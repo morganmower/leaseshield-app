@@ -68,6 +68,12 @@ export default function Landing() {
                   variant="outline"
                   data-testid="button-hero-learn"
                   className="text-base px-8"
+                  onClick={() => {
+                    document.getElementById('features')?.scrollIntoView({ 
+                      behavior: 'smooth',
+                      block: 'start'
+                    });
+                  }}
                 >
                   Learn More
                 </Button>
@@ -119,7 +125,7 @@ export default function Landing() {
       </section>
 
       {/* Features Grid */}
-      <section className="py-20 md:py-28">
+      <section id="features" className="py-20 md:py-28">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
