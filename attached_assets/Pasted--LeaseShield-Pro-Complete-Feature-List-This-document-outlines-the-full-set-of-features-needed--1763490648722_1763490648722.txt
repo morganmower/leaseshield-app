@@ -1,0 +1,292 @@
+# LeaseShield Pro — Complete Feature List
+
+This document outlines the full set of features needed for LeaseShield Pro across both the **front end** (user-facing experience) and **back end** (administrative, content management, operational). No technologies are specified—this is a pure feature blueprint.
+
+---
+
+# FRONT-END FEATURES (USER-FACING)
+
+## 1. User Onboarding & Account Management
+
+* User registration page
+* Login/logout flow
+* Password reset functionality
+* Email verification
+* 7-day free trial activation
+* Day-6 reminder email notification
+* Automatic trial-to-paid conversion
+* Subscription management (upgrade, downgrade, cancel)
+* Dashboard personalized welcome message
+* Optional 60-second risk assessment quiz
+* First-time user walkthrough or simplified onboarding steps
+
+---
+
+## 2. Main Dashboard
+
+* “Start Here” section showing 3 core tools
+* Suggested templates based on user state
+* Quick links to:
+
+  * Screening Toolkit
+  * Leasing Toolkit
+  * Compliance Toolkit
+  * Tenant Issue Toolkit
+* Notification center for legal updates
+* Link to Western Verify screening
+
+---
+
+## 3. Navigation System
+
+### Hybrid navigation:
+
+* Topic-Based Navigation
+* Workflow Navigation (Step 1 → Step 7)
+* State-Based Navigation
+* Search bar for templates & guides
+
+---
+
+## 4. Template Library (Core Feature)
+
+### Full library of downloadable and fillable resources:
+
+* State-specific leases
+* Lease applications
+* Adverse action templates
+* Late rent notices
+* Non-renewal notices
+* Lease violation notices
+* Property damage documentation forms
+* Move-in/move-out checklists
+* ESA vs. pet documentation guides
+* Rent increase notices
+* Partial payment acceptance guides
+* Tenant complaint forms
+
+### Template features:
+
+* PDF downloads
+* Fillable online versions
+* Pre-filled state-specific versions
+* Instant generation summary page
+* Post-download suggested resources
+
+---
+
+## 5. State-Specific Compliance Sections
+
+For UT, TX, ND, SD at launch.
+
+* State “Compliance Card” pages
+* Required disclosures list
+* Application requirements
+* Screening regulations (credit, criminal, adverse action)
+* Eviction rules overview
+* Local/city rule callouts when relevant
+* Update logs for each state
+* Before/after change display for legal updates
+
+---
+
+## 6. Legal Update System (User-Facing)
+
+* Dashboard alerts for important updates
+* Email notifications for high-impact changes
+* Side-by-side clause comparisons
+* “Why this matters” explanations
+* “How to update your lease/application” steps
+
+---
+
+## 7. Screening Toolkit
+
+* Credit Report Decoder
+* Tradeline explanations
+* Red flag glossary
+* List of follow-up questions for tenants
+* Criminal screening overview
+* Eviction screening best practices
+* State-specific screening rules
+* Optional CTA: “Run Screening with Western Verify”
+
+---
+
+## 8. Tenant Issue Toolkit
+
+* Step-by-step workflows for:
+
+  * Late rent
+  * Lease violations
+  * Property damage
+  * ESA vs. pets verification
+  * Complaints resolution
+  * Rent increases
+  * Non-renewal decisions
+  * Move-out process
+* Notices & templates for each scenario
+
+---
+
+## 9. Live Q&A Events
+
+* Embedded live session player (e.g., Zoom integration)
+* Event schedule page
+* RSVP/registration within platform
+* Anonymous question submission
+* Archive of recorded sessions
+* Categorized library of past Q&A videos
+
+---
+
+## 10. Search & Filtering Features
+
+* Search bar for templates, guides, topics
+* Filters:
+
+  * By state
+  * By workflow step
+  * By category (screening, leasing, compliance, issues)
+  * By document type
+
+---
+
+## 11. Account Profile & Billing
+
+* Personal info management
+* Subscription overview
+* Payment method management
+* Billing history and receipts
+
+---
+
+## 12. Help & Support
+
+* FAQ section
+* “How to use this platform” mini guide
+* Contact support form
+* Troubleshooting pages
+
+---
+
+# BACK-END FEATURES (ADMIN & CONTENT MANAGEMENT)
+
+## 1. Content Management System (CMS)
+
+* Add/edit/delete templates
+* Upload PDF and fillable form versions
+* Add new states
+* Edit state-specific compliance cards
+* Create update logs with side-by-side comparisons
+* Manage categories and navigation
+* Add tenant issue workflows
+* Manage Q&A library videos
+
+---
+
+## 2. Legal Update Management
+
+* Admin interface to:
+
+  * Flag critical updates
+  * Add explanations and risk context
+  * Push updates to dashboard notifications
+  * Send update email notifications
+* Ability to attach documents or before/after comparisons
+
+---
+
+## 3. Template Version Control
+
+* Track versions of all templates
+* Store change history
+* Rollback capability
+* Mark specific versions as “current”
+
+---
+
+## 4. User Management
+
+* View user accounts
+* Manage subscriptions
+* Manually extend trials
+* Issue refunds (if needed)
+* Deactivate or delete accounts
+
+---
+
+## 5. Analytics System
+
+* Dashboard showing:
+
+  * Subscription count & MRR
+  * Trial → conversion rate
+  * Template downloads by type/state
+  * Western Verify click-through rate
+  * Q&A attendance
+  * Monthly active users
+  * Churn and cancellation reasons
+
+---
+
+## 6. Billing & Subscription Engine
+
+* Integrate with a payment system (Stripe or similar)
+* Manage trials, renewals, cancellations
+* Automated renewal emails
+* Failed payment handling & reminders
+
+---
+
+## 7. Notification System
+
+* Email broadcast tool for:
+
+  * Legal updates
+  * Product updates
+  * New templates
+  * Q&A reminders
+* On-site dashboard alerts
+
+---
+
+## 8. Western Verify Integration Layer
+
+* Track screening referral clicks
+* Log conversion activity
+* Display screening CTAs contextually
+* Optional referral code integration
+
+---
+
+## 9. Event Management System
+
+* Create and schedule monthly Q&A events
+* Upload and categorize recordings
+* Archive management
+
+---
+
+## 10. Audit & Compliance
+
+* Log all admin changes
+* Track template update actions
+* Maintain historical compliance records
+
+---
+
+# OPTIONAL FUTURE FEATURES (NOT IN VERSION 1)
+
+* Document storage for landlords
+* Notice generation wizards
+* Expanded state coverage
+* Tenant risk scoring tools
+* Automated workflow generators
+* AI-guided lease editing suggestions
+
+---
+
+# Summary
+
+This feature list outlines the complete user experience, content system, administrative tools, compliance update workflows, and subscription infrastructure required to launch and scale LeaseShield Pro. It ensures the platform delivers its core promise: **simple, protective, state-specific guidance that prevents legal and financial mistakes for landlords.**
