@@ -107,12 +107,12 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-2">
+          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
             <span className="font-display text-base sm:text-xl font-semibold text-foreground">
               LeaseShield<span className="hidden sm:inline"> Pro</span>
             </span>
-          </div>
+          </a>
           <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <Button
