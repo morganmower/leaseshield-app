@@ -242,9 +242,7 @@ export default function Privacy() {
                 If you have questions or concerns about this privacy policy or our data practices, please contact us at:
               </p>
               <div className="bg-muted/50 p-4 rounded-lg">
-                <p className="text-foreground font-medium mb-1">LeaseShield Pro</p>
-                <p className="text-muted-foreground text-sm">Email: privacy@leaseshieldpro.com</p>
-                <p className="text-muted-foreground text-sm">Address: [Your Business Address]</p>
+                <p className="text-foreground font-medium">support@leaseshieldpro.com</p>
               </div>
             </section>
           </CardContent>
