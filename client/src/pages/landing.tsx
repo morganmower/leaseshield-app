@@ -161,7 +161,7 @@ export default function Landing() {
                   >
                     <Card className="p-4 hover-elevate transition-all">
                       <Shield className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">Legal Protection</p>
+                      <p className="text-sm font-medium">Compliance Guidance</p>
                     </Card>
                   </motion.div>
                   <motion.div
