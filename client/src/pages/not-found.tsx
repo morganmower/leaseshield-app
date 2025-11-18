@@ -1,21 +1,52 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { AlertCircle } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Shield, Home, ArrowLeft } from "lucide-react";
 
 export default function NotFound() {
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gray-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardContent className="pt-6">
-          <div className="flex mb-4 gap-2">
-            <AlertCircle className="h-8 w-8 text-red-500" />
-            <h1 className="text-2xl font-bold text-gray-900">404 Page Not Found</h1>
+    <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4">
+      <div className="text-center mb-8">
+        <div className="flex items-center justify-center gap-2 mb-4">
+          <Shield className="h-8 w-8 text-primary" />
+          <span className="font-display text-2xl font-semibold text-foreground">
+            LeaseShield Pro
+          </span>
+        </div>
+      </div>
+
+      <Card className="w-full max-w-lg">
+        <CardContent className="pt-8 pb-8 text-center">
+          <div className="mb-6">
+            <div className="text-6xl font-bold text-primary mb-2">404</div>
+            <h1 className="text-2xl font-semibold text-foreground mb-2">Page Not Found</h1>
+            <p className="text-muted-foreground">
+              The page you're looking for doesn't exist or has been moved.
+            </p>
           </div>
 
-          <p className="mt-4 text-sm text-gray-600">
-            Did you forget to add the page to the router?
-          </p>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button
+              onClick={() => window.history.back()}
+              variant="outline"
+              data-testid="button-go-back"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Go Back
+            </Button>
+            <Button
+              onClick={() => window.location.href = "/"}
+              data-testid="button-home"
+            >
+              <Home className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      <p className="text-sm text-muted-foreground mt-8">
+        Need help? Contact our support team.
+      </p>
     </div>
   );
 }
