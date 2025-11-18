@@ -31,27 +31,31 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <div className="flex items-center gap-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-display text-xl font-semibold text-foreground">
-              LeaseShield Pro
+            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <span className="font-display text-base sm:text-xl font-semibold text-foreground">
+              LeaseShield<span className="hidden sm:inline"> Pro</span>
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <ThemeToggle />
             <Button
               variant="ghost"
+              size="sm"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
+              className="text-xs sm:text-sm"
             >
               Log In
             </Button>
             <Button
+              size="sm"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-start-trial"
+              className="text-xs sm:text-sm px-2 sm:px-4"
             >
-              Start Free Trial
+              <span className="hidden xs:inline">Start </span>Trial
             </Button>
           </div>
         </div>
@@ -78,7 +82,7 @@ export default function Landing() {
               
               <motion.h1 
                 variants={fadeInUp}
-                className="font-display text-4xl sm:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6"
+                className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6"
               >
                 Protect Your Rental Business from{" "}
                 <span className="text-primary">Costly Legal Mistakes</span>
@@ -86,7 +90,7 @@ export default function Landing() {
               
               <motion.p 
                 variants={fadeInUp}
-                className="text-lg text-muted-foreground mb-8 leading-relaxed"
+                className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed"
               >
                 State-specific leases, compliance guidance, and screening resources designed
                 specifically for small and midsize landlords. Your protective mentor for
@@ -121,14 +125,14 @@ export default function Landing() {
               
               <motion.div 
                 variants={fadeInUp}
-                className="flex items-center gap-6 text-sm text-muted-foreground"
+                className="flex flex-col xs:flex-row items-start xs:items-center gap-3 xs:gap-6 text-sm text-muted-foreground"
               >
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                   <span>No credit card required</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                   <span>Cancel anytime</span>
                 </div>
               </motion.div>
@@ -186,42 +190,42 @@ export default function Landing() {
       </section>
 
       {/* Stats Bar */}
-      <section className="py-12 border-y bg-muted/30">
+      <section className="py-8 sm:py-12 border-y bg-muted/30">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid grid-cols-2 md:grid-cols-4 gap-8"
+            className="grid grid-cols-2 md:grid-cols-4 gap-6 sm:gap-8"
           >
             <motion.div variants={fadeInUp} className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <TrendingUp className="h-5 w-5 text-primary" />
-                <div className="text-3xl font-bold text-foreground">500+</div>
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">500+</div>
               </div>
-              <div className="text-sm text-muted-foreground">Active Landlords</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Active Landlords</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <FileText className="h-5 w-5 text-primary" />
-                <div className="text-3xl font-bold text-foreground">37+</div>
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">37+</div>
               </div>
-              <div className="text-sm text-muted-foreground">Legal Templates</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Shield className="h-5 w-5 text-primary" />
-                <div className="text-3xl font-bold text-foreground">4</div>
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">4</div>
               </div>
-              <div className="text-sm text-muted-foreground">States Covered</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">States Covered</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
-              <div className="flex items-center justify-center gap-2 mb-2">
-                <Clock className="h-5 w-5 text-primary" />
-                <div className="text-3xl font-bold text-foreground">24/7</div>
+              <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">24/7</div>
               </div>
-              <div className="text-sm text-muted-foreground">Access Anytime</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Access Anytime</div>
             </motion.div>
           </motion.div>
         </div>
@@ -235,12 +239,12 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mb-16"
+            className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Everything You Need to Operate Confidently
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
               Simple, protective, state-specific guidance that prevents legal and financial mistakes
             </p>
           </motion.div>
@@ -346,10 +350,10 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Trusted by Landlords Nationwide
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
               See how LeaseShield Pro is protecting rental businesses just like yours
             </p>
           </motion.div>
@@ -443,10 +447,10 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground px-4">
               Everything you need to protect your rental business
             </p>
           </motion.div>
@@ -522,10 +526,10 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Frequently Asked Questions
             </h2>
-            <p className="text-lg text-muted-foreground">
+            <p className="text-base sm:text-lg text-muted-foreground px-4">
               Everything you need to know about LeaseShield Pro
             </p>
           </motion.div>
@@ -597,10 +601,10 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <h2 className="font-display text-3xl sm:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Ready to Protect Your Rental Business?
             </h2>
-            <p className="text-lg text-muted-foreground mb-8 max-w-2xl mx-auto">
+            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
               Join hundreds of landlords who sleep better knowing their leases, notices, and
               compliance are handled correctly. Start your free trial today.
             </p>
