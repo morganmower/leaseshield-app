@@ -14,7 +14,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FileText, Download, Search, Filter } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { FileText, Download, Search, Filter, Lock } from "lucide-react";
 import type { Template } from "@shared/schema";
 
 export default function Templates() {
@@ -23,6 +31,25 @@ export default function Templates() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  const isPayingMember = user?.subscriptionStatus === 'active';
+  const isTrialing = user?.subscriptionStatus === 'trialing';
+
+  const handleTemplateAction = (action: 'download' | 'fill', templateId: string) => {
+    if (!isPayingMember) {
+      setShowUpgradeDialog(true);
+      return;
+    }
+
+    // TODO: Implement actual download/fill logic
+    toast({
+      title: action === 'download' ? 'Download Started' : 'Opening Form',
+      description: action === 'download' 
+        ? 'Your template is being downloaded...' 
+        : 'Opening fillable form...',
+    });
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -211,9 +238,14 @@ export default function Templates() {
                     variant="default"
                     size="sm"
                     className="flex-1"
+                    onClick={() => handleTemplateAction('download', template.id)}
                     data-testid={`button-download-${template.id}`}
                   >
-                    <Download className="mr-2 h-4 w-4" />
+                    {!isPayingMember ? (
+                      <Lock className="mr-2 h-4 w-4" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
                     Download
                   </Button>
                   {template.fillableFormData && (
@@ -221,8 +253,10 @@ export default function Templates() {
                       variant="outline"
                       size="sm"
                       className="flex-1"
+                      onClick={() => handleTemplateAction('fill', template.id)}
                       data-testid={`button-fill-${template.id}`}
                     >
+                      {!isPayingMember && <Lock className="mr-2 h-4 w-4" />}
                       Fill Online
                     </Button>
                   )}
@@ -231,6 +265,42 @@ export default function Templates() {
             ))}
           </div>
         )}
+
+        {/* Upgrade Dialog */}
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+          <DialogContent data-testid="dialog-upgrade-required">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-primary" />
+                Upgrade Required
+              </DialogTitle>
+              <DialogDescription className="pt-4 space-y-3">
+                <p>
+                  Template downloads are available to paying members only.
+                  {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
+                </p>
+                <p>
+                  Upgrade now for just <strong>$12-15/month</strong> to access our complete library of 37+ attorney-reviewed, state-specific templates.
+                </p>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowUpgradeDialog(false)}
+                data-testid="button-cancel-upgrade"
+              >
+                Not Now
+              </Button>
+              <Button
+                onClick={() => window.location.href = '/subscribe'}
+                data-testid="button-go-to-subscribe"
+              >
+                Upgrade to Pro
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
