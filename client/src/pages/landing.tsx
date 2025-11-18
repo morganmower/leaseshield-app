@@ -9,7 +9,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -26,7 +34,74 @@ const staggerContainer = {
   }
 };
 
+type FeatureType = "leases" | "compliance" | "screening" | "resources" | null;
+
 export default function Landing() {
+  const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
+
+  const featureDetails = {
+    leases: {
+      title: "State-Specific Leases",
+      icon: FileText,
+      description: "Access attorney-reviewed lease agreements and rental forms tailored to your state's exact legal requirements.",
+      details: [
+        "Residential lease agreements compliant with UT, TX, ND, and SD laws",
+        "Rental application forms with fair housing compliance",
+        "Move-in and move-out inspection checklists",
+        "Lease addendums for pets, parking, utilities, and more",
+        "Month-to-month rental agreements",
+        "Lease renewal and termination notices",
+        "All documents available in Word and PDF formats",
+        "Step-by-step instructions for customizing each template"
+      ]
+    },
+    compliance: {
+      title: "Compliance Guidance",
+      icon: Shield,
+      description: "Stay ahead of changing landlord-tenant laws with curated updates that only include what could create liability.",
+      details: [
+        "Real-time monitoring of state legislature and court decisions",
+        "Email alerts when laws change in your selected state",
+        "Clear before/after comparisons showing what changed",
+        "Impact-level ratings (high, medium, low) for each update",
+        "Compliance cards summarizing current requirements",
+        "Security deposit rules and deadlines by state",
+        "Notice period requirements for lease termination",
+        "Fair housing and discrimination prevention guidance"
+      ]
+    },
+    screening: {
+      title: "Screening Toolkit",
+      icon: Search,
+      description: "Step-by-step guidance on tenant screening with checklists, red flag indicators, and resources to help you make informed decisions.",
+      details: [
+        "Credit report decoder explaining key sections and scores",
+        "Income verification checklists and guidelines",
+        "Rental history verification templates",
+        "Criminal background check best practices",
+        "Red flags to watch for during screening",
+        "Fair housing compliance during screening process",
+        "Western Verify integration for comprehensive checks",
+        "Sample screening criteria and policies"
+      ]
+    },
+    resources: {
+      title: "Helpful Resources",
+      icon: Users,
+      description: "Expert guidance and educational resources to help you handle common landlord challenges with confidence.",
+      details: [
+        "Step-by-step workflows for handling tenant issues",
+        "Late rent collection procedures by state",
+        "Eviction process guides with required notices",
+        "Security deposit return procedures and timelines",
+        "Maintenance request handling best practices",
+        "Lease violation notice templates",
+        "Communication guidelines for difficult situations",
+        "Property management tips and checklists"
+      ]
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -150,7 +225,11 @@ export default function Landing() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <Card className="p-4 hover-elevate transition-all">
+                    <Card 
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      onClick={() => setSelectedFeature("leases")}
+                      data-testid="card-feature-leases"
+                    >
                       <FileText className="h-8 w-8 text-primary mb-2" />
                       <p className="text-sm font-medium">State-Specific Leases</p>
                     </Card>
@@ -159,7 +238,11 @@ export default function Landing() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <Card className="p-4 hover-elevate transition-all">
+                    <Card 
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      onClick={() => setSelectedFeature("compliance")}
+                      data-testid="card-feature-compliance"
+                    >
                       <Shield className="h-8 w-8 text-primary mb-2" />
                       <p className="text-sm font-medium">Compliance Guidance</p>
                     </Card>
@@ -168,7 +251,11 @@ export default function Landing() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <Card className="p-4 hover-elevate transition-all">
+                    <Card 
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      onClick={() => setSelectedFeature("screening")}
+                      data-testid="card-feature-screening"
+                    >
                       <Search className="h-8 w-8 text-primary mb-2" />
                       <p className="text-sm font-medium">Screening Toolkit</p>
                     </Card>
@@ -177,7 +264,11 @@ export default function Landing() {
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
                   >
-                    <Card className="p-4 hover-elevate transition-all">
+                    <Card 
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      onClick={() => setSelectedFeature("resources")}
+                      data-testid="card-feature-resources"
+                    >
                       <Users className="h-8 w-8 text-primary mb-2" />
                       <p className="text-sm font-medium">Helpful Resources</p>
                     </Card>
@@ -639,6 +730,53 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* Feature Details Dialog */}
+      <Dialog open={selectedFeature !== null} onOpenChange={() => setSelectedFeature(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          {selectedFeature && featureDetails[selectedFeature] && (
+            <>
+              <DialogHeader>
+                <div className="flex items-center gap-3 mb-2">
+                  {(() => {
+                    const IconComponent = featureDetails[selectedFeature].icon;
+                    return <IconComponent className="h-8 w-8 text-primary" />;
+                  })()}
+                  <DialogTitle className="text-2xl">{featureDetails[selectedFeature].title}</DialogTitle>
+                </div>
+                <DialogDescription className="text-base">
+                  {featureDetails[selectedFeature].description}
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-6">
+                <h4 className="font-semibold text-foreground mb-4">What's Included:</h4>
+                <ul className="space-y-3">
+                  {featureDetails[selectedFeature].details.map((detail, index) => (
+                    <li key={index} className="flex items-start gap-3">
+                      <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                      <span className="text-muted-foreground">{detail}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-6 pt-6 border-t">
+                <Button
+                  size="lg"
+                  className="w-full"
+                  onClick={() => window.location.href = "/api/login"}
+                  data-testid="button-dialog-start-trial"
+                >
+                  Start Your Free Trial
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <p className="text-sm text-muted-foreground text-center mt-3">
+                  7-day free trial • No credit card required
+                </p>
+              </div>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Footer */}
       <footer className="border-t py-12 bg-muted/30">
