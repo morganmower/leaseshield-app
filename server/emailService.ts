@@ -269,6 +269,79 @@ The LeaseShield Pro Team
 
     return this.sendEmail(user, template);
   }
+  async sendContactFormEmail(formData: { firstName: string; lastName: string; email: string; phone: string; message: string }): Promise<boolean> {
+    const { firstName, lastName, email, phone, message } = formData;
+
+    const template: EmailTemplate = {
+      subject: `New Contact Form Submission from ${firstName} ${lastName}`,
+      textBody: `New contact form submission from LeaseShield Pro website:
+
+Name: ${firstName} ${lastName}
+Email: ${email}
+Phone: ${phone}
+
+Message:
+${message}
+
+---
+Sent from LeaseShield Pro Contact Form
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .info-box { background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    .message-box { background: #ffffff; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+    .label { font-weight: 600; color: #1e293b; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">📬 New Contact Form Submission</h1>
+    </div>
+    <div class="content">
+      <p><strong>New contact request from LeaseShield Pro website</strong></p>
+      
+      <div class="info-box">
+        <p style="margin: 5px 0;"><span class="label">Name:</span> ${firstName} ${lastName}</p>
+        <p style="margin: 5px 0;"><span class="label">Email:</span> <a href="mailto:${email}">${email}</a></p>
+        <p style="margin: 5px 0;"><span class="label">Phone:</span> ${phone}</p>
+      </div>
+
+      <div class="message-box">
+        <p class="label">Message:</p>
+        <p style="margin-top: 10px; white-space: pre-wrap;">${message}</p>
+      </div>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+        Reply to <a href="mailto:${email}">${email}</a> to respond to this inquiry.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>Sent from LeaseShield Pro Contact Form</p>
+      <p>© ${new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    // Send to support email
+    return this.sendEmail(
+      { email: 'support@leaseshieldpro.com', firstName: 'Support', lastName: 'Team' },
+      template
+    );
+  }
 }
 
 export const emailService = new EmailService();
