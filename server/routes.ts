@@ -103,24 +103,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      // Create subscription with 7-day free trial and $15/month price
-      // TODO: In production, create a price in Stripe dashboard and use the price ID here
-      // For now we use price_data which creates an ad-hoc price
+      // Get the Stripe Price ID from environment variable
+      // In production, create a Price in Stripe dashboard and set STRIPE_PRICE_ID
+      const stripePriceId = process.env.STRIPE_PRICE_ID;
+      
+      if (!stripePriceId) {
+        throw new Error('STRIPE_PRICE_ID environment variable is required. Create a Price in Stripe dashboard and set this variable.');
+      }
+
+      // Create subscription with 7-day free trial using the configured Price ID
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
-        items: [{
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'LeaseShield Pro Monthly Subscription',
-              description: 'Full access to state-specific templates and compliance updates',
-            },
-            unit_amount: 1500, // $15.00
-            recurring: {
-              interval: 'month',
-            },
-          },
-        }],
+        items: [{ price: stripePriceId }],
         trial_period_days: 7,
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
