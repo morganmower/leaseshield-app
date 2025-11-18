@@ -179,7 +179,7 @@ export default function Landing() {
                   >
                     <Card className="p-4 hover-elevate transition-all">
                       <Users className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">Expert Guidance</p>
+                      <p className="text-sm font-medium">Helpful Resources</p>
                     </Card>
                   </motion.div>
                 </div>
