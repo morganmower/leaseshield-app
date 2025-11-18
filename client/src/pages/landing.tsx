@@ -81,7 +81,7 @@ export default function Landing() {
         "Criminal background check best practices",
         "Red flags to watch for during screening",
         "Fair housing compliance during screening process",
-        "Western Verify integration for comprehensive checks",
+        "Western Verify (www.westernverify.com) integration for comprehensive checks",
         "Sample screening criteria and policies"
       ]
     },
@@ -409,7 +409,16 @@ export default function Landing() {
                 <h3 className="font-display text-xl font-semibold mb-3">Screening Toolkit</h3>
                 <p className="text-muted-foreground mb-4">
                   Step-by-step guidance on tenant screening, red flags to watch for, and
-                  direct access to Western Verify for background checks.
+                  direct access to{" "}
+                  <a 
+                    href="https://www.westernverify.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Western Verify
+                  </a>{" "}
+                  for background checks.
                 </p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">

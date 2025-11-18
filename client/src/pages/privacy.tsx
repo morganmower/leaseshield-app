@@ -200,8 +200,16 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">Third-Party Links and Services</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Our service may contain links to third-party websites or services, such as Western Verify for
-                tenant screening. We are not responsible for the privacy practices of these third parties. We
+                Our service may contain links to third-party websites or services, such as{" "}
+                <a 
+                  href="https://www.westernverify.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Western Verify
+                </a>{" "}
+                for tenant screening. We are not responsible for the privacy practices of these third parties. We
                 encourage you to review the privacy policies of any third-party services before providing them
                 with your information.
               </p>

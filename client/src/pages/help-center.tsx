@@ -87,7 +87,7 @@ export default function HelpCenter() {
         },
         {
           q: "Does LeaseShield Pro run background checks?",
-          a: "No, we don't run background checks directly. We provide guidance and resources to help you understand screening reports and integrate with Western Verify for comprehensive tenant screening."
+          a: "No, we don't run background checks directly. We provide guidance and resources to help you understand screening reports and integrate with Western Verify (www.westernverify.com) for comprehensive tenant screening."
         },
         {
           q: "What should I look for when screening tenants?",

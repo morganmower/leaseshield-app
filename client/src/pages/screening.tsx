@@ -73,10 +73,21 @@ export default function Screening() {
                 Professional Tenant Screening
               </h3>
               <p className="text-muted-foreground mb-4">
-                Ready to screen a tenant? We've partnered with Western Verify to provide
-                comprehensive, compliant tenant screening services.
+                Ready to screen a tenant? We've partnered with{" "}
+                <a 
+                  href="https://www.westernverify.com" 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="text-primary hover:underline font-medium"
+                >
+                  Western Verify
+                </a>{" "}
+                to provide comprehensive, compliant tenant screening services.
               </p>
-              <Button data-testid="button-western-verify">
+              <Button 
+                data-testid="button-western-verify"
+                onClick={() => window.open('https://www.westernverify.com', '_blank')}
+              >
                 Screen with Western Verify
                 <ExternalLink className="ml-2 h-4 w-4" />
               </Button>
