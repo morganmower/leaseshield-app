@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Shield, ArrowLeft, Book, FileText, Scale, Users, MessageCircle, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useAuth } from "@/hooks/useAuth";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -10,6 +11,17 @@ const fadeIn = {
 };
 
 export default function HelpCenter() {
+  const { isAuthenticated, isLoading } = useAuth();
+
+  const handleQuickLinkClick = (href: string) => {
+    // If not authenticated and trying to access protected routes, redirect to login
+    if (!isAuthenticated && (href === '/templates' || href === '/compliance' || href === '/screening')) {
+      window.location.href = '/api/login';
+    } else {
+      window.location.href = href;
+    }
+  };
+
   const faqs = [
     {
       category: "Getting Started",
@@ -144,7 +156,11 @@ export default function HelpCenter() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: index * 0.1 }}
             >
-              <Card className="hover-elevate active-elevate-2 cursor-pointer" onClick={() => window.location.href = link.href}>
+              <Card 
+                className="hover-elevate active-elevate-2 cursor-pointer" 
+                onClick={() => handleQuickLinkClick(link.href)}
+                data-testid={`card-quick-${link.title.toLowerCase().replace(/\s+/g, '-')}`}
+              >
                 <CardContent className="p-6">
                   <div className="flex items-center gap-3">
                     <link.icon className="h-6 w-6 text-primary" />
