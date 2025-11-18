@@ -145,6 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const sig = req.headers['stripe-signature'];
 
     if (!sig) {
+      console.error('Stripe webhook: Missing stripe-signature header');
       return res.status(400).send('Missing stripe-signature header');
     }
 
@@ -152,24 +153,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     try {
       // Verify webhook signature using raw body
-      // Note: STRIPE_WEBHOOK_SECRET should be set in production from Stripe dashboard
       const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
       
-      if (webhookSecret && req.rawBody) {
-        // Verify the event with Stripe signature in production
-        event = stripe.webhooks.constructEvent(
-          req.rawBody as Buffer,
-          sig,
-          webhookSecret
-        );
-      } else {
-        // In development/testing without webhook secret, use the parsed body
-        // This is ONLY for development - always verify signatures in production
-        console.warn('⚠️  Stripe webhook signature verification skipped - set STRIPE_WEBHOOK_SECRET in production');
-        event = req.body;
+      if (!webhookSecret) {
+        console.error('⚠️  STRIPE_WEBHOOK_SECRET not set - webhook verification will fail in production');
+        return res.status(500).send('Webhook secret not configured');
       }
+      
+      // req.body is raw Buffer when using express.raw() middleware
+      event = stripe.webhooks.constructEvent(
+        req.body,
+        sig,
+        webhookSecret
+      );
+      
+      console.log(`✓ Webhook verified: ${event.type}`);
     } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message);
+      console.error('❌ Webhook signature verification failed:', err.message);
       return res.status(400).send(`Webhook Error: ${err.message}`);
     }
 

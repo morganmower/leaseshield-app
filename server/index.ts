@@ -9,11 +9,20 @@ declare module 'http' {
     rawBody: unknown
   }
 }
-app.use(express.json({
-  verify: (req, _res, buf) => {
-    req.rawBody = buf;
+
+// IMPORTANT: Stripe webhook must receive raw body for signature verification
+// Apply raw body parser ONLY to webhook route, JSON parser to all other routes
+app.use((req, res, next) => {
+  if (req.path === '/api/stripe-webhook') {
+    // Use raw body parser for Stripe webhook
+    express.raw({ type: 'application/json' })(req, res, next);
+  } else {
+    // Use JSON parser for all other routes
+    next();
   }
-}));
+});
+
+app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 app.use((req, res, next) => {
