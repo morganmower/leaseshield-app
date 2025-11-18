@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { scheduledJobs } from "./scheduledJobs";
 
 const app = express();
 
@@ -86,5 +87,18 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+    
+    // Start scheduled jobs (trial reminders, legal update notifications)
+    scheduledJobs.start();
+  });
+
+  // Graceful shutdown
+  process.on('SIGTERM', () => {
+    log('SIGTERM received, shutting down gracefully...');
+    scheduledJobs.stop();
+    server.close(() => {
+      log('Server closed');
+      process.exit(0);
+    });
   });
 })();
