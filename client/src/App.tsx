@@ -17,6 +17,11 @@ import Screening from "@/pages/screening";
 import TenantIssues from "@/pages/tenant-issues";
 import Subscribe from "@/pages/subscribe";
 import Settings from "@/pages/settings";
+import Admin from "@/pages/admin";
+import AdminTemplates from "@/pages/admin-templates";
+import AdminCompliance from "@/pages/admin-compliance";
+import AdminLegalUpdates from "@/pages/admin-legal-updates";
+import AdminAnalytics from "@/pages/admin-analytics";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -39,6 +44,11 @@ function Router() {
           <Route path="/tenant-issues" component={TenantIssues} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/settings" component={Settings} />
+          <Route path="/admin" component={Admin} />
+          <Route path="/admin/templates" component={AdminTemplates} />
+          <Route path="/admin/compliance" component={AdminCompliance} />
+          <Route path="/admin/legal-updates" component={AdminLegalUpdates} />
+          <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route component={NotFound} />
         </>
       )}

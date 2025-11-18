@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   BookOpen,
   CreditCard,
+  ShieldCheck,
 } from "lucide-react";
 import {
   Sidebar,
@@ -69,6 +70,11 @@ const resourceItems = [
 ];
 
 const accountItems = [
+  {
+    title: "Admin",
+    url: "/admin",
+    icon: ShieldCheck,
+  },
   {
     title: "Billing",
     url: "/billing",

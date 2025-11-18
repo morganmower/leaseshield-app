@@ -287,21 +287,79 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAnalyticsSummary(): Promise<any> {
-    // Simplified analytics - in production, you'd have more complex queries
+    // Subscription metrics
     const totalUsers = await db.select({ count: sql<number>`count(*)` }).from(users);
-    const activeTrials = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(eq(users.subscriptionStatus, 'trialing'));
     const activeSubscriptions = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.subscriptionStatus, 'active'));
+    const trialing = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.subscriptionStatus, 'trialing'));
+    const canceled = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(eq(users.subscriptionStatus, 'canceled'));
+
+    // Calculate MRR (assuming $12-15/month, using $13.50 average)
+    const activeCount = Number(activeSubscriptions[0]?.count || 0);
+    const mrr = activeCount * 13.50;
+
+    // Trial conversion metrics
+    const totalTrialsEver = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(sql`${users.trialEndsAt} IS NOT NULL`);
+    
+    const convertedTrials = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(
+        and(
+          sql`${users.trialEndsAt} IS NOT NULL`,
+          eq(users.subscriptionStatus, 'active')
+        )
+      );
+
+    const totalTrialsCount = Number(totalTrialsEver[0]?.count || 0);
+    const convertedCount = Number(convertedTrials[0]?.count || 0);
+    const trialConversionRate = totalTrialsCount > 0 ? convertedCount / totalTrialsCount : 0;
+
+    // Usage metrics
+    const templateDownloads = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.eventType, 'template_download'));
+    
+    const westernVerifyClicks = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.eventType, 'western_verify_click'));
+
+    const totalDownloads = Number(templateDownloads[0]?.count || 0);
+    const totalWesternClicks = Number(westernVerifyClicks[0]?.count || 0);
+    const totalUsersCount = Number(totalUsers[0]?.count || 0);
+    const avgDownloadsPerUser = totalUsersCount > 0 ? totalDownloads / totalUsersCount : 0;
 
     return {
-      totalUsers: Number(totalUsers[0]?.count || 0),
-      activeTrials: Number(activeTrials[0]?.count || 0),
-      activeSubscriptions: Number(activeSubscriptions[0]?.count || 0),
+      subscriptions: {
+        total: totalUsersCount,
+        active: activeCount,
+        trialing: Number(trialing[0]?.count || 0),
+        canceled: Number(canceled[0]?.count || 0),
+        mrr,
+      },
+      conversion: {
+        trialConversionRate,
+        totalTrials: totalTrialsCount,
+        convertedTrials: convertedCount,
+      },
+      usage: {
+        totalDownloads,
+        westernVerifyClicks: totalWesternClicks,
+        avgDownloadsPerUser,
+      },
     };
   }
 
