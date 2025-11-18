@@ -1,18 +1,274 @@
-import { sql } from "drizzle-orm";
-import { pgTable, text, varchar } from "drizzle-orm/pg-core";
+import { sql } from 'drizzle-orm';
+import { relations } from 'drizzle-orm';
+import {
+  index,
+  jsonb,
+  pgTable,
+  timestamp,
+  varchar,
+  text,
+  integer,
+  boolean,
+  pgEnum,
+} from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
+// User storage table for Replit Auth
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  email: varchar("email").unique(),
+  firstName: varchar("first_name"),
+  lastName: varchar("last_name"),
+  profileImageUrl: varchar("profile_image_url"),
+  // Subscription fields
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSubscriptionId: varchar("stripe_subscription_id"),
+  subscriptionStatus: varchar("subscription_status"), // 'trialing', 'active', 'canceled', 'past_due'
+  trialEndsAt: timestamp("trial_ends_at"),
+  subscriptionEndsAt: timestamp("subscription_ends_at"),
+  // User preferences
+  preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
+  hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
+export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
+
+// States supported by the platform
+export const states = pgTable("states", {
+  id: varchar("id", { length: 2 }).primaryKey(), // UT, TX, ND, SD
+  name: text("name").notNull(), // Utah, Texas, etc.
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertStateSchema = createInsertSchema(states).omit({
+  createdAt: true,
+});
+export type InsertState = z.infer<typeof insertStateSchema>;
+export type State = typeof states.$inferSelect;
+
+// Template categories
+export const categoryEnum = pgEnum('category', [
+  'leasing',
+  'screening',
+  'compliance',
+  'tenant_issues',
+  'notices',
+  'move_in_out',
+]);
+
+export const templateTypeEnum = pgEnum('template_type', [
+  'lease',
+  'application',
+  'adverse_action',
+  'late_rent_notice',
+  'lease_violation_notice',
+  'non_renewal_notice',
+  'rent_increase_notice',
+  'move_in_checklist',
+  'move_out_checklist',
+  'esa_documentation',
+  'property_damage_form',
+  'partial_payment_form',
+  'tenant_complaint_form',
+  'eviction_notice',
+  'security_deposit_return',
+]);
+
+// Templates library
+export const templates = pgTable("templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: categoryEnum("category").notNull(),
+  templateType: templateTypeEnum("template_type").notNull(),
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  // File storage - could be URLs or file paths
+  pdfUrl: text("pdf_url"),
+  fillableFormData: jsonb("fillable_form_data"), // JSON structure for fillable fields
+  // Metadata
+  version: integer("version").default(1),
+  isActive: boolean("is_active").default(true),
+  sortOrder: integer("sort_order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const templatesRelations = relations(templates, ({ one }) => ({
+  state: one(states, {
+    fields: [templates.stateId],
+    references: [states.id],
+  }),
+}));
+
+export const insertTemplateSchema = createInsertSchema(templates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTemplate = z.infer<typeof insertTemplateSchema>;
+export type Template = typeof templates.$inferSelect;
+
+// Compliance cards and legal updates
+export const complianceCards = pgTable("compliance_cards", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  category: text("category").notNull(), // 'disclosures', 'screening', 'eviction', 'general'
+  content: jsonb("content").notNull(), // Rich content structure
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const complianceCardsRelations = relations(complianceCards, ({ one }) => ({
+  state: one(states, {
+    fields: [complianceCards.stateId],
+    references: [states.id],
+  }),
+}));
+
+export const insertComplianceCardSchema = createInsertSchema(complianceCards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertComplianceCard = z.infer<typeof insertComplianceCardSchema>;
+export type ComplianceCard = typeof complianceCards.$inferSelect;
+
+// Legal updates tracking
+export const legalUpdates = pgTable("legal_updates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  title: text("title").notNull(),
+  summary: text("summary").notNull(),
+  whyItMatters: text("why_it_matters").notNull(),
+  beforeText: text("before_text"),
+  afterText: text("after_text"),
+  effectiveDate: timestamp("effective_date"),
+  impactLevel: varchar("impact_level", { length: 20 }).notNull(), // 'high', 'medium', 'low'
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const legalUpdatesRelations = relations(legalUpdates, ({ one }) => ({
+  state: one(states, {
+    fields: [legalUpdates.stateId],
+    references: [states.id],
+  }),
+}));
+
+export const insertLegalUpdateSchema = createInsertSchema(legalUpdates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertLegalUpdate = z.infer<typeof insertLegalUpdateSchema>;
+export type LegalUpdate = typeof legalUpdates.$inferSelect;
+
+// User notifications for legal updates
+export const userNotifications = pgTable("user_notifications", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  legalUpdateId: varchar("legal_update_id").notNull(),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userNotificationsRelations = relations(userNotifications, ({ one }) => ({
+  user: one(users, {
+    fields: [userNotifications.userId],
+    references: [users.id],
+  }),
+  legalUpdate: one(legalUpdates, {
+    fields: [userNotifications.legalUpdateId],
+    references: [legalUpdates.id],
+  }),
+}));
+
+export const insertUserNotificationSchema = createInsertSchema(userNotifications).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertUserNotification = z.infer<typeof insertUserNotificationSchema>;
+export type UserNotification = typeof userNotifications.$inferSelect;
+
+// Analytics events for tracking
+export const analyticsEvents = pgTable("analytics_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // 'template_download', 'western_verify_click', etc.
+  eventData: jsonb("event_data"), // Additional context
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
+export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
+
+// Screening toolkit content
+export const screeningContent = pgTable("screening_content", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  title: text("title").notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // 'credit', 'criminal', 'eviction', 'general'
+  content: jsonb("content").notNull(), // Rich content structure
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertScreeningContentSchema = createInsertSchema(screeningContent).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertScreeningContent = z.infer<typeof insertScreeningContentSchema>;
+export type ScreeningContent = typeof screeningContent.$inferSelect;
+
+// Tenant issue workflows
+export const tenantIssueWorkflows = pgTable("tenant_issue_workflows", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  slug: varchar("slug", { length: 100 }).notNull().unique(),
+  title: text("title").notNull(),
+  description: text("description").notNull(),
+  category: varchar("category", { length: 50 }).notNull(), // 'late_rent', 'violations', 'damage', etc.
+  steps: jsonb("steps").notNull(), // Array of workflow steps
+  relatedTemplateIds: jsonb("related_template_ids"), // Array of template IDs
+  sortOrder: integer("sort_order").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTenantIssueWorkflowSchema = createInsertSchema(tenantIssueWorkflows).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTenantIssueWorkflow = z.infer<typeof insertTenantIssueWorkflowSchema>;
+export type TenantIssueWorkflow = typeof tenantIssueWorkflows.$inferSelect;
