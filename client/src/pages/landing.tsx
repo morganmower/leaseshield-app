@@ -438,7 +438,7 @@ export default function Landing() {
       </section>
 
       {/* Pricing */}
-      <section className="py-20 md:py-28">
+      <section id="pricing" className="py-20 md:py-28">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
