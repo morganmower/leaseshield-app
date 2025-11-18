@@ -3,7 +3,7 @@
 
 import { storage } from "./storage";
 import { emailService } from "./emailService";
-import { db } from "../db";
+import { db } from "./db";
 import { users } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
 
@@ -18,8 +18,6 @@ export class ScheduledJobs {
       // Find users who:
       // 1. Are currently in trial
       // 2. Have trial ending in the next 24-48 hours (day 6 of trial)
-      // 3. Haven't been sent a reminder recently
-
       const now = new Date();
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
@@ -39,6 +37,14 @@ export class ScheduledJobs {
 
       for (const user of trialingUsers) {
         if (user.email && user.trialEndsAt) {
+          // Check if we've already sent a reminder to this user
+          const existingReminder = await storage.getUserTrialReminderEvent(user.id);
+          
+          if (existingReminder) {
+            console.log(`  Skipping ${user.email} - reminder already sent`);
+            continue;
+          }
+
           console.log(`  Sending trial reminder to ${user.email}...`);
           
           await emailService.sendTrialReminderEmail(
@@ -50,7 +56,7 @@ export class ScheduledJobs {
             user.trialEndsAt
           );
 
-          // Track the reminder email in analytics
+          // Track the reminder email in analytics (prevents duplicate sends)
           await storage.trackEvent({
             userId: user.id,
             eventType: 'trial_reminder_sent',
