@@ -673,7 +673,7 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#" className="hover:text-foreground transition-colors">Help Center</a></li>
+                <li><a href="/help" className="hover:text-foreground transition-colors">Help Center</a></li>
                 <li><a href="/contact" className="hover:text-foreground transition-colors">Contact</a></li>
                 <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a></li>
               </ul>

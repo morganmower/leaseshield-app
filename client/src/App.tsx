@@ -12,6 +12,7 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
 import Contact from "@/pages/contact";
+import HelpCenter from "@/pages/help-center";
 import Dashboard from "@/pages/dashboard";
 import Templates from "@/pages/templates";
 import Compliance from "@/pages/compliance";
@@ -35,6 +36,7 @@ function Router() {
           <Route path="/" component={Landing} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/contact" component={Contact} />
+          <Route path="/help" component={HelpCenter} />
           <Route path="/subscribe" component={Subscribe} />
           <Route component={NotFound} />
         </>
@@ -44,6 +46,7 @@ function Router() {
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/privacy" component={Privacy} />
           <Route path="/contact" component={Contact} />
+          <Route path="/help" component={HelpCenter} />
           <Route path="/templates" component={Templates} />
           <Route path="/compliance" component={Compliance} />
           <Route path="/screening" component={Screening} />
