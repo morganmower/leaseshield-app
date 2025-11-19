@@ -1,14 +1,15 @@
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, Home, ArrowLeft } from "lucide-react";
+import { Home, ArrowLeft } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 export default function NotFound() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-2 mb-4">
-          <Shield className="h-8 w-8 text-primary" />
-          <span className="font-display text-2xl font-semibold text-foreground">
+        <div className="flex items-center justify-center gap-3 mb-4">
+          <Logo iconSize={36} />
+          <span className="font-display text-3xl font-semibold text-foreground">
             LeaseShield Pro
           </span>
         </div>

@@ -9,9 +9,9 @@ export default function Privacy() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo iconSize={24} />
-            <span className="font-display text-base sm:text-xl font-semibold text-foreground">
+          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
+            <Logo iconSize={32} />
+            <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
               LeaseShield Pro
             </span>
           </a>

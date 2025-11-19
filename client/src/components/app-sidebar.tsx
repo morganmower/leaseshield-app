@@ -24,6 +24,7 @@ import {
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Logo } from "@/components/logo";
 import { useAuth } from "@/hooks/useAuth";
 import {
   DropdownMenu,
@@ -105,9 +106,9 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4 border-b">
         <Link href="/dashboard">
-          <div className="flex items-center gap-2 cursor-pointer hover-elevate rounded-md p-2 -m-2">
-            <Shield className="h-6 w-6 text-primary" />
-            <span className="font-display text-lg font-semibold">LeaseShield Pro</span>
+          <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-md p-2 -m-2">
+            <Logo iconSize={32} />
+            <span className="font-display text-xl font-semibold">LeaseShield Pro</span>
           </div>
         </Link>
       </SidebarHeader>
