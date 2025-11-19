@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import {
   AlertCircle,
+  AlertTriangle,
   FileText,
   DollarSign,
   Home,
@@ -264,6 +265,20 @@ export default function TenantIssues() {
           <p className="text-muted-foreground">
             Step-by-step workflows for handling common landlord challenges
           </p>
+        </div>
+
+        {/* Legal Disclaimer */}
+        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground">
+                <strong>Not Legal Advice:</strong> These workflows are general educational guidance and may not apply 
+                to your specific situation. Always verify procedures comply with your state and local laws. For legal 
+                actions like evictions, consult a licensed attorney. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Workflows Grid */}

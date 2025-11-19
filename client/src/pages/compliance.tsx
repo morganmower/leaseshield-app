@@ -84,6 +84,20 @@ export default function Compliance() {
           </p>
         </div>
 
+        {/* Legal Disclaimer */}
+        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground">
+                <strong>Not Legal Advice:</strong> This compliance guidance is educational only and may not reflect 
+                the most current laws in your jurisdiction. Always verify requirements with local authorities or a 
+                licensed attorney before taking action. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* State Tabs */}
         <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
           <TabsList className="grid w-full max-w-2xl grid-cols-4" data-testid="tabs-state-selector">

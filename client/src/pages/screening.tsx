@@ -62,6 +62,20 @@ export default function Screening() {
           </p>
         </div>
 
+        {/* Legal Disclaimer */}
+        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground">
+                <strong>Not Legal Advice:</strong> This screening guidance is educational only. You are responsible 
+                for complying with Fair Housing laws, FCRA requirements, and all applicable screening regulations. 
+                Consult an attorney if you have questions. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+              </p>
+            </div>
+          </div>
+        </div>
+
         {/* Western Verify CTA */}
         <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
           <div className="flex items-start gap-4">
