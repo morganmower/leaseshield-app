@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
 import {
   Accordion,
   AccordionContent,
@@ -316,85 +317,13 @@ export default function Landing() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              <div className="aspect-square rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-border p-5 flex items-center justify-center">
-                <div className="grid grid-cols-2 gap-5 w-full h-full">
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="flex"
-                  >
-                    <Card 
-                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
-                      onClick={() => setSelectedFeature("leases")}
-                      data-testid="card-feature-leases"
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
-                      <div className="relative flex flex-col items-center text-center gap-4">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-16 h-16 flex items-center justify-center">
-                          <FileText className="h-8 w-8 text-amber-600 dark:text-amber-500" />
-                        </div>
-                        <p className="font-semibold text-base leading-tight">State-Specific<br />Leases</p>
-                      </div>
-                    </Card>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="flex"
-                  >
-                    <Card 
-                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
-                      onClick={() => setSelectedFeature("compliance")}
-                      data-testid="card-feature-compliance"
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
-                      <div className="relative flex flex-col items-center text-center gap-4">
-                        <div className="rounded-lg bg-primary/10 w-16 h-16 flex items-center justify-center">
-                          <Shield className="h-8 w-8 text-primary" />
-                        </div>
-                        <p className="font-semibold text-base leading-tight">Compliance<br />Guidance</p>
-                      </div>
-                    </Card>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="flex"
-                  >
-                    <Card 
-                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
-                      onClick={() => setSelectedFeature("screening")}
-                      data-testid="card-feature-screening"
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
-                      <div className="relative flex flex-col items-center text-center gap-4">
-                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-16 h-16 flex items-center justify-center">
-                          <Search className="h-8 w-8 text-cyan-600 dark:text-cyan-500" />
-                        </div>
-                        <p className="font-semibold text-base leading-tight">Screening<br />Toolkit</p>
-                      </div>
-                    </Card>
-                  </motion.div>
-                  <motion.div
-                    whileHover={{ scale: 1.05 }}
-                    transition={{ type: "spring", stiffness: 300 }}
-                    className="flex"
-                  >
-                    <Card 
-                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
-                      onClick={() => setSelectedFeature("resources")}
-                      data-testid="card-feature-resources"
-                    >
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
-                      <div className="relative flex flex-col items-center text-center gap-4">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-16 h-16 flex items-center justify-center">
-                          <Users className="h-8 w-8 text-amber-600 dark:text-amber-500" />
-                        </div>
-                        <p className="font-semibold text-base leading-tight">Helpful<br />Resources</p>
-                      </div>
-                    </Card>
-                  </motion.div>
-                </div>
+              <div className="rounded-lg overflow-hidden shadow-xl border border-border">
+                <img 
+                  src={heroImage} 
+                  alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
+                  className="w-full h-auto object-cover"
+                  data-testid="img-hero"
+                />
               </div>
             </motion.div>
           </div>
