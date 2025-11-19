@@ -1,7 +1,7 @@
-# LeaseShield Pro - SaaS Platform for Landlords
+# LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield Pro is a subscription-based SaaS platform ($15/month with 7-day free trial) providing small and midsize landlords with state-specific legal templates, compliance guidance, and tenant screening resources.
+LeaseShield App is a subscription-based SaaS platform ($15/month with 7-day free trial) providing small and midsize landlords with state-specific legal templates, compliance guidance, and tenant screening resources.
 
 **Launch States**: Utah (UT), Texas (TX), North Dakota (ND), South Dakota (SD)
 
@@ -71,7 +71,7 @@ The following secrets are required:
 1. Go to [Stripe Dashboard](https://dashboard.stripe.com/test/products)
 2. Click "Create product"
 3. Fill in:
-   - **Name**: LeaseShield Pro Monthly Subscription
+   - **Name**: LeaseShield App Monthly Subscription
    - **Description**: Full access to state-specific templates and compliance updates
    - **Pricing**: $15.00 USD per month, recurring
 4. Save the product

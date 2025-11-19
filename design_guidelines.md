@@ -1,10 +1,10 @@
-# LeaseShield Pro Design Guidelines
+# LeaseShield App Design Guidelines
 
 ## Design Approach
 
 **Selected Approach:** Design System Foundation with SaaS Application Patterns
 
-Drawing inspiration from professional SaaS products like Linear, Notion, and modern legal tech platforms. This approach balances the need for trust/professionalism with the "protective mentor" warmth that differentiates LeaseShield Pro.
+Drawing inspiration from professional SaaS products like Linear, Notion, and modern legal tech platforms. This approach balances the need for trust/professionalism with the "protective mentor" warmth that differentiates LeaseShield App.
 
 **Core Principles:**
 - Trust through clarity: Clean, organized layouts that reduce cognitive load
@@ -191,4 +191,4 @@ Drawing inspiration from professional SaaS products like Linear, Notion, and mod
 - Embedded checklists and "red flag" callouts
 - Western Verify CTA card at strategic points
 
-This design system creates a professional, trustworthy experience that feels warm and supportive—exactly the "protective mentor" tone LeaseShield Pro requires. Clean information architecture combined with thoughtful visual hierarchy ensures landlords feel confident and in control.
+This design system creates a professional, trustworthy experience that feels warm and supportive—exactly the "protective mentor" tone LeaseShield App requires. Clean information architecture combined with thoughtful visual hierarchy ensures landlords feel confident and in control.
