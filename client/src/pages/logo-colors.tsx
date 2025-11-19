@@ -5,29 +5,24 @@ import { ArrowLeft, Shield, Home } from "lucide-react";
 export default function LogoColors() {
   const colorOptions = [
     {
+      name: "Western Verify Coral/Orange",
+      house: { start: "#e57a5a", end: "#d9725c" },
+      description: "🎯 Matches Western Verify branding - warm, approachable"
+    },
+    {
+      name: "Lighter Coral",
+      house: { start: "#f28b77", end: "#e57a5a" },
+      description: "Softer version of Western Verify orange"
+    },
+    {
+      name: "Deep Coral",
+      house: { start: "#d9725c", end: "#c25e48" },
+      description: "Richer, more saturated coral tone"
+    },
+    {
       name: "Current - Amber/Gold",
       house: { start: "#f59e0b", end: "#d97706" },
       description: "Warm, professional, high contrast"
-    },
-    {
-      name: "Bright Yellow",
-      house: { start: "#fbbf24", end: "#f59e0b" },
-      description: "Cheerful, eye-catching, energetic"
-    },
-    {
-      name: "Navy Blue (Professional)",
-      house: { start: "#3b82f6", end: "#2563eb" },
-      description: "Corporate, trustworthy, matches screening industry"
-    },
-    {
-      name: "Dark Teal/Cyan",
-      house: { start: "#06b6d4", end: "#0891b2" },
-      description: "Tech-forward, verification theme, professional"
-    },
-    {
-      name: "Forest Green",
-      house: { start: "#10b981", end: "#059669" },
-      description: "Verified/approved, trustworthy, stable"
     },
     {
       name: "Charcoal Gray",
@@ -38,6 +33,11 @@ export default function LogoColors() {
       name: "Steel Blue-Gray",
       house: { start: "#64748b", end: "#475569" },
       description: "Professional services, sophisticated, modern"
+    },
+    {
+      name: "Forest Green",
+      house: { start: "#10b981", end: "#059669" },
+      description: "Verified/approved, trustworthy, stable"
     },
     {
       name: "Silver/Light Gray",
