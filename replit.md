@@ -248,6 +248,11 @@ Stripe webhooks update subscription status:
 - [ ] Set up error tracking (Sentry, etc.)
 
 ## Recent Changes
+- **2024-11-19**: Added Western Verify LLC referral disclosure to Terms of Service and Legal Disclaimers
+- **2024-11-19**: Created comprehensive legal pages (Terms, Refund Policy, Disclaimers)
+- **2024-11-19**: Added UPL compliance disclaimer banners to Templates, Compliance, Screening, and Tenant Issues pages
+- **2024-11-19**: Updated footer with all legal page links
+- **2024-11-19**: Added Account Access FAQ to Help Center explaining Replit Auth
 - **2024-11-18**: Backend implementation complete with Stripe integration
 - **2024-11-18**: Database schema pushed and seeded
 - **2024-11-18**: All API routes implemented

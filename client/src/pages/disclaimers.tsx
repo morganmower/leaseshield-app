@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { ArrowLeft, AlertTriangle, Shield, Scale } from "lucide-react";
+import { ArrowLeft, AlertTriangle, Shield, Scale, ExternalLink } from "lucide-react";
 import { Logo } from "@/components/logo";
 
 export default function Disclaimers() {
@@ -243,6 +243,45 @@ export default function Disclaimers() {
                   <strong>You assume all risk</strong> for the use of templates and information provided by 
                   LeaseShield App.
                 </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Third-Party Referrals and Affiliations */}
+          <Card>
+            <CardContent className="p-6 sm:p-8">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center">
+                    <ExternalLink className="h-6 w-6 text-primary" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h2 className="text-xl font-semibold text-foreground mb-3">
+                    Third-Party Referrals and Affiliations
+                  </h2>
+                  <div className="space-y-3 text-muted-foreground leading-relaxed">
+                    <p>
+                      <strong>Tenant Screening Referrals:</strong> LeaseShield App may provide referrals to 
+                      Western Verify LLC (<a href="https://www.westernverify.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">www.westernverify.com</a>) 
+                      for tenant screening services.
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      Important Disclosure:
+                    </p>
+                    <ul className="list-disc list-inside space-y-2 ml-4">
+                      <li>Western Verify LLC is a separate business entity owned and operated by the same ownership as LeaseShield App</li>
+                      <li>LeaseShield App may receive compensation or benefit from referrals to Western Verify LLC</li>
+                      <li>You are not obligated to use Western Verify LLC and may choose any tenant screening service provider</li>
+                      <li>Any services purchased from Western Verify LLC are subject to their own separate terms and conditions</li>
+                      <li>LeaseShield App is not responsible for the services, pricing, or performance of Western Verify LLC</li>
+                    </ul>
+                    <p>
+                      This disclosure is provided for transparency and in compliance with applicable consumer protection laws. 
+                      All referrals to Western Verify LLC are clearly identified within the platform.
+                    </p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

@@ -120,9 +120,36 @@ export default function Terms() {
               </div>
             </section>
 
+            {/* Third-Party Referrals */}
+            <section>
+              <h2 className="text-xl font-semibold text-foreground mb-3">4. Third-Party Referrals and Affiliations</h2>
+              <div className="space-y-3 text-muted-foreground leading-relaxed">
+                <p>
+                  <strong>Tenant Screening Referrals:</strong> LeaseShield App may provide referrals to Western Verify LLC 
+                  (www.westernverify.com) for tenant screening services. Western Verify LLC is a separate business entity 
+                  owned and operated by the same ownership as LeaseShield App.
+                </p>
+                <p>
+                  By using LeaseShield App and clicking on referral links to Western Verify LLC, you acknowledge and 
+                  agree that:
+                </p>
+                <ul className="list-disc list-inside space-y-2 ml-4">
+                  <li>Western Verify LLC is a separate legal entity providing tenant screening services</li>
+                  <li>Any services purchased from Western Verify LLC are subject to their own terms and conditions</li>
+                  <li>LeaseShield App may receive compensation or benefit from referrals to Western Verify LLC</li>
+                  <li>You are not obligated to use Western Verify LLC and may choose any screening service provider</li>
+                  <li>LeaseShield App is not responsible for the services, pricing, or performance of Western Verify LLC</li>
+                </ul>
+                <p>
+                  This disclosure is provided for transparency. All referrals to Western Verify LLC are clearly identified 
+                  within the platform.
+                </p>
+              </div>
+            </section>
+
             {/* License and Restrictions */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">4. License and Restrictions</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">5. License and Restrictions</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 We grant you a limited, non-exclusive, non-transferable license to:
               </p>
@@ -146,7 +173,7 @@ export default function Terms() {
 
             {/* User Responsibilities */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">5. User Responsibilities</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">6. User Responsibilities</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 You are responsible for:
               </p>
@@ -162,7 +189,7 @@ export default function Terms() {
 
             {/* Disclaimers and Warranties */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">6. Disclaimers and Warranties</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">7. Disclaimers and Warranties</h2>
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p className="font-semibold">
                   THE SERVICE AND ALL MATERIALS ARE PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND.
@@ -190,7 +217,7 @@ export default function Terms() {
 
             {/* Limitation of Liability */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">7. Limitation of Liability</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">8. Limitation of Liability</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 To the maximum extent permitted by law, LeaseShield App and its officers, directors, employees, 
                 and agents shall not be liable for:
@@ -211,7 +238,7 @@ export default function Terms() {
 
             {/* Intellectual Property */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">8. Intellectual Property</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">9. Intellectual Property</h2>
               <p className="text-muted-foreground leading-relaxed">
                 All content, templates, logos, trademarks, and materials on LeaseShield App are owned by or 
                 licensed to us and are protected by copyright, trademark, and other intellectual property laws. 
@@ -221,7 +248,7 @@ export default function Terms() {
 
             {/* Account Termination */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">9. Account Termination</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">10. Account Termination</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We reserve the right to suspend or terminate your account at any time for violations of these 
                 Terms, fraudulent activity, or any reason at our sole discretion. You may terminate your account 
@@ -232,7 +259,7 @@ export default function Terms() {
 
             {/* Modifications to Terms */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">10. Modifications to Terms</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">11. Modifications to Terms</h2>
               <p className="text-muted-foreground leading-relaxed">
                 We reserve the right to modify these Terms at any time. We will notify you of material changes 
                 by email or through a notice on the Service. Your continued use of the Service after changes 
@@ -242,7 +269,7 @@ export default function Terms() {
 
             {/* Governing Law */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">11. Governing Law</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">12. Governing Law</h2>
               <p className="text-muted-foreground leading-relaxed">
                 These Terms shall be governed by and construed in accordance with the laws of the State of Utah, 
                 without regard to its conflict of law provisions. Any disputes shall be resolved in the courts 
@@ -252,7 +279,7 @@ export default function Terms() {
 
             {/* Contact */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">12. Contact Information</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">13. Contact Information</h2>
               <p className="text-muted-foreground leading-relaxed mb-3">
                 If you have questions about these Terms, please contact us:
               </p>
