@@ -26,6 +26,7 @@ import AdminCompliance from "@/pages/admin-compliance";
 import AdminLegalUpdates from "@/pages/admin-legal-updates";
 import AdminAnalytics from "@/pages/admin-analytics";
 import LogoPicker from "@/pages/logo-picker";
+import LogoColors from "@/pages/logo-colors";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -40,6 +41,7 @@ function Router() {
           <Route path="/help" component={HelpCenter} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/logos" component={LogoPicker} />
+          <Route path="/logo-colors" component={LogoColors} />
           <Route component={NotFound} />
         </>
       ) : (
