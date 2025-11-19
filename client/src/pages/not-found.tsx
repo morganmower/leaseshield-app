@@ -10,7 +10,7 @@ export default function NotFound() {
         <div className="flex items-center justify-center gap-3 mb-4">
           <Logo iconSize={36} />
           <span className="font-display text-3xl font-semibold text-foreground">
-            LeaseShield Pro
+            LeaseShield App
           </span>
         </div>
       </div>

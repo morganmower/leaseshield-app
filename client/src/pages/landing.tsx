@@ -454,7 +454,7 @@ export default function Landing() {
               Trusted by Landlords Nationwide
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              See how LeaseShield Pro is protecting rental businesses just like yours
+              See how LeaseShield App is protecting rental businesses just like yours
             </p>
           </motion.div>
 
@@ -473,7 +473,7 @@ export default function Landing() {
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
-                  "LeaseShield Pro saved me from a costly mistake. Their Utah lease template
+                  "LeaseShield App saved me from a costly mistake. Their Utah lease template
                   included a clause I didn't know about that protected me during a difficult eviction."
                 </p>
                 <div className="flex items-center gap-3">
@@ -567,7 +567,7 @@ export default function Landing() {
                   <Award className="h-6 w-6 text-primary" />
                   <Badge variant="outline" className="text-sm">Most Popular</Badge>
                 </div>
-                <h3 className="font-display text-2xl font-semibold mb-2">LeaseShield Pro</h3>
+                <h3 className="font-display text-2xl font-semibold mb-2">LeaseShield App</h3>
                 <div className="flex items-baseline justify-center gap-2">
                   <span className="text-5xl font-bold text-foreground">$12</span>
                   <span className="text-muted-foreground">/month</span>
@@ -630,7 +630,7 @@ export default function Landing() {
               Frequently Asked Questions
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
-              Everything you need to know about LeaseShield Pro
+              Everything you need to know about LeaseShield App
             </p>
           </motion.div>
 
@@ -642,7 +642,7 @@ export default function Landing() {
           >
             <Accordion type="single" collapsible className="w-full">
               <AccordionItem value="item-1">
-                <AccordionTrigger>What states does LeaseShield Pro currently support?</AccordionTrigger>
+                <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent>
                   We currently serve landlords in Utah, Texas, North Dakota, and South Dakota with
                   comprehensive state-specific templates and compliance guidance. We're expanding to
@@ -739,7 +739,7 @@ export default function Landing() {
       <Dialog open={showAllFeatures} onOpenChange={setShowAllFeatures}>
         <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield Pro</DialogTitle>
+            <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
               Comprehensive landlord protection for UT, TX, ND, and SD properties
             </DialogDescription>
@@ -857,7 +857,7 @@ export default function Landing() {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Shield className="h-5 w-5 text-primary" />
-                <span className="font-display font-semibold">LeaseShield Pro</span>
+                <span className="font-display font-semibold">LeaseShield App</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Your protective mentor for confident, risk-free property management.
@@ -890,7 +890,7 @@ export default function Landing() {
             </div>
           </div>
           <div className="border-t pt-8 text-center text-sm text-muted-foreground">
-            <p>&copy; {new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+            <p>&copy; {new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
           </div>
         </div>
       </footer>

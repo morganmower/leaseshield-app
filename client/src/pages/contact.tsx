@@ -92,7 +92,7 @@ export default function Contact() {
           <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo iconSize={32} />
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield Pro
+              LeaseShield App
             </span>
           </a>
           <Button

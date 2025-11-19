@@ -74,7 +74,7 @@ export default function HelpCenter() {
         },
         {
           q: "Do you provide legal advice?",
-          a: "No, LeaseShield Pro provides educational templates and compliance guidance only. We do not provide legal advice or representation. For specific legal questions about your situation, please consult with a licensed attorney."
+          a: "No, LeaseShield App provides educational templates and compliance guidance only. We do not provide legal advice or representation. For specific legal questions about your situation, please consult with a licensed attorney."
         }
       ]
     },
@@ -87,7 +87,7 @@ export default function HelpCenter() {
           a: "Our credit report decoder helps you understand the key sections of tenant credit reports, including payment history, debt-to-income ratios, and red flags. It's a educational tool to help you make informed decisions."
         },
         {
-          q: "Does LeaseShield Pro run background checks?",
+          q: "Does LeaseShield App run background checks?",
           a: "No, we don't run background checks directly. We provide guidance and resources to help you understand screening reports and integrate with Western Verify (www.westernverify.com) for comprehensive tenant screening."
         },
         {
@@ -113,7 +113,7 @@ export default function HelpCenter() {
           <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo iconSize={32} />
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield Pro
+              LeaseShield App
             </span>
           </a>
           <Button
@@ -141,7 +141,7 @@ export default function HelpCenter() {
               Help Center
             </h1>
             <p className="text-lg sm:text-xl text-muted-foreground">
-              Everything you need to know about using LeaseShield Pro
+              Everything you need to know about using LeaseShield App
             </p>
           </motion.div>
         </div>
@@ -226,7 +226,7 @@ export default function HelpCenter() {
                 Still have questions?
               </h2>
               <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Can't find what you're looking for? Our support team is here to help you get the most out of LeaseShield Pro.
+                Can't find what you're looking for? Our support team is here to help you get the most out of LeaseShield App.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button

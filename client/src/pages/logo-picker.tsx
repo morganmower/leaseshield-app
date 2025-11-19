@@ -61,7 +61,7 @@ export default function LogoPicker() {
             Logo Options
           </h2>
           <p className="text-muted-foreground">
-            Select the logo design that best represents LeaseShield Pro
+            Select the logo design that best represents LeaseShield App
           </p>
         </div>
 
@@ -84,7 +84,7 @@ export default function LogoPicker() {
                     {logo.description}
                   </p>
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                    <span className="font-display font-semibold text-foreground">LeaseShield Pro</span>
+                    <span className="font-display font-semibold text-foreground">LeaseShield App</span>
                     <LogoComponent iconSize={20} />
                   </div>
                 </div>

@@ -108,7 +108,7 @@ export function AppSidebar() {
         <Link href="/dashboard">
           <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-md p-2 -m-2">
             <Logo iconSize={32} />
-            <span className="font-display text-xl font-semibold">LeaseShield Pro</span>
+            <span className="font-display text-xl font-semibold">LeaseShield App</span>
           </div>
         </Link>
       </SidebarHeader>

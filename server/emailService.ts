@@ -1,4 +1,4 @@
-// Email notification service for LeaseShield Pro
+// Email notification service for LeaseShield App
 // In production, this would integrate with SendGrid, Postmark, or similar service
 
 interface EmailTemplate {
@@ -31,10 +31,10 @@ export class EmailService {
     const firstName = user.firstName || 'there';
 
     const template: EmailTemplate = {
-      subject: `Your LeaseShield Pro trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
+      subject: `Your LeaseShield App trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
       textBody: `Hi ${firstName},
 
-Your 7-day free trial of LeaseShield Pro ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.
+Your 7-day free trial of LeaseShield App ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.
 
 Don't lose access to:
 • State-specific legal templates for UT, TX, ND, SD
@@ -49,7 +49,7 @@ Log in to manage your subscription: ${process.env.REPLIT_DOMAINS || 'https://lea
 Questions? We're here to help.
 
 Best regards,
-The LeaseShield Pro Team
+The LeaseShield App Team
       `,
       htmlBody: `
 <!DOCTYPE html>
@@ -74,7 +74,7 @@ The LeaseShield Pro Team
     <div class="content">
       <p>Hi ${firstName},</p>
       
-      <p>Your 7-day free trial of <strong>LeaseShield Pro</strong> ends in <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}</strong>.</p>
+      <p>Your 7-day free trial of <strong>LeaseShield App</strong> ends in <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}</strong>.</p>
       
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>Don't lose access to:</strong></p>
@@ -98,7 +98,7 @@ The LeaseShield Pro Team
     </div>
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -127,10 +127,10 @@ ${updateSummary}
 
 This change has been flagged as ${impactLevel} impact to your rental business.
 
-Log in to LeaseShield Pro to read the full details, including before/after comparison and why this matters to you: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/compliance
+Log in to LeaseShield App to read the full details, including before/after comparison and why this matters to you: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/compliance
 
 Stay compliant and protected,
-The LeaseShield Pro Team
+The LeaseShield App Team
       `,
       htmlBody: `
 <!DOCTYPE html>
@@ -162,7 +162,7 @@ The LeaseShield Pro Team
         <p style="margin-bottom: 0;"><strong>Impact Level:</strong> ${impactLevel.charAt(0).toUpperCase() + impactLevel.slice(1)}</p>
       </div>
 
-      <p>This legal change affects landlords in <strong>${stateId}</strong>. Log in to LeaseShield Pro to read the full details, including:</p>
+      <p>This legal change affects landlords in <strong>${stateId}</strong>. Log in to LeaseShield App to read the full details, including:</p>
       <ul>
         <li>Before/after comparison of the law</li>
         <li>Why this matters to your rental business</li>
@@ -175,11 +175,11 @@ The LeaseShield Pro Team
         </a>
       </center>
 
-      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">Stay compliant and protected with LeaseShield Pro.</p>
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">Stay compliant and protected with LeaseShield App.</p>
     </div>
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
     </div>
   </div>
 </body>
@@ -194,10 +194,10 @@ The LeaseShield Pro Team
     const firstName = user.firstName || 'there';
 
     const template: EmailTemplate = {
-      subject: 'Welcome to LeaseShield Pro! Your subscription is active',
+      subject: 'Welcome to LeaseShield App! Your subscription is active',
       textBody: `Hi ${firstName},
 
-Welcome to LeaseShield Pro! Your subscription is now active.
+Welcome to LeaseShield App! Your subscription is now active.
 
 You now have unlimited access to:
 • State-specific legal templates for UT, TX, ND, SD
@@ -210,7 +210,7 @@ Start protecting your rental business: ${process.env.REPLIT_DOMAINS || 'https://
 Need help getting started? Visit our Help Center or reach out anytime.
 
 Best regards,
-The LeaseShield Pro Team
+The LeaseShield App Team
       `,
       htmlBody: `
 <!DOCTYPE html>
@@ -230,13 +230,13 @@ The LeaseShield Pro Team
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0; font-size: 32px;">🎉 Welcome to LeaseShield Pro!</h1>
+      <h1 style="margin: 0; font-size: 32px;">🎉 Welcome to LeaseShield App!</h1>
       <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Your subscription is now active</p>
     </div>
     <div class="content">
       <p>Hi ${firstName},</p>
       
-      <p>Thank you for subscribing to <strong>LeaseShield Pro</strong>! You now have unlimited access to our complete platform.</p>
+      <p>Thank you for subscribing to <strong>LeaseShield App</strong>! You now have unlimited access to our complete platform.</p>
 
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>Here's what you can do now:</strong></p>
@@ -258,7 +258,7 @@ The LeaseShield Pro Team
     </div>
     
     <div class="footer">
-      <p>© ${new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
       <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/settings" style="color: #2563eb;">Settings</a></p>
     </div>
   </div>
@@ -274,7 +274,7 @@ The LeaseShield Pro Team
 
     const template: EmailTemplate = {
       subject: `New Contact Form Submission from ${firstName} ${lastName}`,
-      textBody: `New contact form submission from LeaseShield Pro website:
+      textBody: `New contact form submission from LeaseShield App website:
 
 Name: ${firstName} ${lastName}
 Email: ${email}
@@ -284,7 +284,7 @@ Message:
 ${message}
 
 ---
-Sent from LeaseShield Pro Contact Form
+Sent from LeaseShield App Contact Form
       `,
       htmlBody: `
 <!DOCTYPE html>
@@ -308,7 +308,7 @@ Sent from LeaseShield Pro Contact Form
       <h1 style="margin: 0;">📬 New Contact Form Submission</h1>
     </div>
     <div class="content">
-      <p><strong>New contact request from LeaseShield Pro website</strong></p>
+      <p><strong>New contact request from LeaseShield App website</strong></p>
       
       <div class="info-box">
         <p style="margin: 5px 0;"><span class="label">Name:</span> ${firstName} ${lastName}</p>
@@ -327,8 +327,8 @@ Sent from LeaseShield Pro Contact Form
     </div>
     
     <div class="footer">
-      <p>Sent from LeaseShield Pro Contact Form</p>
-      <p>© ${new Date().getFullYear()} LeaseShield Pro. All rights reserved.</p>
+      <p>Sent from LeaseShield App Contact Form</p>
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
     </div>
   </div>
 </body>

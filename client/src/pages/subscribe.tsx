@@ -41,7 +41,7 @@ function SubscribeForm() {
     } else {
       toast({
         title: "Payment Successful",
-        description: "You are now subscribed to LeaseShield Pro!",
+        description: "You are now subscribed to LeaseShield App!",
       });
     }
   };
@@ -124,10 +124,10 @@ export default function Subscribe() {
         <div className="text-center mb-12">
           <div className="flex items-center justify-center gap-2 mb-4">
             <Shield className="h-8 w-8 text-primary" />
-            <span className="font-display text-2xl font-semibold">LeaseShield Pro</span>
+            <span className="font-display text-2xl font-semibold">LeaseShield App</span>
           </div>
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Subscribe to LeaseShield Pro
+            Subscribe to LeaseShield App
           </h1>
           <p className="text-muted-foreground">
             Continue your protection with full access to all templates and compliance updates

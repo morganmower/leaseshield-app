@@ -12,7 +12,7 @@ export default function Privacy() {
           <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo iconSize={32} />
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield Pro
+              LeaseShield App
             </span>
           </a>
           <Button
@@ -42,7 +42,7 @@ export default function Privacy() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">Introduction</h2>
               <p className="text-muted-foreground leading-relaxed">
-                LeaseShield Pro ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
+                LeaseShield App ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy
                 explains how we collect, use, disclose, and safeguard your information when you use our service.
                 Please read this privacy policy carefully. If you do not agree with the terms of this privacy policy,
                 please do not access the service.
@@ -136,7 +136,7 @@ export default function Privacy() {
                 <div>
                   <h3 className="font-medium text-foreground mb-2">Business Transfers</h3>
                   <p>
-                    If LeaseShield Pro is involved in a merger, acquisition, or sale of assets, your information
+                    If LeaseShield App is involved in a merger, acquisition, or sale of assets, your information
                     may be transferred. We will provide notice before your information is transferred and becomes
                     subject to a different privacy policy.
                   </p>

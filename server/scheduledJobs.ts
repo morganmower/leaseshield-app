@@ -1,4 +1,4 @@
-// Scheduled jobs for LeaseShield Pro
+// Scheduled jobs for LeaseShield App
 // In production, this would use a proper job queue like Bull, Agenda, or node-cron
 
 import { storage } from "./storage";
