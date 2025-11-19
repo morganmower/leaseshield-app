@@ -1,0 +1,138 @@
+In your index.html (or whatever page is your marketing site), add this where you want the chat to appear (bottom-right popup style):
+
+<div id="ls-chat-widget">
+  <div id="ls-chat-header">LeaseShield Assistant</div>
+  <div id="ls-chat-messages"></div>
+  <form id="ls-chat-form">
+    <input
+      id="ls-chat-input"
+      type="text"
+      placeholder="Ask a question about leases or LeaseShield Pro..."
+      autocomplete="off"
+      required
+    />
+    <button type="submit">Send</button>
+  </form>
+</div>
+
+
+Add this CSS (in your <style> block or CSS file) just to make it not ugly:
+
+#ls-chat-widget {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 320px;
+  max-height: 480px;
+  background: #ffffff;
+  border: 1px solid #ddd;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+  z-index: 9999;
+}
+
+#ls-chat-header {
+  background: #0b6efd; /* tweak to match your LeaseShield colors */
+  color: #fff;
+  padding: 10px 12px;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+#ls-chat-messages {
+  flex: 1;
+  padding: 10px;
+  overflow-y: auto;
+  font-size: 14px;
+}
+
+.ls-msg {
+  margin-bottom: 8px;
+}
+
+.ls-msg-user {
+  text-align: right;
+  font-weight: 500;
+}
+
+.ls-msg-bot {
+  text-align: left;
+}
+
+#ls-chat-form {
+  display: flex;
+  border-top: 1px solid #eee;
+}
+
+#ls-chat-input {
+  flex: 1;
+  border: none;
+  padding: 8px;
+  font-size: 14px;
+}
+
+#ls-chat-input:focus {
+  outline: none;
+}
+
+#ls-chat-form button {
+  border: none;
+  padding: 0 12px;
+  font-size: 14px;
+  cursor: pointer;
+  background: #0b6efd;
+  color: #fff;
+}
+
+
+Then add this JS at the bottom of your HTML (before </body>):
+
+<script>
+  const form = document.getElementById("ls-chat-form");
+  const input = document.getElementById("ls-chat-input");
+  const messagesDiv = document.getElementById("ls-chat-messages");
+
+  function addMessage(text, type) {
+    const div = document.createElement("div");
+    div.classList.add("ls-msg");
+    div.classList.add(type === "user" ? "ls-msg-user" : "ls-msg-bot");
+    div.textContent = text;
+    messagesDiv.appendChild(div);
+    messagesDiv.scrollTop = messagesDiv.scrollHeight;
+  }
+
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const text = input.value.trim();
+    if (!text) return;
+
+    addMessage(text, "user");
+    input.value = "";
+
+    addMessage("Thinking...", "bot");
+
+    try {
+      const res = await fetch("/api/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message: text }),
+      });
+
+      const data = await res.json();
+      // remove the "Thinking..." line
+      messagesDiv.lastChild.remove();
+      addMessage(data.reply || "Sorry, I had trouble answering that.", "bot");
+    } catch (err) {
+      console.error(err);
+      messagesDiv.lastChild.remove();
+      addMessage("Error talking to LeaseShield Assistant. Please try again.", "bot");
+    }
+  });
+</script>
+
+
+Now when you run your Replit app and visit the site, you should see a little LeaseShield Assistant box in the corner that talks using the same brain as your custom prompt.
