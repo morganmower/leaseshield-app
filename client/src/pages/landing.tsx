@@ -255,7 +255,7 @@ export default function Landing() {
               
               <motion.h1 
                 variants={fadeInUp}
-                className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6"
+                className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-foreground leading-tight mb-6"
               >
                 Protect Your Rental Business from{" "}
                 <span className="bg-gradient-to-r from-amber-600 to-primary bg-clip-text text-transparent">Costly Legal Mistakes</span>
@@ -263,19 +263,19 @@ export default function Landing() {
               
               <motion.p 
                 variants={fadeInUp}
-                className="text-base sm:text-lg text-muted-foreground mb-8 leading-relaxed"
+                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed"
               >
                 State-specific leases, compliance guidance, and screening resources designed
                 specifically for small and midsize landlords. Your protective mentor for
                 confident, risk-free property management.
               </motion.p>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 mb-8">
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
                 <Button
                   size="lg"
                   onClick={() => window.location.href = "/api/login"}
                   data-testid="button-hero-trial"
-                  className="text-base px-8"
+                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
                 >
                   Get Your First Lease in 5 Minutes
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -284,7 +284,7 @@ export default function Landing() {
                   size="lg"
                   variant="outline"
                   data-testid="button-hero-learn"
-                  className="text-base px-8"
+                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
                   onClick={() => {
                     document.getElementById('features')?.scrollIntoView({ 
                       behavior: 'smooth',
@@ -752,95 +752,95 @@ export default function Landing() {
           >
             <Card className="overflow-hidden">
               <div className="overflow-x-auto">
-                <table className="w-full">
+                <table className="w-full min-w-[600px]">
                   <thead>
                     <tr className="border-b bg-muted/50">
-                      <th className="text-left p-4 font-semibold"></th>
-                      <th className="text-center p-4 font-semibold text-muted-foreground">DIY Templates</th>
-                      <th className="text-center p-4 font-semibold text-muted-foreground">Local Attorney</th>
-                      <th className="text-center p-4 font-semibold bg-primary/5">
+                      <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm"></th>
+                      <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">DIY Templates</th>
+                      <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">Local Attorney</th>
+                      <th className="text-center p-2 sm:p-4 font-semibold bg-primary/5">
                         <div className="flex flex-col items-center gap-1">
-                          <Badge className="mb-1">Best Value</Badge>
-                          <span className="text-primary">LeaseShield</span>
+                          <Badge className="mb-1 text-xs">Best Value</Badge>
+                          <span className="text-primary text-xs sm:text-sm">LeaseShield</span>
                         </div>
                       </th>
                     </tr>
                   </thead>
                   <tbody>
                     <tr className="border-b">
-                      <td className="p-4 font-medium">Cost</td>
-                      <td className="p-4 text-center text-muted-foreground">Free (risky!)</td>
-                      <td className="p-4 text-center text-muted-foreground">$300-500/hour</td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <span className="font-bold text-primary">$12/month</span>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Cost</td>
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <span className="font-bold text-primary text-xs sm:text-sm">$12/month</span>
                       </td>
                     </tr>
                     <tr className="border-b">
-                      <td className="p-4 font-medium">State-Specific</td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">State-Specific</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-4 text-center">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-4 font-medium">Attorney-Reviewed</td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
-                      </td>
-                      <td className="p-4 text-center">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
-                      </td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
-                      <td className="p-4 font-medium">Automatic Updates</td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Attorney-Reviewed</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-4 text-center text-muted-foreground">Pay each time</td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-4 font-medium">37+ Templates</td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
-                      </td>
-                      <td className="p-4 text-center text-muted-foreground">Extra fees</td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
-                      <td className="p-4 font-medium">24/7 Access</td>
-                      <td className="p-4 text-center">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Auto Updates</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Pay each time</td>
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">37+ Templates</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Extra fees</td>
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">24/7 Access</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-medium">Compliance Alerts</td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Compliance Alerts</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-4 text-center">
-                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
                     </tr>
                   </tbody>
@@ -860,9 +860,9 @@ export default function Landing() {
               size="lg"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-comparison-trial"
-              className="text-base px-8"
+              className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
             >
-              Start Free Trial - No Credit Card Required
+              <span className="hidden xs:inline">Start Free Trial - </span><span className="xs:hidden">Start Trial - </span>No Credit Card
               <ArrowRight className="ml-2 h-4 w-4" />
             </Button>
           </motion.div>
@@ -893,72 +893,72 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <Card className="p-8 bg-gradient-to-br from-primary/5 to-amber-500/5">
+            <Card className="p-4 sm:p-6 md:p-8 bg-gradient-to-br from-primary/5 to-amber-500/5">
               <div className="space-y-6">
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full bg-primary/10 p-3 flex-shrink-0">
-                    <Calculator className="h-6 w-6 text-primary" />
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="rounded-full bg-primary/10 p-2 sm:p-3 flex-shrink-0">
+                    <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-4">Without LeaseShield:</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">Attorney consultation (3 hours):</span>
+                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Without LeaseShield:</h3>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Attorney (3 hrs):</span>
                         <span className="font-semibold">$900</span>
                       </div>
-                      <div className="flex justify-between items-center py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">Custom lease drafting:</span>
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Lease drafting:</span>
                         <span className="font-semibold">$1,200</span>
                       </div>
-                      <div className="flex justify-between items-center py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">Eviction notices & documents:</span>
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Eviction docs:</span>
                         <span className="font-semibold">$800</span>
                       </div>
-                      <div className="flex justify-between items-center py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">One compliance mistake (average):</span>
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">Compliance mistake:</span>
                         <span className="font-semibold text-destructive">$5,000</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 bg-destructive/10 rounded-lg px-4">
-                        <span className="font-bold text-lg">Total Cost:</span>
-                        <span className="font-bold text-2xl text-destructive">$7,900</span>
+                      <div className="flex justify-between items-center py-2 sm:py-3 bg-destructive/10 rounded-lg px-3 sm:px-4">
+                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
+                        <span className="font-bold text-xl sm:text-2xl text-destructive">$7,900</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-start gap-4">
-                  <div className="rounded-full bg-success/10 p-3 flex-shrink-0">
-                    <DollarSign className="h-6 w-6 text-success" />
+                <div className="flex items-start gap-3 sm:gap-4">
+                  <div className="rounded-full bg-success/10 p-2 sm:p-3 flex-shrink-0">
+                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-semibold text-lg mb-4">With LeaseShield:</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center py-2 border-b border-border/50">
-                        <span className="text-muted-foreground">12 months subscription:</span>
+                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">With LeaseShield:</h3>
+                    <div className="space-y-2 sm:space-y-3">
+                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
+                        <span className="text-muted-foreground">12 months:</span>
                         <span className="font-semibold">$144</span>
                       </div>
-                      <div className="flex justify-between items-center py-3 bg-success/10 rounded-lg px-4">
-                        <span className="font-bold text-lg">Total Cost:</span>
-                        <span className="font-bold text-2xl text-success">$144</span>
+                      <div className="flex justify-between items-center py-2 sm:py-3 bg-success/10 rounded-lg px-3 sm:px-4">
+                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
+                        <span className="font-bold text-xl sm:text-2xl text-success">$144</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-6 border-t-2 border-primary/20">
+                <div className="pt-4 sm:pt-6 border-t-2 border-primary/20">
                   <div className="text-center">
-                    <p className="text-sm text-muted-foreground mb-2">Your First-Year Savings:</p>
-                    <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent mb-4">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">Your First-Year Savings:</p>
+                    <p className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent mb-3 sm:mb-4">
                       $7,756
                     </p>
-                    <p className="text-sm text-muted-foreground mb-6">
+                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
                       That's a <strong className="text-foreground">5,386% ROI</strong> in Year 1
                     </p>
                     <Button
                       size="lg"
                       onClick={() => window.location.href = "/api/login"}
                       data-testid="button-roi-trial"
-                      className="text-base px-8"
+                      className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
                     >
                       Start Saving Today - Free Trial
                       <ArrowRight className="ml-2 h-4 w-4" />
@@ -995,50 +995,50 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <Card className="p-8 border-2 border-primary/20 shadow-lg">
+            <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-2 mb-2">
-                  <Award className="h-6 w-6 text-primary" />
-                  <Badge variant="outline" className="text-sm">Most Popular</Badge>
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <Badge variant="outline" className="text-xs sm:text-sm">Most Popular</Badge>
                 </div>
-                <h3 className="font-display text-2xl font-semibold mb-2">LeaseShield App</h3>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">LeaseShield App</h3>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-5xl font-bold text-foreground">$12</span>
-                  <span className="text-muted-foreground">/month</span>
+                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$12</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
               </div>
 
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>37+ templates for UT, TX, ND, and SD</span>
+              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">37+ templates for UT, TX, ND, and SD</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Real-time legal compliance updates for your state</span>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Real-time legal compliance updates for your state</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Complete tenant screening toolkit & resources</span>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Complete tenant screening toolkit & resources</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Step-by-step guidance for every document</span>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Step-by-step guidance for every document</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Email alerts when laws change in your state</span>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Email alerts when laws change in your state</span>
                 </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Cancel anytime, no questions asked</span>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Cancel anytime, no questions asked</span>
                 </li>
               </ul>
 
               <Button
                 size="lg"
-                className="w-full text-base"
+                className="w-full text-sm sm:text-base"
                 onClick={() => window.location.href = "/api/login"}
                 data-testid="button-pricing-trial"
               >
