@@ -230,7 +230,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative py-20 md:py-32 overflow-hidden">
+      <section className="relative pt-12 pb-20 md:pt-16 md:pb-32 overflow-hidden">
         {/* Gradient Background with amber/gold and blue */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
