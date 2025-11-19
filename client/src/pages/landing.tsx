@@ -112,7 +112,7 @@ export default function Landing() {
           <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo iconSize={32} />
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield<span className="hidden sm:inline"> Pro</span>
+              LeaseShield<span className="hidden sm:inline"> App</span>
             </span>
           </a>
           <div className="flex items-center gap-2 sm:gap-3">
@@ -138,8 +138,9 @@ export default function Landing() {
 
       {/* Hero Section */}
       <section className="relative py-20 md:py-32 overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10 pointer-events-none" />
+        {/* Gradient Background with amber/gold and blue */}
+        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
+        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -160,7 +161,7 @@ export default function Landing() {
                 className="font-display text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold text-foreground leading-tight mb-6"
               >
                 Protect Your Rental Business from{" "}
-                <span className="text-primary">Costly Legal Mistakes</span>
+                <span className="bg-gradient-to-r from-amber-600 to-primary bg-clip-text text-transparent">Costly Legal Mistakes</span>
               </motion.h1>
               
               <motion.p 
@@ -226,12 +227,17 @@ export default function Landing() {
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
                       onClick={() => setSelectedFeature("leases")}
                       data-testid="card-feature-leases"
                     >
-                      <FileText className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">State-Specific Leases</p>
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-10 -mt-10" />
+                      <div className="relative">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 flex items-center justify-center mb-2">
+                          <FileText className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                        </div>
+                        <p className="text-sm font-medium">State-Specific Leases</p>
+                      </div>
                     </Card>
                   </motion.div>
                   <motion.div
@@ -239,12 +245,17 @@ export default function Landing() {
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
                       onClick={() => setSelectedFeature("compliance")}
                       data-testid="card-feature-compliance"
                     >
-                      <Shield className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">Compliance Guidance</p>
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-10 -mt-10" />
+                      <div className="relative">
+                        <div className="rounded-lg bg-primary/10 w-10 h-10 flex items-center justify-center mb-2">
+                          <Shield className="h-5 w-5 text-primary" />
+                        </div>
+                        <p className="text-sm font-medium">Compliance Guidance</p>
+                      </div>
                     </Card>
                   </motion.div>
                   <motion.div
@@ -252,12 +263,17 @@ export default function Landing() {
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
                       onClick={() => setSelectedFeature("screening")}
                       data-testid="card-feature-screening"
                     >
-                      <Search className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">Screening Toolkit</p>
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-10 -mt-10" />
+                      <div className="relative">
+                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-10 h-10 flex items-center justify-center mb-2">
+                          <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-500" />
+                        </div>
+                        <p className="text-sm font-medium">Screening Toolkit</p>
+                      </div>
                     </Card>
                   </motion.div>
                   <motion.div
@@ -265,12 +281,17 @@ export default function Landing() {
                     transition={{ type: "spring", stiffness: 300 }}
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer"
+                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
                       onClick={() => setSelectedFeature("resources")}
                       data-testid="card-feature-resources"
                     >
-                      <Users className="h-8 w-8 text-primary mb-2" />
-                      <p className="text-sm font-medium">Helpful Resources</p>
+                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-10 -mt-10" />
+                      <div className="relative">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 flex items-center justify-center mb-2">
+                          <Users className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                        </div>
+                        <p className="text-sm font-medium">Helpful Resources</p>
+                      </div>
                     </Card>
                   </motion.div>
                 </div>
@@ -292,14 +313,14 @@ export default function Landing() {
           >
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">500+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Active Landlords</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">37+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
@@ -313,7 +334,7 @@ export default function Landing() {
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <Clock className="h-4 w-4 sm:h-5 sm:w-5 text-cyan-600 dark:text-cyan-500" />
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">24/7</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Access Anytime</div>
@@ -348,92 +369,101 @@ export default function Landing() {
             className="grid md:grid-cols-3 gap-8"
           >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all">
-                <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <FileText className="h-6 w-6 text-primary" />
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">State-Specific Templates</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Attorney-reviewed leases, applications, notices, and forms tailored to your state's
+                    exact requirements. Download as PDF or fill online.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Residential leases & applications</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Move-in/move-out checklists</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>All required notices by state</span>
+                    </li>
+                  </ul>
                 </div>
-                <h3 className="font-display text-xl font-semibold mb-3">State-Specific Templates</h3>
-                <p className="text-muted-foreground mb-4">
-                  Attorney-reviewed leases, applications, notices, and forms tailored to your state's
-                  exact requirements. Download as PDF or fill online.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Residential leases & applications</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Move-in/move-out checklists</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>All required notices by state</span>
-                  </li>
-                </ul>
               </Card>
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all">
-                <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <Shield className="h-6 w-6 text-primary" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">Compliance Protection</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Stay ahead of changing laws with curated updates that only include what could
+                    create liability. Clear before/after comparisons included.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Impact-only legal updates</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Before/after comparisons</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Email alerts for your state</span>
+                    </li>
+                  </ul>
                 </div>
-                <h3 className="font-display text-xl font-semibold mb-3">Compliance Protection</h3>
-                <p className="text-muted-foreground mb-4">
-                  Stay ahead of changing laws with curated updates that only include what could
-                  create liability. Clear before/after comparisons included.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Impact-only legal updates</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Before/after comparisons</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Email alerts for your state</span>
-                  </li>
-                </ul>
               </Card>
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all">
-                <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Search className="h-6 w-6 text-primary" />
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">Screening Toolkit</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Step-by-step guidance on tenant screening, red flags to watch for, and
+                    direct access to{" "}
+                    <a 
+                      href="https://www.westernverify.com" 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-primary hover:underline font-medium"
+                    >
+                      Western Verify
+                    </a>{" "}
+                    for background checks.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Screening best practices</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Red flag checklists</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Western Verify integration</span>
+                    </li>
+                  </ul>
                 </div>
-                <h3 className="font-display text-xl font-semibold mb-3">Screening Toolkit</h3>
-                <p className="text-muted-foreground mb-4">
-                  Step-by-step guidance on tenant screening, red flags to watch for, and
-                  direct access to{" "}
-                  <a 
-                    href="https://www.westernverify.com" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="text-primary hover:underline font-medium"
-                  >
-                    Western Verify
-                  </a>{" "}
-                  for background checks.
-                </p>
-                <ul className="space-y-2 text-sm">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Screening best practices</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Red flag checklists</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                    <span>Western Verify integration</span>
-                  </li>
-                </ul>
               </Card>
             </motion.div>
           </motion.div>
@@ -469,7 +499,7 @@ export default function Landing() {
               <Card className="p-6 h-full">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
@@ -492,7 +522,7 @@ export default function Landing() {
               <Card className="p-6 h-full">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
@@ -515,7 +545,7 @@ export default function Landing() {
               <Card className="p-6 h-full">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-primary text-primary" />
+                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
                 <p className="text-muted-foreground mb-4">
