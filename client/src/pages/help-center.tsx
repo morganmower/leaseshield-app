@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Shield, ArrowLeft, Book, FileText, Scale, Users, MessageCircle, CheckCircle2 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
+import { Logo } from "@/components/logo";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -110,7 +111,7 @@ export default function HelpCenter() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <Logo iconSize={24} />
             <span className="font-display text-base sm:text-xl font-semibold text-foreground">
               LeaseShield Pro
             </span>

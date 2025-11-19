@@ -8,6 +8,7 @@ import { Shield, ArrowLeft, Mail, CheckCircle2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
+import { Logo } from "@/components/logo";
 
 interface ContactFormData {
   firstName: string;
@@ -89,7 +90,7 @@ export default function Contact() {
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
           <a href="/" className="flex items-center gap-2 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Shield className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+            <Logo iconSize={24} />
             <span className="font-display text-base sm:text-xl font-semibold text-foreground">
               LeaseShield Pro
             </span>
