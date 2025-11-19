@@ -272,3 +272,36 @@ export const insertTenantIssueWorkflowSchema = createInsertSchema(tenantIssueWor
 });
 export type InsertTenantIssueWorkflow = z.infer<typeof insertTenantIssueWorkflowSchema>;
 export type TenantIssueWorkflow = typeof tenantIssueWorkflows.$inferSelect;
+
+// Blog posts for SEO and landlord education
+export const blogPosts = pgTable("blog_posts", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  title: text("title").notNull(),
+  slug: varchar("slug", { length: 200 }).notNull().unique(),
+  excerpt: text("excerpt").notNull(),
+  content: text("content").notNull(), // Markdown or HTML
+  author: varchar("author", { length: 100 }).notNull().default('LeaseShield Team'),
+  featuredImageUrl: text("featured_image_url"),
+  // SEO fields
+  metaTitle: text("meta_title"),
+  metaDescription: text("meta_description"),
+  // Categorization
+  stateIds: text("state_ids").array(), // ['UT', 'TX'] - null means applies to all states
+  tags: text("tags").array(), // ['eviction', 'compliance', 'screening']
+  // Publishing
+  isPublished: boolean("is_published").default(false),
+  publishedAt: timestamp("published_at"),
+  // Metadata
+  viewCount: integer("view_count").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
+  id: true,
+  viewCount: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;

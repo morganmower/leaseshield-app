@@ -8,6 +8,7 @@ import {
   screeningContent,
   tenantIssueWorkflows,
   states,
+  blogPosts,
   type User,
   type UpsertUser,
   type Template,
@@ -26,6 +27,8 @@ import {
   type InsertTenantIssueWorkflow,
   type State,
   type InsertState,
+  type BlogPost,
+  type InsertBlogPost,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -84,6 +87,15 @@ export interface IStorage {
   getAllTenantIssueWorkflows(): Promise<TenantIssueWorkflow[]>;
   getTenantIssueWorkflowBySlug(slug: string): Promise<TenantIssueWorkflow | undefined>;
   createTenantIssueWorkflow(workflow: InsertTenantIssueWorkflow): Promise<TenantIssueWorkflow>;
+
+  // Blog post operations
+  getAllBlogPosts(filters?: { stateId?: string; tag?: string; isPublished?: boolean }): Promise<BlogPost[]>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  getBlogPost(id: string): Promise<BlogPost | undefined>;
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: string): Promise<void>;
+  incrementBlogPostViews(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -414,6 +426,66 @@ export class DatabaseStorage implements IStorage {
   async createTenantIssueWorkflow(workflowData: InsertTenantIssueWorkflow): Promise<TenantIssueWorkflow> {
     const [workflow] = await db.insert(tenantIssueWorkflows).values(workflowData).returning();
     return workflow;
+  }
+
+  // Blog post operations
+  async getAllBlogPosts(filters?: { stateId?: string; tag?: string; isPublished?: boolean }): Promise<BlogPost[]> {
+    let query = db.select().from(blogPosts);
+    
+    const conditions = [];
+    
+    if (filters?.isPublished !== undefined) {
+      conditions.push(eq(blogPosts.isPublished, filters.isPublished));
+    }
+    
+    if (filters?.stateId) {
+      conditions.push(sql`${filters.stateId} = ANY(${blogPosts.stateIds})`);
+    }
+    
+    if (filters?.tag) {
+      conditions.push(sql`${filters.tag} = ANY(${blogPosts.tags})`);
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+    
+    return await query.orderBy(desc(blogPosts.publishedAt));
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+    return post;
+  }
+
+  async getBlogPost(id: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post;
+  }
+
+  async createBlogPost(postData: InsertBlogPost): Promise<BlogPost> {
+    const [post] = await db.insert(blogPosts).values(postData).returning();
+    return post;
+  }
+
+  async updateBlogPost(id: string, postData: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [post] = await db
+      .update(blogPosts)
+      .set({ ...postData, updatedAt: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return post;
+  }
+
+  async deleteBlogPost(id: string): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async incrementBlogPostViews(id: string): Promise<void> {
+    await db
+      .update(blogPosts)
+      .set({ viewCount: sql`${blogPosts.viewCount} + 1` })
+      .where(eq(blogPosts.id, id));
   }
 }
 
