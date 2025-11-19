@@ -74,6 +74,21 @@ export default function Templates() {
   const { data: templates, isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
     enabled: isAuthenticated,
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (selectedState && selectedState !== "all") {
+        params.append("stateId", selectedState);
+      }
+      if (selectedCategory && selectedCategory !== "all") {
+        params.append("category", selectedCategory);
+      }
+      const url = `/api/templates${params.toString() ? `?${params.toString()}` : ''}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch templates');
+      }
+      return response.json();
+    },
   });
 
   if (isLoading) {
