@@ -7,6 +7,7 @@ import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSche
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
+import OpenAI from "openai";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -15,6 +16,48 @@ if (!process.env.STRIPE_SECRET_KEY) {
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
   apiVersion: "2023-10-16",
 });
+
+// Initialize OpenAI for chat assistant
+const openai = new OpenAI({
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+});
+
+// Simple in-memory rate limiter for chat endpoint
+const chatRateLimiter = new Map<string, { count: number; resetTime: number }>();
+const CHAT_RATE_LIMIT = 10; // messages per window
+const CHAT_RATE_WINDOW = 60 * 1000; // 1 minute in milliseconds
+
+function checkChatRateLimit(ip: string): boolean {
+  const now = Date.now();
+  const record = chatRateLimiter.get(ip);
+
+  if (!record || now > record.resetTime) {
+    // New window
+    chatRateLimiter.set(ip, {
+      count: 1,
+      resetTime: now + CHAT_RATE_WINDOW
+    });
+    return true;
+  }
+
+  if (record.count >= CHAT_RATE_LIMIT) {
+    return false; // Rate limit exceeded
+  }
+
+  record.count++;
+  return true;
+}
+
+// Clean up old rate limit records every 5 minutes
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, record] of chatRateLimiter.entries()) {
+    if (now > record.resetTime) {
+      chatRateLimiter.delete(ip);
+    }
+  }
+}, 5 * 60 * 1000);
 
 // Helper to get user ID from request
 function getUserId(req: any): string {
@@ -537,6 +580,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting blog post:", error);
       res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Chat assistant endpoint (public, for landing page)
+  app.post('/api/chat', async (req, res) => {
+    try {
+      // Rate limiting
+      const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+      if (!checkChatRateLimit(clientIp)) {
+        return res.status(429).json({ 
+          reply: "You're sending messages too quickly. Please wait a moment and try again." 
+        });
+      }
+
+      const { message } = req.body;
+
+      if (!message || typeof message !== 'string') {
+        return res.status(400).json({ reply: "Please provide a valid message." });
+      }
+
+      if (message.length > 500) {
+        return res.status(400).json({ reply: "Message is too long. Please keep it under 500 characters." });
+      }
+
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are the LeaseShield Assistant, a helpful and protective AI assistant for landlords visiting the LeaseShield App website.
+
+ABOUT LEASESHIELD APP:
+- Subscription-based platform ($15/month with 7-day free trial)
+- Provides state-specific legal templates, compliance guidance, and tenant screening resources
+- Currently serving: Utah (UT), Texas (TX), North Dakota (ND), and South Dakota (SD)
+- Features: attorney-reviewed lease agreements, compliance cards, legal update notifications, screening guides, tenant issue workflows
+- Tone: "Protective mentor" - helping landlords protect their investments while staying compliant
+
+YOUR ROLE:
+1. Answer questions about landlord-tenant law in UT, TX, ND, and SD (general guidance only, not legal advice)
+2. Explain LeaseShield App features and benefits
+3. Help landlords understand compliance requirements
+4. Guide them toward signing up for the 7-day free trial
+5. Be warm, professional, and protective of their interests
+
+IMPORTANT DISCLAIMERS:
+- Always remind users that you provide educational information, not legal advice
+- Encourage them to consult an attorney for specific legal situations
+- Emphasize that LeaseShield App provides templates and guidance, but users should review with legal counsel
+
+TONE: Friendly, knowledgeable, protective, and helpful. Think "experienced landlord mentor."
+
+If asked about states we don't serve, politely explain we currently focus on UT, TX, ND, and SD but are expanding.
+
+Keep responses concise (2-4 sentences unless more detail is specifically requested).`
+          },
+          {
+            role: "user",
+            content: message
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 300,
+      });
+
+      const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that. Please try again.";
+
+      res.json({ reply });
+    } catch (error) {
+      console.error("Chat error:", error);
+      res.status(500).json({ reply: "Sorry, I'm having trouble right now. Please try again later." });
     }
   });
 
