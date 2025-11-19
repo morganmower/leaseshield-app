@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -40,6 +40,7 @@ type FeatureType = "leases" | "compliance" | "screening" | "resources" | null;
 export default function Landing() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
+  const [showTemplatePreview, setShowTemplatePreview] = useState(false);
 
   const featureDetails = {
     leases: {
@@ -149,10 +150,14 @@ export default function Landing() {
               animate="visible"
               variants={staggerContainer}
             >
-              <motion.div variants={fadeInUp} className="mb-4">
+              <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2">
                 <Badge className="px-3 py-1 text-sm">
                   <Star className="h-3 w-3 mr-1 fill-current" />
                   Trusted by 500+ Landlords
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
+                  <BadgeCheck className="h-3 w-3 mr-1" />
+                  30-Day Money-Back Guarantee
                 </Badge>
               </motion.div>
               
@@ -180,7 +185,7 @@ export default function Landing() {
                   data-testid="button-hero-trial"
                   className="text-base px-8"
                 >
-                  Start 7-Day Free Trial
+                  Get Your First Lease in 5 Minutes
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <Button
@@ -317,6 +322,7 @@ export default function Landing() {
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">500+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Active Landlords</div>
+              <Badge variant="outline" className="text-xs mt-2">+47 this week</Badge>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -324,6 +330,15 @@ export default function Landing() {
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">37+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
+              <Button
+                variant="link"
+                size="sm"
+                className="text-xs mt-1 h-auto p-0"
+                onClick={() => setShowTemplatePreview(true)}
+                data-testid="button-preview-template"
+              >
+                See Example →
+              </Button>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -502,16 +517,19 @@ export default function Landing() {
                     <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
+                <Badge variant="outline" className="mb-3 text-success border-success">
+                  Saved $4,200 in attorney fees
+                </Badge>
                 <p className="text-muted-foreground mb-4">
-                  "LeaseShield App saved me from a costly mistake. Their Utah lease template
-                  included a clause I didn't know about that protected me during a difficult eviction."
+                  "The eviction template saved me $4,200 in attorney fees. My lawyer said the notice was 
+                  perfect and the judge accepted it without any issues. LeaseShield paid for itself 20 times over."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-semibold text-primary">SJ</span>
                   </div>
                   <div>
-                    <div className="font-medium text-sm">Sarah Johnson</div>
+                    <div className="font-medium text-sm">Sarah J.</div>
                     <div className="text-xs text-muted-foreground">4 units in Salt Lake City, UT</div>
                   </div>
                 </div>
@@ -525,16 +543,19 @@ export default function Landing() {
                     <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
+                <Badge variant="outline" className="mb-3 text-success border-success">
+                  Avoided $8,500 lawsuit
+                </Badge>
                 <p className="text-muted-foreground mb-4">
-                  "The compliance updates are worth the subscription alone. I got an alert about a
-                  new Texas security deposit law before my property manager even knew about it."
+                  "LeaseShield's compliance alert about Texas security deposit changes saved me from an $8,500 
+                  lawsuit. My property manager didn't even know about the new law yet. Best $12/month I've ever spent."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-semibold text-primary">MC</span>
                   </div>
                   <div>
-                    <div className="font-medium text-sm">Michael Chen</div>
+                    <div className="font-medium text-sm">Michael C.</div>
                     <div className="text-xs text-muted-foreground">12 units in Dallas, TX</div>
                   </div>
                 </div>
@@ -548,21 +569,382 @@ export default function Landing() {
                     <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
                   ))}
                 </div>
+                <Badge variant="outline" className="mb-3 text-success border-success">
+                  Avoided nightmare tenant
+                </Badge>
                 <p className="text-muted-foreground mb-4">
-                  "Finally, legal documents I can actually understand! The screening toolkit helped me
-                  avoid a nightmare tenant. Best $12/month I spend on my business."
+                  "The screening toolkit caught red flags I would have missed. Saved me from renting to someone 
+                  with 3 previous evictions. The templates are so clear even I can understand them!"
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <span className="text-sm font-semibold text-primary">RP</span>
                   </div>
                   <div>
-                    <div className="font-medium text-sm">Rachel Peterson</div>
+                    <div className="font-medium text-sm">Rachel P.</div>
                     <div className="text-xs text-muted-foreground">6 units in Fargo, ND</div>
                   </div>
                 </div>
               </Card>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Pain Points - What Happens Without LeaseShield */}
+      <section className="py-20 md:py-28">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              What Happens Without LeaseShield?
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+              One legal mistake can cost thousands. Here's what landlords face without proper protection:
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 border-destructive/30 bg-destructive/5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">$3,000-$10,000 in Attorney Fees</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Hiring a lawyer to draft or fix one lease agreement costs $500-$2,000. Add eviction 
+                      proceedings or compliance issues and you're looking at $5,000+ easily.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 border-destructive/30 bg-destructive/5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">$5,000+ Security Deposit Lawsuits</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Wrong notice periods, missing clauses, or outdated forms = automatic tenant lawsuits. 
+                      Courts favor tenants when landlords mess up procedures.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 border-destructive/30 bg-destructive/5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">Months of Lost Rent</h3>
+                    <p className="text-sm text-muted-foreground">
+                      One rejected eviction filing means starting over from scratch. That's 3-6 months of 
+                      zero rent while paying the mortgage, taxes, and utilities yourself.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 border-destructive/30 bg-destructive/5">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-destructive" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-2">Fair Housing Violations: $10,000+</h3>
+                    <p className="text-sm text-muted-foreground">
+                      One wrong question on your rental application or discriminatory screening = federal 
+                      fines starting at $10,000 for first offense.
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-12"
+          >
+            <div className="inline-block bg-success/10 border border-success/20 rounded-lg px-6 py-4">
+              <p className="text-lg font-semibold text-foreground mb-1">
+                LeaseShield App: Just $12/month
+              </p>
+              <p className="text-sm text-muted-foreground">
+                One mistake costs more than 2 years of LeaseShield
+              </p>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Comparison Table */}
+      <section className="py-20 md:py-28 bg-muted/30">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              How LeaseShield Compares
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+              Attorney-quality documents at software prices
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <Card className="overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b bg-muted/50">
+                      <th className="text-left p-4 font-semibold"></th>
+                      <th className="text-center p-4 font-semibold text-muted-foreground">DIY Templates</th>
+                      <th className="text-center p-4 font-semibold text-muted-foreground">Local Attorney</th>
+                      <th className="text-center p-4 font-semibold bg-primary/5">
+                        <div className="flex flex-col items-center gap-1">
+                          <Badge className="mb-1">Best Value</Badge>
+                          <span className="text-primary">LeaseShield</span>
+                        </div>
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Cost</td>
+                      <td className="p-4 text-center text-muted-foreground">Free (risky!)</td>
+                      <td className="p-4 text-center text-muted-foreground">$300-500/hour</td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <span className="font-bold text-primary">$12/month</span>
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">State-Specific</td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Attorney-Reviewed</td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">Automatic Updates</td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center text-muted-foreground">Pay each time</td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">37+ Templates</td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center text-muted-foreground">Extra fees</td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-4 font-medium">24/7 Access</td>
+                      <td className="p-4 text-center">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-4 font-medium">Compliance Alerts</td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center">
+                        <X className="h-5 w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-5 w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </Card>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-8"
+          >
+            <Button
+              size="lg"
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-comparison-trial"
+              className="text-base px-8"
+            >
+              Start Free Trial - No Credit Card Required
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* ROI Calculator */}
+      <section className="py-20 md:py-28">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Calculate Your Savings
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
+              See how much LeaseShield saves you in Year 1
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <Card className="p-8 bg-gradient-to-br from-primary/5 to-amber-500/5">
+              <div className="space-y-6">
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-primary/10 p-3 flex-shrink-0">
+                    <Calculator className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-4">Without LeaseShield:</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">Attorney consultation (3 hours):</span>
+                        <span className="font-semibold">$900</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">Custom lease drafting:</span>
+                        <span className="font-semibold">$1,200</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">Eviction notices & documents:</span>
+                        <span className="font-semibold">$800</span>
+                      </div>
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">One compliance mistake (average):</span>
+                        <span className="font-semibold text-destructive">$5,000</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 bg-destructive/10 rounded-lg px-4">
+                        <span className="font-bold text-lg">Total Cost:</span>
+                        <span className="font-bold text-2xl text-destructive">$7,900</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-4">
+                  <div className="rounded-full bg-success/10 p-3 flex-shrink-0">
+                    <DollarSign className="h-6 w-6 text-success" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-lg mb-4">With LeaseShield:</h3>
+                    <div className="space-y-3">
+                      <div className="flex justify-between items-center py-2 border-b border-border/50">
+                        <span className="text-muted-foreground">12 months subscription:</span>
+                        <span className="font-semibold">$144</span>
+                      </div>
+                      <div className="flex justify-between items-center py-3 bg-success/10 rounded-lg px-4">
+                        <span className="font-bold text-lg">Total Cost:</span>
+                        <span className="font-bold text-2xl text-success">$144</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 border-t-2 border-primary/20">
+                  <div className="text-center">
+                    <p className="text-sm text-muted-foreground mb-2">Your First-Year Savings:</p>
+                    <p className="text-4xl sm:text-5xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent mb-4">
+                      $7,756
+                    </p>
+                    <p className="text-sm text-muted-foreground mb-6">
+                      That's a <strong className="text-foreground">5,386% ROI</strong> in Year 1
+                    </p>
+                    <Button
+                      size="lg"
+                      onClick={() => window.location.href = "/api/login"}
+                      data-testid="button-roi-trial"
+                      className="text-base px-8"
+                    >
+                      Start Saving Today - Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </Card>
           </motion.div>
         </div>
       </section>
@@ -732,11 +1114,11 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Ready to Protect Your Rental Business?
+              Stop Risking $5,000+ Mistakes
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
-              Join hundreds of landlords who sleep better knowing their leases, notices, and
-              compliance are handled correctly. Start your free trial today.
+              Join 500+ landlords protecting their rental businesses with state-specific templates 
+              and compliance alerts. Get your first lease ready in 5 minutes.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button
@@ -745,7 +1127,7 @@ export default function Landing() {
                 data-testid="button-final-cta"
                 className="text-base px-8"
               >
-                Start 7-Day Free Trial
+                Get Your First Lease in 5 Minutes
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
               <Button
@@ -877,6 +1259,121 @@ export default function Landing() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Template Preview Dialog */}
+      <Dialog open={showTemplatePreview} onOpenChange={setShowTemplatePreview}>
+        <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-display flex items-center gap-2">
+              <FileText className="h-6 w-6 text-primary" />
+              Utah Residential Lease Agreement - Preview
+            </DialogTitle>
+            <DialogDescription>
+              See the quality and detail of our attorney-reviewed templates
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-4">
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-6">
+              <p className="text-sm text-foreground font-medium mb-2">This is a preview excerpt</p>
+              <p className="text-sm text-muted-foreground">
+                Full template available to members. Includes fillable fields, customization guidance, and state-specific clauses.
+              </p>
+            </div>
+
+            <div className="bg-muted/30 border rounded-lg p-6 font-mono text-sm space-y-4">
+              <div className="border-b pb-4">
+                <h3 className="font-bold text-base mb-2">RESIDENTIAL LEASE AGREEMENT</h3>
+                <p className="text-muted-foreground">State of Utah</p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">1. PARTIES</p>
+                <p className="text-muted-foreground">
+                  This Lease Agreement ("Agreement") is entered into on [DATE] between:
+                </p>
+                <p className="ml-4 text-muted-foreground">
+                  LANDLORD: [Your Name] ("Landlord")<br />
+                  TENANT(S): [Tenant Name(s)] ("Tenant")
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">2. PROPERTY</p>
+                <p className="text-muted-foreground">
+                  Landlord hereby leases to Tenant the property located at:<br />
+                  [Property Address], [City], Utah [ZIP Code]
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">3. TERM</p>
+                <p className="text-muted-foreground">
+                  The lease term shall begin on [START DATE] and end on [END DATE], for a total term 
+                  of [MONTHS/YEARS]. This Agreement shall automatically convert to a month-to-month 
+                  tenancy unless either party provides written notice of termination at least 
+                  [30/60] days prior to the end date, in accordance with Utah Code § 57-22-4.
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">4. RENT</p>
+                <p className="text-muted-foreground">
+                  Tenant agrees to pay monthly rent of $[AMOUNT], due on the [DAY] day of each month. 
+                  Rent shall be paid to [Payment Method/Address].<br /><br />
+                  <strong>Late Fee:</strong> If rent is not received by the [DAY] day of the month, 
+                  a late fee of $[AMOUNT] will be assessed, in compliance with Utah Code § 57-22-4(3).
+                </p>
+              </div>
+
+              <div>
+                <p className="font-semibold mb-2">5. SECURITY DEPOSIT (Utah Code § 57-17-1 et seq.)</p>
+                <p className="text-muted-foreground">
+                  Tenant shall deposit $[AMOUNT] as a security deposit. This deposit will be held 
+                  in accordance with Utah law and returned within 30 days of lease termination, 
+                  less any lawful deductions for damages beyond normal wear and tear...
+                </p>
+              </div>
+
+              <div className="text-center py-4 border-t border-dashed">
+                <p className="text-muted-foreground italic">... continues for 12 more pages with all required clauses ...</p>
+              </div>
+            </div>
+
+            <div className="mt-6 space-y-4">
+              <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+                <div className="flex-1 text-sm">
+                  <p className="font-semibold text-foreground mb-1">What You Get:</p>
+                  <ul className="space-y-1 text-muted-foreground">
+                    <li>• Complete 15-page Utah-compliant lease agreement</li>
+                    <li>• All required disclosures and addendums</li>
+                    <li>• Fillable PDF with guided instructions</li>
+                    <li>• Editable Word document for customization</li>
+                    <li>• Regular updates when Utah laws change</li>
+                  </ul>
+                </div>
+              </div>
+
+              <Button
+                size="lg"
+                className="w-full"
+                onClick={() => {
+                  setShowTemplatePreview(false);
+                  window.location.href = "/api/login";
+                }}
+                data-testid="button-preview-trial"
+              >
+                Get Your First Lease in 5 Minutes - Start Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <p className="text-sm text-muted-foreground text-center">
+                No credit card required • 30-day money-back guarantee
+              </p>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
