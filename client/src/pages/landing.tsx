@@ -911,11 +911,14 @@ export default function Landing() {
               </ul>
             </div>
             <div>
-              <h4 className="font-semibold mb-3 text-sm">Support</h4>
+              <h4 className="font-semibold mb-3 text-sm">Support & Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="/help" className="hover:text-foreground transition-colors">Help Center</a></li>
                 <li><a href="/contact" className="hover:text-foreground transition-colors">Contact</a></li>
-                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy</a></li>
+                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
+                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
+                <li><a href="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</a></li>
+                <li><a href="/disclaimers" className="hover:text-foreground transition-colors">Legal Disclaimers</a></li>
               </ul>
             </div>
           </div>

@@ -13,6 +13,9 @@ import { Settings as SettingsIcon, CreditCard, LogOut } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
+import Terms from "@/pages/terms";
+import RefundPolicy from "@/pages/refund-policy";
+import Disclaimers from "@/pages/disclaimers";
 import Contact from "@/pages/contact";
 import HelpCenter from "@/pages/help-center";
 import Dashboard from "@/pages/dashboard";
@@ -50,6 +53,9 @@ function Router() {
         <>
           <Route path="/" component={Landing} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/refund-policy" component={RefundPolicy} />
+          <Route path="/disclaimers" component={Disclaimers} />
           <Route path="/contact" component={Contact} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/subscribe" component={Subscribe} />
@@ -62,6 +68,9 @@ function Router() {
           <Route path="/" component={Dashboard} />
           <Route path="/dashboard" component={Dashboard} />
           <Route path="/privacy" component={Privacy} />
+          <Route path="/terms" component={Terms} />
+          <Route path="/refund-policy" component={RefundPolicy} />
+          <Route path="/disclaimers" component={Disclaimers} />
           <Route path="/contact" component={Contact} />
           <Route path="/help" component={HelpCenter} />
           <Route path="/templates" component={Templates} />
