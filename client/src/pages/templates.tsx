@@ -29,7 +29,7 @@ export default function Templates() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedState, setSelectedState] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
@@ -64,6 +64,14 @@ export default function Templates() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  useEffect(() => {
+    if (user?.preferredState) {
+      setSelectedState(user.preferredState);
+    } else {
+      setSelectedState("all");
+    }
+  }, [user]);
 
   const { data: templates, isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
