@@ -8,6 +8,8 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/app-sidebar";
 import { useAuth } from "@/hooks/useAuth";
+import { Button } from "@/components/ui/button";
+import { Settings as SettingsIcon, CreditCard, LogOut } from "lucide-react";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
@@ -88,7 +90,36 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="flex items-center justify-between p-4 border-b bg-background">
             <SidebarTrigger data-testid="button-sidebar-toggle" />
-            <ThemeToggle />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = "/settings"}
+                data-testid="button-header-settings"
+              >
+                <SettingsIcon className="h-4 w-4 mr-2" />
+                Settings
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = "/billing"}
+                data-testid="button-header-billing"
+              >
+                <CreditCard className="h-4 w-4 mr-2" />
+                Billing
+              </Button>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => window.location.href = "/api/logout"}
+                data-testid="button-header-logout"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                Log Out
+              </Button>
+              <ThemeToggle />
+            </div>
           </header>
           <main className="flex-1 overflow-hidden">{children}</main>
         </div>
