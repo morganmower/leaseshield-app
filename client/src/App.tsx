@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, Link, useLocation } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -59,6 +59,7 @@ function Router() {
           <Route path="/tenant-issues" component={TenantIssues} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/settings" component={Settings} />
+          <Route path="/billing" component={Settings} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/templates" component={AdminTemplates} />
           <Route path="/admin/compliance" component={AdminCompliance} />
@@ -73,6 +74,7 @@ function Router() {
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuth();
+  const [, setLocation] = useLocation();
 
   if (!isAuthenticated) {
     return <>{children}</>;
@@ -94,7 +96,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = "/settings"}
+                onClick={() => setLocation("/settings")}
                 data-testid="button-header-settings"
               >
                 <SettingsIcon className="h-4 w-4 mr-2" />
@@ -103,7 +105,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = "/billing"}
+                onClick={() => setLocation("/billing")}
                 data-testid="button-header-billing"
               >
                 <CreditCard className="h-4 w-4 mr-2" />
