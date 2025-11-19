@@ -152,7 +152,7 @@ export default function Settings() {
                 Preferred State
               </Label>
               <p className="text-sm text-muted-foreground mt-1 mb-3">
-                Templates and Compliance pages will show this state by default. You can always switch to "All States" or select a different state when needed.
+                Choose where your properties are located. Templates and Compliance pages will automatically show content for this state.
               </p>
               <Select value={preferredState} onValueChange={setPreferredState}>
                 <SelectTrigger id="preferred-state" data-testid="select-preferred-state">
