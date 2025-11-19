@@ -316,77 +316,81 @@ export default function Landing() {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="relative hidden lg:block"
             >
-              <div className="aspect-square rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-border p-8 flex items-center justify-center">
-                <div className="grid grid-cols-2 gap-4 w-full">
+              <div className="aspect-square rounded-lg bg-gradient-to-br from-primary/10 to-primary/5 border border-border p-5 flex items-center justify-center">
+                <div className="grid grid-cols-2 gap-5 w-full h-full">
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
+                    className="flex"
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
+                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
                       onClick={() => setSelectedFeature("leases")}
                       data-testid="card-feature-leases"
                     >
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-10 -mt-10" />
-                      <div className="relative">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 flex items-center justify-center mb-2">
-                          <FileText className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-12 -mt-12" />
+                      <div className="relative flex flex-col flex-1">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-3">
+                          <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                         </div>
-                        <p className="text-sm font-medium">State-Specific Leases</p>
+                        <p className="font-medium">State-Specific Leases</p>
                       </div>
                     </Card>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
+                    className="flex"
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
+                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
                       onClick={() => setSelectedFeature("compliance")}
                       data-testid="card-feature-compliance"
                     >
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-10 -mt-10" />
-                      <div className="relative">
-                        <div className="rounded-lg bg-primary/10 w-10 h-10 flex items-center justify-center mb-2">
-                          <Shield className="h-5 w-5 text-primary" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-12 -mt-12" />
+                      <div className="relative flex flex-col flex-1">
+                        <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-3">
+                          <Shield className="h-6 w-6 text-primary" />
                         </div>
-                        <p className="text-sm font-medium">Compliance Guidance</p>
+                        <p className="font-medium">Compliance Guidance</p>
                       </div>
                     </Card>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
+                    className="flex"
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
+                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
                       onClick={() => setSelectedFeature("screening")}
                       data-testid="card-feature-screening"
                     >
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-10 -mt-10" />
-                      <div className="relative">
-                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-10 h-10 flex items-center justify-center mb-2">
-                          <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-500" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-12 -mt-12" />
+                      <div className="relative flex flex-col flex-1">
+                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-3">
+                          <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
                         </div>
-                        <p className="text-sm font-medium">Screening Toolkit</p>
+                        <p className="font-medium">Screening Toolkit</p>
                       </div>
                     </Card>
                   </motion.div>
                   <motion.div
                     whileHover={{ scale: 1.05 }}
                     transition={{ type: "spring", stiffness: 300 }}
+                    className="flex"
                   >
                     <Card 
-                      className="p-4 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden"
+                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
                       onClick={() => setSelectedFeature("resources")}
                       data-testid="card-feature-resources"
                     >
-                      <div className="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-10 -mt-10" />
-                      <div className="relative">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 flex items-center justify-center mb-2">
-                          <Users className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-12 -mt-12" />
+                      <div className="relative flex flex-col flex-1">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-3">
+                          <Users className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                         </div>
-                        <p className="text-sm font-medium">Helpful Resources</p>
+                        <p className="font-medium">Helpful Resources</p>
                       </div>
                     </Card>
                   </motion.div>
