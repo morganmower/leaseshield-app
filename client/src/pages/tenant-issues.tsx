@@ -34,6 +34,9 @@ const workflows = [
     description: "Step-by-step process for handling late rent, from first notice to legal action",
     icon: DollarSign,
     category: "Payment Issues",
+    color: "from-amber-500 to-orange-600",
+    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
+    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Late rent notice", "Payment plan agreement", "Pay or quit notice"],
     steps: [
       "Review your lease agreement for late fee policies and grace periods",
@@ -51,6 +54,9 @@ const workflows = [
     description: "Document and address lease violations while maintaining Fair Housing compliance",
     icon: AlertCircle,
     category: "Violations",
+    color: "from-blue-500 to-blue-600",
+    iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
+    iconColor: "text-blue-600 dark:text-blue-500",
     templates: ["Violation notice", "Cure or quit notice", "Incident documentation"],
     steps: [
       "Document the specific violation with photos, dates, and details",
@@ -68,6 +74,9 @@ const workflows = [
     description: "Document damage, communicate with tenants, and handle security deposit deductions",
     icon: Home,
     category: "Property Issues",
+    color: "from-amber-500 to-orange-600",
+    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
+    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Damage documentation form", "Repair cost estimate", "Deposit deduction letter"],
     steps: [
       "Document damage with photos and detailed description",
@@ -85,6 +94,9 @@ const workflows = [
     description: "Verify emotional support animal requests and handle documentation requirements",
     icon: Home,
     category: "Animals",
+    color: "from-cyan-500 to-teal-600",
+    iconBg: "bg-gradient-to-br from-cyan-500/10 to-teal-600/10",
+    iconColor: "text-cyan-600 dark:text-cyan-500",
     templates: ["ESA verification request", "ESA acceptance letter", "Pet policy addendum"],
     steps: [
       "Receive request for emotional support animal accommodation",
@@ -102,6 +114,9 @@ const workflows = [
     description: "Legally notify tenants of rent increases with proper timing and documentation",
     icon: TrendingUp,
     category: "Lease Changes",
+    color: "from-amber-500 to-orange-600",
+    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
+    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Rent increase notice", "Lease renewal with increase", "Month-to-month notice"],
     steps: [
       "Research local rent control laws and limitations",
@@ -119,6 +134,9 @@ const workflows = [
     description: "End tenancies properly with correct notices and move-out procedures",
     icon: UserX,
     category: "Lease Termination",
+    color: "from-blue-500 to-blue-600",
+    iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
+    iconColor: "text-blue-600 dark:text-blue-500",
     templates: ["Non-renewal notice", "Move-out checklist", "Security deposit return"],
     steps: [
       "Review lease end date and notice requirements",
@@ -259,8 +277,8 @@ export default function TenantIssues() {
                 data-testid={`workflow-card-${workflow.id}`}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                    <Icon className="h-6 w-6 text-primary" />
+                  <div className={`rounded-lg ${workflow.iconBg} w-12 h-12 flex items-center justify-center flex-shrink-0`}>
+                    <Icon className={`h-6 w-6 ${workflow.iconColor}`} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <Badge variant="secondary" className="mb-2 text-xs">
@@ -333,8 +351,8 @@ export default function TenantIssues() {
               <>
                 <DialogHeader>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                      <selectedWorkflow.icon className="h-6 w-6 text-primary" />
+                    <div className={`rounded-lg ${selectedWorkflow.iconBg} w-12 h-12 flex items-center justify-center flex-shrink-0`}>
+                      <selectedWorkflow.icon className={`h-6 w-6 ${selectedWorkflow.iconColor}`} />
                     </div>
                     <div>
                       <DialogTitle className="text-left">{selectedWorkflow.title}</DialogTitle>
@@ -352,13 +370,13 @@ export default function TenantIssues() {
                   {/* Steps */}
                   <div>
                     <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                      <CheckCircle2 className={`h-5 w-5 ${selectedWorkflow.iconColor}`} />
                       Step-by-Step Guide
                     </h3>
                     <ol className="space-y-3">
                       {selectedWorkflow.steps.map((step, idx) => (
                         <li key={idx} className="flex gap-3">
-                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">
+                          <span className={`flex-shrink-0 w-6 h-6 rounded-full ${selectedWorkflow.iconBg} ${selectedWorkflow.iconColor} text-sm font-semibold flex items-center justify-center`}>
                             {idx + 1}
                           </span>
                           <span className="text-sm text-foreground pt-0.5">{step}</span>
@@ -370,7 +388,7 @@ export default function TenantIssues() {
                   {/* Related Templates */}
                   <div className="pt-4 border-t">
                     <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <FileText className="h-5 w-5 text-primary" />
+                      <FileText className={`h-5 w-5 ${selectedWorkflow.iconColor}`} />
                       Related Templates
                     </h3>
                     <div className="space-y-2">
