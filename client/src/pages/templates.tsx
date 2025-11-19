@@ -283,7 +283,7 @@ export default function Templates() {
                     )}
                     Download
                   </Button>
-                  {template.fillableFormData && (
+                  {template.fillableFormData ? (
                     <Button
                       variant="outline"
                       size="sm"
@@ -294,7 +294,7 @@ export default function Templates() {
                       {!isPayingMember && <Lock className="mr-2 h-4 w-4" />}
                       Fill Online
                     </Button>
-                  )}
+                  ) : null}
                 </div>
               </Card>
             ))}
