@@ -100,7 +100,7 @@ export default function Blog() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All States</SelectItem>
-                  {states?.map((state: any) => (
+                  {Array.isArray(states) && states.map((state: any) => (
                     <SelectItem key={state.id} value={state.id}>
                       {state.name}
                     </SelectItem>
@@ -194,7 +194,7 @@ export default function Blog() {
                             <Calendar className="h-3 w-3" />
                             <span>{formatDate(post.publishedAt)}</span>
                           </div>
-                          {post.viewCount > 0 && (
+                          {(post.viewCount ?? 0) > 0 && (
                             <div className="flex items-center gap-1">
                               <Eye className="h-3 w-3" />
                               <span>{post.viewCount} views</span>

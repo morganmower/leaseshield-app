@@ -18,6 +18,8 @@ import RefundPolicy from "@/pages/refund-policy";
 import Disclaimers from "@/pages/disclaimers";
 import Contact from "@/pages/contact";
 import HelpCenter from "@/pages/help-center";
+import Blog from "@/pages/blog";
+import BlogPost from "@/pages/blog-post";
 import Dashboard from "@/pages/dashboard";
 import Templates from "@/pages/templates";
 import Compliance from "@/pages/compliance";
@@ -58,6 +60,8 @@ function Router() {
           <Route path="/disclaimers" component={Disclaimers} />
           <Route path="/contact" component={Contact} />
           <Route path="/help" component={HelpCenter} />
+          <Route path="/blog" component={Blog} />
+          <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/logos" component={LogoPicker} />
           <Route path="/logo-colors" component={LogoColors} />
@@ -73,6 +77,8 @@ function Router() {
           <Route path="/disclaimers" component={Disclaimers} />
           <Route path="/contact" component={Contact} />
           <Route path="/help" component={HelpCenter} />
+          <Route path="/blog" component={Blog} />
+          <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/templates" component={Templates} />
           <Route path="/compliance" component={Compliance} />
           <Route path="/screening" component={Screening} />

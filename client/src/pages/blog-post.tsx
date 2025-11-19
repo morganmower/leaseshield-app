@@ -1,4 +1,4 @@
-import { useQuery } from "@tantml:query/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useRoute, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -80,7 +80,7 @@ export default function BlogPostPage() {
           </Link>
           
           <div className="flex flex-wrap gap-2 mb-4">
-            {post.tags?.map((tag) => (
+            {post.tags?.map((tag: string) => (
               <Badge key={tag} variant="secondary">
                 {tag}
               </Badge>

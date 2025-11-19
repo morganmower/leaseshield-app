@@ -330,15 +330,13 @@ export default function Landing() {
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">37+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
-              <Button
-                variant="link"
-                size="sm"
-                className="text-xs mt-1 h-auto p-0"
+              <button
+                className="text-xs mt-1 text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => setShowTemplatePreview(true)}
                 data-testid="button-preview-template"
               >
                 See Example →
-              </Button>
+              </button>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -1395,7 +1393,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-foreground transition-colors">Templates</a></li>
+                <li><a href="/blog" className="hover:text-foreground transition-colors">Blog & Resources</a></li>
               </ul>
             </div>
             <div>
