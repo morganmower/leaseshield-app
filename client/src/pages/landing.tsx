@@ -39,6 +39,7 @@ type FeatureType = "leases" | "compliance" | "screening" | "resources" | null;
 
 export default function Landing() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
+  const [showAllFeatures, setShowAllFeatures] = useState(false);
 
   const featureDetails = {
     leases: {
@@ -720,12 +721,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 variant="outline"
-                onClick={() => {
-                  document.getElementById('features')?.scrollIntoView({ 
-                    behavior: 'smooth',
-                    block: 'start'
-                  });
-                }}
+                onClick={() => setShowAllFeatures(true)}
                 data-testid="button-final-learn"
                 className="text-base px-8"
               >
@@ -738,6 +734,74 @@ export default function Landing() {
           </motion.div>
         </div>
       </section>
+
+      {/* All Features Dialog */}
+      <Dialog open={showAllFeatures} onOpenChange={setShowAllFeatures}>
+        <DialogContent className="max-w-4xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield Pro</DialogTitle>
+            <DialogDescription className="text-base">
+              Comprehensive landlord protection for UT, TX, ND, and SD properties
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="mt-6 space-y-8">
+            {Object.entries(featureDetails).map(([key, feature]) => {
+              const IconComponent = feature.icon;
+              return (
+                <div key={key} className="border-b pb-6 last:border-b-0">
+                  <div className="flex items-start gap-3 mb-4">
+                    <IconComponent className="h-7 w-7 text-primary mt-1 flex-shrink-0" />
+                    <div>
+                      <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
+                      <p className="text-muted-foreground mb-4">{feature.description}</p>
+                      <ul className="space-y-2">
+                        {feature.details.map((detail, index) => (
+                          <li key={index} className="flex items-start gap-2 text-sm">
+                            <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                            <span className="text-muted-foreground">{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-8 pt-6 border-t bg-muted/30 -mx-6 px-6 -mb-6 pb-6">
+            <div className="text-center space-y-4">
+              <div className="grid sm:grid-cols-3 gap-4 mb-6">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">37+</div>
+                  <div className="text-sm text-muted-foreground">Legal Templates</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">4</div>
+                  <div className="text-sm text-muted-foreground">States Covered</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-primary mb-1">$12</div>
+                  <div className="text-sm text-muted-foreground">Per Month</div>
+                </div>
+              </div>
+              <Button
+                size="lg"
+                className="w-full text-base"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-features-dialog-trial"
+              >
+                Start Your 7-Day Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <p className="text-sm text-muted-foreground">
+                No credit card required • Cancel anytime
+              </p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
 
       {/* Feature Details Dialog */}
       <Dialog open={selectedFeature !== null} onOpenChange={() => setSelectedFeature(null)}>
