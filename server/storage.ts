@@ -39,10 +39,13 @@ export interface IStorage {
   upsertUser(user: UpsertUser): Promise<User>;
   updateUserPreferences(id: string, data: { preferredState?: string }): Promise<User>;
   updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User>;
+  getAllActiveUsers(): Promise<User[]>;
+  getUsersByState(stateId: string): Promise<User[]>;
 
   // State operations
   getAllStates(): Promise<State[]>;
   getState(id: string): Promise<State | undefined>;
+  getStateById(id: string): Promise<State | undefined>;
   createState(state: InsertState): Promise<State>;
 
   // Template operations
@@ -63,6 +66,7 @@ export interface IStorage {
   getLegalUpdatesByState(stateId: string): Promise<LegalUpdate[]>;
   getRecentLegalUpdates(limit?: number): Promise<LegalUpdate[]>;
   getLegalUpdate(id: string): Promise<LegalUpdate | undefined>;
+  getLegalUpdateById(id: string): Promise<LegalUpdate | undefined>;
   createLegalUpdate(update: InsertLegalUpdate): Promise<LegalUpdate>;
   updateLegalUpdate(id: string, update: Partial<InsertLegalUpdate>): Promise<LegalUpdate>;
   deleteLegalUpdate(id: string): Promise<void>;
@@ -138,6 +142,14 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getAllActiveUsers(): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.subscriptionStatus, 'active'));
+  }
+
+  async getUsersByState(stateId: string): Promise<User[]> {
+    return await db.select().from(users).where(eq(users.preferredState, stateId));
+  }
+
   // State operations
   async getAllStates(): Promise<State[]> {
     return await db.select().from(states).where(eq(states.isActive, true));
@@ -146,6 +158,10 @@ export class DatabaseStorage implements IStorage {
   async getState(id: string): Promise<State | undefined> {
     const [state] = await db.select().from(states).where(eq(states.id, id));
     return state;
+  }
+
+  async getStateById(id: string): Promise<State | undefined> {
+    return this.getState(id);
   }
 
   async createState(stateData: InsertState): Promise<State> {
@@ -248,6 +264,10 @@ export class DatabaseStorage implements IStorage {
   async getLegalUpdate(id: string): Promise<LegalUpdate | undefined> {
     const [update] = await db.select().from(legalUpdates).where(eq(legalUpdates.id, id));
     return update;
+  }
+
+  async getLegalUpdateById(id: string): Promise<LegalUpdate | undefined> {
+    return this.getLegalUpdate(id);
   }
 
   async createLegalUpdate(updateData: InsertLegalUpdate): Promise<LegalUpdate> {

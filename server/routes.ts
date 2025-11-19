@@ -8,6 +8,8 @@ import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
+import { getUncachableResendClient } from "./resend";
+import { generateLegalUpdateEmail } from "./email-templates";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -580,6 +582,84 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting blog post:", error);
       res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // Send legal update notifications (admin only)
+  app.post('/api/admin/notify-legal-update/:updateId', isAuthenticated, async (req, res) => {
+    try {
+      const { updateId } = req.params;
+      
+      // Get the legal update with state info
+      const update = await storage.getLegalUpdateById(updateId);
+      if (!update) {
+        return res.status(404).json({ message: "Legal update not found" });
+      }
+      
+      const state = await storage.getStateById(update.stateId);
+      if (!state) {
+        return res.status(404).json({ message: "State not found" });
+      }
+      
+      // Get all users who have this state as their preferred state or all users for high impact
+      const users = update.impactLevel === 'high' 
+        ? await storage.getAllActiveUsers() 
+        : await storage.getUsersByState(update.stateId);
+      
+      const { client, fromEmail } = await getUncachableResendClient();
+      
+      let successCount = 0;
+      let errorCount = 0;
+      
+      // Send emails to all users
+      for (const user of users) {
+        if (!user.email) continue;
+        
+        try {
+          const emailData = generateLegalUpdateEmail({
+            update: {
+              ...update,
+              whatChanged: (update as any).beforeText && (update as any).afterText 
+                ? `Before: ${(update as any).beforeText}\n\nAfter: ${(update as any).afterText}` 
+                : null,
+              nextSteps: null,
+            },
+            state: { ...state, code: state.id },
+            userEmail: user.email,
+            userName: user.firstName || undefined,
+          });
+          
+          await client.emails.send({
+            from: fromEmail,
+            to: user.email,
+            subject: emailData.subject,
+            html: emailData.html,
+            text: emailData.text,
+          });
+          
+          // Create in-app notification
+          await storage.createUserNotification({
+            userId: user.id,
+            legalUpdateId: updateId,
+            isRead: false,
+          });
+          
+          successCount++;
+        } catch (emailError) {
+          console.error(`Failed to send email to ${user.email}:`, emailError);
+          errorCount++;
+        }
+      }
+      
+      res.json({ 
+        success: true,
+        sent: successCount,
+        failed: errorCount,
+        total: users.length
+      });
+    } catch (error) {
+      console.error("Error sending notifications:", error);
+      res.status(500).json({ message: "Failed to send notifications" });
     }
   });
 
