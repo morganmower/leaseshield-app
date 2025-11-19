@@ -1,4 +1,4 @@
-import { Switch, Route, Link, useLocation } from "wouter";
+import { Switch, Route, Link, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
@@ -29,6 +29,17 @@ import AdminLegalUpdates from "@/pages/admin-legal-updates";
 import AdminAnalytics from "@/pages/admin-analytics";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
+import { useEffect } from "react";
+
+function RedirectToHome() {
+  const [, setLocation] = useLocation();
+  
+  useEffect(() => {
+    setLocation("/");
+  }, [setLocation]);
+  
+  return null;
+}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -44,7 +55,7 @@ function Router() {
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/logos" component={LogoPicker} />
           <Route path="/logo-colors" component={LogoColors} />
-          <Route component={NotFound} />
+          <Route component={RedirectToHome} />
         </>
       ) : (
         <>
