@@ -48,7 +48,7 @@ export function generateLegalUpdateEmail(data: LegalUpdateEmailData) {
           <tr>
             <td style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
-                🛡️ LeaseShield App
+                LeaseShield App
               </h1>
               <p style="margin: 8px 0 0 0; color: #e0e7ff; font-size: 14px;">
                 Legal Update Alert
@@ -233,7 +233,7 @@ export function generateMonthlyDigestEmail(updates: Array<{update: LegalUpdate &
           <tr>
             <td style="background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%); padding: 32px 40px; text-align: center;">
               <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: 700;">
-                🛡️ LeaseShield App
+                LeaseShield App
               </h1>
               <p style="margin: 8px 0 0 0; color: #e0e7ff; font-size: 14px;">
                 Monthly Legal Updates Digest

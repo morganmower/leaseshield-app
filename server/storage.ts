@@ -143,7 +143,9 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllActiveUsers(): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.subscriptionStatus, 'active'));
+    return await db.select().from(users).where(
+      sql`${users.subscriptionStatus} IN ('active', 'trialing', 'incomplete')`
+    );
   }
 
   async getUsersByState(stateId: string): Promise<User[]> {
