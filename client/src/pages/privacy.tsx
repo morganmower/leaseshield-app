@@ -15,14 +15,23 @@ export default function Privacy() {
               LeaseShield App
             </span>
           </a>
-          <Button
-            variant="ghost"
-            onClick={() => window.location.href = "/"}
-            data-testid="button-back-home"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            Back to Home
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-login"
+            >
+              Log In
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => window.location.href = "/"}
+              data-testid="button-back-home"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Back to Home
+            </Button>
+          </div>
         </div>
       </header>
 
