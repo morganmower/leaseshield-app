@@ -25,6 +25,28 @@ export default function HelpCenter() {
 
   const faqs = [
     {
+      category: "Account Access",
+      icon: Shield,
+      questions: [
+        {
+          q: "How do I log in to my account?",
+          a: "LeaseShield App uses Replit authentication for secure access. Simply click the 'Log In' or 'Start Free Trial' button, and you'll be redirected to sign in with your Replit account. If you don't have a Replit account yet, you can create one for free."
+        },
+        {
+          q: "I forgot my password. How do I reset it?",
+          a: "Since LeaseShield App uses Replit authentication, password management is handled by Replit. To reset your Replit account password, visit replit.com and click 'Forgot Password' on the login page. If you're having trouble accessing your Replit account, contact Replit support at https://replit.com/support for assistance."
+        },
+        {
+          q: "Can't remember which email I used to sign up?",
+          a: "Your LeaseShield App account is connected to your Replit account. Try logging in with any email addresses you typically use. If you're still having trouble, check your email inbox for past messages from LeaseShield App (sent from support@leaseshieldapp.com) or Replit to identify the correct email address."
+        },
+        {
+          q: "What if I can't access my account?",
+          a: "If you're unable to access your account, first try resetting your Replit password at replit.com. If that doesn't work, contact our support team at support@leaseshieldapp.com with the email address you believe is associated with your account, and we'll help you regain access."
+        }
+      ]
+    },
+    {
       category: "Getting Started",
       icon: Book,
       questions: [
