@@ -324,16 +324,16 @@ export default function Landing() {
                     className="flex"
                   >
                     <Card 
-                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
+                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
                       onClick={() => setSelectedFeature("leases")}
                       data-testid="card-feature-leases"
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-12 -mt-12" />
-                      <div className="relative flex flex-col flex-1">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-3">
-                          <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                      <div className="relative flex flex-col items-center text-center gap-4">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-16 h-16 flex items-center justify-center">
+                          <FileText className="h-8 w-8 text-amber-600 dark:text-amber-500" />
                         </div>
-                        <p className="font-medium">State-Specific Leases</p>
+                        <p className="font-semibold text-base leading-tight">State-Specific<br />Leases</p>
                       </div>
                     </Card>
                   </motion.div>
@@ -343,16 +343,16 @@ export default function Landing() {
                     className="flex"
                   >
                     <Card 
-                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
+                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
                       onClick={() => setSelectedFeature("compliance")}
                       data-testid="card-feature-compliance"
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-12 -mt-12" />
-                      <div className="relative flex flex-col flex-1">
-                        <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-3">
-                          <Shield className="h-6 w-6 text-primary" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+                      <div className="relative flex flex-col items-center text-center gap-4">
+                        <div className="rounded-lg bg-primary/10 w-16 h-16 flex items-center justify-center">
+                          <Shield className="h-8 w-8 text-primary" />
                         </div>
-                        <p className="font-medium">Compliance Guidance</p>
+                        <p className="font-semibold text-base leading-tight">Compliance<br />Guidance</p>
                       </div>
                     </Card>
                   </motion.div>
@@ -362,16 +362,16 @@ export default function Landing() {
                     className="flex"
                   >
                     <Card 
-                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
+                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
                       onClick={() => setSelectedFeature("screening")}
                       data-testid="card-feature-screening"
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-12 -mt-12" />
-                      <div className="relative flex flex-col flex-1">
-                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-3">
-                          <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                      <div className="relative flex flex-col items-center text-center gap-4">
+                        <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-16 h-16 flex items-center justify-center">
+                          <Search className="h-8 w-8 text-cyan-600 dark:text-cyan-500" />
                         </div>
-                        <p className="font-medium">Screening Toolkit</p>
+                        <p className="font-semibold text-base leading-tight">Screening<br />Toolkit</p>
                       </div>
                     </Card>
                   </motion.div>
@@ -381,16 +381,16 @@ export default function Landing() {
                     className="flex"
                   >
                     <Card 
-                      className="p-6 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full"
+                      className="p-8 hover-elevate active-elevate-2 transition-all cursor-pointer relative overflow-hidden flex flex-col w-full justify-center"
                       onClick={() => setSelectedFeature("resources")}
                       data-testid="card-feature-resources"
                     >
-                      <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-12 -mt-12" />
-                      <div className="relative flex flex-col flex-1">
-                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-3">
-                          <Users className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                      <div className="relative flex flex-col items-center text-center gap-4">
+                        <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-16 h-16 flex items-center justify-center">
+                          <Users className="h-8 w-8 text-amber-600 dark:text-amber-500" />
                         </div>
-                        <p className="font-medium">Helpful Resources</p>
+                        <p className="font-semibold text-base leading-tight">Helpful<br />Resources</p>
                       </div>
                     </Card>
                   </motion.div>
