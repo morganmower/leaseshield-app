@@ -249,7 +249,7 @@ export default function HelpCenter() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => window.location.href = "mailto:support@leaseshieldpro.com"}
+                  onClick={() => window.location.href = "mailto:support@leaseshieldapp.com"}
                   data-testid="button-email-support"
                 >
                   Email Us

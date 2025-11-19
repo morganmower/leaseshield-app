@@ -44,7 +44,7 @@ Don't lose access to:
 
 Continue your subscription for just $12-15/month and keep your rental business protected.
 
-Log in to manage your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/settings
+Log in to manage your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings
 
 Questions? We're here to help.
 
@@ -89,7 +89,7 @@ The LeaseShield App Team
       <p>Continue your subscription for just <strong>$12-15/month</strong> and keep your rental business protected.</p>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/settings" class="cta-button">
+        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" class="cta-button">
           Manage Subscription
         </a>
       </center>
@@ -127,7 +127,7 @@ ${updateSummary}
 
 This change has been flagged as ${impactLevel} impact to your rental business.
 
-Log in to LeaseShield App to read the full details, including before/after comparison and why this matters to you: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/compliance
+Log in to LeaseShield App to read the full details, including before/after comparison and why this matters to you: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/compliance
 
 Stay compliant and protected,
 The LeaseShield App Team
@@ -170,7 +170,7 @@ The LeaseShield App Team
       </ul>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/compliance" class="cta-button">
+        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/compliance" class="cta-button">
           View Legal Update
         </a>
       </center>
@@ -205,7 +205,7 @@ You now have unlimited access to:
 • Credit report decoder and tenant screening resources
 • Expert guidance for handling tenant issues
 
-Start protecting your rental business: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/dashboard
+Start protecting your rental business: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/dashboard
 
 Need help getting started? Visit our Help Center or reach out anytime.
 
@@ -249,7 +249,7 @@ The LeaseShield App Team
       </div>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/dashboard" class="cta-button">
+        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/dashboard" class="cta-button">
           Go to Dashboard
         </a>
       </center>
@@ -259,7 +259,7 @@ The LeaseShield App Team
     
     <div class="footer">
       <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
-      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldpro.com'}/settings" style="color: #2563eb;">Settings</a></p>
+      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" style="color: #2563eb;">Settings</a></p>
     </div>
   </div>
 </body>
@@ -338,7 +338,7 @@ Sent from LeaseShield App Contact Form
 
     // Send to support email
     return this.sendEmail(
-      { email: 'support@leaseshieldpro.com', firstName: 'Support', lastName: 'Team' },
+      { email: 'support@leaseshieldapp.com', firstName: 'Support', lastName: 'Team' },
       template
     );
   }

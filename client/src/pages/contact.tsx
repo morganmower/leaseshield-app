@@ -277,10 +277,10 @@ export default function Contact() {
           <p className="text-sm text-muted-foreground">
             Or email us directly at{" "}
             <a
-              href="mailto:support@leaseshieldpro.com"
+              href="mailto:support@leaseshieldapp.com"
               className="text-primary hover:underline"
             >
-              support@leaseshieldpro.com
+              support@leaseshieldapp.com
             </a>
           </p>
         </div>
