@@ -114,22 +114,20 @@ export default function Landing() {
               LeaseShield<span className="hidden sm:inline"> Pro</span>
             </span>
           </a>
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Button
               variant="ghost"
-              size="sm"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-login"
-              className="text-xs sm:text-sm"
+              className="text-sm sm:text-base"
             >
               Log In
             </Button>
             <Button
-              size="sm"
               onClick={() => window.location.href = "/api/login"}
               data-testid="button-start-trial"
-              className="text-xs sm:text-sm px-2 sm:px-4"
+              className="text-sm sm:text-base px-3 sm:px-5"
             >
               <span className="hidden xs:inline">Start </span>Trial
             </Button>
