@@ -155,17 +155,21 @@ export class DatabaseStorage implements IStorage {
 
   // Template operations
   async getAllTemplates(filters?: { stateId?: string; category?: string }): Promise<Template[]> {
-    let query = db.select().from(templates).where(eq(templates.isActive, true));
+    const conditions = [eq(templates.isActive, true)];
 
     if (filters?.stateId && filters.stateId !== "all") {
-      query = query.where(eq(templates.stateId, filters.stateId));
+      conditions.push(eq(templates.stateId, filters.stateId));
     }
 
     if (filters?.category && filters.category !== "all") {
-      query = query.where(eq(templates.category, filters.category as any));
+      conditions.push(eq(templates.category, filters.category as any));
     }
 
-    return await query.orderBy(templates.sortOrder, templates.title);
+    return await db
+      .select()
+      .from(templates)
+      .where(and(...conditions))
+      .orderBy(templates.sortOrder, templates.title);
   }
 
   async getTemplate(id: string): Promise<Template | undefined> {

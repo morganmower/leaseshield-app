@@ -24,8 +24,25 @@ export default function Blog() {
   const [selectedState, setSelectedState] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
 
+  // Build query string for filters
+  const buildQueryString = () => {
+    const params = new URLSearchParams();
+    if (selectedState && selectedState !== "all") {
+      params.append('stateId', selectedState);
+    }
+    if (selectedTag && selectedTag !== "all") {
+      params.append('tag', selectedTag);
+    }
+    return params.toString() ? `?${params.toString()}` : '';
+  };
+
   const { data: posts, isLoading } = useQuery<BlogPost[]>({
-    queryKey: ['/api/blog', selectedState !== "all" ? selectedState : undefined, selectedTag !== "all" ? selectedTag : undefined],
+    queryKey: ['/api/blog', selectedState, selectedTag],
+    queryFn: async () => {
+      const response = await fetch(`/api/blog${buildQueryString()}`);
+      if (!response.ok) throw new Error('Failed to fetch blog posts');
+      return response.json();
+    },
   });
 
   const { data: states } = useQuery({
