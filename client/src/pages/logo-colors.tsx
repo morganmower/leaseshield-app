@@ -81,7 +81,7 @@ export default function LogoColors() {
             right: '-2%',
             top: '3%',
             stroke: 'url(#shieldGrad)',
-            strokeWidth: 3.5,
+            strokeWidth: 2.5,
             fill: 'url(#shieldFillGrad)',
             filter: 'drop-shadow(0 4px 8px rgb(0 0 0 / 0.3))',
             strokeLinecap: 'square',
