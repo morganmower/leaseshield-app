@@ -577,7 +577,7 @@ export default function Landing() {
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span>Unlimited access to 37+ state-specific templates</span>
+                  <span>37+ templates for UT, TX, ND, and SD</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
