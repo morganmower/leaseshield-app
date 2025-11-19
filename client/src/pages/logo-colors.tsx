@@ -15,34 +15,34 @@ export default function LogoColors() {
       description: "Cheerful, eye-catching, energetic"
     },
     {
+      name: "Navy Blue (Professional)",
+      house: { start: "#3b82f6", end: "#2563eb" },
+      description: "Corporate, trustworthy, matches screening industry"
+    },
+    {
+      name: "Dark Teal/Cyan",
+      house: { start: "#06b6d4", end: "#0891b2" },
+      description: "Tech-forward, verification theme, professional"
+    },
+    {
       name: "Forest Green",
       house: { start: "#10b981", end: "#059669" },
-      description: "Natural, trustworthy, stable"
+      description: "Verified/approved, trustworthy, stable"
     },
     {
-      name: "Sage Green",
-      house: { start: "#84cc16", end: "#65a30d" },
-      description: "Modern, fresh, balanced"
+      name: "Charcoal Gray",
+      house: { start: "#6b7280", end: "#4b5563" },
+      description: "Ultra-professional, corporate, neutral"
     },
     {
-      name: "Silver/Gray",
+      name: "Steel Blue-Gray",
+      house: { start: "#64748b", end: "#475569" },
+      description: "Professional services, sophisticated, modern"
+    },
+    {
+      name: "Silver/Light Gray",
       house: { start: "#94a3b8", end: "#64748b" },
-      description: "Professional, sophisticated, neutral"
-    },
-    {
-      name: "White/Light",
-      house: { start: "#f1f5f9", end: "#cbd5e1" },
-      description: "Clean, minimal, subtle (better for dark mode)"
-    },
-    {
-      name: "Copper/Bronze",
-      house: { start: "#ea580c", end: "#c2410c" },
-      description: "Warm, premium, distinctive"
-    },
-    {
-      name: "Teal",
-      house: { start: "#14b8a6", end: "#0d9488" },
-      description: "Modern, trustworthy, complementary"
+      description: "Clean, professional, subtle contrast"
     }
   ];
 
