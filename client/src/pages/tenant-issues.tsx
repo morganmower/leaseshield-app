@@ -1,9 +1,16 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertCircle,
   FileText,
@@ -12,6 +19,7 @@ import {
   UserX,
   ArrowRight,
   TrendingUp,
+  CheckCircle2,
 } from "lucide-react";
 
 const workflows = [
@@ -22,6 +30,15 @@ const workflows = [
     icon: DollarSign,
     category: "Payment Issues",
     templates: ["Late rent notice", "Payment plan agreement", "Pay or quit notice"],
+    steps: [
+      "Review your lease agreement for late fee policies and grace periods",
+      "Send a friendly reminder if within grace period",
+      "Issue formal late rent notice after grace period expires",
+      "Contact tenant to discuss payment options or payment plan",
+      "If no response, issue Pay or Quit notice per state requirements",
+      "Document all communication and maintain records",
+      "Consider legal action only as last resort"
+    ]
   },
   {
     id: "lease-violation",
@@ -30,6 +47,15 @@ const workflows = [
     icon: AlertCircle,
     category: "Violations",
     templates: ["Violation notice", "Cure or quit notice", "Incident documentation"],
+    steps: [
+      "Document the specific violation with photos, dates, and details",
+      "Review lease terms to confirm violation",
+      "Issue written violation notice describing the issue",
+      "Provide reasonable time to cure (check state requirements)",
+      "Follow up to verify compliance",
+      "If uncured, issue Cure or Quit notice",
+      "Maintain Fair Housing compliance throughout process"
+    ]
   },
   {
     id: "property-damage",
@@ -38,6 +64,15 @@ const workflows = [
     icon: Home,
     category: "Property Issues",
     templates: ["Damage documentation form", "Repair cost estimate", "Deposit deduction letter"],
+    steps: [
+      "Document damage with photos and detailed description",
+      "Determine if damage exceeds normal wear and tear",
+      "Obtain repair estimates from licensed contractors",
+      "Notify tenant of damage and estimated costs",
+      "Complete repairs with proper documentation",
+      "Provide itemized deduction statement within state deadline",
+      "Return remaining deposit per state requirements"
+    ]
   },
   {
     id: "esa-pets",
@@ -46,6 +81,15 @@ const workflows = [
     icon: Home,
     category: "Animals",
     templates: ["ESA verification request", "ESA acceptance letter", "Pet policy addendum"],
+    steps: [
+      "Receive request for emotional support animal accommodation",
+      "Request verification from healthcare provider",
+      "Verify provider credentials and patient relationship",
+      "Review documentation for disability-related need",
+      "Make reasonable accommodation decision",
+      "Document approval or denial with clear reasoning",
+      "Never charge pet fees/deposits for legitimate ESAs"
+    ]
   },
   {
     id: "rent-increase",
@@ -54,6 +98,15 @@ const workflows = [
     icon: TrendingUp,
     category: "Lease Changes",
     templates: ["Rent increase notice", "Lease renewal with increase", "Month-to-month notice"],
+    steps: [
+      "Research local rent control laws and limitations",
+      "Verify required notice period (typically 30-60 days)",
+      "Calculate new rent amount based on market conditions",
+      "Prepare written notice with all required information",
+      "Deliver notice via certified mail or per state requirements",
+      "Keep proof of delivery and all documentation",
+      "Offer lease renewal with new terms"
+    ]
   },
   {
     id: "non-renewal",
@@ -62,12 +115,23 @@ const workflows = [
     icon: UserX,
     category: "Lease Termination",
     templates: ["Non-renewal notice", "Move-out checklist", "Security deposit return"],
+    steps: [
+      "Review lease end date and notice requirements",
+      "Send non-renewal notice within required timeframe",
+      "Schedule move-out inspection with tenant",
+      "Conduct walkthrough using detailed checklist",
+      "Document property condition with photos",
+      "Calculate security deposit deductions if applicable",
+      "Return deposit within state deadline with itemization"
+    ]
   },
 ];
 
 export default function TenantIssues() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [selectedWorkflow, setSelectedWorkflow] = useState<typeof workflows[0] | null>(null);
+  const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -82,6 +146,11 @@ export default function TenantIssues() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  const handleViewWorkflow = (workflow: typeof workflows[0]) => {
+    setSelectedWorkflow(workflow);
+    setShowWorkflowDialog(true);
+  };
 
   if (isLoading) {
     return (
@@ -157,6 +226,7 @@ export default function TenantIssues() {
                   variant="outline"
                   size="sm"
                   className="w-full"
+                  onClick={() => handleViewWorkflow(workflow)}
                   data-testid={`button-view-workflow-${workflow.id}`}
                 >
                   View Workflow
@@ -182,6 +252,93 @@ export default function TenantIssues() {
             </Button>
           </div>
         </Card>
+
+        {/* Workflow Detail Dialog */}
+        <Dialog open={showWorkflowDialog} onOpenChange={setShowWorkflowDialog}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto" data-testid="dialog-workflow-detail">
+            {selectedWorkflow && (
+              <>
+                <DialogHeader>
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                      <selectedWorkflow.icon className="h-6 w-6 text-primary" />
+                    </div>
+                    <div>
+                      <DialogTitle className="text-left">{selectedWorkflow.title}</DialogTitle>
+                      <Badge variant="secondary" className="mt-1 text-xs">
+                        {selectedWorkflow.category}
+                      </Badge>
+                    </div>
+                  </div>
+                  <DialogDescription className="text-left pt-2">
+                    {selectedWorkflow.description}
+                  </DialogDescription>
+                </DialogHeader>
+
+                <div className="space-y-6 pt-4">
+                  {/* Steps */}
+                  <div>
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                      Step-by-Step Guide
+                    </h3>
+                    <ol className="space-y-3">
+                      {selectedWorkflow.steps.map((step, idx) => (
+                        <li key={idx} className="flex gap-3">
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">
+                            {idx + 1}
+                          </span>
+                          <span className="text-sm text-foreground pt-0.5">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+
+                  {/* Related Templates */}
+                  <div className="pt-4 border-t">
+                    <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-primary" />
+                      Related Templates
+                    </h3>
+                    <div className="space-y-2">
+                      {selectedWorkflow.templates.map((template, idx) => (
+                        <div
+                          key={idx}
+                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm"
+                        >
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-foreground">{template}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-3">
+                      Access these templates from the Templates page
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 pt-4">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowWorkflowDialog(false)}
+                    className="flex-1"
+                    data-testid="button-close-workflow"
+                  >
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => window.location.href = '/templates'}
+                    className="flex-1"
+                    data-testid="button-view-templates"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Templates
+                  </Button>
+                </div>
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
