@@ -10,6 +10,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   AlertCircle,
@@ -20,7 +21,11 @@ import {
   ArrowRight,
   TrendingUp,
   CheckCircle2,
+  Download,
+  Lock,
 } from "lucide-react";
+import type { Template } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
 
 const workflows = [
   {
@@ -132,6 +137,21 @@ export default function TenantIssues() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [selectedWorkflow, setSelectedWorkflow] = useState<typeof workflows[0] | null>(null);
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+
+  const isPayingMember = user?.subscriptionStatus === 'active';
+  const isTrialing = user?.subscriptionStatus === 'trialing';
+
+  // Fetch all templates to match workflow template names
+  const { data: allTemplates } = useQuery<Template[]>({
+    queryKey: ["/api/templates"],
+    enabled: isAuthenticated,
+    queryFn: async () => {
+      const response = await fetch('/api/templates', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch templates');
+      return response.json();
+    },
+  });
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -150,6 +170,59 @@ export default function TenantIssues() {
   const handleViewWorkflow = (workflow: typeof workflows[0]) => {
     setSelectedWorkflow(workflow);
     setShowWorkflowDialog(true);
+  };
+
+  const handleTemplateDownload = async (templateName: string) => {
+    if (!isPayingMember) {
+      setShowUpgradeDialog(true);
+      return;
+    }
+
+    // Find matching template by name
+    const template = allTemplates?.find(t => 
+      t.title.toLowerCase().includes(templateName.toLowerCase()) ||
+      templateName.toLowerCase().includes(t.title.toLowerCase())
+    );
+
+    if (!template) {
+      toast({
+        title: "Template Not Found",
+        description: "This template is not available yet.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/templates/${template.id}/download`, {
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Download failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${template.title}.docx`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Download Started",
+        description: `${template.title} is downloading...`,
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "There was an error downloading the template.",
+        variant: "destructive",
+      });
+    }
   };
 
   if (isLoading) {
@@ -302,17 +375,28 @@ export default function TenantIssues() {
                     </h3>
                     <div className="space-y-2">
                       {selectedWorkflow.templates.map((template, idx) => (
-                        <div
+                        <button
                           key={idx}
-                          className="flex items-center gap-2 p-3 rounded-lg bg-muted/50 text-sm"
+                          onClick={() => handleTemplateDownload(template)}
+                          className="w-full flex items-center justify-between gap-2 p-3 rounded-lg bg-muted/50 text-sm hover-elevate active-elevate-2 transition-all"
+                          data-testid={`button-download-template-${idx}`}
                         >
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-foreground">{template}</span>
-                        </div>
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-foreground">{template}</span>
+                          </div>
+                          {isPayingMember ? (
+                            <Download className="h-4 w-4 text-muted-foreground" />
+                          ) : (
+                            <Lock className="h-4 w-4 text-muted-foreground" />
+                          )}
+                        </button>
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground mt-3">
-                      Access these templates from the Templates page
+                      {isPayingMember 
+                        ? "Click any template to download instantly"
+                        : "Upgrade to access and download templates"}
                     </p>
                   </div>
                 </div>
@@ -337,6 +421,42 @@ export default function TenantIssues() {
                 </div>
               </>
             )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Upgrade Dialog */}
+        <Dialog open={showUpgradeDialog} onOpenChange={setShowUpgradeDialog}>
+          <DialogContent data-testid="dialog-upgrade-required">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5 text-primary" />
+                Upgrade Required
+              </DialogTitle>
+              <DialogDescription className="pt-4 space-y-3">
+                <p>
+                  Template downloads are available to paying members only.
+                  {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
+                </p>
+                <p>
+                  Upgrade now for just <strong>$12-15/month</strong> to access our complete library of 37+ attorney-reviewed, state-specific templates.
+                </p>
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-2 sm:gap-0">
+              <Button
+                variant="outline"
+                onClick={() => setShowUpgradeDialog(false)}
+                data-testid="button-cancel-upgrade"
+              >
+                Not Now
+              </Button>
+              <Button
+                onClick={() => window.location.href = '/subscribe'}
+                data-testid="button-go-to-subscribe"
+              >
+                Upgrade to Pro
+              </Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
       </div>
