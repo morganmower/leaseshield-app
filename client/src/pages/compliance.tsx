@@ -13,7 +13,7 @@ import type { ComplianceCard, LegalUpdate } from "@shared/schema";
 export default function Compliance() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
-  const [selectedState, setSelectedState] = useState<string>("");
+  const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -30,19 +30,35 @@ export default function Compliance() {
   }, [isAuthenticated, isLoading, toast]);
 
   useEffect(() => {
-    if (user?.preferredState) {
+    if (user?.preferredState && !selectedState) {
       setSelectedState(user.preferredState);
     }
-  }, [user]);
+  }, [user, selectedState]);
 
   const { data: complianceCards, isLoading: cardsLoading } = useQuery<ComplianceCard[]>({
     queryKey: ["/api/compliance-cards", selectedState],
     enabled: isAuthenticated && !!selectedState,
+    queryFn: async () => {
+      const url = `/api/compliance-cards?stateId=${selectedState}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch compliance cards');
+      }
+      return response.json();
+    },
   });
 
   const { data: legalUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
     queryKey: ["/api/legal-updates", selectedState],
     enabled: isAuthenticated && !!selectedState,
+    queryFn: async () => {
+      const url = `/api/legal-updates?stateId=${selectedState}`;
+      const response = await fetch(url, { credentials: 'include' });
+      if (!response.ok) {
+        throw new Error('Failed to fetch legal updates');
+      }
+      return response.json();
+    },
   });
 
   if (isLoading) {
