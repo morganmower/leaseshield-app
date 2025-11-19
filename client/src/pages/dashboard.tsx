@@ -117,46 +117,58 @@ export default function Dashboard() {
             Start Here
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all" data-testid="card-leasing-toolkit">
-              <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                <FileText className="h-6 w-6 text-primary" />
+            {/* Leasing Toolkit - Amber/Gold */}
+            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-leasing-toolkit">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <div className="relative">
+                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                  <FileText className="h-7 w-7 text-amber-600 dark:text-amber-500" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">Leasing Toolkit</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  State-specific leases, applications, and rental agreements
+                </p>
+                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
+                  Browse Templates
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <h3 className="font-display text-lg font-semibold mb-2">Leasing Toolkit</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                State-specific leases, applications, and rental agreements
-              </p>
-              <Button variant="ghost" size="sm" className="p-0 h-auto font-medium">
-                Browse Templates
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </Card>
 
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all" data-testid="card-screening-toolkit">
-              <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                <Search className="h-6 w-6 text-primary" />
+            {/* Screening Toolkit - Teal/Cyan */}
+            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-toolkit">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <div className="relative">
+                <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                  <Search className="h-7 w-7 text-cyan-600 dark:text-cyan-500" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">Screening Toolkit</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Learn to read credit reports and avoid screening mistakes
+                </p>
+                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium text-cyan-600 dark:text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400">
+                  Get Started
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <h3 className="font-display text-lg font-semibold mb-2">Screening Toolkit</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Learn to read credit reports and avoid screening mistakes
-              </p>
-              <Button variant="ghost" size="sm" className="p-0 h-auto font-medium">
-                Get Started
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </Card>
 
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all" data-testid="card-compliance-toolkit">
-              <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                <Shield className="h-6 w-6 text-primary" />
+            {/* Compliance Toolkit - Blue/Primary */}
+            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-compliance-toolkit">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <div className="relative">
+                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                  <Shield className="h-7 w-7 text-primary" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">Compliance Toolkit</h3>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Stay current with state-specific requirements and updates
+                </p>
+                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium">
+                  View Compliance
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
               </div>
-              <h3 className="font-display text-lg font-semibold mb-2">Compliance Toolkit</h3>
-              <p className="text-sm text-muted-foreground mb-4">
-                Stay current with state-specific requirements and updates
-              </p>
-              <Button variant="ghost" size="sm" className="p-0 h-auto font-medium">
-                View Compliance
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
             </Card>
           </div>
         </div>
