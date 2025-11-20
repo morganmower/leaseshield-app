@@ -51,6 +51,9 @@ shared/
 - **analyticsEvents**: Usage tracking
 - **screeningContent**: Tenant screening guides
 - **tenantIssueWorkflows**: Issue resolution workflows
+- **legislativeMonitoring**: Tracked bills from LegiScan with AI relevance analysis
+- **templateReviewQueue**: Templates flagged for attorney review due to new legislation
+- **monitoringRuns**: Log of each monthly legislative monitoring run
 
 ## Setup Instructions
 
@@ -65,6 +68,7 @@ The following secrets are required:
 
 **Required Setup**:
 - `STRIPE_PRICE_ID` - **IMPORTANT**: Create this manually in Stripe dashboard
+- `LEGISCAN_API_KEY` - **IMPORTANT**: Get free API key from legiscan.com for legislative monitoring
 
 #### Setting up STRIPE_PRICE_ID
 
@@ -77,6 +81,17 @@ The following secrets are required:
 4. Save the product
 5. Copy the **Price ID** (starts with `price_`)
 6. Add to Replit Secrets as `STRIPE_PRICE_ID`
+
+#### Setting up LEGISCAN_API_KEY
+
+1. Go to [LegiScan](https://legiscan.com/legiscan)
+2. Click "Request API Key" (free tier)
+3. Fill in account information
+4. Verify email and activate account
+5. Copy your API key
+6. Add to Replit Secrets as `LEGISCAN_API_KEY`
+
+**Free Tier:** 30,000 queries/month (plenty for 4 states)
 
 ### 2. Database Setup
 ```bash
@@ -155,6 +170,13 @@ The app will be available on port 5000.
 - `GET /api/legal-updates/recent` - Get recent updates
 - `POST /api/admin/legal-updates` - Create update (admin)
 - `POST /api/admin/notify-legal-update/:updateId` - Send email notifications (admin)
+
+### Legislative Monitoring (Internal/Automated)
+- Monthly cron job runs automatically on 1st of each month
+- Queries LegiScan API for new landlord-tenant bills
+- AI analyzes relevance and flags affected templates
+- Sends admin email with monthly report
+- See LEGISLATIVE_MONITORING_SYSTEM.md for details
 
 ### Notifications
 - `GET /api/notifications` - Get user notifications
@@ -249,6 +271,16 @@ Stripe webhooks update subscription status:
 - [ ] Set up error tracking (Sentry, etc.)
 
 ## Recent Changes
+- **2024-11-20**: **Automated legislative monitoring system implemented** - Monthly monitoring for new landlord-tenant laws
+  - LegiScan API integration (30k free queries/month) for tracking state legislation in UT/TX/ND/SD
+  - Monthly cron job (runs 1st of each month) searches for relevant bills
+  - AI-powered relevance analysis using GPT-4 to identify bills affecting templates
+  - Automated template review queue with priority-based flagging
+  - Email notification system sends monthly admin reports with findings
+  - Semi-automated workflow maintains UPL compliance (human approval required before publishing changes)
+  - Database tables: legislativeMonitoring, templateReviewQueue, monitoringRuns
+  - Comprehensive documentation in LEGISLATIVE_MONITORING_SYSTEM.md
+  - Monthly cost: ~$2-5 (OpenAI API usage for bill analysis)
 - **2024-11-19**: **Email notification system implemented** - Legal update emails with Resend integration
   - Professional HTML/text email templates for high/medium/low impact legal updates
   - Impact-based routing (high → all active/trialing users, medium → state-specific users)
@@ -271,7 +303,8 @@ Stripe webhooks update subscription status:
 - Admin features require manual role assignment (no UI yet)
 - Western Verify integration is CTA-based, no API integration
 - No automated testing suite yet
-- Legislative monitoring requires manual setup (see LEGAL_UPDATE_SYSTEM.md)
+- Legislative monitoring runs automatically but requires admin dashboard for template review workflow
+- Template review queue requires manual admin review (no UI yet)
 
 ## Future Enhancements
 - Admin role management UI
