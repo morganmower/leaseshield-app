@@ -4,6 +4,7 @@ import { Shield, ArrowLeft, Book, FileText, Scale, Users, MessageCircle, CheckCi
 import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Logo } from "@/components/logo";
+import { useLocation } from "wouter";
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -13,13 +14,14 @@ const fadeIn = {
 
 export default function HelpCenter() {
   const { isAuthenticated, isLoading } = useAuth();
+  const [, setLocation] = useLocation();
 
   const handleQuickLinkClick = (href: string) => {
     // If not authenticated and trying to access protected routes, redirect to login
     if (!isAuthenticated && (href === '/templates' || href === '/compliance' || href === '/screening')) {
       window.location.href = '/api/login';
     } else {
-      window.location.href = href;
+      setLocation(href);
     }
   };
 
@@ -262,7 +264,7 @@ export default function HelpCenter() {
               <div className="flex flex-col sm:flex-row gap-3 justify-center">
                 <Button
                   size="lg"
-                  onClick={() => window.location.href = "/contact"}
+                  onClick={() => setLocation("/contact")}
                   data-testid="button-contact-support"
                 >
                   <MessageCircle className="mr-2 h-5 w-5" />
@@ -271,10 +273,12 @@ export default function HelpCenter() {
                 <Button
                   size="lg"
                   variant="outline"
-                  onClick={() => window.location.href = "mailto:support@leaseshieldapp.com"}
+                  asChild
                   data-testid="button-email-support"
                 >
-                  Email Us
+                  <a href="mailto:support@leaseshieldapp.com">
+                    Email Us
+                  </a>
                 </Button>
               </div>
               <p className="text-sm text-muted-foreground mt-4">
