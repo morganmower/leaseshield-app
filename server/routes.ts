@@ -1164,7 +1164,7 @@ ABOUT LEASESHIELD APP:
 - Subscription-based platform ($12/month with 7-day free trial)
 - Provides state-specific legal templates, compliance guidance, and tenant screening resources
 - Currently serving: Utah (UT), Texas (TX), North Dakota (ND), and South Dakota (SD)
-- Features: attorney-reviewed lease agreements, compliance cards, legal update notifications, screening guides, tenant issue workflows
+- Features: professional state-specific lease agreements, compliance cards, legal update notifications, screening guides, tenant issue workflows
 - Tone: "Protective mentor" - helping landlords protect their investments while staying compliant
 
 YOUR ROLE:

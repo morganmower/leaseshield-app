@@ -417,7 +417,7 @@ export default function Screening() {
                   <h4 className="font-semibold text-foreground mb-2">Required by Federal Law</h4>
                   <p className="text-sm text-muted-foreground">
                     Failing to provide proper adverse action notices can result in lawsuits and
-                    penalties. Use our attorney-reviewed templates to stay compliant.
+                    penalties. Use our professional templates to help you stay compliant.
                   </p>
                 </div>
               </div>

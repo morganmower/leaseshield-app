@@ -26,7 +26,7 @@ Not specified.
 
 ### Feature Specifications
 - **Subscription Management**: 7-day free trial, $12/month subscription, Stripe Elements integration, webhook-driven lifecycle, and trial countdowns.
-- **Template Library**: State-specific legal documents categorized by use case, attorney-reviewed, and downloadable as PDF/DOCX.
+- **Template Library**: State-specific legal documents categorized by use case and downloadable as PDF/DOCX.
 - **Compliance Cards**: State-specific before/after guidance with explanations and actionable next steps.
 - **Screening Toolkit**: Guides for credit reports, background checks, Fair Housing compliance, and CTAs for Western Verify integration.
 - **Tenant Issue Workflows**: Step-by-step resolution guides with state-specific procedures and document templates.

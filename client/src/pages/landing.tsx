@@ -138,7 +138,7 @@ export default function Landing() {
     leases: {
       title: "State-Specific Leases",
       icon: FileText,
-      description: "Access attorney-reviewed lease agreements and rental forms tailored to your state's exact legal requirements.",
+      description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
         "Residential lease agreements compliant with UT, TX, ND, and SD laws",
         "Rental application forms with fair housing compliance",
@@ -414,7 +414,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-xl font-semibold mb-3">State-Specific Templates</h3>
                   <p className="text-muted-foreground mb-4">
-                    Attorney-reviewed leases, applications, notices, and forms tailored to your state's
+                    Professional leases, applications, notices, and forms tailored to your state's
                     exact requirements. Download as PDF or fill online.
                   </p>
                   <ul className="space-y-2 text-sm">
@@ -788,7 +788,7 @@ export default function Landing() {
                       </td>
                     </tr>
                     <tr className="border-b">
-                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Attorney-Reviewed</td>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Professional Quality</td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
@@ -1084,11 +1084,11 @@ export default function Landing() {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Are the templates really attorney-reviewed?</AccordionTrigger>
+                <AccordionTrigger>Are the templates state-specific and up to date?</AccordionTrigger>
                 <AccordionContent>
-                  Yes! Every template in our library has been reviewed and approved by licensed
-                  attorneys in each respective state. We also update templates whenever state laws
-                  change to ensure you're always compliant.
+                  Yes! Every template in our library is tailored to each state's specific laws and requirements.
+                  We monitor state legislation and update templates whenever laws change to help you stay compliant.
+                  However, these are general forms for informational purposes only and we recommend having them reviewed by your own attorney for your specific situation.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
@@ -1293,7 +1293,7 @@ export default function Landing() {
               Utah Residential Lease Agreement - Preview
             </DialogTitle>
             <DialogDescription>
-              See the quality and detail of our attorney-reviewed templates
+              See the quality and detail of our professional templates
             </DialogDescription>
           </DialogHeader>
           

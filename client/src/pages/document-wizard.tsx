@@ -312,8 +312,8 @@ export default function DocumentWizard() {
           <CardContent className="pt-6">
             <p className="text-sm text-blue-900 dark:text-blue-100">
               <strong>Important:</strong> This document is generated based on your input and state-specific requirements. 
-              While our templates are attorney-reviewed, we recommend having any completed documents reviewed by a local 
-              attorney before use.
+              These are general forms for informational purposes only. We strongly recommend having any completed documents reviewed by a local 
+              attorney before use to ensure they meet your specific needs.
             </p>
           </CardContent>
         </Card>
