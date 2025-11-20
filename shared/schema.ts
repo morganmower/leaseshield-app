@@ -187,11 +187,13 @@ export const insertLegalUpdateSchema = createInsertSchema(legalUpdates).omit({
 export type InsertLegalUpdate = z.infer<typeof insertLegalUpdateSchema>;
 export type LegalUpdate = typeof legalUpdates.$inferSelect;
 
-// User notifications for legal updates
+// User notifications for legal updates and template updates
 export const userNotifications = pgTable("user_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull(),
-  legalUpdateId: varchar("legal_update_id").notNull(),
+  legalUpdateId: varchar("legal_update_id"),
+  templateId: varchar("template_id"),
+  message: text("message"),
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow(),
@@ -205,6 +207,10 @@ export const userNotificationsRelations = relations(userNotifications, ({ one })
   legalUpdate: one(legalUpdates, {
     fields: [userNotifications.legalUpdateId],
     references: [legalUpdates.id],
+  }),
+  template: one(templates, {
+    fields: [userNotifications.templateId],
+    references: [templates.id],
   }),
 }));
 

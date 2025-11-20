@@ -53,7 +53,9 @@ shared/
 - **tenantIssueWorkflows**: Issue resolution workflows
 - **legislativeMonitoring**: Tracked bills from LegiScan with AI relevance analysis
 - **templateReviewQueue**: Templates flagged for attorney review due to new legislation
+- **templateVersions**: Version history for all template updates with change notes
 - **monitoringRuns**: Log of each monthly legislative monitoring run
+- **userNotifications**: Extended to support both legal update and template update notifications
 
 ## Setup Instructions
 
@@ -178,6 +180,14 @@ The app will be available on port 5000.
 - Sends admin email with monthly report
 - See LEGISLATIVE_MONITORING_SYSTEM.md for details
 
+### Template Review & Publishing (Admin Only)
+- `GET /api/admin/template-review-queue` - Get pending template reviews
+- `PATCH /api/admin/template-review-queue/:id/approve` - Approve and publish template update
+- `PATCH /api/admin/template-review-queue/:id/reject` - Reject template update
+- `GET /api/templates/:id/versions` - Get template version history
+- **Atomic Publishing**: All updates happen in a transaction (version increment, history record, queue status, user notifications)
+- **User Notifications**: Automatic email + in-app notifications to all users in affected state
+
 ### Notifications
 - `GET /api/notifications` - Get user notifications
 - `GET /api/notifications/unread-count` - Count unread
@@ -271,6 +281,15 @@ Stripe webhooks update subscription status:
 - [ ] Set up error tracking (Sentry, etc.)
 
 ## Recent Changes
+- **2024-11-20**: **Complete template update approval workflow implemented** - Full workflow from legislative detection to user notification
+  - Transactional `publishTemplateUpdate()` storage method ensures atomic updates
+  - Admin API endpoints for approving/rejecting template updates
+  - Template version history tracking with immutable records
+  - Automatic user notifications (email + in-app) when templates are updated
+  - Extended userNotifications schema to support both legal updates and template updates
+  - Version history API allows users to see all template changes over time
+  - Human-in-the-loop approval maintains UPL compliance (attorney must approve all changes)
+  - See TEMPLATE_UPDATE_WORKFLOW.md for complete documentation
 - **2024-11-20**: **Automated legislative monitoring system implemented** - Monthly monitoring for new landlord-tenant laws
   - LegiScan API integration (30k free queries/month) for tracking state legislation in UT/TX/ND/SD
   - Monthly cron job (runs 1st of each month) searches for relevant bills

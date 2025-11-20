@@ -22,6 +22,7 @@ export async function notifyUsersOfTemplateUpdate(
     for (const user of usersToNotify) {
       await storage.createUserNotification({
         userId: user.id,
+        templateId: template.id,
         message: `${template.title} has been updated to version ${version.versionNumber}`,
         isRead: false,
       });
