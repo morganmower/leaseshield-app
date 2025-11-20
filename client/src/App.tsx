@@ -28,6 +28,7 @@ import Screening from "@/pages/screening";
 import TenantIssues from "@/pages/tenant-issues";
 import Subscribe from "@/pages/subscribe";
 import Settings from "@/pages/settings";
+import Billing from "@/pages/billing";
 import Admin from "@/pages/admin";
 import AdminTemplates from "@/pages/admin-templates";
 import AdminCompliance from "@/pages/admin-compliance";
@@ -89,7 +90,7 @@ function Router() {
           <Route path="/tenant-issues" component={TenantIssues} />
           <Route path="/subscribe" component={Subscribe} />
           <Route path="/settings" component={Settings} />
-          <Route path="/billing" component={Settings} />
+          <Route path="/billing" component={Billing} />
           <Route path="/admin" component={Admin} />
           <Route path="/admin/dashboard" component={AdminDashboard} />
           <Route path="/admin/templates" component={AdminTemplates} />
