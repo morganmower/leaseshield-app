@@ -154,6 +154,7 @@ The app will be available on port 5000.
 - `GET /api/legal-updates?stateId=UT` - Get updates by state
 - `GET /api/legal-updates/recent` - Get recent updates
 - `POST /api/admin/legal-updates` - Create update (admin)
+- `POST /api/admin/notify-legal-update/:updateId` - Send email notifications (admin)
 
 ### Notifications
 - `GET /api/notifications` - Get user notifications
@@ -248,6 +249,13 @@ Stripe webhooks update subscription status:
 - [ ] Set up error tracking (Sentry, etc.)
 
 ## Recent Changes
+- **2024-11-19**: **Email notification system implemented** - Legal update emails with Resend integration
+  - Professional HTML/text email templates for high/medium/low impact legal updates
+  - Impact-based routing (high → all active/trialing users, medium → state-specific users)
+  - API endpoint: `POST /api/admin/notify-legal-update/:updateId`
+  - In-app notification creation alongside email delivery
+  - Comprehensive documentation in LEGAL_UPDATE_SYSTEM.md
+  - support@leaseshieldapp.com as sender address
 - **2024-11-19**: Added Western Verify LLC referral disclosure to Terms of Service and Legal Disclaimers
 - **2024-11-19**: Created comprehensive legal pages (Terms, Refund Policy, Disclaimers)
 - **2024-11-19**: Added UPL compliance disclaimer banners to Templates, Compliance, Screening, and Tenant Issues pages
@@ -261,15 +269,16 @@ Stripe webhooks update subscription status:
 
 ## Known Limitations
 - Admin features require manual role assignment (no UI yet)
-- Email notifications not implemented (placeholder hooks ready)
 - Western Verify integration is CTA-based, no API integration
 - No automated testing suite yet
+- Legislative monitoring requires manual setup (see LEGAL_UPDATE_SYSTEM.md)
 
 ## Future Enhancements
-- Email notification system
 - Admin role management UI
+- Automated legislative tracking API integration
 - More launch states
 - Template versioning
 - Document assembly wizard
 - Property management features
 - Lease signing integration
+- SMS alerts for urgent legal updates (Twilio)
