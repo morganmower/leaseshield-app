@@ -104,6 +104,8 @@ export const templates = pgTable("templates", {
   fillableFormData: jsonb("fillable_form_data"), // JSON structure for fillable fields
   // Metadata
   version: integer("version").default(1),
+  versionNotes: text("version_notes"), // What changed in this version
+  lastUpdateReason: text("last_update_reason"), // Why was this updated
   isActive: boolean("is_active").default(true),
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
@@ -382,6 +384,10 @@ export const templateReviewQueue = pgTable("template_review_queue", {
   reviewCompletedAt: timestamp("review_completed_at"),
   attorneyNotes: text("attorney_notes"),
   approvedChanges: text("approved_changes"),
+  approvalNotes: text("approval_notes"), // Admin notes on approval/rejection
+  approvedAt: timestamp("approved_at"),
+  rejectedAt: timestamp("rejected_at"),
+  updatedTemplateSnapshot: jsonb("updated_template_snapshot"), // Stores approved changes payload
   // Publishing
   publishedAt: timestamp("published_at"),
   publishedBy: varchar("published_by"),
@@ -418,3 +424,25 @@ export const insertMonitoringRunSchema = createInsertSchema(monitoringRuns).omit
 });
 export type InsertMonitoringRun = z.infer<typeof insertMonitoringRunSchema>;
 export type MonitoringRun = typeof monitoringRuns.$inferSelect;
+
+// Template Versions - immutable history of template changes
+export const templateVersions = pgTable("template_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => templates.id),
+  versionNumber: integer("version_number").notNull(),
+  pdfUrl: text("pdf_url"),
+  fillableFormData: jsonb("fillable_form_data"),
+  versionNotes: text("version_notes"), // What changed
+  lastUpdateReason: text("last_update_reason"), // Why it changed (e.g., "SB 142")
+  sourceReviewId: varchar("source_review_id"), // Link to templateReviewQueue if from legislative monitoring
+  metadata: jsonb("metadata"), // Additional context
+  createdBy: varchar("created_by"), // Admin who published
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const insertTemplateVersionSchema = createInsertSchema(templateVersions).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTemplateVersion = z.infer<typeof insertTemplateVersionSchema>;
+export type TemplateVersion = typeof templateVersions.$inferSelect;
