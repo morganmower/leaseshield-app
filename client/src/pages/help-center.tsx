@@ -28,7 +28,8 @@ export default function HelpCenter() {
   const faqs = [
     {
       category: "Account Access",
-      icon: Shield,
+      icon: Logo,
+      iconSize: 24,
       questions: [
         {
           q: "How do I log in to my account?",
@@ -220,7 +221,11 @@ export default function HelpCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
-                    <section.icon className="h-6 w-6 text-primary" />
+                    {section.iconSize ? (
+                      <section.icon iconSize={section.iconSize} />
+                    ) : (
+                      <section.icon className="h-6 w-6 text-primary" />
+                    )}
                     {section.category}
                   </CardTitle>
                 </CardHeader>
