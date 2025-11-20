@@ -148,9 +148,9 @@ export default function Billing() {
                 {user.subscriptionStatus === 'cancel_at_period_end' 
                   ? 'Cancelling at period end' 
                   : user.subscriptionStatus === 'active'
-                  ? 'LeaseShield Pro - $12/month'
+                  ? 'LeaseShield App - $12/month'
                   : user.subscriptionStatus === 'trialing'
-                  ? 'LeaseShield Pro - 7-Day Free Trial'
+                  ? 'LeaseShield App - 7-Day Free Trial'
                   : "No active subscription"}
               </p>
             </div>
