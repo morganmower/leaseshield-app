@@ -38,7 +38,7 @@ export default function Templates() {
   const isPayingMember = user?.subscriptionStatus === 'active' || user?.isAdmin === true;
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
-  const handleTemplateAction = (action: 'download' | 'fill', templateId: string) => {
+  const handleTemplateAction = async (action: 'download' | 'fill', templateId: string) => {
     if (!isPayingMember) {
       setShowUpgradeDialog(true);
       return;
@@ -48,11 +48,49 @@ export default function Templates() {
       // Navigate to document wizard
       setLocation(`/templates/${templateId}/fill`);
     } else {
-      // TODO: Implement actual download logic
-      toast({
-        title: 'Download Started',
-        description: 'Your template is being downloaded...',
-      });
+      // Download blank template
+      try {
+        toast({
+          title: 'Download Started',
+          description: 'Your template is being downloaded...',
+        });
+
+        // Generate blank template with empty field values
+        const response = await fetch('/api/documents/generate', {
+          method: 'POST',
+          credentials: 'include',
+          body: JSON.stringify({ templateId, fieldValues: {} }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to generate document');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const template = templates?.find(t => t.id === templateId);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_') || 'template'}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast({
+          title: 'Download Complete',
+          description: 'Your template has been downloaded successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Download Failed',
+          description: 'Failed to download template. Please try again.',
+          variant: 'destructive',
+        });
+      }
     }
   };
 
