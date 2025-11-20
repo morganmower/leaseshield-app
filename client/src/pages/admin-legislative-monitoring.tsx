@@ -3,11 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
 import { AlertCircle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle } from 'lucide-react';
-import { useState } from 'react';
 import { format } from 'date-fns';
 
 interface LegislativeBill {
@@ -55,8 +53,6 @@ interface TemplateReview {
 
 export default function AdminLegislativeMonitoring() {
   const { toast } = useToast();
-  const [selectedReview, setSelectedReview] = useState<string | null>(null);
-  const [reviewNotes, setReviewNotes] = useState('');
 
   const { data: pendingBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills', { isReviewed: false }],
@@ -66,58 +62,9 @@ export default function AdminLegislativeMonitoring() {
     queryKey: ['/api/admin/legislative-bills', { isReviewed: true }],
   });
 
-  const { data: reviewQueue = [] } = useQuery<TemplateReview[]>({
-    queryKey: ['/api/admin/template-review-queue', { status: 'pending' }],
-  });
-
-  const { data: approvedReviews = [] } = useQuery<TemplateReview[]>({
+  // Auto-published updates (no longer pending, all auto-approved)
+  const { data: publishedUpdates = [] } = useQuery<TemplateReview[]>({
     queryKey: ['/api/admin/template-review-queue', { status: 'approved' }],
-  });
-
-  const approveMutation = useMutation({
-    mutationFn: async ({ reviewId, notes }: { reviewId: string; notes: string }) => {
-      return await apiRequest('POST', `/api/admin/template-review/${reviewId}/approve`, { approvalNotes: notes });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
-      toast({
-        title: 'Template Update Approved',
-        description: 'Template has been updated and users will be notified.',
-      });
-      setSelectedReview(null);
-      setReviewNotes('');
-    },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Failed to approve template update',
-        variant: 'destructive',
-      });
-    },
-  });
-
-  const rejectMutation = useMutation({
-    mutationFn: async ({ reviewId, notes }: { reviewId: string; notes: string }) => {
-      return await apiRequest('POST', `/api/admin/template-review/${reviewId}/reject`, { rejectionNotes: notes });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
-      toast({
-        title: 'Template Update Rejected',
-        description: 'No changes will be made to the template.',
-      });
-      setSelectedReview(null);
-      setReviewNotes('');
-    },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Failed to reject template update',
-        variant: 'destructive',
-      });
-    },
   });
 
   const runMonitoringMutation = useMutation({
@@ -161,7 +108,7 @@ export default function AdminLegislativeMonitoring() {
               Legislative Monitoring
             </h1>
             <p className="text-muted-foreground mt-1">
-              Review legislative changes and approve template updates
+              Monitor legislative changes and review auto-published template updates
             </p>
           </div>
           <Button 
@@ -174,10 +121,10 @@ export default function AdminLegislativeMonitoring() {
           </Button>
         </div>
 
-        <Tabs defaultValue="review-queue" className="space-y-4">
+        <Tabs defaultValue="published-updates" className="space-y-4">
           <TabsList data-testid="tabs-monitoring">
-            <TabsTrigger value="review-queue" data-testid="tab-review-queue">
-              Template Review Queue ({reviewQueue.length})
+            <TabsTrigger value="published-updates" data-testid="tab-published-updates">
+              Published Updates ({publishedUpdates.length})
             </TabsTrigger>
             <TabsTrigger value="pending-bills" data-testid="tab-pending-bills">
               Pending Bills ({pendingBills.length})
@@ -187,18 +134,27 @@ export default function AdminLegislativeMonitoring() {
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="review-queue" className="space-y-4">
-            {reviewQueue.length === 0 ? (
+          <TabsContent value="published-updates" className="space-y-4">
+            <Card className="mb-4">
+              <CardContent className="py-3">
+                <p className="text-sm text-muted-foreground">
+                  <CheckCircle className="h-4 w-4 inline mr-2" />
+                  Template updates are automatically published when relevant legislation is detected. Users are notified immediately.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {publishedUpdates.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
-                  <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
-                  <p className="text-muted-foreground" data-testid="text-no-pending-reviews">
-                    No pending template reviews
+                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground" data-testid="text-no-published-updates">
+                    No template updates published yet
                   </p>
                 </CardContent>
               </Card>
             ) : (
-              reviewQueue.map((review) => (
+              publishedUpdates.map((review) => (
                 <Card key={review.id} data-testid={`card-review-${review.id}`}>
                   <CardHeader>
                     <div className="flex items-start justify-between">
@@ -224,75 +180,30 @@ export default function AdminLegislativeMonitoring() {
                     </div>
 
                     <div>
-                      <h4 className="font-semibold text-sm text-foreground mb-2">Recommended Changes:</h4>
+                      <h4 className="font-semibold text-sm text-foreground mb-2">Published Changes:</h4>
                       <p className="text-sm text-muted-foreground whitespace-pre-wrap" data-testid={`text-changes-${review.id}`}>
                         {review.recommendedChanges}
                       </p>
                     </div>
 
-                    {selectedReview === review.id ? (
-                      <div className="space-y-3 pt-4 border-t">
-                        <div>
-                          <label className="text-sm font-medium text-foreground">Review Notes</label>
-                          <Textarea
-                            value={reviewNotes}
-                            onChange={(e) => setReviewNotes(e.target.value)}
-                            placeholder="Add your review notes (optional)..."
-                            className="mt-1"
-                            data-testid={`input-review-notes-${review.id}`}
-                          />
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            onClick={() => approveMutation.mutate({ reviewId: review.id, notes: reviewNotes })}
-                            disabled={approveMutation.isPending}
-                            className="flex-1"
-                            data-testid={`button-confirm-approve-${review.id}`}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Confirm Approval & Publish
-                          </Button>
-                          <Button
-                            variant="destructive"
-                            onClick={() => rejectMutation.mutate({ reviewId: review.id, notes: reviewNotes })}
-                            disabled={rejectMutation.isPending}
-                            className="flex-1"
-                            data-testid={`button-confirm-reject-${review.id}`}
-                          >
-                            <XCircle className="h-4 w-4 mr-2" />
-                            Confirm Rejection
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setSelectedReview(null);
-                              setReviewNotes('');
-                            }}
-                            data-testid={`button-cancel-${review.id}`}
-                          >
-                            Cancel
-                          </Button>
-                        </div>
+                    <div className="pt-4 border-t">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Badge variant="default" data-testid={`badge-status-${review.id}`}>
+                          <CheckCircle className="h-3 w-3 mr-1" />
+                          Auto-Published
+                        </Badge>
+                        {review.approvedAt && (
+                          <span className="text-muted-foreground" data-testid={`text-published-at-${review.id}`}>
+                            {format(new Date(review.approvedAt), 'MMM d, yyyy h:mm a')}
+                          </span>
+                        )}
                       </div>
-                    ) : (
-                      <div className="flex gap-2 pt-4 border-t">
-                        <Button
-                          onClick={() => setSelectedReview(review.id)}
-                          data-testid={`button-approve-${review.id}`}
-                        >
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Approve & Publish
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => setSelectedReview(review.id)}
-                          data-testid={`button-reject-${review.id}`}
-                        >
-                          <XCircle className="h-4 w-4 mr-2" />
-                          Reject
-                        </Button>
-                      </div>
-                    )}
+                      {review.approvalNotes && (
+                        <p className="text-xs text-muted-foreground mt-2" data-testid={`text-approval-notes-${review.id}`}>
+                          {review.approvalNotes}
+                        </p>
+                      )}
+                    </div>
                   </CardContent>
                 </Card>
               ))
@@ -384,16 +295,16 @@ export default function AdminLegislativeMonitoring() {
           <TabsContent value="history" className="space-y-4">
             <div className="space-y-4">
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-3">Approved Reviews</h3>
-                {approvedReviews.length === 0 ? (
+                <h3 className="text-lg font-semibold text-foreground mb-3">Published Updates</h3>
+                {publishedUpdates.length === 0 ? (
                   <Card>
                     <CardContent className="py-8 text-center text-muted-foreground">
-                      No approved reviews yet
+                      No published updates yet
                     </CardContent>
                   </Card>
                 ) : (
                   <div className="space-y-3">
-                    {approvedReviews.map((review) => (
+                    {publishedUpdates.map((review: TemplateReview) => (
                       <Card key={review.id} data-testid={`card-approved-${review.id}`}>
                         <CardContent className="py-4">
                           <div className="flex items-center justify-between">
