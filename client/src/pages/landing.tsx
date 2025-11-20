@@ -1404,9 +1404,9 @@ export default function Landing() {
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-2 mb-4">
-                <Shield className="h-5 w-5 text-primary" />
-                <span className="font-display font-semibold">LeaseShield App</span>
+              <div className="flex items-center gap-3 mb-4">
+                <Logo iconSize={28} />
+                <span className="font-display font-semibold text-lg">LeaseShield App</span>
               </div>
               <p className="text-sm text-muted-foreground">
                 Your protective mentor for confident, risk-free property management.
