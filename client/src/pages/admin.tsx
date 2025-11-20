@@ -31,10 +31,10 @@ export default function AdminPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Link href="/admin/templates/new">
+                <Link href="/admin/templates">
                   <Button size="sm" className="w-full" data-testid="button-create-template">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Template
+                    Manage Templates
                   </Button>
                 </Link>
               </CardContent>
@@ -46,10 +46,10 @@ export default function AdminPage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Link href="/admin/compliance/new">
+                <Link href="/admin/compliance">
                   <Button size="sm" className="w-full" data-testid="button-create-compliance">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Card
+                    Manage Cards
                   </Button>
                 </Link>
               </CardContent>
@@ -61,10 +61,10 @@ export default function AdminPage() {
                 <Bell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Link href="/admin/legal-updates/new">
+                <Link href="/admin/legal-updates">
                   <Button size="sm" className="w-full" data-testid="button-create-update">
                     <Plus className="h-4 w-4 mr-2" />
-                    Create Update
+                    Manage Updates
                   </Button>
                 </Link>
               </CardContent>
