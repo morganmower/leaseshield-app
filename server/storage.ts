@@ -12,6 +12,7 @@ import {
   legislativeMonitoring,
   templateReviewQueue,
   monitoringRuns,
+  templateVersions,
   type User,
   type UpsertUser,
   type Template,
@@ -38,6 +39,8 @@ import {
   type InsertTemplateReviewQueue,
   type MonitoringRun,
   type InsertMonitoringRun,
+  type TemplateVersion,
+  type InsertTemplateVersion,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -124,6 +127,19 @@ export interface IStorage {
   // Monitoring run operations
   createMonitoringRun(run: InsertMonitoringRun): Promise<MonitoringRun>;
   getRecentMonitoringRuns(limit?: number): Promise<MonitoringRun[]>;
+
+  // Template version operations
+  publishTemplateUpdate(data: {
+    templateId: string;
+    reviewId: string;
+    pdfUrl?: string;
+    fillableFormData?: any;
+    versionNotes: string;
+    lastUpdateReason: string;
+    publishedBy: string;
+  }): Promise<{ template: Template; version: TemplateVersion }>;
+  getTemplateVersions(templateId: string): Promise<TemplateVersion[]>;
+  getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -625,6 +641,97 @@ export class DatabaseStorage implements IStorage {
       .from(monitoringRuns)
       .orderBy(desc(monitoringRuns.createdAt))
       .limit(limit);
+  }
+
+  // Template version operations
+  async publishTemplateUpdate(data: {
+    templateId: string;
+    reviewId: string;
+    pdfUrl?: string;
+    fillableFormData?: any;
+    versionNotes: string;
+    lastUpdateReason: string;
+    publishedBy: string;
+  }): Promise<{ template: Template; version: TemplateVersion }> {
+    // Use transaction to ensure atomicity
+    return await db.transaction(async (tx) => {
+      // Get current template
+      const [currentTemplate] = await tx.select().from(templates).where(eq(templates.id, data.templateId));
+      if (!currentTemplate) {
+        throw new Error(`Template ${data.templateId} not found`);
+      }
+
+      const newVersion = (currentTemplate.version || 1) + 1;
+
+      // Update template
+      const [updatedTemplate] = await tx
+        .update(templates)
+        .set({
+          version: newVersion,
+          versionNotes: data.versionNotes,
+          lastUpdateReason: data.lastUpdateReason,
+          pdfUrl: data.pdfUrl || currentTemplate.pdfUrl,
+          fillableFormData: data.fillableFormData || currentTemplate.fillableFormData,
+          updatedAt: new Date(),
+        })
+        .where(eq(templates.id, data.templateId))
+        .returning();
+
+      // Create version history record
+      const [versionRecord] = await tx
+        .insert(templateVersions)
+        .values({
+          templateId: data.templateId,
+          versionNumber: newVersion,
+          pdfUrl: data.pdfUrl || currentTemplate.pdfUrl,
+          fillableFormData: data.fillableFormData || currentTemplate.fillableFormData,
+          versionNotes: data.versionNotes,
+          lastUpdateReason: data.lastUpdateReason,
+          sourceReviewId: data.reviewId,
+          createdBy: data.publishedBy,
+        })
+        .returning();
+
+      // Mark review queue as published
+      await tx
+        .update(templateReviewQueue)
+        .set({
+          status: 'published' as any,
+          publishedAt: new Date(),
+          publishedBy: data.publishedBy,
+          updatedAt: new Date(),
+        })
+        .where(eq(templateReviewQueue.id, data.reviewId));
+
+      // Mark legislative monitoring as reviewed
+      const [review] = await tx.select().from(templateReviewQueue).where(eq(templateReviewQueue.id, data.reviewId));
+      if (review?.billId) {
+        await tx
+          .update(legislativeMonitoring)
+          .set({
+            isReviewed: true,
+            reviewedBy: data.publishedBy,
+            reviewedAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .where(eq(legislativeMonitoring.id, review.billId));
+      }
+
+      return { template: updatedTemplate, version: versionRecord };
+    });
+  }
+
+  async getTemplateVersions(templateId: string): Promise<TemplateVersion[]> {
+    return await db
+      .select()
+      .from(templateVersions)
+      .where(eq(templateVersions.templateId, templateId))
+      .orderBy(desc(templateVersions.versionNumber));
+  }
+
+  async getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined> {
+    const [review] = await db.select().from(templateReviewQueue).where(eq(templateReviewQueue.id, id));
+    return review;
   }
 }
 

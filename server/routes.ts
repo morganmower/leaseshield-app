@@ -10,6 +10,7 @@ import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
 import { generateLegalUpdateEmail } from "./email-templates";
+import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -660,6 +661,106 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error sending notifications:", error);
       res.status(500).json({ message: "Failed to send notifications" });
+    }
+  });
+
+  // Admin - Get template review queue
+  app.get("/api/admin/template-review-queue", isAuthenticated, async (req, res) => {
+    try {
+      const reviews = await storage.getAllTemplateReviewQueue({
+        status: req.query.status as string | undefined,
+      });
+
+      const enrichedReviews = await Promise.all(
+        reviews.map(async (review) => {
+          const template = await storage.getTemplate(review.templateId);
+          return { ...review, template };
+        })
+      );
+
+      res.json({ reviews: enrichedReviews, total: enrichedReviews.length });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Approve template update
+  app.patch("/api/admin/template-review-queue/:id/approve", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { approvalNotes, versionNotes, lastUpdateReason, pdfUrl, fillableFormData } = req.body;
+
+      if (!versionNotes || !lastUpdateReason) {
+        return res.status(400).json({ message: "versionNotes and lastUpdateReason are required" });
+      }
+
+      const review = await storage.getTemplateReviewById(id);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+
+      const { template, version } = await storage.publishTemplateUpdate({
+        templateId: review.templateId,
+        reviewId: id,
+        pdfUrl,
+        fillableFormData,
+        versionNotes,
+        lastUpdateReason,
+        publishedBy: req.user!.id,
+      });
+
+      if (approvalNotes) {
+        await storage.updateTemplateReviewQueue(id, { approvalNotes, approvedAt: new Date() });
+      }
+
+      const notificationsSent = await notifyUsersOfTemplateUpdate(template, version);
+
+      res.json({ success: true, template, version, notificationsSent });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Admin - Reject template update
+  app.patch("/api/admin/template-review-queue/:id/reject", isAuthenticated, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const { approvalNotes } = req.body;
+
+      if (!approvalNotes) {
+        return res.status(400).json({ message: "approvalNotes is required" });
+      }
+
+      await storage.updateTemplateReviewQueue(id, {
+        status: 'rejected' as any,
+        approvalNotes,
+        rejectedAt: new Date(),
+      });
+
+      res.json({ success: true, reviewId: id, status: 'rejected' });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Get template version history
+  app.get("/api/templates/:id/versions", async (req, res) => {
+    try {
+      const { id } = req.params;
+      
+      const template = await storage.getTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const versions = await storage.getTemplateVersions(id);
+
+      res.json({
+        template: { id: template.id, title: template.title, currentVersion: template.version },
+        versions,
+      });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message });
     }
   });
 
