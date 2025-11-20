@@ -1463,7 +1463,7 @@ export default function Landing() {
                 <div className="bg-primary text-primary-foreground rounded-t-lg">
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-2">
-                      <Shield className="h-5 w-5" />
+                      <Logo iconSize={20} className="brightness-0 invert" />
                       <span className="font-semibold">LeaseShield Assistant</span>
                     </div>
                     <Button
