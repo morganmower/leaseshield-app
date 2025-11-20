@@ -48,11 +48,31 @@ Not specified.
 - **Western Verify LLC**: Integrated via Call-To-Actions (CTAs) within the screening toolkit for tenant screening services.
 - **Resend**: Email service for sending user notifications.
 
-## Cron Job Setup (for Production)
-To enable automated monthly legislative monitoring:
+## Automated Monthly Legislative Monitoring Setup
+
+### Using Replit Scheduled Deployments (Recommended)
+1. **Set Environment Variables:**
+   - Add `CRON_SECRET` to your Repl secrets (a secure random string)
+   - The `REPLIT_DOMAINS` variable is automatically set by Replit
+
+2. **Create Scheduled Deployment:**
+   - Click the "Publish" button in your Replit workspace
+   - Select "Scheduled" deployment type
+   - Configure the schedule:
+     - **Schedule:** `0 2 1 * *` (2:00 AM UTC on the 1st of every month)
+     - **Run command:** `tsx cron-legislative-monitoring.ts`
+     - **Timeout:** 5 minutes (should complete in under 2 minutes typically)
+   - Click "Deploy"
+
+3. **Verify Setup:**
+   - The scheduled deployment will run monthly automatically
+   - Check the deployment logs in the "Publish" panel to see execution results
+   - Alternatively, use admin UI "Run Monitoring Now" button for manual triggers anytime
+
+### Alternative: External Cron Service
+If not using Replit's scheduled deployments:
 1. Set `CRON_SECRET` environment variable to a secure random string
 2. Configure external cron service (e.g., cron-job.org, EasyCron) to POST to: `https://your-domain.com/api/cron/legislative-monitoring`
 3. Add header: `X-Cron-Secret: <your-cron-secret>`
 4. Schedule: Monthly (recommended: 1st of each month at 2:00 AM UTC)
-5. Alternatively, use admin UI "Run Monitoring Now" button for manual triggers
 ```
