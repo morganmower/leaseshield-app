@@ -2,10 +2,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale } from "lucide-react";
-import { useLocation } from "wouter";
+import { Link } from "wouter";
 
 export default function AdminPage() {
-  const [, setLocation] = useLocation();
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
@@ -32,15 +31,16 @@ export default function AdminPage() {
                 <FileText className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Button 
-                  size="sm" 
-                  className="w-full" 
-                  onClick={() => setLocation("/admin/templates")}
-                  data-testid="button-create-template"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Manage Templates
-                </Button>
+                <Link href="/admin/templates" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-create-template"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manage Templates
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -50,15 +50,16 @@ export default function AdminPage() {
                 <Shield className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Button 
-                  size="sm" 
-                  className="w-full" 
-                  onClick={() => setLocation("/admin/compliance")}
-                  data-testid="button-create-compliance"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Manage Cards
-                </Button>
+                <Link href="/admin/compliance" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-create-compliance"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manage Cards
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -68,15 +69,16 @@ export default function AdminPage() {
                 <Bell className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Button 
-                  size="sm" 
-                  className="w-full" 
-                  onClick={() => setLocation("/admin/legal-updates")}
-                  data-testid="button-create-update"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Manage Updates
-                </Button>
+                <Link href="/admin/legal-updates" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-create-update"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Manage Updates
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -86,15 +88,16 @@ export default function AdminPage() {
                 <Scale className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="w-full" 
-                  onClick={() => setLocation("/admin/legislative-monitoring")}
-                  data-testid="button-legislative-monitoring"
-                >
-                  Review Queue
-                </Button>
+                <Link href="/admin/legislative-monitoring" asChild>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="w-full" 
+                    data-testid="button-legislative-monitoring"
+                  >
+                    Review Queue
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
 
@@ -104,15 +107,16 @@ export default function AdminPage() {
                 <BarChart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <Button 
-                  size="sm" 
-                  variant="secondary" 
-                  className="w-full" 
-                  onClick={() => setLocation("/admin/analytics")}
-                  data-testid="button-view-analytics"
-                >
-                  View Reports
-                </Button>
+                <Link href="/admin/analytics" asChild>
+                  <Button 
+                    size="sm" 
+                    variant="secondary" 
+                    className="w-full" 
+                    data-testid="button-view-analytics"
+                  >
+                    View Reports
+                  </Button>
+                </Link>
               </CardContent>
             </Card>
           </div>
@@ -123,51 +127,56 @@ export default function AdminPage() {
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={() => setLocation("/admin/dashboard")}
-                data-testid="link-review-queue"
-              >
-                <AlertCircle className="h-4 w-4 mr-2 text-primary" />
-                Template Review Queue
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={() => setLocation("/admin/templates")}
-                data-testid="link-manage-templates"
-              >
-                <FileText className="h-4 w-4 mr-2" />
-                Manage All Templates
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={() => setLocation("/admin/compliance")}
-                data-testid="link-manage-compliance"
-              >
-                <Shield className="h-4 w-4 mr-2" />
-                Manage Compliance Cards
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={() => setLocation("/admin/legal-updates")}
-                data-testid="link-manage-updates"
-              >
-                <Bell className="h-4 w-4 mr-2" />
-                Manage Legal Updates
-              </Button>
-              <Button 
-                variant="outline" 
-                className="w-full justify-start" 
-                onClick={() => setLocation("/admin/legislative-monitoring")}
-                data-testid="link-legislative-monitoring"
-              >
-                <Scale className="h-4 w-4 mr-2" />
-                Legislative Monitoring
-              </Button>
+              <Link href="/admin/dashboard" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-review-queue"
+                >
+                  <AlertCircle className="h-4 w-4 mr-2 text-primary" />
+                  Template Review Queue
+                </Button>
+              </Link>
+              <Link href="/admin/templates" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-manage-templates"
+                >
+                  <FileText className="h-4 w-4 mr-2" />
+                  Manage All Templates
+                </Button>
+              </Link>
+              <Link href="/admin/compliance" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-manage-compliance"
+                >
+                  <Shield className="h-4 w-4 mr-2" />
+                  Manage Compliance Cards
+                </Button>
+              </Link>
+              <Link href="/admin/legal-updates" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-manage-updates"
+                >
+                  <Bell className="h-4 w-4 mr-2" />
+                  Manage Legal Updates
+                </Button>
+              </Link>
+              <Link href="/admin/legislative-monitoring" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-legislative-monitoring"
+                >
+                  <Scale className="h-4 w-4 mr-2" />
+                  Legislative Monitoring
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -182,12 +191,11 @@ export default function AdminPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Visit the dedicated template management page to view, edit, and create templates.
               </p>
-              <Button 
-                onClick={() => setLocation("/admin/templates")}
-                data-testid="button-goto-templates"
-              >
-                Go to Template Management
-              </Button>
+              <Link href="/admin/templates" asChild>
+                <Button data-testid="button-goto-templates">
+                  Go to Template Management
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -202,12 +210,11 @@ export default function AdminPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Visit the dedicated compliance management page to create and edit compliance cards.
               </p>
-              <Button 
-                onClick={() => setLocation("/admin/compliance")}
-                data-testid="button-goto-compliance"
-              >
-                Go to Compliance Management
-              </Button>
+              <Link href="/admin/compliance" asChild>
+                <Button data-testid="button-goto-compliance">
+                  Go to Compliance Management
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -222,12 +229,11 @@ export default function AdminPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 Visit the dedicated legal updates page to create new updates and manage existing ones.
               </p>
-              <Button 
-                onClick={() => setLocation("/admin/legal-updates")}
-                data-testid="button-goto-updates"
-              >
-                Go to Legal Updates
-              </Button>
+              <Link href="/admin/legal-updates" asChild>
+                <Button data-testid="button-goto-updates">
+                  Go to Legal Updates
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
@@ -242,12 +248,11 @@ export default function AdminPage() {
               <p className="text-sm text-muted-foreground mb-4">
                 View detailed analytics including MRR, trial conversions, and user engagement.
               </p>
-              <Button 
-                onClick={() => setLocation("/admin/analytics")}
-                data-testid="button-goto-analytics"
-              >
-                View Full Analytics
-              </Button>
+              <Link href="/admin/analytics" asChild>
+                <Button data-testid="button-goto-analytics">
+                  View Full Analytics
+                </Button>
+              </Link>
             </CardContent>
           </Card>
         </TabsContent>
