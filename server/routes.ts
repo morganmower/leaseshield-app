@@ -214,6 +214,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel subscription
+  app.post('/api/cancel-subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.stripeSubscriptionId) {
+        return res.status(400).json({ message: "No active subscription found" });
+      }
+
+      // Cancel the subscription at period end (so user keeps access until billing cycle ends)
+      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+        cancel_at_period_end: true,
+      });
+
+      // Update user status
+      await storage.updateUserStripeInfo(userId, {
+        subscriptionStatus: 'cancel_at_period_end',
+      });
+
+      console.log(`✓ Subscription ${subscription.id} will cancel at period end for user ${userId}`);
+
+      res.json({
+        message: 'Subscription will be cancelled at the end of your billing period',
+        cancelAt: subscription.cancel_at,
+      });
+    } catch (error: any) {
+      console.error("Error cancelling subscription:", error);
+      res.status(500).json({ message: error.message || "Failed to cancel subscription" });
+    }
+  });
+
   // Stripe webhook handler for subscription lifecycle events
   app.post('/api/stripe-webhook', async (req: any, res) => {
     const sig = req.headers['stripe-signature'];
@@ -258,10 +294,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Find user by Stripe customer ID
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
+            // Check if subscription is set to cancel at period end
+            const status = subscription.cancel_at_period_end 
+              ? 'cancel_at_period_end' 
+              : subscription.status;
+            
             await storage.updateUserStripeInfo(userResults[0].id, {
-              subscriptionStatus: subscription.status,
+              subscriptionStatus: status,
             });
-            console.log(`Updated user ${userResults[0].id} subscription status to ${subscription.status}`);
+            console.log(`Updated user ${userResults[0].id} subscription status to ${status}`);
           }
           break;
         }
