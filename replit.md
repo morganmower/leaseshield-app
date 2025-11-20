@@ -20,8 +20,8 @@ Not specified.
 - **Authentication**: Replit Auth with session management.
 - **Payments**: Stripe Subscriptions for payment processing, integrated with webhooks for subscription lifecycle management.
 - **Document Assembly Wizard**: Interactive multi-step forms with smart field validation, real-time validation, server-side PDF generation using Puppeteer, and comprehensive HTML escaping for security.
-- **Legislative Monitoring**: Monthly cron job integrates with LegiScan API to track landlord-tenant bills, uses AI (GPT-4) for relevance analysis, and flags affected templates for review.
-- **Template Review & Publishing**: An atomic publishing system ensures template updates are transactional, including versioning, history records, queue status updates, and automatic user notifications. A manual admin review process ensures UPL compliance.
+- **Legislative Monitoring**: Fully automated system with monthly cron job integration via LegiScan API. Workflow: (1) LegiScan monitors state bills for UT, TX, ND, SD → (2) AI analyzes bills using GPT-4 to determine relevance and affected templates → (3) Creates template review queue entries → (4) Admin reviews/approves in dedicated UI → (5) Approved updates auto-publish with versioning → (6) Users notified via email. Includes manual trigger button for testing and admin oversight. Protected cron endpoint (`/api/cron/legislative-monitoring`) with secret key verification.
+- **Template Review & Publishing**: Atomic publishing system ensures template updates are transactional. Includes: versioning with auto-incrementing version numbers, complete history tracking, review queue status updates (pending → approved/rejected), legislative bill flagging as reviewed, and automatic user notifications via Resend. Manual admin review process ensures UPL compliance before any template goes live.
 - **Email Notifications**: Integration with a professional email service (e.g., Resend) for legal update and template update notifications.
 
 ### Feature Specifications
@@ -35,15 +35,24 @@ Not specified.
 ### System Design Choices
 - **Deployment**: Automated deployments via Replit on push.
 - **Database Schema**: Comprehensive schema including users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, and notifications.
-- **API Endpoints**: Structured API for authentication, user management, subscriptions, templates, compliance, legal updates, legislative monitoring (internal), template review, notifications, analytics, and states.
+- **API Endpoints**: Structured API for authentication, user management, subscriptions, templates, compliance, legal updates, legislative monitoring (admin-only: bills list, review queue, approve/reject, manual trigger), template review (versioning & publishing), notifications, analytics, and states. Cron endpoint for scheduled monitoring runs.
+- **Admin Legislative Monitoring UI**: Dedicated admin page (`/admin/legislative-monitoring`) with three tabs: (1) Template Review Queue - shows pending template updates with bill context, recommended changes, approve/reject actions, (2) Pending Bills - displays unreviewed bills with AI analysis and affected templates, (3) History - tracks approved reviews and reviewed bills. Includes manual "Run Monitoring Now" button for testing.
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database for all application data.
 - **Stripe**: Payment gateway for subscription management, including Stripe Elements for UI and webhooks for server-side updates.
 - **Replit Auth**: Authentication service for user login and session management.
-- **LegiScan API**: Third-party service for legislative tracking and monitoring.
-- **GPT-4 (OpenAI API)**: Used for AI-powered relevance analysis of legislative bills.
+- **LegiScan API**: Third-party service for legislative tracking and monitoring. Requires LEGISCAN_API_KEY environment variable.
+- **GPT-4 (OpenAI API via Replit AI Integration)**: Used for AI-powered relevance analysis of legislative bills. Uses AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL environment variables.
 - **Puppeteer**: Used for server-side PDF generation from HTML templates.
 - **Western Verify LLC**: Integrated via Call-To-Actions (CTAs) within the screening toolkit for tenant screening services.
 - **Resend**: Email service for sending user notifications.
+
+## Cron Job Setup (for Production)
+To enable automated monthly legislative monitoring:
+1. Set `CRON_SECRET` environment variable to a secure random string
+2. Configure external cron service (e.g., cron-job.org, EasyCron) to POST to: `https://your-domain.com/api/cron/legislative-monitoring`
+3. Add header: `X-Cron-Secret: <your-cron-secret>`
+4. Schedule: Monthly (recommended: 1st of each month at 2:00 AM UTC)
+5. Alternatively, use admin UI "Run Monitoring Now" button for manual triggers
 ```
