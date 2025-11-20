@@ -22,6 +22,7 @@ import Blog from "@/pages/blog";
 import BlogPost from "@/pages/blog-post";
 import Dashboard from "@/pages/dashboard";
 import Templates from "@/pages/templates";
+import DocumentWizard from "@/pages/document-wizard";
 import Compliance from "@/pages/compliance";
 import Screening from "@/pages/screening";
 import TenantIssues from "@/pages/tenant-issues";
@@ -81,6 +82,7 @@ function Router() {
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/templates" component={Templates} />
+          <Route path="/templates/:id/fill" component={DocumentWizard} />
           <Route path="/compliance" component={Compliance} />
           <Route path="/screening" component={Screening} />
           <Route path="/tenant-issues" component={TenantIssues} />
