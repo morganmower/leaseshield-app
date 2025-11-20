@@ -764,6 +764,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Generate filled document (PDF)
+  app.post('/api/documents/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const { templateId, fieldValues } = req.body;
+
+      if (!templateId || !fieldValues) {
+        return res.status(400).json({ message: "Template ID and field values are required" });
+      }
+
+      // Get template
+      const template = await storage.getTemplate(templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Import document generator
+      const { generateDocument } = await import('./utils/documentGenerator');
+
+      // Generate PDF
+      const pdfBuffer = await generateDocument({
+        templateTitle: template.title,
+        templateContent: '', // Will use default generation based on fields
+        fieldValues,
+        stateId: template.stateId,
+      });
+
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error('Document generation error:', error);
+      res.status(500).json({ message: error.message || 'Failed to generate document' });
+    }
+  });
+
   // Chat assistant endpoint (public, for landing page)
   app.post('/api/chat', async (req, res) => {
     try {
