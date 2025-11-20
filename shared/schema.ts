@@ -305,3 +305,116 @@ export const insertBlogPostSchema = createInsertSchema(blogPosts).omit({
 });
 export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
 export type BlogPost = typeof blogPosts.$inferSelect;
+
+// Legislative Monitoring - tracks bills from LegiScan API
+export const billStatusEnum = pgEnum('bill_status', [
+  'introduced',
+  'in_committee',
+  'passed_chamber',
+  'passed_both',
+  'signed',
+  'vetoed',
+  'dead',
+]);
+
+export const relevanceEnum = pgEnum('relevance_level', [
+  'high',      // Definitely affects templates
+  'medium',    // Might affect templates
+  'low',       // Probably doesn't affect templates
+  'dismissed', // Reviewed and determined not relevant
+]);
+
+export const legislativeMonitoring = pgTable("legislative_monitoring", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  billId: text("bill_id").notNull().unique(), // LegiScan bill_id
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  billNumber: text("bill_number").notNull(), // e.g., "SB 142"
+  title: text("title").notNull(),
+  description: text("description"),
+  status: billStatusEnum("status").notNull(),
+  url: text("url"), // Link to LegiScan or state legislature
+  lastAction: text("last_action"),
+  lastActionDate: timestamp("last_action_date"),
+  // AI Analysis
+  relevanceLevel: relevanceEnum("relevance_level"),
+  aiAnalysis: text("ai_analysis"), // AI explanation of why this matters
+  affectedTemplateIds: text("affected_template_ids").array(), // Which templates might need updates
+  // Tracking
+  isMonitored: boolean("is_monitored").default(true),
+  isReviewed: boolean("is_reviewed").default(false),
+  reviewedBy: varchar("reviewed_by"), // Admin user ID
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertLegislativeMonitoringSchema = createInsertSchema(legislativeMonitoring).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertLegislativeMonitoring = z.infer<typeof insertLegislativeMonitoringSchema>;
+export type LegislativeMonitoring = typeof legislativeMonitoring.$inferSelect;
+
+// Template Review Queue - tracks templates flagged for attorney review
+export const reviewStatusEnum = pgEnum('review_status', [
+  'pending',      // Waiting for attorney review
+  'in_review',    // Attorney is reviewing
+  'approved',     // Changes approved, ready to publish
+  'rejected',     // No changes needed
+  'published',    // Changes published to live templates
+]);
+
+export const templateReviewQueue = pgTable("template_review_queue", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull(),
+  billId: varchar("bill_id"), // Reference to legislativeMonitoring
+  // Review details
+  status: reviewStatusEnum("status").default('pending'),
+  priority: integer("priority").default(5), // 1-10, higher = more urgent
+  reason: text("reason").notNull(), // Why this template needs review
+  recommendedChanges: text("recommended_changes"), // AI-suggested updates
+  currentVersion: integer("current_version"),
+  // Attorney workflow
+  assignedTo: varchar("assigned_to"), // Attorney user ID
+  reviewStartedAt: timestamp("review_started_at"),
+  reviewCompletedAt: timestamp("review_completed_at"),
+  attorneyNotes: text("attorney_notes"),
+  approvedChanges: text("approved_changes"),
+  // Publishing
+  publishedAt: timestamp("published_at"),
+  publishedBy: varchar("published_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertTemplateReviewQueueSchema = createInsertSchema(templateReviewQueue).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertTemplateReviewQueue = z.infer<typeof insertTemplateReviewQueueSchema>;
+export type TemplateReviewQueue = typeof templateReviewQueue.$inferSelect;
+
+// Monitoring Run Log - tracks each monthly automated run
+export const monitoringRuns = pgTable("monitoring_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  runDate: timestamp("run_date").defaultNow(),
+  statesChecked: text("states_checked").array(), // ['UT', 'TX', 'ND', 'SD']
+  billsFound: integer("bills_found").default(0),
+  relevantBills: integer("relevant_bills").default(0),
+  templatesQueued: integer("templates_queued").default(0),
+  status: varchar("status"), // 'success', 'partial', 'failed'
+  errorMessage: text("error_message"),
+  summaryReport: text("summary_report"), // Generated summary for admin
+  emailSent: boolean("email_sent").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertMonitoringRunSchema = createInsertSchema(monitoringRuns).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertMonitoringRun = z.infer<typeof insertMonitoringRunSchema>;
+export type MonitoringRun = typeof monitoringRuns.$inferSelect;
