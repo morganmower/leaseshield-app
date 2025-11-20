@@ -1001,6 +1001,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manually trigger legislative monitoring run (admin only)
+  app.post('/api/admin/legislative-monitoring/run', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      console.log('📋 Manually triggered legislative monitoring run by admin:', user.email);
+      
+      // Run the monitoring service
+      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
+      const monitoringService = new LegislativeMonitoringService(storage);
+      const result = await monitoringService.runMonitoring();
+
+      res.json({
+        success: true,
+        message: 'Monitoring run completed',
+        result,
+      });
+    } catch (error) {
+      console.error('Error running legislative monitoring:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Failed to run monitoring' 
+      });
+    }
+  });
+
+  // Automated cron endpoint for legislative monitoring (protected by secret key)
+  app.post('/api/cron/legislative-monitoring', async (req, res) => {
+    try {
+      // Verify cron secret to prevent unauthorized triggers
+      const cronSecret = req.headers['x-cron-secret'];
+      const expectedSecret = process.env.CRON_SECRET || 'dev-secret-change-in-production';
+      
+      if (cronSecret !== expectedSecret) {
+        console.warn('⚠️ Unauthorized cron attempt - invalid secret');
+        return res.status(401).json({ message: 'Unauthorized' });
+      }
+
+      console.log('🔄 Running scheduled legislative monitoring...');
+      
+      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
+      const monitoringService = new LegislativeMonitoringService(storage);
+      const result = await monitoringService.runMonitoring();
+
+      console.log('✅ Scheduled monitoring completed');
+      res.json({
+        success: true,
+        result,
+      });
+    } catch (error) {
+      console.error('❌ Cron monitoring failed:', error);
+      res.status(500).json({ 
+        success: false,
+        message: error instanceof Error ? error.message : 'Monitoring failed' 
+      });
+    }
+  });
+
   // Chat assistant endpoint (public, for landing page)
   app.post('/api/chat', async (req, res) => {
     try {

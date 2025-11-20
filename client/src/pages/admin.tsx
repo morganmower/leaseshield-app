@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AdminPage() {
@@ -72,6 +72,20 @@ export default function AdminPage() {
 
             <Card className="hover-elevate">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Legislative Monitor</CardTitle>
+                <Scale className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/legislative-monitoring">
+                  <Button size="sm" variant="secondary" className="w-full" data-testid="button-legislative-monitoring">
+                    Review Queue
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Analytics</CardTitle>
                 <BarChart className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
@@ -113,6 +127,12 @@ export default function AdminPage() {
                 <Button variant="outline" className="w-full justify-start" data-testid="link-manage-updates">
                   <Bell className="h-4 w-4 mr-2" />
                   Manage Legal Updates
+                </Button>
+              </Link>
+              <Link href="/admin/legislative-monitoring">
+                <Button variant="outline" className="w-full justify-start" data-testid="link-legislative-monitoring">
+                  <Scale className="h-4 w-4 mr-2" />
+                  Legislative Monitoring
                 </Button>
               </Link>
             </CardContent>

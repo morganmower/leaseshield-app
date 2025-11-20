@@ -34,6 +34,7 @@ import AdminCompliance from "@/pages/admin-compliance";
 import AdminLegalUpdates from "@/pages/admin-legal-updates";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminDashboard from "@/pages/admin-dashboard";
+import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 import { useEffect } from "react";
@@ -94,6 +95,7 @@ function Router() {
           <Route path="/admin/templates" component={AdminTemplates} />
           <Route path="/admin/compliance" component={AdminCompliance} />
           <Route path="/admin/legal-updates" component={AdminLegalUpdates} />
+          <Route path="/admin/legislative-monitoring" component={AdminLegislativeMonitoring} />
           <Route path="/admin/analytics" component={AdminAnalytics} />
           <Route component={NotFound} />
         </>
