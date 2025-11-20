@@ -11,6 +11,17 @@ interface DocumentGenerationOptions {
   stateId: string;
 }
 
+// HTML escape function to prevent XSS/injection attacks
+function escapeHtml(unsafe: string): string {
+  return unsafe
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;")
+    .replace(/\//g, "&#x2F;");
+}
+
 export async function generateDocument(options: DocumentGenerationOptions): Promise<Buffer> {
   const { templateTitle, templateContent, fieldValues, stateId } = options;
 
@@ -18,13 +29,13 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
   const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId);
 
   // Launch headless browser
+  // NOTE: Using minimal args. Sandbox is enabled by default for security.
+  // All user input is HTML-escaped before rendering to prevent injection attacks.
   const browser = await puppeteer.launch({
     headless: true,
     args: [
-      '--no-sandbox',
-      '--disable-setuid-sandbox',
-      '--disable-dev-shm-usage',
-      '--disable-gpu'
+      '--disable-dev-shm-usage', // Required for containerized environments
+      '--disable-gpu' // Not needed for PDF generation
     ]
   });
 
@@ -58,13 +69,22 @@ function generateHTMLFromTemplate(
   fieldValues: FieldValue,
   stateId: string
 ): string {
-  // Replace field placeholders with actual values
-  let filledContent = templateContent || generateDefaultTemplateContent(templateTitle, fieldValues, stateId);
+  // SECURITY: For MVP, we ONLY use default template generation with fully escaped values.
+  // templateContent should always be empty. If it's not empty, we ignore it to prevent injection.
+  // Future custom templates must use a safe templating engine with auto-escaping.
   
-  // Replace {{fieldId}} placeholders with actual values
+  // Sanitize template title
+  const safeTitle = escapeHtml(templateTitle);
+  
+  // ALWAYS use default template generation (never trust templateContent from database)
+  let filledContent = generateDefaultTemplateContent(safeTitle, fieldValues, stateId);
+  
+  // For safety, still escape any {{fieldId}} placeholders if they exist
+  // (though default generator doesn't use this pattern)
   Object.entries(fieldValues).forEach(([fieldId, value]) => {
     const placeholder = new RegExp(`{{${fieldId}}}`, 'g');
-    filledContent = filledContent.replace(placeholder, String(value));
+    const escapedValue = escapeHtml(String(value));
+    filledContent = filledContent.replace(placeholder, escapedValue);
   });
 
   // Wrap in proper HTML structure with styling
@@ -74,7 +94,7 @@ function generateHTMLFromTemplate(
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${templateTitle}</title>
+  <title>${safeTitle}</title>
   <style>
     @page {
       size: Letter;
@@ -185,12 +205,15 @@ function generateDefaultTemplateContent(
     categories.get(category)!.push([fieldId, value]);
   });
   
-  // Generate sections
+  // Generate sections (with HTML escaping for security)
   categories.forEach((fields, category) => {
-    sections.push(`<h2>${category}</h2>`);
+    const safeCategory = escapeHtml(category);
+    sections.push(`<h2>${safeCategory}</h2>`);
     fields.forEach(([fieldId, value]) => {
       const label = fieldIdToLabel(fieldId);
-      sections.push(`<p><strong>${label}:</strong> <span class="field-value">${value}</span></p>`);
+      const safeLabel = escapeHtml(label);
+      const safeValue = escapeHtml(String(value));
+      sections.push(`<p><strong>${safeLabel}:</strong> <span class="field-value">${safeValue}</span></p>`);
     });
   });
   

@@ -98,8 +98,9 @@ export default function DocumentWizard() {
   // Generate document mutation
   const generateMutation = useMutation({
     mutationFn: async (fieldValues: Record<string, string>) => {
-      const response = await apiRequest(`/api/documents/generate`, {
+      const response = await fetch(`/api/documents/generate`, {
         method: 'POST',
+        credentials: 'include',
         body: JSON.stringify({ templateId, fieldValues }),
         headers: {
           'Content-Type': 'application/json',

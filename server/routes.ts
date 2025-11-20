@@ -779,13 +779,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Template not found" });
       }
 
+      // SECURITY: We NEVER use custom templateContent from the database to prevent HTML injection.
+      // All documents are generated using the default template generator with fully escaped user input.
+      // If custom templates are needed in the future, they MUST be:
+      // 1. Created only by admin users
+      // 2. Stored as safe placeholder-based templates (not raw HTML)
+      // 3. Rendered through a safe templating engine with auto-escaping
+
       // Import document generator
       const { generateDocument } = await import('./utils/documentGenerator');
 
-      // Generate PDF
+      // Generate PDF using default template (all user input is HTML-escaped)
       const pdfBuffer = await generateDocument({
         templateTitle: template.title,
-        templateContent: '', // Will use default generation based on fields
+        templateContent: '', // Always empty - use default generation only
         fieldValues,
         stateId: template.stateId,
       });
