@@ -96,6 +96,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Make current user an admin (for testing - remove in production)
+  app.post('/api/user/make-admin', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Update user to be admin
+      await storage.upsertUser({
+        id: userId,
+        isAdmin: true,
+      });
+
+      const updatedUser = await storage.getUser(userId);
+      res.json({ 
+        message: "Admin access granted",
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error("Error setting admin status:", error);
+      res.status(500).json({ message: "Failed to set admin status" });
+    }
+  });
+
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
     try {
