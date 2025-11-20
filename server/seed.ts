@@ -31,6 +31,28 @@ async function seedDatabase() {
       stateId: "UT",
       version: 1,
       sortOrder: 1,
+      fillableFormData: {
+        fields: [
+          { id: "landlordName", label: "Landlord Full Name", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordAddress", label: "Landlord Address", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordPhone", label: "Landlord Phone", type: "tel", required: true, category: "Landlord Information" },
+          { id: "landlordEmail", label: "Landlord Email", type: "email", required: true, category: "Landlord Information" },
+          { id: "tenantName", label: "Tenant Full Name", type: "text", required: true, category: "Tenant Information" },
+          { id: "tenantEmail", label: "Tenant Email", type: "email", required: false, category: "Tenant Information" },
+          { id: "tenantPhone", label: "Tenant Phone", type: "tel", required: false, category: "Tenant Information" },
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Property Details" },
+          { id: "propertyCity", label: "City", type: "text", required: true, category: "Property Details" },
+          { id: "propertyState", label: "State", type: "text", required: true, category: "Property Details", defaultValue: "Utah" },
+          { id: "propertyZip", label: "ZIP Code", type: "text", required: true, category: "Property Details" },
+          { id: "monthlyRent", label: "Monthly Rent Amount", type: "currency", required: true, category: "Financial Terms" },
+          { id: "securityDeposit", label: "Security Deposit", type: "currency", required: true, category: "Financial Terms" },
+          { id: "lateFeeDays", label: "Late Fee Grace Period (Days)", type: "number", required: true, category: "Financial Terms", defaultValue: "5" },
+          { id: "lateFeeAmount", label: "Late Fee Amount", type: "currency", required: true, category: "Financial Terms" },
+          { id: "leaseStartDate", label: "Lease Start Date", type: "date", required: true, category: "Lease Terms" },
+          { id: "leaseEndDate", label: "Lease End Date", type: "date", required: true, category: "Lease Terms" },
+          { id: "rentDueDay", label: "Rent Due Day of Month", type: "number", required: true, category: "Lease Terms", defaultValue: "1" },
+        ]
+      },
     },
     {
       title: "Rental Application",
@@ -40,6 +62,20 @@ async function seedDatabase() {
       stateId: "UT",
       version: 1,
       sortOrder: 2,
+      fillableFormData: {
+        fields: [
+          { id: "applicantName", label: "Full Name", type: "text", required: true, category: "Applicant Information" },
+          { id: "applicantPhone", label: "Phone Number", type: "tel", required: true, category: "Applicant Information" },
+          { id: "applicantEmail", label: "Email Address", type: "email", required: true, category: "Applicant Information" },
+          { id: "currentAddress", label: "Current Address", type: "text", required: true, category: "Applicant Information" },
+          { id: "moveInDate", label: "Desired Move-In Date", type: "date", required: true, category: "Applicant Information" },
+          { id: "employerName", label: "Employer Name", type: "text", required: true, category: "Employment Information" },
+          { id: "employerPhone", label: "Employer Phone", type: "tel", required: true, category: "Employment Information" },
+          { id: "monthlyIncome", label: "Monthly Income", type: "currency", required: true, category: "Employment Information" },
+          { id: "emergencyContact", label: "Emergency Contact Name", type: "text", required: true, category: "Emergency Contact" },
+          { id: "emergencyPhone", label: "Emergency Contact Phone", type: "tel", required: true, category: "Emergency Contact" },
+        ]
+      },
     },
     {
       title: "Late Rent Notice",
@@ -49,6 +85,17 @@ async function seedDatabase() {
       stateId: "UT",
       version: 1,
       sortOrder: 3,
+      fillableFormData: {
+        fields: [
+          { id: "tenantName", label: "Tenant Full Name", type: "text", required: true, category: "Notice Details" },
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Notice Details" },
+          { id: "rentDueDate", label: "Rent Due Date", type: "date", required: true, category: "Notice Details" },
+          { id: "amountDue", label: "Amount Due", type: "currency", required: true, category: "Notice Details" },
+          { id: "lateFeeAmount", label: "Late Fee", type: "currency", required: true, category: "Notice Details" },
+          { id: "payByDate", label: "Pay By Date", type: "date", required: true, category: "Notice Details" },
+          { id: "noticeDate", label: "Notice Date", type: "date", required: true, category: "Notice Details", defaultValue: "today" },
+        ]
+      },
     },
     {
       title: "Move-In Checklist",
@@ -58,6 +105,15 @@ async function seedDatabase() {
       stateId: "UT",
       version: 1,
       sortOrder: 4,
+      fillableFormData: {
+        fields: [
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Property Information" },
+          { id: "tenantName", label: "Tenant Name", type: "text", required: true, category: "Property Information" },
+          { id: "landlordName", label: "Landlord Name", type: "text", required: true, category: "Property Information" },
+          { id: "inspectionDate", label: "Inspection Date", type: "date", required: true, category: "Property Information", defaultValue: "today" },
+          { id: "moveInDate", label: "Move-In Date", type: "date", required: true, category: "Property Information" },
+        ]
+      },
     },
   ];
 
