@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform ($15/month with 7-day free trial) designed for small and midsize landlords. Its primary purpose is to provide state-specific legal templates, compliance guidance, and tenant screening resources. The platform aims to be a "protective mentor," helping landlords safeguard their investments while ensuring compliance with legal regulations. Initial launch states include Utah, Texas, North Dakota, and South Dakota.
+LeaseShield App is a subscription-based SaaS platform ($12/month with 7-day free trial) designed for small and midsize landlords. Its primary purpose is to provide state-specific legal templates, compliance guidance, and tenant screening resources. The platform aims to be a "protective mentor," helping landlords safeguard their investments while ensuring compliance with legal regulations. Initial launch states include Utah, Texas, North Dakota, and South Dakota.
 
 ## User Preferences
 Not specified.
@@ -25,7 +25,7 @@ Not specified.
 - **Email Notifications**: Integration with a professional email service (e.g., Resend) for legal update and template update notifications.
 
 ### Feature Specifications
-- **Subscription Management**: 7-day free trial, $15/month subscription, Stripe Elements integration, webhook-driven lifecycle, and trial countdowns.
+- **Subscription Management**: 7-day free trial, $12/month subscription, Stripe Elements integration, webhook-driven lifecycle, and trial countdowns.
 - **Template Library**: State-specific legal documents categorized by use case, attorney-reviewed, and downloadable as PDF/DOCX.
 - **Compliance Cards**: State-specific before/after guidance with explanations and actionable next steps.
 - **Screening Toolkit**: Guides for credit reports, background checks, Fair Housing compliance, and CTAs for Western Verify integration.

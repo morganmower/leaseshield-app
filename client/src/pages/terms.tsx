@@ -103,7 +103,7 @@ export default function Terms() {
                 </p>
                 <p>
                   <strong>Paid Subscription:</strong> After the trial period, continued access requires a paid 
-                  subscription at $15/month (pricing subject to change with notice).
+                  subscription at $12/month (pricing subject to change with notice).
                 </p>
                 <p>
                   <strong>Auto-Renewal:</strong> Subscriptions automatically renew monthly unless canceled before 

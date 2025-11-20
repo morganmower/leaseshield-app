@@ -395,9 +395,9 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.subscriptionStatus, 'canceled'));
 
-    // Calculate MRR (assuming $12-15/month, using $13.50 average)
+    // Calculate MRR (assuming $12/month)
     const activeCount = Number(activeSubscriptions[0]?.count || 0);
-    const mrr = activeCount * 13.50;
+    const mrr = activeCount * 12;
 
     // Trial conversion metrics
     const totalTrialsEver = await db

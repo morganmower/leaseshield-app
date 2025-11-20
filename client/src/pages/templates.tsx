@@ -320,7 +320,7 @@ export default function Templates() {
                   {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
                 </p>
                 <p>
-                  Upgrade now for just <strong>$12-15/month</strong> to access our complete library of 37+ attorney-reviewed, state-specific templates.
+                  Upgrade now for just <strong>$12/month</strong> to access our complete library of 37+ attorney-reviewed, state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>
