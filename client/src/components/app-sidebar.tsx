@@ -8,6 +8,8 @@ import {
   BookOpen,
   CreditCard,
   ShieldCheck,
+  ChevronDown,
+  LogOut,
 } from "lucide-react";
 import {
   Sidebar,
@@ -104,26 +106,33 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-4 border-b">
+      <SidebarHeader className="p-6 border-b">
         <Link href="/dashboard">
-          <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-md p-2 -m-2">
-            <Logo iconSize={32} />
-            <span className="font-display text-xl font-semibold">LeaseShield App</span>
+          <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-lg p-3 -m-3 transition-all">
+            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
+              <Logo iconSize={24} />
+            </div>
+            <div className="flex flex-col">
+              <span className="font-display text-lg font-bold">LeaseShield</span>
+              <span className="text-xs text-muted-foreground">Landlord Protection</span>
+            </div>
           </div>
         </Link>
       </SidebarHeader>
 
-      <SidebarContent className="px-3 py-4">
-        <SidebarGroup>
-          <SidebarGroupLabel>Main</SidebarGroupLabel>
+      <SidebarContent className="px-3 py-6">
+        <SidebarGroup className="mb-6">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-2">
+            Main
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location === item.url}>
+                  <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -132,16 +141,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          <SidebarGroupLabel>Resources</SidebarGroupLabel>
+        <div className="border-t my-4" />
+
+        <SidebarGroup className="mb-6">
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-2">
+            Resources
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {resourceItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location === item.url}>
+                  <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -150,16 +163,20 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <div className="border-t my-4" />
+
         <SidebarGroup>
-          <SidebarGroupLabel>Account</SidebarGroupLabel>
+          <SidebarGroupLabel className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2 px-2">
+            Account
+          </SidebarGroupLabel>
           <SidebarGroupContent>
-            <SidebarMenu>
+            <SidebarMenu className="gap-1">
               {accountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={location === item.url}>
+                  <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                      <item.icon className="h-4 w-4" />
-                      <span>{item.title}</span>
+                      <item.icon className="h-5 w-5" />
+                      <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -169,30 +186,33 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="p-4 border-t">
+      <SidebarFooter className="p-4 border-t bg-sidebar-accent/30">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="ghost"
-              className="w-full justify-start gap-3 px-2 hover-elevate"
+              className="w-full justify-between gap-3 px-3 py-2 h-auto hover-elevate rounded-lg"
               data-testid="button-user-menu"
             >
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user?.profileImageUrl || undefined} />
-                <AvatarFallback className="bg-primary text-primary-foreground text-sm">
-                  {getInitials()}
-                </AvatarFallback>
-              </Avatar>
-              <div className="flex flex-col items-start flex-1 min-w-0">
-                <span className="text-sm font-medium truncate w-full">
-                  {user?.firstName && user?.lastName
-                    ? `${user.firstName} ${user.lastName}`
-                    : user?.email || "User"}
-                </span>
-                <span className="text-xs text-muted-foreground truncate w-full">
-                  {user?.email}
-                </span>
+              <div className="flex items-center gap-3 min-w-0">
+                <Avatar className="h-9 w-9 border-2 border-primary/20">
+                  <AvatarImage src={user?.profileImageUrl || undefined} />
+                  <AvatarFallback className="bg-primary text-primary-foreground text-sm font-semibold">
+                    {getInitials()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex flex-col items-start flex-1 min-w-0">
+                  <span className="text-sm font-semibold truncate w-full">
+                    {user?.firstName && user?.lastName
+                      ? `${user.firstName} ${user.lastName}`
+                      : user?.email || "User"}
+                  </span>
+                  <span className="text-xs text-muted-foreground truncate w-full">
+                    {user?.subscriptionStatus === 'active' ? 'Pro Plan' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
+                  </span>
+                </div>
               </div>
+              <ChevronDown className="h-4 w-4 text-muted-foreground shrink-0" />
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
@@ -212,7 +232,9 @@ export function AppSidebar() {
             <DropdownMenuItem
               onClick={() => window.location.href = "/api/logout"}
               data-testid="button-logout"
+              className="text-destructive focus:text-destructive"
             >
+              <LogOut className="mr-2 h-4 w-4" />
               Log out
             </DropdownMenuItem>
           </DropdownMenuContent>
