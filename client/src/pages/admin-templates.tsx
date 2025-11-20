@@ -8,13 +8,17 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Plus, FileText, Trash2 } from "lucide-react";
+import { Plus, FileText, Trash2, Pencil } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { Template } from "@shared/schema";
 
 export default function AdminTemplatesPage() {
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
+  const [deleteTemplateId, setDeleteTemplateId] = useState<string | null>(null);
   
   const { data: templates, isLoading } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
@@ -45,6 +49,48 @@ export default function AdminTemplatesPage() {
     },
   });
 
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return apiRequest("PUT", `/api/admin/templates/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
+      toast({
+        title: "Template Updated",
+        description: "The template has been updated successfully.",
+      });
+      setEditingTemplate(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update template. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/templates/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/templates"] });
+      toast({
+        title: "Template Deleted",
+        description: "The template has been deleted successfully.",
+      });
+      setDeleteTemplateId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete template. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     const formData = new FormData(e.currentTarget);
@@ -60,6 +106,23 @@ export default function AdminTemplatesPage() {
     };
 
     createMutation.mutate(data);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingTemplate) return;
+    
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: formData.get("title") as string,
+      description: formData.get("description") as string,
+      category: formData.get("category") as string,
+      templateType: formData.get("templateType") as string,
+      stateId: formData.get("stateId") as string,
+      sortOrder: parseInt(formData.get("sortOrder") as string) || 0,
+    };
+
+    updateMutation.mutate({ id: editingTemplate.id, data });
   };
 
   if (isLoading) {
@@ -217,7 +280,7 @@ export default function AdminTemplatesPage() {
                 {stateTemplates.map((template) => (
                   <div
                     key={template.id}
-                    className="flex items-start justify-between p-4 rounded-md border hover-elevate"
+                    className="flex items-start justify-between gap-4 p-4 rounded-md border hover-elevate"
                     data-testid={`template-card-${template.id}`}
                   >
                     <div className="flex-1">
@@ -232,6 +295,24 @@ export default function AdminTemplatesPage() {
                         </Badge>
                       </div>
                     </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setEditingTemplate(template)}
+                        data-testid={`button-edit-${template.id}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setDeleteTemplateId(template.id)}
+                        data-testid={`button-delete-${template.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-destructive" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -239,6 +320,124 @@ export default function AdminTemplatesPage() {
           </Card>
         ))}
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={!!editingTemplate} onOpenChange={(open) => !open && setEditingTemplate(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Template</DialogTitle>
+            <DialogDescription>Update the template details</DialogDescription>
+          </DialogHeader>
+          {editingTemplate && (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="edit-title">Title</Label>
+                  <Input
+                    id="edit-title"
+                    name="title"
+                    required
+                    defaultValue={editingTemplate.title}
+                    data-testid="input-edit-title"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-category">Category</Label>
+                  <Input
+                    id="edit-category"
+                    name="category"
+                    required
+                    defaultValue={editingTemplate.category}
+                    data-testid="input-edit-category"
+                  />
+                </div>
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div>
+                  <Label htmlFor="edit-templateType">Template Type</Label>
+                  <Input
+                    id="edit-templateType"
+                    name="templateType"
+                    required
+                    defaultValue={editingTemplate.templateType}
+                    data-testid="input-edit-template-type"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-stateId">State</Label>
+                  <Select name="stateId" defaultValue={editingTemplate.stateId} required>
+                    <SelectTrigger id="edit-stateId" data-testid="select-edit-state">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states?.map((state) => (
+                        <SelectItem key={state.id} value={state.id}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="edit-sortOrder">Sort Order</Label>
+                <Input
+                  id="edit-sortOrder"
+                  name="sortOrder"
+                  type="number"
+                  defaultValue={editingTemplate.sortOrder ?? 0}
+                  data-testid="input-edit-sort-order"
+                />
+              </div>
+
+              <div>
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  name="description"
+                  required
+                  defaultValue={editingTemplate.description}
+                  rows={3}
+                  data-testid="textarea-edit-description"
+                />
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setEditingTemplate(null)} data-testid="button-edit-cancel">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending} data-testid="button-edit-submit">
+                  {updateMutation.isPending ? "Updating..." : "Update Template"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={!!deleteTemplateId} onOpenChange={(open) => !open && setDeleteTemplateId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this template. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-delete-cancel">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteTemplateId && deleteMutation.mutate(deleteTemplateId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-delete-confirm"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

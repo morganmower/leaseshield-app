@@ -37,6 +37,7 @@ Not specified.
 - **Database Schema**: Comprehensive schema including users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, and notifications.
 - **API Endpoints**: Structured API for authentication, user management, subscriptions, templates, compliance, legal updates, legislative monitoring (admin-only: bills list, review queue, approve/reject, manual trigger), template review (versioning & publishing), notifications, analytics, and states. Cron endpoint for scheduled monitoring runs.
 - **Admin Legislative Monitoring UI**: Dedicated admin page (`/admin/legislative-monitoring`) with three tabs: (1) Published Updates - shows auto-published template updates with bill context and recommended changes for audit trail, (2) Pending Bills - displays unreviewed bills with AI analysis and affected templates, (3) History - tracks all published updates and reviewed bills. Includes manual "Run Monitoring Now" button for testing. All template updates are automatically published without requiring manual approval.
+- **Admin Resource Management**: All admin management pages (Templates, Compliance Cards, Legal Updates) now have complete CRUD operations with edit and delete functionality, allowing admins to manage all platform content directly through the UI.
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database for all application data.

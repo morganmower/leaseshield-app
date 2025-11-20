@@ -77,6 +77,7 @@ export interface IStorage {
 
   // Legal update operations
   getLegalUpdatesByState(stateId: string): Promise<LegalUpdate[]>;
+  getAllLegalUpdates(): Promise<LegalUpdate[]>;
   getRecentLegalUpdates(limit?: number): Promise<LegalUpdate[]>;
   getLegalUpdate(id: string): Promise<LegalUpdate | undefined>;
   getLegalUpdateById(id: string): Promise<LegalUpdate | undefined>;
@@ -299,6 +300,13 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(legalUpdates)
       .where(and(eq(legalUpdates.stateId, stateId), eq(legalUpdates.isActive, true)))
+      .orderBy(desc(legalUpdates.createdAt));
+  }
+
+  async getAllLegalUpdates(): Promise<LegalUpdate[]> {
+    return await db
+      .select()
+      .from(legalUpdates)
       .orderBy(desc(legalUpdates.createdAt));
   }
 

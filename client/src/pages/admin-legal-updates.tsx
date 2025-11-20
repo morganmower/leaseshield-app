@@ -8,17 +8,21 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import { Plus, Bell, AlertTriangle } from "lucide-react";
+import { Plus, Bell, AlertTriangle, Pencil, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import type { LegalUpdate } from "@shared/schema";
 import { format } from "date-fns";
 
 export default function AdminLegalUpdatesPage() {
   const { toast } = useToast();
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [editingUpdate, setEditingUpdate] = useState<LegalUpdate | null>(null);
+  const [deleteUpdateId, setDeleteUpdateId] = useState<string | null>(null);
   
   const { data: updates, isLoading } = useQuery<LegalUpdate[]>({
-    queryKey: ["/api/legal-updates"],
+    queryKey: ["/api/admin/legal-updates"],
   });
 
   const { data: states } = useQuery<Array<{ id: string; name: string }>>({
@@ -30,7 +34,7 @@ export default function AdminLegalUpdatesPage() {
       return apiRequest("POST", "/api/admin/legal-updates", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/legal-updates"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/legal-updates"] });
       toast({
         title: "Legal Update Created",
         description: "The legal update has been published successfully.",
@@ -41,6 +45,48 @@ export default function AdminLegalUpdatesPage() {
       toast({
         title: "Error",
         description: "Failed to create legal update. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      return apiRequest("PUT", `/api/admin/legal-updates/${id}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/legal-updates"] });
+      toast({
+        title: "Legal Update Updated",
+        description: "The legal update has been updated successfully.",
+      });
+      setEditingUpdate(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update legal update. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      return apiRequest("DELETE", `/api/admin/legal-updates/${id}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/legal-updates"] });
+      toast({
+        title: "Legal Update Deleted",
+        description: "The legal update has been deleted successfully.",
+      });
+      setDeleteUpdateId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete legal update. Please try again.",
         variant: "destructive",
       });
     },
@@ -62,6 +108,25 @@ export default function AdminLegalUpdatesPage() {
     };
 
     createMutation.mutate(data);
+  };
+
+  const handleEditSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    if (!editingUpdate) return;
+    
+    const formData = new FormData(e.currentTarget);
+    const data = {
+      title: formData.get("title") as string,
+      summary: formData.get("summary") as string,
+      whyItMatters: formData.get("whyItMatters") as string,
+      beforeText: formData.get("beforeText") as string,
+      afterText: formData.get("afterText") as string,
+      stateId: formData.get("stateId") as string,
+      impactLevel: formData.get("impactLevel") as string,
+      effectiveDate: new Date(formData.get("effectiveDate") as string),
+    };
+
+    updateMutation.mutate({ id: editingUpdate.id, data });
   };
 
   if (isLoading) {
@@ -260,6 +325,24 @@ export default function AdminLegalUpdatesPage() {
                         Effective: {update.effectiveDate ? format(new Date(update.effectiveDate), "MMMM d, yyyy") : "TBD"}
                       </p>
                     </div>
+                    <div className="flex gap-2 ml-4">
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setEditingUpdate(update)}
+                        data-testid={`button-edit-${update.id}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="outline"
+                        onClick={() => setDeleteUpdateId(update.id)}
+                        data-testid={`button-delete-${update.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -267,6 +350,155 @@ export default function AdminLegalUpdatesPage() {
           </Card>
         ))}
       </div>
+
+      <Dialog open={!!editingUpdate} onOpenChange={() => setEditingUpdate(null)}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Legal Update</DialogTitle>
+            <DialogDescription>
+              Update the legal update information below.
+            </DialogDescription>
+          </DialogHeader>
+          {editingUpdate && (
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-title">Title</Label>
+                <Input
+                  id="edit-title"
+                  name="title"
+                  defaultValue={editingUpdate.title}
+                  required
+                  data-testid="input-edit-title"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-3">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-stateId">State</Label>
+                  <Select name="stateId" defaultValue={editingUpdate.stateId} required>
+                    <SelectTrigger id="edit-stateId" data-testid="select-edit-state">
+                      <SelectValue placeholder="Select a state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {states?.map((state) => (
+                        <SelectItem key={state.id} value={state.id}>
+                          {state.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-impactLevel">Impact Level</Label>
+                  <Select name="impactLevel" defaultValue={editingUpdate.impactLevel} required>
+                    <SelectTrigger id="edit-impactLevel" data-testid="select-edit-impact">
+                      <SelectValue placeholder="Select impact level" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-effectiveDate">Effective Date</Label>
+                  <Input
+                    id="edit-effectiveDate"
+                    name="effectiveDate"
+                    type="date"
+                    defaultValue={editingUpdate.effectiveDate ? new Date(editingUpdate.effectiveDate).toISOString().split('T')[0] : ''}
+                    required
+                    data-testid="input-edit-effective-date"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-summary">Summary</Label>
+                <Textarea
+                  id="edit-summary"
+                  name="summary"
+                  defaultValue={editingUpdate.summary}
+                  rows={2}
+                  required
+                  data-testid="textarea-edit-summary"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="edit-whyItMatters">Why It Matters</Label>
+                <Textarea
+                  id="edit-whyItMatters"
+                  name="whyItMatters"
+                  defaultValue={editingUpdate.whyItMatters}
+                  rows={2}
+                  required
+                  data-testid="textarea-edit-why-it-matters"
+                />
+              </div>
+
+              <div className="grid gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="edit-beforeText">Before (Old Law)</Label>
+                  <Textarea
+                    id="edit-beforeText"
+                    name="beforeText"
+                    defaultValue={editingUpdate.beforeText}
+                    rows={3}
+                    required
+                    data-testid="textarea-edit-before"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="edit-afterText">After (New Law)</Label>
+                  <Textarea
+                    id="edit-afterText"
+                    name="afterText"
+                    defaultValue={editingUpdate.afterText}
+                    rows={3}
+                    required
+                    data-testid="textarea-edit-after"
+                  />
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button type="button" variant="outline" onClick={() => setEditingUpdate(null)} data-testid="button-cancel-edit">
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={updateMutation.isPending} data-testid="button-save-edit">
+                  {updateMutation.isPending ? "Saving..." : "Save Changes"}
+                </Button>
+              </DialogFooter>
+            </form>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteUpdateId} onOpenChange={() => setDeleteUpdateId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Legal Update</AlertDialogTitle>
+            <AlertDialogDescription>
+              Are you sure you want to delete this legal update? This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteUpdateId && deleteMutation.mutate(deleteUpdateId)}
+              disabled={deleteMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

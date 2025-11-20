@@ -436,6 +436,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Update template
+  app.put('/api/admin/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertTemplateSchema.partial().parse(req.body);
+      const template = await storage.updateTemplate(id, validatedData);
+      res.json(template);
+    } catch (error) {
+      console.error("Error updating template:", error);
+      res.status(500).json({ message: "Failed to update template" });
+    }
+  });
+
+  // Admin: Delete template
+  app.delete('/api/admin/templates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteTemplate(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting template:", error);
+      res.status(500).json({ message: "Failed to delete template" });
+    }
+  });
+
   // Compliance routes
   app.get('/api/compliance-cards', isAuthenticated, async (req: any, res) => {
     try {
@@ -524,6 +549,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all legal updates
+  app.get('/api/admin/legal-updates', isAuthenticated, async (req: any, res) => {
+    try {
+      const updates = await storage.getAllLegalUpdates();
+      res.json(updates);
+    } catch (error) {
+      console.error("Error fetching all legal updates:", error);
+      res.status(500).json({ message: "Failed to fetch legal updates" });
+    }
+  });
+
   // Admin: Create legal update
   app.post('/api/admin/legal-updates', isAuthenticated, async (req: any, res) => {
     try {
@@ -537,6 +573,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating legal update:", error);
       res.status(500).json({ message: "Failed to create legal update" });
+    }
+  });
+
+  // Admin: Update legal update
+  app.put('/api/admin/legal-updates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertLegalUpdateSchema.partial().parse(req.body);
+      const update = await storage.updateLegalUpdate(id, validatedData);
+      res.json(update);
+    } catch (error) {
+      console.error("Error updating legal update:", error);
+      res.status(500).json({ message: "Failed to update legal update" });
+    }
+  });
+
+  // Admin: Delete legal update
+  app.delete('/api/admin/legal-updates/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteLegalUpdate(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting legal update:", error);
+      res.status(500).json({ message: "Failed to delete legal update" });
     }
   });
 
