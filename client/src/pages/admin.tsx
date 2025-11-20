@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AdminPage() {
@@ -91,6 +91,12 @@ export default function AdminPage() {
               <CardDescription>Common administrative tasks</CardDescription>
             </CardHeader>
             <CardContent className="space-y-3">
+              <Link href="/admin/dashboard">
+                <Button variant="outline" className="w-full justify-start" data-testid="link-review-queue">
+                  <AlertCircle className="h-4 w-4 mr-2 text-primary" />
+                  Template Review Queue
+                </Button>
+              </Link>
               <Link href="/admin/templates">
                 <Button variant="outline" className="w-full justify-start" data-testid="link-manage-templates">
                   <FileText className="h-4 w-4 mr-2" />
