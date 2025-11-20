@@ -281,6 +281,14 @@ Stripe webhooks update subscription status:
 - [ ] Set up error tracking (Sentry, etc.)
 
 ## Recent Changes
+- **2024-11-20**: **Admin Dashboard UI for Template Review Queue** - Visual interface for attorney approval workflow
+  - Created `/admin/dashboard` page showing pending template reviews
+  - Real-time display of AI-flagged templates with priority badges (HIGH/MEDIUM/LOW)
+  - Approve/Reject dialogs with version notes and attorney approval tracking
+  - Version history viewer showing all template changes over time
+  - Integrated into main admin page Quick Actions section
+  - Seed script (seedReviewQueue.ts) to populate sample review data for demonstration
+  - Complete end-to-end workflow: Legislative Detection → AI Analysis → Admin Review → Approval → Publishing → User Notification
 - **2024-11-20**: **Complete template update approval workflow implemented** - Full workflow from legislative detection to user notification
   - Transactional `publishTemplateUpdate()` storage method ensures atomic updates
   - Admin API endpoints for approving/rejecting template updates
