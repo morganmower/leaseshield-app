@@ -15,6 +15,7 @@ import {
   Bell
 } from "lucide-react";
 import type { LegalUpdate } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -118,58 +119,64 @@ export default function Dashboard() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {/* Leasing Toolkit - Amber/Gold */}
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-leasing-toolkit">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
-              <div className="relative">
-                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
-                  <FileText className="h-7 w-7 text-amber-600 dark:text-amber-500" />
+            <Link href="/templates">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-leasing-toolkit">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                    <FileText className="h-7 w-7 text-amber-600 dark:text-amber-500" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold mb-2">Leasing Toolkit</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    State-specific leases, applications, and rental agreements
+                  </p>
+                  <div className="text-sm font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400 flex items-center">
+                    Browse Templates
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </div>
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2">Leasing Toolkit</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  State-specific leases, applications, and rental agreements
-                </p>
-                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium text-amber-600 dark:text-amber-500 hover:text-amber-700 dark:hover:text-amber-400">
-                  Browse Templates
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            </Link>
 
             {/* Screening Toolkit - Teal/Cyan */}
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-toolkit">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
-              <div className="relative">
-                <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
-                  <Search className="h-7 w-7 text-cyan-600 dark:text-cyan-500" />
+            <Link href="/screening">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-toolkit">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                    <Search className="h-7 w-7 text-cyan-600 dark:text-cyan-500" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold mb-2">Screening Toolkit</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Learn to read credit reports and avoid screening mistakes
+                  </p>
+                  <div className="text-sm font-medium text-cyan-600 dark:text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400 flex items-center">
+                    Get Started
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </div>
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2">Screening Toolkit</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Learn to read credit reports and avoid screening mistakes
-                </p>
-                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium text-cyan-600 dark:text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400">
-                  Get Started
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            </Link>
 
             {/* Compliance Toolkit - Blue/Primary */}
-            <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-compliance-toolkit">
-              <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
-              <div className="relative">
-                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
-                  <Shield className="h-7 w-7 text-primary" />
+            <Link href="/compliance">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-compliance-toolkit">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
+                    <Shield className="h-7 w-7 text-primary" />
+                  </div>
+                  <h3 className="font-display text-lg font-semibold mb-2">Compliance Toolkit</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Stay current with state-specific requirements and updates
+                  </p>
+                  <div className="text-sm font-medium flex items-center">
+                    View Compliance
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </div>
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2">Compliance Toolkit</h3>
-                <p className="text-sm text-muted-foreground mb-4">
-                  Stay current with state-specific requirements and updates
-                </p>
-                <Button variant="ghost" size="sm" className="p-0 h-auto font-medium">
-                  View Compliance
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </div>
-            </Card>
+              </Card>
+            </Link>
           </div>
         </div>
 
@@ -180,10 +187,12 @@ export default function Dashboard() {
               <h2 className="text-xl font-display font-semibold text-foreground">
                 Recent Compliance Updates
               </h2>
-              <Button variant="ghost" size="sm" data-testid="button-all-updates">
-                View All
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link href="/compliance">
+                <Button variant="ghost" size="sm" data-testid="button-all-updates">
+                  View All
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
             <div className="space-y-4">
               {recentUpdates.slice(0, 3).map((update) => (
@@ -228,10 +237,12 @@ export default function Dashboard() {
             <h2 className="text-xl font-display font-semibold text-foreground">
               Most Used Templates
             </h2>
-            <Button variant="ghost" size="sm" data-testid="button-all-templates">
-              View All Templates
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
+            <Link href="/templates">
+              <Button variant="ghost" size="sm" data-testid="button-all-templates">
+                View All Templates
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[
@@ -242,25 +253,26 @@ export default function Dashboard() {
               { name: 'Lease Violation Notice', state: user.preferredState || 'UT', type: 'notices' },
               { name: 'Security Deposit Return', state: user.preferredState || 'UT', type: 'move_in_out' },
             ].map((template, index) => (
-              <Card 
-                key={index} 
-                className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
-                data-testid={`template-card-${index}`}
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex-1">
-                    <h3 className="font-medium text-foreground mb-1">{template.name}</h3>
-                    <Badge variant="secondary" className="text-xs">
-                      {template.state}
-                    </Badge>
+              <Link key={index} href="/templates">
+                <Card 
+                  className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
+                  data-testid={`template-card-${index}`}
+                >
+                  <div className="flex items-start justify-between gap-3 mb-3">
+                    <div className="flex-1">
+                      <h3 className="font-medium text-foreground mb-1">{template.name}</h3>
+                      <Badge variant="secondary" className="text-xs">
+                        {template.state}
+                      </Badge>
+                    </div>
+                    <FileText className="h-5 w-5 text-muted-foreground" />
                   </div>
-                  <FileText className="h-5 w-5 text-muted-foreground" />
-                </div>
-                <Button variant="outline" size="sm" className="w-full" data-testid={`button-download-${index}`}>
-                  <Download className="mr-2 h-4 w-4" />
-                  Download
-                </Button>
-              </Card>
+                  <Button variant="outline" size="sm" className="w-full" data-testid={`button-download-${index}`}>
+                    <Download className="mr-2 h-4 w-4" />
+                    View Template
+                  </Button>
+                </Card>
+              </Link>
             ))}
           </div>
         </div>
