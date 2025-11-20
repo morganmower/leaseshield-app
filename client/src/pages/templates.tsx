@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -28,6 +29,7 @@ import type { Template } from "@shared/schema";
 export default function Templates() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState<string>("all");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
@@ -42,13 +44,16 @@ export default function Templates() {
       return;
     }
 
-    // TODO: Implement actual download/fill logic
-    toast({
-      title: action === 'download' ? 'Download Started' : 'Opening Form',
-      description: action === 'download' 
-        ? 'Your template is being downloaded...' 
-        : 'Opening fillable form...',
-    });
+    if (action === 'fill') {
+      // Navigate to document wizard
+      setLocation(`/templates/${templateId}/fill`);
+    } else {
+      // TODO: Implement actual download logic
+      toast({
+        title: 'Download Started',
+        description: 'Your template is being downloaded...',
+      });
+    }
   };
 
   useEffect(() => {
