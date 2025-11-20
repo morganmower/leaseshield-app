@@ -146,47 +146,81 @@ export class LegislativeMonitoringService {
                 
                 if (!template) continue;
 
-                // Create review queue entry for audit trail (marked as auto-approved)
+                // Create review queue entry as pending first (for atomicity)
                 const reviewData: InsertTemplateReviewQueue = {
                   templateId: templateId,
                   billId: savedMonitoring.id,
-                  status: 'approved',
+                  status: 'pending',
                   priority: analysis.relevanceLevel === 'high' ? 10 : 5,
                   reason: `Bill ${bill.bill_number}: ${bill.title}`,
                   recommendedChanges: analysis.recommendedChanges,
                   currentVersion: template.version || 1,
                   assignedTo: null,
                   reviewStartedAt: new Date(),
-                  reviewCompletedAt: new Date(),
+                  reviewCompletedAt: null,
                   attorneyNotes: null,
-                  approvedChanges: analysis.recommendedChanges,
-                  approvalNotes: 'Auto-approved by AI legislative monitoring system',
-                  approvedAt: new Date(),
+                  approvedChanges: null,
+                  approvalNotes: null,
+                  approvedAt: null,
                   rejectedAt: null,
                   updatedTemplateSnapshot: null,
-                  publishedAt: new Date(),
-                  publishedBy: 'system',
+                  publishedAt: null,
+                  publishedBy: null,
                 };
 
                 const createdReview = await storage.createTemplateReviewQueue(reviewData);
                 
                 // Auto-publish the template update immediately
+                let publishResult;
+                let publishSucceeded = false;
+                
                 try {
-                  const publishResult = await storage.publishTemplateUpdate({
+                  publishResult = await storage.publishTemplateUpdate({
                     templateId: templateId,
                     reviewId: createdReview.id,
                     versionNotes: analysis.recommendedChanges || 'Legislative update',
                     lastUpdateReason: `Bill ${bill.bill_number}: ${bill.title}`,
                     publishedBy: 'system',
                   });
-                  
-                  templatesQueued++;
-                  console.log(`  ✅ Auto-published ${template.title} (v${publishResult.version.versionNumber})`);
-                  
-                  // TODO: Notify users of template update
-                  // This will be done via a separate notification job
+                  publishSucceeded = true;
+                  console.log(`  ✅ Published ${template.title} (v${publishResult.version.versionNumber})`);
                 } catch (publishError) {
-                  console.error(`  ❌ Failed to auto-publish ${template.title}:`, publishError);
+                  console.error(`  ❌ Failed to publish ${template.title}:`, publishError);
+                  // Update review entry to rejected status on publish failure
+                  try {
+                    await storage.updateTemplateReviewQueue(createdReview.id, {
+                      status: 'rejected',
+                      reviewCompletedAt: new Date(),
+                      rejectedAt: new Date(),
+                      approvalNotes: `Auto-publish failed: ${publishError instanceof Error ? publishError.message : 'Unknown error'}`,
+                    });
+                  } catch (updateError) {
+                    console.error(`  ⚠️  Failed to update review status to rejected:`, updateError);
+                  }
+                }
+                
+                // If publish succeeded, update review to approved
+                if (publishSucceeded) {
+                  try {
+                    await storage.updateTemplateReviewQueue(createdReview.id, {
+                      status: 'approved',
+                      reviewCompletedAt: new Date(),
+                      approvedChanges: analysis.recommendedChanges,
+                      approvalNotes: 'Auto-approved by AI legislative monitoring system',
+                      approvedAt: new Date(),
+                      publishedAt: new Date(),
+                      publishedBy: 'system',
+                    });
+                    templatesQueued++;
+                    
+                    // TODO: Notify users of template update
+                    // This will be done via a separate notification job
+                  } catch (updateError) {
+                    console.error(`  ⚠️  Template published but failed to update review status:`, updateError);
+                    console.error(`  ⚠️  MANUAL ACTION REQUIRED: Review ${createdReview.id} should be marked as approved`);
+                    // Still count as success since template was published
+                    templatesQueued++;
+                  }
                 }
               }
             }
