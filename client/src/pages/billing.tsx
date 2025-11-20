@@ -121,6 +121,22 @@ export default function Billing() {
       </div>
 
       <div className="space-y-6">
+        {/* No Stripe Customer - Need to Subscribe */}
+        {!user.stripeCustomerId && (user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'active') && (
+          <Card className="p-6 border-primary/50 bg-primary/5">
+            <h2 className="text-xl font-semibold text-foreground mb-4">Complete Your Subscription Setup</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              You have trial access but haven't set up billing yet. To manage your payment method or subscription, please complete the subscription setup process.
+            </p>
+            <Button 
+              onClick={() => window.location.href = '/subscribe'}
+              data-testid="button-setup-subscription"
+            >
+              Complete Subscription Setup
+            </Button>
+          </Card>
+        )}
+
         {/* Subscription Status */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold text-foreground mb-6">Subscription Status</h2>
@@ -150,7 +166,7 @@ export default function Billing() {
               </div>
             )}
 
-            {user.subscriptionStatus === 'cancel_at_period_end' && (
+            {user.subscriptionStatus === 'cancel_at_period_end' && user.stripeCustomerId && (
               <div className="p-4 bg-muted rounded-lg border">
                 <p className="text-sm text-muted-foreground">
                   Your subscription has been cancelled and will end at the end of your billing period. 
@@ -162,7 +178,7 @@ export default function Billing() {
         </Card>
 
         {/* Payment Method */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'cancel_at_period_end') && (
+        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end') && user.stripeCustomerId && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
             
@@ -184,7 +200,7 @@ export default function Billing() {
         )}
 
         {/* Cancel Subscription */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing') && (
+        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing') && user.stripeSubscriptionId && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-6">Cancel Subscription</h2>
             
