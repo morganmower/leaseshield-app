@@ -175,3 +175,42 @@ export const isAuthenticated: RequestHandler = async (req, res, next) => {
     return;
   }
 };
+
+export const requireAccess: RequestHandler = async (req, res, next) => {
+  const user = req.user as any;
+  
+  if (!req.isAuthenticated() || !user.claims?.sub) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  try {
+    // Get user from database to check admin status and subscription
+    const dbUser = await storage.getUser(user.claims.sub);
+    
+    if (!dbUser) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    // Admin users have full access
+    if (dbUser.isAdmin) {
+      return next();
+    }
+
+    // Check if user has active subscription or trial
+    const hasActiveSubscription = 
+      dbUser.subscriptionStatus === 'active' || 
+      dbUser.subscriptionStatus === 'trialing';
+
+    if (!hasActiveSubscription) {
+      return res.status(403).json({ 
+        message: "Subscription required",
+        requiresSubscription: true 
+      });
+    }
+
+    next();
+  } catch (error) {
+    console.error('Access check error:', error);
+    res.status(500).json({ message: "Internal server error" });
+  }
+};
