@@ -451,6 +451,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Get all compliance cards
+  app.get('/api/admin/compliance-cards', isAuthenticated, async (req: any, res) => {
+    try {
+      const cards = await storage.getAllComplianceCards();
+      res.json(cards);
+    } catch (error) {
+      console.error("Error fetching all compliance cards:", error);
+      res.status(500).json({ message: "Failed to fetch compliance cards" });
+    }
+  });
+
   // Admin: Create compliance card
   app.post('/api/admin/compliance-cards', isAuthenticated, async (req: any, res) => {
     try {

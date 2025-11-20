@@ -18,7 +18,7 @@ export default function AdminCompliancePage() {
   const [sections, setSections] = useState([{ title: "", content: "" }]);
   
   const { data: cards, isLoading } = useQuery<ComplianceCard[]>({
-    queryKey: ["/api/compliance-cards"],
+    queryKey: ["/api/admin/compliance-cards"],
   });
 
   const { data: states } = useQuery<Array<{ id: string; name: string }>>({
@@ -30,7 +30,7 @@ export default function AdminCompliancePage() {
       return apiRequest("POST", "/api/admin/compliance-cards", data);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/compliance-cards"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/compliance-cards"] });
       toast({
         title: "Compliance Card Created",
         description: "The compliance card has been created successfully.",

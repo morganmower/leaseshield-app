@@ -69,6 +69,7 @@ export interface IStorage {
 
   // Compliance card operations
   getComplianceCardsByState(stateId: string): Promise<ComplianceCard[]>;
+  getAllComplianceCards(): Promise<ComplianceCard[]>;
   getComplianceCard(id: string): Promise<ComplianceCard | undefined>;
   createComplianceCard(card: InsertComplianceCard): Promise<ComplianceCard>;
   updateComplianceCard(id: string, card: Partial<InsertComplianceCard>): Promise<ComplianceCard>;
@@ -260,6 +261,13 @@ export class DatabaseStorage implements IStorage {
       .from(complianceCards)
       .where(and(eq(complianceCards.stateId, stateId), eq(complianceCards.isActive, true)))
       .orderBy(complianceCards.sortOrder, complianceCards.title);
+  }
+
+  async getAllComplianceCards(): Promise<ComplianceCard[]> {
+    return await db
+      .select()
+      .from(complianceCards)
+      .orderBy(complianceCards.stateId, complianceCards.sortOrder, complianceCards.title);
   }
 
   async getComplianceCard(id: string): Promise<ComplianceCard | undefined> {
