@@ -29,11 +29,14 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
   const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId);
 
   // Launch headless browser
-  // NOTE: Using minimal args. Sandbox is enabled by default for security.
+  // NOTE: Running in --no-sandbox mode for Replit environment compatibility.
+  // Security is maintained through comprehensive HTML escaping of all user input.
   // All user input is HTML-escaped before rendering to prevent injection attacks.
   const browser = await puppeteer.launch({
     headless: true,
     args: [
+      '--no-sandbox', // Required for Replit containerized environment
+      '--disable-setuid-sandbox', // Required for Replit containerized environment
       '--disable-dev-shm-usage', // Required for containerized environments
       '--disable-gpu' // Not needed for PDF generation
     ]
