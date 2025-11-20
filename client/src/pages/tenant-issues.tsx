@@ -158,7 +158,7 @@ export default function TenantIssues() {
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const isPayingMember = user?.subscriptionStatus === 'active';
+  const isPayingMember = user?.subscriptionStatus === 'active' || user?.isAdmin === true;
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   // Fetch all templates to match workflow template names
