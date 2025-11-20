@@ -9,6 +9,9 @@ import {
   tenantIssueWorkflows,
   states,
   blogPosts,
+  legislativeMonitoring,
+  templateReviewQueue,
+  monitoringRuns,
   type User,
   type UpsertUser,
   type Template,
@@ -29,6 +32,12 @@ import {
   type InsertState,
   type BlogPost,
   type InsertBlogPost,
+  type LegislativeMonitoring,
+  type InsertLegislativeMonitoring,
+  type TemplateReviewQueue,
+  type InsertTemplateReviewQueue,
+  type MonitoringRun,
+  type InsertMonitoringRun,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -100,6 +109,21 @@ export interface IStorage {
   updateBlogPost(id: string, post: Partial<InsertBlogPost>): Promise<BlogPost>;
   deleteBlogPost(id: string): Promise<void>;
   incrementBlogPostViews(id: string): Promise<void>;
+
+  // Legislative monitoring operations
+  getLegislativeMonitoringByBillId(billId: string): Promise<LegislativeMonitoring | undefined>;
+  getAllLegislativeMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<LegislativeMonitoring[]>;
+  createLegislativeMonitoring(monitoring: InsertLegislativeMonitoring): Promise<LegislativeMonitoring>;
+  updateLegislativeMonitoring(id: string, monitoring: Partial<InsertLegislativeMonitoring>): Promise<LegislativeMonitoring>;
+
+  // Template review queue operations
+  getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<TemplateReviewQueue[]>;
+  createTemplateReviewQueue(review: InsertTemplateReviewQueue): Promise<TemplateReviewQueue>;
+  updateTemplateReviewQueue(id: string, review: Partial<InsertTemplateReviewQueue>): Promise<TemplateReviewQueue>;
+
+  // Monitoring run operations
+  createMonitoringRun(run: InsertMonitoringRun): Promise<MonitoringRun>;
+  getRecentMonitoringRuns(limit?: number): Promise<MonitoringRun[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -512,6 +536,95 @@ export class DatabaseStorage implements IStorage {
       .update(blogPosts)
       .set({ viewCount: sql`${blogPosts.viewCount} + 1` })
       .where(eq(blogPosts.id, id));
+  }
+
+  // Legislative monitoring operations
+  async getLegislativeMonitoringByBillId(billId: string): Promise<LegislativeMonitoring | undefined> {
+    const [monitoring] = await db.select().from(legislativeMonitoring).where(eq(legislativeMonitoring.billId, billId));
+    return monitoring;
+  }
+
+  async getAllLegislativeMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<LegislativeMonitoring[]> {
+    const conditions = [];
+
+    if (filters?.stateId) {
+      conditions.push(eq(legislativeMonitoring.stateId, filters.stateId));
+    }
+
+    if (filters?.relevanceLevel) {
+      conditions.push(eq(legislativeMonitoring.relevanceLevel, filters.relevanceLevel as any));
+    }
+
+    if (filters?.isReviewed !== undefined) {
+      conditions.push(eq(legislativeMonitoring.isReviewed, filters.isReviewed));
+    }
+
+    return await db
+      .select()
+      .from(legislativeMonitoring)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(legislativeMonitoring.createdAt));
+  }
+
+  async createLegislativeMonitoring(monitoringData: InsertLegislativeMonitoring): Promise<LegislativeMonitoring> {
+    const [monitoring] = await db.insert(legislativeMonitoring).values(monitoringData).returning();
+    return monitoring;
+  }
+
+  async updateLegislativeMonitoring(id: string, monitoringData: Partial<InsertLegislativeMonitoring>): Promise<LegislativeMonitoring> {
+    const [monitoring] = await db
+      .update(legislativeMonitoring)
+      .set({ ...monitoringData, updatedAt: new Date() })
+      .where(eq(legislativeMonitoring.id, id))
+      .returning();
+    return monitoring;
+  }
+
+  // Template review queue operations
+  async getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<TemplateReviewQueue[]> {
+    const conditions = [];
+
+    if (filters?.status) {
+      conditions.push(eq(templateReviewQueue.status, filters.status as any));
+    }
+
+    if (filters?.templateId) {
+      conditions.push(eq(templateReviewQueue.templateId, filters.templateId));
+    }
+
+    return await db
+      .select()
+      .from(templateReviewQueue)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(templateReviewQueue.priority), desc(templateReviewQueue.createdAt));
+  }
+
+  async createTemplateReviewQueue(reviewData: InsertTemplateReviewQueue): Promise<TemplateReviewQueue> {
+    const [review] = await db.insert(templateReviewQueue).values(reviewData).returning();
+    return review;
+  }
+
+  async updateTemplateReviewQueue(id: string, reviewData: Partial<InsertTemplateReviewQueue>): Promise<TemplateReviewQueue> {
+    const [review] = await db
+      .update(templateReviewQueue)
+      .set({ ...reviewData, updatedAt: new Date() })
+      .where(eq(templateReviewQueue.id, id))
+      .returning();
+    return review;
+  }
+
+  // Monitoring run operations
+  async createMonitoringRun(runData: InsertMonitoringRun): Promise<MonitoringRun> {
+    const [run] = await db.insert(monitoringRuns).values(runData).returning();
+    return run;
+  }
+
+  async getRecentMonitoringRuns(limit: number = 10): Promise<MonitoringRun[]> {
+    return await db
+      .select()
+      .from(monitoringRuns)
+      .orderBy(desc(monitoringRuns.createdAt))
+      .limit(limit);
   }
 }
 

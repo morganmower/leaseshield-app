@@ -6,9 +6,12 @@ import { emailService } from "./emailService";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
+import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
+  private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
+  private legislativeMonitoringLastRun: Date | null = null;
 
   // Check for trials ending soon and send reminder emails
   async checkTrialReminders(): Promise<void> {
@@ -155,6 +158,37 @@ export class ScheduledJobs {
     }
   }
 
+  // Check if legislative monitoring should run (monthly on the 1st)
+  async checkLegislativeMonitoring(): Promise<void> {
+    try {
+      const now = new Date();
+      const dayOfMonth = now.getDate();
+
+      // Only run on the 1st of the month
+      if (dayOfMonth !== 1) {
+        return;
+      }
+
+      // Check if we've already run this month
+      if (this.legislativeMonitoringLastRun) {
+        const lastRunMonth = this.legislativeMonitoringLastRun.getMonth();
+        const currentMonth = now.getMonth();
+        
+        if (lastRunMonth === currentMonth) {
+          console.log('  Legislative monitoring already ran this month');
+          return;
+        }
+      }
+
+      console.log('🔍 Running monthly legislative monitoring...');
+      await runMonthlyLegislativeMonitoring();
+      this.legislativeMonitoringLastRun = now;
+      
+    } catch (error) {
+      console.error('❌ Error in legislative monitoring check:', error);
+    }
+  }
+
   // Start all scheduled jobs
   start(): void {
     console.log('🚀 Starting scheduled jobs...');
@@ -169,6 +203,15 @@ export class ScheduledJobs {
     // Run initial check after 1 minute
     setTimeout(() => this.checkTrialReminders(), 60 * 1000);
 
+    // Check for legislative monitoring daily (will only run on 1st of month)
+    this.legislativeMonitoringInterval = setInterval(
+      () => this.checkLegislativeMonitoring(),
+      24 * 60 * 60 * 1000 // Daily check
+    );
+
+    // Run initial check after 2 minutes
+    setTimeout(() => this.checkLegislativeMonitoring(), 2 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -179,6 +222,11 @@ export class ScheduledJobs {
     if (this.trialReminderInterval) {
       clearInterval(this.trialReminderInterval);
       this.trialReminderInterval = null;
+    }
+
+    if (this.legislativeMonitoringInterval) {
+      clearInterval(this.legislativeMonitoringInterval);
+      this.legislativeMonitoringInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');
