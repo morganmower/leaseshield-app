@@ -55,11 +55,31 @@ export default function Templates() {
           description: 'Your template is being downloaded...',
         });
 
-        // Generate blank template with empty field values
+        // Fetch template details to get field definitions
+        const templateResponse = await fetch(`/api/templates/${templateId}`, {
+          credentials: 'include',
+        });
+        
+        if (!templateResponse.ok) {
+          throw new Error('Failed to fetch template details');
+        }
+        
+        const template = await templateResponse.json();
+        const fillableData = template.fillableFormData as { fields?: Array<{ id: string; label: string }> };
+        
+        // Create blank field values with underscores for manual filling
+        const blankFieldValues: Record<string, string> = {};
+        if (fillableData?.fields) {
+          fillableData.fields.forEach(field => {
+            blankFieldValues[field.id] = '___________________________';
+          });
+        }
+
+        // Generate blank template with placeholder values
         const response = await fetch('/api/documents/generate', {
           method: 'POST',
           credentials: 'include',
-          body: JSON.stringify({ templateId, fieldValues: {} }),
+          body: JSON.stringify({ templateId, fieldValues: blankFieldValues }),
           headers: {
             'Content-Type': 'application/json',
           },
@@ -71,7 +91,6 @@ export default function Templates() {
 
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
-        const template = templates?.find(t => t.id === templateId);
         const a = document.createElement('a');
         a.href = url;
         a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_') || 'template'}.pdf`;
