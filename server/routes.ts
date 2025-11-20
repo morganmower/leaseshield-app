@@ -474,6 +474,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Update compliance card
+  app.put('/api/admin/compliance-cards/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const validatedData = insertComplianceCardSchema.partial().parse(req.body);
+      const card = await storage.updateComplianceCard(id, validatedData);
+      res.json(card);
+    } catch (error) {
+      console.error("Error updating compliance card:", error);
+      res.status(500).json({ message: "Failed to update compliance card" });
+    }
+  });
+
+  // Admin: Delete compliance card
+  app.delete('/api/admin/compliance-cards/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteComplianceCard(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting compliance card:", error);
+      res.status(500).json({ message: "Failed to delete compliance card" });
+    }
+  });
+
   // Legal updates routes
   app.get('/api/legal-updates', isAuthenticated, async (req: any, res) => {
     try {
