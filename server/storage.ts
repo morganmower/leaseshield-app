@@ -150,6 +150,7 @@ export interface IStorage {
     publishedBy: string;
   }): Promise<{ template: Template; version: TemplateVersion }>;
   getTemplateVersions(templateId: string): Promise<TemplateVersion[]>;
+  createTemplateVersion(versionData: InsertTemplateVersion): Promise<TemplateVersion>;
   getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined>;
 
   // Property operations
@@ -804,6 +805,14 @@ export class DatabaseStorage implements IStorage {
       .from(templateVersions)
       .where(eq(templateVersions.templateId, templateId))
       .orderBy(desc(templateVersions.versionNumber));
+  }
+
+  async createTemplateVersion(versionData: InsertTemplateVersion): Promise<TemplateVersion> {
+    const [version] = await db
+      .insert(templateVersions)
+      .values(versionData)
+      .returning();
+    return version;
   }
 
   async getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined> {

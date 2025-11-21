@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, Download, MousePointerClick } from "lucide-react";
+import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText } from "lucide-react";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 
 interface AnalyticsSummary {
   subscriptions: {
@@ -125,24 +126,63 @@ export default function AdminAnalyticsPage() {
               <CardTitle>Subscription Breakdown</CardTitle>
               <CardDescription>Current status of all subscriptions</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Active Subscriptions</span>
-                <span className="font-bold" data-testid="text-active-count">
-                  {analytics?.subscriptions.active || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Trialing</span>
-                <span className="font-bold" data-testid="text-trialing-count">
-                  {analytics?.subscriptions.trialing || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Canceled</span>
-                <span className="font-bold" data-testid="text-canceled-count">
-                  {analytics?.subscriptions.canceled || 0}
-                </span>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <PieChart>
+                  <Pie
+                    data={[
+                      { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
+                      { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
+                      { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
+                    ]}
+                    cx="50%"
+                    cy="50%"
+                    labelLine={false}
+                    label={({ name, value }) => `${name}: ${value}`}
+                    outerRadius={80}
+                    fill="#8884d8"
+                    dataKey="value"
+                  >
+                    {[
+                      { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
+                      { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
+                      { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
+                    ].map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="space-y-2 mt-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    Active
+                  </span>
+                  <span className="font-bold" data-testid="text-active-count">
+                    {analytics?.subscriptions.active || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
+                    Trialing
+                  </span>
+                  <span className="font-bold" data-testid="text-trialing-count">
+                    {analytics?.subscriptions.trialing || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    Canceled
+                  </span>
+                  <span className="font-bold" data-testid="text-canceled-count">
+                    {analytics?.subscriptions.canceled || 0}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>
@@ -152,30 +192,47 @@ export default function AdminAnalyticsPage() {
               <CardTitle>User Engagement</CardTitle>
               <CardDescription>Platform usage metrics</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-sm flex items-center gap-2">
-                  <Download className="h-4 w-4" />
-                  Total Template Downloads
-                </span>
-                <span className="font-bold" data-testid="text-total-downloads">
-                  {analytics?.usage.totalDownloads || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm flex items-center gap-2">
-                  <MousePointerClick className="h-4 w-4" />
-                  Western Verify Clicks
-                </span>
-                <span className="font-bold" data-testid="text-western-verify-clicks">
-                  {analytics?.usage.westernVerifyClicks || 0}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm">Avg Downloads per User</span>
-                <span className="font-bold" data-testid="text-avg-downloads">
-                  {analytics?.usage.avgDownloadsPerUser.toFixed(1) || "0.0"}
-                </span>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart
+                  data={[
+                    { name: 'Template Downloads', value: analytics?.usage.totalDownloads || 0, color: '#3b82f6' },
+                    { name: 'Western Verify Clicks', value: analytics?.usage.westernVerifyClicks || 0, color: '#8b5cf6' },
+                  ]}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} />
+                  <YAxis />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="#3b82f6" />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="space-y-2 mt-4">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Total Template Downloads
+                  </span>
+                  <span className="font-bold" data-testid="text-total-downloads">
+                    {analytics?.usage.totalDownloads || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <MousePointerClick className="h-4 w-4" />
+                    Western Verify Clicks
+                  </span>
+                  <span className="font-bold" data-testid="text-western-verify-clicks">
+                    {analytics?.usage.westernVerifyClicks || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span>Avg Downloads per User</span>
+                  <span className="font-bold" data-testid="text-avg-downloads">
+                    {analytics?.usage?.avgDownloadsPerUser?.toFixed(1) ?? "0.0"}
+                  </span>
+                </div>
               </div>
             </CardContent>
           </Card>

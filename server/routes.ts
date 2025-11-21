@@ -96,32 +96,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Make current user an admin (for testing - remove in production)
-  app.post('/api/user/make-admin', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = getUserId(req);
-      const user = await storage.getUser(userId);
-      
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-
-      // Update user to be admin
-      await storage.upsertUser({
-        id: userId,
-        isAdmin: true,
-      });
-
-      const updatedUser = await storage.getUser(userId);
-      res.json({ 
-        message: "Admin access granted",
-        user: updatedUser 
-      });
-    } catch (error) {
-      console.error("Error setting admin status:", error);
-      res.status(500).json({ message: "Failed to set admin status" });
-    }
-  });
+  // SECURITY: /api/user/make-admin endpoint removed (critical vulnerability)
+  // To make a user admin in development, update the database directly:
+  // UPDATE users SET "isAdmin" = true WHERE id = '<user-id>';
 
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
@@ -1206,6 +1183,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
+    }
+  });
+
+  // Restore a previous template version
+  app.post("/api/templates/:id/restore-version/:versionId", isAuthenticated, async (req: any, res) => {
+    try {
+      const { id, versionId } = req.params;
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+      
+      const template = await storage.getTemplate(id);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      const versions = await storage.getTemplateVersions(id);
+      const versionToRestore = versions.find(v => v.id.toString() === versionId);
+      
+      if (!versionToRestore) {
+        return res.status(404).json({ message: "Version not found" });
+      }
+
+      // Create new version entry for the restoration
+      const newVersionNumber = template.version ? template.version + 1 : 2;
+      await storage.createTemplateVersion({
+        templateId: id,
+        versionNumber: newVersionNumber,
+        pdfUrl: versionToRestore.pdfUrl,
+        fillableFormData: versionToRestore.fillableFormData,
+        versionNotes: `Restored from Version ${versionToRestore.versionNumber}`,
+        lastUpdateReason: `Rollback to previous version ${versionToRestore.versionNumber}`,
+        sourceReviewId: null,
+        metadata: { restoredFrom: versionToRestore.id },
+        createdBy: userId,
+      });
+
+      // Update the template with the restored version's data
+      await storage.updateTemplate(id, {
+        version: newVersionNumber,
+        pdfUrl: versionToRestore.pdfUrl,
+        fillableFormData: versionToRestore.fillableFormData,
+        versionNotes: `Restored from Version ${versionToRestore.versionNumber}`,
+        lastUpdateReason: `Rollback to previous version ${versionToRestore.versionNumber}`,
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Template restored to version ${versionToRestore.versionNumber}`,
+        newVersion: newVersionNumber,
+      });
+    } catch (error: any) {
+      console.error('Error restoring template version:', error);
+      res.status(500).json({ message: error.message || 'Failed to restore version' });
     }
   });
 
