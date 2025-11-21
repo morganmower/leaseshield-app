@@ -8,10 +8,11 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Download, Loader2, Save } from "lucide-react";
+import { ArrowLeft, FileText, Download, Loader2, Save, Building2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { Template } from "@shared/schema";
+import type { Template, Property } from "@shared/schema";
 import { useState } from "react";
 
 interface FieldDefinition {
@@ -32,6 +33,7 @@ export default function DocumentWizard() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const templateId = params?.id;
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
   // Fetch template
   const { data: template, isLoading } = useQuery<Template>({
@@ -44,6 +46,16 @@ export default function DocumentWizard() {
       return response.json();
     },
     enabled: !!templateId,
+  });
+
+  // Fetch properties
+  const { data: properties = [] } = useQuery<Property[]>({
+    queryKey: ['/api/properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      return response.json();
+    },
   });
 
   const fillableData = template?.fillableFormData as FillableFormData | null;
@@ -114,6 +126,7 @@ export default function DocumentWizard() {
       documentName: string;
       formData: Record<string, string>;
       stateCode: string | null;
+      propertyId?: string | null;
     }) => {
       const response = await fetch('/api/saved-documents', {
         method: 'POST',
@@ -184,6 +197,7 @@ export default function DocumentWizard() {
           documentName,
           formData: fieldValues,
           stateCode: template.stateId || null,
+          propertyId: selectedPropertyId,
         });
       }
 
@@ -296,6 +310,35 @@ export default function DocumentWizard() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {/* Property Selector */}
+            {properties.length > 0 && (
+              <div className="mb-6 pb-6 border-b">
+                <div className="flex items-center gap-2 mb-2">
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                  <label className="text-sm font-medium">Associate with Property (Optional)</label>
+                </div>
+                <Select
+                  value={selectedPropertyId || "none"}
+                  onValueChange={(value) => setSelectedPropertyId(value === "none" ? null : value)}
+                >
+                  <SelectTrigger className="max-w-md" data-testid="select-property">
+                    <SelectValue placeholder="Select a property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No Property</SelectItem>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>
+                        {property.name} - {property.address}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Link this document to a specific property for better organization
+                </p>
+              </div>
+            )}
+
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {Object.entries(categories).map(([category, categoryFields]) => (
