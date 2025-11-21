@@ -11,6 +11,7 @@ import {
   ChevronDown,
   LogOut,
   FolderOpen,
+  Building2,
 } from "lucide-react";
 import {
   Sidebar,
@@ -52,6 +53,11 @@ const mainItems = [
     title: "My Documents",
     url: "/my-documents",
     icon: FolderOpen,
+  },
+  {
+    title: "Properties",
+    url: "/properties",
+    icon: Building2,
   },
   {
     title: "Compliance",
