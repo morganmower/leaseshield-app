@@ -84,6 +84,9 @@ export interface IStorage {
   createLegalUpdate(update: InsertLegalUpdate): Promise<LegalUpdate>;
   updateLegalUpdate(id: string, update: Partial<InsertLegalUpdate>): Promise<LegalUpdate>;
   deleteLegalUpdate(id: string): Promise<void>;
+  
+  // Get current legal disclosures for document generation (dynamic, updates with new legislation)
+  getCurrentStateLegalDisclosures(stateId: string): Promise<string>;
 
   // User notification operations
   getUserNotifications(userId: string): Promise<UserNotification[]>;
