@@ -39,7 +39,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Late rent notice", "Payment plan agreement", "Pay or quit notice"],
+    templates: ["Late Rent Notice", "3-Day Pay or Quit Notice"],
     steps: [
       "Review your lease agreement for late fee policies and grace periods",
       "Send a friendly reminder if within grace period",
@@ -59,7 +59,7 @@ const workflows = [
     color: "from-blue-500 to-blue-600",
     iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
     iconColor: "text-blue-600 dark:text-blue-500",
-    templates: ["Violation notice", "Cure or quit notice", "Incident documentation"],
+    templates: ["5-Day Lease Violation Notice"],
     steps: [
       "Document the specific violation with photos, dates, and details",
       "Review lease terms to confirm violation",
@@ -79,7 +79,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Damage documentation form", "Repair cost estimate", "Deposit deduction letter"],
+    templates: ["Move-Out Inspection Checklist"],
     steps: [
       "Document damage with photos and detailed description",
       "Determine if damage exceeds normal wear and tear",
@@ -99,7 +99,7 @@ const workflows = [
     color: "from-cyan-500 to-teal-600",
     iconBg: "bg-gradient-to-br from-cyan-500/10 to-teal-600/10",
     iconColor: "text-cyan-600 dark:text-cyan-500",
-    templates: ["ESA verification request", "ESA acceptance letter", "Pet policy addendum"],
+    templates: ["Residential Lease Agreement"],
     steps: [
       "Receive request for emotional support animal accommodation",
       "Request verification from healthcare provider",
@@ -119,7 +119,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Rent increase notice", "Lease renewal with increase", "Month-to-month notice"],
+    templates: ["Month-to-Month Rental Agreement"],
     steps: [
       "Research local rent control laws and limitations",
       "Verify required notice period (typically 30-60 days)",
@@ -139,7 +139,7 @@ const workflows = [
     color: "from-blue-500 to-blue-600",
     iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
     iconColor: "text-blue-600 dark:text-blue-500",
-    templates: ["Non-renewal notice", "Move-out checklist", "Security deposit return"],
+    templates: ["Move-Out Inspection Checklist", "Move-In Checklist"],
     steps: [
       "Review lease end date and notice requirements",
       "Send non-renewal notice within required timeframe",
