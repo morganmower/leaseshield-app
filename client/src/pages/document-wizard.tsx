@@ -110,10 +110,10 @@ export default function DocumentWizard() {
     mutationFn: async (data: {
       templateId: string;
       templateName: string;
-      templateVersion: number;
+      templateVersion: number | null;
       documentName: string;
       formData: Record<string, string>;
-      stateCode: string;
+      stateCode: string | null;
     }) => {
       const response = await fetch('/api/saved-documents', {
         method: 'POST',
@@ -180,10 +180,10 @@ export default function DocumentWizard() {
         saveMutation.mutate({
           templateId: template.id,
           templateName: template.title,
-          templateVersion: template.version || 1,
+          templateVersion: template.version || null,
           documentName,
           formData: fieldValues,
-          stateCode: template.stateId,
+          stateCode: template.stateId || null,
         });
       }
 
