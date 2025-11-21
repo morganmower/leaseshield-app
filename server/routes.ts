@@ -492,12 +492,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!userId) {
         return res.status(401).json({ message: "Unauthorized" });
       }
-      const property = await storage.getProperty(req.params.id);
+      const property = await storage.getProperty(req.params.id, userId);
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
-      }
-      if (property.userId !== userId) {
-        return res.status(403).json({ message: "Forbidden" });
       }
       res.json(property);
     } catch (error) {
@@ -538,15 +535,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const property = await storage.getProperty(req.params.id);
-      if (!property) {
+      const updatedProperty = await storage.updateProperty(req.params.id, userId, req.body);
+      if (!updatedProperty) {
         return res.status(404).json({ message: "Property not found" });
       }
-      if (property.userId !== userId) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
-      const updatedProperty = await storage.updateProperty(req.params.id, req.body);
       res.json(updatedProperty);
     } catch (error) {
       console.error("Error updating property:", error);
@@ -561,15 +553,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const property = await storage.getProperty(req.params.id);
-      if (!property) {
+      const deleted = await storage.deleteProperty(req.params.id, userId);
+      if (!deleted) {
         return res.status(404).json({ message: "Property not found" });
       }
-      if (property.userId !== userId) {
-        return res.status(403).json({ message: "Forbidden" });
-      }
-
-      await storage.deleteProperty(req.params.id);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting property:", error);
@@ -619,7 +606,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const { templateId, templateName, templateVersion, documentName, formData, stateCode } = req.body;
+      const { templateId, templateName, templateVersion, documentName, formData, stateCode, propertyId } = req.body;
+      
+      // Validate propertyId ownership if provided
+      if (propertyId) {
+        const property = await storage.getProperty(propertyId, userId);
+        if (!property) {
+          return res.status(403).json({ message: "Property not found or access denied" });
+        }
+      }
       
       const savedDocument = await storage.createSavedDocument({
         userId,
@@ -629,6 +624,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         documentName,
         formData,
         stateCode,
+        propertyId: propertyId || null,
       });
 
       await storage.trackEvent({
@@ -706,6 +702,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (document.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
+
+      // Note: We allow deleting documents even if the associated property no longer exists
+      // This prevents orphaned documents from becoming undeletable if the property is deleted first
 
       await storage.deleteSavedDocument(req.params.id);
       res.json({ success: true });

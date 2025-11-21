@@ -154,10 +154,10 @@ export interface IStorage {
 
   // Property operations
   getPropertiesByUserId(userId: string): Promise<Property[]>;
-  getProperty(id: string): Promise<Property | undefined>;
+  getProperty(id: string, userId: string): Promise<Property | undefined>;
   createProperty(property: InsertProperty): Promise<Property>;
-  updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property>;
-  deleteProperty(id: string): Promise<void>;
+  updateProperty(id: string, userId: string, property: Partial<InsertProperty>): Promise<Property | null>;
+  deleteProperty(id: string, userId: string): Promise<boolean>;
 
   // Saved document operations
   getSavedDocumentsByUserId(userId: string): Promise<SavedDocument[]>;
@@ -820,11 +820,11 @@ export class DatabaseStorage implements IStorage {
       .orderBy(desc(properties.createdAt));
   }
 
-  async getProperty(id: string): Promise<Property | undefined> {
+  async getProperty(id: string, userId: string): Promise<Property | undefined> {
     const [property] = await db
       .select()
       .from(properties)
-      .where(eq(properties.id, id));
+      .where(and(eq(properties.id, id), eq(properties.userId, userId)));
     return property;
   }
 
@@ -836,17 +836,21 @@ export class DatabaseStorage implements IStorage {
     return newProperty;
   }
 
-  async updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property> {
+  async updateProperty(id: string, userId: string, property: Partial<InsertProperty>): Promise<Property | null> {
     const [updatedProperty] = await db
       .update(properties)
       .set({ ...property, updatedAt: new Date() })
-      .where(eq(properties.id, id))
+      .where(and(eq(properties.id, id), eq(properties.userId, userId)))
       .returning();
-    return updatedProperty;
+    return updatedProperty || null;
   }
 
-  async deleteProperty(id: string): Promise<void> {
-    await db.delete(properties).where(eq(properties.id, id));
+  async deleteProperty(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(properties)
+      .where(and(eq(properties.id, id), eq(properties.userId, userId)))
+      .returning();
+    return result.length > 0;
   }
 
   // Saved document operations
