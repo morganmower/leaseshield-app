@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 import type { Template } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 const workflows = [
   {
@@ -275,7 +276,7 @@ export default function TenantIssues() {
               <p className="text-sm text-foreground">
                 <strong>Not Legal Advice:</strong> These workflows are general educational guidance and may not apply 
                 to your specific situation. Always verify procedures comply with your state and local laws. For legal 
-                actions like evictions, consult a licensed attorney. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+                actions like evictions, consult a licensed attorney. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
               </p>
             </div>
           </div>

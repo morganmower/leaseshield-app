@@ -20,6 +20,7 @@ import {
   XCircle,
   HelpCircle,
 } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Screening() {
   const { toast } = useToast();
@@ -70,7 +71,7 @@ export default function Screening() {
               <p className="text-sm text-foreground">
                 <strong>Not Legal Advice:</strong> This screening guidance is educational only. You are responsible 
                 for complying with Fair Housing laws, FCRA requirements, and all applicable screening regulations. 
-                Consult an attorney if you have questions. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+                Consult an attorney if you have questions. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
               </p>
             </div>
           </div>

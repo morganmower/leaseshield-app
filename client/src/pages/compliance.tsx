@@ -9,6 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
 import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import type { ComplianceCard, LegalUpdate } from "@shared/schema";
+import { Link } from "wouter";
 
 export default function Compliance() {
   const { toast } = useToast();
@@ -94,7 +95,7 @@ export default function Compliance() {
               <p className="text-sm text-foreground">
                 <strong>Not Legal Advice:</strong> This compliance guidance is educational only and may not reflect 
                 the most current laws in your jurisdiction. Always verify requirements with local authorities or a 
-                licensed attorney before taking action. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+                licensed attorney before taking action. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
               </p>
             </div>
           </div>
