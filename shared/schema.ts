@@ -522,3 +522,34 @@ export const insertSavedDocumentSchema = createInsertSchema(savedDocuments).omit
 });
 export type InsertSavedDocument = z.infer<typeof insertSavedDocumentSchema>;
 export type SavedDocument = typeof savedDocuments.$inferSelect;
+
+// Uploaded Documents - user-uploaded lease documents and files
+export const uploadedDocuments = pgTable("uploaded_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  propertyId: varchar("property_id").references(() => properties.id),
+  fileName: text("file_name").notNull(), // Original filename
+  fileUrl: text("file_url").notNull(), // Storage path
+  fileType: varchar("file_type", { length: 50 }), // pdf, docx, etc
+  fileSize: integer("file_size"), // Size in bytes
+  description: text("description"), // Optional user description
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const uploadedDocumentsRelations = relations(uploadedDocuments, ({ one }) => ({
+  user: one(users, {
+    fields: [uploadedDocuments.userId],
+    references: [users.id],
+  }),
+  property: one(properties, {
+    fields: [uploadedDocuments.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const insertUploadedDocumentSchema = createInsertSchema(uploadedDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertUploadedDocument = z.infer<typeof insertUploadedDocumentSchema>;
+export type UploadedDocument = typeof uploadedDocuments.$inferSelect;

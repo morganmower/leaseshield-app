@@ -15,6 +15,7 @@ import {
   templateVersions,
   properties,
   savedDocuments,
+  uploadedDocuments,
   type User,
   type UpsertUser,
   type Template,
@@ -47,6 +48,8 @@ import {
   type InsertProperty,
   type SavedDocument,
   type InsertSavedDocument,
+  type UploadedDocument,
+  type InsertUploadedDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -182,6 +185,13 @@ export interface IStorage {
   getSavedDocumentById(id: string): Promise<SavedDocument | undefined>;
   createSavedDocument(document: InsertSavedDocument): Promise<SavedDocument>;
   deleteSavedDocument(id: string): Promise<void>;
+
+  // Uploaded document operations
+  getUploadedDocumentsByUserId(userId: string): Promise<UploadedDocument[]>;
+  getUploadedDocumentsByPropertyId(propertyId: string, userId: string): Promise<UploadedDocument[]>;
+  getUploadedDocumentById(id: string, userId: string): Promise<UploadedDocument | undefined>;
+  createUploadedDocument(document: InsertUploadedDocument): Promise<UploadedDocument>;
+  deleteUploadedDocument(id: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -937,6 +947,47 @@ export class DatabaseStorage implements IStorage {
 
   async deleteSavedDocument(id: string): Promise<void> {
     await db.delete(savedDocuments).where(eq(savedDocuments.id, id));
+  }
+
+  // Uploaded document operations
+  async getUploadedDocumentsByUserId(userId: string): Promise<UploadedDocument[]> {
+    return await db
+      .select()
+      .from(uploadedDocuments)
+      .where(eq(uploadedDocuments.userId, userId))
+      .orderBy(desc(uploadedDocuments.createdAt));
+  }
+
+  async getUploadedDocumentsByPropertyId(propertyId: string, userId: string): Promise<UploadedDocument[]> {
+    return await db
+      .select()
+      .from(uploadedDocuments)
+      .where(and(eq(uploadedDocuments.propertyId, propertyId), eq(uploadedDocuments.userId, userId)))
+      .orderBy(desc(uploadedDocuments.createdAt));
+  }
+
+  async getUploadedDocumentById(id: string, userId: string): Promise<UploadedDocument | undefined> {
+    const [document] = await db
+      .select()
+      .from(uploadedDocuments)
+      .where(and(eq(uploadedDocuments.id, id), eq(uploadedDocuments.userId, userId)));
+    return document;
+  }
+
+  async createUploadedDocument(document: InsertUploadedDocument): Promise<UploadedDocument> {
+    const [uploaded] = await db
+      .insert(uploadedDocuments)
+      .values(document)
+      .returning();
+    return uploaded;
+  }
+
+  async deleteUploadedDocument(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(uploadedDocuments)
+      .where(and(eq(uploadedDocuments.id, id), eq(uploadedDocuments.userId, userId)))
+      .returning();
+    return result.length > 0;
   }
 }
 
