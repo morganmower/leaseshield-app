@@ -131,7 +131,9 @@ export default function Compliance() {
                   </div>
                 ) : legalUpdates && legalUpdates.length > 0 ? (
                   <div className="space-y-4">
-                    {legalUpdates.map((update) => {
+                    {legalUpdates.filter((update, index, self) => 
+                      index === self.findIndex(u => u.id === update.id)
+                    ).map((update) => {
                       const isExpanded = expandedUpdates.has(update.id);
                       return (
                       <Card
