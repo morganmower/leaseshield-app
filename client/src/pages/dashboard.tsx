@@ -15,7 +15,7 @@ import {
   Download,
   Bell
 } from "lucide-react";
-import type { LegalUpdate } from "@shared/schema";
+import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
 
 export default function Dashboard() {
@@ -44,6 +44,11 @@ export default function Dashboard() {
 
   const { data: unreadCount } = useQuery<{ count: number }>({
     queryKey: ["/api/notifications/unread-count"],
+    enabled: isAuthenticated,
+  });
+
+  const { data: allTemplates } = useQuery<Template[]>({
+    queryKey: ["/api/templates"],
     enabled: isAuthenticated,
   });
 
@@ -259,28 +264,39 @@ export default function Dashboard() {
               { name: 'Late Rent Notice', state: user.preferredState || 'UT', type: 'notices' },
               { name: 'Lease Violation Notice', state: user.preferredState || 'UT', type: 'notices' },
               { name: 'Security Deposit Return', state: user.preferredState || 'UT', type: 'move_in_out' },
-            ].map((template, index) => (
-              <Link key={index} to="/templates">
-                <Card 
-                  className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
-                  data-testid={`template-card-${index}`}
+            ].map((templateInfo, index) => {
+              // Find matching template from database
+              const matchedTemplate = allTemplates?.find(t => 
+                t.title.toLowerCase().includes(templateInfo.name.toLowerCase()) &&
+                t.stateId === templateInfo.state
+              );
+              
+              return (
+                <Link 
+                  key={index} 
+                  to={matchedTemplate ? `/templates/${matchedTemplate.id}/fill` : "/templates"}
                 >
-                  <div className="flex items-start justify-between gap-3 mb-3">
-                    <div className="flex-1">
-                      <h3 className="font-medium text-foreground mb-1">{template.name}</h3>
-                      <Badge variant="secondary" className="text-xs">
-                        {template.state}
-                      </Badge>
+                  <Card 
+                    className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
+                    data-testid={`template-card-${index}`}
+                  >
+                    <div className="flex items-start justify-between gap-3 mb-3">
+                      <div className="flex-1">
+                        <h3 className="font-medium text-foreground mb-1">{templateInfo.name}</h3>
+                        <Badge variant="secondary" className="text-xs">
+                          {templateInfo.state}
+                        </Badge>
+                      </div>
+                      <FileText className="h-5 w-5 text-muted-foreground" />
                     </div>
-                    <FileText className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                  <Button variant="outline" size="sm" className="w-full" data-testid={`button-download-${index}`}>
-                    <Download className="mr-2 h-4 w-4" />
-                    View Template
-                  </Button>
-                </Card>
-              </Link>
-            ))}
+                    <Button variant="outline" size="sm" className="w-full" data-testid={`button-download-${index}`}>
+                      <Download className="mr-2 h-4 w-4" />
+                      View Template
+                    </Button>
+                  </Card>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
