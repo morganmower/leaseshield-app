@@ -78,6 +78,7 @@ export interface IStorage {
   updateUserPreferences(id: string, data: { preferredState?: string }): Promise<User>;
   updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User>;
   getAllActiveUsers(): Promise<User[]>;
+  getAllUsers(): Promise<User[]>;
   getUsersByState(stateId: string): Promise<User[]>;
 
   // State operations
@@ -256,6 +257,12 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(users).where(
       sql`${users.subscriptionStatus} IN ('active', 'trialing', 'incomplete')`
     );
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(users).orderBy(desc(users.createdAt));
+    }, 'getAllUsers');
   }
 
   async getUsersByState(stateId: string): Promise<User[]> {
