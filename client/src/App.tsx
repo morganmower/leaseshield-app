@@ -13,6 +13,7 @@ import { Settings as SettingsIcon, CreditCard, LogOut } from "lucide-react";
 import { NotificationCenter } from "@/components/notification-center";
 import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
+import { ChatWidget } from "@/components/chat-widget";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Privacy from "@/pages/privacy";
@@ -170,6 +171,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
           </header>
           <main className="flex-1 overflow-y-auto">{children}</main>
         </div>
+        <ChatWidget />
       </div>
     </SidebarProvider>
   );
