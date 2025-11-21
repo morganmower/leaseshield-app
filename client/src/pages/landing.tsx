@@ -275,8 +275,8 @@ export default function Landing() {
                 className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed"
               >
                 Professional legal templates, automated compliance alerts, tenant screening tools, 
-                and multi-property management — all in one platform built for landlords managing 
-                1-50 rental units.
+                and multi-property management — all in one platform built for small to midsize 
+                landlords.
               </motion.p>
               
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
