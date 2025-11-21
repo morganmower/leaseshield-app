@@ -137,6 +137,7 @@ export const complianceCards = pgTable("compliance_cards", {
   summary: text("summary").notNull(),
   category: text("category").notNull(), // 'disclosures', 'screening', 'eviction', 'general'
   content: jsonb("content").notNull(), // Rich content structure
+  relatedTemplateId: varchar("related_template_id").references(() => templates.id), // Optional link to template
   sortOrder: integer("sort_order").default(0),
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
@@ -147,6 +148,10 @@ export const complianceCardsRelations = relations(complianceCards, ({ one }) => 
   state: one(states, {
     fields: [complianceCards.stateId],
     references: [states.id],
+  }),
+  relatedTemplate: one(templates, {
+    fields: [complianceCards.relatedTemplateId],
+    references: [templates.id],
   }),
 }));
 

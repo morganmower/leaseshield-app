@@ -9,11 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
 import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import type { ComplianceCard, LegalUpdate } from "@shared/schema";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 export default function Compliance() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [expandedUpdates, setExpandedUpdates] = useState<Set<string>>(new Set());
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
@@ -291,16 +292,25 @@ export default function Compliance() {
                           size="sm" 
                           data-testid={`button-view-card-${card.id}`}
                           onClick={() => {
-                            const newExpanded = new Set(expandedCards);
-                            if (newExpanded.has(card.id)) {
-                              newExpanded.delete(card.id);
+                            if (card.relatedTemplateId) {
+                              setLocation(`/templates/${card.relatedTemplateId}/fill`);
                             } else {
-                              newExpanded.add(card.id);
+                              const newExpanded = new Set(expandedCards);
+                              if (newExpanded.has(card.id)) {
+                                newExpanded.delete(card.id);
+                              } else {
+                                newExpanded.add(card.id);
+                              }
+                              setExpandedCards(newExpanded);
                             }
-                            setExpandedCards(newExpanded);
                           }}
                         >
-                          {isExpanded ? (
+                          {card.relatedTemplateId ? (
+                            <>
+                              View Template
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          ) : isExpanded ? (
                             <>
                               Back
                               <ArrowLeft className="ml-2 h-4 w-4" />

@@ -127,6 +127,7 @@ export default function MyDocuments() {
     }) => {
       const formData = new FormData();
       formData.append('file', file);
+      formData.append('fileName', documentName); // Custom name for the document
       if (propertyId && propertyId !== 'none') {
         formData.append('propertyId', propertyId);
       }
@@ -322,21 +323,12 @@ export default function MyDocuments() {
           </Button>
         </div>
 
-        {filteredDocuments.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Documents Yet</h3>
-              <p className="text-muted-foreground text-center max-w-md mb-4">
-                {searchQuery
-                  ? "No documents match your search. Try a different search term."
-                  : "Generate documents using templates to start building your library."}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDocuments.map((document) => (
+        {/* Generated Documents Section */}
+        {filteredDocuments.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Generated Documents</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDocuments.map((document) => (
               <Card key={document.id} className="hover-elevate" data-testid={`card-document-${document.id}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
@@ -398,10 +390,216 @@ export default function MyDocuments() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Uploaded Documents Section */}
+        {filteredUploadedDocuments.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Uploaded Documents</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredUploadedDocuments.map((document) => (
+                <Card key={document.id} className="hover-elevate" data-testid={`card-uploaded-document-${document.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg line-clamp-2" data-testid={`text-uploaded-document-name-${document.id}`}>
+                          {document.fileName}
+                        </CardTitle>
+                        {document.description && (
+                          <CardDescription className="mt-1" data-testid={`text-uploaded-description-${document.id}`}>
+                            {document.description}
+                          </CardDescription>
+                        )}
+                      </div>
+                      <File className="h-8 w-8 text-primary flex-shrink-0" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span data-testid={`text-uploaded-date-${document.id}`}>
+                          {format(new Date(document.uploadedAt), 'MMM d, yyyy')}
+                        </span>
+                      </div>
+                      {document.propertyId && (
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground" data-testid={`text-uploaded-property-${document.id}`}>
+                            {properties.find(p => p.id === document.propertyId)?.name || 'Unknown Property'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => downloadUploadedMutation.mutate(document.id)}
+                        disabled={downloadUploadedMutation.isPending}
+                        className="flex-1"
+                        data-testid={`button-download-uploaded-${document.id}`}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeleteUploadedDocId(document.id)}
+                        data-testid={`button-delete-uploaded-${document.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {filteredDocuments.length === 0 && filteredUploadedDocuments.length === 0 && (
+          <Card>
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
+              <h3 className="text-xl font-semibold mb-2">No Documents Yet</h3>
+              <p className="text-muted-foreground text-center max-w-md mb-4">
+                {searchQuery
+                  ? "No documents match your search. Try a different search term."
+                  : "Generate documents using templates or upload your own to start building your library."}
+              </p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upload Dialog */}
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent data-testid="dialog-upload-document">
+            <DialogHeader>
+              <DialogTitle>Upload Document</DialogTitle>
+              <DialogDescription>
+                Upload your own lease or other document. Accepted formats: PDF, DOC, DOCX (max 20MB).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="file-upload">Select File *</Label>
+                <Input
+                  id="file-upload"
+                  type="file"
+                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      if (file.size > 20 * 1024 * 1024) {
+                        toast({
+                          title: "File Too Large",
+                          description: "Please select a file smaller than 20MB.",
+                          variant: "destructive",
+                        });
+                        e.target.value = '';
+                        return;
+                      }
+                      setUploadFile(file);
+                      if (!uploadDocumentName) {
+                        setUploadDocumentName(file.name);
+                      }
+                    }
+                  }}
+                  data-testid="input-file-upload"
+                />
+                {uploadFile && (
+                  <p className="text-sm text-muted-foreground">
+                    Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="document-name">Document Name *</Label>
+                <Input
+                  id="document-name"
+                  placeholder="My Lease Agreement"
+                  value={uploadDocumentName}
+                  onChange={(e) => setUploadDocumentName(e.target.value)}
+                  data-testid="input-document-name"
+                  required
+                />
+                <p className="text-sm text-muted-foreground">Give this document a custom name</p>
+              </div>
+
+              {properties.length > 0 && (
+                <div className="grid gap-2">
+                  <Label htmlFor="upload-property-select">Property (Optional)</Label>
+                  <Select
+                    value={uploadPropertyId}
+                    onValueChange={setUploadPropertyId}
+                  >
+                    <SelectTrigger id="upload-property-select" data-testid="select-upload-property">
+                      <SelectValue placeholder="Select a property" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Property</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="upload-description">Description (Optional)</Label>
+                <Textarea
+                  id="upload-description"
+                  placeholder="Add notes about this document..."
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-upload-description"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsUploadDialogOpen(false);
+                  setUploadFile(null);
+                  setUploadDocumentName("");
+                  setUploadPropertyId("none");
+                  setUploadDescription("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (uploadFile && uploadDocumentName.trim()) {
+                    uploadMutation.mutate({
+                      file: uploadFile,
+                      documentName: uploadDocumentName.trim(),
+                      propertyId: uploadPropertyId !== "none" ? uploadPropertyId : undefined,
+                      description: uploadDescription || undefined,
+                    });
+                  }
+                }} 
+                disabled={!uploadFile || !uploadDocumentName.trim() || uploadMutation.isPending}
+                data-testid="button-confirm-upload"
+              >
+                {uploadMutation.isPending ? "Uploading..." : "Upload"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Generated Document Dialog */}
         <AlertDialog open={!!deleteDocId} onOpenChange={(open) => !open && setDeleteDocId(null)}>
           <AlertDialogContent data-testid="dialog-confirm-delete">
             <AlertDialogHeader>
@@ -415,6 +613,27 @@ export default function MyDocuments() {
               <AlertDialogAction
                 onClick={() => deleteDocId && deleteMutation.mutate(deleteDocId)}
                 data-testid="button-confirm-delete"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Delete Uploaded Document Dialog */}
+        <AlertDialog open={!!deleteUploadedDocId} onOpenChange={(open) => !open && setDeleteUploadedDocId(null)}>
+          <AlertDialogContent data-testid="dialog-confirm-delete-uploaded">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Uploaded Document?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this uploaded document from your library. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-delete-uploaded">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteUploadedDocId && deleteUploadedMutation.mutate(deleteUploadedDocId)}
+                data-testid="button-confirm-delete-uploaded"
               >
                 Delete
               </AlertDialogAction>
