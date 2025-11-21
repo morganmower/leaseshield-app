@@ -185,6 +185,53 @@ function generateHTMLFromTemplate(
   `;
 }
 
+function getStateDisclosures(stateId: string, templateTitle: string): string {
+  const disclosures: Record<string, string> = {
+    UT: `
+      <h2>Utah State-Specific Disclosures</h2>
+      <h3>Fair Housing Notice</h3>
+      <p>In accordance with the Fair Housing Act and Utah Fair Housing Act, it is illegal to discriminate in the sale, rental, or financing of housing, or in the provision of real estate services, because of race, color, religion, sex, handicap, familial status, national origin, or sexual orientation.</p>
+      <h3>Radon Gas</h3>
+      <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings. Testing for radon is recommended but not required.</p>
+      <h3>Lead-Based Paint (if built before 1978)</h3>
+      <p>Housing built before 1978 may contain lead-based paint. Lead from paint, paint chips, and dust can pose health hazards, particularly for young children. Contact local health authorities for information on lead hazards.</p>
+    `,
+    TX: `
+      <h2>Texas State-Specific Disclosures</h2>
+      <h3>Fair Housing Notice</h3>
+      <p>It is illegal to refuse to rent, to refuse to negotiate for the rental, or in any other manner to discriminate in connection with the offering, advertising, leasing, or in the provision of any facilities or services of the property, because of race, color, religion, sex, national origin, handicap, or familial status.</p>
+      <h3>Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>If the property was built before January 1, 1978, landlord must provide all available records and reports regarding lead-based paint and lead-based paint hazards.</p>
+      <h3>Residential Tenancy Act Rights and Responsibilities</h3>
+      <p>Tenant rights and landlord duties are governed by the Texas Property Code, Chapter 92.</p>
+    `,
+    ND: `
+      <h2>North Dakota State-Specific Disclosures</h2>
+      <h3>Fair Housing Compliance</h3>
+      <p>Complies with Fair Housing Act and North Dakota Fair Housing Act. It is illegal to refuse housing or discriminate based on protected class status.</p>
+      <h3>Security Deposit Handling</h3>
+      <p>Security deposits must be held in accordance with North Dakota Century Code Section 47-16-01 et seq.</p>
+      <h3>Right to Counsel</h3>
+      <p>Tenant has the right to be represented by an attorney in any legal proceedings regarding this lease.</p>
+    `,
+    SD: `
+      <h2>South Dakota State-Specific Disclosures</h2>
+      <h3>Fair Housing Statement</h3>
+      <p>Fair housing is a right guaranteed by federal and state law. It is illegal to discriminate in the rental of housing because of race, color, creed, religion, sex, national origin, disability, familial status, or sexual orientation.</p>
+      <h3>Lead-Based Paint Notice (if applicable)</h3>
+      <p>Properties built before 1978 may contain lead-based paint hazards. Landlord is required to disclose all known information regarding lead-based paint.</p>
+      <h3>Landlord and Tenant Responsibilities</h3>
+      <p>Rights and responsibilities are governed by South Dakota Codified Law Chapter 43-32.</p>
+    `
+  };
+
+  return disclosures[stateId] || `
+    <h2>Mandatory Disclosures</h2>
+    <h3>Fair Housing Notice</h3>
+    <p>Housing is offered without regard to protected characteristics under federal and state fair housing laws.</p>
+  `;
+}
+
 function generateDefaultTemplateContent(
   safeTitle: string,
   fieldValues: FieldValue,
@@ -226,8 +273,16 @@ function generateDefaultTemplateContent(
     });
   });
   
-  // Add signature blocks for leases
-  if (safeTitle.toLowerCase().includes('lease') || safeTitle.toLowerCase().includes('agreement')) {
+  // Add state-specific disclosures for lease agreements, rental applications, and notices
+  const titleLower = safeTitle.toLowerCase();
+  if (titleLower.includes('lease') || titleLower.includes('agreement') || 
+      titleLower.includes('rental application') || titleLower.includes('notice') ||
+      titleLower.includes('checklist')) {
+    sections.push(getStateDisclosures(safeStateId, safeTitle));
+  }
+  
+  // Add signature blocks for leases and agreements
+  if (titleLower.includes('lease') || titleLower.includes('agreement')) {
     sections.push(`
       <div class="signature-block">
         <h2>Signatures</h2>
