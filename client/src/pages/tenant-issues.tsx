@@ -477,7 +477,10 @@ export default function TenantIssues() {
                     Close
                   </Button>
                   <Button
-                    onClick={() => setLocation('/templates')}
+                    onClick={() => {
+                      setShowWorkflowDialog(false);
+                      setLocation('/templates');
+                    }}
                     className="flex-1"
                     data-testid="button-view-templates"
                   >
