@@ -350,6 +350,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCurrentStateLegalDisclosures(stateId: string): Promise<string> {
+    // Helper function for HTML escaping (local copy for this method)
+    const htmlEscape = (unsafe: string) => {
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;")
+        .replace(/\//g, "&#x2F;");
+    };
+
     // Get all active legal updates for this state to build dynamic disclosures
     const stateUpdates = await db
       .select()
@@ -366,10 +377,10 @@ export class DatabaseStorage implements IStorage {
       .slice(0, 5) // Limit to latest 5 updates for document brevity
       .map(
         (update) => `
-      <h3>${escapeHtml(update.title)}</h3>
+      <h3>${htmlEscape(update.title)}</h3>
       <p><strong>Effective Date:</strong> ${update.effectiveDate ? new Date(update.effectiveDate).toLocaleDateString() : 'Ongoing'}</p>
-      <p>${escapeHtml(update.summary)}</p>
-      ${update.afterText ? `<p><strong>Current Requirement:</strong> ${escapeHtml(update.afterText)}</p>` : ''}
+      <p>${htmlEscape(update.summary)}</p>
+      ${update.afterText ? `<p><strong>Current Requirement:</strong> ${htmlEscape(update.afterText)}</p>` : ''}
     `
       )
       .join('');

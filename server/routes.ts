@@ -987,6 +987,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templateContent: '', // Always empty - use default generation only
         fieldValues,
         stateId: template.stateId,
+        version: template.version,
+        updatedAt: template.updatedAt,
       });
 
       // Set response headers
