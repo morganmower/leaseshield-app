@@ -1212,7 +1212,7 @@ export default function Landing() {
             <div className="text-center space-y-4">
               <div className="grid sm:grid-cols-3 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">37+</div>
+                  <div className="text-2xl font-bold text-primary mb-1">{templateCount}+</div>
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
@@ -1302,7 +1302,7 @@ export default function Landing() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">37+ State-Specific Templates</p>
+                  <p className="font-medium text-foreground">{templateCount}+ State-Specific Templates</p>
                   <p className="text-sm text-muted-foreground">Download as PDF or fill online</p>
                 </div>
               </div>
