@@ -65,8 +65,6 @@ export function HeaderContext() {
     context = routeMap[location] || { title: "" };
   }
 
-  if (!context.title) return null;
-
   return (
     <div className="flex items-center gap-3">
       {context.breadcrumbs ? (
@@ -80,9 +78,9 @@ export function HeaderContext() {
             </div>
           ))}
         </div>
-      ) : (
+      ) : context.title ? (
         <h1 className="text-lg font-semibold text-foreground">{context.title}</h1>
-      )}
+      ) : null}
       
       {context.showState && user?.preferredState && (
         <Badge variant="secondary" className="text-xs">
