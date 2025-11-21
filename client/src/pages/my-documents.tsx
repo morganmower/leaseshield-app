@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -15,18 +16,28 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Download, Trash2, Search, Calendar } from "lucide-react";
+import { FileText, Download, Trash2, Search, Calendar, Building2 } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import type { SavedDocument } from "@shared/schema";
+import type { SavedDocument, Property } from "@shared/schema";
 import { format } from "date-fns";
 
 export default function MyDocuments() {
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string>("all");
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
 
   const { data: documents = [], isLoading } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],
+  });
+
+  const { data: properties = [] } = useQuery<Property[]>({
+    queryKey: ['/api/properties'],
+    queryFn: async () => {
+      const response = await fetch('/api/properties', { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch properties');
+      return response.json();
+    },
   });
 
   const downloadMutation = useMutation({
@@ -92,10 +103,16 @@ export default function MyDocuments() {
     },
   });
 
-  const filteredDocuments = documents.filter(doc =>
-    doc.documentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    doc.templateName.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredDocuments = documents.filter(doc => {
+    const matchesSearch = doc.documentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      doc.templateName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesProperty = selectedPropertyId === "all" ||
+      (selectedPropertyId === "none" && !doc.propertyId) ||
+      doc.propertyId === selectedPropertyId;
+    
+    return matchesSearch && matchesProperty;
+  });
 
   if (isLoading) {
     return (
@@ -125,8 +142,8 @@ export default function MyDocuments() {
           </p>
         </div>
 
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+          <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search documents..."
@@ -136,6 +153,32 @@ export default function MyDocuments() {
               data-testid="input-search-documents"
             />
           </div>
+          
+          {properties.length > 0 && (
+            <div className="relative max-w-xs">
+              <div className="flex items-center gap-2 mb-1">
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+                <label className="text-sm font-medium text-muted-foreground">Filter by Property</label>
+              </div>
+              <Select
+                value={selectedPropertyId}
+                onValueChange={setSelectedPropertyId}
+              >
+                <SelectTrigger data-testid="select-property-filter">
+                  <SelectValue placeholder="All Properties" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Properties</SelectItem>
+                  <SelectItem value="none">No Property</SelectItem>
+                  {properties.map((property) => (
+                    <SelectItem key={property.id} value={property.id}>
+                      {property.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
 
         {filteredDocuments.length === 0 ? (
