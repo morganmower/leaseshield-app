@@ -131,8 +131,14 @@ export default function Compliance() {
                     {legalUpdates.map((update) => (
                       <Card
                         key={update.id}
-                        className="p-6 hover-elevate transition-all"
+                        className="p-6 hover-elevate transition-all cursor-pointer"
                         data-testid={`legal-update-${update.id}`}
+                        onClick={() => {
+                          const element = document.querySelector(`[data-testid="update-details-${update.id}"]`);
+                          if (element) {
+                            element.classList.toggle('hidden');
+                          }
+                        }}
                       >
                         <div className="flex items-start justify-between gap-4 mb-4">
                           <div className="flex items-center gap-3">
@@ -156,34 +162,42 @@ export default function Compliance() {
 
                         <p className="text-muted-foreground mb-4">{update.summary}</p>
 
-                        <div className="bg-muted/50 rounded-lg p-4 mb-4">
-                          <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
-                            <Shield className="h-4 w-4 text-primary" />
-                            Why This Matters
-                          </h4>
-                          <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
-                        </div>
-
-                        {update.beforeText && update.afterText && (
-                          <div className="grid md:grid-cols-2 gap-4 mb-4">
-                            <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
-                              <h4 className="font-semibold text-sm text-destructive mb-2">Before</h4>
-                              <p className="text-sm text-muted-foreground">{update.beforeText}</p>
-                            </div>
-                            <div className="border border-success/20 rounded-lg p-4 bg-success/5">
-                              <h4 className="font-semibold text-sm text-success mb-2">After (New)</h4>
-                              <p className="text-sm text-muted-foreground">{update.afterText}</p>
-                            </div>
+                        <div 
+                          data-testid={`update-details-${update.id}`}
+                          className="hidden mt-4 pt-4 border-t space-y-4"
+                        >
+                          <div className="bg-muted/50 rounded-lg p-4">
+                            <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
+                              <Shield className="h-4 w-4 text-primary" />
+                              Why This Matters
+                            </h4>
+                            <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
                           </div>
-                        )}
+
+                          {update.beforeText && update.afterText && (
+                            <div className="grid md:grid-cols-2 gap-4">
+                              <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
+                                <h4 className="font-semibold text-sm text-destructive mb-2">Before</h4>
+                                <p className="text-sm text-muted-foreground">{update.beforeText}</p>
+                              </div>
+                              <div className="border border-success/20 rounded-lg p-4 bg-success/5">
+                                <h4 className="font-semibold text-sm text-success mb-2">After (New)</h4>
+                                <p className="text-sm text-muted-foreground">{update.afterText}</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
                         <Button 
                           variant="outline" 
                           size="sm" 
                           data-testid={`button-view-update-${update.id}`}
-                          onClick={() => {
-                            const element = document.querySelector(`[data-testid="update-${update.id}"]`);
-                            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const element = document.querySelector(`[data-testid="update-details-${update.id}"]`);
+                            if (element) {
+                              element.classList.toggle('hidden');
+                            }
                           }}
                         >
                           View Full Details
