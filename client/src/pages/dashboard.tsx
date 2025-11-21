@@ -91,9 +91,11 @@ export default function Dashboard() {
                   Subscribe now to continue accessing all templates and compliance updates
                 </p>
               </div>
-              <Button size="sm" variant="default" data-testid="button-subscribe-now">
-                Subscribe Now
-              </Button>
+              <Link to="/subscribe">
+                <Button size="sm" variant="default" data-testid="button-subscribe-now">
+                  Subscribe Now
+                </Button>
+              </Link>
             </div>
           </Card>
         )}
@@ -111,10 +113,12 @@ export default function Dashboard() {
                   Review important legal changes that could affect your leases
                 </p>
               </div>
-              <Button size="sm" variant="outline" data-testid="button-view-updates">
-                View Updates
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
+              <Link to="/compliance">
+                <Button size="sm" variant="outline" data-testid="button-view-updates">
+                  View Updates
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
             </div>
           </Card>
         )}
