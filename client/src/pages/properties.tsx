@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -11,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Edit, Trash2, Plus, MapPin } from "lucide-react";
-import type { Property, InsertProperty } from "@shared/schema";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText } from "lucide-react";
+import type { Property, InsertProperty, SavedDocument } from "@shared/schema";
 
 const US_STATES = [
   { code: "UT", name: "Utah" },
@@ -33,6 +34,7 @@ const PROPERTY_TYPES = [
 
 export default function Properties() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
@@ -53,6 +55,18 @@ export default function Properties() {
   const { data: properties = [], isLoading } = useQuery<Property[]>({
     queryKey: ["/api/properties"],
   });
+
+  const { data: documents = [] } = useQuery<SavedDocument[]>({
+    queryKey: ['/api/saved-documents'],
+  });
+
+  // Calculate document counts per property
+  const documentCounts = documents.reduce((acc, doc) => {
+    if (doc.propertyId) {
+      acc[doc.propertyId] = (acc[doc.propertyId] || 0) + 1;
+    }
+    return acc;
+  }, {} as Record<string, number>);
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<InsertProperty>) => {
@@ -409,6 +423,35 @@ export default function Properties() {
                         <p className="text-muted-foreground text-xs line-clamp-2">{property.notes}</p>
                       </div>
                     )}
+                    <div className="pt-2 border-t">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground">
+                            {documentCounts[property.id] || 0} {documentCounts[property.id] === 1 ? 'document' : 'documents'}
+                          </span>
+                        </div>
+                        {documentCounts[property.id] > 0 && (
+                          <Button
+                            variant="link"
+                            size="sm"
+                            className="h-auto p-0"
+                            onClick={() => {
+                              setLocation('/my-documents');
+                              setTimeout(() => {
+                                const select = document.querySelector('[data-testid="select-property-filter"]');
+                                if (select) {
+                                  (select as HTMLElement).click();
+                                }
+                              }, 100);
+                            }}
+                            data-testid={`link-view-documents-${property.id}`}
+                          >
+                            View
+                          </Button>
+                        )}
+                      </div>
+                    </div>
                   </div>
                   <div className="flex gap-2 mt-4">
                     <Button
