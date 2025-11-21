@@ -311,7 +311,7 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative hidden lg:block"
+              className="relative"
             >
               <div className="rounded-lg overflow-hidden shadow-xl border border-border">
                 <img 
