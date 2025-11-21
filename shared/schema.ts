@@ -455,10 +455,43 @@ export const insertTemplateVersionSchema = createInsertSchema(templateVersions).
 export type InsertTemplateVersion = z.infer<typeof insertTemplateVersionSchema>;
 export type TemplateVersion = typeof templateVersions.$inferSelect;
 
+// Properties - user property management
+export const properties = pgTable("properties", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  name: text("name").notNull(),
+  address: text("address").notNull(),
+  city: text("city"),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zip_code", { length: 10 }),
+  propertyType: varchar("property_type", { length: 50 }),
+  units: integer("units").default(1),
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const propertiesRelations = relations(properties, ({ one, many }) => ({
+  user: one(users, {
+    fields: [properties.userId],
+    references: [users.id],
+  }),
+  savedDocuments: many(savedDocuments),
+}));
+
+export const insertPropertySchema = createInsertSchema(properties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertProperty = z.infer<typeof insertPropertySchema>;
+export type Property = typeof properties.$inferSelect;
+
 // Saved Documents - user document history
 export const savedDocuments = pgTable("saved_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   userId: varchar("user_id").notNull().references(() => users.id),
+  propertyId: varchar("property_id").references(() => properties.id),
   templateId: varchar("template_id").notNull().references(() => templates.id),
   templateName: text("template_name").notNull(),
   templateVersion: integer("template_version"),
@@ -472,6 +505,10 @@ export const savedDocumentsRelations = relations(savedDocuments, ({ one }) => ({
   user: one(users, {
     fields: [savedDocuments.userId],
     references: [users.id],
+  }),
+  property: one(properties, {
+    fields: [savedDocuments.propertyId],
+    references: [properties.id],
   }),
   template: one(templates, {
     fields: [savedDocuments.templateId],
