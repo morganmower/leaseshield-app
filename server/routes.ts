@@ -471,6 +471,144 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Saved Documents routes
+  app.get('/api/saved-documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const documents = await storage.getSavedDocumentsByUserId(userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching saved documents:", error);
+      res.status(500).json({ message: "Failed to fetch saved documents" });
+    }
+  });
+
+  app.get('/api/saved-documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const document = await storage.getSavedDocumentById(req.params.id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      if (document.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      res.json(document);
+    } catch (error) {
+      console.error("Error fetching saved document:", error);
+      res.status(500).json({ message: "Failed to fetch saved document" });
+    }
+  });
+
+  app.post('/api/saved-documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const { templateId, templateName, templateVersion, documentName, formData, stateCode } = req.body;
+      
+      const savedDocument = await storage.createSavedDocument({
+        userId,
+        templateId,
+        templateName,
+        templateVersion,
+        documentName,
+        formData,
+        stateCode,
+      });
+
+      await storage.trackEvent({
+        userId,
+        eventType: 'document_saved',
+        eventData: { templateId, documentName },
+      });
+
+      res.json(savedDocument);
+    } catch (error) {
+      console.error("Error saving document:", error);
+      res.status(500).json({ message: "Failed to save document" });
+    }
+  });
+
+  app.get('/api/saved-documents/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const document = await storage.getSavedDocumentById(req.params.id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      if (document.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const template = await storage.getTemplate(document.templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Import document generator
+      const { generateDocument } = await import('./utils/documentGenerator');
+
+      // Generate PDF using default template (all user input is HTML-escaped)
+      const pdfBuffer = await generateDocument({
+        templateTitle: template.title,
+        templateContent: '', // Always empty - use default generation only
+        fieldValues: document.formData as Record<string, string>,
+        stateId: template.stateId,
+        version: template.version || 1,
+        updatedAt: template.updatedAt || new Date(),
+      });
+      
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.pdf"`);
+      res.send(pdfBuffer);
+
+      await storage.trackEvent({
+        userId,
+        eventType: 'document_downloaded',
+        eventData: { templateId: document.templateId, documentName: document.documentName },
+      });
+    } catch (error) {
+      console.error("Error downloading saved document:", error);
+      res.status(500).json({ message: "Failed to download document" });
+    }
+  });
+
+  app.delete('/api/saved-documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const document = await storage.getSavedDocumentById(req.params.id);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+      if (document.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await storage.deleteSavedDocument(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting saved document:", error);
+      res.status(500).json({ message: "Failed to delete saved document" });
+    }
+  });
+
   // Compliance routes
   app.get('/api/compliance-cards', isAuthenticated, async (req: any, res) => {
     try {

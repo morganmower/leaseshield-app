@@ -9,9 +9,10 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Download, Loader2 } from "lucide-react";
-import { apiRequest } from "@/lib/queryClient";
+import { ArrowLeft, FileText, Download, Loader2, Save } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Template } from "@shared/schema";
+import { useState } from "react";
 
 interface FieldDefinition {
   id: string;
@@ -102,6 +103,33 @@ export default function DocumentWizard() {
     defaultValues,
   });
 
+  const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, string> | null>(null);
+
+  // Save document mutation
+  const saveMutation = useMutation({
+    mutationFn: async (data: {
+      templateId: string;
+      templateName: string;
+      templateVersion: number;
+      documentName: string;
+      formData: Record<string, string>;
+      stateCode: string;
+    }) => {
+      return await apiRequest('/api/saved-documents', {
+        method: 'POST',
+        body: JSON.stringify(data),
+        headers: { 'Content-Type': 'application/json' },
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/saved-documents'] });
+      toast({
+        title: "Document Saved!",
+        description: "Added to your document library.",
+      });
+    },
+  });
+
   // Generate document mutation
   const generateMutation = useMutation({
     mutationFn: async (fieldValues: Record<string, string>) => {
@@ -122,7 +150,7 @@ export default function DocumentWizard() {
 
       return response.blob();
     },
-    onSuccess: (blob) => {
+    onSuccess: (blob, fieldValues) => {
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -133,9 +161,30 @@ export default function DocumentWizard() {
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
+      // Store the data for saving
+      setLastGeneratedData(fieldValues);
+
+      // Auto-save to document library
+      if (template) {
+        const tenantField = fields.find(f => f.id.includes('tenant') && f.id.includes('name'));
+        const tenantName = tenantField ? fieldValues[tenantField.id] : '';
+        const documentName = tenantName 
+          ? `${template.title} - ${tenantName}`
+          : template.title;
+
+        saveMutation.mutate({
+          templateId: template.id,
+          templateName: template.title,
+          templateVersion: template.version || 1,
+          documentName,
+          formData: fieldValues,
+          stateCode: template.stateId,
+        });
+      }
+
       toast({
         title: "Document Generated!",
-        description: "Your PDF has been downloaded successfully.",
+        description: "Your PDF has been downloaded and saved to your library.",
       });
     },
     onError: (error: Error) => {
