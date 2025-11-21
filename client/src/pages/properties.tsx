@@ -12,8 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Edit, Trash2, Plus, MapPin, FileText } from "lucide-react";
-import type { Property, InsertProperty, SavedDocument } from "@shared/schema";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Download } from "lucide-react";
+import type { Property, InsertProperty, SavedDocument, UploadedDocument } from "@shared/schema";
 
 const US_STATES = [
   { code: "UT", name: "Utah" },
@@ -37,8 +37,11 @@ export default function Properties() {
   const [, setLocation] = useLocation();
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
   const [editingProperty, setEditingProperty] = useState<Property | null>(null);
+  const [uploadingForProperty, setUploadingForProperty] = useState<Property | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
 
   const [formData, setFormData] = useState<Partial<InsertProperty>>({
@@ -148,6 +151,42 @@ export default function Properties() {
       toast({
         title: "Error",
         description: "Failed to delete property. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, propertyId }: { file: File; propertyId: string }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('propertyId', propertyId);
+      
+      const response = await fetch('/api/uploaded-documents', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to upload document');
+      return response.json();
+    },
+    onSuccess: () => {
+      // Invalidate queries to refresh data
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
+      
+      setIsUploadDialogOpen(false);
+      setUploadFile(null);
+      setUploadingForProperty(null);
+      toast({
+        title: "Document Uploaded",
+        description: "Your document has been uploaded successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload document. Please try again.",
         variant: "destructive",
       });
     },
@@ -366,6 +405,75 @@ export default function Properties() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+
+          <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Upload Document</DialogTitle>
+                <DialogDescription>
+                  Upload a lease or other document for {uploadingForProperty?.name || 'this property'}.
+                  Accepted formats: PDF, DOC, DOCX (max 20MB).
+                </DialogDescription>
+              </DialogHeader>
+              <div className="grid gap-4 py-4">
+                <div className="grid gap-2">
+                  <Label htmlFor="file-upload">Select File</Label>
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 20 * 1024 * 1024) {
+                          toast({
+                            title: "File Too Large",
+                            description: "Please select a file smaller than 20MB.",
+                            variant: "destructive",
+                          });
+                          e.target.value = '';
+                          return;
+                        }
+                        setUploadFile(file);
+                      }
+                    }}
+                    data-testid="input-file-upload"
+                  />
+                  {uploadFile && (
+                    <p className="text-sm text-muted-foreground">
+                      Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                    </p>
+                  )}
+                </div>
+              </div>
+              <DialogFooter>
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setIsUploadDialogOpen(false);
+                    setUploadFile(null);
+                    setUploadingForProperty(null);
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    if (uploadFile && uploadingForProperty) {
+                      uploadMutation.mutate({
+                        file: uploadFile,
+                        propertyId: uploadingForProperty.id,
+                      });
+                    }
+                  }} 
+                  disabled={!uploadFile || uploadMutation.isPending}
+                  data-testid="button-confirm-upload"
+                >
+                  {uploadMutation.isPending ? "Uploading..." : "Upload"}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {filteredProperties.length === 0 ? (
@@ -457,12 +565,23 @@ export default function Properties() {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(property)}
+                      onClick={() => {
+                        setUploadingForProperty(property);
+                        setIsUploadDialogOpen(true);
+                      }}
                       className="flex-1"
+                      data-testid={`button-upload-${property.id}`}
+                    >
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEdit(property)}
                       data-testid={`button-edit-property-${property.id}`}
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
