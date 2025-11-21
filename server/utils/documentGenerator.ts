@@ -185,50 +185,198 @@ function generateHTMLFromTemplate(
   `;
 }
 
-function getStateDisclosures(stateId: string, templateTitle: string): string {
+function getComprehensiveLeaseContent(stateId: string, fieldValues: FieldValue): string {
+  return `
+    <h2>1. TERM OF LEASE</h2>
+    <p>This Residential Lease Agreement ("Lease") is entered into as of ${escapeHtml(String(fieldValues.leaseStartDate) || '[DATE]')} ("Commencement Date") between the undersigned Landlord and Tenant(s) for the rental of the property located at ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}, ${escapeHtml(String(fieldValues.propertyCity) || '[CITY]')}, ${stateId} ${escapeHtml(String(fieldValues.propertyZip) || '[ZIP]')} ("Premises"). This Lease shall commence on ${escapeHtml(String(fieldValues.leaseStartDate) || '[START DATE]')} and shall terminate at 11:59 PM on ${escapeHtml(String(fieldValues.leaseEndDate) || '[END DATE]')} unless sooner terminated or further extended in writing by mutual agreement of both parties.</p>
+
+    <h2>2. PARTIES AND OCCUPANTS</h2>
+    <p>Landlord: ${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD NAME]')}, residing at ${escapeHtml(String(fieldValues.landlordAddress) || '[ADDRESS]')}. Tenant(s): ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')}. All occupants of the Premises, whether family members, friends, or guests staying more than fourteen (14) consecutive days or thirty (30) days in any calendar year, must be approved in writing by Landlord. Unauthorized occupants shall constitute a material breach of this Lease.</p>
+
+    <h2>3. RENT AND PAYMENT TERMS</h2>
+    <p>3.1 Monthly Rent: Tenant agrees to pay Landlord the sum of $${escapeHtml(String(fieldValues.monthlyRent) || '[AMOUNT]')} per month as rent for the Premises, payable in advance on the ${escapeHtml(String(fieldValues.rentDueDay) || '1st')} day of each calendar month. Rent shall be paid to Landlord at the following address: ${escapeHtml(String(fieldValues.landlordAddress) || '[ADDRESS]')} or such other place as Landlord may designate in writing.</p>
+    <p>3.2 Late Payment Charges: If rent is not received by Landlord on or before the 5th day of the month, a late fee of $${escapeHtml(String(fieldValues.lateFeeAmount) || '[AMOUNT]')} shall be assessed and added to the rent due. Any grace period of ${escapeHtml(String(fieldValues.lateFeeDays) || '5')} days as referenced herein is a courtesy only and shall not constitute a waiver of the timely payment requirement or waive Landlord's right to pursue any legal remedies for non-payment.</p>
+    <p>3.3 NSF Checks: A charge of $35 shall be assessed for each check returned for insufficient funds.</p>
+    <p>3.4 Payment Method: All payments shall be made via check, money order, electronic transfer, or other method acceptable to Landlord. All payments are non-refundable.</p>
+
+    <h2>4. SECURITY DEPOSIT</h2>
+    <p>4.1 Amount: Tenant shall deposit with Landlord the sum of $${escapeHtml(String(fieldValues.securityDeposit) || '[AMOUNT]')} as a security deposit to be held by Landlord for the faithful performance of all terms and conditions of this Lease.</p>
+    <p>4.2 Deposit Use: The security deposit may be applied by Landlord to any unpaid rent, damages to the Premises beyond normal wear and tear, cleaning costs, or any other default under this Lease. The security deposit shall not be considered rent, though it may be applied toward rent if Tenant defaults.</p>
+    <p>4.3 Return of Deposit: Within ${stateId === 'UT' ? '30' : stateId === 'TX' ? '30' : stateId === 'ND' ? '30' : '30'} days after termination of the Lease and vacancy of the Premises, Landlord shall return the security deposit less any lawful deductions for damages, unpaid rent, or lease violations, along with an itemized statement of any deductions.</p>
+    <p>4.4 Non-Refundable Fee: The security deposit is refundable only for damages and lease violations; it is NOT a non-refundable cleaning or administrative fee.</p>
+
+    <h2>5. MAINTENANCE AND REPAIRS</h2>
+    <p>5.1 Tenant Responsibilities: Tenant shall maintain the Premises in a clean, sanitary, and good condition and shall be responsible for all interior maintenance and minor repairs, including but not limited to: light bulbs, air filters, clogged drains, and routine maintenance costing less than $75.</p>
+    <p>5.2 Landlord Responsibilities: Landlord shall maintain the structure, exterior, roof, foundation, and major systems (electrical, plumbing, heating/cooling) in good repair and comply with all applicable building, housing, and health codes.</p>
+    <p>5.3 Repair Request Procedures: Tenant shall notify Landlord in writing of any necessary repairs within 48 hours of discovery. Landlord shall make repairs within a reasonable timeframe not to exceed 14 days for non-emergency situations.</p>
+    <p>5.4 Emergency Repairs: In case of emergency (fire, flooding, gas leak, etc.), Tenant may arrange repairs and provide receipt to Landlord for reimbursement of reasonable costs.</p>
+
+    <h2>6. ALTERATIONS AND IMPROVEMENTS</h2>
+    <p>Tenant shall not make any alterations, additions, modifications, or improvements to the Premises, including but not limited to painting, installing shelving, hanging pictures with nails, installing fixtures, or landscaping, without prior written consent from Landlord. All alterations made without consent shall be deemed a material breach. All approved alterations become the property of Landlord and shall remain at the Premises upon termination of this Lease unless otherwise agreed in writing.</p>
+
+    <h2>7. USE OF PREMISES</h2>
+    <p>7.1 Permitted Use: The Premises shall be used solely as a residential dwelling unit for Tenant and approved occupants only. No business, trade, or commercial activity shall be conducted on the Premises.</p>
+    <p>7.2 Prohibited Activities: Tenant shall not: (a) engage in any illegal activity; (b) maintain a dangerous, hazardous, or explosive substance; (c) keep any animal except as permitted in writing; (d) operate any motorized vehicle, motorcycle, or recreational vehicle on the Premises; (e) conduct any business operation; (f) create excessive noise; (g) engage in disorderly conduct.</p>
+    <p>7.3 Nuisance Clause: Tenant shall not use the Premises in any way that creates a nuisance or materially interferes with the quiet enjoyment of neighboring tenants or surrounding properties.</p>
+
+    <h2>8. PETS</h2>
+    <p>No pets or animals of any kind shall be kept on the Premises without prior written permission from Landlord. If permission is granted, Tenant shall pay a pet deposit of $[PET DEPOSIT] and a monthly pet fee of $[PET FEE]. Tenant shall be liable for any and all damage caused by any pet, including excessive odor, stains, or removal of odor-causing conditions.</p>
+
+    <h2>9. UTILITIES AND SERVICES</h2>
+    <p>Tenant shall be responsible for arranging and paying for all utilities including: electricity, gas, water, sewer, trash collection, telephone, cable, and internet service. Landlord shall provide: [SPECIFY]. Tenant shall not alter or tamper with utility meters, systems, or connections.</p>
+
+    <h2>10. INSURANCE</h2>
+    <p>10.1 Renter's Insurance: Tenant shall obtain and maintain renter's insurance with minimum coverage of $[AMOUNT] throughout the term of this Lease. Proof of insurance shall be provided to Landlord within 14 days of Lease execution.</p>
+    <p>10.2 Landlord's Insurance: Landlord shall maintain property insurance on the building structure only. Landlord's insurance does not cover Tenant's personal property or liability.</p>
+    <p>10.3 No Liability: Landlord shall not be liable for any loss, theft, damage, or destruction of Tenant's personal property, regardless of cause.</p>
+
+    <h2>11. NOISE AND CONDUCT</h2>
+    <p>Tenant shall maintain peaceful and quiet enjoyment of the Premises and shall not create excessive noise between 10:00 PM and 8:00 AM, nor at any time constitute a nuisance to neighbors. Tenant shall comply with all local ordinances regarding noise levels and shall not have loud parties, loud music, or gatherings that disturb neighbors.</p>
+
+    <h2>12. ENTRY AND INSPECTION</h2>
+    <p>Landlord may enter the Premises for purposes of inspection, repair, maintenance, showing to prospective tenants, emergency situations, or other legitimate purposes upon reasonable notice (${stateId === 'UT' ? '24' : stateId === 'TX' ? '24' : stateId === 'ND' ? '24' : '24'} hours unless emergency). Tenant shall provide Landlord with keys and access codes. Landlord shall not unreasonably interfere with Tenant's quiet enjoyment of the Premises.</p>
+
+    <h2>13. YARD AND LANDSCAPING</h2>
+    <p>Tenant shall maintain any yard, patio, or outdoor area in a neat and clean condition. Tenant shall not alter landscaping without written permission. Tenant shall water vegetation regularly and maintain the grounds during the lease term.</p>
+
+    <h2>14. PARKING</h2>
+    <p>Tenant shall park vehicles only in assigned parking areas. No commercial vehicles, recreational vehicles, or inoperable vehicles may be parked on the Premises. Tenant shall not park on the street, grass, or common areas without express written permission. Violators are subject to towing at Tenant's expense.</p>
+
+    <h2>15. TERMINATION AND RENEWAL</h2>
+    <p>15.1 End of Term: Upon expiration of this Lease, Tenant shall vacate the Premises completely and return all keys. The Premises shall be in clean, undamaged condition (normal wear and tear excepted) or Tenant shall be liable for cleaning and repairs.</p>
+    <p>15.2 Notice to Vacate: If either party wishes to terminate this Lease at its expiration date, written notice shall be provided no less than ${stateId === 'UT' ? '30' : stateId === 'TX' ? '30' : stateId === 'ND' ? '60' : '30'} days prior to the end of the lease term. Failure to provide notice may result in automatic renewal.</p>
+    <p>15.3 Early Termination: Termination prior to the lease end date shall be considered a material breach. Tenant shall remain liable for all remaining rent owed unless Landlord re-rents the Premises.</p>
+
+    <h2>16. DEFAULT AND REMEDIES</h2>
+    <p>16.1 Default Events: The following shall constitute material default: (a) non-payment of rent or fees; (b) unauthorized occupants; (c) pets without permission; (d) alterations without consent; (e) illegal activity; (f) property damage; (g) violation of any lease term.</p>
+    <p>16.2 Cure Period: If Tenant is in default, Landlord shall provide written notice with a reasonable opportunity to cure (minimum 3 days for non-payment, 5 days for other breaches) unless the breach cannot be cured (illegal activity).</p>
+    <p>16.3 Remedies: Upon default, Landlord may: (a) apply security deposit; (b) pursue eviction proceedings; (c) recover all unpaid rent, late fees, court costs, and attorney fees; (d) hold Tenant liable for all damages to the Premises.</p>
+
+    <h2>17. MOVE-OUT REQUIREMENTS</h2>
+    <p>17.1 Final Inspection: Prior to move-out, Tenant shall notify Landlord and schedule a final walk-through inspection.</p>
+    <p>17.2 Condition: The Premises shall be returned in the same condition as received, normal wear and tear excepted. All repairs needed shall be itemized and provided to Tenant.</p>
+    <p>17.3 Cleaning: Tenant shall thoroughly clean the Premises including walls, floors, carpet, appliances, and removal of all personal items and trash. Professional cleaning may be required if condition is unsatisfactory.</p>
+    <p>17.4 Keys and Access: All keys, remotes, access codes, and devices shall be returned in working condition. Lost keys will result in rekeying costs of $[AMOUNT] being deducted from security deposit.</p>
+
+    <h2>18. FAIR HOUSING AND ANTI-DISCRIMINATION</h2>
+    <p>Landlord shall not discriminate against Tenant based on protected class status including race, color, religion, sex, national origin, disability, familial status, or sexual orientation, in accordance with the Fair Housing Act and state laws.</p>
+
+    ${getStateDisclosuresExpanded(stateId)}
+
+    <h2>20. ENTIRE AGREEMENT AND MODIFICATIONS</h2>
+    <p>This Lease constitutes the entire agreement between Landlord and Tenant and supersedes all prior negotiations and agreements, whether written or oral. This Lease may be modified only by written amendment signed by both Landlord and Tenant.</p>
+
+    <h2>21. GOVERNING LAW</h2>
+    <p>This Lease shall be governed by and construed in accordance with the laws of the State of ${stateId === 'UT' ? 'Utah' : stateId === 'TX' ? 'Texas' : stateId === 'ND' ? 'North Dakota' : 'South Dakota'}, without regard to conflict of law principles.</p>
+
+    <h2>22. DISPUTE RESOLUTION</h2>
+    <p>Any disputes arising from this Lease shall be resolved in the appropriate court of competent jurisdiction in the county where the Premises is located. Prevailing party in any litigation shall be entitled to recover reasonable attorney fees and court costs.</p>
+
+    <h2>23. SEVERABILITY</h2>
+    <p>If any provision of this Lease is found to be invalid or unenforceable, all other provisions shall remain in full force and effect.</p>
+
+    <h2>24. LIABILITY WAIVER</h2>
+    <p>Tenant acknowledges that Landlord is not liable for any loss of personal property, injury, or damage, regardless of cause, except as required by law. Tenant assumes full responsibility for all personal safety and security of the Premises.</p>
+  `;
+}
+
+function getStateDisclosuresExpanded(stateId: string): string {
   const disclosures: Record<string, string> = {
     UT: `
-      <h2>Utah State-Specific Disclosures</h2>
-      <h3>Fair Housing Notice</h3>
-      <p>In accordance with the Fair Housing Act and Utah Fair Housing Act, it is illegal to discriminate in the sale, rental, or financing of housing, or in the provision of real estate services, because of race, color, religion, sex, handicap, familial status, national origin, or sexual orientation.</p>
-      <h3>Radon Gas</h3>
-      <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings. Testing for radon is recommended but not required.</p>
-      <h3>Lead-Based Paint (if built before 1978)</h3>
-      <p>Housing built before 1978 may contain lead-based paint. Lead from paint, paint chips, and dust can pose health hazards, particularly for young children. Contact local health authorities for information on lead hazards.</p>
+      <h2>19. UTAH STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Fair Housing Disclosure</h3>
+      <p>In accordance with the Utah Fair Housing Act (Utah Code § 34-42-1 et seq.), it is unlawful to refuse to rent, discriminate, or discriminate in advertising because of protected class status.</p>
+      <h3>19.2 Radon Gas Disclosure</h3>
+      <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings in Utah. Long-term exposure may pose health risks. Testing for radon is recommended. Information about radon is available from the Utah Department of Environmental Quality.</p>
+      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>If the property was built before January 1, 1978, Landlord has disclosed all known information regarding lead-based paint and lead-based paint hazards. Tenant has been provided with the pamphlet "Protect Your Family from Lead in Your Home." Tenant acknowledges receipt of this disclosure.</p>
+      <h3>19.4 Security Deposit Laws (Utah Code § 34-42-1)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized accounting of any deductions.</p>
     `,
     TX: `
-      <h2>Texas State-Specific Disclosures</h2>
-      <h3>Fair Housing Notice</h3>
-      <p>It is illegal to refuse to rent, to refuse to negotiate for the rental, or in any other manner to discriminate in connection with the offering, advertising, leasing, or in the provision of any facilities or services of the property, because of race, color, religion, sex, national origin, handicap, or familial status.</p>
-      <h3>Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
-      <p>If the property was built before January 1, 1978, landlord must provide all available records and reports regarding lead-based paint and lead-based paint hazards.</p>
-      <h3>Residential Tenancy Act Rights and Responsibilities</h3>
-      <p>Tenant rights and landlord duties are governed by the Texas Property Code, Chapter 92.</p>
+      <h2>19. TEXAS STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Fair Housing Compliance</h3>
+      <p>In accordance with the Texas Fair Housing Act and Texas Property Code § 92.001 et seq., it is unlawful to refuse to rent, negotiate, discriminate, or discriminate in advertising because of protected characteristics.</p>
+      <h3>19.2 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>If built before January 1, 1978, Landlord certifies disclosure of all known lead-based paint and lead-based paint hazards. Tenant has received the EPA pamphlet and has had 10 days to conduct an inspection.</p>
+      <h3>19.3 Texas Property Code Compliance</h3>
+      <p>This Lease is governed by Texas Property Code Chapter 92 (Residential Tenancies). Tenant rights and Landlord duties are established in this statutory framework. Both parties acknowledge familiarity with these rights and duties.</p>
+      <h3>19.4 Security Deposit Handling (Texas Property Code § 92.103)</h3>
+      <p>Landlord shall return the security deposit or provide an itemized accounting within 30 days of lease termination.</p>
+      <h3>19.5 Mandatory Lease Language</h3>
+      <p>Tenant is advised that Section 92.001, Texas Property Code grants certain rights and responsibilities to both Tenant and Landlord.</p>
     `,
     ND: `
-      <h2>North Dakota State-Specific Disclosures</h2>
-      <h3>Fair Housing Compliance</h3>
-      <p>Complies with Fair Housing Act and North Dakota Fair Housing Act. It is illegal to refuse housing or discriminate based on protected class status.</p>
-      <h3>Security Deposit Handling</h3>
-      <p>Security deposits must be held in accordance with North Dakota Century Code Section 47-16-01 et seq.</p>
-      <h3>Right to Counsel</h3>
-      <p>Tenant has the right to be represented by an attorney in any legal proceedings regarding this lease.</p>
+      <h2>19. NORTH DAKOTA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Fair Housing Notice</h3>
+      <p>In accordance with North Dakota Fair Housing Act (N.D. Cent. Code § 14-02.4-01), it is unlawful to refuse to rent or discriminate because of protected status.</p>
+      <h3>19.2 Security Deposit Requirements (N.D. Cent. Code § 47-16-01)</h3>
+      <p>Landlord shall return the security deposit with interest within 30 days of lease termination. Deductions may only be made for damages beyond normal wear and tear, unpaid rent, or lease violations.</p>
+      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>If the property was built before January 1, 1978, Landlord discloses all known lead-based paint conditions and hazards in writing.</p>
+      <h3>19.4 Right to Counsel</h3>
+      <p>Tenant has the right to be represented by an attorney in any legal proceedings regarding this lease or tenancy.</p>
+      <h3>19.5 Century Code Compliance</h3>
+      <p>This Lease complies with North Dakota Century Code Chapter 47-16 (Residential Tenancies).</p>
     `,
     SD: `
-      <h2>South Dakota State-Specific Disclosures</h2>
-      <h3>Fair Housing Statement</h3>
-      <p>Fair housing is a right guaranteed by federal and state law. It is illegal to discriminate in the rental of housing because of race, color, creed, religion, sex, national origin, disability, familial status, or sexual orientation.</p>
-      <h3>Lead-Based Paint Notice (if applicable)</h3>
-      <p>Properties built before 1978 may contain lead-based paint hazards. Landlord is required to disclose all known information regarding lead-based paint.</p>
-      <h3>Landlord and Tenant Responsibilities</h3>
-      <p>Rights and responsibilities are governed by South Dakota Codified Law Chapter 43-32.</p>
+      <h2>19. SOUTH DAKOTA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Fair Housing Statement</h3>
+      <p>Fair housing is a right guaranteed by state law (S.D. Codified Law § 20-13-1). It is unlawful to discriminate in rental housing based on protected characteristics.</p>
+      <h3>19.2 Security Deposit Laws (S.D. Codified Law § 43-32-6)</h3>
+      <p>Landlord shall return the security deposit within 14 days of lease termination with an accounting of any deductions for damages, cleaning, or unpaid rent.</p>
+      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>For properties built before January 1, 1978, Landlord certifies disclosure of all known lead-based paint hazards and has provided the EPA pamphlet to Tenant.</p>
+      <h3>19.4 Codified Law Compliance</h3>
+      <p>This Lease complies with South Dakota Codified Law Chapter 43-32 (Residential Tenancies).</p>
+      <h3>19.5 Landlord Remedies</h3>
+      <p>Landlord has the right to pursue all available remedies under state law for breach of this Lease, including eviction, suit for damages, and collection of all related costs and fees.</p>
+    `
+  };
+
+  return disclosures[stateId] || `
+    <h2>19. STANDARD DISCLOSURES</h2>
+    <h3>Fair Housing Notice</h3>
+    <p>This rental is offered without discrimination based on protected class status under applicable fair housing laws.</p>
+  `;
+}
+
+function getStateDisclosures(stateId: string, templateTitle: string): string {
+  // Check if this is a lease agreement
+  if (templateTitle && (templateTitle.toLowerCase().includes('lease') || templateTitle.toLowerCase().includes('agreement'))) {
+    return getComprehensiveLeaseContent(stateId, {});
+  }
+  
+  const disclosures: Record<string, string> = {
+    UT: `
+      <h2>State-Specific Disclosures - Utah</h2>
+      <p><strong>Fair Housing Act:</strong> It is illegal to discriminate in housing based on protected class status.</p>
+      <p><strong>Radon:</strong> Radon is a naturally occurring radioactive gas that may accumulate in buildings.</p>
+      <p><strong>Lead-Based Paint:</strong> For properties built before 1978, landlord must disclose all known lead-based paint hazards.</p>
+    `,
+    TX: `
+      <h2>State-Specific Disclosures - Texas</h2>
+      <p><strong>Fair Housing:</strong> Texas Property Code § 92.001 prohibits discrimination in rental housing.</p>
+      <p><strong>Lead-Based Paint:</strong> Pre-1978 properties require disclosure of lead-based paint hazards per federal law.</p>
+      <p><strong>Rights and Duties:</strong> See Texas Property Code Chapter 92 for tenant and landlord rights.</p>
+    `,
+    ND: `
+      <h2>State-Specific Disclosures - North Dakota</h2>
+      <p><strong>Fair Housing:</strong> N.D. Cent. Code § 14-02.4-01 prohibits discrimination in housing.</p>
+      <p><strong>Security Deposits:</strong> Must be returned within 30 days per N.D. Cent. Code § 47-16-01.</p>
+      <p><strong>Lead-Based Paint:</strong> Pre-1978 properties must have disclosed lead hazards.</p>
+    `,
+    SD: `
+      <h2>State-Specific Disclosures - South Dakota</h2>
+      <p><strong>Fair Housing:</strong> S.D. Codified Law § 20-13-1 prohibits rental discrimination.</p>
+      <p><strong>Security Deposits:</strong> Must be returned within 14 days per S.D. Codified Law § 43-32-6.</p>
+      <p><strong>Lead-Based Paint:</strong> Pre-1978 properties require lead hazard disclosure.</p>
     `
   };
 
   return disclosures[stateId] || `
     <h2>Mandatory Disclosures</h2>
-    <h3>Fair Housing Notice</h3>
-    <p>Housing is offered without regard to protected characteristics under federal and state fair housing laws.</p>
+    <p><strong>Fair Housing:</strong> Housing offered without discrimination based on protected status.</p>
   `;
 }
 
@@ -273,10 +421,15 @@ function generateDefaultTemplateContent(
     });
   });
   
-  // Add state-specific disclosures for lease agreements, rental applications, and notices
+  // Add comprehensive content for lease agreements
   const titleLower = safeTitle.toLowerCase();
-  if (titleLower.includes('lease') || titleLower.includes('agreement') || 
-      titleLower.includes('rental application') || titleLower.includes('notice') ||
+  if (titleLower.includes('lease') || titleLower.includes('agreement')) {
+    // Replace with full comprehensive lease content
+    return getComprehensiveLeaseContent(safeStateId, fieldValues);
+  }
+  
+  // Add state-specific disclosures for other documents
+  if (titleLower.includes('rental application') || titleLower.includes('notice') ||
       titleLower.includes('checklist')) {
     sections.push(getStateDisclosures(safeStateId, safeTitle));
   }
