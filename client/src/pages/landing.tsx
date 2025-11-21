@@ -49,6 +49,7 @@ export default function Landing() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
+  const [showBenefitsDialog, setShowBenefitsDialog] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -285,12 +286,7 @@ export default function Landing() {
                   variant="outline"
                   data-testid="button-hero-learn"
                   className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                  onClick={() => {
-                    document.getElementById('features')?.scrollIntoView({ 
-                      behavior: 'smooth',
-                      block: 'start'
-                    });
-                  }}
+                  onClick={() => setShowBenefitsDialog(true)}
                 >
                   Learn More
                 </Button>
@@ -1281,6 +1277,84 @@ export default function Landing() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Subscription Benefits Dialog */}
+      <Dialog open={showBenefitsDialog} onOpenChange={setShowBenefitsDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="text-2xl">What You Get With LeaseShield</DialogTitle>
+            <DialogDescription>
+              Everything you need to manage your rental business confidently
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">37+ State-Specific Templates</p>
+                  <p className="text-sm text-muted-foreground">Download as PDF or fill online</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Live Compliance Monitoring</p>
+                  <p className="text-sm text-muted-foreground">Instant alerts when laws change</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Before/After Guidance</p>
+                  <p className="text-sm text-muted-foreground">Clear explanations of legal changes</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Tenant Screening Toolkit</p>
+                  <p className="text-sm text-muted-foreground">Red flags and best practices</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">Fair Housing Compliance</p>
+                  <p className="text-sm text-muted-foreground">Avoid $10,000+ in federal fines</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">24/7 Access to All Resources</p>
+                  <p className="text-sm text-muted-foreground">Your complete landlord toolkit</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-medium text-foreground">7-Day Free Trial</p>
+                  <p className="text-sm text-muted-foreground">No credit card required</p>
+                </div>
+              </div>
+            </div>
+            <div className="pt-4 border-t">
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={() => {
+                  setShowBenefitsDialog(false);
+                  window.location.href = "/api/login";
+                }}
+              >
+                Start Your Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
 
