@@ -27,7 +27,7 @@ import {
 } from "lucide-react";
 import type { Template } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const workflows = [
   {
@@ -155,6 +155,7 @@ const workflows = [
 export default function TenantIssues() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [, setLocation] = useLocation();
   const [selectedWorkflow, setSelectedWorkflow] = useState<typeof workflows[0] | null>(null);
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -445,7 +446,7 @@ export default function TenantIssues() {
                     Close
                   </Button>
                   <Button
-                    onClick={() => window.location.href = '/templates'}
+                    onClick={() => setLocation('/templates')}
                     className="flex-1"
                     data-testid="button-view-templates"
                   >
@@ -485,7 +486,7 @@ export default function TenantIssues() {
                 Not Now
               </Button>
               <Button
-                onClick={() => window.location.href = '/subscribe'}
+                onClick={() => setLocation('/subscribe')}
                 data-testid="button-go-to-subscribe"
               >
                 Upgrade to Pro

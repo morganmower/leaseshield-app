@@ -404,7 +404,7 @@ export default function Templates() {
                 Not Now
               </Button>
               <Button
-                onClick={() => window.location.href = '/subscribe'}
+                onClick={() => setLocation('/subscribe')}
                 data-testid="button-go-to-subscribe"
               >
                 Upgrade to Pro
