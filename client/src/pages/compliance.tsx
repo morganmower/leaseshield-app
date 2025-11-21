@@ -136,17 +136,8 @@ export default function Compliance() {
                       return (
                       <Card
                         key={update.id}
-                        className="p-6 hover-elevate transition-all cursor-pointer"
+                        className="p-6 hover-elevate transition-all"
                         data-testid={`legal-update-${update.id}`}
-                        onClick={() => {
-                          const newExpanded = new Set(expandedUpdates);
-                          if (newExpanded.has(update.id)) {
-                            newExpanded.delete(update.id);
-                          } else {
-                            newExpanded.add(update.id);
-                          }
-                          setExpandedUpdates(newExpanded);
-                        }}
                       >
                         <div className="flex items-start justify-between gap-4 mb-4">
                           <div className="flex items-center gap-3">
@@ -200,8 +191,7 @@ export default function Compliance() {
                           variant="outline" 
                           size="sm" 
                           data-testid={`button-view-update-${update.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             const newExpanded = new Set(expandedUpdates);
                             if (newExpanded.has(update.id)) {
                               newExpanded.delete(update.id);
@@ -262,17 +252,8 @@ export default function Compliance() {
                       return (
                       <Card
                         key={card.id}
-                        className="p-6 hover-elevate transition-all cursor-pointer"
+                        className="p-6 hover-elevate transition-all"
                         data-testid={`compliance-card-${card.id}`}
-                        onClick={() => {
-                          const newExpanded = new Set(expandedCards);
-                          if (newExpanded.has(card.id)) {
-                            newExpanded.delete(card.id);
-                          } else {
-                            newExpanded.add(card.id);
-                          }
-                          setExpandedCards(newExpanded);
-                        }}
                       >
                         <div className="flex items-start justify-between mb-4">
                           <Badge variant="secondary">{card.category}</Badge>
@@ -305,8 +286,7 @@ export default function Compliance() {
                           variant="outline" 
                           size="sm" 
                           data-testid={`button-view-card-${card.id}`}
-                          onClick={(e) => {
-                            e.stopPropagation();
+                          onClick={() => {
                             const newExpanded = new Set(expandedCards);
                             if (newExpanded.has(card.id)) {
                               newExpanded.delete(card.id);
