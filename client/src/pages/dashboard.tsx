@@ -119,7 +119,7 @@ export default function Dashboard() {
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {/* Leasing Toolkit - Amber/Gold */}
-            <Link href="/templates">
+            <Link to="/templates">
               <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-leasing-toolkit">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
@@ -139,7 +139,7 @@ export default function Dashboard() {
             </Link>
 
             {/* Screening Toolkit - Teal/Cyan */}
-            <Link href="/screening">
+            <Link to="/screening">
               <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-toolkit">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
@@ -159,7 +159,7 @@ export default function Dashboard() {
             </Link>
 
             {/* Compliance Toolkit - Blue/Primary */}
-            <Link href="/compliance">
+            <Link to="/compliance">
               <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-compliance-toolkit">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
@@ -187,7 +187,7 @@ export default function Dashboard() {
               <h2 className="text-xl font-display font-semibold text-foreground">
                 Recent Compliance Updates
               </h2>
-              <Link href="/compliance">
+              <Link to="/compliance">
                 <Button variant="ghost" size="sm" data-testid="button-all-updates">
                   View All
                   <ArrowRight className="ml-2 h-4 w-4" />
@@ -237,7 +237,7 @@ export default function Dashboard() {
             <h2 className="text-xl font-display font-semibold text-foreground">
               Most Used Templates
             </h2>
-            <Link href="/templates">
+            <Link to="/templates">
               <Button variant="ghost" size="sm" data-testid="button-all-templates">
                 View All Templates
                 <ArrowRight className="ml-2 h-4 w-4" />
@@ -253,7 +253,7 @@ export default function Dashboard() {
               { name: 'Lease Violation Notice', state: user.preferredState || 'UT', type: 'notices' },
               { name: 'Security Deposit Return', state: user.preferredState || 'UT', type: 'move_in_out' },
             ].map((template, index) => (
-              <Link key={index} href="/templates">
+              <Link key={index} to="/templates">
                 <Card 
                   className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
                   data-testid={`template-card-${index}`}
