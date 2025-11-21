@@ -13,6 +13,7 @@ import {
   templateReviewQueue,
   monitoringRuns,
   templateVersions,
+  properties,
   savedDocuments,
   type User,
   type UpsertUser,
@@ -42,6 +43,8 @@ import {
   type InsertMonitoringRun,
   type TemplateVersion,
   type InsertTemplateVersion,
+  type Property,
+  type InsertProperty,
   type SavedDocument,
   type InsertSavedDocument,
 } from "@shared/schema";
@@ -148,6 +151,13 @@ export interface IStorage {
   }): Promise<{ template: Template; version: TemplateVersion }>;
   getTemplateVersions(templateId: string): Promise<TemplateVersion[]>;
   getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined>;
+
+  // Property operations
+  getPropertiesByUserId(userId: string): Promise<Property[]>;
+  getProperty(id: string): Promise<Property | undefined>;
+  createProperty(property: InsertProperty): Promise<Property>;
+  updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property>;
+  deleteProperty(id: string): Promise<void>;
 
   // Saved document operations
   getSavedDocumentsByUserId(userId: string): Promise<SavedDocument[]>;
@@ -799,6 +809,44 @@ export class DatabaseStorage implements IStorage {
   async getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined> {
     const [review] = await db.select().from(templateReviewQueue).where(eq(templateReviewQueue.id, id));
     return review;
+  }
+
+  // Property operations
+  async getPropertiesByUserId(userId: string): Promise<Property[]> {
+    return await db
+      .select()
+      .from(properties)
+      .where(eq(properties.userId, userId))
+      .orderBy(desc(properties.createdAt));
+  }
+
+  async getProperty(id: string): Promise<Property | undefined> {
+    const [property] = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.id, id));
+    return property;
+  }
+
+  async createProperty(property: InsertProperty): Promise<Property> {
+    const [newProperty] = await db
+      .insert(properties)
+      .values(property)
+      .returning();
+    return newProperty;
+  }
+
+  async updateProperty(id: string, property: Partial<InsertProperty>): Promise<Property> {
+    const [updatedProperty] = await db
+      .update(properties)
+      .set({ ...property, updatedAt: new Date() })
+      .where(eq(properties.id, id))
+      .returning();
+    return updatedProperty;
+  }
+
+  async deleteProperty(id: string): Promise<void> {
+    await db.delete(properties).where(eq(properties.id, id));
   }
 
   // Saved document operations
