@@ -115,11 +115,16 @@ export default function DocumentWizard() {
       formData: Record<string, string>;
       stateCode: string;
     }) => {
-      return await apiRequest('/api/saved-documents', {
+      const response = await fetch('/api/saved-documents', {
         method: 'POST',
+        credentials: 'include',
         body: JSON.stringify(data),
         headers: { 'Content-Type': 'application/json' },
       });
+      if (!response.ok) {
+        throw new Error('Failed to save document');
+      }
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/saved-documents'] });

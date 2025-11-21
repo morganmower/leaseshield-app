@@ -10,6 +10,7 @@ import {
   ShieldCheck,
   ChevronDown,
   LogOut,
+  FolderOpen,
 } from "lucide-react";
 import {
   Sidebar,
@@ -46,6 +47,11 @@ const mainItems = [
     title: "Templates",
     url: "/templates",
     icon: FileText,
+  },
+  {
+    title: "My Documents",
+    url: "/my-documents",
+    icon: FolderOpen,
   },
   {
     title: "Compliance",
