@@ -7,13 +7,15 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { Shield, AlertTriangle, CheckCircle, ArrowRight } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
 import type { ComplianceCard, LegalUpdate } from "@shared/schema";
 
 export default function Compliance() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
+  const [expandedUpdates, setExpandedUpdates] = useState<Set<string>>(new Set());
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -128,16 +130,21 @@ export default function Compliance() {
                   </div>
                 ) : legalUpdates && legalUpdates.length > 0 ? (
                   <div className="space-y-4">
-                    {legalUpdates.map((update) => (
+                    {legalUpdates.map((update) => {
+                      const isExpanded = expandedUpdates.has(update.id);
+                      return (
                       <Card
                         key={update.id}
                         className="p-6 hover-elevate transition-all cursor-pointer"
                         data-testid={`legal-update-${update.id}`}
                         onClick={() => {
-                          const element = document.querySelector(`[data-testid="update-details-${update.id}"]`);
-                          if (element) {
-                            element.classList.toggle('hidden');
+                          const newExpanded = new Set(expandedUpdates);
+                          if (newExpanded.has(update.id)) {
+                            newExpanded.delete(update.id);
+                          } else {
+                            newExpanded.add(update.id);
                           }
+                          setExpandedUpdates(newExpanded);
                         }}
                       >
                         <div className="flex items-start justify-between gap-4 mb-4">
@@ -164,7 +171,7 @@ export default function Compliance() {
 
                         <div 
                           data-testid={`update-details-${update.id}`}
-                          className="hidden mt-4 pt-4 border-t space-y-4"
+                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-4`}
                         >
                           <div className="bg-muted/50 rounded-lg p-4">
                             <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
@@ -194,17 +201,30 @@ export default function Compliance() {
                           data-testid={`button-view-update-${update.id}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const element = document.querySelector(`[data-testid="update-details-${update.id}"]`);
-                            if (element) {
-                              element.classList.toggle('hidden');
+                            const newExpanded = new Set(expandedUpdates);
+                            if (newExpanded.has(update.id)) {
+                              newExpanded.delete(update.id);
+                            } else {
+                              newExpanded.add(update.id);
                             }
+                            setExpandedUpdates(newExpanded);
                           }}
                         >
-                          View Full Details
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                          {isExpanded ? (
+                            <>
+                              Back
+                              <ArrowLeft className="ml-2 h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              View Full Details
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
                         </Button>
                       </Card>
-                    ))}
+                    );
+                    })}
                   </div>
                 ) : (
                   <Card className="p-12 text-center">
@@ -236,16 +256,21 @@ export default function Compliance() {
                   </div>
                 ) : complianceCards && complianceCards.length > 0 ? (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {complianceCards.map((card) => (
+                    {complianceCards.map((card) => {
+                      const isExpanded = expandedCards.has(card.id);
+                      return (
                       <Card
                         key={card.id}
                         className="p-6 hover-elevate transition-all cursor-pointer"
                         data-testid={`compliance-card-${card.id}`}
                         onClick={() => {
-                          const element = document.querySelector(`[data-testid="card-details-${card.id}"]`);
-                          if (element) {
-                            element.classList.toggle('hidden');
+                          const newExpanded = new Set(expandedCards);
+                          if (newExpanded.has(card.id)) {
+                            newExpanded.delete(card.id);
+                          } else {
+                            newExpanded.add(card.id);
                           }
+                          setExpandedCards(newExpanded);
                         }}
                       >
                         <div className="flex items-start justify-between mb-4">
@@ -263,7 +288,7 @@ export default function Compliance() {
 
                         <div 
                           data-testid={`card-details-${card.id}`} 
-                          className="hidden mt-4 pt-4 border-t space-y-3"
+                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-3`}
                         >
                           <div>
                             <h4 className="text-sm font-semibold text-foreground mb-1">Category</h4>
@@ -281,17 +306,30 @@ export default function Compliance() {
                           data-testid={`button-view-card-${card.id}`}
                           onClick={(e) => {
                             e.stopPropagation();
-                            const element = document.querySelector(`[data-testid="card-details-${card.id}"]`);
-                            if (element) {
-                              element.classList.toggle('hidden');
+                            const newExpanded = new Set(expandedCards);
+                            if (newExpanded.has(card.id)) {
+                              newExpanded.delete(card.id);
+                            } else {
+                              newExpanded.add(card.id);
                             }
+                            setExpandedCards(newExpanded);
                           }}
                         >
-                          View Requirements
-                          <ArrowRight className="ml-2 h-4 w-4" />
+                          {isExpanded ? (
+                            <>
+                              Back
+                              <ArrowLeft className="ml-2 h-4 w-4" />
+                            </>
+                          ) : (
+                            <>
+                              View Requirements
+                              <ArrowRight className="ml-2 h-4 w-4" />
+                            </>
+                          )}
                         </Button>
                       </Card>
-                    ))}
+                    );
+                    })}
                   </div>
                 ) : (
                   <Card className="p-12 text-center">
