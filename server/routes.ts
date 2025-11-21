@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
@@ -12,6 +12,10 @@ import { getUncachableResendClient } from "./resend";
 import { generateLegalUpdateEmail } from "./email-templates";
 import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 import { asyncHandler, RateLimiter } from "./utils/validation";
+import multer from "multer";
+import path from "path";
+import { randomUUID } from "crypto";
+import fs from "fs/promises";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
@@ -29,6 +33,53 @@ const openai = new OpenAI({
 
 // Rate limiter for chat endpoint
 const chatRateLimiter = new RateLimiter(10, 60 * 1000); // 10 messages per minute
+
+// Configure multer for secure file uploads
+const uploadStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = 'uploads';
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error as Error, uploadDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    // Use UUID for collision-resistant filenames
+    const uniqueId = randomUUID();
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}${ext}`);
+  }
+});
+
+const upload = multer({
+  storage: uploadStorage,
+  limits: { 
+    fileSize: 20 * 1024 * 1024 // 20MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    // Allowed MIME types for PDF and DOCX
+    const allowedMimeTypes = [
+      'application/pdf',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword', // .doc
+    ];
+    
+    // Allowed file extensions
+    const allowedExtensions = /\.(pdf|docx|doc)$/i;
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
+    const extensionValid = allowedExtensions.test(ext);
+    
+    if (mimeTypeValid && extensionValid) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
+    }
+  }
+});
 
 // Helper to get user ID from request with validation
 function getUserId(req: any): string {
@@ -665,6 +716,164 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting saved document:", error);
       res.status(500).json({ message: "Failed to delete saved document" });
+    }
+  });
+
+  // Uploaded Documents routes
+  app.post('/api/uploaded-documents', isAuthenticated, upload.single('file'), async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { propertyId, description } = req.body;
+
+      // Validate propertyId ownership if provided
+      if (propertyId) {
+        const property = await storage.getProperty(propertyId, userId);
+        if (!property) {
+          // Clean up uploaded file if property validation fails
+          await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
+          return res.status(403).json({ message: "Property not found or access denied" });
+        }
+      }
+
+      const uploadedDocument = await storage.createUploadedDocument({
+        userId,
+        propertyId: propertyId || null,
+        fileName: req.file.originalname,
+        fileUrl: req.file.path,
+        fileType: req.file.mimetype,
+        fileSize: req.file.size,
+        description: description || null,
+      });
+
+      await storage.trackEvent({
+        userId,
+        eventType: 'document_uploaded',
+        eventData: { fileName: req.file.originalname, fileSize: req.file.size },
+      });
+
+      res.json(uploadedDocument);
+    } catch (error) {
+      // Clean up uploaded file on error
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
+      }
+      console.error("Error uploading document:", error);
+      res.status(500).json({ message: "Failed to upload document" });
+    }
+  });
+
+  app.get('/api/uploaded-documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const documents = await storage.getUploadedDocumentsByUserId(userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching uploaded documents:", error);
+      res.status(500).json({ message: "Failed to fetch uploaded documents" });
+    }
+  });
+
+  app.get('/api/uploaded-documents/property/:propertyId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { propertyId } = req.params;
+
+      // Validate property ownership
+      const property = await storage.getProperty(propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Property not found or access denied" });
+      }
+
+      const documents = await storage.getUploadedDocumentsByPropertyId(propertyId, userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching property documents:", error);
+      res.status(500).json({ message: "Failed to fetch property documents" });
+    }
+  });
+
+  app.get('/api/uploaded-documents/:id/download', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const document = await storage.getUploadedDocumentById(req.params.id, userId);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Check if file exists on disk
+      try {
+        await fs.access(document.fileUrl);
+      } catch {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      // Stream file to client with proper headers
+      res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      
+      const fileStream = (await import('fs')).createReadStream(document.fileUrl);
+      fileStream.pipe(res);
+
+      await storage.trackEvent({
+        userId,
+        eventType: 'uploaded_document_downloaded',
+        eventData: { fileName: document.fileName },
+      });
+    } catch (error) {
+      console.error("Error downloading uploaded document:", error);
+      res.status(500).json({ message: "Failed to download document" });
+    }
+  });
+
+  app.delete('/api/uploaded-documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const document = await storage.getUploadedDocumentById(req.params.id, userId);
+      if (!document) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Delete from database
+      const deleted = await storage.deleteUploadedDocument(req.params.id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      // Delete physical file from disk
+      try {
+        await fs.unlink(document.fileUrl);
+      } catch (err) {
+        console.error("Error deleting file from disk:", err);
+        // Continue - database record is already deleted
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting uploaded document:", error);
+      res.status(500).json({ message: "Failed to delete uploaded document" });
     }
   });
 
