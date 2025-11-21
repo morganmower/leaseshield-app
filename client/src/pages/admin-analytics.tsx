@@ -258,89 +258,160 @@ export default function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader>
+            <CardTitle>Users on Free Trial</CardTitle>
+            <CardDescription>
+              Users currently testing the platform (trialing status)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {usersLoading ? (
+              <p className="text-muted-foreground">Loading trial users...</p>
+            ) : users ? (
+              (() => {
+                const trialingUsers = users.filter(u => u.subscriptionStatus === "trialing");
+                return trialingUsers.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm" data-testid="table-trialing-users">
+                      <thead>
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-2 font-medium">Name</th>
+                          <th className="text-left py-3 px-2 font-medium">Email</th>
+                          <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
+                          <th className="text-left py-3 px-2 font-medium">Joined</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {trialingUsers.map((user) => (
+                          <tr
+                            key={user.id}
+                            className="border-b hover-elevate"
+                            data-testid={`row-trialing-user-${user.id}`}
+                          >
+                            <td className="py-3 px-2" data-testid={`text-name-${user.id}`}>
+                              {user.firstName && user.lastName
+                                ? `${user.firstName} ${user.lastName}`
+                                : user.firstName || user.lastName || user.email || "Anonymous"}
+                            </td>
+                            <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
+                              {user.email || "—"}
+                            </td>
+                            <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
+                              {user.trialEndsAt
+                                ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
+                                : "—"}
+                            </td>
+                            <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
+                              {format(new Date(user.createdAt), "MMM d, yyyy")}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <p className="text-center py-8 text-muted-foreground">
+                    No users on trial at the moment
+                  </p>
+                );
+              })()
+            ) : (
+              <p className="text-center py-8 text-destructive">
+                Failed to load trial users
+              </p>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
             <CardTitle>All Users</CardTitle>
             <CardDescription>
-              Complete list of users with subscription details
+              Complete list of all users with subscription details
             </CardDescription>
           </CardHeader>
           <CardContent>
             {usersLoading ? (
               <p className="text-muted-foreground">Loading users...</p>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm" data-testid="table-users">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2 font-medium">Name</th>
-                      <th className="text-left py-3 px-2 font-medium">Email</th>
-                      <th className="text-left py-3 px-2 font-medium">Status</th>
-                      <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
-                      <th className="text-left py-3 px-2 font-medium">Subscription Ends</th>
-                      <th className="text-left py-3 px-2 font-medium">Joined</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users?.map((user) => (
-                      <tr
-                        key={user.id}
-                        className="border-b hover-elevate"
-                        data-testid={`row-user-${user.id}`}
-                      >
-                        <td className="py-3 px-2" data-testid={`text-name-${user.id}`}>
-                          <div className="flex items-center gap-2">
-                            {user.firstName && user.lastName
-                              ? `${user.firstName} ${user.lastName}`
-                              : user.firstName || user.lastName || "—"}
-                            {user.isAdmin && (
-                              <Badge variant="secondary" className="text-xs">
-                                Admin
-                              </Badge>
-                            )}
-                          </div>
-                        </td>
-                        <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
-                          {user.email || "—"}
-                        </td>
-                        <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
-                          {user.subscriptionStatus ? (
-                            <Badge
-                              variant={
-                                user.subscriptionStatus === "active"
-                                  ? "default"
-                                  : user.subscriptionStatus === "trialing"
-                                  ? "secondary"
-                                  : "outline"
-                              }
-                            >
-                              {user.subscriptionStatus}
-                            </Badge>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
-                          {user.trialEndsAt
-                            ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
-                            : "—"}
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-sub-ends-${user.id}`}>
-                          {user.subscriptionEndsAt
-                            ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
-                            : "—"}
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
-                          {format(new Date(user.createdAt), "MMM d, yyyy")}
-                        </td>
+            ) : users ? (
+              users.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" data-testid="table-users">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-2 font-medium">Name</th>
+                        <th className="text-left py-3 px-2 font-medium">Email</th>
+                        <th className="text-left py-3 px-2 font-medium">Status</th>
+                        <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
+                        <th className="text-left py-3 px-2 font-medium">Subscription Ends</th>
+                        <th className="text-left py-3 px-2 font-medium">Joined</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-                {(!users || users.length === 0) && (
-                  <p className="text-center py-8 text-muted-foreground">
-                    No users found
-                  </p>
-                )}
-              </div>
+                    </thead>
+                    <tbody>
+                      {users.map((user) => (
+                        <tr
+                          key={user.id}
+                          className="border-b hover-elevate"
+                          data-testid={`row-user-${user.id}`}
+                        >
+                          <td className="py-3 px-2" data-testid={`text-name-${user.id}`}>
+                            <div className="flex items-center gap-2">
+                              {user.firstName && user.lastName
+                                ? `${user.firstName} ${user.lastName}`
+                                : user.firstName || user.lastName || user.email || "Anonymous"}
+                              {user.isAdmin && (
+                                <Badge variant="secondary" className="text-xs">
+                                  Admin
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                          <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
+                            {user.email || "—"}
+                          </td>
+                          <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
+                            {user.subscriptionStatus ? (
+                              <Badge
+                                variant={
+                                  user.subscriptionStatus === "active"
+                                    ? "default"
+                                    : user.subscriptionStatus === "trialing"
+                                    ? "secondary"
+                                    : "outline"
+                                }
+                              >
+                                {user.subscriptionStatus}
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline">No subscription</Badge>
+                            )}
+                          </td>
+                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
+                            {user.trialEndsAt
+                              ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
+                              : "—"}
+                          </td>
+                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-sub-ends-${user.id}`}>
+                            {user.subscriptionEndsAt
+                              ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
+                              : "—"}
+                          </td>
+                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
+                            {format(new Date(user.createdAt), "MMM d, yyyy")}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">
+                  No users found
+                </p>
+              )
+            ) : (
+              <p className="text-center py-8 text-destructive">
+                Failed to load users
+              </p>
             )}
           </CardContent>
         </Card>
