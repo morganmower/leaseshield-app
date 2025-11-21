@@ -249,7 +249,9 @@ export default function Compliance() {
                   </div>
                 ) : complianceCards && complianceCards.length > 0 ? (
                   <div className="grid md:grid-cols-2 gap-6">
-                    {complianceCards.map((card) => {
+                    {complianceCards.filter((card, index, self) => 
+                      index === self.findIndex(c => c.id === card.id)
+                    ).map((card) => {
                       const isExpanded = expandedCards.has(card.id);
                       return (
                       <Card
