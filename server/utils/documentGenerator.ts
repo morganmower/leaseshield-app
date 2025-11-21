@@ -54,15 +54,15 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
     // Set content
     await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
 
-    // Generate PDF
+    // Generate PDF with professional attorney-quality margins (1 inch standard)
     const pdfBuffer = await page.pdf({
       format: 'Letter',
       printBackground: true,
       margin: {
-        top: '0.75in',
-        right: '0.75in',
-        bottom: '0.75in',
-        left: '0.75in',
+        top: '1in',
+        right: '1in',
+        bottom: '1in',
+        left: '1in',
       }
     });
 
@@ -101,14 +101,16 @@ function generateHTMLFromTemplate(
 
   // Add version and date info to document header
   const versionInfo = `
-  <div style="background-color: #f0f0f0; padding: 10pt; margin-bottom: 20pt; font-size: 9pt; border-bottom: 1px solid #ccc;">
-    <p style="margin: 0;"><strong>Document Version:</strong> ${version} | <strong>Last Updated:</strong> ${new Date(updatedAt).toLocaleDateString()} | <strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+  <div class="version-info">
+    <p style="margin: 3pt 0; text-align: left;"><strong>Document Version:</strong> ${version}</p>
+    <p style="margin: 3pt 0; text-align: left;"><strong>Last Updated:</strong> ${new Date(updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+    <p style="margin: 3pt 0; text-align: left;"><strong>Generated:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
   </div>
   `;
   
   const contentWithVersion = versionInfo + filledContent;
 
-  // Wrap in proper HTML structure with styling
+  // Wrap in proper HTML structure with professional attorney-quality styling
   return `
 <!DOCTYPE html>
 <html lang="en">
@@ -119,79 +121,172 @@ function generateHTMLFromTemplate(
   <style>
     @page {
       size: Letter;
-      margin: 0.75in;
+      margin: 1in 1in 1in 1in;
     }
     
     body {
-      font-family: 'Georgia', 'Times New Roman', serif;
+      font-family: 'Times New Roman', 'Georgia', serif;
       font-size: 12pt;
-      line-height: 1.6;
+      line-height: 1.8;
       color: #000;
       margin: 0;
       padding: 0;
     }
     
+    .document-header {
+      text-align: center;
+      margin-bottom: 30pt;
+      padding-bottom: 15pt;
+      border-bottom: 2px solid #1a1a1a;
+    }
+    
+    .document-header .firm-name {
+      font-size: 16pt;
+      font-weight: bold;
+      letter-spacing: 1pt;
+      margin-bottom: 6pt;
+      color: #1a1a1a;
+    }
+    
+    .document-header .tagline {
+      font-size: 10pt;
+      font-style: italic;
+      color: #333;
+      margin-bottom: 8pt;
+    }
+    
+    .document-header .state-info {
+      font-size: 9pt;
+      color: #555;
+      margin-top: 6pt;
+    }
+    
     h1 {
-      font-size: 18pt;
+      font-size: 16pt;
       font-weight: bold;
       text-align: center;
-      margin-bottom: 24pt;
+      margin: 24pt 0 20pt 0;
       text-transform: uppercase;
+      letter-spacing: 1.5pt;
+      color: #1a1a1a;
     }
     
     h2 {
-      font-size: 14pt;
+      font-size: 13pt;
       font-weight: bold;
-      margin-top: 20pt;
-      margin-bottom: 10pt;
-      border-bottom: 1px solid #333;
-      padding-bottom: 4pt;
+      margin-top: 24pt;
+      margin-bottom: 12pt;
+      padding-bottom: 6pt;
+      border-bottom: 2px solid #2a2a2a;
+      color: #1a1a1a;
     }
     
     h3 {
       font-size: 12pt;
       font-weight: bold;
-      margin-top: 16pt;
-      margin-bottom: 8pt;
+      margin-top: 18pt;
+      margin-bottom: 10pt;
+      text-decoration: underline;
+      color: #1a1a1a;
     }
     
     p {
-      margin-bottom: 12pt;
+      margin-bottom: 14pt;
       text-align: justify;
+      text-indent: 0;
+      line-height: 1.8;
     }
     
     .field-value {
-      font-weight: bold;
+      font-weight: 600;
       text-decoration: underline;
+      padding: 0 2pt;
     }
     
     .signature-line {
-      margin-top: 40pt;
-      border-top: 1px solid #000;
-      width: 300pt;
+      margin-top: 50pt;
+      border-top: 2px solid #000;
+      width: 350pt;
       display: inline-block;
     }
     
     .signature-block {
-      margin-top: 30pt;
+      margin-top: 40pt;
       page-break-inside: avoid;
     }
     
+    .signature-section {
+      margin-top: 30pt;
+      margin-bottom: 30pt;
+      page-break-inside: avoid;
+    }
+    
+    .signature-section p {
+      margin: 8pt 0;
+      text-align: left;
+    }
+    
+    .signature-section strong {
+      font-weight: bold;
+      font-size: 11pt;
+      letter-spacing: 0.5pt;
+    }
+    
     .footer {
-      margin-top: 40pt;
-      font-size: 10pt;
+      margin-top: 50pt;
+      font-size: 8pt;
       color: #666;
       text-align: center;
-      border-top: 1px solid #ccc;
+      border-top: 1px solid #bbb;
       padding-top: 12pt;
+      font-style: italic;
+    }
+    
+    .version-info {
+      background-color: #f5f5f5;
+      padding: 8pt;
+      margin-bottom: 20pt;
+      font-size: 8pt;
+      border: 1px solid #ddd;
+      text-align: left;
+    }
+    
+    .version-info p {
+      margin: 3pt 0;
+      text-align: left;
+      text-indent: 0;
+    }
+    
+    .legal-notice {
+      background-color: #fafafa;
+      border-left: 4px solid #333;
+      padding: 12pt;
+      margin: 20pt 0;
+      font-size: 10pt;
+    }
+    
+    .legal-notice p {
+      margin: 6pt 0;
+      text-align: left;
+    }
+    
+    strong {
+      font-weight: 600;
     }
   </style>
 </head>
 <body>
+  <div class="document-header">
+    <div class="firm-name">LEASESHIELD LEGAL DOCUMENTS</div>
+    <div class="tagline">Professional Landlord Protection Services</div>
+    <div class="state-info">State-Specific Legal Forms for ${safeStateId}</div>
+  </div>
+  
   ${contentWithVersion}
   
   <div class="footer">
-    Document generated by LeaseShield App | ${safeStateId} | ${new Date().toLocaleDateString()}
+    This document was generated by LeaseShield App on ${new Date().toLocaleDateString()} | State: ${safeStateId}<br>
+    For informational purposes only - Consult with a licensed attorney for legal advice
   </div>
 </body>
 </html>
@@ -395,34 +490,40 @@ function getStateDisclosures(stateId: string, templateTitle: string): string {
 
 function generateSignaturePage(): string {
   return `
-    <div style="page-break-before: always; padding-top: 40pt;">
-      <h2 style="text-align: center;">SIGNATURE PAGE</h2>
-      <p style="text-align: center; margin-top: 40pt; margin-bottom: 60pt;">This document is hereby executed on the date(s) shown below.</p>
-      
-      <div style="margin-top: 60pt; margin-bottom: 40pt;">
-        <p><strong>LANDLORD/PROPERTY OWNER:</strong></p>
-        <p style="margin-top: 30pt;">Signature: _________________________________</p>
-        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
-        <p style="margin-top: 10pt;">Date: _________________________________</p>
-      </div>
-      
-      <div style="margin-top: 60pt; margin-bottom: 40pt;">
-        <p><strong>TENANT/LESSEE:</strong></p>
-        <p style="margin-top: 30pt;">Signature: _________________________________</p>
-        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
-        <p style="margin-top: 10pt;">Date: _________________________________</p>
-      </div>
-      
-      <div style="margin-top: 60pt;">
-        <p><strong>ADDITIONAL OCCUPANT/CO-TENANT (if applicable):</strong></p>
-        <p style="margin-top: 30pt;">Signature: _________________________________</p>
-        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
-        <p style="margin-top: 10pt;">Date: _________________________________</p>
-      </div>
-      
-      <p style="margin-top: 60pt; text-align: center; font-size: 10pt; color: #666;">
-        This signature page may be executed in multiple counterparts, each of which shall be deemed an original and all of which together shall constitute one and the same instrument.
+    <div style="page-break-before: always; padding-top: 50pt;">
+      <h2 style="text-align: center; text-transform: uppercase; letter-spacing: 2pt; border-bottom: 3px double #1a1a1a; padding-bottom: 12pt;">SIGNATURE PAGE</h2>
+      <p style="text-align: center; margin-top: 30pt; margin-bottom: 50pt; font-style: italic; font-size: 11pt;">
+        IN WITNESS WHEREOF, the parties hereto have executed this document on the date(s) shown below.
       </p>
+      
+      <div class="signature-section" style="margin-top: 50pt; margin-bottom: 50pt; border: 2px solid #e0e0e0; padding: 20pt; background-color: #fafafa;">
+        <p style="font-size: 11pt; font-weight: bold; letter-spacing: 1pt; margin-bottom: 20pt; text-transform: uppercase;">LANDLORD/PROPERTY OWNER:</p>
+        <p style="margin-top: 40pt; border-bottom: 2px solid #000; width: 400pt; padding-bottom: 2pt;">Signature</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 400pt; padding-bottom: 2pt;">Print Name</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 250pt; padding-bottom: 2pt;">Date</p>
+      </div>
+      
+      <div class="signature-section" style="margin-top: 50pt; margin-bottom: 50pt; border: 2px solid #e0e0e0; padding: 20pt; background-color: #fafafa;">
+        <p style="font-size: 11pt; font-weight: bold; letter-spacing: 1pt; margin-bottom: 20pt; text-transform: uppercase;">TENANT/LESSEE:</p>
+        <p style="margin-top: 40pt; border-bottom: 2px solid #000; width: 400pt; padding-bottom: 2pt;">Signature</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 400pt; padding-bottom: 2pt;">Print Name</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 250pt; padding-bottom: 2pt;">Date</p>
+      </div>
+      
+      <div class="signature-section" style="margin-top: 50pt; margin-bottom: 50pt; border: 2px solid #e0e0e0; padding: 20pt; background-color: #fafafa;">
+        <p style="font-size: 11pt; font-weight: bold; letter-spacing: 1pt; margin-bottom: 20pt; text-transform: uppercase;">ADDITIONAL OCCUPANT/CO-TENANT (if applicable):</p>
+        <p style="margin-top: 40pt; border-bottom: 2px solid #000; width: 400pt; padding-bottom: 2pt;">Signature</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 400pt; padding-bottom: 2pt;">Print Name</p>
+        <p style="margin-top: 20pt; border-bottom: 1px solid #666; width: 250pt; padding-bottom: 2pt;">Date</p>
+      </div>
+      
+      <div style="margin-top: 60pt; padding: 15pt; background-color: #f5f5f5; border: 1px solid #ccc;">
+        <p style="text-align: center; font-size: 9pt; color: #555; line-height: 1.6; margin: 0;">
+          <strong>EXECUTION IN COUNTERPARTS:</strong> This signature page may be executed in multiple counterparts, 
+          each of which shall be deemed an original and all of which together shall constitute one and the same instrument. 
+          Facsimile and electronic signatures shall have the same force and effect as original signatures.
+        </p>
+      </div>
     </div>
   `;
 }
