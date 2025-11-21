@@ -6,6 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
 import {
   Accordion,
@@ -203,7 +204,7 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
+          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo iconSize={32} />
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
               LeaseShield<span className="hidden sm:inline"> App</span>
@@ -479,7 +480,7 @@ export default function Landing() {
                       className="text-primary hover:underline font-medium"
                     >
                       Western Verify
-                    </a>{" "}
+                    </Link>{" "}
                     for background checks.
                   </p>
                   <ul className="space-y-2 text-sm">
@@ -1491,7 +1492,7 @@ export default function Landing() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
                 <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
-                <li><a href="/blog" className="hover:text-foreground transition-colors">Blog & Resources</a></li>
+                <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog & Resources</Link></li>
               </ul>
             </div>
             <div>
@@ -1506,12 +1507,12 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Support & Legal</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="/help" className="hover:text-foreground transition-colors">Help Center</a></li>
-                <li><a href="/contact" className="hover:text-foreground transition-colors">Contact</a></li>
-                <li><a href="/terms" className="hover:text-foreground transition-colors">Terms of Service</a></li>
-                <li><a href="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</a></li>
-                <li><a href="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</a></li>
-                <li><a href="/disclaimers" className="hover:text-foreground transition-colors">Legal Disclaimers</a></li>
+                <li><Link to="/help" className="hover:text-foreground transition-colors">Help Center</Link></li>
+                <li><Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
+                <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Service</Link></li>
+                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/refund-policy" className="hover:text-foreground transition-colors">Refund Policy</Link></li>
+                <li><Link to="/disclaimers" className="hover:text-foreground transition-colors">Legal Disclaimers</Link></li>
               </ul>
             </div>
           </div>
