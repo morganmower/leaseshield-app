@@ -476,16 +476,17 @@ export default function TenantIssues() {
                   >
                     Close
                   </Button>
-                  <Link to="/templates" className="flex-1">
-                    <Button
-                      onClick={() => setShowWorkflowDialog(false)}
-                      className="w-full"
-                      data-testid="button-view-templates"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      View Templates
-                    </Button>
-                  </Link>
+                  <Button
+                    onClick={() => {
+                      setShowWorkflowDialog(false);
+                      setTimeout(() => setLocation('/templates'), 100);
+                    }}
+                    className="flex-1"
+                    data-testid="button-view-templates"
+                  >
+                    <FileText className="mr-2 h-4 w-4" />
+                    View Templates
+                  </Button>
                 </div>
               </>
             )}
