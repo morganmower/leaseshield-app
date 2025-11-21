@@ -29,16 +29,20 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
   const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId);
 
   // Launch headless browser
-  // NOTE: Running in --no-sandbox mode for Replit environment compatibility.
+  // NOTE: Using system Chromium for stability in Replit environment.
+  // Running in --no-sandbox mode for Replit environment compatibility.
   // Security is maintained through comprehensive HTML escaping of all user input.
   // All user input is HTML-escaped before rendering to prevent injection attacks.
   const browser = await puppeteer.launch({
     headless: true,
+    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
     args: [
       '--no-sandbox', // Required for Replit containerized environment
       '--disable-setuid-sandbox', // Required for Replit containerized environment
       '--disable-dev-shm-usage', // Required for containerized environments
-      '--disable-gpu' // Not needed for PDF generation
+      '--disable-gpu', // Not needed for PDF generation
+      '--single-process', // More stable in containerized environments
+      '--no-zygote' // More stable in containerized environments
     ]
   });
 
