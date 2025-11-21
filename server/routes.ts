@@ -471,6 +471,112 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Property routes
+  app.get('/api/properties', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const properties = await storage.getPropertiesByUserId(userId);
+      res.json(properties);
+    } catch (error) {
+      console.error("Error fetching properties:", error);
+      res.status(500).json({ message: "Failed to fetch properties" });
+    }
+  });
+
+  app.get('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const property = await storage.getProperty(req.params.id);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      if (property.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+      res.json(property);
+    } catch (error) {
+      console.error("Error fetching property:", error);
+      res.status(500).json({ message: "Failed to fetch property" });
+    }
+  });
+
+  app.post('/api/properties', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      
+      const property = await storage.createProperty({
+        ...req.body,
+        userId,
+      });
+
+      await storage.trackEvent({
+        userId,
+        eventType: 'property_created',
+        eventData: { propertyId: property.id, propertyName: property.name },
+      });
+
+      res.json(property);
+    } catch (error) {
+      console.error("Error creating property:", error);
+      res.status(500).json({ message: "Failed to create property" });
+    }
+  });
+
+  app.put('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const property = await storage.getProperty(req.params.id);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      if (property.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const updatedProperty = await storage.updateProperty(req.params.id, req.body);
+      res.json(updatedProperty);
+    } catch (error) {
+      console.error("Error updating property:", error);
+      res.status(500).json({ message: "Failed to update property" });
+    }
+  });
+
+  app.delete('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const property = await storage.getProperty(req.params.id);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      if (property.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      await storage.deleteProperty(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting property:", error);
+      res.status(500).json({ message: "Failed to delete property" });
+    }
+  });
+
   // Saved Documents routes
   app.get('/api/saved-documents', isAuthenticated, async (req: any, res) => {
     try {
