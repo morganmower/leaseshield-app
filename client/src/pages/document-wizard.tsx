@@ -29,10 +29,11 @@ interface FillableFormData {
 }
 
 export default function DocumentWizard() {
-  const [match, params] = useRoute("/templates/:id/fill");
+  const [match, params] = useRoute("/templates/:id/fill/:documentId?");
   const [, setLocation] = useLocation();
   const { toast } = useToast();
   const templateId = params?.id;
+  const documentId = params?.documentId; // Optional: for re-editing saved documents
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
   // Fetch template
@@ -46,6 +47,18 @@ export default function DocumentWizard() {
       return response.json();
     },
     enabled: !!templateId,
+  });
+
+  // Fetch saved document if re-editing
+  const { data: savedDocument, isLoading: isLoadingSavedDoc } = useQuery({
+    queryKey: ['/api/saved-documents', documentId],
+    queryFn: async () => {
+      if (!documentId) return null;
+      const response = await fetch(`/api/saved-documents/${documentId}`, { credentials: 'include' });
+      if (!response.ok) throw new Error('Failed to fetch saved document');
+      return response.json();
+    },
+    enabled: !!documentId,
   });
 
   // Fetch properties
@@ -98,9 +111,22 @@ export default function DocumentWizard() {
     }, {} as Record<string, z.ZodTypeAny>)
   );
 
-  // Initialize form with default values
+  // Initialize form with default values or saved document data
   const defaultValues = fields.reduce((acc, field) => {
-    if (field.defaultValue === 'today') {
+    // If re-editing, use saved document data
+    if (savedDocument?.formData && savedDocument.formData[field.id]) {
+      const savedValue = savedDocument.formData[field.id];
+      // Handle date formatting - convert from display format back to YYYY-MM-DD
+      if (field.type === 'date' && typeof savedValue === 'string' && savedValue.includes(',')) {
+        const date = new Date(savedValue);
+        acc[field.id] = date.toISOString().split('T')[0];
+      } else if (field.type === 'currency' && typeof savedValue === 'string' && savedValue.startsWith('$')) {
+        // Remove $ for editing
+        acc[field.id] = savedValue.slice(1);
+      } else {
+        acc[field.id] = String(savedValue);
+      }
+    } else if (field.defaultValue === 'today') {
       acc[field.id] = new Date().toISOString().split('T')[0];
     } else if (field.defaultValue) {
       acc[field.id] = field.defaultValue;
@@ -114,6 +140,11 @@ export default function DocumentWizard() {
     resolver: zodResolver(formSchema),
     defaultValues,
   });
+
+  // Set property from saved document
+  if (savedDocument && selectedPropertyId === null && savedDocument.propertyId) {
+    setSelectedPropertyId(savedDocument.propertyId);
+  }
 
   const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, string> | null>(null);
 
@@ -236,7 +267,7 @@ export default function DocumentWizard() {
     generateMutation.mutate(formattedData);
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingSavedDoc) {
     return (
       <div className="h-full overflow-y-auto">
         <div className="max-w-4xl mx-auto p-8">
@@ -277,13 +308,13 @@ export default function DocumentWizard() {
         {/* Header */}
         <div className="mb-8">
           <Button 
-            onClick={() => setLocation("/templates")} 
+            onClick={() => setLocation(documentId ? "/my-documents" : "/templates")} 
             variant="ghost" 
             className="mb-4"
             data-testid="button-back-to-templates"
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Templates
+            {documentId ? "Back to My Documents" : "Back to Templates"}
           </Button>
           
           <div className="flex items-start gap-4">
@@ -291,6 +322,13 @@ export default function DocumentWizard() {
               <FileText className="h-8 w-8 text-primary" />
             </div>
             <div className="flex-1">
+              {documentId && (
+                <div className="mb-2">
+                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                    Re-editing Saved Document
+                  </span>
+                </div>
+              )}
               <h1 className="text-3xl font-display font-semibold mb-2" data-testid="text-template-title">
                 {template.title}
               </h1>

@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,13 +17,14 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Download, Trash2, Search, Calendar, Building2 } from "lucide-react";
+import { FileText, Download, Trash2, Search, Calendar, Building2, Edit } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
 import type { SavedDocument, Property } from "@shared/schema";
 import { format } from "date-fns";
 
 export default function MyDocuments() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("all");
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
@@ -227,6 +229,14 @@ export default function MyDocuments() {
                     >
                       <Download className="h-4 w-4 mr-2" />
                       Download
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => setLocation(`/templates/${document.templateId}/fill/${document.id}`)}
+                      data-testid={`button-edit-${document.id}`}
+                    >
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"

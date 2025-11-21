@@ -89,6 +89,7 @@ function Router() {
           <Route path="/blog" component={Blog} />
           <Route path="/blog/:slug" component={BlogPost} />
           <Route path="/templates" component={Templates} />
+          <Route path="/templates/:id/fill/:documentId" component={DocumentWizard} />
           <Route path="/templates/:id/fill" component={DocumentWizard} />
           <Route path="/my-documents" component={MyDocuments} />
           <Route path="/properties" component={Properties} />
