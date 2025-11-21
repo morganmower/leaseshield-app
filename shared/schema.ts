@@ -454,3 +454,34 @@ export const insertTemplateVersionSchema = createInsertSchema(templateVersions).
 });
 export type InsertTemplateVersion = z.infer<typeof insertTemplateVersionSchema>;
 export type TemplateVersion = typeof templateVersions.$inferSelect;
+
+// Saved Documents - user document history
+export const savedDocuments = pgTable("saved_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  templateId: varchar("template_id").notNull().references(() => templates.id),
+  templateName: text("template_name").notNull(),
+  templateVersion: integer("template_version"),
+  documentName: text("document_name").notNull(), // User-friendly name like "Late Rent Notice - John Doe"
+  formData: jsonb("form_data").notNull(), // Filled form data for regeneration
+  stateCode: varchar("state_code", { length: 2 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const savedDocumentsRelations = relations(savedDocuments, ({ one }) => ({
+  user: one(users, {
+    fields: [savedDocuments.userId],
+    references: [users.id],
+  }),
+  template: one(templates, {
+    fields: [savedDocuments.templateId],
+    references: [templates.id],
+  }),
+}));
+
+export const insertSavedDocumentSchema = createInsertSchema(savedDocuments).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSavedDocument = z.infer<typeof insertSavedDocumentSchema>;
+export type SavedDocument = typeof savedDocuments.$inferSelect;

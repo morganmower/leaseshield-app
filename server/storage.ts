@@ -13,6 +13,7 @@ import {
   templateReviewQueue,
   monitoringRuns,
   templateVersions,
+  savedDocuments,
   type User,
   type UpsertUser,
   type Template,
@@ -41,6 +42,8 @@ import {
   type InsertMonitoringRun,
   type TemplateVersion,
   type InsertTemplateVersion,
+  type SavedDocument,
+  type InsertSavedDocument,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -145,6 +148,12 @@ export interface IStorage {
   }): Promise<{ template: Template; version: TemplateVersion }>;
   getTemplateVersions(templateId: string): Promise<TemplateVersion[]>;
   getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined>;
+
+  // Saved document operations
+  getSavedDocumentsByUserId(userId: string): Promise<SavedDocument[]>;
+  getSavedDocumentById(id: string): Promise<SavedDocument | undefined>;
+  createSavedDocument(document: InsertSavedDocument): Promise<SavedDocument>;
+  deleteSavedDocument(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -790,6 +799,35 @@ export class DatabaseStorage implements IStorage {
   async getTemplateReviewById(id: string): Promise<TemplateReviewQueue | undefined> {
     const [review] = await db.select().from(templateReviewQueue).where(eq(templateReviewQueue.id, id));
     return review;
+  }
+
+  // Saved document operations
+  async getSavedDocumentsByUserId(userId: string): Promise<SavedDocument[]> {
+    return await db
+      .select()
+      .from(savedDocuments)
+      .where(eq(savedDocuments.userId, userId))
+      .orderBy(desc(savedDocuments.createdAt));
+  }
+
+  async getSavedDocumentById(id: string): Promise<SavedDocument | undefined> {
+    const [document] = await db
+      .select()
+      .from(savedDocuments)
+      .where(eq(savedDocuments.id, id));
+    return document;
+  }
+
+  async createSavedDocument(document: InsertSavedDocument): Promise<SavedDocument> {
+    const [savedDoc] = await db
+      .insert(savedDocuments)
+      .values(document)
+      .returning();
+    return savedDoc;
+  }
+
+  async deleteSavedDocument(id: string): Promise<void> {
+    await db.delete(savedDocuments).where(eq(savedDocuments.id, id));
   }
 }
 
