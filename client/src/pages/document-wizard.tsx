@@ -35,6 +35,13 @@ export default function DocumentWizard() {
   // Fetch template
   const { data: template, isLoading } = useQuery<Template>({
     queryKey: ["/api/templates", templateId],
+    queryFn: async () => {
+      const response = await fetch(`/api/templates/${templateId}`);
+      if (!response.ok) {
+        throw new Error('Failed to fetch template');
+      }
+      return response.json();
+    },
     enabled: !!templateId,
   });
 
