@@ -424,10 +424,12 @@ export default function Screening() {
               </div>
             </div>
 
-            <Button variant="default" data-testid="button-adverse-action-template">
-              <FileText className="mr-2 h-4 w-4" />
-              Get Adverse Action Templates
-            </Button>
+            <Link to="/templates?category=screening">
+              <Button variant="default" data-testid="button-adverse-action-template">
+                <FileText className="mr-2 h-4 w-4" />
+                Get Adverse Action Templates
+              </Button>
+            </Link>
           </Card>
         </div>
       </div>

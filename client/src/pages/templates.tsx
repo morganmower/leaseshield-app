@@ -127,6 +127,20 @@ export default function Templates() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Initialize filters from URL query parameters
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const categoryParam = params.get('category');
+    const stateParam = params.get('stateId');
+    
+    if (categoryParam && categoryParam !== selectedCategory) {
+      setSelectedCategory(categoryParam);
+    }
+    if (stateParam && stateParam !== selectedState) {
+      setSelectedState(stateParam);
+    }
+  }, []); // Run only on mount
+
   useEffect(() => {
     if (user?.preferredState && selectedState === "all") {
       setSelectedState(user.preferredState);
