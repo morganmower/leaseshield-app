@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -199,7 +199,7 @@ export default function Templates() {
               <p className="text-sm text-foreground">
                 <strong>Not Legal Advice:</strong> These templates are general forms for informational purposes only. 
                 They must be customized for your specific situation and reviewed by a licensed attorney. Using these 
-                templates does not create an attorney-client relationship. <a href="/disclaimers" className="text-primary hover:underline">Read full disclaimers</a>
+                templates does not create an attorney-client relationship. <Link to="/disclaimers" className="text-primary hover:underline" data-testid="link-disclaimers">Read full disclaimers</Link>
               </p>
             </div>
           </div>
