@@ -50,6 +50,23 @@ import {
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
+import { stateCache, templateCache, complianceCache } from "./utils/cache";
+
+/**
+ * Database error handler wrapper
+ * Provides consistent error handling and logging for database operations
+ */
+async function handleDbOperation<T>(
+  operation: () => Promise<T>,
+  context: string
+): Promise<T> {
+  try {
+    return await operation();
+  } catch (error) {
+    console.error(`Database error in ${context}:`, error);
+    throw new Error(`Database operation failed: ${context}`);
+  }
+}
 
 export interface IStorage {
   // User operations
@@ -170,41 +187,59 @@ export interface IStorage {
 export class DatabaseStorage implements IStorage {
   // User operations
   async getUser(id: string): Promise<User | undefined> {
-    const [user] = await db.select().from(users).where(eq(users.id, id));
-    return user;
+    return handleDbOperation(async () => {
+      const [user] = await db.select().from(users).where(eq(users.id, id));
+      return user;
+    }, 'getUser');
   }
 
   async upsertUser(userData: UpsertUser): Promise<User> {
-    const [user] = await db
-      .insert(users)
-      .values(userData)
-      .onConflictDoUpdate({
-        target: users.id,
-        set: {
-          ...userData,
-          updatedAt: new Date(),
-        },
-      })
-      .returning();
-    return user;
+    return handleDbOperation(async () => {
+      const [user] = await db
+        .insert(users)
+        .values(userData)
+        .onConflictDoUpdate({
+          target: users.id,
+          set: {
+            ...userData,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return user;
+    }, 'upsertUser');
   }
 
   async updateUserPreferences(id: string, data: { preferredState?: string }): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+    return handleDbOperation(async () => {
+      const [user] = await db
+        .update(users)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!user) {
+        throw new Error(`User not found: ${id}`);
+      }
+
+      return user;
+    }, 'updateUserPreferences');
   }
 
   async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User> {
-    const [user] = await db
-      .update(users)
-      .set({ ...data, updatedAt: new Date() })
-      .where(eq(users.id, id))
-      .returning();
-    return user;
+    return handleDbOperation(async () => {
+      const [user] = await db
+        .update(users)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!user) {
+        throw new Error(`User not found: ${id}`);
+      }
+
+      return user;
+    }, 'updateUserStripeInfo');
   }
 
   async getAllActiveUsers(): Promise<User[]> {
@@ -219,12 +254,21 @@ export class DatabaseStorage implements IStorage {
 
   // State operations
   async getAllStates(): Promise<State[]> {
-    return await db.select().from(states).where(eq(states.isActive, true));
+    return handleDbOperation(async () => {
+      // Use cache for states (rarely change)
+      return stateCache.getOrSet('all-states', async () => {
+        return await db.select().from(states).where(eq(states.isActive, true));
+      }, 3600); // Cache for 1 hour
+    }, 'getAllStates');
   }
 
   async getState(id: string): Promise<State | undefined> {
-    const [state] = await db.select().from(states).where(eq(states.id, id));
-    return state;
+    return handleDbOperation(async () => {
+      return stateCache.getOrSet(`state-${id}`, async () => {
+        const [state] = await db.select().from(states).where(eq(states.id, id));
+        return state;
+      }, 3600); // Cache for 1 hour
+    }, 'getState');
   }
 
   async getStateById(id: string): Promise<State | undefined> {
@@ -232,8 +276,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createState(stateData: InsertState): Promise<State> {
-    const [state] = await db.insert(states).values(stateData).returning();
-    return state;
+    return handleDbOperation(async () => {
+      const [state] = await db.insert(states).values(stateData).returning();
+      // Invalidate cache
+      stateCache.clear();
+      return state;
+    }, 'createState');
   }
 
   // Template operations

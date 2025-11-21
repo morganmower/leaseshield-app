@@ -2,6 +2,17 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { scheduledJobs } from "./scheduledJobs";
+import { closePool } from "./db";
+import { validateEnv } from "./utils/env";
+
+// Validate environment variables on startup
+try {
+  validateEnv();
+  log('✓ Environment variables validated');
+} catch (error) {
+  console.error('Failed to start server:', error);
+  process.exit(1);
+}
 
 const app = express();
 
@@ -23,8 +34,28 @@ app.use((req, res, next) => {
   }
 });
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+app.use(express.json({ limit: '10mb' })); // Add size limit to prevent large payloads
+app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Request timeout middleware - prevent hanging requests
+app.use((req, res, next) => {
+  // Set timeout to 30 seconds for all requests
+  req.setTimeout(30000, () => {
+    log(`Request timeout: ${req.method} ${req.path}`);
+    if (!res.headersSent) {
+      res.status(408).json({ message: 'Request timeout' });
+    }
+  });
+
+  res.setTimeout(30000, () => {
+    log(`Response timeout: ${req.method} ${req.path}`);
+    if (!res.headersSent) {
+      res.status(504).json({ message: 'Gateway timeout' });
+    }
+  });
+
+  next();
+});
 
 app.use((req, res, next) => {
   const start = Date.now();
@@ -59,12 +90,29 @@ app.use((req, res, next) => {
 (async () => {
   const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+  // Global error handler - must be last middleware
+  app.use((err: any, req: Request, res: Response, _next: NextFunction) => {
+    // Log error details
+    console.error('Error occurred:', {
+      path: req.path,
+      method: req.method,
+      error: err.message,
+      stack: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+    });
+
+    // Don't send response if headers already sent
+    if (res.headersSent) {
+      return;
+    }
+
     const status = err.status || err.statusCode || 500;
     const message = err.message || "Internal Server Error";
 
-    res.status(status).json({ message });
-    throw err;
+    // Send appropriate error response
+    res.status(status).json({
+      message,
+      ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+    });
   });
 
   // importantly only setup vite in development and after
@@ -93,12 +141,33 @@ app.use((req, res, next) => {
   });
 
   // Graceful shutdown
-  process.on('SIGTERM', () => {
-    log('SIGTERM received, shutting down gracefully...');
-    scheduledJobs.stop();
-    server.close(() => {
-      log('Server closed');
+  const shutdown = async (signal: string) => {
+    log(`${signal} received, shutting down gracefully...`);
+
+    try {
+      // Stop scheduled jobs first
+      scheduledJobs.stop();
+
+      // Close HTTP server
+      await new Promise<void>((resolve, reject) => {
+        server.close((err) => {
+          if (err) reject(err);
+          else resolve();
+        });
+      });
+      log('HTTP server closed');
+
+      // Close database pool
+      await closePool();
+
+      log('Graceful shutdown complete');
       process.exit(0);
-    });
-  });
+    } catch (error) {
+      log(`Error during shutdown: ${error}`);
+      process.exit(1);
+    }
+  };
+
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 })();
