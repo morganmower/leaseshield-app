@@ -2,6 +2,8 @@ import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { Badge } from "@/components/ui/badge";
+import { format } from "date-fns";
 
 interface AnalyticsSummary {
   subscriptions: {
@@ -23,9 +25,25 @@ interface AnalyticsSummary {
   };
 }
 
+interface User {
+  id: string;
+  email: string;
+  firstName: string | null;
+  lastName: string | null;
+  subscriptionStatus: string | null;
+  trialEndsAt: string | null;
+  subscriptionEndsAt: string | null;
+  createdAt: string;
+  isAdmin: boolean | null;
+}
+
 export default function AdminAnalyticsPage() {
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
+  });
+
+  const { data: users, isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
   });
 
   if (isLoading) {
@@ -237,6 +255,95 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>All Users</CardTitle>
+            <CardDescription>
+              Complete list of users with subscription details
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {usersLoading ? (
+              <p className="text-muted-foreground">Loading users...</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" data-testid="table-users">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium">Name</th>
+                      <th className="text-left py-3 px-2 font-medium">Email</th>
+                      <th className="text-left py-3 px-2 font-medium">Status</th>
+                      <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
+                      <th className="text-left py-3 px-2 font-medium">Subscription Ends</th>
+                      <th className="text-left py-3 px-2 font-medium">Joined</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users?.map((user) => (
+                      <tr
+                        key={user.id}
+                        className="border-b hover-elevate"
+                        data-testid={`row-user-${user.id}`}
+                      >
+                        <td className="py-3 px-2" data-testid={`text-name-${user.id}`}>
+                          <div className="flex items-center gap-2">
+                            {user.firstName && user.lastName
+                              ? `${user.firstName} ${user.lastName}`
+                              : user.firstName || user.lastName || "—"}
+                            {user.isAdmin && (
+                              <Badge variant="secondary" className="text-xs">
+                                Admin
+                              </Badge>
+                            )}
+                          </div>
+                        </td>
+                        <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
+                          {user.email || "—"}
+                        </td>
+                        <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
+                          {user.subscriptionStatus ? (
+                            <Badge
+                              variant={
+                                user.subscriptionStatus === "active"
+                                  ? "default"
+                                  : user.subscriptionStatus === "trialing"
+                                  ? "secondary"
+                                  : "outline"
+                              }
+                            >
+                              {user.subscriptionStatus}
+                            </Badge>
+                          ) : (
+                            <span className="text-muted-foreground">—</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
+                          {user.trialEndsAt
+                            ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
+                            : "—"}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-sub-ends-${user.id}`}>
+                          {user.subscriptionEndsAt
+                            ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
+                            : "—"}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
+                          {format(new Date(user.createdAt), "MMM d, yyyy")}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {(!users || users.length === 0) && (
+                  <p className="text-center py-8 text-muted-foreground">
+                    No users found
+                  </p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
     </div>
   );
