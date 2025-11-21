@@ -11,6 +11,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Settings as SettingsIcon, CreditCard, LogOut } from "lucide-react";
 import { NotificationCenter } from "@/components/notification-center";
+import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -130,7 +131,10 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
         <AppSidebar />
         <div className="flex flex-col flex-1 overflow-hidden">
           <header className="flex items-center justify-between p-4 border-b bg-background">
-            <SidebarTrigger data-testid="button-sidebar-toggle" />
+            <div className="flex items-center gap-4">
+              <SidebarTrigger data-testid="button-sidebar-toggle" />
+              <HeaderContext />
+            </div>
             <div className="flex items-center gap-2">
               <NotificationCenter />
               <Button
