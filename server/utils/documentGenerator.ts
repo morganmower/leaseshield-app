@@ -568,7 +568,137 @@ function getNoticeContent(fieldValues: FieldValue, stateId: string, noticeType: 
   const titleLower = noticeType.toLowerCase();
   let noticeContent = '';
   
-  if (titleLower.includes('eviction') || titleLower.includes('notice to quit')) {
+  // Late Rent / Pay or Quit Notices
+  if (titleLower.includes('late rent') || titleLower.includes('pay or quit') || 
+      titleLower.includes('notice to vacate') && titleLower.includes('3-day') || 
+      titleLower.includes('demand for rent')) {
+    const stateCitations: Record<string, string> = {
+      UT: 'Utah Code § 78B-6-802',
+      TX: 'Texas Property Code § 24.005',
+      ND: 'North Dakota Century Code § 47-32-01',
+      SD: 'South Dakota Codified Laws § 21-16'
+    };
+    const daysPeriod = titleLower.includes('3-day') ? 'three (3)' : 'three (3)';
+    
+    noticeContent = `
+      <h2>NOTICE TO PAY RENT OR VACATE</h2>
+      
+      <p style="margin-top: 20pt;"><strong>TO:</strong> ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all other occupants</p>
+      <p><strong>PROPERTY ADDRESS:</strong> ${escapeHtml(String(fieldValues.propertyAddress) || '[PROPERTY ADDRESS]')}</p>
+      <p><strong>DATE OF NOTICE:</strong> ${escapeHtml(String(fieldValues.noticeDate) || '[DATE]')}</p>
+      
+      <p style="margin-top: 20pt;">NOTICE IS HEREBY GIVEN that you are in default of your rental obligations under the Lease Agreement for the above-referenced property. As of the date of this notice, you owe the following:</p>
+      
+      <h2>AMOUNT DUE</h2>
+      <p><strong>Rent Due Date:</strong> ${escapeHtml(String(fieldValues.rentDueDate) || '[DUE DATE]')}</p>
+      <p><strong>Monthly Rent Amount:</strong> $${escapeHtml(String(fieldValues.amountDue) || '[AMOUNT]')}</p>
+      <p><strong>Late Fee (if applicable):</strong> $${escapeHtml(String(fieldValues.lateFeeAmount) || '0.00')}</p>
+      <p><strong>TOTAL AMOUNT DUE:</strong> $${(parseFloat(String(fieldValues.amountDue) || '0') + parseFloat(String(fieldValues.lateFeeAmount) || '0')).toFixed(2)}</p>
+      
+      <h2>DEMAND FOR PAYMENT</h2>
+      <p>You are hereby required to pay the full amount due stated above within ${daysPeriod} days from the date of this notice, or to vacate and deliver possession of the Premises on or before ${escapeHtml(String(fieldValues.payByDate) || '[PAY BY DATE]')}.  </p>
+      
+      <p>Payment must be made in full and tendered in the form of cashier's check, money order, or certified funds. Personal checks may not be accepted. Payment must be delivered to:</p>
+      <p><strong>Payment Address:</strong> ${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD NAME]')}<br/>
+      ${escapeHtml(String(fieldValues.landlordAddress) || '[LANDLORD ADDRESS]')}</p>
+      
+      <h2>FAILURE TO COMPLY</h2>
+      <p>If you fail to pay the total amount due OR fail to vacate the Premises within the time period stated above, Landlord will commence legal action to terminate your tenancy and seek possession of the Premises through eviction proceedings. You will be liable for court costs, attorney fees, and any additional rent and damages incurred.</p>
+      
+      <h2>NO WAIVER OF RIGHTS</h2>
+      <p>This notice does not constitute a waiver of Landlord's right to pursue eviction or other legal remedies. Acceptance of partial payment does not waive Landlord's right to the full amount due or the right to terminate the tenancy.</p>
+      
+      <h2>LEGAL AUTHORITY</h2>
+      <p>This notice is provided pursuant to ${stateCitations[stateId] || 'applicable state law'} and the terms of your Lease Agreement dated ${escapeHtml(String(fieldValues.leaseDate) || '[LEASE DATE]')}.</p>
+      
+      <h2>CONTACT INFORMATION</h2>
+      <p>If you have questions about this notice, contact:</p>
+      <p>${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD]')}<br/>
+      Phone: ${escapeHtml(String(fieldValues.landlordPhone) || '[PHONE]')}<br/>
+      Email: ${escapeHtml(String(fieldValues.landlordEmail) || '[EMAIL]')}</p>
+    `;
+  } else if (titleLower.includes('lease violation') || titleLower.includes('cure or quit')) {
+    const daysPeriod = titleLower.includes('5-day') ? 'five (5)' : titleLower.includes('3-day') ? 'three (3)' : 'five (5)';
+    
+    noticeContent = `
+      <h2>NOTICE OF LEASE VIOLATION</h2>
+      
+      <p style="margin-top: 20pt;"><strong>TO:</strong> ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all other occupants</p>
+      <p><strong>PROPERTY ADDRESS:</strong> ${escapeHtml(String(fieldValues.propertyAddress) || '[PROPERTY ADDRESS]')}</p>
+      <p><strong>DATE OF NOTICE:</strong> ${escapeHtml(String(fieldValues.noticeDate) || '[DATE]')}</p>
+      
+      <p style="margin-top: 20pt;">NOTICE IS HEREBY GIVEN that you are in violation of your Lease Agreement for the above-referenced property. This notice serves as formal notification of said violation(s) and provides you the opportunity to cure as specified herein.</p>
+      
+      <h2>VIOLATION DETAILS</h2>
+      <p><strong>Description of Violation:</strong></p>
+      <p>${escapeHtml(String(fieldValues.violationDescription) || '[DESCRIBE THE SPECIFIC LEASE VIOLATION]')}</p>
+      
+      <p><strong>Violated Lease Provision:</strong> ${escapeHtml(String(fieldValues.leaseClause) || '[REFERENCE TO LEASE SECTION/CLAUSE]')}</p>
+      
+      <p><strong>Date(s) of Violation:</strong> ${escapeHtml(String(fieldValues.violationDate) || '[DATE OF VIOLATION]')}</p>
+      
+      <h2>REQUIRED CORRECTIVE ACTION</h2>
+      <p>You are required to cure (correct) the above violation(s) within ${daysPeriod} days from the date of this notice. Specifically, you must:</p>
+      <p>${escapeHtml(String(fieldValues.correctiveAction) || '[DESCRIBE WHAT TENANT MUST DO TO CURE THE VIOLATION]')}</p>
+      
+      <p><strong>Deadline to Cure:</strong> ${escapeHtml(String(fieldValues.correctionDeadline) || '[CORRECTION DEADLINE DATE]')} by 11:59 PM</p>
+      
+      <h2>FAILURE TO CURE</h2>
+      <p>If you fail to cure the violation(s) described above within the specified time period, Landlord will proceed with legal action to terminate your tenancy and seek possession of the Premises through eviction proceedings. You will be liable for court costs, attorney fees, and any damages incurred.</p>
+      
+      <h2>DOCUMENTATION</h2>
+      <p>Landlord may document compliance or non-compliance through inspections, photographs, witness statements, or other evidence as necessary to enforce the Lease Agreement and protect the Premises.</p>
+      
+      <h2>REPEATED VIOLATIONS</h2>
+      <p>If this is a repeated violation of the same lease provision, Landlord reserves the right to proceed directly with eviction proceedings without opportunity to cure, as permitted by law and the Lease Agreement.</p>
+      
+      <h2>NO WAIVER OF RIGHTS</h2>
+      <p>This notice does not constitute a waiver of Landlord's rights to enforce all provisions of the Lease Agreement or pursue other legal remedies. Landlord reserves all rights under the Lease Agreement and applicable law.</p>
+      
+      <h2>CONTACT INFORMATION</h2>
+      <p>If you have questions about this notice or need clarification on how to cure the violation, contact:</p>
+      <p>${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD]')}<br/>
+      Phone: ${escapeHtml(String(fieldValues.landlordPhone) || '[PHONE]')}<br/>
+      Email: ${escapeHtml(String(fieldValues.landlordEmail) || '[EMAIL]')}</p>
+    `;
+  } else if (titleLower.includes('rent increase')) {
+    const daysPeriod = titleLower.includes('30-day') ? 'thirty (30)' : 'thirty (30)';
+    
+    noticeContent = `
+      <h2>NOTICE OF RENT INCREASE</h2>
+      
+      <p style="margin-top: 20pt;"><strong>TO:</strong> ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')}</p>
+      <p><strong>PROPERTY ADDRESS:</strong> ${escapeHtml(String(fieldValues.propertyAddress) || '[PROPERTY ADDRESS]')}</p>
+      <p><strong>DATE OF NOTICE:</strong> ${escapeHtml(String(fieldValues.noticeDate) || '[DATE]')}</p>
+      
+      <p style="margin-top: 20pt;">NOTICE IS HEREBY GIVEN that your monthly rent will be increased effective ${escapeHtml(String(fieldValues.effectiveDate) || '[EFFECTIVE DATE]')}, in accordance with the terms of your month-to-month rental agreement.</p>
+      
+      <h2>RENT INCREASE DETAILS</h2>
+      <p><strong>Current Monthly Rent:</strong> $${escapeHtml(String(fieldValues.currentRent) || '[CURRENT AMOUNT]')}</p>
+      <p><strong>New Monthly Rent:</strong> $${escapeHtml(String(fieldValues.newRent) || '[NEW AMOUNT]')}</p>
+      <p><strong>Increase Amount:</strong> $${(parseFloat(String(fieldValues.newRent) || '0') - parseFloat(String(fieldValues.currentRent) || '0')).toFixed(2)}</p>
+      <p><strong>Effective Date:</strong> ${escapeHtml(String(fieldValues.effectiveDate) || '[EFFECTIVE DATE]')}</p>
+      
+      <h2>PAYMENT INFORMATION</h2>
+      <p>Beginning ${escapeHtml(String(fieldValues.effectiveDate) || '[EFFECTIVE DATE]')}, your monthly rent payment of $${escapeHtml(String(fieldValues.newRent) || '[NEW AMOUNT]')} will be due on the ${escapeHtml(String(fieldValues.rentDueDay) || '1st')} day of each month.</p>
+      
+      <p>All other terms and conditions of your rental agreement remain in effect and unchanged.</p>
+      
+      <h2>YOUR OPTIONS</h2>
+      <p>You have the following options:</p>
+      <p><strong>1. Accept the Rent Increase:</strong> Continue your tenancy at the new rent amount beginning on the effective date specified above.</p>
+      <p><strong>2. Terminate Tenancy:</strong> Provide ${daysPeriod} days written notice to terminate your month-to-month tenancy in accordance with your rental agreement.</p>
+      
+      <h2>REQUIRED NOTICE PERIOD</h2>
+      <p>This notice is provided ${daysPeriod} days in advance of the effective date, in compliance with ${stateId} law and the terms of your rental agreement.</p>
+      
+      <h2>CONTACT INFORMATION</h2>
+      <p>If you have questions about this rent increase, please contact:</p>
+      <p>${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD]')}<br/>
+      Phone: ${escapeHtml(String(fieldValues.landlordPhone) || '[PHONE]')}<br/>
+      Email: ${escapeHtml(String(fieldValues.landlordEmail) || '[EMAIL]')}</p>
+    `;
+  } else if (titleLower.includes('eviction') || titleLower.includes('notice to quit')) {
     noticeContent = `
       <h2>1. NOTICE TO VACATE</h2>
       <p>TO: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all occupants</p>
