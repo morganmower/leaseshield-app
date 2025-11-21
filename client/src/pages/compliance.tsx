@@ -177,7 +177,15 @@ export default function Compliance() {
                           </div>
                         )}
 
-                        <Button variant="outline" size="sm" data-testid={`button-view-update-${update.id}`}>
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          data-testid={`button-view-update-${update.id}`}
+                          onClick={() => {
+                            const element = document.querySelector(`[data-testid="update-${update.id}"]`);
+                            element?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }}
+                        >
                           View Full Details
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>
@@ -217,8 +225,14 @@ export default function Compliance() {
                     {complianceCards.map((card) => (
                       <Card
                         key={card.id}
-                        className="p-6 hover-elevate transition-all"
+                        className="p-6 hover-elevate transition-all cursor-pointer"
                         data-testid={`compliance-card-${card.id}`}
+                        onClick={() => {
+                          const element = document.querySelector(`[data-testid="card-details-${card.id}"]`);
+                          if (element) {
+                            element.classList.toggle('hidden');
+                          }
+                        }}
                       >
                         <div className="flex items-start justify-between mb-4">
                           <Badge variant="secondary">{card.category}</Badge>
@@ -233,7 +247,32 @@ export default function Compliance() {
                           {card.summary}
                         </p>
 
-                        <Button variant="outline" size="sm" data-testid={`button-view-card-${card.id}`}>
+                        <div 
+                          data-testid={`card-details-${card.id}`} 
+                          className="hidden mt-4 pt-4 border-t space-y-3"
+                        >
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-1">Category</h4>
+                            <p className="text-sm text-muted-foreground">{card.category}</p>
+                          </div>
+                          <div>
+                            <h4 className="text-sm font-semibold text-foreground mb-1">Details</h4>
+                            <p className="text-sm text-muted-foreground">{card.summary}</p>
+                          </div>
+                        </div>
+                        
+                        <Button 
+                          variant="outline" 
+                          size="sm" 
+                          data-testid={`button-view-card-${card.id}`}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const element = document.querySelector(`[data-testid="card-details-${card.id}"]`);
+                            if (element) {
+                              element.classList.toggle('hidden');
+                            }
+                          }}
+                        >
                           View Requirements
                           <ArrowRight className="ml-2 h-4 w-4" />
                         </Button>

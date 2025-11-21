@@ -349,6 +349,34 @@ export class DatabaseStorage implements IStorage {
     await db.update(legalUpdates).set({ isActive: false }).where(eq(legalUpdates.id, id));
   }
 
+  async getCurrentStateLegalDisclosures(stateId: string): Promise<string> {
+    // Get all active legal updates for this state to build dynamic disclosures
+    const stateUpdates = await db
+      .select()
+      .from(legalUpdates)
+      .where(and(eq(legalUpdates.stateId, stateId), eq(legalUpdates.isActive, true)))
+      .orderBy(desc(legalUpdates.effectiveDate));
+
+    // Build disclosure HTML from latest updates
+    if (stateUpdates.length === 0) {
+      return `<h2>State-Specific Disclosures - ${stateId}</h2><p>Please refer to current state law.</p>`;
+    }
+
+    const disclosureHtml = stateUpdates
+      .slice(0, 5) // Limit to latest 5 updates for document brevity
+      .map(
+        (update) => `
+      <h3>${escapeHtml(update.title)}</h3>
+      <p><strong>Effective Date:</strong> ${update.effectiveDate ? new Date(update.effectiveDate).toLocaleDateString() : 'Ongoing'}</p>
+      <p>${escapeHtml(update.summary)}</p>
+      ${update.afterText ? `<p><strong>Current Requirement:</strong> ${escapeHtml(update.afterText)}</p>` : ''}
+    `
+      )
+      .join('');
+
+    return `<h2>Current State-Specific Disclosures - ${stateId}</h2>${disclosureHtml}`;
+  }
+
   // User notification operations
   async getUserNotifications(userId: string): Promise<UserNotification[]> {
     return await db
