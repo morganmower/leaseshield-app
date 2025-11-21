@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dialog";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -57,6 +58,12 @@ export default function Landing() {
   const [isTyping, setIsTyping] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+
+  const { data: templateStats } = useQuery<{ count: number }>({
+    queryKey: ['/api/stats/template-count'],
+  });
+
+  const templateCount = templateStats?.count || 26;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -348,7 +355,7 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <FileText className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">37+</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{templateCount}+</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
               <button
@@ -807,7 +814,7 @@ export default function Landing() {
                       </td>
                     </tr>
                     <tr className="border-b">
-                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">37+ Templates</td>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">{templateCount}+ Templates</td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
@@ -1009,7 +1016,7 @@ export default function Landing() {
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">37+ templates for UT, TX, ND, and SD</span>
+                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, and SD</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />

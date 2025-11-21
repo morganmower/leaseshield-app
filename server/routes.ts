@@ -389,6 +389,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Templates routes
+  app.get('/api/stats/template-count', async (req, res) => {
+    try {
+      const templates = await storage.getAllTemplates({});
+      res.json({ count: templates.length });
+    } catch (error) {
+      console.error("Error fetching template count:", error);
+      res.status(500).json({ message: "Failed to fetch template count" });
+    }
+  });
+
   app.get('/api/templates', isAuthenticated, async (req: any, res) => {
     try {
       const { stateId, category } = req.query;
