@@ -1229,11 +1229,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "Template ID and field values are required" });
       }
 
+      console.log('📄 Document generation request:', {
+        templateId,
+        fieldCount: Object.keys(fieldValues || {}).length,
+        fieldIds: Object.keys(fieldValues || {}),
+        sampleValues: Object.entries(fieldValues || {}).slice(0, 3).map(([k, v]) => `${k}=${v}`)
+      });
+
       // Get template
       const template = await storage.getTemplate(templateId);
       if (!template) {
         return res.status(404).json({ message: "Template not found" });
       }
+
+      console.log('📄 Template found:', template.title, '- Generating PDF with field values...');
 
       // SECURITY: We NEVER use custom templateContent from the database to prevent HTML injection.
       // All documents are generated using the default template generator with fully escaped user input.
