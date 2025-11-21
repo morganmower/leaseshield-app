@@ -147,6 +147,7 @@ export default function DocumentWizard() {
   }
 
   const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, string> | null>(null);
+  const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   // Save document mutation
   const saveMutation = useMutation({
@@ -231,6 +232,9 @@ export default function DocumentWizard() {
           propertyId: selectedPropertyId,
         });
       }
+
+      // Show success banner
+      setShowSuccessBanner(true);
 
       toast({
         title: "Document Generated!",
@@ -338,6 +342,50 @@ export default function DocumentWizard() {
             </div>
           </div>
         </div>
+
+        {/* Success Banner */}
+        {showSuccessBanner && (
+          <Card className="mb-6 border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950" data-testid="card-success-banner">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
+                    <FileText className="h-5 w-5 text-green-600 dark:text-green-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-green-900 dark:text-green-100">
+                    Document Generated Successfully!
+                  </h3>
+                  <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                    Your PDF has been downloaded and saved to your library. You can generate another document or view all your saved documents.
+                  </p>
+                  <div className="flex gap-3 mt-4">
+                    <Button
+                      onClick={() => setLocation("/my-documents")}
+                      variant="default"
+                      size="sm"
+                      data-testid="button-view-my-documents"
+                    >
+                      View My Documents
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowSuccessBanner(false);
+                        form.reset();
+                      }}
+                      variant="outline"
+                      size="sm"
+                      data-testid="button-generate-another"
+                    >
+                      Generate Another
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Form */}
         <Card>
