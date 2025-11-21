@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, MessageCircle, Send, Minimize2 } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, MessageCircle, Send, Minimize2, Building2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -274,9 +274,9 @@ export default function Landing() {
                 variants={fadeInUp}
                 className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed"
               >
-                State-specific leases, compliance guidance, and screening resources designed
-                specifically for small and midsize landlords. Your protective mentor for
-                confident, risk-free property management.
+                Professional legal templates, automated compliance alerts, tenant screening tools, 
+                and multi-property management — all in one platform built for landlords managing 
+                1-50 rental units.
               </motion.p>
               
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
@@ -407,7 +407,7 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid md:grid-cols-3 gap-8"
+            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
           >
             <motion.div variants={fadeInUp}>
               <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
@@ -502,6 +502,36 @@ export default function Landing() {
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                       <span>Western Verify integration</span>
+                    </li>
+                  </ul>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-500" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">Property Management</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Organize multiple properties, associate documents with specific units, and 
+                    keep all your rental paperwork organized in one place.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Track unlimited properties</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Link documents to properties</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Filter & organize by location</span>
                     </li>
                   </ul>
                 </div>
