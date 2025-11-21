@@ -27,7 +27,7 @@ async function seedBlogPosts() {
         
         <p><strong>The Risk:</strong> An unenforceable lease could prevent you from collecting rent or evicting problem tenants.</p>
         
-        <p><strong>How to Avoid It:</strong> Use attorney-reviewed, Utah-specific lease agreements that include all required disclosures and comply with current state law.</p>
+        <p><strong>How to Avoid It:</strong> Use professional, Utah-specific lease agreements that include all required disclosures and comply with current state law.</p>
 
         <h2>3. Improper Eviction Procedures</h2>
         <p>Utah requires specific notice periods and procedures for different types of evictions. Skipping steps or using the wrong form can void your entire eviction.</p>

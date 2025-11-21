@@ -25,7 +25,7 @@ async function seedDatabase() {
   const templateSamples = [
     {
       title: "Residential Lease Agreement",
-      description: "Attorney-reviewed residential lease agreement with all required state disclosures",
+      description: "Professional residential lease agreement with all required state disclosures",
       category: "leasing" as const,
       templateType: "lease" as const,
       stateId: "UT",

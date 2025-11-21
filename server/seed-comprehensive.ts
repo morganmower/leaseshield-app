@@ -5,7 +5,7 @@ const comprehensiveTemplates = [
   // UTAH - Leasing
   {
     title: "Utah Residential Lease Agreement",
-    description: "Attorney-reviewed 12-month residential lease with all Utah-required disclosures including mold, lead paint, and HOA rules",
+    description: "Professional 12-month residential lease with all Utah-required disclosures including mold, lead paint, and HOA rules",
     category: "leasing" as const,
     templateType: "lease" as const,
     stateId: "UT",
