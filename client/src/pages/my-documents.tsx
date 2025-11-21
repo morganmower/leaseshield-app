@@ -17,10 +17,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Download, Trash2, Search, Calendar, Building2, Edit } from "lucide-react";
+import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File } from "lucide-react";
 import { queryClient } from "@/lib/queryClient";
-import type { SavedDocument, Property } from "@shared/schema";
+import type { SavedDocument, Property, UploadedDocument } from "@shared/schema";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function MyDocuments() {
   const { toast } = useToast();
@@ -28,9 +31,19 @@ export default function MyDocuments() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("all");
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocumentName, setUploadDocumentName] = useState("");
+  const [uploadPropertyId, setUploadPropertyId] = useState<string>("none");
+  const [uploadDescription, setUploadDescription] = useState("");
+  const [deleteUploadedDocId, setDeleteUploadedDocId] = useState<string | null>(null);
 
   const { data: documents = [], isLoading } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],
+  });
+
+  const { data: uploadedDocuments = [] } = useQuery<UploadedDocument[]>({
+    queryKey: ['/api/uploaded-documents'],
   });
 
   const { data: properties = [] } = useQuery<Property[]>({
@@ -105,9 +118,127 @@ export default function MyDocuments() {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, documentName, propertyId, description }: {
+      file: File;
+      documentName: string;
+      propertyId?: string;
+      description?: string;
+    }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      if (propertyId && propertyId !== 'none') {
+        formData.append('propertyId', propertyId);
+      }
+      if (description) {
+        formData.append('description', description);
+      }
+      
+      const response = await fetch('/api/uploaded-documents', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+      });
+      if (!response.ok) throw new Error('Failed to upload document');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      setIsUploadDialogOpen(false);
+      setUploadFile(null);
+      setUploadDocumentName("");
+      setUploadPropertyId("none");
+      setUploadDescription("");
+      toast({
+        title: "Document Uploaded",
+        description: "Your document has been uploaded successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload document. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const downloadUploadedMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/uploaded-documents/${id}/download`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to download document');
+      }
+      return { blob: await response.blob(), id };
+    },
+    onSuccess: ({ blob, id }) => {
+      const uploadedDoc = uploadedDocuments.find(d => d.id === id);
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = uploadedDoc?.fileName || 'document';
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Document Downloaded",
+        description: "Your document has been downloaded successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUploadedMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const response = await fetch(`/api/uploaded-documents/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete document');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      toast({
+        title: "Document Deleted",
+        description: "The document has been removed from your library.",
+      });
+      setDeleteUploadedDocId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.documentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.templateName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesProperty = selectedPropertyId === "all" ||
+      (selectedPropertyId === "none" && !doc.propertyId) ||
+      doc.propertyId === selectedPropertyId;
+    
+    return matchesSearch && matchesProperty;
+  });
+
+  const filteredUploadedDocuments = uploadedDocuments.filter(doc => {
+    const matchesSearch = doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesProperty = selectedPropertyId === "all" ||
       (selectedPropertyId === "none" && !doc.propertyId) ||
@@ -181,6 +312,14 @@ export default function MyDocuments() {
               </Select>
             </div>
           )}
+
+          <Button
+            onClick={() => setIsUploadDialogOpen(true)}
+            data-testid="button-upload-document"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Document
+          </Button>
         </div>
 
         {filteredDocuments.length === 0 ? (
