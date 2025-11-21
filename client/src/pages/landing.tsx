@@ -209,7 +209,7 @@ export default function Landing() {
             <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
               LeaseShield<span className="hidden sm:inline"> App</span>
             </span>
-          </a>
+          </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Button
@@ -480,7 +480,7 @@ export default function Landing() {
                       className="text-primary hover:underline font-medium"
                     >
                       Western Verify
-                    </Link>{" "}
+                    </a>{" "}
                     for background checks.
                   </p>
                   <ul className="space-y-2 text-sm">
