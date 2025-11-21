@@ -380,28 +380,296 @@ function getStateDisclosures(stateId: string, templateTitle: string): string {
   `;
 }
 
+function generateSignaturePage(): string {
+  return `
+    <div style="page-break-before: always; padding-top: 40pt;">
+      <h2 style="text-align: center;">SIGNATURE PAGE</h2>
+      <p style="text-align: center; margin-top: 40pt; margin-bottom: 60pt;">This document is hereby executed on the date(s) shown below.</p>
+      
+      <div style="margin-top: 60pt; margin-bottom: 40pt;">
+        <p><strong>LANDLORD/PROPERTY OWNER:</strong></p>
+        <p style="margin-top: 30pt;">Signature: _________________________________</p>
+        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
+        <p style="margin-top: 10pt;">Date: _________________________________</p>
+      </div>
+      
+      <div style="margin-top: 60pt; margin-bottom: 40pt;">
+        <p><strong>TENANT/LESSEE:</strong></p>
+        <p style="margin-top: 30pt;">Signature: _________________________________</p>
+        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
+        <p style="margin-top: 10pt;">Date: _________________________________</p>
+      </div>
+      
+      <div style="margin-top: 60pt;">
+        <p><strong>ADDITIONAL OCCUPANT/CO-TENANT (if applicable):</strong></p>
+        <p style="margin-top: 30pt;">Signature: _________________________________</p>
+        <p style="margin-top: 10pt;">Print Name: _________________________________</p>
+        <p style="margin-top: 10pt;">Date: _________________________________</p>
+      </div>
+      
+      <p style="margin-top: 60pt; text-align: center; font-size: 10pt; color: #666;">
+        This signature page may be executed in multiple counterparts, each of which shall be deemed an original and all of which together shall constitute one and the same instrument.
+      </p>
+    </div>
+  `;
+}
+
+function getRentalApplicationContent(fieldValues: FieldValue, stateId: string): string {
+  return `
+    <h1>RENTAL APPLICATION</h1>
+    
+    <h2>1. APPLICANT INFORMATION</h2>
+    <p>Full Name: ${escapeHtml(String(fieldValues.tenantName) || '_____________________')} | Date of Birth: _____________</p>
+    <p>Social Security Number (last 4): _____________ | Email: ${escapeHtml(String(fieldValues.tenantEmail) || '_____________________')}</p>
+    <p>Phone: ${escapeHtml(String(fieldValues.tenantPhone) || '_____________________')} | Driver's License #: _____________________</p>
+    
+    <h2>2. PROPERTY INFORMATION</h2>
+    <p>Address of Rental Property: ${escapeHtml(String(fieldValues.propertyAddress) || '_____________________')}</p>
+    <p>Desired Move-In Date: ${escapeHtml(String(fieldValues.leaseStartDate) || '_____________________')} | Lease Term: _____________</p>
+    
+    <h2>3. EMPLOYMENT INFORMATION</h2>
+    <p>Current Employer: _____________________ | Position: _____________________</p>
+    <p>Employment Duration: _____________________ | Monthly Gross Income: $_____________________</p>
+    <p>Work Phone: _____________________ | Supervisor Name: _____________________</p>
+    
+    <h2>4. RENTAL HISTORY</h2>
+    <p>Previous Address: _____________________ | Landlord/Property Manager: _____________________</p>
+    <p>Monthly Rent: $_____ | Reason for Moving: _____________________</p>
+    <p>Would your previous landlord recommend you as a tenant? ☐ Yes ☐ No ☐ Unknown</p>
+    
+    <h2>5. FINANCIAL REFERENCES</h2>
+    <p>Bank Name: _____________________ | Account Type: _____________________ | Approximate Balance: $_____________</p>
+    <p>Credit Card Issuer: _____________________ | Credit Limit: $_____________________ </p>
+    
+    <h2>6. BACKGROUND AUTHORIZATION AND ACKNOWLEDGMENTS</h2>
+    <p>I/We authorize Landlord to conduct a comprehensive background investigation including but not limited to credit report, criminal background check, eviction history, and tenant history verification. I/We understand that false or misleading information on this application may result in immediate denial or termination of tenancy.</p>
+    <p>I/We certify that all information provided is true and accurate. I/We acknowledge receipt of the Fair Housing Notice and agree to comply with all lease terms and applicable laws.</p>
+    ${getStateDisclosuresExpanded(stateId)}
+    
+    ${generateSignaturePage()}
+  `;
+}
+
+function getNoticeContent(fieldValues: FieldValue, stateId: string, noticeType: string): string {
+  const titleLower = noticeType.toLowerCase();
+  let noticeContent = '';
+  
+  if (titleLower.includes('eviction') || titleLower.includes('notice to quit')) {
+    noticeContent = `
+      <h2>1. NOTICE TO VACATE</h2>
+      <p>TO: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all occupants</p>
+      <p>AT: ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}, ${escapeHtml(String(fieldValues.propertyCity) || '[CITY]')}, ${stateId} ${escapeHtml(String(fieldValues.propertyZip) || '[ZIP]')}</p>
+      
+      <p style="margin-top: 20pt;"><strong>NOTICE IS HEREBY GIVEN</strong> that Tenant is required to vacate the above-referenced Premises on or before ${escapeHtml(String(fieldValues.vacateDate) || '[DATE]')} at 11:59 PM, which is the expiration of the notice period required by law, or as provided in the Lease Agreement.</p>
+      
+      <h2>2. REASON FOR NOTICE TO VACATE</h2>
+      <p>This notice is given for the following reason:</p>
+      <p>☐ Non-payment of rent ☐ Lease violation ☐ End of lease term ☐ Other: _____________________</p>
+      
+      <h2>3. OUTSTANDING OBLIGATIONS</h2>
+      <p>Tenant is responsible for all unpaid rent, utilities, damages, and other charges due under the Lease Agreement as of the date of this notice.</p>
+      
+      <h2>4. MOVE-OUT REQUIREMENTS</h2>
+      <p>Upon vacating, Tenant shall: (a) remove all personal property; (b) clean the Premises thoroughly; (c) return all keys and access devices; (d) leave utilities in operational condition; and (e) comply with all move-out requirements specified in the Lease Agreement.</p>
+      
+      <h2>5. SECURITY DEPOSIT AND FINAL ACCOUNTING</h2>
+      <p>Landlord shall return the security deposit within the time period required by ${stateId} law, less any lawful deductions, with an itemized accounting of any deductions.</p>
+      
+      <h2>6. FINAL WALK-THROUGH</h2>
+      <p>Landlord shall conduct a final walk-through inspection. Tenant may be present during this inspection. Any damages or violations will be documented.</p>
+      
+      <h2>7. FAILURE TO VACATE</h2>
+      <p>If Tenant fails to vacate the Premises by the date specified above, Landlord reserves all legal rights and remedies, including filing for eviction proceedings in court. Tenant shall be liable for all court costs, attorney fees, and additional rent for any days in which Tenant remains in occupancy.</p>
+      
+      <h2>8. DELIVERY OF NOTICE</h2>
+      <p>This notice has been delivered to Tenant via: ☐ Personal delivery ☐ Certified mail ☐ Posted on door</p>
+      <p>Date of Notice: _____________________ | Delivered By: _____________________</p>
+    `;
+  } else if (titleLower.includes('maintenance') || titleLower.includes('repair')) {
+    noticeContent = `
+      <h2>1. NOTICE OF MAINTENANCE OR REPAIR WORK</h2>
+      <p>TO: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all occupants</p>
+      <p>AT: ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}, ${escapeHtml(String(fieldValues.propertyCity) || '[CITY]')}, ${stateId} ${escapeHtml(String(fieldValues.propertyZip) || '[ZIP]')}</p>
+      
+      <p style="margin-top: 20pt;"><strong>NOTICE IS HEREBY GIVEN</strong> that Landlord or authorized contractors shall enter the Premises for the purpose of conducting maintenance, repairs, or inspections.</p>
+      
+      <h2>2. REPAIR DETAILS</h2>
+      <p>Nature of Work: _________________________________________________________________________</p>
+      <p>Scheduled Date(s): ${escapeHtml(String(fieldValues.repairDate) || '[DATE]')} | Estimated Duration: _____________________</p>
+      <p>Contractor: _____________________ | Contact: _____________________</p>
+      
+      <h2>3. ENTRY NOTICE REQUIREMENTS</h2>
+      <p>Landlord provides this notice in accordance with state law requirements. Entry shall be at a reasonable time during normal business hours, or as otherwise specified below.</p>
+      <p>Proposed Entry Time: _____________________ | Access Instructions: _____________________</p>
+      
+      <h2>4. TENANT RESPONSIBILITIES</h2>
+      <p>Tenant shall (a) ensure access to all areas requiring work; (b) secure personal items; (c) remove obstacles; and (d) be present if possible to grant access.</p>
+      
+      <h2>5. LIABILITY AND INSURANCE</h2>
+      <p>Landlord maintains liability insurance for such repairs. Tenant should ensure personal items are protected. Tenant is advised to obtain renter's insurance for personal property protection.</p>
+      
+      <h2>6. EMERGENCY REPAIRS</h2>
+      <p>In case of emergency affecting health or safety, Landlord or emergency responders may enter without prior notice to address the emergency.</p>
+    `;
+  } else if (titleLower.includes('security deposit') || titleLower.includes('deposit')) {
+    noticeContent = `
+      <h2>1. SECURITY DEPOSIT HANDLING NOTICE</h2>
+      <p>TO: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT NAME]')} and all occupants</p>
+      <p>FROM: ${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD NAME]')}</p>
+      <p>RE: Security Deposit for ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}</p>
+      
+      <h2>2. SECURITY DEPOSIT ACCOUNTING</h2>
+      <p>Initial Security Deposit: $${escapeHtml(String(fieldValues.securityDeposit) || '[AMOUNT]')}</p>
+      <p>Date Received: _____________________ | Amount Returned: $_____________________</p>
+      <p>Deductions Itemized Below:</p>
+      <p>• Unpaid Rent: $_____________________ • Damages: $_____________________ • Cleaning: $_____________________ • Other: $_____________________</p>
+      <p>TOTAL DEDUCTIONS: $_____________________ | NET AMOUNT DUE TO TENANT: $_____________________</p>
+      
+      <h2>3. ITEMIZED DEDUCTIONS</h2>
+      <p>Description of Deduction 1: _____________________ | Cost: $_____________________</p>
+      <p>Description of Deduction 2: _____________________ | Cost: $_____________________</p>
+      <p>Description of Deduction 3: _____________________ | Cost: $_____________________</p>
+      
+      <h2>4. DEPOSIT RETURN TIMELINE</h2>
+      <p>Pursuant to ${stateId} law, the security deposit (or itemized deductions) shall be returned within the legally required timeframe from lease termination.</p>
+      
+      <h2>5. DISPUTE RESOLUTION</h2>
+      <p>If Tenant disputes any deductions, Tenant shall notify Landlord in writing within the time period specified by state law. Disputes not timely raised shall be deemed accepted by Tenant.</p>
+      
+      <h2>6. STATUTORY COMPLIANCE</h2>
+      <p>Landlord certifies that this accounting complies with all security deposit requirements under ${stateId} law regarding handling, accounting, and return of deposits.</p>
+    `;
+  }
+  
+  return noticeContent + getStateDisclosuresExpanded(stateId) + generateSignaturePage();
+}
+
+function getChecklistContent(fieldValues: FieldValue, stateId: string, checklistType: string): string {
+  const titleLower = checklistType.toLowerCase();
+  let checklistContent = '';
+  
+  if (titleLower.includes('move-in') || titleLower.includes('move in')) {
+    checklistContent = `
+      <h1>MOVE-IN INSPECTION CHECKLIST</h1>
+      
+      <h2>PROPERTY INFORMATION</h2>
+      <p>Address: ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}</p>
+      <p>Tenant Name: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT]')} | Move-In Date: ${escapeHtml(String(fieldValues.leaseStartDate) || '[DATE]')}</p>
+      <p>Landlord/Inspector: ${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD]')} | Inspection Date: _____________________</p>
+      
+      <h2>INSPECTION INSTRUCTIONS</h2>
+      <p>This checklist documents the condition of the Premises at the time Tenant takes occupancy. Check boxes to indicate condition: G (Good), F (Fair), P (Poor), or D (Damaged). Write comments for any concerns.</p>
+      <p>All parties acknowledge that this checklist accurately reflects the condition of the Premises at move-in. Tenant acknowledges receipt of the Premises in the condition documented herein.</p>
+      
+      <h2>INTERIOR INSPECTION</h2>
+      <p><strong>Living Areas:</strong> ☐ Walls ☐ Flooring ☐ Ceiling ☐ Lighting ☐ Windows ☐ Doors</p>
+      <p><strong>Kitchen:</strong> ☐ Appliances ☐ Cabinets ☐ Countertops ☐ Sink ☐ Faucet ☐ Flooring</p>
+      <p><strong>Bedrooms:</strong> ☐ Walls ☐ Flooring ☐ Closets ☐ Windows ☐ Doors ☐ Ceiling</p>
+      <p><strong>Bathrooms:</strong> ☐ Toilet ☐ Sink ☐ Tub/Shower ☐ Flooring ☐ Walls ☐ Lighting</p>
+      <p><strong>Utilities:</strong> ☐ Heating ☐ Cooling ☐ Water Heater ☐ Electrical ☐ Gas ☐ Plumbing</p>
+      
+      <h2>EXTERIOR INSPECTION</h2>
+      <p><strong>Exterior:</strong> ☐ Roof ☐ Siding ☐ Windows ☐ Doors ☐ Deck/Patio ☐ Landscaping ☐ Parking</p>
+      
+      <h2>COMMENTS AND CONDITIONS</h2>
+      <p>_________________________________________________________________________________________</p>
+      <p>_________________________________________________________________________________________</p>
+      <p>_________________________________________________________________________________________</p>
+      
+      <h2>KEYS, REMOTES, AND ACCESS</h2>
+      <p>Number of Keys Provided: _____ | Remote Controls: _____ | Access Codes: _____ | Garage Door Opener: _____</p>
+      <p>Special Instructions: _______________________________________________________________________</p>
+      
+      <h2>UTILITY READINGS</h2>
+      <p>Electricity Meter Reading: _____________________ | Gas Meter Reading: _____________________</p>
+      <p>Water Meter Reading: _____________________ | Date/Time Read: _____________________</p>
+      
+      <h2>ACKNOWLEDGMENTS</h2>
+      <p>Tenant acknowledges: (a) receipt of the Premises in the condition documented; (b) opportunity to inspect fully; (c) all existing damage has been noted; and (d) any damage not documented is considered pre-existing and Tenant accepts the Premises "AS-IS" for undocumented conditions.</p>
+    `;
+  } else if (titleLower.includes('move-out') || titleLower.includes('move out')) {
+    checklistContent = `
+      <h1>MOVE-OUT INSPECTION CHECKLIST</h1>
+      
+      <h2>PROPERTY INFORMATION</h2>
+      <p>Address: ${escapeHtml(String(fieldValues.propertyAddress) || '[ADDRESS]')}</p>
+      <p>Tenant Name: ${escapeHtml(String(fieldValues.tenantName) || '[TENANT]')} | Move-Out Date: ${escapeHtml(String(fieldValues.leaseEndDate) || '[DATE]')}</p>
+      <p>Landlord/Inspector: ${escapeHtml(String(fieldValues.landlordName) || '[LANDLORD]')} | Inspection Date: _____________________</p>
+      
+      <h2>FINAL CONDITION ASSESSMENT</h2>
+      <p>This checklist documents the condition of the Premises at move-out and identifies any deductions from security deposit. All damage beyond normal wear and tear will be noted and charged to Tenant.</p>
+      
+      <h2>INTERIOR INSPECTION</h2>
+      <p><strong>Cleanliness:</strong> ☐ Walls (clean) ☐ Flooring (clean) ☐ Ceiling (clean) ☐ Windows (clean) ☐ Doors (clean)</p>
+      <p><strong>Condition:</strong> ☐ Walls (no damage) ☐ Flooring (no damage) ☐ Ceiling (no damage) ☐ Fixtures (intact)</p>
+      <p><strong>Kitchen:</strong> ☐ Appliances (clean) ☐ Cabinets (clean) ☐ Countertops (clean) ☐ No debris</p>
+      <p><strong>Bathrooms:</strong> ☐ Fixtures (clean) ☐ Mold/mildew (none) ☐ Caulking (intact) ☐ Floors (clean)</p>
+      
+      <h2>DAMAGES AND DEDUCTIONS</h2>
+      <p>Damage Description: ________________________________________________________________________</p>
+      <p>Location: _____________________ | Estimated Repair Cost: $_____________________ </p>
+      <p>Damage Description: ________________________________________________________________________</p>
+      <p>Location: _____________________ | Estimated Repair Cost: $_____________________</p>
+      
+      <h2>KEYS AND ACCESS</h2>
+      <p>☐ All keys returned ☐ Remotes returned ☐ Access codes disabled ☐ Garage openers returned</p>
+      <p>Missing/Damaged Items: _____________________________________________________________________</p>
+      
+      <h2>UTILITY READINGS AT MOVE-OUT</h2>
+      <p>Electricity Meter Reading: _____________________ | Gas Meter Reading: _____________________</p>
+      <p>Water Meter Reading: _____________________ | Date/Time Read: _____________________</p>
+      
+      <h2>FINAL SETTLEMENT</h2>
+      <p>Security Deposit Applied: $_____________________ | Total Deductions: $_____________________ </p>
+      <p>Amount Due to Tenant: $_____________________ | Date Check Mailed: _____________________</p>
+      
+      <h2>NOTES</h2>
+      <p>_________________________________________________________________________________________</p>
+      <p>_________________________________________________________________________________________</p>
+    `;
+  }
+  
+  return checklistContent + getStateDisclosuresExpanded(stateId) + generateSignaturePage();
+}
+
 function generateDefaultTemplateContent(
   safeTitle: string,
   fieldValues: FieldValue,
   safeStateId: string
 ): string {
-  // Generate a default template based on common patterns
-  // NOTE: safeTitle and safeStateId are already HTML-escaped
-  const sections: string[] = [];
+  const titleLower = safeTitle.toLowerCase();
   
+  // Route to comprehensive legal content based on template type
+  if (titleLower.includes('lease') || titleLower.includes('agreement')) {
+    return getComprehensiveLeaseContent(safeStateId, fieldValues) + generateSignaturePage();
+  }
+  
+  if (titleLower.includes('rental application') || titleLower.includes('application')) {
+    return getRentalApplicationContent(fieldValues, safeStateId);
+  }
+  
+  if (titleLower.includes('notice') || titleLower.includes('eviction') || 
+      titleLower.includes('maintenance') || titleLower.includes('repair') ||
+      titleLower.includes('deposit') || titleLower.includes('vacate')) {
+    return getNoticeContent(fieldValues, safeStateId, safeTitle);
+  }
+  
+  if (titleLower.includes('checklist') || titleLower.includes('move-in') || 
+      titleLower.includes('move-out') || titleLower.includes('inspection')) {
+    return getChecklistContent(fieldValues, safeStateId, safeTitle);
+  }
+  
+  // Fallback for any other document type
+  const sections: string[] = [];
   sections.push(`<h1>${safeTitle}</h1>`);
   
-  // Group fields by category
   const categories = new Map<string, Array<[string, any]>>();
-  
   Object.entries(fieldValues).forEach(([fieldId, value]) => {
-    // Infer category from field ID (simple heuristic)
     let category = 'General Information';
     if (fieldId.includes('landlord')) category = 'Landlord Information';
     else if (fieldId.includes('tenant')) category = 'Tenant Information';
     else if (fieldId.includes('property')) category = 'Property Details';
     else if (fieldId.includes('rent') || fieldId.includes('deposit') || fieldId.includes('fee')) category = 'Financial Terms';
-    else if (fieldId.includes('lease') || fieldId.includes('date')) category = 'Lease Terms';
     
     if (!categories.has(category)) {
       categories.set(category, []);
@@ -409,7 +677,6 @@ function generateDefaultTemplateContent(
     categories.get(category)!.push([fieldId, value]);
   });
   
-  // Generate sections (with HTML escaping for security)
   categories.forEach((fields, category) => {
     const safeCategory = escapeHtml(category);
     sections.push(`<h2>${safeCategory}</h2>`);
@@ -421,40 +688,8 @@ function generateDefaultTemplateContent(
     });
   });
   
-  // Add comprehensive content for lease agreements
-  const titleLower = safeTitle.toLowerCase();
-  if (titleLower.includes('lease') || titleLower.includes('agreement')) {
-    // Replace with full comprehensive lease content
-    return getComprehensiveLeaseContent(safeStateId, fieldValues);
-  }
-  
-  // Add state-specific disclosures for other documents
-  if (titleLower.includes('rental application') || titleLower.includes('notice') ||
-      titleLower.includes('checklist')) {
-    sections.push(getStateDisclosures(safeStateId, safeTitle));
-  }
-  
-  // Add signature blocks for leases and agreements
-  if (titleLower.includes('lease') || titleLower.includes('agreement')) {
-    sections.push(`
-      <div class="signature-block">
-        <h2>Signatures</h2>
-        <p>By signing below, the parties acknowledge that they have read, understood, and agree to the terms outlined in this document.</p>
-        
-        <p style="margin-top: 30pt;">
-          <strong>Landlord:</strong><br>
-          Signature: <span class="signature-line"></span><br>
-          Date: _________________
-        </p>
-        
-        <p style="margin-top: 30pt;">
-          <strong>Tenant:</strong><br>
-          Signature: <span class="signature-line"></span><br>
-          Date: _________________
-        </p>
-      </div>
-    `);
-  }
+  sections.push(getStateDisclosures(safeStateId, safeTitle));
+  sections.push(generateSignaturePage());
   
   return sections.join('\n');
 }
