@@ -13,7 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, FileText, Download, Loader2, Save, Building2 } from "lucide-react";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import type { Template, Property } from "@shared/schema";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface FieldDefinition {
   id: string;
@@ -111,22 +111,35 @@ export default function DocumentWizard() {
     }, {} as Record<string, z.ZodTypeAny>)
   );
 
-  // Initialize form with default values or saved document data
-  const defaultValues = fields.reduce((acc, field) => {
-    // If re-editing, use saved document data
-    if (savedDocument?.formData && savedDocument.formData[field.id]) {
-      const savedValue = savedDocument.formData[field.id];
-      // Handle date formatting - convert from display format back to YYYY-MM-DD
-      if (field.type === 'date' && typeof savedValue === 'string' && savedValue.includes(',')) {
-        const date = new Date(savedValue);
-        acc[field.id] = date.toISOString().split('T')[0];
-      } else if (field.type === 'currency' && typeof savedValue === 'string' && savedValue.startsWith('$')) {
-        // Remove $ for editing
-        acc[field.id] = savedValue.slice(1);
+  // Helper function to normalize saved document data for form fields
+  const normalizeSavedData = (savedDoc: any, fieldList: FieldDefinition[]): Record<string, string> => {
+    return fieldList.reduce((acc, field) => {
+      if (savedDoc?.formData && savedDoc.formData[field.id]) {
+        const savedValue = savedDoc.formData[field.id];
+        // Handle date formatting - convert from display format back to YYYY-MM-DD
+        if (field.type === 'date' && typeof savedValue === 'string' && savedValue.includes(',')) {
+          const date = new Date(savedValue);
+          acc[field.id] = date.toISOString().split('T')[0];
+        } else if (field.type === 'currency' && typeof savedValue === 'string' && savedValue.startsWith('$')) {
+          // Remove $ for editing
+          acc[field.id] = savedValue.slice(1);
+        } else {
+          acc[field.id] = String(savedValue);
+        }
+      } else if (field.defaultValue === 'today') {
+        acc[field.id] = new Date().toISOString().split('T')[0];
+      } else if (field.defaultValue) {
+        acc[field.id] = field.defaultValue;
       } else {
-        acc[field.id] = String(savedValue);
+        acc[field.id] = '';
       }
-    } else if (field.defaultValue === 'today') {
+      return acc;
+    }, {} as Record<string, string>);
+  };
+
+  // Initialize form with default values from template schema only
+  const defaultValues = fields.reduce((acc, field) => {
+    if (field.defaultValue === 'today') {
       acc[field.id] = new Date().toISOString().split('T')[0];
     } else if (field.defaultValue) {
       acc[field.id] = field.defaultValue;
@@ -141,13 +154,24 @@ export default function DocumentWizard() {
     defaultValues,
   });
 
-  // Set property from saved document
-  if (savedDocument && selectedPropertyId === null && savedDocument.propertyId) {
-    setSelectedPropertyId(savedDocument.propertyId);
-  }
-
   const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, string> | null>(null);
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
+
+  // Reset form with saved document data when documentId or document changes
+  useEffect(() => {
+    // Only reset if we have a saved document and fields are loaded
+    if (savedDocument && fields.length > 0) {
+      // Check if form is dirty before resetting
+      const isDirty = form.formState.isDirty;
+      if (!isDirty) {
+        const resetValues = normalizeSavedData(savedDocument, fields);
+        form.reset(resetValues);
+
+        // Always set property from saved document (including null to clear previous)
+        setSelectedPropertyId(savedDocument.propertyId || null);
+      }
+    }
+  }, [documentId, savedDocument?.createdAt, fields.length, form]);
 
   // Save document mutation
   const saveMutation = useMutation({
