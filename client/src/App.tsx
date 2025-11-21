@@ -44,72 +44,65 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
-import { useEffect } from "react";
-
-function RedirectToHome() {
-  const [, setLocation] = useLocation();
-  
-  useEffect(() => {
-    setLocation("/");
-  }, [setLocation]);
-  
-  return null;
-}
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isAuthenticated) {
+    return (
+      <Switch>
+        <Route path="/" component={Landing} />
+        <Route path="/privacy" component={Privacy} />
+        <Route path="/terms" component={Terms} />
+        <Route path="/refund-policy" component={RefundPolicy} />
+        <Route path="/disclaimers" component={Disclaimers} />
+        <Route path="/contact" component={Contact} />
+        <Route path="/help" component={HelpCenter} />
+        <Route path="/blog" component={Blog} />
+        <Route path="/blog/:slug" component={BlogPost} />
+        <Route path="/subscribe" component={Subscribe} />
+        <Route path="/logos" component={LogoPicker} />
+        <Route path="/logo-colors" component={LogoColors} />
+        <Route component={NotFound} />
+      </Switch>
+    );
+  }
+
   return (
     <Switch>
-      {isLoading || !isAuthenticated ? (
-        <>
-          <Route path="/" component={Landing} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/refund-policy" component={RefundPolicy} />
-          <Route path="/disclaimers" component={Disclaimers} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/help" component={HelpCenter} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/blog/:slug" component={BlogPost} />
-          <Route path="/subscribe" component={Subscribe} />
-          <Route path="/logos" component={LogoPicker} />
-          <Route path="/logo-colors" component={LogoColors} />
-          <Route component={RedirectToHome} />
-        </>
-      ) : (
-        <>
-          <Route path="/" component={Dashboard} />
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/privacy" component={Privacy} />
-          <Route path="/terms" component={Terms} />
-          <Route path="/refund-policy" component={RefundPolicy} />
-          <Route path="/disclaimers" component={Disclaimers} />
-          <Route path="/contact" component={Contact} />
-          <Route path="/help" component={HelpCenter} />
-          <Route path="/blog" component={Blog} />
-          <Route path="/blog/:slug" component={BlogPost} />
-          <Route path="/templates" component={Templates} />
-          <Route path="/templates/:id/fill/:documentId" component={DocumentWizard} />
-          <Route path="/templates/:id/fill" component={DocumentWizard} />
-          <Route path="/my-documents" component={MyDocuments} />
-          <Route path="/properties" component={Properties} />
-          <Route path="/compliance" component={Compliance} />
-          <Route path="/screening" component={Screening} />
-          <Route path="/tenant-issues" component={TenantIssues} />
-          <Route path="/subscribe" component={Subscribe} />
-          <Route path="/settings" component={Settings} />
-          <Route path="/billing" component={Billing} />
-          <Route path="/admin" component={Admin} />
-          <Route path="/admin/dashboard" component={AdminDashboard} />
-          <Route path="/admin/templates" component={AdminTemplates} />
-          <Route path="/admin/compliance" component={AdminCompliance} />
-          <Route path="/admin/legal-updates" component={AdminLegalUpdates} />
-          <Route path="/admin/legislative-monitoring" component={AdminLegislativeMonitoring} />
-          <Route path="/admin/analytics" component={AdminAnalytics} />
-          <Route component={NotFound} />
-        </>
-      )}
+      <Route path="/" component={Dashboard} />
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/refund-policy" component={RefundPolicy} />
+      <Route path="/disclaimers" component={Disclaimers} />
+      <Route path="/contact" component={Contact} />
+      <Route path="/help" component={HelpCenter} />
+      <Route path="/blog" component={Blog} />
+      <Route path="/blog/:slug" component={BlogPost} />
+      <Route path="/templates" component={Templates} />
+      <Route path="/templates/:id/fill/:documentId" component={DocumentWizard} />
+      <Route path="/templates/:id/fill" component={DocumentWizard} />
+      <Route path="/my-documents" component={MyDocuments} />
+      <Route path="/properties" component={Properties} />
+      <Route path="/compliance" component={Compliance} />
+      <Route path="/screening" component={Screening} />
+      <Route path="/tenant-issues" component={TenantIssues} />
+      <Route path="/subscribe" component={Subscribe} />
+      <Route path="/settings" component={Settings} />
+      <Route path="/billing" component={Billing} />
+      <Route path="/admin" component={Admin} />
+      <Route path="/admin/dashboard" component={AdminDashboard} />
+      <Route path="/admin/templates" component={AdminTemplates} />
+      <Route path="/admin/compliance" component={AdminCompliance} />
+      <Route path="/admin/legal-updates" component={AdminLegalUpdates} />
+      <Route path="/admin/legislative-monitoring" component={AdminLegislativeMonitoring} />
+      <Route path="/admin/analytics" component={AdminAnalytics} />
+      <Route component={NotFound} />
     </Switch>
   );
 }
