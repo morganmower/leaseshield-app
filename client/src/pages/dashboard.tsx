@@ -1,10 +1,11 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Shield, 
   FileText, 
@@ -20,6 +21,7 @@ import { Link } from "wouter";
 export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
+  const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -221,7 +223,12 @@ export default function Dashboard() {
                         Why it matters: <span className="font-normal text-muted-foreground">{update.whyItMatters}</span>
                       </p>
                     </div>
-                    <Button variant="outline" size="sm" data-testid={`button-view-detail-${update.id}`}>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => setSelectedUpdate(update)}
+                      data-testid={`button-view-detail-${update.id}`}
+                    >
                       View Details
                     </Button>
                   </div>
@@ -277,6 +284,66 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Legal Update Details Modal */}
+      <Dialog open={!!selectedUpdate} onOpenChange={(open) => !open && setSelectedUpdate(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <Badge 
+                variant={selectedUpdate?.impactLevel === 'high' ? 'default' : 'secondary'}
+              >
+                {selectedUpdate?.impactLevel.toUpperCase()} IMPACT
+              </Badge>
+              <Badge variant="outline">
+                {selectedUpdate?.stateId}
+              </Badge>
+            </DialogTitle>
+            <DialogDescription className="text-lg font-semibold text-foreground pt-2">
+              {selectedUpdate?.title}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-4 pt-4">
+            {selectedUpdate?.effectiveDate && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-1">Effective Date</h4>
+                <p className="text-sm text-muted-foreground">
+                  {new Date(selectedUpdate.effectiveDate).toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                  })}
+                </p>
+              </div>
+            )}
+
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Summary</h4>
+              <p className="text-sm text-muted-foreground">{selectedUpdate?.summary}</p>
+            </div>
+
+            <div>
+              <h4 className="text-sm font-semibold text-foreground mb-1">Why It Matters</h4>
+              <p className="text-sm text-muted-foreground">{selectedUpdate?.whyItMatters}</p>
+            </div>
+
+            {selectedUpdate?.beforeText && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-1">Before</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.beforeText}</p>
+              </div>
+            )}
+
+            {selectedUpdate?.afterText && (
+              <div>
+                <h4 className="text-sm font-semibold text-foreground mb-1">After</h4>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.afterText}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
