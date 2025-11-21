@@ -213,11 +213,21 @@ export default function MyDocuments() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <Calendar className="h-4 w-4" />
-                    <span data-testid={`text-created-date-${document.id}`}>
-                      {format(new Date(document.createdAt), 'MMM d, yyyy')}
-                    </span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span data-testid={`text-created-date-${document.id}`}>
+                        {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                      </span>
+                    </div>
+                    {document.propertyId && (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground" data-testid={`text-property-${document.id}`}>
+                          {properties.find(p => p.id === document.propertyId)?.name || 'Unknown Property'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
                     <Button
