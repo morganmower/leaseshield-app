@@ -45,7 +45,7 @@ export default function Billing() {
     onSuccess: (response: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
       const cancelDate = response.cancelAt 
-        ? new Date(response.cancelAt * 1000).toLocaleDateString()
+        ? new Date(response.cancelAt * 1000).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
         : 'the end of your billing period';
       toast({
         title: "Subscription Cancelled",
@@ -166,7 +166,7 @@ export default function Billing() {
                   Trial Ends
                 </Label>
                 <p className="text-muted-foreground mt-1">
-                  {new Date(user.trialEndsAt).toLocaleDateString()}
+                  {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                 </p>
                 <p className="text-xs text-muted-foreground mt-1">
                   {Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining

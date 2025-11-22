@@ -89,7 +89,7 @@ export default function Dashboard() {
                 {isTrialing && user.trialEndsAt ? (
                   <>
                     <p className="font-medium text-foreground">
-                      Your free trial ends {new Date(user.trialEndsAt).toLocaleDateString()}
+                      Your free trial ends {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
                       Subscribe now to continue accessing all templates and compliance updates
