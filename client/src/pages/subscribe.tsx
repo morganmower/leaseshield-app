@@ -28,8 +28,9 @@ function SubscribeForm() {
     const { error } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: window.location.origin + "/dashboard",
+        return_url: `${window.location.origin}/dashboard`,
       },
+      redirect: 'if_required',
     });
 
     if (error) {
@@ -39,10 +40,26 @@ function SubscribeForm() {
         variant: "destructive",
       });
     } else {
+      // Payment succeeded - redirect manually
       toast({
-        title: "Payment Successful",
+        title: "Payment Successful!",
         description: "You are now subscribed to LeaseShield App!",
       });
+      
+      // Use setTimeout to allow toast to show, then redirect
+      setTimeout(() => {
+        // Try multiple redirect methods for iframe compatibility
+        try {
+          if (window.top && window.top !== window) {
+            window.top.location.href = '/dashboard';
+          } else {
+            window.location.href = '/dashboard';
+          }
+        } catch (e) {
+          // Fallback if iframe access is blocked
+          window.location.href = '/dashboard';
+        }
+      }, 1000);
     }
   };
 
