@@ -18,7 +18,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { CreditCard, AlertTriangle } from "lucide-react";
+import { CreditCard, AlertTriangle, ArrowRight } from "lucide-react";
 
 export default function Billing() {
   const { toast } = useToast();
@@ -179,6 +179,24 @@ export default function Billing() {
                 <p className="text-sm text-muted-foreground">
                   Your subscription has been cancelled and will end at the end of your billing period. 
                   You'll retain access to all features until then.
+                </p>
+              </div>
+            )}
+
+            {/* Upgrade Button for Trial Users */}
+            {user.subscriptionStatus === 'trialing' && !user.stripeCustomerId && (
+              <div className="pt-4 border-t">
+                <Button 
+                  onClick={() => window.location.href = '/subscribe'}
+                  size="lg"
+                  className="w-full sm:w-auto"
+                  data-testid="button-upgrade-to-paid"
+                >
+                  Upgrade to Paid - $12/month
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Start your paid subscription now and skip the trial wait
                 </p>
               </div>
             )}
