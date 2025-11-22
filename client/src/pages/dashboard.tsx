@@ -63,6 +63,8 @@ export default function Dashboard() {
   if (!user) return null;
 
   const isTrialing = user.subscriptionStatus === 'trialing';
+  const isIncomplete = user.subscriptionStatus === 'incomplete';
+  const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId;
   const hasActiveSubscription = user.subscriptionStatus === 'active' || isTrialing;
 
   return (
@@ -78,18 +80,31 @@ export default function Dashboard() {
           </p>
         </div>
 
-        {/* Trial Banner */}
-        {isTrialing && user.trialEndsAt && (
-          <Card className="mb-8 p-4 bg-warning/10 border-warning/20">
+        {/* Subscription Banner - for trial, incomplete, or no subscription */}
+        {needsSubscription && user.subscriptionStatus !== 'active' && (
+          <Card className="mb-8 p-4 bg-primary/10 border-primary/20">
             <div className="flex items-start gap-3">
-              <Bell className="h-5 w-5 text-warning mt-0.5" />
+              <Bell className="h-5 w-5 text-primary mt-0.5" />
               <div className="flex-1">
-                <p className="font-medium text-foreground">
-                  Your free trial ends {new Date(user.trialEndsAt).toLocaleDateString()}
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Subscribe now to continue accessing all templates and compliance updates
-                </p>
+                {isTrialing && user.trialEndsAt ? (
+                  <>
+                    <p className="font-medium text-foreground">
+                      Your free trial ends {new Date(user.trialEndsAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Subscribe now to continue accessing all templates and compliance updates
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="font-medium text-foreground">
+                      Complete Your Subscription
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Subscribe to LeaseShield for $12/month and get access to all templates and compliance updates
+                    </p>
+                  </>
+                )}
               </div>
               <Link to="/subscribe">
                 <Button size="sm" variant="default" data-testid="button-subscribe-now">
