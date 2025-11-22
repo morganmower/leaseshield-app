@@ -190,24 +190,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         throw new Error('STRIPE_PRICE_ID environment variable is required. Create a Price in Stripe dashboard and set this variable.');
       }
 
-      // Create subscription with 7-day free trial using the configured Price ID
+      // Create subscription that requires immediate payment (no trial on subscribe button)
+      // Note: Trial happens automatically when users first sign up via webhook
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: stripePriceId }],
-        trial_period_days: 7,
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
       });
 
-      // Mark as incomplete - webhook will update to trialing/active when payment succeeds
+      // Mark as incomplete - webhook will update to active when payment succeeds
       await storage.updateUserStripeInfo(userId, {
         stripeSubscriptionId: subscription.id,
         subscriptionStatus: 'incomplete',
       });
 
       const latestInvoice = subscription.latest_invoice as any;
-      const paymentIntent = latestInvoice.payment_intent;
+      const paymentIntent = latestInvoice?.payment_intent;
+
+      if (!paymentIntent || !paymentIntent.client_secret) {
+        throw new Error('Failed to create payment intent for subscription');
+      }
 
       res.json({
         subscriptionId: subscription.id,
