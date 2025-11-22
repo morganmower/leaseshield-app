@@ -144,7 +144,7 @@ export default function Billing() {
           <div className="space-y-4">
             <div>
               <Label className="text-sm font-medium text-foreground">Current Plan</Label>
-              <p className="text-muted-foreground mt-1 capitalize">
+              <p className="text-muted-foreground mt-1">
                 {user.subscriptionStatus === 'cancel_at_period_end' 
                   ? 'Cancelling at period end' 
                   : user.subscriptionStatus === 'active'
@@ -153,15 +153,23 @@ export default function Billing() {
                   ? 'LeaseShield App - 7-Day Free Trial'
                   : "No active subscription"}
               </p>
+              {user.subscriptionStatus && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  Status: {user.subscriptionStatus}
+                </p>
+              )}
             </div>
 
-            {user.trialEndsAt && user.subscriptionStatus === "trialing" && (
+            {user.trialEndsAt && (
               <div>
                 <Label className="text-sm font-medium text-foreground">
                   Trial Ends
                 </Label>
                 <p className="text-muted-foreground mt-1">
                   {new Date(user.trialEndsAt).toLocaleDateString()}
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">
+                  {Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
                 </p>
               </div>
             )}
