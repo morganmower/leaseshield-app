@@ -7,6 +7,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -14,7 +15,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Settings as SettingsIcon, Save } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Settings as SettingsIcon, Save, CreditCard, X } from "lucide-react";
 
 export default function Settings() {
   const { toast } = useToast();
@@ -83,6 +95,37 @@ export default function Settings() {
     }
     updateSettingsMutation.mutate({ preferredState });
   };
+
+  const cancelSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      await apiRequest("POST", "/api/cancel-subscription", {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Subscription Cancelled",
+        description: "Your subscription will end at the end of your current billing period. You'll keep access until then.",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to cancel subscription. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
 
   if (isLoading) {
     return (
@@ -184,6 +227,97 @@ export default function Settings() {
                 </>
               )}
             </Button>
+          </div>
+        </Card>
+
+        {/* Subscription Management */}
+        <Card className="p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <CreditCard className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold text-foreground">Subscription</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <Label className="text-sm font-medium text-foreground">Status</Label>
+              <div className="mt-2">
+                {user.subscriptionStatus ? (
+                  <Badge
+                    variant={
+                      user.subscriptionStatus === "active"
+                        ? "default"
+                        : user.subscriptionStatus === "trialing"
+                        ? "secondary"
+                        : "outline"
+                    }
+                    data-testid="badge-subscription-status"
+                  >
+                    {user.subscriptionStatus}
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" data-testid="badge-subscription-status">
+                    No active subscription
+                  </Badge>
+                )}
+              </div>
+            </div>
+
+            {user.trialEndsAt && user.subscriptionStatus === "trialing" && (
+              <div>
+                <Label className="text-sm font-medium text-foreground">Trial Ends</Label>
+                <p className="text-muted-foreground mt-1">
+                  {new Date(user.trialEndsAt).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            {user.subscriptionEndsAt && user.subscriptionStatus === "active" && (
+              <div>
+                <Label className="text-sm font-medium text-foreground">Next Billing Date</Label>
+                <p className="text-muted-foreground mt-1">
+                  {new Date(user.subscriptionEndsAt).toLocaleDateString()}
+                </p>
+              </div>
+            )}
+
+            {(user.subscriptionStatus === "active" || user.subscriptionStatus === "trialing") && (
+              <div className="pt-4 border-t">
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="text-destructive hover:text-destructive"
+                      data-testid="button-cancel-subscription"
+                    >
+                      <X className="mr-2 h-4 w-4" />
+                      Cancel Subscription
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Cancel Subscription?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Your subscription will be cancelled at the end of your current billing period.
+                        You'll keep access to all features until then. This action can be undone by
+                        resubscribing before the period ends.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel data-testid="button-cancel-dialog">
+                        Keep Subscription
+                      </AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={() => cancelSubscriptionMutation.mutate()}
+                        className="bg-destructive hover:bg-destructive/90"
+                        data-testid="button-confirm-cancel"
+                      >
+                        {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Yes, Cancel"}
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            )}
           </div>
         </Card>
       </div>
