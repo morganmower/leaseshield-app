@@ -17,11 +17,17 @@ import path from "path";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
 
-if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
+// Use live Stripe keys in production, test keys in development
+const isProduction = process.env.NODE_ENV === 'production';
+const stripeSecretKey = isProduction 
+  ? process.env.STRIPE_LIVE_SECRET_KEY 
+  : process.env.STRIPE_SECRET_KEY;
+
+if (!stripeSecretKey) {
+  throw new Error(`Missing required Stripe secret: ${isProduction ? 'STRIPE_LIVE_SECRET_KEY' : 'STRIPE_SECRET_KEY'}`);
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2023-10-16",
 });
 
@@ -183,11 +189,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Get the Stripe Price ID from environment variable
-      // In production, create a Price in Stripe dashboard and set STRIPE_PRICE_ID
-      const stripePriceId = process.env.STRIPE_PRICE_ID;
+      // Use live price ID in production, test price ID in development
+      const stripePriceId = isProduction 
+        ? process.env.STRIPE_LIVE_PRICE_ID 
+        : process.env.STRIPE_PRICE_ID;
       
       if (!stripePriceId) {
-        throw new Error('STRIPE_PRICE_ID environment variable is required. Create a Price in Stripe dashboard and set this variable.');
+        throw new Error(`STRIPE ${isProduction ? 'LIVE_' : ''}PRICE_ID environment variable is required. Create a Price in Stripe dashboard and set this variable.`);
       }
 
       // Create subscription that requires immediate payment (no trial on subscribe button)
