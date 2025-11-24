@@ -139,6 +139,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user.email) return res.status(400).json({ message: 'No user email' });
 
       const stripePriceId = process.env.STRIPE_PRICE_ID;
+      console.error(`[create-subscription] stripePriceId from env: "${stripePriceId}" (length: ${stripePriceId?.length})`);
       if (!stripePriceId) {
         return res.status(500).json({ message: 'STRIPE_PRICE_ID not configured' });
       }
