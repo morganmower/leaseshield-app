@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
 import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
-import type { ComplianceCard, LegalUpdate } from "@shared/schema";
+import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 
 export default function Compliance() {
@@ -16,7 +16,6 @@ export default function Compliance() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
-  const [expandedUpdates, setExpandedUpdates] = useState<Set<string>>(new Set());
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 
   useEffect(() => {
@@ -52,19 +51,6 @@ export default function Compliance() {
     },
   });
 
-  const { data: legalUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
-    queryKey: ["/api/legal-updates", selectedState],
-    enabled: isAuthenticated && !!selectedState,
-    queryFn: async () => {
-      const url = `/api/legal-updates?stateId=${selectedState}`;
-      const response = await fetch(url, { credentials: 'include' });
-      if (!response.ok) {
-        throw new Error('Failed to fetch legal updates');
-      }
-      return response.json();
-    },
-  });
-
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -84,7 +70,7 @@ export default function Compliance() {
             Compliance Toolkit
           </h1>
           <p className="text-muted-foreground">
-            Stay current with state-specific requirements and legal updates
+            Stay current with state-specific requirements
           </p>
         </div>
 
@@ -113,124 +99,6 @@ export default function Compliance() {
 
           {["UT", "TX", "ND", "SD"].map((state) => (
             <TabsContent key={state} value={state} className="space-y-8">
-              {/* Legal Updates Section */}
-              <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <AlertTriangle className="h-6 w-6 text-warning" />
-                  <h2 className="text-2xl font-display font-semibold text-foreground">
-                    Recent Legal Updates
-                  </h2>
-                </div>
-
-                {updatesLoading ? (
-                  <div className="space-y-4">
-                    {[...Array(3)].map((_, i) => (
-                      <Card key={i} className="p-6">
-                        <div className="h-32 animate-pulse bg-muted rounded-md" />
-                      </Card>
-                    ))}
-                  </div>
-                ) : legalUpdates && legalUpdates.length > 0 ? (
-                  <div className="space-y-4">
-                    {legalUpdates.filter((update, index, self) => 
-                      index === self.findIndex(u => u.id === update.id)
-                    ).map((update) => {
-                      const isExpanded = expandedUpdates.has(update.id);
-                      return (
-                      <Card
-                        key={update.id}
-                        className="p-6 hover-elevate transition-all"
-                        data-testid={`legal-update-${update.id}`}
-                      >
-                        <div className="flex items-start justify-between gap-4 mb-4">
-                          <div className="flex items-center gap-3">
-                            <Badge
-                              variant={update.impactLevel === 'high' ? 'default' : 'secondary'}
-                              className={update.impactLevel === 'high' ? 'bg-warning text-warning-foreground' : ''}
-                            >
-                              {update.impactLevel.toUpperCase()} IMPACT
-                            </Badge>
-                            {update.effectiveDate && (
-                              <span className="text-sm text-muted-foreground">
-                                Effective {new Date(update.effectiveDate).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-
-                        <h3 className="font-semibold text-lg text-foreground mb-3">
-                          {update.title}
-                        </h3>
-
-                        <p className="text-muted-foreground mb-4">{update.summary}</p>
-
-                        <div 
-                          data-testid={`update-details-${update.id}`}
-                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-4`}
-                        >
-                          <div className="bg-muted/50 rounded-lg p-4">
-                            <h4 className="font-semibold text-sm text-foreground mb-2 flex items-center gap-2">
-                              <Shield className="h-4 w-4 text-primary" />
-                              Why This Matters
-                            </h4>
-                            <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
-                          </div>
-
-                          {update.beforeText && update.afterText && (
-                            <div className="grid md:grid-cols-2 gap-4">
-                              <div className="border border-destructive/20 rounded-lg p-4 bg-destructive/5">
-                                <h4 className="font-semibold text-sm text-destructive mb-2">Before</h4>
-                                <p className="text-sm text-muted-foreground">{update.beforeText}</p>
-                              </div>
-                              <div className="border border-success/20 rounded-lg p-4 bg-success/5">
-                                <h4 className="font-semibold text-sm text-success mb-2">After (New)</h4>
-                                <p className="text-sm text-muted-foreground">{update.afterText}</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          data-testid={`button-view-update-${update.id}`}
-                          onClick={() => {
-                            const newExpanded = new Set(expandedUpdates);
-                            if (newExpanded.has(update.id)) {
-                              newExpanded.delete(update.id);
-                            } else {
-                              newExpanded.add(update.id);
-                            }
-                            setExpandedUpdates(newExpanded);
-                          }}
-                        >
-                          {isExpanded ? (
-                            <>
-                              Back
-                              <ArrowLeft className="ml-2 h-4 w-4" />
-                            </>
-                          ) : (
-                            <>
-                              View Full Details
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
-                      </Card>
-                    );
-                    })}
-                  </div>
-                ) : (
-                  <Card className="p-12 text-center">
-                    <CheckCircle className="h-12 w-12 text-success mx-auto mb-4" />
-                    <h3 className="font-semibold text-lg mb-2">You're all up to date!</h3>
-                    <p className="text-muted-foreground">
-                      No new compliance updates for {state}. We'll notify you when something changes.
-                    </p>
-                  </Card>
-                )}
-              </div>
-
               {/* Compliance Cards Section */}
               <div>
                 <div className="flex items-center gap-2 mb-6">
