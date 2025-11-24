@@ -328,7 +328,7 @@ export default function AdminLegislativeMonitoring() {
                                 <Badge variant="outline">{review.template?.stateId}</Badge>
                               </div>
                               <p className="text-sm text-muted-foreground" data-testid={`text-approved-date-${review.id}`}>
-                                Approved {review.approvedAt && format(new Date(review.approvedAt), 'MMM d, yyyy')}
+                                Approved {review.approvedAt && safeFormatDate(review.approvedAt, 'MMM d, yyyy')}
                               </p>
                             </div>
                           </div>
@@ -360,7 +360,7 @@ export default function AdminLegislativeMonitoring() {
                                 {getRelevanceBadge(bill.relevanceLevel)}
                               </div>
                               <p className="text-sm text-muted-foreground">
-                                Reviewed {bill.reviewedAt && format(new Date(bill.reviewedAt), 'MMM d, yyyy')}
+                                Reviewed {bill.reviewedAt && safeFormatDate(bill.reviewedAt, 'MMM d, yyyy')}
                               </p>
                             </div>
                           </div>

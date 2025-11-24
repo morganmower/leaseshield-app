@@ -1678,17 +1678,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('📋 Manually triggered legislative monitoring run by admin:', user.email);
       
-      // Run the monitoring service
+      // Run the monitoring service in background (don't await)
       const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
-      await legislativeMonitoringService.runMonthlyMonitoring();
+      legislativeMonitoringService.runMonthlyMonitoring().catch(err => {
+        console.error('Background monitoring error:', err);
+      });
 
-      res.json({
+      return res.json({
         success: true,
-        message: 'Monitoring run completed',
+        message: 'Monitoring run started in background',
       });
     } catch (error) {
       console.error('Error running legislative monitoring:', error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         success: false,
         message: error instanceof Error ? error.message : 'Failed to run monitoring' 
       });
@@ -1710,16 +1712,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('🔄 Running scheduled legislative monitoring...');
       
       const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
-      await legislativeMonitoringService.runMonthlyMonitoring();
+      legislativeMonitoringService.runMonthlyMonitoring().catch(err => {
+        console.error('Background cron monitoring error:', err);
+      });
 
-      console.log('✅ Scheduled monitoring completed');
-      res.json({
+      console.log('✅ Scheduled monitoring started');
+      return res.json({
         success: true,
-        message: 'Scheduled monitoring completed',
+        message: 'Scheduled monitoring started',
       });
     } catch (error) {
       console.error('❌ Cron monitoring failed:', error);
-      res.status(500).json({ 
+      return res.status(500).json({ 
         success: false,
         message: error instanceof Error ? error.message : 'Monitoring failed' 
       });
