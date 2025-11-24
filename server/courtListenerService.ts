@@ -81,29 +81,20 @@ export class CourtListenerService {
    */
   async searchCases(stateId: string, keywords: string[] = []): Promise<CourtListenerSearchResponse | null> {
     try {
-      const courtIds = this.stateCourtMap[stateId] || [];
-      if (courtIds.length === 0) {
-        console.log(`⚠️ No court mappings for state ${stateId}`);
-        return null;
-      }
-
-      // Default landlord-tenant keywords
+      // Default landlord-tenant keywords for v4 API
       const searchTerms = keywords.length > 0 ? keywords : [
-        'landlord-tenant',
-        'residential lease',
+        'landlord tenant',
         'eviction',
-        'security deposit',
-        'tenant rights',
-        'rental housing',
+        'lease',
+        'rental',
       ];
 
-      const query = searchTerms.map(t => `"${t}"`).join(' OR ');
-      const courtFilter = courtIds.map(c => `court:${c}`).join(' OR ');
-      const fullQuery = `(${query}) AND (${courtFilter})`;
+      // v4 API uses simpler query format - just search terms, no complex syntax
+      const query = searchTerms.join(' OR ');
 
       const url = new URL(`${this.baseUrl}/search/`);
-      url.searchParams.set('q', fullQuery);
-      url.searchParams.set('order_by', '-date_filed');
+      url.searchParams.set('q', query);
+      url.searchParams.set('type', 'case');
       url.searchParams.set('format', 'json');
       url.searchParams.set('limit', '20');
 
@@ -112,11 +103,13 @@ export class CourtListenerService {
         'Accept': 'application/json',
       };
 
-      console.log(`🔍 Searching CourtListener for ${stateId} case law...`);
+      console.log(`🔍 Searching CourtListener for ${stateId} case law with query: "${query}"`);
       const response = await fetch(url.toString(), { headers });
 
       if (!response.ok) {
+        const errorText = await response.text();
         console.error(`CourtListener API error: ${response.status} ${response.statusText}`);
+        console.error(`Response: ${errorText}`);
         return null;
       }
 
