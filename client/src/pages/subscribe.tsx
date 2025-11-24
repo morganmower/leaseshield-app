@@ -83,9 +83,13 @@ export default function Subscribe() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
+  
+  console.log("🔍 Subscribe component mounted", { isAuthenticated, isLoading, hasUser: !!user });
 
   useEffect(() => {
+    console.log("🔍 Auth check useEffect", { isLoading, isAuthenticated });
     if (!isLoading && !isAuthenticated) {
+      console.log("❌ Not authenticated - redirecting to login");
       // Immediately redirect to login - don't wait
       window.location.href = "/api/login";
       return;
