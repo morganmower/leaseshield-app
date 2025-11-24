@@ -31,38 +31,36 @@ export default function Screening() {
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
   const [userQuestion, setUserQuestion] = useState('');
   const [explanation, setExplanation] = useState('');
+  const [isExplaining, setIsExplaining] = useState(false);
 
-  const handleExplain = () => {
-    const input = userQuestion.trim().toLowerCase();
+  const handleExplain = async () => {
+    const input = userQuestion.trim();
     
     if (!input) {
       setExplanation('Please type a word or phrase from your report first.');
       return;
     }
 
-    let exp = '';
+    setIsExplaining(true);
+    setExplanation('');
 
-    if (input.includes('charge-off') || input.includes('charge off')) {
-      exp = 'A charge-off is a debt that the lender has decided it is unlikely to collect. The account may be closed, but it can still appear on your credit report and hurt your score.';
-    } else if (input.includes('collection')) {
-      exp = 'A collection is a bill that was not paid and has been sent to a collection agency. It usually means the account was seriously past due.';
-    } else if (input.includes('utilization') || input.includes('utilisation')) {
-      exp = 'Utilization is how much of your available credit you are using. For example, if you have a $1,000 limit and owe $500, your utilization is 50%. Lower utilization is generally better.';
-    } else if (input.includes('inquiry') || input.includes('inquiries') || input.includes('enquiry')) {
-      exp = 'An inquiry is a record that someone checked your credit report. For example, a bank might make an inquiry when you apply for a loan or credit card.';
-    } else if (input.includes('30 days late') || input.includes('60 days late') || input.includes('90 days late')) {
-      exp = 'This means a payment was not received by the due date and was late by that many days. More days late usually has a bigger negative impact on your credit.';
-    } else if (input.includes('delinquent') || input.includes('delinquency')) {
-      exp = 'Delinquent means a payment was missed or not made on time. A delinquent account is past due.';
-    } else if (input.includes('past due')) {
-      exp = 'Past due means the payment should have been made already but has not been paid yet.';
-    } else if (input.includes('default')) {
-      exp = 'Default means a serious failure to repay a debt as agreed, often after several missed payments.';
-    } else {
-      exp = 'This looks like a specific term from your credit report. In general, check whether it refers to: (1) a type of account (loan or card), (2) a status (paid, late, collection), or (3) a number (balance, limit, or date). If you are unsure, you may want to speak with a financial professional for personal advice.';
+    try {
+      const response = await fetch('/api/explain-credit-term', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ term: input }),
+      });
+
+      const data = await response.json();
+      setExplanation(data.explanation || 'Unable to get explanation. Please try again.');
+    } catch (error) {
+      console.error('Error getting explanation:', error);
+      setExplanation('Something went wrong. Please try again in a moment.');
+    } finally {
+      setIsExplaining(false);
     }
-
-    setExplanation(exp);
   };
 
   useEffect(() => {
@@ -553,12 +551,21 @@ export default function Screening() {
 
                 <Button 
                   onClick={handleExplain}
+                  disabled={isExplaining || !userQuestion.trim()}
                   data-testid="button-get-explanation"
                 >
-                  Get Explanation
+                  {isExplaining ? 'Getting explanation...' : 'Get Explanation'}
                 </Button>
 
-                {explanation && (
+                {isExplaining && (
+                  <div className="bg-muted/50 border border-muted rounded-lg p-4">
+                    <p className="text-sm text-muted-foreground animate-pulse">
+                      Analyzing your question...
+                    </p>
+                  </div>
+                )}
+
+                {!isExplaining && explanation && (
                   <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-lg" data-testid="container-credit-explanation">
                     <p className="font-semibold text-foreground mb-2">Here's what that usually means:</p>
                     <p className="text-muted-foreground mb-3" data-testid="text-credit-explanation">{explanation}</p>

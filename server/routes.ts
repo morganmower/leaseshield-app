@@ -1734,6 +1734,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Credit Report Helper - explain credit terms using AI
+  app.post('/api/explain-credit-term', asyncHandler(async (req, res) => {
+    // Rate limiting (same as chat)
+    const clientIp = getClientIp(req);
+    if (!chatRateLimiter.check(clientIp)) {
+      return res.status(429).json({
+        explanation: "You're asking questions too quickly. Please wait a moment and try again."
+      });
+    }
+
+    const { term } = req.body;
+
+    if (!term || typeof term !== 'string') {
+      return res.status(400).json({ 
+        explanation: "Please provide a valid credit report term." 
+      });
+    }
+
+    const trimmedTerm = term.trim();
+
+    // Privacy and safety checks
+    // Block Social Security Numbers (various formats)
+    if (/\b\d{3}-\d{2}-\d{4}\b/.test(trimmedTerm) || 
+        /\b\d{9}\b/.test(trimmedTerm) ||
+        /\bssn\b/i.test(trimmedTerm)) {
+      return res.json({
+        explanation: "For your safety, please do not enter Social Security numbers or personal identifiers. Just type the WORD or PHRASE you'd like explained (for example: 'charge-off' or 'collection')."
+      });
+    }
+
+    // Block long numbers (likely account numbers, loan numbers, etc.)
+    if (/\d{8,}/.test(trimmedTerm)) {
+      return res.json({
+        explanation: "This looks like an account or loan number. For privacy reasons, please enter only the WORD or PHRASE you'd like explained (for example: 'utilization' or '30 days late')."
+      });
+    }
+
+    // Block dollar amounts
+    if (/\$\s*\d+/.test(trimmedTerm) || /\d+\s*dollars?/i.test(trimmedTerm)) {
+      return res.json({
+        explanation: "For privacy reasons, please don't enter dollar amounts. Just type the term or phrase you'd like explained."
+      });
+    }
+
+    // Length check
+    if (trimmedTerm.length > 200) {
+      return res.status(400).json({ 
+        explanation: "Please keep your question under 200 characters. Just enter the word or phrase you need explained." 
+      });
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful assistant that explains credit report terms in simple, plain English for landlords who are reviewing tenant credit reports.
+
+YOUR ROLE:
+- Explain credit report terminology clearly and concisely
+- Use everyday language that non-financial professionals can understand
+- Keep explanations practical and relevant to landlords screening tenants
+- Focus on what the term means and why it matters for evaluating a tenant
+
+GUIDELINES:
+- Keep responses SHORT (2-4 sentences maximum)
+- Avoid jargon and technical language
+- Provide practical context (e.g., "This suggests the person struggled to pay bills on time")
+- Do NOT give legal or financial advice
+- Do NOT make specific recommendations about accepting or rejecting tenants
+
+TONE: Clear, helpful, educational, and straightforward.
+
+Common credit report terms you might explain:
+- Collections, charge-off, delinquency, late payments
+- Credit utilization, credit score, payment history
+- Inquiries (hard/soft), accounts, balances
+- Default, settlement, bankruptcy`
+          },
+          {
+            role: "user",
+            content: `Explain this credit report term: "${trimmedTerm}"`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 150,
+      });
+
+      const explanation = completion.choices[0]?.message?.content || 
+        "I couldn't generate an explanation. Please try rephrasing your question.";
+
+      res.json({ explanation });
+    } catch (error) {
+      console.error('Error explaining credit term:', error);
+      res.status(500).json({
+        explanation: "Sorry, something went wrong. Please try again in a moment."
+      });
+    }
+  }));
+
   // Chat assistant endpoint (public, for landing page)
   app.post('/api/chat', asyncHandler(async (req, res) => {
     // Rate limiting
