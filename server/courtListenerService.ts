@@ -94,7 +94,6 @@ export class CourtListenerService {
 
       const url = new URL(`${this.baseUrl}/search/`);
       url.searchParams.set('q', query);
-      url.searchParams.set('type', 'case');
       url.searchParams.set('format', 'json');
       url.searchParams.set('limit', '20');
 
