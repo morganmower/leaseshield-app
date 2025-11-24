@@ -1,10 +1,11 @@
 // Legislative Monitoring Orchestration Service
-// Coordinates LegiScan API, AI analysis, and database operations
+// Coordinates LegiScan API, CourtListener API, AI analysis, and database operations
 
 import { legiscanService } from './legiscanService';
+import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
-import type { InsertLegislativeMonitoring, InsertTemplateReviewQueue } from '@shared/schema';
+import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue } from '@shared/schema';
 
 export class LegislativeMonitoringService {
   /**

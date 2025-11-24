@@ -10,6 +10,7 @@ import {
   states,
   blogPosts,
   legislativeMonitoring,
+  caseLawMonitoring,
   templateReviewQueue,
   monitoringRuns,
   templateVersions,
@@ -38,6 +39,8 @@ import {
   type InsertBlogPost,
   type LegislativeMonitoring,
   type InsertLegislativeMonitoring,
+  type CaseLawMonitoring,
+  type InsertCaseLawMonitoring,
   type TemplateReviewQueue,
   type InsertTemplateReviewQueue,
   type MonitoringRun,
@@ -150,6 +153,12 @@ export interface IStorage {
   getAllLegislativeMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<LegislativeMonitoring[]>;
   createLegislativeMonitoring(monitoring: InsertLegislativeMonitoring): Promise<LegislativeMonitoring>;
   updateLegislativeMonitoring(id: string, monitoring: Partial<InsertLegislativeMonitoring>): Promise<LegislativeMonitoring>;
+
+  // Case law monitoring operations
+  getCaseLawMonitoringByCaseId(caseId: string): Promise<CaseLawMonitoring | undefined>;
+  getAllCaseLawMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<CaseLawMonitoring[]>;
+  createCaseLawMonitoring(monitoring: InsertCaseLawMonitoring): Promise<CaseLawMonitoring>;
+  updateCaseLawMonitoring(id: string, monitoring: Partial<InsertCaseLawMonitoring>): Promise<CaseLawMonitoring>;
 
   // Template review queue operations
   getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<TemplateReviewQueue[]>;

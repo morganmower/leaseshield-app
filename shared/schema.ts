@@ -372,6 +372,40 @@ export const insertLegislativeMonitoringSchema = createInsertSchema(legislativeM
 export type InsertLegislativeMonitoring = z.infer<typeof insertLegislativeMonitoringSchema>;
 export type LegislativeMonitoring = typeof legislativeMonitoring.$inferSelect;
 
+// Case Law Monitoring - tracks court cases from CourtListener API
+export const caseLawMonitoring = pgTable("case_law_monitoring", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  caseId: text("case_id").notNull().unique(), // CourtListener cluster ID
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  caseName: text("case_name").notNull(),
+  caseNameFull: text("case_name_full"),
+  citation: text("citation").notNull(), // e.g., "123 N.E.2d 456"
+  court: text("court").notNull(),
+  dateFiled: timestamp("date_filed"),
+  caseNumber: text("case_number"),
+  url: text("url"), // Link to CourtListener
+  // AI Analysis
+  relevanceLevel: relevanceEnum("relevance_level"),
+  aiAnalysis: text("ai_analysis"), // AI explanation of why this matters
+  affectedTemplateIds: text("affected_template_ids").array(), // Which templates might need updates
+  // Tracking
+  isMonitored: boolean("is_monitored").default(true),
+  isReviewed: boolean("is_reviewed").default(false),
+  reviewedBy: varchar("reviewed_by"), // Admin user ID
+  reviewedAt: timestamp("reviewed_at"),
+  reviewNotes: text("review_notes"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertCaseLawMonitoringSchema = createInsertSchema(caseLawMonitoring).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCaseLawMonitoring = z.infer<typeof insertCaseLawMonitoringSchema>;
+export type CaseLawMonitoring = typeof caseLawMonitoring.$inferSelect;
+
 // Template Review Queue - tracks templates flagged for attorney review
 export const reviewStatusEnum = pgEnum('review_status', [
   'pending',      // Waiting for attorney review
