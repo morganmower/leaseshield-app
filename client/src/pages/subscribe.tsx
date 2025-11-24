@@ -6,7 +6,8 @@ import { loadStripe } from '@stripe/stripe-js';
 import { apiRequest } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Shield, CheckCircle2 } from "lucide-react";
+import { CheckCircle2 } from "lucide-react";
+import { Logo } from "@/components/logo";
 
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
@@ -152,9 +153,9 @@ export default function Subscribe() {
       <div className="container max-w-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-8 sm:mb-12">
-          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 flex-wrap">
-            <Shield className="h-6 sm:h-8 w-6 sm:w-8 text-primary flex-shrink-0" />
-            <span className="font-display text-lg sm:text-2xl font-semibold">LeaseShield App</span>
+          <div className="flex items-center justify-center gap-3 mb-3 sm:mb-4 flex-wrap">
+            <Logo iconSize={32} />
+            <span className="font-display text-xl sm:text-2xl font-semibold">LeaseShield App</span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-2">
             Subscribe to LeaseShield App
