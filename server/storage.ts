@@ -748,6 +748,48 @@ export class DatabaseStorage implements IStorage {
     return monitoring;
   }
 
+  // Case law monitoring operations
+  async getCaseLawMonitoringByCaseId(caseId: string): Promise<CaseLawMonitoring | undefined> {
+    const [monitoring] = await db.select().from(caseLawMonitoring).where(eq(caseLawMonitoring.caseId, caseId));
+    return monitoring;
+  }
+
+  async getAllCaseLawMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<CaseLawMonitoring[]> {
+    const conditions = [];
+
+    if (filters?.stateId) {
+      conditions.push(eq(caseLawMonitoring.stateId, filters.stateId));
+    }
+
+    if (filters?.relevanceLevel) {
+      conditions.push(eq(caseLawMonitoring.relevanceLevel, filters.relevanceLevel as any));
+    }
+
+    if (filters?.isReviewed !== undefined) {
+      conditions.push(eq(caseLawMonitoring.isReviewed, filters.isReviewed));
+    }
+
+    return await db
+      .select()
+      .from(caseLawMonitoring)
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(desc(caseLawMonitoring.createdAt));
+  }
+
+  async createCaseLawMonitoring(monitoringData: InsertCaseLawMonitoring): Promise<CaseLawMonitoring> {
+    const [monitoring] = await db.insert(caseLawMonitoring).values(monitoringData).returning();
+    return monitoring;
+  }
+
+  async updateCaseLawMonitoring(id: string, monitoringData: Partial<InsertCaseLawMonitoring>): Promise<CaseLawMonitoring> {
+    const [monitoring] = await db
+      .update(caseLawMonitoring)
+      .set({ ...monitoringData, updatedAt: new Date() })
+      .where(eq(caseLawMonitoring.id, id))
+      .returning();
+    return monitoring;
+  }
+
   // Template review queue operations
   async getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<TemplateReviewQueue[]> {
     const conditions = [];
