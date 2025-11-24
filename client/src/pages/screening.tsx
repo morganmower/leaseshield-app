@@ -25,6 +25,44 @@ import {
 import { Link } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
 
+interface ParsedExplanation {
+  whatItMeans: string;
+  whatToWatchFor: string;
+  questionsToAsk: string;
+}
+
+function parseAIExplanation(text: string): ParsedExplanation | null {
+  if (!text) return null;
+  
+  const sections: ParsedExplanation = {
+    whatItMeans: '',
+    whatToWatchFor: '',
+    questionsToAsk: ''
+  };
+  
+  const whatItMeansMatch = text.match(/What it means:?\s*\n([\s\S]*?)(?=\n\s*What to watch for:|$)/i);
+  const whatToWatchForMatch = text.match(/What to watch for:?\s*\n([\s\S]*?)(?=\n\s*Questions to ask:|$)/i);
+  const questionsToAskMatch = text.match(/Questions to ask:?\s*\n([\s\S]*?)$/i);
+  
+  if (whatItMeansMatch) {
+    sections.whatItMeans = whatItMeansMatch[1].trim();
+  }
+  
+  if (whatToWatchForMatch) {
+    sections.whatToWatchFor = whatToWatchForMatch[1].trim();
+  }
+  
+  if (questionsToAskMatch) {
+    sections.questionsToAsk = questionsToAskMatch[1].trim();
+  }
+  
+  if (sections.whatItMeans || sections.whatToWatchFor || sections.questionsToAsk) {
+    return sections;
+  }
+  
+  return null;
+}
+
 export default function Screening() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -116,20 +154,21 @@ export default function Screening() {
 
         {/* AI Credit Report Helper - Hero Feature */}
         <div className="mb-12">
-          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 border-2 border-primary/30 rounded-xl p-6 mb-6">
+          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-4 mb-4">
-              <div className="rounded-lg bg-primary/20 w-14 h-14 flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="h-7 w-7 text-primary" />
+              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
+                <Lightbulb className="h-7 w-7 text-primary dark:text-primary" />
               </div>
               <div className="flex-1">
                 <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
                   AI Credit Report Helper
                 </h2>
-                <p className="text-foreground/80 mb-3">
+                <p className="text-foreground dark:text-foreground/90 mb-3">
                   Get instant explanations of credit report terms, plus the exact questions you should ask your applicant
                 </p>
-                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
-                  ✨ Powered by AI
+                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
+                  <Lightbulb className="h-3 w-3 mr-1" />
+                  Powered by AI
                 </Badge>
               </div>
             </div>
@@ -174,10 +213,10 @@ export default function Screening() {
                     setExplanation('');
                   }}
                   variant="default"
-                  className="flex-1 bg-primary"
+                  className="flex-1"
                   data-testid="button-ask-question"
                 >
-                  <HelpCircle className="mr-2 h-4 w-4" />
+                  <Lightbulb className="mr-2 h-4 w-4" />
                   Ask About a Credit Term (AI)
                 </Button>
               </div>
@@ -295,18 +334,22 @@ export default function Screening() {
 
               <div className="flex items-center gap-2 mb-4">
                 <h3 className="font-semibold text-lg">Ask About a Credit Term</h3>
-                <Badge variant="secondary" className="bg-primary/20 text-primary border-primary/30">
-                  ✨ AI Powered
+                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
+                  <Lightbulb className="h-3 w-3 mr-1" />
+                  AI Powered
                 </Badge>
               </div>
               
               <div className="space-y-4">
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 mb-4">
-                  <p className="text-sm text-foreground font-medium mb-2">💡 What you'll get:</p>
-                  <ul className="text-sm text-muted-foreground space-y-1 ml-4">
-                    <li>• Plain-English explanation of the term</li>
-                    <li>• Warning signs to watch for</li>
-                    <li>• Specific questions to ask your applicant</li>
+                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-foreground font-medium">What you'll get:</p>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                    <li>Plain-English explanation of the term</li>
+                    <li>Warning signs to watch for</li>
+                    <li>Specific questions to ask your applicant</li>
                   </ul>
                 </div>
 
@@ -317,10 +360,13 @@ export default function Screening() {
                   <p>3. Get instant AI-powered guidance</p>
                 </div>
 
-                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
-                  <p className="text-sm text-destructive font-medium">
-                    ⚠️ For your safety: Do not type Social Security numbers, full account numbers, or exact dollar amounts.
-                  </p>
+                <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-destructive font-medium">
+                      For your safety: Do not type Social Security numbers, full account numbers, or exact dollar amounts.
+                    </p>
+                  </div>
                 </div>
 
                 <Textarea
@@ -338,33 +384,89 @@ export default function Screening() {
                   size="lg"
                   data-testid="button-get-explanation"
                 >
-                  {isExplaining ? 'Getting explanation...' : '✨ Get AI Explanation'}
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  {isExplaining ? 'Getting explanation...' : 'Get AI Explanation'}
                 </Button>
 
                 {isExplaining && (
                   <div className="bg-muted/50 border border-muted rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground animate-pulse">
-                      🤖 Analyzing your question and preparing actionable guidance...
-                    </p>
-                  </div>
-                )}
-
-                {!isExplaining && explanation && (
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/30 p-6 rounded-lg" data-testid="container-credit-explanation">
-                    <div className="flex items-start gap-3 mb-4">
-                      <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-foreground text-lg mb-3">What You Need to Know</h4>
-                        <div className="text-foreground whitespace-pre-wrap" data-testid="text-credit-explanation">{explanation}</div>
-                      </div>
-                    </div>
-                    <div className="mt-4 pt-4 border-t border-primary/20">
-                      <p className="text-xs text-muted-foreground">
-                        💡 This information is for general education only. It is not legal or financial advice. Always consult with legal counsel for specific situations.
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                      <p className="text-sm text-muted-foreground">
+                        Analyzing your question and preparing actionable guidance...
                       </p>
                     </div>
                   </div>
                 )}
+
+                {!isExplaining && explanation && (() => {
+                  const parsed = parseAIExplanation(explanation);
+                  
+                  if (!parsed) {
+                    return (
+                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg" data-testid="container-credit-explanation">
+                        <div className="flex items-start gap-3 mb-4">
+                          <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
+                            <div className="text-foreground dark:text-foreground/95 whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-primary/20 dark:border-primary/30">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-muted-foreground">
+                              This information is for general education only. It is not legal or financial advice. Always consult with legal counsel for specific situations.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg space-y-4" data-testid="container-credit-explanation">
+                      {parsed.whatItMeans && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold text-foreground">What it means</h4>
+                          </div>
+                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7" data-testid="text-credit-explanation">{parsed.whatItMeans}</p>
+                        </div>
+                      )}
+                      
+                      {parsed.whatToWatchFor && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                            <h4 className="font-semibold text-foreground">What to watch for</h4>
+                          </div>
+                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
+                        </div>
+                      )}
+                      
+                      {parsed.questionsToAsk && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <HelpCircle className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold text-foreground">Questions to ask</h4>
+                          </div>
+                          <div className="ml-7 text-foreground dark:text-foreground/95 leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
+                        </div>
+                      )}
+                      
+                      <div className="pt-4 border-t border-primary/20 dark:border-primary/30">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            This information is for general education only. It is not legal or financial advice. Always consult with legal counsel for specific situations.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </Card>
           )}
