@@ -42,6 +42,7 @@ import AdminLegalUpdates from "@/pages/admin-legal-updates";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
+import LegalUpdatesPage from "@/pages/legal-updates";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 
@@ -92,6 +93,7 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening" component={Screening} />
       <Route path="/tenant-issues" component={TenantIssues} />
+      <Route path="/legal-updates" component={LegalUpdatesPage} />
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />

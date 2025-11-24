@@ -74,6 +74,11 @@ const mainItems = [
     url: "/tenant-issues",
     icon: AlertCircle,
   },
+  {
+    title: "Legal Updates",
+    url: "/legal-updates",
+    icon: BookOpen,
+  },
 ];
 
 const resourceItems = [

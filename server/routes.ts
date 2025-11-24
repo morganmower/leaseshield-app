@@ -1527,6 +1527,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get all monitored case law (admin only)
+  // Get case law for authenticated users (filtered by relevance and state)
+  app.get('/api/case-law', isAuthenticated, async (req: any, res) => {
+    try {
+      const { stateId } = req.query;
+      if (!stateId) {
+        return res.status(400).json({ message: "stateId required" });
+      }
+      
+      const cases = await db.query.caseLawMonitoring.findMany({
+        where: (table, { eq, and }) => and(
+          eq(table.stateId, stateId as string),
+          eq(table.isMonitored, true),
+          // Only show cases with relevance analysis (high/medium relevance)
+        ),
+        limit: 50,
+        orderBy: (table) => [table.dateFiled],
+      });
+
+      // Filter to only high/medium relevance cases for user display
+      const relevantCases = cases.filter(c => c.relevanceLevel === 'high' || c.relevanceLevel === 'medium');
+      res.json(relevantCases);
+    } catch (error) {
+      console.error('Error fetching case law:', error);
+      res.status(500).json({ message: 'Failed to fetch case law' });
+    }
+  });
+
   app.get('/api/admin/case-law', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
