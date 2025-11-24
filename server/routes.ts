@@ -170,29 +170,39 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'incomplete',
       });
 
-      // Extract payment intent - handle both expanded object and string ID
-      const latestInvoice = subscription.latest_invoice as any;
-      let paymentIntent = latestInvoice?.payment_intent;
+      // Get the invoice to extract payment intent
+      let clientSecret: string | null = null;
       
-      console.error(`[create-subscription] latestInvoice type: ${typeof latestInvoice}, paymentIntent type: ${typeof paymentIntent}`);
-      
-      // If payment_intent is a string (not expanded), fetch it
-      if (typeof paymentIntent === 'string') {
-        console.error(`[create-subscription] Payment intent is a string ID, fetching: ${paymentIntent}`);
-        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
+      if (subscription.latest_invoice) {
+        const invoiceId = typeof subscription.latest_invoice === 'string' 
+          ? subscription.latest_invoice 
+          : subscription.latest_invoice.id;
+        
+        console.error(`[create-subscription] Fetching invoice: ${invoiceId}`);
+        const invoice = await stripe.invoices.retrieve(invoiceId);
+        console.error(`[create-subscription] Invoice payment_intent type: ${typeof invoice.payment_intent}`);
+        
+        if (invoice.payment_intent) {
+          const paymentIntentId = typeof invoice.payment_intent === 'string'
+            ? invoice.payment_intent
+            : invoice.payment_intent.id;
+          
+          console.error(`[create-subscription] Fetching payment intent: ${paymentIntentId}`);
+          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+          clientSecret = paymentIntent.client_secret;
+          console.error(`[create-subscription] ✅ Got client_secret: ${clientSecret?.substring(0, 20)}...`);
+        }
       }
 
-      if (!paymentIntent || !paymentIntent.client_secret) {
+      if (!clientSecret) {
         console.error(`[create-subscription] ❌ No client_secret found`);
-        throw new Error('Failed to get payment intent client secret');
+        throw new Error('Failed to retrieve payment intent client secret');
       }
-
-      console.error(`[create-subscription] ✅ Got client_secret: ${paymentIntent.client_secret.substring(0, 20)}...`);
 
       // Return only plain data - no Stripe objects
       return res.json({
         subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
+        clientSecret: clientSecret,
       });
     } catch (error: any) {
       console.error('❌ /api/create-subscription error:', error.message);
