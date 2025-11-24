@@ -250,7 +250,7 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1">
                                 <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                                {getImpactBadge(caseItem.relevanceLevel)}
+                                {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
                               </div>
                               <p className="text-sm text-muted-foreground">{caseItem.citation}</p>
                               {caseItem.dateFiled && (
@@ -323,7 +323,7 @@ export default function LegalUpdatesPage() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2 mb-1">
                             <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                            {getImpactBadge(caseItem.relevanceLevel)}
+                            {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
                           </div>
                           <p className="text-sm text-muted-foreground">{caseItem.citation}</p>
                           {caseItem.dateFiled && (
