@@ -20,6 +20,8 @@ export class LegislativeMonitoringService {
 
     let totalBills = 0;
     let relevantBills = 0;
+    let totalCases = 0;
+    let relevantCases = 0;
     let templatesQueued = 0;
 
     try {

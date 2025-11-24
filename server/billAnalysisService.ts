@@ -231,7 +231,6 @@ Respond in JSON format:
       throw error;
     }
   }
-}
 
   /**
    * Analyze a court case to determine if it affects any templates
