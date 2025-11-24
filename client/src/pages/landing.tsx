@@ -352,19 +352,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Lawyer-Safe Disclaimer */}
-      <section className="py-4 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
-            <p className="text-sm text-foreground">
-              <strong>Important:</strong> These are general templates based on current state laws. 
-              This is not legal advice. Always have your final documents reviewed by a licensed attorney in your state.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Problems Section */}
       <section className="py-16 sm:py-20 bg-background">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1506,6 +1493,19 @@ export default function Landing() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Lawyer-Safe Disclaimer */}
+      <section className="py-6 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
+              <strong>Important:</strong> These are general templates based on current state laws. 
+              This is not legal advice. Always have your final documents reviewed by a licensed attorney in your state.
+            </p>
+          </div>
+        </div>
+      </section>
 
       {/* Footer */}
       <footer className="border-t py-12 bg-muted/30">
