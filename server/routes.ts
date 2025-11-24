@@ -976,12 +976,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
           ...b, 
           type: 'legislative_update',
           impactLevel: b.relevanceLevel,
-          // Map legislative fields to legal update format
+          // Map legislative fields to legal update format for UI display
+          title: b.title || b.billNumber,
+          summary: b.description || `Bill: ${b.billNumber}`,
           whyItMatters: b.aiAnalysis || 'This bill affects landlord-tenant law in your state.',
           beforeText: b.lastAction || 'Bill pending',
           afterText: `${b.billNumber}: ${b.title}`,
-          effectiveDate: b.lastActionDate || b.createdAt,
-          summary: b.description || b.title
+          effectiveDate: b.lastActionDate || b.createdAt
         }))
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
