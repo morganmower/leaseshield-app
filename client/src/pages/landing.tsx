@@ -272,23 +272,41 @@ export default function Landing() {
               
               <motion.p 
                 variants={fadeInUp}
-                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed"
+                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 leading-relaxed"
               >
                 Professional legal templates, automated compliance alerts, tenant screening tools, 
                 and multi-property management — all in one platform built for small to midsize 
                 landlords.
               </motion.p>
+
+              {/* Pricing Display */}
+              <motion.div 
+                variants={fadeInUp}
+                className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
+              >
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-baseline gap-2 mb-1">
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$12</span>
+                      <span className="text-lg text-muted-foreground">/month</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      7-day free trial • No credit card required • Cancel anytime
+                    </p>
+                  </div>
+                  <Button
+                    size="lg"
+                    onClick={() => window.location.href = "/api/login"}
+                    className="w-full sm:w-auto whitespace-nowrap"
+                    data-testid="button-pricing-cta"
+                  >
+                    Start Free Trial
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
+              </motion.div>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <Button
-                  size="lg"
-                  onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-hero-trial"
-                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                >
-                  Get Your First Lease in 5 Minutes
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
                 <Button
                   size="lg"
                   variant="outline"
@@ -306,7 +324,7 @@ export default function Landing() {
               >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                  <span>No credit card required</span>
+                  <span>Instant access</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
@@ -331,6 +349,90 @@ export default function Landing() {
               </div>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Lawyer-Safe Disclaimer */}
+      <section className="py-4 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
+              <strong>Important:</strong> These are general templates based on current state laws. 
+              This is not legal advice. Always have your final documents reviewed by a licensed attorney in your state.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Problems Section */}
+      <section className="py-16 sm:py-20 bg-background">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              One Bad Lease Can Cost You $10,000+ in 2025
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
+              Most small landlords are still using free Google templates written years ago… and hoping 
+              they hold up in court. That's where things go sideways:
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-6 sm:gap-8"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  New ESA / Assistance-Animal Rules
+                </h3>
+                <p className="text-muted-foreground">
+                  Leases that ignore updated Fair Housing guidance can put you on the wrong side of HUD complaints. One violation can cost $16,000+ in fines.
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <XCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  Adverse Action Mistakes
+                </h3>
+                <p className="text-muted-foreground">
+                  Using the wrong wording in your denial letters can trigger FCRA problems and angry applicants. Lawsuits start at $1,000 per violation.
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <DollarSign className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  $500 Every Time You Email Your Lawyer
+                </h3>
+                <p className="text-muted-foreground">
+                  Paying for one-off questions instead of using a consistent, attorney-vetted foundation. Small questions add up to thousands per year.
+                </p>
+              </Card>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
