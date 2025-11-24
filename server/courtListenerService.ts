@@ -123,8 +123,31 @@ export class CourtListenerService {
       }
 
       // Transform v4 response to match our expected format
-      const results = data.results || data.data || [];
-      const totalCount = data.count || data.total_count || results.length;
+      const rawResults = data.results || data.data || [];
+      const totalCount = data.count || data.total_count || rawResults.length;
+
+      // Convert camelCase API response to snake_case for our schema
+      const results = rawResults.map((item: any) => ({
+        id: item.cluster_id || item.id,
+        url: item.url || `https://www.courtlistener.com${item.absolute_url}`,
+        absolute_url: item.absolute_url || '',
+        case_name: item.caseName || item.case_name || '',
+        case_name_full: item.caseNameFull || item.case_name_full || '',
+        case_name_short: item.caseNameShort || item.case_name_short || '',
+        case_number: item.caseNumber || item.case_number || '',
+        date_filed: item.dateFiled || item.date_filed || '',
+        date_filed_is_approximate: item.dateFiledIsApproximate || item.date_filed_is_approximate || false,
+        slug: item.slug || '',
+        citations: item.citation || item.citations || [],
+        source: item.source || '',
+        court: item.court || item.court_id || '',
+        court_id: item.court_id || 0,
+        judges: item.judges || [],
+        nature_of_suit: item.nature_of_suit || '',
+        precedential_status: item.precedential_status || '',
+        date_last_filing: item.date_last_filing || '',
+        date_last_index: item.date_last_index || '',
+      }));
 
       const transformedResponse: CourtListenerSearchResponse = {
         meta: {
@@ -255,12 +278,12 @@ export class CourtListenerService {
     url: string;
   } {
     return {
-      title: caseData.case_name_full || caseData.case_name,
+      title: caseData.case_name_full || caseData.case_name || '',
       citation: this.formatCitation(caseData),
-      court: caseData.court,
-      dateFiled: caseData.date_filed,
-      caseNumber: caseData.case_number,
-      url: `https://www.courtlistener.com${caseData.absolute_url}`,
+      court: caseData.court || '',
+      dateFiled: caseData.date_filed || '',
+      caseNumber: caseData.case_number || '',
+      url: `https://www.courtlistener.com${caseData.absolute_url || ''}`,
     };
   }
 }
