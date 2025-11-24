@@ -132,8 +132,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
     try {
+      console.log('💳 /api/create-subscription called');
       const userId = getUserId(req);
+      console.log('📝 userId:', userId);
+      
       let user = await storage.getUser(userId);
+      console.log('📋 user found:', !!user, user?.email);
 
       if (!user) {
         return res.status(404).json({ message: "User not found" });
@@ -141,6 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // If user already has an active subscription, don't create a new one
       if (user.stripeSubscriptionId && (user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing')) {
+        console.log('✅ User already has subscription:', user.stripeSubscriptionId);
         const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
         
         // If subscription needs payment setup, return the payment intent
@@ -170,28 +175,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Reuse existing Stripe customer or create new one
       let customerId = user.stripeCustomerId;
       if (!customerId) {
+        console.log('👤 Creating Stripe customer for:', user.email);
         const customer = await stripe.customers.create({
           email: user.email,
           name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
           metadata: { userId },
         });
         customerId = customer.id;
+        console.log('✅ Customer created:', customerId);
         
         // Update user with customer ID
         await storage.updateUserStripeInfo(userId, {
           stripeCustomerId: customerId,
         });
+      } else {
+        console.log('♻️ Using existing Stripe customer:', customerId);
       }
 
       // Get the Stripe Price ID from environment variable
       const stripePriceId = process.env.STRIPE_PRICE_ID;
+      console.log('🏷️ STRIPE_PRICE_ID:', stripePriceId ? 'SET' : 'MISSING');
       
       if (!stripePriceId) {
-        throw new Error('STRIPE_PRICE_ID environment variable is required. Create a Price in Stripe dashboard and set this variable.');
+        const errorMsg = 'STRIPE_PRICE_ID environment variable is not set. Please set it to your Stripe Price ID.';
+        console.error('❌', errorMsg);
+        throw new Error(errorMsg);
       }
 
       // Create subscription that requires immediate payment (no trial on subscribe button)
       // Note: Trial happens automatically when users first sign up via webhook
+      console.log('🔄 Creating subscription with customer:', customerId, 'price:', stripePriceId);
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: stripePriceId }],
@@ -199,26 +212,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
         payment_settings: { save_default_payment_method: 'on_subscription' },
         expand: ['latest_invoice.payment_intent'],
       });
+      console.log('✅ Subscription created:', subscription.id);
 
       // Mark as incomplete - webhook will update to active when payment succeeds
       await storage.updateUserStripeInfo(userId, {
         stripeSubscriptionId: subscription.id,
         subscriptionStatus: 'incomplete',
       });
+      console.log('📊 User subscription info updated');
 
       const latestInvoice = subscription.latest_invoice as any;
       const paymentIntent = latestInvoice?.payment_intent;
+      console.log('💰 Payment intent:', paymentIntent?.client_secret ? 'HAS SECRET' : 'MISSING SECRET');
 
       if (!paymentIntent || !paymentIntent.client_secret) {
         throw new Error('Failed to create payment intent for subscription');
       }
 
+      console.log('🎉 Returning clientSecret to frontend');
       res.json({
         subscriptionId: subscription.id,
         clientSecret: paymentIntent.client_secret,
       });
     } catch (error: any) {
-      console.error("Error creating subscription:", error);
+      console.error("❌ Error creating subscription:", error.message, error);
       res.status(500).json({ message: error.message || "Failed to create subscription" });
     }
   });
