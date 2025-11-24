@@ -269,6 +269,89 @@ The LeaseShield App Team
 
     return this.sendEmail(user, template);
   }
+  async sendTrialExpiredEmail(user: EmailRecipient): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+
+    const template: EmailTemplate = {
+      subject: 'Your LeaseShield App trial has ended - Subscribe now',
+      textBody: `Hi ${firstName},
+
+Your 7-day free trial of LeaseShield App has ended.
+
+To continue protecting your rental business, please subscribe for just $12/month:
+• State-specific legal templates for UT, TX, ND, SD
+• Real-time compliance updates and legal change notifications
+• Credit report decoder and tenant screening resources
+• Expert guidance for handling tenant issues
+
+Reactivate your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings
+
+If you have questions or need assistance, reach out anytime.
+
+Best regards,
+The LeaseShield App Team
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .alert-box { background: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0; }
+    .feature-list { background: #f1f5f9; padding: 20px; border-left: 4px solid #2563eb; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Your trial has ended</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <div class="alert-box">
+        <p style="margin: 0; color: #991b1b;"><strong>Your 7-day free trial of LeaseShield App has ended.</strong></p>
+      </div>
+
+      <p>You still have access to view your previous data, but to continue using LeaseShield App and protecting your rental business, please subscribe for just <strong>$12/month</strong>.</p>
+
+      <div class="feature-list">
+        <p style="margin-top: 0;"><strong>With your subscription, you'll get:</strong></p>
+        <ul>
+          <li>State-specific legal templates for UT, TX, ND, SD</li>
+          <li>Real-time compliance updates and legal change notifications</li>
+          <li>Credit report decoder and tenant screening resources</li>
+          <li>Expert guidance for handling tenant issues</li>
+        </ul>
+      </div>
+
+      <center>
+        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" class="cta-button">
+          Reactivate Subscription
+        </a>
+      </center>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">Questions? We're here to help. Contact support anytime.</p>
+    </div>
+    
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
   async sendContactFormEmail(formData: { firstName: string; lastName: string; email: string; phone: string; message: string }): Promise<boolean> {
     const { firstName, lastName, email, phone, message } = formData;
 

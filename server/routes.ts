@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { requireActiveSubscription } from "./subscriptionMiddleware";
 import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema } from "@shared/schema";
 import { db } from "./db";
@@ -402,7 +403,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/templates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/templates', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const { stateId, category } = req.query;
       const templates = await storage.getAllTemplates({
@@ -416,7 +417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/templates/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/templates/:id', isAuthenticated, requireActiveSubscription, async (req, res) => {
     try {
       const template = await storage.getTemplate(req.params.id);
       if (!template) {
@@ -876,7 +877,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Compliance routes
-  app.get('/api/compliance-cards', isAuthenticated, async (req: any, res) => {
+  app.get('/api/compliance-cards', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const { stateId } = req.query;
       if (!stateId) {

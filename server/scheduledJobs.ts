@@ -10,17 +10,15 @@ import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
+  private trialExpiryInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringLastRun: Date | null = null;
 
-  // Check for trials ending soon and send reminder emails
+  // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
       console.log('🔔 Checking for trial reminders...');
 
-      // Find users who:
-      // 1. Are currently in trial
-      // 2. Have trial ending in the next 24-48 hours (day 6 of trial)
       const now = new Date();
       const tomorrow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
       const dayAfterTomorrow = new Date(now.getTime() + 48 * 60 * 60 * 1000);
@@ -40,7 +38,6 @@ export class ScheduledJobs {
 
       for (const user of trialingUsers) {
         if (user.email && user.trialEndsAt) {
-          // Check if we've already sent a reminder to this user
           const existingReminder = await storage.getUserTrialReminderEvent(user.id);
           
           if (existingReminder) {
@@ -59,7 +56,6 @@ export class ScheduledJobs {
             user.trialEndsAt
           );
 
-          // Track the reminder email in analytics (prevents duplicate sends)
           await storage.trackEvent({
             userId: user.id,
             eventType: 'trial_reminder_sent',
@@ -71,6 +67,62 @@ export class ScheduledJobs {
       console.log('✅ Trial reminder check complete');
     } catch (error) {
       console.error('❌ Error checking trial reminders:', error);
+    }
+  }
+
+  // Check for expired trials and send expiration emails
+  async checkTrialExpiry(): Promise<void> {
+    try {
+      console.log('⏳ Checking for expired trials...');
+
+      const now = new Date();
+      
+      // Find users whose trials have just expired (in the last 24 hours)
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      
+      const expiredUsers = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.subscriptionStatus, 'trialing'),
+            lt(users.trialEndsAt, now),
+            gte(users.trialEndsAt, oneDayAgo)
+          )
+        );
+
+      console.log(`  Found ${expiredUsers.length} users with expired trials`);
+
+      for (const user of expiredUsers) {
+        if (user.email) {
+          const existingExpiredEmail = await storage.getUserTrialExpiredEvent(user.id);
+          
+          if (existingExpiredEmail) {
+            console.log(`  Skipping ${user.email} - expiration email already sent`);
+            continue;
+          }
+
+          console.log(`  Sending trial expired email to ${user.email}...`);
+          
+          await emailService.sendTrialExpiredEmail(
+            {
+              email: user.email,
+              firstName: user.firstName || undefined,
+              lastName: user.lastName || undefined,
+            }
+          );
+
+          await storage.trackEvent({
+            userId: user.id,
+            eventType: 'trial_expired_email_sent',
+            eventData: { trialEndsAt: user.trialEndsAt },
+          });
+        }
+      }
+
+      console.log('✅ Trial expiry check complete');
+    } catch (error) {
+      console.error('❌ Error checking trial expiry:', error);
     }
   }
 
@@ -194,34 +246,41 @@ export class ScheduledJobs {
     console.log('🚀 Starting scheduled jobs...');
 
     // Check for trial reminders every 6 hours
-    // In production, this would run once daily at a specific time
     this.trialReminderInterval = setInterval(
       () => this.checkTrialReminders(),
-      6 * 60 * 60 * 1000 // 6 hours
+      6 * 60 * 60 * 1000
     );
-
-    // Run initial check after 1 minute
     setTimeout(() => this.checkTrialReminders(), 60 * 1000);
 
-    // Check for legislative monitoring daily (will only run on 1st of month)
+    // Check for trial expiry every 6 hours
+    this.trialExpiryInterval = setInterval(
+      () => this.checkTrialExpiry(),
+      6 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.checkTrialExpiry(), 90 * 1000);
+
+    // Check for legislative monitoring daily
     this.legislativeMonitoringInterval = setInterval(
       () => this.checkLegislativeMonitoring(),
-      24 * 60 * 60 * 1000 // Daily check
+      24 * 60 * 60 * 1000
     );
-
-    // Run initial check after 2 minutes
     setTimeout(() => this.checkLegislativeMonitoring(), 2 * 60 * 1000);
 
     console.log('✅ Scheduled jobs started');
   }
 
-  // Stop all scheduled jobs (for graceful shutdown)
+  // Stop all scheduled jobs
   stop(): void {
     console.log('🛑 Stopping scheduled jobs...');
     
     if (this.trialReminderInterval) {
       clearInterval(this.trialReminderInterval);
       this.trialReminderInterval = null;
+    }
+
+    if (this.trialExpiryInterval) {
+      clearInterval(this.trialExpiryInterval);
+      this.trialExpiryInterval = null;
     }
 
     if (this.legislativeMonitoringInterval) {
