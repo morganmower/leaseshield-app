@@ -51,35 +51,31 @@ interface TemplateReview {
   };
 }
 
+const safeFormatDate = (dateString: string | null | undefined, formatStr: string): string => {
+  if (!dateString) return '';
+  try {
+    const date = new Date(dateString);
+    if (isNaN(date.getTime())) return '';
+    return format(date, formatStr);
+  } catch {
+    return '';
+  }
+};
+
 export default function AdminLegislativeMonitoring() {
   const { toast } = useToast();
 
   const { data: pendingBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills', { isReviewed: false }],
-    queryFn: async () => {
-      const res = await fetch('/api/admin/legislative-bills?isReviewed=false');
-      if (!res.ok) throw new Error('Failed to fetch pending bills');
-      return res.json();
-    },
   });
 
   const { data: reviewedBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills', { isReviewed: true }],
-    queryFn: async () => {
-      const res = await fetch('/api/admin/legislative-bills?isReviewed=true');
-      if (!res.ok) throw new Error('Failed to fetch reviewed bills');
-      return res.json();
-    },
   });
 
   // Auto-published updates (no longer pending, all auto-approved)
   const { data: publishedUpdates = [] } = useQuery<TemplateReview[]>({
     queryKey: ['/api/admin/template-review-queue', { status: 'approved' }],
-    queryFn: async () => {
-      const res = await fetch('/api/admin/template-review-queue?status=approved');
-      if (!res.ok) throw new Error('Failed to fetch published updates');
-      return res.json();
-    },
   });
 
   const runMonitoringMutation = useMutation({
@@ -209,7 +205,7 @@ export default function AdminLegislativeMonitoring() {
                         </Badge>
                         {review.approvedAt && (
                           <span className="text-muted-foreground" data-testid={`text-published-at-${review.id}`}>
-                            {format(new Date(review.approvedAt), 'MMM d, yyyy h:mm a')}
+                            {safeFormatDate(review.approvedAt, 'MMM d, yyyy h:mm a')}
                           </span>
                         )}
                       </div>
