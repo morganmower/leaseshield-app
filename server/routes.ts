@@ -945,8 +945,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!stateId) {
         return res.status(400).json({ message: "stateId is required" });
       }
-      const updates = await storage.getLegalUpdatesByState(stateId as string);
-      res.json(updates);
+      
+      let updates;
+      
+      if (stateId === 'NATIONAL') {
+        // Get legal updates from all 4 monitored states
+        const utUpdates = await storage.getLegalUpdatesByState('UT');
+        const txUpdates = await storage.getLegalUpdatesByState('TX');
+        const ndUpdates = await storage.getLegalUpdatesByState('ND');
+        const sdUpdates = await storage.getLegalUpdatesByState('SD');
+        updates = [...utUpdates, ...txUpdates, ...ndUpdates, ...sdUpdates];
+      } else {
+        updates = await storage.getLegalUpdatesByState(stateId as string);
+      }
+      
+      // Also fetch recent legislative monitoring records (high/medium relevance) for this state(s)
+      let legislativeUpdates: any[] = [];
+      if (stateId === 'NATIONAL') {
+        const allBills = await storage.getAllLegislativeMonitoring({});
+        legislativeUpdates = allBills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
+      } else {
+        const bills = await storage.getAllLegislativeMonitoring({ stateId: stateId as string });
+        legislativeUpdates = bills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
+      }
+      
+      // Combine and sort by date (most recent first)
+      const combined = [
+        ...updates.map(u => ({ ...u, type: 'legal_update' })),
+        ...legislativeUpdates.map(b => ({ 
+          ...b, 
+          type: 'legislative_update',
+          title: b.billTitle,
+          summary: b.summary,
+          impactLevel: b.relevanceLevel,
+          createdAt: b.createdAt
+        }))
+      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      res.json(combined);
     } catch (error) {
       console.error("Error fetching legal updates:", error);
       res.status(500).json({ message: "Failed to fetch legal updates" });
