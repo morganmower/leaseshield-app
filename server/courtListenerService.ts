@@ -20,31 +20,33 @@ interface CourtListenerOpinion {
 }
 
 interface CourtListenerCluster {
-  id: number;
-  url: string;
-  absolute_url: string;
-  case_name: string;
-  case_name_full: string;
-  case_name_short: string;
-  case_number: string;
-  date_filed: string;
-  date_filed_is_approximate: boolean;
-  slug: string;
-  citations: Array<{
+  id?: number;
+  url?: string;
+  absolute_url?: string;
+  case_name?: string;
+  case_name_full?: string;
+  case_name_short?: string;
+  case_number?: string;
+  date_filed?: string;
+  date_filed_is_approximate?: boolean;
+  slug?: string;
+  citations?: Array<{
     id: number;
     volume: number;
     reporter: string;
     page: number;
     type: string;
   }>;
-  source: string;
-  court: string;
-  court_id: number;
-  judges: string[];
-  nature_of_suit: string;
-  precedential_status: string;
-  date_last_filing: string;
-  date_last_index: string;
+  source?: string;
+  court?: string;
+  court_id?: number;
+  judges?: string[];
+  nature_of_suit?: string;
+  precedential_status?: string;
+  date_last_filing?: string;
+  date_last_index?: string;
+  // v4 API fields
+  [key: string]: any;
 }
 
 interface CourtListenerSearchResponse {
@@ -112,10 +114,31 @@ export class CourtListenerService {
         return null;
       }
 
-      const data: CourtListenerSearchResponse = await response.json();
+      const data = await response.json();
+      
+      // Handle v4 API response structure
+      if (!data || (!data.results && !data.data)) {
+        console.log(`⚠️ Invalid response structure from CourtListener`);
+        return null;
+      }
 
-      console.log(`✅ Found ${data.meta.total_count} case law matches for ${stateId}`);
-      return data;
+      // Transform v4 response to match our expected format
+      const results = data.results || data.data || [];
+      const totalCount = data.count || data.total_count || results.length;
+
+      const transformedResponse: CourtListenerSearchResponse = {
+        meta: {
+          limit: 20,
+          next: data.next || null,
+          offset: 0,
+          previous: data.previous || null,
+          total_count: totalCount,
+        },
+        results: results,
+      };
+
+      console.log(`✅ Found ${totalCount} case law matches for ${stateId}`);
+      return transformedResponse;
     } catch (error) {
       console.error('Error searching CourtListener:', error);
       return null;
