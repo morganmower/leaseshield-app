@@ -94,7 +94,7 @@ export default function Dashboard() {
             <div className="flex items-start gap-3">
               <Bell className="h-5 w-5 text-primary mt-0.5" />
               <div className="flex-1">
-                {isTrialing && user.trialEndsAt ? (
+                {(isTrialing || user.subscriptionStatus === 'incomplete') && user.trialEndsAt ? (
                   <>
                     {(() => {
                       const daysLeft = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
