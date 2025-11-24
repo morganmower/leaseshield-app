@@ -191,7 +191,7 @@ export default function Screening() {
         </div>
 
         {/* AI Credit Report Helper - Hero Feature */}
-        <div className="mb-12">
+        <div className="mb-12" id="ai-helpers">
           <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-4 mb-4">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
@@ -1210,7 +1210,12 @@ export default function Screening() {
                   <Button 
                     variant="outline"
                     size="lg"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onClick={() => {
+                      const helpersSection = document.getElementById('ai-helpers');
+                      if (helpersSection) {
+                        helpersSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
                     data-testid="button-back-to-top"
                   >
                     <ArrowLeft className="mr-2 h-4 w-4 rotate-90" />
