@@ -476,7 +476,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Property routes
-  app.get('/api/properties', isAuthenticated, async (req: any, res) => {
+  app.get('/api/properties', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -507,7 +507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/properties', isAuthenticated, async (req: any, res) => {
+  app.post('/api/properties', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/properties/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -550,7 +550,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/properties/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/properties/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -569,7 +569,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Saved Documents routes
-  app.get('/api/saved-documents', isAuthenticated, async (req: any, res) => {
+  app.get('/api/saved-documents', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -583,7 +583,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/saved-documents/:id', isAuthenticated, async (req: any, res) => {
+  app.get('/api/saved-documents/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -603,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/saved-documents', isAuthenticated, async (req: any, res) => {
+  app.post('/api/saved-documents', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -644,7 +644,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/saved-documents/:id/download', isAuthenticated, async (req: any, res) => {
+  app.get('/api/saved-documents/:id/download', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -692,7 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/saved-documents/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/saved-documents/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
