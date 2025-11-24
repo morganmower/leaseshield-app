@@ -146,9 +146,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // If subscription needs payment setup, return the payment intent
         if (subscription.status === 'incomplete') {
           const latestInvoice = await stripe.invoices.retrieve(subscription.latest_invoice as string);
-          const paymentIntent = latestInvoice.payment_intent;
+          const paymentIntent = latestInvoice.payment_intent as Stripe.PaymentIntent | null;
 
-          if (paymentIntent && typeof paymentIntent !== 'string') {
+          if (paymentIntent && typeof paymentIntent === 'object' && 'client_secret' in paymentIntent) {
             return res.json({
               subscriptionId: subscription.id,
               clientSecret: paymentIntent.client_secret,
@@ -1328,6 +1328,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Review not found" });
       }
 
+      const userId = getUserId(req);
       const { template, version } = await storage.publishTemplateUpdate({
         templateId: review.templateId,
         reviewId: id,
@@ -1335,7 +1336,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fillableFormData,
         versionNotes,
         lastUpdateReason,
-        publishedBy: req.user!.id,
+        publishedBy: userId,
       });
 
       if (approvalNotes) {
@@ -1422,11 +1423,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templateId: id,
         versionNumber: newVersionNumber,
         pdfUrl: versionToRestore.pdfUrl,
-        fillableFormData: versionToRestore.fillableFormData,
+        fillableFormData: versionToRestore.fillableFormData as any,
         versionNotes: `Restored from Version ${versionToRestore.versionNumber}`,
         lastUpdateReason: `Rollback to previous version ${versionToRestore.versionNumber}`,
         sourceReviewId: null,
-        metadata: { restoredFrom: versionToRestore.id },
+        metadata: { restoredFrom: versionToRestore.id } as any,
         createdBy: userId,
       });
 
@@ -1434,7 +1435,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await storage.updateTemplate(id, {
         version: newVersionNumber,
         pdfUrl: versionToRestore.pdfUrl,
-        fillableFormData: versionToRestore.fillableFormData,
+        fillableFormData: versionToRestore.fillableFormData as any,
         versionNotes: `Restored from Version ${versionToRestore.versionNumber}`,
         lastUpdateReason: `Rollback to previous version ${versionToRestore.versionNumber}`,
       });
@@ -1490,8 +1491,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         templateContent: '', // Always empty - use default generation only
         fieldValues,
         stateId: template.stateId,
-        version: template.version,
-        updatedAt: template.updatedAt,
+        version: template.version || 1,
+        updatedAt: template.updatedAt || new Date(),
       });
 
       // Set response headers
@@ -1573,6 +1574,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         approvedAt: new Date(),
       });
 
+      // Publish the template update automatically
+      const template = await storage.getTemplate(review.templateId);
+      if (!template) {
+        return res.status(404).json({ message: 'Template not found' });
+      }
+
       // Mark the originating bill as reviewed
       if (review.billId) {
         await storage.updateLegislativeMonitoring(review.billId, {
@@ -1581,12 +1588,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
           reviewedAt: new Date(),
           reviewNotes: `Approved template update for ${template.title}`,
         });
-      }
-
-      // Publish the template update automatically
-      const template = await storage.getTemplate(review.templateId);
-      if (!template) {
-        return res.status(404).json({ message: 'Template not found' });
       }
 
       const publishResult = await storage.publishTemplateUpdate({
@@ -1684,14 +1685,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log('📋 Manually triggered legislative monitoring run by admin:', user.email);
       
       // Run the monitoring service
-      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
-      const monitoringService = new LegislativeMonitoringService(storage);
-      const result = await monitoringService.runMonitoring();
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      await legislativeMonitoringService.runMonthlyMonitoring();
 
       res.json({
         success: true,
         message: 'Monitoring run completed',
-        result,
       });
     } catch (error) {
       console.error('Error running legislative monitoring:', error);
@@ -1716,14 +1715,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       console.log('🔄 Running scheduled legislative monitoring...');
       
-      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
-      const monitoringService = new LegislativeMonitoringService(storage);
-      const result = await monitoringService.runMonitoring();
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      await legislativeMonitoringService.runMonthlyMonitoring();
 
       console.log('✅ Scheduled monitoring completed');
       res.json({
         success: true,
-        result,
+        message: 'Scheduled monitoring completed',
       });
     } catch (error) {
       console.error('❌ Cron monitoring failed:', error);
