@@ -394,8 +394,16 @@ export default function Screening() {
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p><strong className="text-foreground">How to use:</strong></p>
                   <p>1. Look at your tenant's credit report</p>
-                  <p>2. Type any term you see (like <em>"charge-off"</em>, <em>"collection"</em>, <em>"30 days late"</em>, or <em>"utilization"</em>)</p>
-                  <p>3. Get instant AI-powered guidance</p>
+                  <p>2. Type any term you see, such as:</p>
+                  <ul className="ml-6 space-y-1 list-disc">
+                    <li><em>"account closed by creditor"</em> - What does this mean?</li>
+                    <li><em>"maxed out credit card"</em> - Is this a red flag?</li>
+                    <li><em>"medical collections"</em> - Should I be concerned?</li>
+                    <li><em>"bankruptcy chapter 7"</em> - How recent is too recent?</li>
+                    <li><em>"hard inquiry from payday lender"</em> - What's the risk?</li>
+                    <li><em>"authorized user on account"</em> - Does this count?</li>
+                  </ul>
+                  <p>3. Get instant AI-powered guidance tailored for landlords</p>
                 </div>
 
                 <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
@@ -959,9 +967,17 @@ export default function Screening() {
 
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p><strong className="text-foreground">How to use:</strong></p>
-                  <p>1. Look at your screening report</p>
-                  <p>2. Type any term you see (like <em>"misdemeanor"</em>, <em>"eviction judgment"</em>, <em>"dismissed"</em>, or <em>"7-year rule"</em>)</p>
-                  <p>3. Get instant AI-powered guidance with Fair Housing considerations</p>
+                  <p>1. Look at your criminal or eviction screening report</p>
+                  <p>2. Type any term or situation you see, such as:</p>
+                  <ul className="ml-6 space-y-1 list-disc">
+                    <li><em>"dismissed charge"</em> - Does this still matter?</li>
+                    <li><em>"misdemeanor theft from 10 years ago"</em> - Can I deny for this?</li>
+                    <li><em>"unlawful detainer judgment"</em> - What is this?</li>
+                    <li><em>"felony DUI"</em> - How should I evaluate this?</li>
+                    <li><em>"eviction filed but not completed"</em> - Red flag or not?</li>
+                    <li><em>"expunged record"</em> - Am I allowed to consider it?</li>
+                  </ul>
+                  <p>3. Get Fair Housing-compliant AI guidance instantly</p>
                 </div>
 
                 <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
