@@ -58,6 +58,11 @@ app.use((req, res, next) => {
 });
 
 app.use((req, res, next) => {
+  // Log ALL incoming requests immediately
+  if (req.path.startsWith("/api")) {
+    console.error(`\n🚀 INCOMING ${req.method} ${req.path}`);
+  }
+  
   const start = Date.now();
   const path = req.path;
   let capturedJsonResponse: Record<string, any> | undefined = undefined;
