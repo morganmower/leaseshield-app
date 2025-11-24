@@ -94,19 +94,32 @@ export default function Subscribe() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log('🔄 Calling /api/create-subscription');
       apiRequest("POST", "/api/create-subscription")
         .then(async (res) => {
-          const data = await res.json();
+          console.log('📡 Response status:', res.status);
+          const text = await res.text();
+          console.log('📦 Response body:', text);
+          let data;
+          try {
+            data = JSON.parse(text);
+          } catch (e) {
+            throw new Error(`Invalid response from server: ${text}`);
+          }
           if (!res.ok) {
-            throw new Error(data.message || "Failed to create subscription");
+            throw new Error(data.message || `HTTP ${res.status}: Failed to create subscription`);
           }
           return data;
         })
         .then((data) => {
+          console.log('✅ Got clientSecret:', data.clientSecret ? 'YES' : 'NO');
           setClientSecret(data.clientSecret);
         })
         .catch((error) => {
+          console.error('❌ Full error object:', error);
+          console.error('❌ Error message:', error.message);
           const errorMessage = error.message || "Failed to initialize payment. Please try again.";
+          console.error('❌ Showing toast with:', errorMessage);
           toast({
             title: "Subscription Error",
             description: errorMessage,
