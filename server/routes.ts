@@ -131,99 +131,63 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
-    console.log('💳 POST /api/create-subscription - ENDPOINT CALLED');
+    console.error('\n🔴🔴🔴 /api/create-subscription CALLED 🔴🔴🔴\n');
+    
     try {
       const userId = getUserId(req);
-      console.log('✅ Got userId:', userId);
-      
-      let user = await storage.getUser(userId);
-      console.log('✅ Got user:', !!user, user?.email);
+      const user = await storage.getUser(userId);
 
-      if (!user) {
-        console.log('❌ User not found');
-        return res.status(404).json({ message: "User not found" });
-      }
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.email) return res.status(400).json({ message: 'No user email' });
 
-      if (!user.email) {
-        console.log('❌ User has no email');
-        return res.status(400).json({ message: 'No user email on file' });
-      }
-
-      console.log('📊 User subscription status:', user.subscriptionStatus, 'customerId:', user.stripeCustomerId);
-
-      // Get the Stripe Price ID from environment variable - MUST BE PRESENT
       const stripePriceId = process.env.STRIPE_PRICE_ID;
-      console.log('🔍 Checking STRIPE_PRICE_ID:', stripePriceId ? stripePriceId.substring(0, 10) + '...' : 'NOT SET');
+      console.error('STRIPE_PRICE_ID =', stripePriceId);
       
       if (!stripePriceId) {
-        console.error('❌ STRIPE_PRICE_ID is missing!');
-        return res.status(500).json({ message: 'Server configuration error: STRIPE_PRICE_ID not set' });
+        return res.status(500).json({ message: 'STRIPE_PRICE_ID not configured' });
       }
 
       // Reuse existing Stripe customer or create new one
       let customerId = user.stripeCustomerId;
       if (!customerId) {
-        console.log('👤 No customer ID - creating new Stripe customer');
-        try {
-          const customer = await stripe.customers.create({
-            email: user.email,
-            name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
-            metadata: { userId },
-          });
-          customerId = customer.id;
-          console.log('✅ Stripe customer created:', customerId);
-          
-          // Update user with customer ID
-          await storage.updateUserStripeInfo(userId, {
-            stripeCustomerId: customerId,
-          });
-        } catch (customerError: any) {
-          console.error('❌ Failed to create Stripe customer:', customerError.message);
-          throw new Error(`Failed to create Stripe customer: ${customerError.message}`);
-        }
-      } else {
-        console.log('♻️ Using existing Stripe customer:', customerId);
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
+          metadata: { userId },
+        });
+        customerId = customer.id;
+        await storage.updateUserStripeInfo(userId, { stripeCustomerId: customerId });
       }
 
-      // Create subscription that requires immediate payment
-      console.log('🔄 Creating subscription - customer:', customerId.substring(0, 10), 'price:', stripePriceId.substring(0, 10));
-      try {
-        const subscription = await stripe.subscriptions.create({
-          customer: customerId,
-          items: [{ price: stripePriceId }],
-          payment_behavior: 'default_incomplete',
-          payment_settings: { save_default_payment_method: 'on_subscription' },
-          expand: ['latest_invoice.payment_intent'],
-        });
-        console.log('✅ Stripe subscription created:', subscription.id);
+      // Create subscription
+      const subscription = await stripe.subscriptions.create({
+        customer: customerId,
+        items: [{ price: stripePriceId }],
+        payment_behavior: 'default_incomplete',
+        payment_settings: { save_default_payment_method: 'on_subscription' },
+        expand: ['latest_invoice.payment_intent'],
+      });
 
-        // Mark as incomplete - webhook will update to active when payment succeeds
-        await storage.updateUserStripeInfo(userId, {
-          stripeSubscriptionId: subscription.id,
-          subscriptionStatus: 'incomplete',
-        });
-        console.log('📊 Database updated with subscription');
+      await storage.updateUserStripeInfo(userId, {
+        stripeSubscriptionId: subscription.id,
+        subscriptionStatus: 'incomplete',
+      });
 
-        const latestInvoice = subscription.latest_invoice as any;
-        const paymentIntent = latestInvoice?.payment_intent;
-        
-        if (!paymentIntent || !paymentIntent.client_secret) {
-          console.error('❌ No client_secret in payment intent');
-          throw new Error('Failed to create payment intent - no client_secret');
-        }
-
-        console.log('🎉 SUCCESS - Returning clientSecret to frontend');
-        res.json({
-          subscriptionId: subscription.id,
-          clientSecret: paymentIntent.client_secret,
-        });
-      } catch (stripeError: any) {
-        console.error('❌ Stripe API error:', stripeError.message);
-        throw stripeError;
+      const latestInvoice = subscription.latest_invoice as any;
+      const paymentIntent = latestInvoice?.payment_intent;
+      
+      if (!paymentIntent?.client_secret) {
+        throw new Error('No client_secret in payment intent');
       }
+
+      console.error('✅ SUCCESS - sending clientSecret to frontend\n');
+      return res.json({
+        subscriptionId: subscription.id,
+        clientSecret: paymentIntent.client_secret,
+      });
     } catch (error: any) {
-      console.error("❌ ENDPOINT ERROR:", error.message || error);
-      res.status(500).json({ message: error.message || "Failed to create subscription" });
+      console.error('❌ ERROR:', error.message, '\n');
+      return res.status(500).json({ message: error.message || "Failed to create subscription" });
     }
   });
 
