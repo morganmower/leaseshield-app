@@ -156,13 +156,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserStripeInfo(userId, { stripeCustomerId: customerId });
       }
 
-      // Create subscription
+      // Create subscription without payment method (will attach later)
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: stripePriceId }],
         payment_behavior: 'default_incomplete',
         payment_settings: { save_default_payment_method: 'on_subscription' },
-        expand: ['latest_invoice.payment_intent'],
       });
 
       await storage.updateUserStripeInfo(userId, {
@@ -170,36 +169,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'incomplete',
       });
 
-      // Get the invoice to extract payment intent
-      let clientSecret: string | null = null;
-      
-      if (subscription.latest_invoice) {
-        const invoice = subscription.latest_invoice as any;
-        console.error(`[create-subscription] Invoice type: ${typeof invoice}, has payment_intent: ${'payment_intent' in invoice}`);
-        
-        if (invoice.payment_intent) {
-          const paymentIntentId = typeof invoice.payment_intent === 'string'
-            ? invoice.payment_intent
-            : invoice.payment_intent.id;
-          
-          console.error(`[create-subscription] Payment intent ID: ${paymentIntentId}`);
-          const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-          clientSecret = paymentIntent.client_secret;
-          console.error(`[create-subscription] ✅ Got client_secret: ${clientSecret?.substring(0, 20)}...`);
-        } else {
-          console.error(`[create-subscription] ⚠️ No payment_intent in expanded invoice`);
-        }
+      // Create a payment intent directly for this subscription
+      console.error(`[create-subscription] Creating payment intent for subscription ${subscription.id}`);
+      const paymentIntent = await stripe.paymentIntents.create({
+        amount: 1200, // $12 in cents
+        currency: 'usd',
+        customer: customerId,
+        description: `LeaseShield subscription - ${user.email}`,
+        metadata: {
+          subscriptionId: subscription.id,
+          userId: userId,
+        },
+      });
+
+      if (!paymentIntent.client_secret) {
+        console.error(`[create-subscription] ❌ Payment intent has no client_secret`);
+        throw new Error('Failed to create payment intent');
       }
 
-      if (!clientSecret) {
-        console.error(`[create-subscription] ❌ No client_secret found`);
-        throw new Error('Failed to retrieve payment intent client secret');
-      }
+      console.error(`[create-subscription] ✅ Payment intent created: ${paymentIntent.id}`);
+      console.error(`[create-subscription] ✅ Client secret: ${paymentIntent.client_secret?.substring(0, 20)}...`);
 
-      // Return only plain data - no Stripe objects
+      // Return subscription and payment intent details
       return res.json({
         subscriptionId: subscription.id,
-        clientSecret: clientSecret,
+        clientSecret: paymentIntent.client_secret,
+        paymentIntentId: paymentIntent.id,
       });
     } catch (error: any) {
       console.error('❌ /api/create-subscription error:', error.message);
