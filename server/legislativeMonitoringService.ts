@@ -253,17 +253,30 @@ export class LegislativeMonitoringService {
 
           // Process each case (limit to first 10 for MVP)
           for (const caseCluster of caseSearchResults.results.slice(0, 10)) {
-            // Check if we've already processed this case
+            // Check if we've already processed this case - if so, skip to avoid duplicates
+            // (CourtListener returns national results, so different state searches may find same cases)
             const existingCase = await storage.getCaseLawMonitoringByCaseId(caseCluster.id.toString());
 
             if (existingCase) {
-              console.log(`  ⏭️  Case ${caseCluster.case_name_short} already tracked`);
+              console.log(`  ⏭️  Case ${caseCluster.case_name_short} already tracked (found in ${existingCase.stateId})`);
               continue;
             }
 
             // Check if case is relevant to landlord-tenant law
             if (!courtListenerService.isRelevantCase(caseCluster)) {
               console.log(`  ⏭️  ${caseCluster.case_name_short} not relevant to landlord-tenant law`);
+              continue;
+            }
+
+            // Extract state from court name to validate this case belongs to the state we're searching for
+            // CourtListener returns national results, so we need to filter by court jurisdiction
+            const courtState = caseCluster.court?.toLowerCase() || '';
+            const stateNameLower = state.name.toLowerCase();
+            const isFromThisState = courtState.includes(stateNameLower) || 
+                                   courtState.includes(state.id.toLowerCase());
+
+            if (!isFromThisState) {
+              console.log(`  ⏭️  ${caseCluster.case_name_short} is from ${caseCluster.court}, not ${state.name}`);
               continue;
             }
 
