@@ -37,6 +37,15 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '10mb' })); // Add size limit to prevent large payloads
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
+// Catch body parsing errors
+app.use((err: any, req: any, res: any, next: any) => {
+  if (err instanceof SyntaxError && 'body' in err) {
+    console.error('❌ JSON PARSE ERROR:', err.message);
+    return res.status(400).json({ message: 'Invalid JSON' });
+  }
+  next(err);
+});
+
 // Request timeout middleware - prevent hanging requests
 app.use((req, res, next) => {
   // Set timeout to 30 seconds for all requests
