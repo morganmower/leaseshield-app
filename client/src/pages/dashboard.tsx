@@ -96,12 +96,19 @@ export default function Dashboard() {
               <div className="flex-1">
                 {isTrialing && user.trialEndsAt ? (
                   <>
-                    <p className="font-medium text-foreground">
-                      Your free trial ends {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Subscribe now to continue accessing all templates and compliance updates
-                    </p>
+                    {(() => {
+                      const daysLeft = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      return (
+                        <>
+                          <p className="font-medium text-foreground">
+                            Your free trial ends in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
+                          </p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            Subscribe now to continue accessing all templates and compliance updates
+                          </p>
+                        </>
+                      );
+                    })()}
                   </>
                 ) : (
                   <>
@@ -119,6 +126,30 @@ export default function Dashboard() {
                   Subscribe Now
                 </Button>
               </Link>
+            </div>
+          </Card>
+        )}
+
+        {/* Active Subscription Banner - show days remaining until renewal */}
+        {user.subscriptionStatus === 'active' && user.subscriptionEndsAt && (
+          <Card className="mb-8 p-4 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800">
+            <div className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500 mt-0.5" />
+              <div className="flex-1">
+                {(() => {
+                  const daysLeft = Math.ceil((new Date(user.subscriptionEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <>
+                      <p className="font-medium text-emerald-900 dark:text-emerald-100">
+                        Your subscription renews in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
+                      </p>
+                      <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
+                        You have full access to all LeaseShield features
+                      </p>
+                    </>
+                  );
+                })()}
+              </div>
             </div>
           </Card>
         )}
