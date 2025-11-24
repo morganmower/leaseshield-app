@@ -60,7 +60,7 @@ interface CourtListenerSearchResponse {
 
 export class CourtListenerService {
   private apiKey: string;
-  private baseUrl = 'https://www.courtlistener.com/api/rest/v3';
+  private baseUrl = 'https://www.courtlistener.com/api/rest/v4';
   private stateCourtMap: { [key: string]: string[] } = {
     // State to CourtListener court IDs mapping
     UT: ['court-of-appeals-of-utah', 'supreme-court-of-utah', 'court-of-appeals-of-the-united-states-tenth-circuit'],

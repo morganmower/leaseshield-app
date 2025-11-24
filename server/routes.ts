@@ -1526,6 +1526,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get all monitored case law (admin only)
+  app.get('/api/admin/case-law', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const filters: any = {};
+      if (req.query.stateId) filters.stateId = req.query.stateId as string;
+      if (req.query.relevanceLevel) filters.relevanceLevel = req.query.relevanceLevel as string;
+      if (req.query.isReviewed !== undefined) filters.isReviewed = req.query.isReviewed === 'true';
+
+      const cases = await storage.getAllCaseLawMonitoring(filters);
+      res.json(cases);
+    } catch (error) {
+      console.error('Error fetching case law:', error);
+      res.status(500).json({ message: 'Failed to fetch case law' });
+    }
+  });
+
   // Get template review queue (admin only)
   app.get('/api/admin/template-review-queue', isAuthenticated, async (req: any, res) => {
     try {

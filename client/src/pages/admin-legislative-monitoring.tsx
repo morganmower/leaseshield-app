@@ -29,6 +29,27 @@ interface LegislativeBill {
   createdAt: string;
 }
 
+interface CaseLaw {
+  id: string;
+  caseId: string;
+  stateId: string;
+  caseName: string;
+  caseNameFull: string;
+  citation: string;
+  court: string;
+  dateFiled: string;
+  caseNumber: string;
+  url: string;
+  relevanceLevel: 'high' | 'medium' | 'low' | 'dismissed';
+  aiAnalysis: string;
+  affectedTemplateIds: string[];
+  isReviewed: boolean;
+  reviewedBy: string | null;
+  reviewedAt: string | null;
+  reviewNotes: string | null;
+  createdAt: string;
+}
+
 interface TemplateReview {
   id: string;
   templateId: string;
@@ -76,6 +97,10 @@ export default function AdminLegislativeMonitoring() {
   // Auto-published updates (no longer pending, all auto-approved)
   const { data: publishedUpdates = [] } = useQuery<TemplateReview[]>({
     queryKey: ['/api/admin/template-review-queue', { status: 'approved' }],
+  });
+
+  const { data: caseLaws = [] } = useQuery<CaseLaw[]>({
+    queryKey: ['/api/admin/case-law'],
   });
 
   const runMonitoringMutation = useMutation({
@@ -139,6 +164,9 @@ export default function AdminLegislativeMonitoring() {
             </TabsTrigger>
             <TabsTrigger value="pending-bills" data-testid="tab-pending-bills">
               Pending Bills ({pendingBills.length})
+            </TabsTrigger>
+            <TabsTrigger value="case-law" data-testid="tab-case-law">
+              Case Law ({caseLaws.length})
             </TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">
               History
@@ -296,6 +324,82 @@ export default function AdminLegislativeMonitoring() {
                       <span data-testid={`text-bill-date-${bill.id}`}>
                         Status updated: {format(new Date(bill.statusDate), 'MMM d, yyyy')}
                       </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="case-law" className="space-y-4">
+            {caseLaws.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <FileText className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground" data-testid="text-no-case-law">
+                    No case law monitored yet
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              caseLaws.map((caseItem) => (
+                <Card key={caseItem.id} data-testid={`card-case-${caseItem.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="space-y-1 flex-1">
+                        <div className="flex items-center gap-2">
+                          <CardTitle className="text-lg" data-testid={`text-case-name-${caseItem.id}`}>
+                            {caseItem.caseName}
+                          </CardTitle>
+                          {getRelevanceBadge(caseItem.relevanceLevel)}
+                          <Badge variant="outline">{caseItem.stateId}</Badge>
+                        </div>
+                        <CardDescription data-testid={`text-case-citation-${caseItem.id}`}>
+                          {caseItem.citation}
+                        </CardDescription>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        asChild
+                        data-testid={`link-case-external-${caseItem.id}`}
+                      >
+                        <a href={caseItem.url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2">Court & Details:</h4>
+                      <p className="text-sm text-muted-foreground" data-testid={`text-court-${caseItem.id}`}>
+                        {caseItem.court} • Case #: {caseItem.caseNumber}
+                      </p>
+                    </div>
+
+                    <div>
+                      <h4 className="font-semibold text-sm text-foreground mb-2">AI Analysis:</h4>
+                      <p className="text-sm text-muted-foreground" data-testid={`text-analysis-${caseItem.id}`}>
+                        {caseItem.aiAnalysis}
+                      </p>
+                    </div>
+
+                    {caseItem.affectedTemplateIds && caseItem.affectedTemplateIds.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-foreground mb-2">Affected Templates:</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {caseItem.affectedTemplateIds.map((templateId) => (
+                            <Badge key={templateId} variant="secondary" data-testid={`badge-template-${templateId}`}>
+                              {templateId}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="pt-4 border-t text-sm text-muted-foreground">
+                      Filed: {safeFormatDate(caseItem.dateFiled, 'MMM d, yyyy')}
                     </div>
                   </CardContent>
                 </Card>
