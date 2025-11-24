@@ -31,7 +31,7 @@ export default function Templates() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedState, setSelectedState] = useState<string>("all");
+  const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
@@ -127,7 +127,7 @@ export default function Templates() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Initialize filters from URL query parameters
+  // Initialize filters from URL query parameters or user preferences
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const categoryParam = params.get('category');
@@ -138,14 +138,11 @@ export default function Templates() {
     }
     if (stateParam && stateParam !== selectedState) {
       setSelectedState(stateParam);
-    }
-  }, []); // Run only on mount
-
-  useEffect(() => {
-    if (user?.preferredState && selectedState === "all") {
+    } else if (user?.preferredState && !stateParam) {
+      // If no URL param, use user's preferred state
       setSelectedState(user.preferredState);
     }
-  }, [user, selectedState]);
+  }, [user]); // Run when user loads
 
   const { data: templates, isLoading: templatesLoading } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
