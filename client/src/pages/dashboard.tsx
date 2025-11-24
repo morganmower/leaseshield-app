@@ -13,7 +13,15 @@ import {
   AlertCircle,
   ArrowRight,
   Download,
-  Bell
+  Bell,
+  Lightbulb,
+  MessageCircle,
+  Sparkles,
+  Building2,
+  AlertTriangle,
+  Gavel,
+  CheckCircle2,
+  Wand2
 } from "lucide-react";
 import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
@@ -138,10 +146,246 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Start Here - Core Toolkits */}
+        {/* AI Protection Center - Hero Section */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 sm:p-8" data-testid="section-ai-protection-center">
+            <div className="flex items-start gap-4 mb-6">
+              <div className="rounded-xl bg-primary/20 dark:bg-primary/30 w-16 h-16 flex items-center justify-center flex-shrink-0">
+                <Sparkles className="h-8 w-8 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
+                  AI Protection Center
+                </h2>
+                <p className="text-foreground/80 dark:text-foreground/90">
+                  Three powerful AI tools helping you screen tenants fairly, understand complex reports, and get instant compliance guidance
+                </p>
+              </div>
+            </div>
+
+            <div className="grid md:grid-cols-3 gap-4">
+              {/* Credit Report Helper */}
+              <Link to="/screening">
+                <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-credit-helper">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="rounded-lg bg-cyan-500/20 dark:bg-cyan-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-500" />
+                    </div>
+                    <div className="flex-1">
+                      <Badge variant="secondary" className="mb-2 bg-primary/20 dark:bg-primary/30 text-primary border-primary/30">
+                        <Lightbulb className="h-3 w-3 mr-1" />
+                        AI Powered
+                      </Badge>
+                      <h3 className="font-semibold text-foreground mb-1">Credit Report Helper</h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Get instant AI explanations of credit terms, red flags, and questions to ask applicants
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-credit-helper">
+                    Try It Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Card>
+              </Link>
+
+              {/* Criminal & Eviction Helper */}
+              <Link to="/screening">
+                <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-criminal-helper">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="rounded-lg bg-amber-500/20 dark:bg-amber-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                    </div>
+                    <div className="flex-1">
+                      <Badge variant="secondary" className="mb-2 bg-primary/20 dark:bg-primary/30 text-primary border-primary/30">
+                        <Lightbulb className="h-3 w-3 mr-1" />
+                        AI Powered
+                      </Badge>
+                      <h3 className="font-semibold text-foreground mb-1">Criminal & Eviction Helper</h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Fair Housing-compliant AI guidance for criminal and eviction screening decisions
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-criminal-helper">
+                    Try It Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Card>
+              </Link>
+
+              {/* AI Chat Assistant */}
+              <Card className="p-5 border-2 border-primary/40 dark:border-primary/30 h-full" data-testid="card-ai-chat-assistant">
+                <div className="flex items-start gap-3 mb-3">
+                  <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                    <MessageCircle className="h-5 w-5 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <Badge variant="secondary" className="mb-2 bg-primary/20 dark:bg-primary/30 text-primary border-primary/30">
+                      <Lightbulb className="h-3 w-3 mr-1" />
+                      AI Powered
+                    </Badge>
+                    <h3 className="font-semibold text-foreground mb-1">AI Chat Assistant</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  24/7 AI assistant for landlord-tenant law, compliance questions, and platform features
+                </p>
+                <div className="bg-primary/10 dark:bg-primary/20 rounded-lg p-2 text-center">
+                  <p className="text-xs text-foreground font-medium flex items-center justify-center gap-1">
+                    <CheckCircle2 className="h-3 w-3 text-primary" />
+                    Look for the chat button in the bottom-right corner
+                  </p>
+                </div>
+              </Card>
+            </div>
+          </div>
+        </div>
+
+        {/* Platform Playbook - Feature Grid */}
         <div className="mb-12">
           <h2 className="text-xl font-display font-semibold text-foreground mb-6">
-            Start Here
+            Your Complete Toolkit
+          </h2>
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {/* Document Assembly Wizard */}
+            <Link to="/templates">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-document-wizard">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <Wand2 className="h-6 w-6 text-primary" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Document Assembly Wizard</h3>
+                    <Badge variant="secondary" className="text-xs">Attorney-Quality PDFs</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Choose a template, fill out guided forms, and generate professional legal documents instantly
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-wizard">
+                  <Wand2 className="mr-2 h-4 w-4" />
+                  Choose Template
+                </Button>
+              </Card>
+            </Link>
+
+            {/* Legislative Monitoring */}
+            <Link to="/compliance">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-legislative-monitoring">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <Gavel className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Legislative Monitoring</h3>
+                    <Badge variant="secondary" className="text-xs">Automatic Updates</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  AI tracks state laws monthly and auto-updates your templates when legislation changes
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-monitoring">
+                  <Bell className="mr-2 h-4 w-4" />
+                  View Updates
+                </Button>
+              </Card>
+            </Link>
+
+            {/* Multi-Property Management */}
+            <Link to="/properties">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-property-management">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Property Portfolio</h3>
+                    <Badge variant="secondary" className="text-xs">Organize Everything</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Manage multiple properties and link documents to specific rental units
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-manage-properties">
+                  <Building2 className="mr-2 h-4 w-4" />
+                  Manage Properties
+                </Button>
+              </Card>
+            </Link>
+
+            {/* Tenant Issue Workflows */}
+            <Link to="/tenant-issues">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-tenant-workflows">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <AlertCircle className="h-6 w-6 text-rose-600 dark:text-rose-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Tenant Issue Workflows</h3>
+                    <Badge variant="secondary" className="text-xs">Step-by-Step Guides</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  State-specific resolution guides for late rent, repairs, violations, and evictions
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-workflows">
+                  <ArrowRight className="mr-2 h-4 w-4" />
+                  View Workflows
+                </Button>
+              </Card>
+            </Link>
+
+            {/* Template Library */}
+            <Link to="/templates">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-template-library">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <FileText className="h-6 w-6 text-violet-600 dark:text-violet-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Template Library</h3>
+                    <Badge variant="secondary" className="text-xs">State-Specific</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Leases, applications, notices, and forms customized for UT, TX, ND, and SD laws
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-browse-templates">
+                  <FileText className="mr-2 h-4 w-4" />
+                  Browse Templates
+                </Button>
+              </Card>
+            </Link>
+
+            {/* Compliance Cards */}
+            <Link to="/compliance">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-compliance-cards">
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <Shield className="h-6 w-6 text-blue-600 dark:text-blue-500" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Compliance Guidance</h3>
+                    <Badge variant="secondary" className="text-xs">Before & After Examples</Badge>
+                  </div>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Before/after compliance cards showing exactly how to meet state requirements
+                </p>
+                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-compliance">
+                  <Shield className="mr-2 h-4 w-4" />
+                  View Guidance
+                </Button>
+              </Card>
+            </Link>
+          </div>
+        </div>
+
+        {/* Daily Actions - Core Toolkits */}
+        <div className="mb-12">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-6">
+            Quick Access
           </h2>
           <div className="grid md:grid-cols-3 gap-6">
             {/* Leasing Toolkit - Amber/Gold */}
