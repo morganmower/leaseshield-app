@@ -1848,6 +1848,127 @@ TONE: Protective mentor helping a landlord make informed decisions.`
     }
   }));
 
+  // Criminal & Eviction Screening Helper - explain terms using AI
+  app.post('/api/explain-criminal-eviction-term', asyncHandler(async (req, res) => {
+    // Rate limiting (same as chat and credit helper)
+    const clientIp = getClientIp(req);
+    if (!chatRateLimiter.check(clientIp)) {
+      return res.status(429).json({
+        explanation: "You're asking questions too quickly. Please wait a moment and try again."
+      });
+    }
+
+    const { term } = req.body;
+
+    if (!term || typeof term !== 'string') {
+      return res.status(400).json({ 
+        explanation: "Please provide a valid term or question." 
+      });
+    }
+
+    const trimmedTerm = term.trim();
+
+    // Privacy and safety checks
+    // Block Social Security Numbers
+    if (/\b\d{3}-\d{2}-\d{4}\b/.test(trimmedTerm) || 
+        /\b\d{9}\b/.test(trimmedTerm) ||
+        /\bssn\b/i.test(trimmedTerm)) {
+      return res.json({
+        explanation: "For your safety, please do not enter Social Security numbers or personal identifiers. Just type the term or concept you'd like explained (for example: 'felony' or 'eviction record')."
+      });
+    }
+
+    // Block long numbers (case numbers, etc.)
+    if (/\d{8,}/.test(trimmedTerm)) {
+      return res.json({
+        explanation: "This looks like a case number or identifier. For privacy reasons, please enter only the TERM or CONCEPT you'd like explained (for example: 'misdemeanor' or '7-year rule')."
+      });
+    }
+
+    // Block specific names (enhanced check for first/last name patterns)
+    if (trimmedTerm.split(' ').filter(word => word.length > 2).length >= 2) {
+      return res.json({
+        explanation: "For privacy reasons, please don't include specific names. Just type the term or concept you need explained (for example: 'misdemeanor' or 'eviction')."
+      });
+    }
+    
+    // Block case/docket numbers (patterns like "CV-2023-12345" or "123456")
+    if (/\b(case|docket|no\.?)\s*[:#]?\s*[\w-]+/i.test(trimmedTerm) || /\b\d{5,7}\b/.test(trimmedTerm)) {
+      return res.json({
+        explanation: "This looks like a case or docket number. For privacy reasons, please enter only the TERM you'd like explained (for example: 'dismissed' or 'felony')."
+      });
+    }
+
+    // Length check
+    if (trimmedTerm.length > 200) {
+      return res.status(400).json({ 
+        explanation: "Please keep your question under 200 characters. Just enter the term or concept you need explained." 
+      });
+    }
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: "gpt-4o-mini",
+        messages: [
+          {
+            role: "system",
+            content: `You are a helpful assistant that explains criminal background and eviction screening terms to landlords. Your PRIMARY goal is to help landlords screen tenants FAIRLY and LEGALLY while understanding Fair Housing compliance requirements.
+
+REQUIRED RESPONSE STRUCTURE:
+You MUST provide your response in the following three sections:
+
+What it means:
+[Plain-English explanation of the term in everyday language, avoiding legal jargon]
+
+What to watch for:
+[CRITICAL Fair Housing considerations, disparate impact warnings, legal restrictions, and compliance requirements. ALWAYS emphasize avoiding blanket bans and discriminatory practices]
+
+Questions to ask (or Legal considerations):
+[2-3 specific Fair Housing compliance reminders, consistent screening requirements, or respectful questions that don't violate privacy/discrimination laws]
+
+EXAMPLE:
+What it means:
+A misdemeanor is a less serious criminal offense than a felony, typically punishable by fines or less than one year in jail. Examples include minor theft, disorderly conduct, or simple assault.
+
+What to watch for:
+CRITICAL: Fair Housing laws PROHIBIT blanket bans on all criminal history - this can create disparate impact discrimination. You MUST consider the nature, severity, and how long ago the offense occurred. Property-related crimes (theft, vandalism, property damage) may be more relevant to safe tenancy than unrelated offenses. Many states restrict how far back you can review criminal records (often 7 years). NEVER use criminal history alone to deny housing - always apply consistent, written criteria to ALL applicants.
+
+Questions to ask (or Legal considerations):
+- Document your screening policy in writing and apply identical standards to EVERY applicant
+- Consider individual circumstances: a 10-year-old misdemeanor may not reflect current character or pose any tenancy risk
+- AVOID asking about arrests without convictions - this violates Fair Housing in many jurisdictions
+- Consult a Fair Housing attorney about your state's specific restrictions on criminal history screening
+
+MANDATORY FAIR HOUSING EMPHASIS:
+- ALWAYS mention Fair Housing compliance in your response
+- ALWAYS warn against blanket bans or discriminatory practices
+- ALWAYS emphasize consistent criteria applied equally to all applicants
+- ALWAYS recommend documenting policies and consulting legal counsel
+- Use respectful, non-stigmatizing language about criminal history
+
+TONE: Protective legal mentor helping a landlord avoid Fair Housing violations while screening responsibly. Emphasize what's LEGALLY REQUIRED, not just recommended.`
+          },
+          {
+            role: "user",
+            content: `Explain this criminal/eviction screening term for a landlord: "${trimmedTerm}"`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 350,
+      });
+
+      const explanation = completion.choices[0]?.message?.content || 
+        "I couldn't generate an explanation. Please try rephrasing your question.";
+
+      res.json({ explanation });
+    } catch (error) {
+      console.error('Error explaining criminal/eviction term:', error);
+      res.status(500).json({
+        explanation: "Sorry, something went wrong. Please try again in a moment."
+      });
+    }
+  }));
+
   // Chat assistant endpoint (public, for landing page)
   app.post('/api/chat', asyncHandler(async (req, res) => {
     // Rate limiting

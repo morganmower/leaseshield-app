@@ -66,10 +66,18 @@ function parseAIExplanation(text: string): ParsedExplanation | null {
 export default function Screening() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  
+  // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
   const [userQuestion, setUserQuestion] = useState('');
   const [explanation, setExplanation] = useState('');
   const [isExplaining, setIsExplaining] = useState(false);
+
+  // Criminal & Eviction Helper state
+  const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
+  const [criminalUserQuestion, setCriminalUserQuestion] = useState('');
+  const [criminalExplanation, setCriminalExplanation] = useState('');
+  const [isCriminalExplaining, setIsCriminalExplaining] = useState(false);
 
   const handleExplain = async () => {
     const input = userQuestion.trim();
@@ -98,6 +106,36 @@ export default function Screening() {
       setExplanation('Something went wrong. Please try again in a moment.');
     } finally {
       setIsExplaining(false);
+    }
+  };
+
+  const handleCriminalExplain = async () => {
+    const input = criminalUserQuestion.trim();
+    
+    if (!input) {
+      setCriminalExplanation('Please type a term or question first.');
+      return;
+    }
+
+    setIsCriminalExplaining(true);
+    setCriminalExplanation('');
+
+    try {
+      const response = await fetch('/api/explain-criminal-eviction-term', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ term: input }),
+      });
+
+      const data = await response.json();
+      setCriminalExplanation(data.explanation || 'Unable to get explanation. Please try again.');
+    } catch (error) {
+      console.error('Error getting criminal/eviction explanation:', error);
+      setCriminalExplanation('Something went wrong. Please try again in a moment.');
+    } finally {
+      setIsCriminalExplaining(false);
     }
   };
 
@@ -711,6 +749,331 @@ export default function Screening() {
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* AI Criminal & Eviction Screening Helper - Hero Feature */}
+        <div className="mb-12">
+          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-7 w-7 text-primary dark:text-primary" />
+              </div>
+              <div className="flex-1">
+                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
+                  AI Criminal & Eviction Screening Helper
+                </h2>
+                <p className="text-foreground dark:text-foreground/90 mb-3">
+                  Get instant explanations of screening terms, Fair Housing guidance, and legal considerations for evaluating criminal and eviction records
+                </p>
+                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
+                  <Lightbulb className="h-3 w-3 mr-1" />
+                  Powered by AI
+                </Badge>
+              </div>
+            </div>
+          </div>
+
+          {/* Privacy & Fair Housing Notice */}
+          <div className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-foreground mb-2">
+                  <strong>Privacy & Compliance Notice:</strong> For your safety, do not enter Social Security numbers, case numbers, docket numbers, or specific names of individuals. We do not store or review your screening reports.
+                </p>
+                <p className="text-sm text-foreground">
+                  <strong>Fair Housing Reminder:</strong> Blanket bans on criminal history violate Fair Housing laws. Always apply consistent, documented criteria to all applicants and consider individual circumstances.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Home Screen */}
+          {criminalHelperScreen === 'home' && (
+            <Card className="p-6 shadow-lg">
+              <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
+              <p className="text-muted-foreground mb-6">
+                This AI-powered tool helps you understand criminal and eviction screening terms AND provides Fair Housing guidance. Choose an option below:
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  onClick={() => {
+                    setCriminalHelperScreen('learn');
+                    setCriminalExplanation('');
+                  }}
+                  className="flex-1"
+                  data-testid="button-learn-criminal-screening"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Learn About Background Screening
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setCriminalHelperScreen('ask');
+                    setCriminalUserQuestion('');
+                    setCriminalExplanation('');
+                  }}
+                  variant="default"
+                  className="flex-1"
+                  data-testid="button-ask-criminal-question"
+                >
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  Ask About a Screening Term (AI)
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Learn Screen */}
+          {criminalHelperScreen === 'learn' && (
+            <Card className="p-6 shadow-lg">
+              <div className="mb-4">
+                <Button 
+                  onClick={() => setCriminalHelperScreen('home')}
+                  variant="ghost"
+                  size="sm"
+                  data-testid="button-back-to-criminal-home"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
+
+              <h3 className="font-semibold text-lg mb-4">Learn About Background Screening</h3>
+              <p className="text-muted-foreground mb-6">
+                Below are critical Fair Housing and legal compliance concepts. This is for educational purposes only - always consult legal counsel.
+              </p>
+
+              <div className="space-y-4">
+                <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border-2 border-amber-500/30">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-amber-600" />
+                    Fair Housing Laws (CRITICAL)
+                  </h4>
+                  <p className="text-sm text-foreground mb-2">
+                    <strong>You CANNOT have blanket bans on all criminal history.</strong> Fair Housing laws prohibit policies that create disparate impact discrimination. You must consider:
+                  </p>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
+                    <li>Nature and severity of the offense</li>
+                    <li>How long ago it occurred</li>
+                    <li>Relevance to safe tenancy</li>
+                    <li>Individual circumstances and rehabilitation</li>
+                  </ul>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Felony vs. Misdemeanor
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Felonies are serious crimes (often punishable by more than 1 year in prison). Misdemeanors are less serious offenses. Fair Housing requires individualized assessment - not automatic denials.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    Consistent Criteria (REQUIRED)
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    You MUST apply identical screening standards to ALL applicants. Write your criteria down and follow it uniformly. Inconsistent criteria create Fair Housing violations and discrimination claims.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Eviction Records
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Past evictions show rental payment history. Recent evictions (within 3 years) are more concerning. Ask about circumstances - not all evictions mean the tenant was at fault. Consider job loss, medical issues, or landlord disputes.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5 text-primary" />
+                    7-Year Rule & State Restrictions
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Many states limit how far back you can look at criminal records (often 7 years for non-convictions, or "ban the box" laws). Some prohibit asking about arrests without convictions. Check your state laws BEFORE screening.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-destructive/10 border-2 border-destructive/30 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm text-foreground font-semibold mb-1">Legal Compliance Required</p>
+                    <p className="text-sm text-muted-foreground">
+                      Criminal and eviction screening is heavily regulated by Fair Housing laws, state statutes, and local ordinances. Violating these laws can result in expensive lawsuits and penalties. Always consult with a Fair Housing attorney about your screening policies and document all decisions consistently.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          )}
+
+          {/* Ask Screen - AI Powered */}
+          {criminalHelperScreen === 'ask' && (
+            <Card className="p-6 shadow-lg">
+              <div className="mb-4">
+                <Button 
+                  onClick={() => {
+                    setCriminalHelperScreen('home');
+                    setCriminalUserQuestion('');
+                    setCriminalExplanation('');
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  data-testid="button-back-from-criminal-ask"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
+
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="font-semibold text-lg">Ask About a Screening Term</h3>
+                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
+                  <Lightbulb className="h-3 w-3 mr-1" />
+                  AI Powered
+                </Badge>
+              </div>
+              
+              <div className="space-y-4">
+                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-2 mb-2">
+                    <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-foreground font-medium">What you'll get:</p>
+                  </div>
+                  <ul className="text-sm text-muted-foreground space-y-1 ml-6">
+                    <li>Plain-English explanation of the term</li>
+                    <li>Fair Housing and legal considerations</li>
+                    <li>Compliance reminders and best practices</li>
+                  </ul>
+                </div>
+
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p><strong className="text-foreground">How to use:</strong></p>
+                  <p>1. Look at your screening report</p>
+                  <p>2. Type any term you see (like <em>"misdemeanor"</em>, <em>"eviction judgment"</em>, <em>"dismissed"</em>, or <em>"7-year rule"</em>)</p>
+                  <p>3. Get instant AI-powered guidance with Fair Housing considerations</p>
+                </div>
+
+                <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
+                  <div className="flex items-start gap-2">
+                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                    <p className="text-sm text-destructive font-medium">
+                      For your safety: Do not type Social Security numbers, case numbers, or specific names.
+                    </p>
+                  </div>
+                </div>
+
+                <Textarea
+                  placeholder="Example: misdemeanor"
+                  value={criminalUserQuestion}
+                  onChange={(e) => setCriminalUserQuestion(e.target.value)}
+                  className="min-h-[100px] text-base"
+                  data-testid="textarea-criminal-question"
+                />
+
+                <Button 
+                  onClick={handleCriminalExplain}
+                  disabled={isCriminalExplaining || !criminalUserQuestion.trim()}
+                  className="w-full"
+                  size="lg"
+                  data-testid="button-get-criminal-explanation"
+                >
+                  <Lightbulb className="mr-2 h-4 w-4" />
+                  {isCriminalExplaining ? 'Getting explanation...' : 'Get AI Explanation'}
+                </Button>
+
+                {isCriminalExplaining && (
+                  <div className="bg-muted/50 border border-muted rounded-lg p-4">
+                    <div className="flex items-center gap-2">
+                      <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                      <p className="text-sm text-muted-foreground">
+                        Analyzing your question and preparing compliance guidance...
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                {!isCriminalExplaining && criminalExplanation && (() => {
+                  const parsed = parseAIExplanation(criminalExplanation);
+                  
+                  if (!parsed) {
+                    return (
+                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg" data-testid="container-criminal-explanation">
+                        <div className="flex items-start gap-3 mb-4">
+                          <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
+                            <div className="text-foreground dark:text-foreground/95 whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
+                          </div>
+                        </div>
+                        <div className="mt-4 pt-4 border-t border-primary/20 dark:border-primary/30">
+                          <div className="flex items-start gap-2">
+                            <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                            <p className="text-xs text-muted-foreground">
+                              This information is for general education only. It is not legal advice. Always consult with legal counsel for specific situations and Fair Housing compliance.
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+                  
+                  return (
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg space-y-4" data-testid="container-criminal-explanation">
+                      {parsed.whatItMeans && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <FileText className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold text-foreground">What it means</h4>
+                          </div>
+                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7" data-testid="text-criminal-explanation">{parsed.whatItMeans}</p>
+                        </div>
+                      )}
+                      
+                      {parsed.whatToWatchFor && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
+                            <h4 className="font-semibold text-foreground">What to watch for</h4>
+                          </div>
+                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
+                        </div>
+                      )}
+                      
+                      {parsed.questionsToAsk && (
+                        <div>
+                          <div className="flex items-center gap-2 mb-2">
+                            <HelpCircle className="h-5 w-5 text-primary" />
+                            <h4 className="font-semibold text-foreground">Legal considerations</h4>
+                          </div>
+                          <div className="ml-7 text-foreground dark:text-foreground/95 leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
+                        </div>
+                      )}
+                      
+                      <div className="pt-4 border-t border-primary/20 dark:border-primary/30">
+                        <div className="flex items-start gap-2">
+                          <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
+                          <p className="text-xs text-muted-foreground">
+                            This information is for general education only. It is not legal advice. Always consult with legal counsel for specific situations and Fair Housing compliance.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Criminal & Eviction Screening */}
