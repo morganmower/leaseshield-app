@@ -254,11 +254,11 @@ export default function Landing() {
               <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2">
                 <Badge className="px-3 py-1 text-sm">
                   <Star className="h-3 w-3 mr-1 fill-current" />
-                  Trusted by 500+ Landlords
+                  Built for Landlords
                 </Badge>
                 <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
                   <BadgeCheck className="h-3 w-3 mr-1" />
-                  30-Day Money-Back Guarantee
+                  7-Day Free Trial
                 </Badge>
               </motion.div>
               
@@ -448,11 +448,11 @@ export default function Landing() {
           >
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">500+</div>
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">100%</div>
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">Active Landlords</div>
-              <Badge variant="outline" className="text-xs mt-2">+47 this week</Badge>
+              <div className="text-xs sm:text-sm text-muted-foreground">State Compliant</div>
+              <Badge variant="outline" className="text-xs mt-2">Updated Monthly</Badge>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -636,112 +636,6 @@ export default function Landing() {
                       <span>Filter & organize by location</span>
                     </li>
                   </ul>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Testimonials */}
-      <section className="py-20 md:py-28 bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-12"
-          >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Trusted by Landlords Nationwide
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              See how LeaseShield App is protecting rental businesses just like yours
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-3 gap-8"
-          >
-            <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Saved $4,200 in attorney fees
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "The eviction template saved me $4,200 in attorney fees. My lawyer said the notice was 
-                  perfect and the judge accepted it without any issues. LeaseShield paid for itself 20 times over."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">SJ</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">Sarah J.</div>
-                    <div className="text-xs text-muted-foreground">4 units in Salt Lake City, UT</div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Avoided $8,500 lawsuit
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "LeaseShield's compliance alert about Texas security deposit changes saved me from an $8,500 
-                  lawsuit. My property manager didn't even know about the new law yet. Best $12/month I've ever spent."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">MC</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">Michael C.</div>
-                    <div className="text-xs text-muted-foreground">12 units in Dallas, TX</div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Avoided nightmare tenant
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "The screening toolkit caught red flags I would have missed. Saved me from renting to someone 
-                  with 3 previous evictions. The templates are so clear even I can understand them!"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">RP</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">Rachel P.</div>
-                    <div className="text-xs text-muted-foreground">6 units in Fargo, ND</div>
-                  </div>
                 </div>
               </Card>
             </motion.div>
