@@ -162,10 +162,12 @@ export default function Landing() {
     compliance: {
       title: "Compliance Guidance",
       icon: Shield,
-      description: "Stay ahead of changing landlord-tenant laws with curated updates that only include what could create liability.",
+      description: "Stay ahead of changing landlord-tenant laws with AI-powered monitoring of both new legislation and court rulings, ensuring your templates are always compliant.",
       details: [
-        "Real-time monitoring of state legislature and court decisions",
-        "Email alerts when laws change in your selected state",
+        "Automated monthly monitoring of state legislatures for relevant bills",
+        "Court case law tracking through CourtListener to monitor landmark decisions",
+        "AI analysis determines which templates need updates based on bills and cases",
+        "Email alerts when laws or court decisions affect your templates",
         "Clear before/after comparisons showing what changed",
         "Impact-level ratings (high, medium, low) for each update",
         "Compliance cards summarizing current requirements",
