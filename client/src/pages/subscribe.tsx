@@ -83,13 +83,9 @@ export default function Subscribe() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
-  
-  console.log("🔍 Subscribe component mounted", { isAuthenticated, isLoading, hasUser: !!user });
 
   useEffect(() => {
-    console.log("🔍 Auth check useEffect", { isLoading, isAuthenticated });
     if (!isLoading && !isAuthenticated) {
-      console.log("❌ Not authenticated - redirecting to login");
       // Immediately redirect to login - don't wait
       window.location.href = "/api/login";
       return;
@@ -98,27 +94,18 @@ export default function Subscribe() {
 
   useEffect(() => {
     if (isAuthenticated) {
-      console.log("🔄 Starting subscription request...");
       apiRequest("POST", "/api/create-subscription")
         .then(async (res) => {
-          console.log("📡 API response received:", res.status, res.statusText);
           const data = await res.json();
-          console.log("📦 Response data:", data);
           if (!res.ok) {
             throw new Error(data.message || "Failed to create subscription");
           }
           return data;
         })
         .then((data) => {
-          console.log("✅ Client secret received");
           setClientSecret(data.clientSecret);
         })
         .catch((error) => {
-          console.error("❌ Subscription error details:", {
-            message: error.message,
-            stack: error.stack,
-            error: error
-          });
           const errorMessage = error.message || "Failed to initialize payment. Please try again.";
           toast({
             title: "Subscription Error",
@@ -148,18 +135,18 @@ export default function Subscribe() {
   }
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-background py-6 sm:py-12">
+      <div className="container max-w-2xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center gap-2 mb-4">
-            <Shield className="h-8 w-8 text-primary" />
-            <span className="font-display text-2xl font-semibold">LeaseShield App</span>
+        <div className="text-center mb-8 sm:mb-12">
+          <div className="flex items-center justify-center gap-2 mb-3 sm:mb-4 flex-wrap">
+            <Shield className="h-6 sm:h-8 w-6 sm:w-8 text-primary flex-shrink-0" />
+            <span className="font-display text-lg sm:text-2xl font-semibold">LeaseShield App</span>
           </div>
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+          <h1 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-2">
             Subscribe to LeaseShield App
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             Continue your protection with full access to all templates and compliance updates
           </p>
         </div>
