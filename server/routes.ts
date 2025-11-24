@@ -174,23 +174,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let clientSecret: string | null = null;
       
       if (subscription.latest_invoice) {
-        const invoiceId = typeof subscription.latest_invoice === 'string' 
-          ? subscription.latest_invoice 
-          : subscription.latest_invoice.id;
-        
-        console.error(`[create-subscription] Fetching invoice: ${invoiceId}`);
-        const invoice = await stripe.invoices.retrieve(invoiceId);
-        console.error(`[create-subscription] Invoice payment_intent type: ${typeof invoice.payment_intent}`);
+        const invoice = subscription.latest_invoice as any;
+        console.error(`[create-subscription] Invoice type: ${typeof invoice}, has payment_intent: ${'payment_intent' in invoice}`);
         
         if (invoice.payment_intent) {
           const paymentIntentId = typeof invoice.payment_intent === 'string'
             ? invoice.payment_intent
             : invoice.payment_intent.id;
           
-          console.error(`[create-subscription] Fetching payment intent: ${paymentIntentId}`);
+          console.error(`[create-subscription] Payment intent ID: ${paymentIntentId}`);
           const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
           clientSecret = paymentIntent.client_secret;
           console.error(`[create-subscription] ✅ Got client_secret: ${clientSecret?.substring(0, 20)}...`);
+        } else {
+          console.error(`[create-subscription] ⚠️ No payment_intent in expanded invoice`);
         }
       }
 
