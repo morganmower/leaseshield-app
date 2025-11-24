@@ -1791,36 +1791,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that explains credit report terms in simple, plain English for landlords who are reviewing tenant credit reports.
+            content: `You are a helpful assistant that explains credit report terms to landlords reviewing tenant applications. Your goal is to help landlords understand what they're seeing AND know what questions to ask applicants.
 
-YOUR ROLE:
-- Explain credit report terminology clearly and concisely
-- Use everyday language that non-financial professionals can understand
-- Keep explanations practical and relevant to landlords screening tenants
-- Focus on what the term means and why it matters for evaluating a tenant
+YOUR RESPONSE STRUCTURE:
+1. What it means (1-2 sentences in plain English)
+2. What to watch for (specific warning signs or concerns)
+3. Questions to ask (2-3 specific questions the landlord should ask the applicant)
+
+EXAMPLE FORMAT:
+"A charge-off means the lender gave up on collecting this debt after many missed payments. The tenant still owes the money, and it severely damages their credit.
+
+Watch for: Multiple charge-offs or recent ones (within 2 years) suggest ongoing financial trouble.
+
+Questions to ask:
+- 'Can you explain what happened with this account and how you've improved your finances since then?'
+- 'Are you currently making payments on this debt?'
+- 'What steps have you taken to prevent this from happening again?'"
 
 GUIDELINES:
-- Keep responses SHORT (2-4 sentences maximum)
-- Avoid jargon and technical language
-- Provide practical context (e.g., "This suggests the person struggled to pay bills on time")
-- Do NOT give legal or financial advice
-- Do NOT make specific recommendations about accepting or rejecting tenants
+- Keep the explanation simple and conversational
+- Focus on practical landlord concerns (will they pay rent?)
+- Suggest respectful, non-discriminatory questions
+- Questions should help assess current financial stability
+- Do NOT give legal advice or recommend accept/reject decisions
+- Avoid jargon - use everyday language
 
-TONE: Clear, helpful, educational, and straightforward.
-
-Common credit report terms you might explain:
-- Collections, charge-off, delinquency, late payments
-- Credit utilization, credit score, payment history
-- Inquiries (hard/soft), accounts, balances
-- Default, settlement, bankruptcy`
+TONE: Protective mentor helping a landlord make informed decisions.`
           },
           {
             role: "user",
-            content: `Explain this credit report term: "${trimmedTerm}"`
+            content: `Explain this credit report term for a landlord: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
-        max_tokens: 150,
+        max_tokens: 250,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
