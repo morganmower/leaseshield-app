@@ -233,4 +233,95 @@ Respond in JSON format:
   }
 }
 
+  /**
+   * Analyze a court case to determine if it affects any templates
+   */
+  async analyzeCase(
+    caseName: string,
+    caseNameFull: string,
+    opinionText: string | null,
+    stateId: string,
+    templates: Template[]
+  ): Promise<BillAnalysisResult> {
+    try {
+      // Filter templates to only those from the same state
+      const stateTemplates = templates.filter(t => t.stateId === stateId && t.isActive);
+
+      const templateList = stateTemplates
+        .map(t => `- ${t.id}: ${t.title} (${t.templateType})`)
+        .join('\n');
+
+      const prompt = `You are a legal analyst specializing in landlord-tenant law. Analyze the following court case and determine:
+
+1. How relevant is this case to landlord-tenant law and rental property management?
+2. Which specific templates (if any) would need to be updated based on this case decision?
+3. What changes would be required to those templates to comply with this ruling?
+
+CASE INFORMATION:
+Name: ${caseName}
+Full Name: ${caseNameFull}
+${opinionText ? `\n\nCase Opinion (excerpt):\n${opinionText.substring(0, 8000)}` : ''}
+
+AVAILABLE TEMPLATES FOR ${stateId}:
+${templateList}
+
+Please respond in JSON format with:
+{
+  "relevanceLevel": "high" | "medium" | "low" | "dismissed",
+  "analysis": "Brief explanation of why this case matters or doesn't matter to landlords",
+  "affectedTemplateIds": ["template-id-1", "template-id-2"],
+  "recommendedChanges": "Specific changes needed to affected templates based on this ruling, or empty string if no changes needed"
+}
+
+Relevance Guidelines:
+- HIGH: Case directly impacts landlord-tenant law, requires immediate template updates
+- MEDIUM: Case related to rental housing, may affect templates indirectly
+- LOW: Tangentially related to housing, unlikely to affect templates
+- DISMISSED: Not related to landlord-tenant law at all
+
+Be conservative - only mark as HIGH if templates definitely need updates.`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a legal analyst specializing in landlord-tenant law. You help identify which court cases affect rental property templates.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3, // Lower temperature for more consistent analysis
+      });
+
+      const response = completion.choices[0].message.content;
+      if (!response) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const parsed = JSON.parse(response);
+
+      // Validate that mentioned template IDs actually exist
+      const validTemplateIds = parsed.affectedTemplateIds.filter((id: string) =>
+        stateTemplates.some(t => t.id === id)
+      );
+
+      return {
+        relevanceLevel: parsed.relevanceLevel,
+        aiAnalysis: parsed.analysis,
+        affectedTemplateIds: validTemplateIds,
+        recommendedChanges: parsed.recommendedChanges || '',
+      };
+    } catch (error) {
+      console.error('Error analyzing case with AI:', error);
+      
+      // Fallback to basic keyword analysis if AI fails
+      return this.fallbackAnalysis(caseName, caseNameFull);
+    }
+  }
+}
+
 export const billAnalysisService = new BillAnalysisService();
