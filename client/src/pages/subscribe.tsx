@@ -101,14 +101,21 @@ export default function Subscribe() {
   useEffect(() => {
     if (isAuthenticated) {
       apiRequest("POST", "/api/create-subscription")
-        .then((res) => res.json())
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || "Failed to create subscription");
+          }
+          return data;
+        })
         .then((data) => {
           setClientSecret(data.clientSecret);
         })
         .catch((error) => {
+          const errorMessage = error.message || "Failed to initialize payment. Please try again.";
           toast({
-            title: "Error",
-            description: "Failed to initialize payment. Please try again.",
+            title: "Subscription Error",
+            description: errorMessage,
             variant: "destructive",
           });
           console.error("Subscription error:", error);
