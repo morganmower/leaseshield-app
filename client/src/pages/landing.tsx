@@ -320,7 +320,7 @@ export default function Landing() {
               
               <motion.div 
                 variants={fadeInUp}
-                className="flex flex-col xs:flex-row items-start xs:items-center gap-3 xs:gap-6 text-sm text-muted-foreground"
+                className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 text-sm text-muted-foreground"
               >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
@@ -328,7 +328,15 @@ export default function Landing() {
                 </div>
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                  <span>No credit card</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                   <span>Cancel anytime</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                  <span>Updates included</span>
                 </div>
               </motion.div>
             </motion.div>
