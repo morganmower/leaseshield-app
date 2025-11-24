@@ -94,25 +94,33 @@ export default function Subscribe() {
 
   useEffect(() => {
     if (isAuthenticated) {
+      console.log("🔄 Starting subscription request...");
       apiRequest("POST", "/api/create-subscription")
         .then(async (res) => {
+          console.log("📡 API response received:", res.status, res.statusText);
           const data = await res.json();
+          console.log("📦 Response data:", data);
           if (!res.ok) {
             throw new Error(data.message || "Failed to create subscription");
           }
           return data;
         })
         .then((data) => {
+          console.log("✅ Client secret received");
           setClientSecret(data.clientSecret);
         })
         .catch((error) => {
+          console.error("❌ Subscription error details:", {
+            message: error.message,
+            stack: error.stack,
+            error: error
+          });
           const errorMessage = error.message || "Failed to initialize payment. Please try again.";
           toast({
             title: "Subscription Error",
             description: errorMessage,
             variant: "destructive",
           });
-          console.error("Subscription error:", error);
         });
     }
   }, [isAuthenticated, toast]);
