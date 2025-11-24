@@ -170,23 +170,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'incomplete',
       });
 
-      // Extract ONLY serializable data from Stripe objects
+      // Extract payment intent - handle both expanded object and string ID
       const latestInvoice = subscription.latest_invoice as any;
-      const paymentIntent = latestInvoice?.payment_intent as any;
+      let paymentIntent = latestInvoice?.payment_intent;
       
-      if (!paymentIntent || typeof paymentIntent === 'string') {
-        throw new Error('Payment intent not expanded properly');
+      console.error(`[create-subscription] latestInvoice type: ${typeof latestInvoice}, paymentIntent type: ${typeof paymentIntent}`);
+      
+      // If payment_intent is a string (not expanded), fetch it
+      if (typeof paymentIntent === 'string') {
+        console.error(`[create-subscription] Payment intent is a string ID, fetching: ${paymentIntent}`);
+        paymentIntent = await stripe.paymentIntents.retrieve(paymentIntent);
       }
 
-      const clientSecret = paymentIntent.client_secret;
-      if (!clientSecret) {
-        throw new Error('No client_secret in payment intent');
+      if (!paymentIntent || !paymentIntent.client_secret) {
+        console.error(`[create-subscription] ❌ No client_secret found`);
+        throw new Error('Failed to get payment intent client secret');
       }
+
+      console.error(`[create-subscription] ✅ Got client_secret: ${paymentIntent.client_secret.substring(0, 20)}...`);
 
       // Return only plain data - no Stripe objects
       return res.json({
         subscriptionId: subscription.id,
-        clientSecret: clientSecret,
+        clientSecret: paymentIntent.client_secret,
       });
     } catch (error: any) {
       console.error('❌ /api/create-subscription error:', error.message);
