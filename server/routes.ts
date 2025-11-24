@@ -131,8 +131,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
-    console.error('\n🔴🔴🔴 /api/create-subscription CALLED 🔴🔴🔴\n');
-    
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -141,8 +139,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user.email) return res.status(400).json({ message: 'No user email' });
 
       const stripePriceId = process.env.STRIPE_PRICE_ID;
-      console.error('STRIPE_PRICE_ID =', stripePriceId);
-      
       if (!stripePriceId) {
         return res.status(500).json({ message: 'STRIPE_PRICE_ID not configured' });
       }
@@ -173,20 +169,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'incomplete',
       });
 
+      // Extract ONLY serializable data from Stripe objects
       const latestInvoice = subscription.latest_invoice as any;
-      const paymentIntent = latestInvoice?.payment_intent;
+      const paymentIntent = latestInvoice?.payment_intent as any;
       
-      if (!paymentIntent?.client_secret) {
+      if (!paymentIntent || typeof paymentIntent === 'string') {
+        throw new Error('Payment intent not expanded properly');
+      }
+
+      const clientSecret = paymentIntent.client_secret;
+      if (!clientSecret) {
         throw new Error('No client_secret in payment intent');
       }
 
-      console.error('✅ SUCCESS - sending clientSecret to frontend\n');
+      // Return only plain data - no Stripe objects
       return res.json({
         subscriptionId: subscription.id,
-        clientSecret: paymentIntent.client_secret,
+        clientSecret: clientSecret,
       });
     } catch (error: any) {
-      console.error('❌ ERROR:', error.message, '\n');
+      console.error('❌ /api/create-subscription error:', error.message);
       return res.status(500).json({ message: error.message || "Failed to create subscription" });
     }
   });
