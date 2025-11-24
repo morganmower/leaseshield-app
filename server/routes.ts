@@ -145,7 +145,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Reuse existing Stripe customer or create new one
-      let customerId = user.stripeCustomerId;
+      let customerId: string | null = user.stripeCustomerId;
       
       // Verify customer exists in current Stripe environment
       if (customerId) {
@@ -154,7 +154,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         } catch (error: any) {
           if (error.message?.includes('No such customer')) {
             console.error(`[create-subscription] Customer ${customerId} not found, creating new one`);
-            customerId = undefined;
+            customerId = null;
           } else {
             throw error;
           }

@@ -56,15 +56,30 @@ export default function AdminLegislativeMonitoring() {
 
   const { data: pendingBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills', { isReviewed: false }],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/legislative-bills?isReviewed=false');
+      if (!res.ok) throw new Error('Failed to fetch pending bills');
+      return res.json();
+    },
   });
 
   const { data: reviewedBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills', { isReviewed: true }],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/legislative-bills?isReviewed=true');
+      if (!res.ok) throw new Error('Failed to fetch reviewed bills');
+      return res.json();
+    },
   });
 
   // Auto-published updates (no longer pending, all auto-approved)
   const { data: publishedUpdates = [] } = useQuery<TemplateReview[]>({
     queryKey: ['/api/admin/template-review-queue', { status: 'approved' }],
+    queryFn: async () => {
+      const res = await fetch('/api/admin/template-review-queue?status=approved');
+      if (!res.ok) throw new Error('Failed to fetch published updates');
+      return res.json();
+    },
   });
 
   const runMonitoringMutation = useMutation({
