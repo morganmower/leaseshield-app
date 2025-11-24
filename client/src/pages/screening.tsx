@@ -518,39 +518,6 @@ export default function Screening() {
           )}
         </div>
 
-        {/* Western Verify CTA */}
-        <Card className="p-6 mb-8 bg-primary/5 border-primary/20">
-          <div className="flex items-start gap-4">
-            <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-              <Search className="h-6 w-6 text-primary" />
-            </div>
-            <div className="flex-1">
-              <h3 className="font-semibold text-lg text-foreground mb-2">
-                Professional Tenant Screening
-              </h3>
-              <p className="text-muted-foreground mb-4">
-                Ready to screen a tenant? We've partnered with{" "}
-                <a 
-                  href="https://www.westernverify.com" 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="text-primary hover:underline font-medium"
-                >
-                  Western Verify
-                </a>{" "}
-                to provide comprehensive, compliant tenant screening services.
-              </p>
-              <Button 
-                data-testid="button-western-verify"
-                onClick={() => window.open('https://www.westernverify.com', '_blank')}
-              >
-                Screen with Western Verify
-                <ExternalLink className="ml-2 h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </Card>
-
         {/* Credit Report Decoder */}
         <div className="mb-12">
           <div className="flex items-center gap-2 mb-6">
@@ -1204,6 +1171,54 @@ export default function Screening() {
                 Get Adverse Action Templates
               </Button>
             </Link>
+          </Card>
+        </div>
+
+        {/* Western Verify CTA - Final Call to Action */}
+        <div className="mt-12">
+          <Card className="p-8 bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border-2 border-primary/20">
+            <div className="flex flex-col md:flex-row items-start gap-6">
+              <div className="rounded-xl bg-primary/10 dark:bg-primary/20 w-16 h-16 flex items-center justify-center flex-shrink-0">
+                <Search className="h-8 w-8 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="text-xl font-display font-semibold text-foreground mb-3">
+                  Ready to Screen Your Next Tenant?
+                </h3>
+                <p className="text-muted-foreground mb-4 leading-relaxed">
+                  Now that you understand how to read screening reports and stay Fair Housing compliant, get professional tenant screening services through our partner{" "}
+                  <a 
+                    href="https://www.westernverify.com" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline font-medium"
+                  >
+                    Western Verify
+                  </a>
+                  . Comprehensive credit, criminal, and eviction reports delivered quickly and compliantly.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <Button 
+                    data-testid="button-western-verify"
+                    onClick={() => window.open('https://www.westernverify.com', '_blank')}
+                    size="lg"
+                  >
+                    <Search className="mr-2 h-5 w-5" />
+                    Screen with Western Verify
+                    <ExternalLink className="ml-2 h-4 w-4" />
+                  </Button>
+                  <Button 
+                    variant="outline"
+                    size="lg"
+                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    data-testid="button-back-to-top"
+                  >
+                    <ArrowLeft className="mr-2 h-4 w-4 rotate-90" />
+                    Back to AI Helpers
+                  </Button>
+                </div>
+              </div>
+            </div>
           </Card>
         </div>
       </div>
