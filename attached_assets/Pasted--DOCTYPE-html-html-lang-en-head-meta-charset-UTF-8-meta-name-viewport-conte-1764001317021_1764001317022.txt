@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LeaseShield Pro – Landlord Protection Toolkit ($10/mo)</title>
+  <meta name="description" content="State-specific lease templates, notices & checklists for Utah • Texas • North Dakota • South Dakota landlords. $10/mo forever for first 200 members – 7-day free trial."/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container hero-inner">
+      <div class="hero-copy">
+        <div class="badge">LeaseShield Pro • Built by Western Verify</div>
+        <h1>Protect Your Rentals<br>From $10,000+ Mistakes</h1>
+        <p class="big">
+          State-specific lease templates, notices, checklists & plain-English guides for landlords in 
+          <strong>Utah</strong>, <strong>Texas</strong>, <strong>North Dakota</strong> & <strong>South Dakota</strong>.
+        </p>
+        <div class="price">
+          <span class="price-main">$10/month</span>
+          <span class="price-sub">Locked in forever – only for the first 200 founders</span>
+        </div>
+
+        <a href="YOUR-STRIPE-CHECKOUT-LINK-HERE" class="stripe-button">
+          Start 7-Day Free Trial → $10/mo after
+        </a>
+
+        <p class="small hero-trust">
+          No setup fee • Cancel anytime • Powered by Stripe
+        </p>
+
+        <div class="mini-trust-row">
+          <span>✔ Used by independent landlords & small PMs</span>
+          <span>✔ Soft pull credit guidance</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LAWYER-SAFE DISCLAIMER -->
+  <div class="disclaimer">
+    <strong>Important:</strong> These are general templates based on current state laws. 
+    This is not legal advice. Always have your final documents reviewed by a licensed attorney.
+  </div>
+
+  <!-- PROBLEMS -->
+  <section class="section">
+    <div class="container">
+      <h2>One bad lease can cost you $10,000+ in 2025</h2>
+      <p class="section-intro">
+        Most small landlords are still using free Google templates written years ago… and hoping 
+        they hold up in court. That’s where things go sideways:
+      </p>
+      <div class="cards">
+        <div class="card">
+          <h3>New ESA / assistance-animal rules</h3>
+          <p>Leases that ignore updated fair housing guidance can put you on the wrong side of HUD complaints.</p>
+        </div>
+        <div class="card">
+          <h3>Adverse action mistakes</h3>
+          <p>Using the wrong wording in your denial letters can trigger FCRA problems and angry applicants.</p>
+        </div>
+        <div class="card">
+          <h3>$500 every time you email your lawyer</h3>
+          <p>Paying for one-off questions instead of using a consistent, attorney-vetted foundation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU GET -->
+  <section class="section light">
+    <div class="container">
+      <h2>Everything a small landlord actually needs</h2>
+      <p class="section-intro">
+        No “lawyer-speak.” Just practical tools you can use tonight on your next lease renewal.
+      </p>
+      <div class="features">
+        <div class="feature">2025 lease agreements (UT • TX • ND • SD)</div>
+        <div class="feature">Late rent, violation & eviction notices (state-specific)</div>
+        <div class="feature">Move-in/move-out checklists & condition reports</div>
+        <div class="feature">Credit report decoder (what really matters vs noise)</div>
+        <div class="feature">Only the legal updates that create real liability</div>
+        <div class="feature">Monthly live Q&A for members (recorded & archived)</div>
+      </div>
+
+      <div class="cta-block">
+        <p class="urgent">Founders-only pricing: jumps to $15/month soon.</p>
+        <a href="YOUR-STRIPE-CHECKOUT-LINK-HERE" class="stripe-button large">
+          Yes – Lock In $10/mo Forever
+        </a>
+        <p class="small">7-day free trial • No contracts • Cancel online anytime</p>
+      </div>
+    </div>
+  </section>
+
+  <!
