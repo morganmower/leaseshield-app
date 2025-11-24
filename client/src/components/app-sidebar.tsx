@@ -120,13 +120,13 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-6 border-b">
         <Link href="/dashboard">
-          <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-lg p-3 -m-3 transition-all">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <Logo iconSize={24} />
+          <div className="flex items-center gap-4 cursor-pointer hover-elevate rounded-lg p-4 -m-4 transition-all">
+            <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10">
+              <Logo iconSize={32} />
             </div>
             <div className="flex flex-col">
-              <span className="font-display text-lg font-bold">LeaseShield</span>
-              <span className="text-xs text-muted-foreground">Landlord Protection</span>
+              <span className="font-display text-2xl font-bold">LeaseShield</span>
+              <span className="text-sm text-muted-foreground">Landlord Protection</span>
             </div>
           </div>
         </Link>
