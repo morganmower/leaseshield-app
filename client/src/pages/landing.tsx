@@ -239,7 +239,7 @@ export default function Landing() {
       </header>
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-20 md:pt-16 md:pb-32 overflow-hidden">
+      <section className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden">
         {/* Gradient Background with amber/gold and blue */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -306,7 +306,7 @@ export default function Landing() {
                 </div>
               </motion.div>
               
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6">
+              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
                 <Button
                   size="lg"
                   variant="outline"
@@ -320,7 +320,7 @@ export default function Landing() {
               
               <motion.div 
                 variants={fadeInUp}
-                className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-4 gap-3 text-sm text-muted-foreground"
+                className="flex flex-col gap-2 text-sm text-muted-foreground"
               >
                 <div className="flex items-center gap-2">
                   <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
