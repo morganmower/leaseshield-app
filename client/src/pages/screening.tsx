@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,12 +19,51 @@ import {
   CheckCircle,
   XCircle,
   HelpCircle,
+  Lightbulb,
+  ArrowLeft,
 } from "lucide-react";
 import { Link } from "wouter";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function Screening() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
+  const [userQuestion, setUserQuestion] = useState('');
+  const [explanation, setExplanation] = useState('');
+
+  const handleExplain = () => {
+    const input = userQuestion.trim().toLowerCase();
+    
+    if (!input) {
+      setExplanation('Please type a word or phrase from your report first.');
+      return;
+    }
+
+    let exp = '';
+
+    if (input.includes('charge-off') || input.includes('charge off')) {
+      exp = 'A charge-off is a debt that the lender has decided it is unlikely to collect. The account may be closed, but it can still appear on your credit report and hurt your score.';
+    } else if (input.includes('collection')) {
+      exp = 'A collection is a bill that was not paid and has been sent to a collection agency. It usually means the account was seriously past due.';
+    } else if (input.includes('utilization') || input.includes('utilisation')) {
+      exp = 'Utilization is how much of your available credit you are using. For example, if you have a $1,000 limit and owe $500, your utilization is 50%. Lower utilization is generally better.';
+    } else if (input.includes('inquiry') || input.includes('inquiries') || input.includes('enquiry')) {
+      exp = 'An inquiry is a record that someone checked your credit report. For example, a bank might make an inquiry when you apply for a loan or credit card.';
+    } else if (input.includes('30 days late') || input.includes('60 days late') || input.includes('90 days late')) {
+      exp = 'This means a payment was not received by the due date and was late by that many days. More days late usually has a bigger negative impact on your credit.';
+    } else if (input.includes('delinquent') || input.includes('delinquency')) {
+      exp = 'Delinquent means a payment was missed or not made on time. A delinquent account is past due.';
+    } else if (input.includes('past due')) {
+      exp = 'Past due means the payment should have been made already but has not been paid yet.';
+    } else if (input.includes('default')) {
+      exp = 'Default means a serious failure to repay a debt as agreed, often after several missed payments.';
+    } else {
+      exp = 'This looks like a specific term from your credit report. In general, check whether it refers to: (1) a type of account (loan or card), (2) a status (paid, late, collection), or (3) a number (balance, limit, or date). If you are unsure, you may want to speak with a financial professional for personal advice.';
+    }
+
+    setExplanation(exp);
+  };
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -316,6 +355,221 @@ export default function Screening() {
               </div>
             </div>
           </Card>
+        </div>
+
+        {/* Credit Report Helper */}
+        <div className="mb-12">
+          <div className="flex items-center gap-2 mb-6">
+            <Lightbulb className="h-6 w-6 text-primary" />
+            <h2 className="text-2xl font-display font-semibold text-foreground">
+              Credit Report Helper
+            </h2>
+          </div>
+
+          <p className="text-muted-foreground mb-6">
+            Simple explanations to help you understand common credit report terms. We do not store or review your full credit report.
+          </p>
+
+          {/* Privacy Notice */}
+          <div className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm text-foreground">
+                  <strong>Privacy Notice:</strong> For your safety, please do not upload your actual credit report or type Social Security numbers, full account numbers, or exact dollar amounts.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Home Screen */}
+          {helperScreen === 'home' && (
+            <Card className="p-6">
+              <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
+              <p className="text-muted-foreground mb-6">
+                This tool is here to teach you what common credit terms mean. Choose one of the options below:
+              </p>
+              
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button 
+                  onClick={() => {
+                    setHelperScreen('learn');
+                    setExplanation('');
+                  }}
+                  className="flex-1"
+                  data-testid="button-learn-credit-report"
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Learn How to Read a Credit Report
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setHelperScreen('ask');
+                    setUserQuestion('');
+                    setExplanation('');
+                  }}
+                  variant="outline"
+                  className="flex-1"
+                  data-testid="button-ask-question"
+                >
+                  <HelpCircle className="mr-2 h-4 w-4" />
+                  Ask a Question About My Report
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Learn Screen */}
+          {helperScreen === 'learn' && (
+            <Card className="p-6">
+              <div className="mb-4">
+                <Button 
+                  onClick={() => setHelperScreen('home')}
+                  variant="ghost"
+                  size="sm"
+                  data-testid="button-back-to-home"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
+
+              <h3 className="font-semibold text-lg mb-4">Learn How to Read a Credit Report</h3>
+              <p className="text-muted-foreground mb-6">
+                Below are common parts of a credit report with explanations. This is for educational purposes only.
+              </p>
+
+              <div className="space-y-4">
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Credit Score
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    A number that summarizes how risky you are as a borrower. Higher is better. Scores range from 300-850.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <CheckCircle className="h-5 w-5 text-primary" />
+                    Payment History
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Shows if bills were paid on time or late. This is the most important factor in credit scoring.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    Collections
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Accounts that were not paid and sent to a collection agency. Major red flag for landlords.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <XCircle className="h-5 w-5 text-destructive" />
+                    Charge-off
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    A debt the lender has given up collecting, but it can still hurt your credit score significantly.
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <HelpCircle className="h-5 w-5 text-amber-600" />
+                    Utilization
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    How much of your credit limit you are using. For example, using $500 of a $1,000 limit is 50%. Lower is better (under 30% is ideal).
+                  </p>
+                </div>
+
+                <div className="bg-muted/30 p-4 rounded-lg border">
+                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
+                    <Search className="h-5 w-5 text-primary" />
+                    Inquiries
+                  </h4>
+                  <p className="text-sm text-muted-foreground">
+                    Who has checked your credit recently (for example, a bank or car dealer). Too many inquiries can indicate credit shopping.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+                <p className="text-sm text-muted-foreground">
+                  <strong className="text-foreground">Tip:</strong> When looking at your tenant's credit report, match these terms to understand what they mean and how they impact their creditworthiness.
+                </p>
+              </div>
+            </Card>
+          )}
+
+          {/* Ask Screen */}
+          {helperScreen === 'ask' && (
+            <Card className="p-6">
+              <div className="mb-4">
+                <Button 
+                  onClick={() => {
+                    setHelperScreen('home');
+                    setUserQuestion('');
+                    setExplanation('');
+                  }}
+                  variant="ghost"
+                  size="sm"
+                  data-testid="button-back-from-ask"
+                >
+                  <ArrowLeft className="mr-2 h-4 w-4" />
+                  Back
+                </Button>
+              </div>
+
+              <h3 className="font-semibold text-lg mb-4">Ask a Question About Your Report</h3>
+              
+              <div className="space-y-4">
+                <div className="text-sm text-muted-foreground space-y-2">
+                  <p>1. Look at your credit report on your screen or on paper.</p>
+                  <p>2. If you see a word or phrase you don't understand (for example: <em>"charge-off"</em>, <em>"collection account"</em>, <em>"30 days late"</em>, or <em>"utilization"</em>), type just that word or phrase in the box below.</p>
+                  <p>3. Click <strong>Get Explanation</strong>.</p>
+                </div>
+
+                <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                  <p className="text-sm text-destructive font-medium">
+                    For your safety, please do not type: Social Security numbers, full account numbers, or exact dollar amounts.
+                  </p>
+                </div>
+
+                <Textarea
+                  placeholder="Type a word or phrase from your report here..."
+                  value={userQuestion}
+                  onChange={(e) => setUserQuestion(e.target.value)}
+                  className="min-h-[120px]"
+                  data-testid="textarea-credit-question"
+                />
+
+                <Button 
+                  onClick={handleExplain}
+                  data-testid="button-get-explanation"
+                >
+                  Get Explanation
+                </Button>
+
+                {explanation && (
+                  <div className="bg-primary/5 border-l-4 border-primary p-4 rounded-lg" data-testid="container-credit-explanation">
+                    <p className="font-semibold text-foreground mb-2">Here's what that usually means:</p>
+                    <p className="text-muted-foreground mb-3" data-testid="text-credit-explanation">{explanation}</p>
+                    <p className="text-xs text-muted-foreground">
+                      This information is for general education only. It is not legal or financial advice.
+                    </p>
+                  </div>
+                )}
+              </div>
+            </Card>
+          )}
         </div>
 
         {/* Criminal & Eviction Screening */}
