@@ -386,7 +386,11 @@ export default function TenantIssues() {
               Every landlord situation is unique. These workflows provide general guidance, but
               for complex legal matters, consider consulting with an attorney in your state.
             </p>
-            <Button variant="outline" data-testid="button-contact-support">
+            <Button 
+              variant="outline" 
+              data-testid="button-contact-support"
+              onClick={() => setLocation('/contact')}
+            >
               Contact Support
             </Button>
           </div>
