@@ -1535,15 +1535,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "stateId required" });
       }
       
-      const cases = await db.query.caseLawMonitoring.findMany({
-        where: (table, { eq, and }) => and(
-          eq(table.stateId, stateId as string),
-          eq(table.isMonitored, true),
-          // Only show cases with relevance analysis (high/medium relevance)
-        ),
-        limit: 50,
-        orderBy: (table) => [table.dateFiled],
-      });
+      let cases;
+      if (stateId === 'NATIONAL') {
+        // Get all cases across all states
+        cases = await db.query.caseLawMonitoring.findMany({
+          where: (table) => eq(table.isMonitored, true),
+          limit: 100,
+          orderBy: (table) => [table.dateFiled],
+        });
+      } else {
+        // Get cases for specific state
+        cases = await db.query.caseLawMonitoring.findMany({
+          where: (table, { eq, and }) => and(
+            eq(table.stateId, stateId as string),
+            eq(table.isMonitored, true),
+          ),
+          limit: 50,
+          orderBy: (table) => [table.dateFiled],
+        });
+      }
 
       // Filter to only high/medium relevance cases for user display
       const relevantCases = cases.filter(c => c.relevanceLevel === 'high' || c.relevanceLevel === 'medium');

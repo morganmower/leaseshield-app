@@ -137,6 +137,14 @@ export default function LegalUpdatesPage() {
         {/* State Selector */}
         {states && states.length > 1 && (
           <div className="mb-8 flex flex-wrap gap-2">
+            <Button
+              variant={selectedState === "NATIONAL" ? "default" : "outline"}
+              onClick={() => setSelectedState("NATIONAL")}
+              data-testid="button-state-NATIONAL"
+              size="sm"
+            >
+              All States
+            </Button>
             {states.map((state) => (
               <Button
                 key={state.id}
