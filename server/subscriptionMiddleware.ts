@@ -17,8 +17,8 @@ export async function requireActiveSubscription(req: any, res: any, next: any) {
       return next();
     }
 
-    // Users in trial mode can access everything
-    if (user.subscriptionStatus === 'trialing') {
+    // Users in trial mode can access everything (including incomplete status with trial)
+    if (user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'incomplete') {
       const now = new Date();
       if (user.trialEndsAt && user.trialEndsAt > now) {
         return next();
