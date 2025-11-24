@@ -975,10 +975,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ...legislativeUpdates.map(b => ({ 
           ...b, 
           type: 'legislative_update',
-          title: b.billTitle,
-          summary: b.summary,
           impactLevel: b.relevanceLevel,
-          createdAt: b.createdAt
+          // Map legislative fields to legal update format
+          whyItMatters: b.aiAnalysis || 'This bill affects landlord-tenant law in your state.',
+          beforeText: b.lastAction || 'Bill pending',
+          afterText: `${b.billNumber}: ${b.title}`,
+          effectiveDate: b.lastActionDate || b.createdAt,
+          summary: b.description || b.title
         }))
       ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       
