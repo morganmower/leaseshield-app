@@ -1704,6 +1704,9 @@ export default function Landing() {
                 <li>North Dakota</li>
                 <li>South Dakota</li>
                 <li>North Carolina</li>
+                <li>Ohio</li>
+                <li>Michigan</li>
+                <li>Idaho</li>
               </ul>
             </div>
             <div>
