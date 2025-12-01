@@ -1,0 +1,29 @@
+Status of Your Fixes (From Live Content)Based on the exhaustive fetch, here's how your polishes landed—some are solid, others need a nudge for full impact:Fix
+Status
+Details from Live Site
+Recommendation (If Needed)
+Communications/Rent Ledger Visibility
+Partial (Implied, Not Explicit)
+"Property Management" subsection mentions "organize documents with units" and "track properties"—implies ledger/comms but no dedicated cards or bonus callout.
+Quick Fix: Add to features as #5–6: "Rent Ledger: Track payments/damages simply" and "Communications: Pre-written notices/messages." + Bonus badge: "Includes rent ledger & comms tools associations ignore." (Replit: Insert new <div className="feature"> in grid—2 min.)
+Association Positioning
+Missing
+Table compares Attorney/DIY/LeaseShield (costs/updates/access)—no association row.
+Quick Fix: Add row to table: "Association PDFs" (outdated, annual) vs. "LeaseShield" (real-time, monthly). Code: <tr><td>Association PDFs</td><td>Outdated annual packet</td><td style="color:green">Real-time updates</td></tr> (Replit: Insert in table—1 min.)
+"See Example →" Links
+Fixed & Functional
+Present in features ("See Example →" under "26+ Legal Templates")—opens modals with actual template content (e.g., lease previews).
+None—spot-on (+25% trust).
+States Expansion
+Partial (5 States, Not 8)
+Mentions "UT, TX, ND, SD, NC" (5 states) in features/pricing/FAQs—"5 States Covered" stat. Survey outliers (OH, MI, ID) not included.
+Quick Fix: Update to "8 states (UT, TX, ND, SD, NC, OH, MI, ID)" in features/pricing. Code: Replace "5 States" with "8 States Covered." (Replit: Search/replace—1 min.)
+Accessibility
+Missing
+No alt text mentioned on hero image or Western Verify logo (content silent on images).
+Quick Fix: Add to hero: <img alt="LeaseShield App logo" ...> and logo: <img alt="Western Verify screening partner" ...>. (Replit: Add to <img> tags—1 min.)
+SEO
+Partial (Keywords Not Visible)
+Title: "LeaseShield App – Stop $10k+ Lease Mistakes ($10/mo)" + desc/keywords include "landlord association alternative 2025"—niche rank potential high, but meta not explicitly fetched.
+Quick Fix: Ensure <meta name="keywords" content="landlord association alternative 2025, utah lease template"> in head. (Replit: Add to public/index.html—1 min.)
+
