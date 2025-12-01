@@ -144,16 +144,43 @@ export default function Compliance() {
 
                         <div 
                           data-testid={`card-details-${card.id}`} 
-                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-3`}
+                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-4`}
                         >
-                          <div>
-                            <h4 className="text-sm font-semibold text-foreground mb-1">Category</h4>
-                            <p className="text-sm text-muted-foreground">{card.category}</p>
-                          </div>
-                          <div>
-                            <h4 className="text-sm font-semibold text-foreground mb-1">Details</h4>
-                            <p className="text-sm text-muted-foreground">{card.summary}</p>
-                          </div>
+                          {/* Statutes */}
+                          {(card.content as any)?.statutes && Array.isArray((card.content as any).statutes) && (card.content as any).statutes.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Legal Authority</h4>
+                              <ul className="space-y-1">
+                                {((card.content as any).statutes as string[]).map((statute: string, idx: number) => (
+                                  <li key={idx} className="text-sm text-muted-foreground">• {statute}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Requirements */}
+                          {(card.content as any)?.requirements && Array.isArray((card.content as any).requirements) && (card.content as any).requirements.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Key Requirements</h4>
+                              <ul className="space-y-1">
+                                {((card.content as any).requirements as string[]).map((req: string, idx: number) => (
+                                  <li key={idx} className="text-sm text-muted-foreground">• {req}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          )}
+                          
+                          {/* Actionable Steps */}
+                          {(card.content as any)?.actionableSteps && Array.isArray((card.content as any).actionableSteps) && (card.content as any).actionableSteps.length > 0 && (
+                            <div>
+                              <h4 className="text-sm font-semibold text-foreground mb-2">Actionable Steps</h4>
+                              <ol className="space-y-1">
+                                {((card.content as any).actionableSteps as string[]).map((step: string, idx: number) => (
+                                  <li key={idx} className="text-sm text-muted-foreground">{idx + 1}. {step}</li>
+                                ))}
+                              </ol>
+                            </div>
+                          )}
                         </div>
                         
                         <Button 
