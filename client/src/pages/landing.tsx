@@ -567,23 +567,22 @@ export default function Landing() {
                   <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-4">
                     <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">State-Specific Templates</h3>
+                  <h3 className="font-display text-xl font-semibold mb-3">Leases & Notices</h3>
                   <p className="text-muted-foreground mb-4">
-                    Professional leases, applications, notices, and forms tailored to your state's
-                    exact requirements. Download as PDF or fill online.
+                    State-specific leases, applications, and critical notices tailored to your exact legal requirements. The most-requested templates by landlords.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Residential leases & applications</span>
+                      <span>Residential lease agreements</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>3-day, late rent & violation notices</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                       <span>Move-in/move-out checklists</span>
-                    </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>All required notices by state</span>
                     </li>
                   </ul>
                 </div>
@@ -597,23 +596,22 @@ export default function Landing() {
                   <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
                     <Shield className="h-6 w-6 text-primary" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Compliance Protection</h3>
+                  <h3 className="font-display text-xl font-semibold mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
-                    Stay ahead of changing laws with curated updates that only include what could
-                    create liability. Clear before/after comparisons included.
+                    Reduce liability with adverse action letters, legal compliance checklists, required disclosures, and monthly updates on law changes.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Impact-only legal updates</span>
+                      <span>Adverse action letter templates</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Before/after comparisons</span>
+                      <span>Monthly legal updates (impact-only)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Email alerts for your state</span>
+                      <span>"Screen legally" compliance checklist</span>
                     </li>
                   </ul>
                 </div>
@@ -627,32 +625,22 @@ export default function Landing() {
                   <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-4">
                     <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Screening Toolkit</h3>
+                  <h3 className="font-display text-xl font-semibold mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
-                    Step-by-step guidance on tenant screening, red flags to watch for, and
-                    direct access to{" "}
-                    <a 
-                      href="https://www.westernverify.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Western Verify
-                    </a>{" "}
-                    for background checks.
+                    Understand credit reports, criminal history, and eviction records. AI-powered explanations help you make fair hiring decisions with confidence.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Screening best practices</span>
+                      <span>Credit report decoder (what matters)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Red flag checklists</span>
+                      <span>Fair housing screening checklist</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Western Verify integration</span>
+                      <span>Background check guidance</span>
                     </li>
                   </ul>
                 </div>
@@ -666,23 +654,22 @@ export default function Landing() {
                   <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center mb-4">
                     <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Property Management</h3>
+                  <h3 className="font-display text-xl font-semibold mb-3">Landlord Toolkit Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
-                    Organize multiple properties, associate documents with specific units, and 
-                    keep all your rental paperwork organized in one place.
+                    Everything in one place. Leases, notices, checklists, guides, and compliance resources—organized by property for instant access.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Track unlimited properties</span>
+                      <span>Centralized document library</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Link documents to properties</span>
+                      <span>Organize by state & property</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Filter & organize by location</span>
+                      <span>Quick access to all templates</span>
                     </li>
                   </ul>
                 </div>
