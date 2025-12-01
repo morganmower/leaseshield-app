@@ -160,9 +160,6 @@ export default function TenantIssues() {
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const isPayingMember = (user?.subscriptionStatus === 'active' || user?.isAdmin === true) && !templatesError;
-  const isTrialing = user?.subscriptionStatus === 'trialing';
-
   // Fetch all templates to match workflow template names
   const { data: allTemplates, error: templatesError } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
@@ -173,6 +170,9 @@ export default function TenantIssues() {
       return response.json();
     },
   });
+
+  const isPayingMember = (user?.subscriptionStatus === 'active' || user?.isAdmin === true) && !templatesError;
+  const isTrialing = user?.subscriptionStatus === 'trialing';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {

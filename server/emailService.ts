@@ -1,5 +1,5 @@
 // Email notification service for LeaseShield App
-// In production, this would integrate with SendGrid, Postmark, or similar service
+import { Resend } from 'resend';
 
 interface EmailTemplate {
   subject: string;
@@ -15,15 +15,38 @@ interface EmailRecipient {
 
 export class EmailService {
   private async sendEmail(to: EmailRecipient, template: EmailTemplate): Promise<boolean> {
-    // In production, this would call the actual email API (SendGrid, Postmark, etc.)
-    // For MVP, we'll log the email details
-    console.log('📧 Email Service - Sending email:');
-    console.log(`  To: ${to.email} (${to.firstName} ${to.lastName})`);
-    console.log(`  Subject: ${template.subject}`);
-    console.log(`  Body Preview: ${template.textBody.substring(0, 100)}...`);
-    
-    // Simulate successful send
-    return true;
+    try {
+      // Use Resend if API key is available
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
+          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          to: to.email,
+          subject: template.subject,
+          html: template.htmlBody,
+          text: template.textBody,
+        });
+        
+        if (result.error) {
+          console.error(`❌ Failed to send email to ${to.email}:`, result.error);
+          return false;
+        }
+        
+        console.log(`✅ Email sent to ${to.email} (${template.subject})`);
+        return true;
+      } else {
+        // Fallback: just log if no API key
+        console.log('📧 Email Service - Sending email:');
+        console.log(`  To: ${to.email} (${to.firstName} ${to.lastName})`);
+        console.log(`  Subject: ${template.subject}`);
+        console.log(`  Body Preview: ${template.textBody.substring(0, 100)}...`);
+        console.log('  ⚠️  RESEND_API_KEY not set - email not actually sent');
+        return true;
+      }
+    } catch (error) {
+      console.error(`❌ Error sending email to ${to.email}:`, error);
+      return false;
+    }
   }
 
   async sendTrialReminderEmail(user: EmailRecipient, trialEndsAt: Date): Promise<boolean> {
