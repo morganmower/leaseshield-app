@@ -987,15 +987,15 @@ export default function Landing() {
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Real-Time Updates</td>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Legal Updates</td>
                       <td className="p-2 sm:p-4 text-center">
-                        <span className="text-muted-foreground text-xs sm:text-sm">Outdated PDFs</span>
+                        <span className="text-muted-foreground text-xs sm:text-sm">Assoc. PDFs (annual)</span>
                       </td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <span className="font-semibold text-success text-xs sm:text-sm">Monthly alerts</span>
                       </td>
                     </tr>
                   </tbody>
