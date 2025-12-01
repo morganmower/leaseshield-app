@@ -1361,7 +1361,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for UT, TX, ND, SD, and NC properties
+              Comprehensive landlord protection for UT, TX, ND, SD, NC, OH, MI, and ID properties
             </DialogDescription>
           </DialogHeader>
           
@@ -1398,7 +1398,7 @@ export default function Landing() {
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">5</div>
+                  <div className="text-2xl font-bold text-primary mb-1">8</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
