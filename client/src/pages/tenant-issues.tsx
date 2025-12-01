@@ -160,7 +160,7 @@ export default function TenantIssues() {
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const isPayingMember = user?.subscriptionStatus === 'active' || user?.isAdmin === true;
+  const isPayingMember = (user?.subscriptionStatus === 'active' || user?.isAdmin === true) && !templatesError;
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   // Fetch all templates to match workflow template names
@@ -314,8 +314,8 @@ export default function TenantIssues() {
           </div>
         </div>
 
-        {/* Subscription CTA if user doesn't have active subscription */}
-        {(!isPayingMember || templatesError) && (
+        {/* Subscription CTA if user doesn't have active subscription or templates error */}
+        {!isPayingMember && (
           <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -335,7 +335,7 @@ export default function TenantIssues() {
         )}
 
         {/* Workflows Grid - only shown to paying members */}
-        {isPayingMember && !templatesError && (
+        {isPayingMember && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map((workflow) => {
             const Icon = workflow.icon;
