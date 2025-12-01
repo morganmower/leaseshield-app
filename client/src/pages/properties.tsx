@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -324,25 +324,6 @@ export default function Properties() {
           <h1 className="text-4xl font-display font-bold mb-2">Properties</h1>
           <p className="text-muted-foreground">Manage your rental properties</p>
         </div>
-
-        {propertiesError && (
-          <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
-            <div className="text-center">
-              <Building2 className="h-12 w-12 text-primary mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">
-                Subscribe to receive updates
-              </h3>
-              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                Organize your properties, track documents, and access all management features
-              </p>
-              <Link to="/subscribe">
-                <Button size="lg" data-testid="button-subscribe-properties">
-                  Subscribe Now
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        )}
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <Input

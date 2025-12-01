@@ -314,8 +314,8 @@ export default function TenantIssues() {
           </div>
         </div>
 
-        {/* Subscription CTA if templates fail to load */}
-        {templatesError && (
+        {/* Subscription CTA if user doesn't have active subscription */}
+        {!isPayingMember && (
           <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -334,7 +334,8 @@ export default function TenantIssues() {
           </Card>
         )}
 
-        {/* Workflows Grid */}
+        {/* Workflows Grid - only shown to paying members */}
+        {isPayingMember && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map((workflow) => {
             const Icon = workflow.icon;
@@ -395,6 +396,7 @@ export default function TenantIssues() {
             );
           })}
         </div>
+        )}
 
         {/* Help Section */}
         <Card className="mt-12 p-8 bg-muted/30">
