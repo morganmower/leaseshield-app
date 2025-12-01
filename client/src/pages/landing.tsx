@@ -259,19 +259,6 @@ export default function Landing() {
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <motion.div
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="text-center mb-6 sm:mb-8"
-          >
-            <img 
-              src={westernVerifyLogo} 
-              alt="Western Verify - Partner" 
-              className="h-8 sm:h-10 mx-auto"
-              data-testid="img-western-verify-hero"
-            />
-          </motion.div>
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <motion.div
               initial="hidden"
