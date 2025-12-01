@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform ($12/month with 7-day free trial) designed for small and midsize landlords. Its primary purpose is to provide state-specific legal templates, compliance guidance, and tenant screening resources. The platform aims to be a "protective mentor," helping landlords safeguard their investments while ensuring compliance with legal regulations. Initial launch states include Utah, Texas, North Dakota, and South Dakota.
+LeaseShield App is a subscription-based SaaS platform for small and midsize landlords, providing state-specific legal templates, compliance guidance, and tenant screening resources. It aims to act as a "protective mentor," safeguarding investments and ensuring legal compliance. The platform currently supports Utah, Texas, North Dakota, South Dakota, and North Carolina.
 
 ## User Preferences
 Not specified.
@@ -9,76 +9,44 @@ Not specified.
 ## System Architecture
 
 ### UI/UX Decisions
-- **Color Scheme**: Primary blue (#2563eb) for trust, secondary slate gray (#475569) for stability, light gray background (#f8fafc).
-- **Typography**: Space Grotesk (headings), Inter (body) for a professional and readable aesthetic.
-- **Component Patterns**: Utilizes cards with subtle shadows, before/after comparison layouts, badge-based categorization, and icon-first navigation.
-- **Messaging**: "Protective mentor" tone integrated throughout the user experience.
+The platform utilizes a primary blue (#2563eb) and secondary slate gray (#475569) color scheme with a light gray background. Typography uses Space Grotesk for headings and Inter for body text. Common UI patterns include cards with subtle shadows, before/after comparison layouts, badge-based categorization, and icon-first navigation. The user experience maintains a "protective mentor" tone.
 
 ### Technical Implementations
-- **Frontend**: React, TypeScript, TanStack Query, Wouter for routing, and Shadcn UI components.
-- **Backend**: Express.js server, PostgreSQL (via Neon) database, Drizzle ORM.
-- **Authentication**: Replit Auth with session management.
-- **Payments**: Stripe Subscriptions for payment processing, integrated with webhooks for subscription lifecycle management.
-- **Document Assembly Wizard**: Interactive multi-step forms with smart field validation, real-time validation, server-side PDF generation using Puppeteer, and comprehensive HTML escaping for security. PDFs feature professional attorney-quality styling including: professional letterhead header ("LEASESHIELD LEGAL DOCUMENTS"), Times New Roman typography with 1.8 line-height, enhanced 1-inch margins, formal signature blocks with bordered sections and "IN WITNESS WHEREOF" legal language, version info display, and comprehensive professional formatting that makes all documents appear as attorney-prepared legal documents.
-- **Legislative Monitoring**: Fully automated end-to-end system with monthly cron job integration via LegiScan API. Workflow: (1) LegiScan monitors state bills for UT, TX, ND, SD → (2) AI analyzes bills using GPT-4 to determine relevance and affected templates → (3) Auto-publishes template updates with versioning → (4) Users notified immediately via email → (5) Admin can review history optionally. Includes manual trigger button for testing. Protected cron endpoint (`/api/cron/legislative-monitoring`) with secret key verification.
-- **Template Review & Publishing**: Atomic auto-publishing system ensures template updates are transactional. Includes: versioning with auto-incrementing version numbers, complete history tracking, automatic approval and publishing, legislative bill flagging, and immediate user notifications via Resend. Updates are published automatically when AI detects relevant legislation, with full audit trail available to admin.
-- **Email Notifications**: Integration with a professional email service (e.g., Resend) for legal update and template update notifications.
+- **Frontend**: Built with React, TypeScript, TanStack Query, Wouter for routing, and Shadcn UI components.
+- **Backend**: An Express.js server connected to a PostgreSQL database (via Neon) using Drizzle ORM.
+- **Authentication**: Managed via Replit Auth with session handling.
+- **Payments**: Stripe Subscriptions are integrated for payment processing, with webhooks managing subscription lifecycle events.
+- **Document Assembly Wizard**: Features interactive multi-step forms with real-time validation, server-side PDF generation using Puppeteer, and robust HTML escaping. Generated PDFs have a professional, attorney-quality appearance with specific styling (letterhead, Times New Roman, enhanced margins, formal signature blocks).
+- **Legislative Monitoring**: An automated system with monthly cron jobs (LegiScan API) tracks state bills. AI (GPT-4) analyzes relevance, auto-publishes template updates with versioning, and notifies users via email.
+- **Template Review & Publishing**: An atomic auto-publishing system ensures transactional updates with versioning, history tracking, automatic approval, legislative bill flagging, and immediate user notifications via Resend.
+- **Email Notifications**: Integrated with a professional email service (e.g., Resend) for legal and template update notifications.
+- **AI Screening Helpers**: Two AI-powered tools (GPT-4o-mini) assist with credit report analysis and criminal/eviction screening, emphasizing Fair Housing compliance. They include "Learn" and "Ask" modes, structured AI responses, and privacy protections for sensitive data.
+- **AI Chat Assistant**: An integrated AI-powered chat widget (GPT-4o-mini via OpenAI) provides instant help with landlord-tenant law questions, platform features, and compliance guidance across all authenticated pages and the landing page.
+- **Multi-Property Management**: Allows CRUD operations for properties, associating documents, and filtering.
+- **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming, optional property association, and metadata.
 
 ### Feature Specifications
-- **Subscription Management**: 7-day free trial, $12/month subscription, Stripe Elements integration, webhook-driven lifecycle, and trial countdowns.
-- **Template Library**: State-specific legal documents categorized by use case and downloadable as PDF/DOCX.
-- **Compliance Cards**: State-specific before/after guidance with explanations and actionable next steps. Cards can optionally link to related templates via relatedTemplateId field, allowing users to navigate directly from compliance requirements to relevant document templates.
-- **Screening Toolkit**: Guides for credit reports, background checks, Fair Housing compliance, and CTAs for Western Verify integration. Features two AI-powered helpers positioned as hero sections:
-  - **AI Credit Report Helper**: Positioned prominently at top of screening page. Includes two modes: (1) Learn mode - educational content explaining common credit terms (credit score, payment history, collections, charge-offs, utilization, inquiries), (2) Ask mode - AI-powered interactive Q&A where users type credit report terms and receive structured GPT-4o-mini generated explanations tailored for landlords. AI responses are structured with three sections: "What it means" (plain-English explanation), "What to watch for" (warning signs and red flags), and "Questions to ask" (2-3 specific questions to ask applicants). Privacy-focused design with automatic server-side blocking of SSNs (pattern ###-##-####), account numbers (8+ digits), dollar amounts, and sensitive information.
-  - **AI Criminal & Eviction Screening Helper**: Positioned as second hero section. EMPHASIZES Fair Housing compliance to prevent discrimination and blanket bans. Includes two modes: (1) Learn mode - educational content emphasizing Fair Housing laws (critical prohibition of blanket bans, disparate impact, consistent criteria, individualized assessment), felony/misdemeanor distinctions, eviction record considerations, 7-year rules, and state restrictions, (2) Ask mode - AI-powered Q&A with GPT-4o-mini providing structured Fair Housing-compliant guidance for criminal/eviction screening terms. System prompt MANDATES Fair Housing emphasis in every response, warning against discriminatory practices and blanket bans. Enhanced privacy protections block names (2+ word patterns), case/docket numbers, and sensitive identifiers. AI responses structured with three mandatory sections emphasizing legal compliance, respectful language, and consistent screening criteria. Both helpers share rate limiting (10 requests per minute), educational disclaimers, hero gradient styling, and full dark mode support.
+- **Subscription Management**: Offers a 7-day free trial and a $10/month subscription model, powered by Stripe Elements and webhooks.
+- **Template Library**: Provides state-specific legal documents categorized by use case, available for download as PDF/DOCX.
+- **Compliance Cards**: Offers state-specific "before/after" guidance, explanations, and actionable steps, with optional links to related templates.
+- **Screening Toolkit**: Guides for credit reports, background checks, and Fair Housing, with CTAs for Western Verify integration and AI-powered helpers.
 - **Tenant Issue Workflows**: Step-by-step resolution guides with state-specific procedures and document templates.
-- **User Preferences**: Users can set their preferred state to filter content and personalize their experience.
-- **Multi-Property Management**: Complete property portfolio management system with CRUD operations (create, read, update, delete properties). Properties include name, address, city, state, zip code, units, property type, and notes. Document Wizard includes optional property selector for associating documents with properties. My Documents page includes property filter for organizing documents by property. Properties accessible via sidebar navigation. Each property card includes an "Upload" button for convenient document uploading directly from the property context.
-- **Document Upload System**: Secure file upload functionality available in two locations: (1) My Documents page with optional property selection, and (2) Properties page where uploads are automatically associated with the specific property. Users can upload their own lease documents (PDF, DOC, DOCX up to 20MB). Features include: custom document naming (users can name documents whatever they want), optional property association (pre-selected when uploading from Properties), optional description field, separate display sections for generated vs uploaded documents, download and delete functionality, and property-based filtering. Files stored securely outside public directory with authenticated download endpoints.
-- **AI Chat Assistant**: Integrated AI-powered chat widget available on all authenticated pages (dashboard, templates, properties, etc.) and the landing page. Powered by GPT-4o-mini via OpenAI integration. The LeaseShield Assistant provides instant help with landlord-tenant law questions (for UT, TX, ND, SD), explains platform features, and guides users through compliance requirements. Includes rate limiting (10 messages per minute), educational disclaimers, typing indicators, and error handling. Appears as a floating button in the bottom-right corner with expandable chat interface.
+- **User Preferences**: Users can set their preferred state for personalized content filtering.
+- **Admin Legislative Monitoring UI**: A dedicated admin page manages published updates, pending bills with AI analysis, and historical data.
+- **Admin Resource Management**: CRUD operations for all platform content (Templates, Compliance Cards, Legal Updates) directly via the UI.
 
 ### System Design Choices
 - **Deployment**: Automated deployments via Replit on push.
-- **Database Schema**: Comprehensive schema including users, states, templates, compliance cards (with optional relatedTemplateId linking to templates), legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties (with property portfolio management), savedDocuments (with propertyId linking to properties), and uploadedDocuments (user-uploaded files with custom naming, property association, and metadata).
-- **API Endpoints**: Structured API for authentication, user management, subscriptions, templates, compliance, legal updates, legislative monitoring (admin-only: bills list, review queue, approve/reject, manual trigger), template review (versioning & publishing), notifications, analytics, and states. Cron endpoint for scheduled monitoring runs.
-- **Admin Legislative Monitoring UI**: Dedicated admin page (`/admin/legislative-monitoring`) with three tabs: (1) Published Updates - shows auto-published template updates with bill context and recommended changes for audit trail, (2) Pending Bills - displays unreviewed bills with AI analysis and affected templates, (3) History - tracks all published updates and reviewed bills. Includes manual "Run Monitoring Now" button for testing. All template updates are automatically published without requiring manual approval.
-- **Admin Resource Management**: All admin management pages (Templates, Compliance Cards, Legal Updates) now have complete CRUD operations with edit and delete functionality, allowing admins to manage all platform content directly through the UI.
+- **Database Schema**: Comprehensive schema covering users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties, savedDocuments, and uploadedDocuments.
+- **API Endpoints**: Structured API for all core functionalities including authentication, user management, subscriptions, content, legislative monitoring, and administrative tasks.
 
 ## External Dependencies
-- **PostgreSQL (Neon)**: Relational database for all application data.
-- **Stripe**: Payment gateway for subscription management, including Stripe Elements for UI and webhooks for server-side updates.
-- **Replit Auth**: Authentication service for user login and session management.
-- **LegiScan API**: Third-party service for legislative tracking and monitoring. Requires LEGISCAN_API_KEY environment variable.
-- **GPT-4 (OpenAI API via Replit AI Integration)**: Used for AI-powered relevance analysis of legislative bills. Uses AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL environment variables.
-- **Puppeteer**: Used for server-side PDF generation from HTML templates.
-- **Western Verify LLC**: Integrated via Call-To-Actions (CTAs) within the screening toolkit for tenant screening services.
-- **Resend**: Email service for sending user notifications.
-
-## Automated Monthly Legislative Monitoring Setup
-
-### Using Replit Scheduled Deployments (Recommended)
-1. **Set Environment Variables:**
-   - Add `CRON_SECRET` to your Repl secrets (a secure random string)
-   - The `REPLIT_DOMAINS` variable is automatically set by Replit
-
-2. **Create Scheduled Deployment:**
-   - Click the "Publish" button in your Replit workspace
-   - Select "Scheduled" deployment type
-   - Configure the schedule:
-     - **Schedule:** `0 2 1 * *` (2:00 AM UTC on the 1st of every month)
-     - **Run command:** `tsx cron-legislative-monitoring.ts`
-     - **Timeout:** 5 minutes (should complete in under 2 minutes typically)
-   - Click "Deploy"
-
-3. **Verify Setup:**
-   - The scheduled deployment will run monthly automatically
-   - Check the deployment logs in the "Publish" panel to see execution results
-   - Alternatively, use admin UI "Run Monitoring Now" button for manual triggers anytime
-
-### Alternative: External Cron Service
-If not using Replit's scheduled deployments:
-1. Set `CRON_SECRET` environment variable to a secure random string
-2. Configure external cron service (e.g., cron-job.org, EasyCron) to POST to: `https://your-domain.com/api/cron/legislative-monitoring`
-3. Add header: `X-Cron-Secret: <your-cron-secret>`
-4. Schedule: Monthly (recommended: 1st of each month at 2:00 AM UTC)
-```
+- **PostgreSQL (Neon)**: Main relational database.
+- **Stripe**: Payment gateway for subscriptions.
+- **Replit Auth**: User authentication service.
+- **LegiScan API**: Legislative tracking and monitoring.
+- **CourtListener API**: Court case and legal precedent tracking.
+- **GPT-4 (OpenAI API via Replit AI Integration)**: Powers AI analysis for legislative bills.
+- **Puppeteer**: Used for server-side PDF generation.
+- **Western Verify LLC**: Integrated via CTAs for tenant screening services.
+- **Resend**: Email service for user notifications.
