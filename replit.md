@@ -145,6 +145,13 @@ grep -r "const.*STATES" client/src/pages --include="*.tsx"
 grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 ```
 
+### Step 11: Legal Updates Pages (DYNAMIC - NO MANUAL CHANGES NEEDED)
+**Files**: `client/src/pages/legal-updates.tsx` and `client/src/pages/admin-legal-updates.tsx`
+- These pages fetch states dynamically from `/api/states` endpoint
+- They automatically display all states from the database
+- **NO manual state selector updates required** - they will show the new state automatically after database seeding
+- Verify: After adding state to database seed, these pages should show the new state without any code changes
+
 ### Verification Checklist
 - [ ] State appears in database seed
 - [ ] State badge displays correct name
@@ -159,24 +166,28 @@ grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 - [ ] Templates page has state in dropdown
 - [ ] Properties page has state in dropdown
 - [ ] Admin pages show state
+- [ ] Legal Updates page shows state (dynamic, verify data populates)
+- [ ] Admin Legal Updates page shows state (dynamic, verify data populates)
 - [ ] Document wizard (if applicable) shows state
 - [ ] Workflow restarted and no errors
 - [ ] Tested: Select new state and verify content appears
 
 ### Quick Reference: Files Summary
-| File | Change Type | Location |
-|------|------------|----------|
-| server/seed.ts | Array | STATES array |
-| client/src/components/state-badge.tsx | Switch case | State cases |
-| server/legislativeMonitoring.ts | Array | MONITORED_STATES |
-| server/courtListenerService.ts | Mappings | Court mappings |
-| server/routes.ts | String | AI system prompts |
-| client/src/pages/compliance.tsx | Tabs + Grid | TabsList + TabsTrigger + map array |
-| client/src/pages/landing.tsx | Text + Count | State references + stat numbers |
-| client/src/pages/dashboard.tsx | Description | Template card text |
-| client/src/pages/help-center.tsx | FAQ text | FAQ answer strings |
-| client/src/pages/settings.tsx | SelectItem | Preferences selector |
-| client/src/pages/templates.tsx | SelectItem | State filter selector |
-| client/src/pages/properties.tsx | Constant | US_STATES array |
-| client/src/pages/admin-templates.tsx | Check | Verify (usually dynamic) |
-| client/src/pages/document-wizard.tsx | Check | Verify (if applicable) |
+| File | Change Type | Location | Notes |
+|------|------------|----------|-------|
+| server/seed.ts | Array | STATES array | Creates state in database |
+| client/src/components/state-badge.tsx | Switch case | State cases | Display state name |
+| server/legislativeMonitoring.ts | Array | MONITORED_STATES | Bill tracking |
+| server/courtListenerService.ts | Mappings | Court mappings | Case law tracking |
+| server/routes.ts | String | AI system prompts | AI chat context |
+| client/src/pages/compliance.tsx | Tabs + Grid | TabsList + TabsTrigger + map array | Compliance tabs |
+| client/src/pages/landing.tsx | Text + Count | State references + stat numbers | Marketing content |
+| client/src/pages/dashboard.tsx | Description | Template card text | Dashboard copy |
+| client/src/pages/help-center.tsx | FAQ text | FAQ answer strings | FAQ responses |
+| client/src/pages/settings.tsx | SelectItem | Preferences selector | State preference dropdown |
+| client/src/pages/templates.tsx | SelectItem | State filter selector | Template filter dropdown |
+| client/src/pages/properties.tsx | Constant | US_STATES array | Property creation dropdown |
+| client/src/pages/admin-templates.tsx | Check | Verify (usually dynamic) | Fetches from API |
+| client/src/pages/legal-updates.tsx | Check | Fetches from `/api/states` | Dynamic - no manual changes |
+| client/src/pages/admin-legal-updates.tsx | Check | Fetches from `/api/states` | Dynamic - no manual changes |
+| client/src/pages/document-wizard.tsx | Check | Verify (if applicable) | If state selector exists |
