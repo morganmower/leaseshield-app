@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports Utah, Texas, North Dakota, South Dakota, and North Carolina.
+LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports 6 states: Utah, Texas, North Dakota, South Dakota, North Carolina, and Ohio.
 
 ## User Preferences
 Not specified.
@@ -52,3 +52,80 @@ The platform uses a blue and slate gray color scheme with a light gray backgroun
 - **Puppeteer**: Server-side PDF generation.
 - **Western Verify LLC**: Tenant screening services (via CTAs).
 - **Resend**: Email notifications.
+
+## Vault: Step-by-Step Process for Adding a New State
+
+This is the documented process for adding a new state to LeaseShield. Follow these steps in order to ensure complete and consistent implementation.
+
+### Step 1: Research State Requirements
+- Search for state's landlord-tenant laws, statute codes, security deposit requirements, eviction procedures
+- Document statute citations (e.g., "Ohio Rev. Code § 5321.16")
+- Identify required disclosures (lead-based paint, military rights, landlord contact info, etc.)
+- Note state-specific procedures (notice periods, eviction timelines, interest requirements)
+
+### Step 2: Create 4 Compliance Cards (SQL insert into `compliance_cards` table)
+Each compliance card should include:
+- **title**: Card name (e.g., "Required Lease Disclosures")
+- **summary**: Brief description
+- **category**: One of: disclosures, deposits, evictions, fair_housing
+- **content**: JSONB field with structure:
+  ```json
+  {
+    "statutes": ["Statute Code § 123", "Another § Code"],
+    "requirements": ["Requirement 1", "Requirement 2"],
+    "actionableSteps": ["Step 1", "Step 2"]
+  }
+  ```
+- **sort_order**: 1-4 (determines display order)
+- **is_active**: true
+
+### Step 3: Create 7 Templates (SQL insert into `templates` table)
+Create all 7 template types aligned with compliance card requirements:
+1. Residential Lease Agreement (category: leasing, template_type: lease)
+2. Month-to-Month Rental Agreement (category: leasing, template_type: lease)
+3. Rental Application (category: screening, template_type: application)
+4. Move-In Checklist (category: move_in_out, template_type: move_in_checklist)
+5. Three-Day Notice to Pay or Quit (category: notices, template_type: eviction_notice)
+6. Thirty-Day Notice for Lease Violation (category: notices, template_type: lease_violation_notice)
+7. Eviction Summons and Complaint (category: notices, template_type: eviction_notice)
+
+Each template includes:
+- **fillable_form_data**: JSONB with form fields including state-required disclosures and fields
+- **state_id**: The state code (e.g., "OH")
+- **version**: 1
+- **is_active**: true
+
+### Step 4: Add 2-3 Legal Updates (SQL insert into `legal_updates` table)
+Create recent/relevant legal updates for the state:
+- **title**: Update name
+- **summary**: Brief description
+- **why_it_matters**: Impact on landlords
+- **before_text**: Previous requirement/practice
+- **after_text**: Current requirement/practice
+- **effective_date**: When update took effect (format: 'YYYY-MM-DD'::timestamp)
+- **impact_level**: high/medium/low
+- **is_active**: true
+
+### Step 5: Update UI State Selectors (Frontend code)
+Update the following files to include new state in dropdowns/tabs:
+- **client/src/components/state-badge.tsx**: Add state code to `STATE_NAMES` object
+- **client/src/pages/compliance.tsx**: 
+  - Add state to TabsList grid (update grid-cols-5 to grid-cols-6, etc.)
+  - Add TabsTrigger for new state
+  - Add state to map array ["UT", "TX", "ND", "SD", "NC", "OH", ...]
+- **client/src/pages/settings.tsx**: Add SelectItem for state in preferred state selector
+- **client/src/pages/templates.tsx**: Add SelectItem for state in template filter
+- **client/src/pages/properties.tsx**: Add state to US_STATES array
+
+### Step 6: Restart Application
+- Use `restart_workflow` on "Start application" workflow to reload server and hot-compile frontend changes
+
+### Template-Compliance Alignment Requirement
+**CRITICAL**: All template form fields must align with compliance card requirements. For example:
+- If compliance card requires "lead-based paint disclosure for pre-1978 properties", template must have a checkbox field for this
+- If compliance card requires "landlord/agent contact info", template must have form fields for landlord name, address, phone, email
+- If compliance card requires specific notice periods (e.g., 30 days), template must include this in form field descriptions
+
+### State Count
+- **Current supported states**: 6 (UT, TX, ND, SD, NC, OH)
+- **Expected per state**: 4 compliance cards, 7 templates, 2-3 legal updates
