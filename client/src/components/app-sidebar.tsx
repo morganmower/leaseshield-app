@@ -13,6 +13,7 @@ import {
   FolderOpen,
   Building2,
   MessageCircle,
+  DollarSign,
 } from "lucide-react";
 import {
   Sidebar,
@@ -84,6 +85,11 @@ const mainItems = [
     title: "Communications",
     url: "/communications",
     icon: MessageCircle,
+  },
+  {
+    title: "Rent Ledger",
+    url: "/rent-ledger",
+    icon: DollarSign,
   },
 ];
 

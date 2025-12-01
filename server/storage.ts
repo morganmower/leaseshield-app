@@ -18,6 +18,7 @@ import {
   savedDocuments,
   uploadedDocuments,
   communicationTemplates,
+  rentLedgerEntries,
   type User,
   type UpsertUser,
   type Template,
@@ -56,6 +57,8 @@ import {
   type InsertUploadedDocument,
   type CommunicationTemplate,
   type InsertCommunicationTemplate,
+  type RentLedgerEntry,
+  type InsertRentLedgerEntry,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -211,6 +214,13 @@ export interface IStorage {
   getCommunicationTemplatesByState(stateId: string): Promise<CommunicationTemplate[]>;
   getAllCommunicationTemplates(): Promise<CommunicationTemplate[]>;
   createCommunicationTemplate(template: InsertCommunicationTemplate): Promise<CommunicationTemplate>;
+
+  // Rent ledger operations
+  getRentLedgerEntries(userId: string): Promise<RentLedgerEntry[]>;
+  getRentLedgerEntriesByProperty(propertyId: string, userId: string): Promise<RentLedgerEntry[]>;
+  createRentLedgerEntry(entry: InsertRentLedgerEntry): Promise<RentLedgerEntry>;
+  updateRentLedgerEntry(id: string, userId: string, data: Partial<InsertRentLedgerEntry>): Promise<RentLedgerEntry | null>;
+  deleteRentLedgerEntry(id: string, userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1094,6 +1104,48 @@ export class DatabaseStorage implements IStorage {
       .values(template)
       .returning();
     return newTemplate;
+  }
+
+  // Rent ledger operations
+  async getRentLedgerEntries(userId: string): Promise<RentLedgerEntry[]> {
+    return await db
+      .select()
+      .from(rentLedgerEntries)
+      .where(eq(rentLedgerEntries.userId, userId))
+      .orderBy(desc(rentLedgerEntries.month));
+  }
+
+  async getRentLedgerEntriesByProperty(propertyId: string, userId: string): Promise<RentLedgerEntry[]> {
+    return await db
+      .select()
+      .from(rentLedgerEntries)
+      .where(and(eq(rentLedgerEntries.propertyId, propertyId), eq(rentLedgerEntries.userId, userId)))
+      .orderBy(desc(rentLedgerEntries.month));
+  }
+
+  async createRentLedgerEntry(entry: InsertRentLedgerEntry): Promise<RentLedgerEntry> {
+    const [newEntry] = await db
+      .insert(rentLedgerEntries)
+      .values(entry)
+      .returning();
+    return newEntry;
+  }
+
+  async updateRentLedgerEntry(id: string, userId: string, data: Partial<InsertRentLedgerEntry>): Promise<RentLedgerEntry | null> {
+    const [updated] = await db
+      .update(rentLedgerEntries)
+      .set({ ...data, updatedAt: new Date() })
+      .where(and(eq(rentLedgerEntries.id, id), eq(rentLedgerEntries.userId, userId)))
+      .returning();
+    return updated || null;
+  }
+
+  async deleteRentLedgerEntry(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(rentLedgerEntries)
+      .where(and(eq(rentLedgerEntries.id, id), eq(rentLedgerEntries.userId, userId)))
+      .returning();
+    return result.length > 0;
   }
 }
 

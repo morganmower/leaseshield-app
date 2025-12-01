@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireActiveSubscription } from "./subscriptionMiddleware";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
@@ -1023,6 +1023,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating communication template:", error);
       res.status(500).json({ message: "Failed to create template" });
+    }
+  });
+
+  // Rent Ledger routes
+  app.get('/api/rent-ledger', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+      const entries = await storage.getRentLedgerEntries(userId);
+      res.json(entries);
+    } catch (error) {
+      console.error("Error fetching rent ledger:", error);
+      res.status(500).json({ message: "Failed to fetch entries" });
+    }
+  });
+
+  app.post('/api/rent-ledger', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const validated = insertRentLedgerEntrySchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const entry = await storage.createRentLedgerEntry(validated);
+      res.json(entry);
+    } catch (error) {
+      console.error("Error creating rent ledger entry:", error);
+      res.status(500).json({ message: "Failed to create entry" });
+    }
+  });
+
+  app.delete('/api/rent-ledger/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const deleted = await storage.deleteRentLedgerEntry(req.params.id, userId);
+      if (!deleted) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting rent ledger entry:", error);
+      res.status(500).json({ message: "Failed to delete entry" });
     }
   });
 

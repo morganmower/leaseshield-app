@@ -627,3 +627,37 @@ export const insertCommunicationTemplateSchema = createInsertSchema(communicatio
 });
 export type InsertCommunicationTemplate = z.infer<typeof insertCommunicationTemplateSchema>;
 export type CommunicationTemplate = typeof communicationTemplates.$inferSelect;
+
+// Rent Ledger - track monthly rent payments (Slow path)
+export const rentLedgerEntries = pgTable("rent_ledger_entries", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  propertyId: varchar("property_id").references(() => properties.id),
+  tenantName: text("tenant_name").notNull(),
+  month: varchar("month", { length: 7 }).notNull(), // YYYY-MM format
+  amountExpected: integer("amount_expected").notNull(), // in cents
+  amountReceived: integer("amount_received").default(0), // in cents
+  paymentDate: timestamp("payment_date"), // when payment was received
+  notes: text("notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentLedgerEntriesRelations = relations(rentLedgerEntries, ({ one }) => ({
+  user: one(users, {
+    fields: [rentLedgerEntries.userId],
+    references: [users.id],
+  }),
+  property: one(properties, {
+    fields: [rentLedgerEntries.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const insertRentLedgerEntrySchema = createInsertSchema(rentLedgerEntries).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentLedgerEntry = z.infer<typeof insertRentLedgerEntrySchema>;
+export type RentLedgerEntry = typeof rentLedgerEntries.$inferSelect;
