@@ -1,0 +1,76 @@
+You are assisting with the LeaseShield Pro marketing, NOT with modifying application code.
+
+Do NOT change any files, code, backend logic, Stripe integration, routing, database structure, or components.
+
+INSTRUCTIONS:
+Your only job is to analyze the following data and produce:
+1. Follow-up email templates.
+2. Updated homepage hero copy (text only).
+3. A build-priority list (high-level, not code).
+4. Pricing & messaging recommendations.
+5. A LinkedIn post.
+
+Again: DO NOT modify any code. DO NOT generate pull requests. Only output text content.
+
+--- START ANALYSIS DATA ---
+
+You are helping me launch and optimize LeaseShield Pro – a $10/mo landlord protection toolkit for small-to-mid-size landlords in Utah, Texas, North Dakota & South Dakota.
+
+Current status (as of Dec 1, 2025):
+• Website is live at www.leaseshieldapp.com (Replit + custom domain)
+• Stripe checkout is fully integrated and working (7-day free trial → $10/mo forever founders pricing)
+• 100% lawyer-safe disclaimers in place (no “attorney-vetted” claims)
+• MVP focus: state-specific leases, notices, checklists, credit report decoder, curated legal updates, monthly live Q&A
+
+I just ran a short survey to my tenant-screening clients + LinkedIn audience.
+Here is the raw data I have so far (2 responses, but very high intent):
+
+Survey questions & answers:
+1. First name / Email → captured for follow-up
+2. Units owned
+   • John: 1–5 units
+   • Jane: 6–20 units
+   → Average ~8 units (perfect mom-and-pop target)
+
+3. States
+   • John: Utah
+   • Jane: Texas
+   → 50/50 UT/TX so far
+
+4. Feature ranking (drag-to-rank) – top choices:
+   • #1 = Late rent / violation / eviction notices
+   • #2 = 2025 state-specific lease agreements
+   • #3 = Credit report decoder
+   • Comment from Jane: “Love the credit decoder”
+
+5. Max they’d happily pay monthly
+   • John: $6–$10
+   • Jane: $11–$15
+   → $10/mo is the sweet spot
+
+6. Likelihood to sign up in next 30 days (1–10)
+   • John: 8/10
+   • Jane: 9/10
+   → Average 8.5/10 = extremely hot leads
+
+7. Open comments
+   • Jane: “Love the credit decoder”
+   • John: none
+
+My goals right now:
+• Turn these survey responses (and the next 20–50) into immediate paid subscribers
+• Decide exact feature build order for MVP launch
+• Optimize the website copy and pricing messaging based on real feedback
+• Create follow-up emails / LinkedIn posts to get more responses + conversions
+
+Please give me:
+1. Exact follow-up email templates for the current respondents (John & Jane) to convert them today
+2. Updated homepage hero copy that highlights the top 3 validated features (notices, leases, credit decoder)
+3. Suggested build priority for the next 7–10 days
+4. Any pricing or site tweaks based on the data
+5. A short LinkedIn post to get 20+ more survey responses fast
+
+--- END ANALYSIS DATA ---
+
+AGAIN: Produce ONLY text-based marketing outputs. 
+Do NOT modify or propose code changes. 
