@@ -940,7 +940,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Legal updates routes
-  app.get('/api/legal-updates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/legal-updates', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const { stateId } = req.query;
       if (!stateId) {
@@ -994,7 +994,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/legal-updates/recent', isAuthenticated, async (req: any, res) => {
+  app.get('/api/legal-updates/recent', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const updates = await storage.getRecentLegalUpdates(5);
       res.json(updates);
