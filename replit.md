@@ -106,6 +106,37 @@ Create recent/relevant legal updates for the state:
 - **impact_level**: high/medium/low
 - **is_active**: true
 
+### Step 4.5: AI Screening Helpers (Automatic - No Additional Setup Required)
+All new states automatically receive AI screening helper access at no additional configuration cost. These are federal/universal tools:
+
+**AI Credit Report Helper**
+- Explains credit report terminology using GPT-4o-mini
+- Emphasizes Fair Housing Act compliance
+- Provides "Learn" mode with credit basics and "Ask" mode for specific questions
+- File: `client/src/pages/screening.tsx` (API endpoint: `/api/explain-credit-term`)
+- Privacy: Blocks SSNs and account numbers automatically
+- Rate limited to prevent abuse
+
+**AI Criminal & Eviction Helper**
+- Explains criminal records and eviction terminology using GPT-4o-mini
+- Emphasizes Fair Housing compliance and avoiding discrimination
+- Provides "Learn" mode with criminal/eviction basics and "Ask" mode for specific questions
+- File: `client/src/pages/screening.tsx` (API endpoint: `/api/explain-criminal-eviction-term`)
+- Privacy: Blocks SSNs and sensitive identifiers automatically
+- Rate limited to prevent abuse
+
+**Why No State Configuration Needed:**
+- Fair Housing Act is federal law (applies uniformly to all states)
+- Credit screening rules (FCRA) are federal (applies uniformly)
+- These helpers teach terminology, not state-specific procedures
+- State-specific screening guidance is provided via Compliance Cards, Templates, and Legal Updates
+
+**Backend Implementation:**
+- Server routes: `server/routes.ts` (POST `/api/explain-credit-term`, POST `/api/explain-criminal-eviction-term`)
+- Both endpoints use OpenAI integration for AI explanations
+- Rate limiter: 60 requests per 60 seconds per IP address (shared with chat)
+- Privacy checks: Automatically reject SSNs, account numbers, and long numeric sequences
+
 ### Step 5: Update UI State Selectors (Frontend code)
 Update the following files to include new state in dropdowns/tabs:
 - **client/src/components/state-badge.tsx**: Add state code to `STATE_NAMES` object
