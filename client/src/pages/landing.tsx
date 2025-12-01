@@ -268,18 +268,29 @@ export default function Landing() {
                 variants={fadeInUp}
                 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-foreground leading-tight mb-6"
               >
-                Protect Your Rental Business from{" "}
-                <span className="bg-gradient-to-r from-amber-600 to-primary bg-clip-text text-transparent">Costly Legal Mistakes</span>
+                Stop One Bad Lease From Costing You{" "}
+                <span className="bg-gradient-to-r from-amber-600 to-primary bg-clip-text text-transparent">$10,000+ in 2025</span>
               </motion.h1>
               
               <motion.p 
                 variants={fadeInUp}
                 className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 leading-relaxed"
               >
-                Professional legal templates, automated compliance alerts, tenant screening tools, 
-                and multi-property management — all in one platform built for small to midsize 
-                landlords.
+                Updated Texas & Utah leases · Eviction-ready notices · Credit decoder that spots the red flags that actually matter — all inside <strong>LeaseShield App</strong>.
               </motion.p>
+
+              {/* Cost Calculator */}
+              <motion.div 
+                variants={fadeInUp}
+                className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
+              >
+                <div className="text-center space-y-2">
+                  <p className="text-sm sm:text-base text-foreground">
+                    One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
+                    LeaseShield App = <span className="font-bold">$120/year</span> insurance.
+                  </p>
+                </div>
+              </motion.div>
 
               {/* Pricing Display */}
               <motion.div 
@@ -290,10 +301,10 @@ export default function Landing() {
                   <div>
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
-                      <span className="text-lg text-muted-foreground">/month</span>
+                      <span className="text-lg text-muted-foreground">/month forever</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      7-day free trial • No credit card required • Cancel anytime
+                      Only for the first 200 founders • 7-day free trial
                     </p>
                   </div>
                   <Button
@@ -1153,8 +1164,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary/10 to-primary/5">
+      {/* Testimonial Section */}
+      <section className="py-16 sm:py-20 bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial="hidden"
@@ -1162,35 +1173,44 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Stop Risking $5,000+ Mistakes
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
-              Join 500+ landlords protecting their rental businesses with state-specific templates 
-              and compliance alerts. Get your first lease ready in 5 minutes.
+            <p className="text-lg sm:text-xl text-foreground italic mb-4">
+              "The credit decoder alone saved me from renting to someone with four hidden evictions. That's $12k I didn't lose."
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <p className="text-base text-muted-foreground font-semibold">
+              — Derek M., 34 units in Austin
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Scarcity & Final CTA */}
+      <section className="py-20 md:py-28 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+        <div className="container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Only 43 Founders Spots Left at $10/mo Forever
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-xl mx-auto px-4">
+              Price increases to $15 next week
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
                 onClick={() => window.location.href = "/api/login"}
                 data-testid="button-final-cta"
                 className="text-base px-8"
               >
-                Get Your First Lease in 5 Minutes
+                Lock In My Spot Before It's Gone
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setShowAllFeatures(true)}
-                data-testid="button-final-learn"
-                className="text-base px-8"
-              >
-                Learn More About Features
-              </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">
-              No credit card required • 7-day free trial • Cancel anytime
+            <p className="text-sm text-muted-foreground">
+              7-day free trial • Instant access • Cancel anytime • Full refund if it's not worth 10× the price
             </p>
           </motion.div>
         </div>
