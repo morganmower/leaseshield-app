@@ -97,7 +97,14 @@ export default function Screening() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ term: input }),
+        credentials: 'include',
       });
+
+      if (response.status === 403) {
+        setExplanation('Subscribe to use this AI helper');
+        setHelperScreen('home');
+        return;
+      }
 
       const data = await response.json();
       setExplanation(data.explanation || 'Unable to get explanation. Please try again.');
@@ -127,7 +134,14 @@ export default function Screening() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({ term: input }),
+        credentials: 'include',
       });
+
+      if (response.status === 403) {
+        setCriminalExplanation('Subscribe to use this AI helper');
+        setCriminalHelperScreen('home');
+        return;
+      }
 
       const data = await response.json();
       setCriminalExplanation(data.explanation || 'Unable to get explanation. Please try again.');
@@ -226,39 +240,60 @@ export default function Screening() {
 
           {/* Home Screen */}
           {helperScreen === 'home' && (
-            <Card className="p-6 shadow-lg">
-              <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
-              <p className="text-muted-foreground mb-6">
-                This AI-powered tool helps you understand credit report terms AND gives you actionable questions to ask your applicant. Choose an option below:
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  onClick={() => {
-                    setHelperScreen('learn');
-                    setExplanation('');
-                  }}
-                  className="flex-1"
-                  data-testid="button-learn-credit-report"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Learn How to Read a Credit Report
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setHelperScreen('ask');
-                    setUserQuestion('');
-                    setExplanation('');
-                  }}
-                  variant="default"
-                  className="flex-1"
-                  data-testid="button-ask-question"
-                >
-                  <Lightbulb className="mr-2 h-4 w-4" />
-                  Ask About a Credit Term (AI)
-                </Button>
-              </div>
-            </Card>
+            <>
+              {explanation === 'Subscribe to use this AI helper' ? (
+                <Card className="p-8 bg-primary/10 border-primary/20">
+                  <div className="text-center">
+                    <CreditCard className="h-12 w-12 text-primary mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold text-foreground mb-2">
+                      Subscribe to receive updates
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                      Get access to AI-powered screening helpers, legal templates, and real-time compliance updates
+                    </p>
+                    <Link to="/subscribe">
+                      <Button size="lg" data-testid="button-subscribe-screening">
+                        Subscribe Now
+                      </Button>
+                    </Link>
+                  </div>
+                </Card>
+              ) : (
+                <Card className="p-6 shadow-lg">
+                  <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
+                  <p className="text-muted-foreground mb-6">
+                    This AI-powered tool helps you understand credit report terms AND gives you actionable questions to ask your applicant. Choose an option below:
+                  </p>
+                  
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <Button 
+                      onClick={() => {
+                        setHelperScreen('learn');
+                        setExplanation('');
+                      }}
+                      className="flex-1"
+                      data-testid="button-learn-credit-report"
+                    >
+                      <FileText className="mr-2 h-4 w-4" />
+                      Learn How to Read a Credit Report
+                    </Button>
+                    <Button 
+                      onClick={() => {
+                        setHelperScreen('ask');
+                        setUserQuestion('');
+                        setExplanation('');
+                      }}
+                      variant="default"
+                      className="flex-1"
+                      data-testid="button-ask-question"
+                    >
+                      <Lightbulb className="mr-2 h-4 w-4" />
+                      Ask About a Credit Term (AI)
+                    </Button>
+                  </div>
+                </Card>
+              )}
+            </>
           )}
 
           {/* Learn Screen */}

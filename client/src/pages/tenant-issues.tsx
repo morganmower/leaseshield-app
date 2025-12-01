@@ -164,7 +164,7 @@ export default function TenantIssues() {
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   // Fetch all templates to match workflow template names
-  const { data: allTemplates } = useQuery<Template[]>({
+  const { data: allTemplates, error: templatesError } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
     enabled: isAuthenticated,
     queryFn: async () => {
@@ -313,6 +313,26 @@ export default function TenantIssues() {
             </div>
           </div>
         </div>
+
+        {/* Subscription CTA if templates fail to load */}
+        {templatesError && (
+          <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Subscribe to receive updates
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Get access to step-by-step tenant issue workflows, templates, and state-specific guidance
+              </p>
+              <Link to="/subscribe">
+                <Button size="lg" data-testid="button-subscribe-tenant-issues">
+                  Subscribe Now
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )}
 
         {/* Workflows Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

@@ -38,7 +38,7 @@ export default function Compliance() {
     }
   }, [user, selectedState]);
 
-  const { data: complianceCards, isLoading: cardsLoading } = useQuery<ComplianceCard[]>({
+  const { data: complianceCards, isLoading: cardsLoading, error: cardsError } = useQuery<ComplianceCard[]>({
     queryKey: ["/api/compliance-cards", selectedState],
     enabled: isAuthenticated && !!selectedState,
     queryFn: async () => {
@@ -120,6 +120,23 @@ export default function Compliance() {
                       </Card>
                     ))}
                   </div>
+                ) : cardsError ? (
+                  <Card className="p-8 bg-primary/10 border-primary/20">
+                    <div className="text-center">
+                      <Shield className="h-12 w-12 text-primary mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-foreground mb-2">
+                        Subscribe to receive updates
+                      </h3>
+                      <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                        Get access to state-specific compliance guidance, legal requirements, and automatic updates when laws change
+                      </p>
+                      <Link to="/subscribe">
+                        <Button size="lg" data-testid="button-subscribe-compliance">
+                          Subscribe Now
+                        </Button>
+                      </Link>
+                    </div>
+                  </Card>
                 ) : complianceCards && complianceCards.length > 0 ? (
                   <div className="grid md:grid-cols-2 gap-6">
                     {complianceCards.filter((card, index, self) => 
