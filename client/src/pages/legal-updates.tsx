@@ -39,7 +39,7 @@ export default function LegalUpdatesPage() {
     }
   }, [user, selectedState]);
 
-  const { data: legalUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
+  const { data: legalUpdates, isLoading: updatesLoading, error: updatesError } = useQuery<LegalUpdate[]>({
     queryKey: ["/api/legal-updates", selectedState],
     enabled: isAuthenticated && !!selectedState,
     queryFn: async () => {
@@ -75,6 +75,30 @@ export default function LegalUpdatesPage() {
   }
 
   if (!user) return null;
+
+  // If trial expired (API returns 403), show only subscription CTA
+  if (updatesError) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center">
+        <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
+          <div className="text-center">
+            <Gavel className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Subscribe to receive updates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Get real-time legal updates and court decisions affecting landlords in your state
+            </p>
+            <Link to="/subscribe">
+              <Button size="lg" data-testid="button-subscribe-legal-updates-cta">
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const getImpactBadge = (level: string) => {
     switch (level) {
