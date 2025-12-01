@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform for small and midsize landlords, providing state-specific legal templates, compliance guidance, and tenant screening resources. It aims to act as a "protective mentor," safeguarding investments and ensuring legal compliance. The platform currently supports Utah, Texas, North Dakota, South Dakota, and North Carolina.
+LeaseShield App is a subscription-based SaaS platform ($10/month with 7-day free trial) designed for small and midsize landlords. Its primary purpose is to provide state-specific legal templates, compliance guidance, and tenant screening resources. The platform aims to be a "protective mentor," helping landlords safeguard their investments while ensuring compliance with legal regulations. Currently supports 5 states: Utah, Texas, North Dakota, South Dakota, and North Carolina.
 
 ## User Preferences
 Not specified.
@@ -50,3 +50,133 @@ The platform utilizes a primary blue (#2563eb) and secondary slate gray (#475569
 - **Puppeteer**: Used for server-side PDF generation.
 - **Western Verify LLC**: Integrated via CTAs for tenant screening services.
 - **Resend**: Email service for user notifications.
+
+---
+
+## Adding New States - Complete Checklist
+
+When adding a new state to LeaseShield, follow this systematic process to ensure consistent integration across the entire platform. This maintains the "simplistic and does not break anything" approach.
+
+### Step 1: Database Seeding
+**File**: `server/seed.ts`
+- Add the new state code (e.g., "NC") to the `STATES` array
+- Format: `{ id: "STATE_CODE", name: "State Name", stateCode: "STATE_CODE" }`
+- Example: `{ id: "NC", name: "North Carolina", stateCode: "NC" }`
+
+### Step 2: State Badge Component
+**File**: `client/src/components/state-badge.tsx`
+- Add a new case in the state switch statement
+- Format: `case "NEW_STATE": return "State Name";`
+- Example: `case "NC": return "North Carolina";`
+
+### Step 3: Legislative Monitoring Setup
+**File**: `server/legislativeMonitoring.ts`
+- Add state code to the monitored states array
+- Example: Add `"NC"` to states being monitored by LegiScan API
+
+### Step 4: Court Case Tracking
+**File**: `server/courtListenerService.ts`
+- Add relevant court mappings for the new state
+- Example for NC: Add "Court of Appeals", "Supreme Court", "4th Circuit" mappings
+
+### Step 5: AI Chat System Prompts
+**File**: `server/routes.ts`
+- Update hardcoded state lists in system prompts
+- Search for: `"for UT, TX, ND, and SD"` patterns
+- Add the new state: `"for UT, TX, ND, SD, and NEW_STATE"`
+
+### Step 6: Compliance Page State Tabs
+**File**: `client/src/pages/compliance.tsx`
+- Update TabsList grid columns: `grid-cols-4` → `grid-cols-5` (adjust count)
+- Update TabsList max-width: `max-w-2xl` → `max-w-4xl` (adjust width)
+- Add TabsTrigger: `<TabsTrigger value="NEW_STATE">State Name</TabsTrigger>`
+- Add to state mapping array: `{["UT", "TX", "ND", "SD", "NEW_STATE"].map(...)`
+
+### Step 7: Landing Page Updates
+**File**: `client/src/pages/landing.tsx`
+- Update state count statistic: `"4 States"` → `"5 States"`
+- Update all template descriptions: Add new state to every `"UT, TX, ND, and SD"` reference
+- Update FAQ section: Mention new state in supported states list
+- Update feature descriptions and footer
+
+### Step 8: Dashboard References
+**File**: `client/src/pages/dashboard.tsx`
+- Update Template Library card description
+- Change: `"...for UT, TX, ND, and SD laws"` → `"...for UT, TX, ND, SD, and NEW_STATE laws"`
+
+### Step 9: Help Center FAQs
+**File**: `client/src/pages/help-center.tsx`
+- Update all FAQ responses mentioning states
+- Add new state to: "How do I access templates?" and "Are templates legally valid?" FAQs
+
+### **CRITICAL Step 10: Update ALL State Selector Dropdowns**
+This is the most commonly missed step. Users must be able to select the new state everywhere.
+
+**Files to Update:**
+
+1. **Settings Page** (`client/src/pages/settings.tsx`)
+   - Find: Preferred State selector
+   - Add: `<SelectItem value="NEW_STATE">State Name</SelectItem>`
+   - Example: Add NC to the SelectContent
+
+2. **Templates Page** (`client/src/pages/templates.tsx`)
+   - Find: State filter selector (line ~234)
+   - Add: `<SelectItem value="NEW_STATE">State Name</SelectItem>`
+   - Example: Add NC after South Dakota in SelectContent
+
+3. **Properties Page** (`client/src/pages/properties.tsx`)
+   - Find: US_STATES constant (line ~18)
+   - Add: `{ code: "NEW_STATE", name: "State Name" },` to array
+   - Example: Add `{ code: "NC", name: "North Carolina" },`
+   - This affects property creation and editing dialogs
+
+4. **Admin Templates Page** (`client/src/pages/admin-templates.tsx`)
+   - Usually fetches states from API dynamically (no change needed)
+   - Verify state appears in the state selector
+
+5. **Document Wizard** (`client/src/pages/document-wizard.tsx`)
+   - Check if it has a state selector (may be optional)
+   - Add new state if selector exists
+
+**How to Find State Selectors:**
+```bash
+grep -r "SelectItem.*UT\|SelectItem.*Texas" client/src/pages --include="*.tsx"
+grep -r "const.*STATES" client/src/pages --include="*.tsx"
+grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
+```
+
+### Verification Checklist
+- [ ] State appears in database seed
+- [ ] State badge displays correct name
+- [ ] State included in legislative monitoring
+- [ ] Court tracking configured for state
+- [ ] AI chat mentions state in prompts
+- [ ] Compliance page has state tab and content loads
+- [ ] Landing page reflects new state count
+- [ ] Dashboard descriptions updated
+- [ ] Help center FAQs mention state
+- [ ] Settings page has state in dropdown
+- [ ] Templates page has state in dropdown
+- [ ] Properties page has state in dropdown
+- [ ] Admin pages show state
+- [ ] Document wizard (if applicable) shows state
+- [ ] Workflow restarted and no errors
+- [ ] Tested: Select new state and verify content appears
+
+### Quick Reference: Files Summary
+| File | Change Type | Location |
+|------|------------|----------|
+| server/seed.ts | Array | STATES array |
+| client/src/components/state-badge.tsx | Switch case | State cases |
+| server/legislativeMonitoring.ts | Array | MONITORED_STATES |
+| server/courtListenerService.ts | Mappings | Court mappings |
+| server/routes.ts | String | AI system prompts |
+| client/src/pages/compliance.tsx | Tabs + Grid | TabsList + TabsTrigger + map array |
+| client/src/pages/landing.tsx | Text + Count | State references + stat numbers |
+| client/src/pages/dashboard.tsx | Description | Template card text |
+| client/src/pages/help-center.tsx | FAQ text | FAQ answer strings |
+| client/src/pages/settings.tsx | SelectItem | Preferences selector |
+| client/src/pages/templates.tsx | SelectItem | State filter selector |
+| client/src/pages/properties.tsx | Constant | US_STATES array |
+| client/src/pages/admin-templates.tsx | Check | Verify (usually dynamic) |
+| client/src/pages/document-wizard.tsx | Check | Verify (if applicable) |
