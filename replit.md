@@ -57,16 +57,27 @@ The platform utilizes a primary blue (#2563eb) and secondary slate gray (#475569
 
 When adding a new state to LeaseShield, follow this systematic process to ensure consistent integration across the entire platform. This maintains the "simplistic and does not break anything" approach.
 
-### Step 1: Database Seeding - State & Templates
+### Step 1: Database Seeding - States, Templates & Compliance Cards
 **File**: `server/seed.ts`
+
+**Add the state:**
 - Add the new state code (e.g., "NC") to the `STATES` array at the top
-  - Format: `{ id: "STATE_CODE", name: "State Name", description: "..." }`
-  - Example: `{ id: "NC", name: "North Carolina", description: "State-specific templates and compliance for North Carolina landlords" }`
+- Format: `{ id: "STATE_CODE", name: "State Name", description: "..." }`
+- Example: `{ id: "NC", name: "North Carolina", description: "State-specific templates and compliance for North Carolina landlords" }`
+
+**Add templates:**
 - Add template entries for the new state to the `templateSamples` array
-  - Duplicate the 4 base templates (Residential Lease, Rental Application, Late Rent Notice, Move-In Checklist)
-  - Change `stateId: "UT"` to `stateId: "NEW_STATE"`
-  - Update state-specific field defaults (e.g., `defaultValue: "North Carolina"` for NC)
-  - Maintain unique `sortOrder` values (1-4) per state for ordering consistency
+- Duplicate the 4 base templates (Residential Lease, Rental Application, Late Rent Notice, Move-In Checklist)
+- Change `stateId: "UT"` to `stateId: "NEW_STATE"`
+- Update state-specific field defaults (e.g., `defaultValue: "North Carolina"` for NC)
+- Maintain unique `sortOrder` values (1-4) per state for ordering consistency
+
+**Add compliance cards:**
+- Add compliance card entries after the templates section
+- Duplicate compliance card structure for the new state
+- Change `stateId: "UT"` to `stateId: "NEW_STATE"`
+- Update state-specific compliance requirements and disclosures
+- Set `sortOrder: 1` for the compliance card
 
 ### Step 2: State Badge Component
 **File**: `client/src/components/state-badge.tsx`
@@ -160,6 +171,7 @@ grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 ### Verification Checklist
 - [ ] State appears in database seed
 - [ ] Templates seeded for new state
+- [ ] Compliance cards seeded for new state
 - [ ] State badge displays correct name
 - [ ] State included in legislative monitoring
 - [ ] Court tracking configured for state
@@ -178,11 +190,12 @@ grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 - [ ] Workflow restarted and no errors
 - [ ] Tested: Select new state and verify content appears
 - [ ] Tested: Verify templates appear for new state
+- [ ] Tested: Verify compliance cards appear for new state
 
 ### Quick Reference: Files Summary
 | File | Change Type | Location | Notes |
 |------|------------|----------|-------|
-| server/seed.ts | Arrays | STATES array + templateSamples | Creates state & templates in database |
+| server/seed.ts | Arrays | STATES + templateSamples + complianceCards | Creates state, templates & compliance in database |
 | client/src/components/state-badge.tsx | Switch case | State cases | Display state name |
 | server/legislativeMonitoring.ts | Array | MONITORED_STATES | Bill tracking |
 | server/courtListenerService.ts | Mappings | Court mappings | Case law tracking |

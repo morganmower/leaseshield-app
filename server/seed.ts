@@ -252,8 +252,8 @@ async function seedDatabase() {
     console.log("  ⚠ Legal update may already exist");
   }
 
-  // Seed sample compliance card
-  console.log("\nCreating sample compliance card...");
+  // Seed sample compliance cards
+  console.log("\nCreating sample compliance cards...");
   try {
     await storage.createComplianceCard({
       stateId: "UT",
@@ -278,9 +278,38 @@ async function seedDatabase() {
       },
       sortOrder: 1,
     });
-    console.log("  ✓ Created sample compliance card");
+    console.log("  ✓ Created Utah compliance card");
   } catch (error) {
-    console.log("  ⚠ Compliance card may already exist");
+    console.log("  ⚠ Utah compliance card may already exist");
+  }
+
+  try {
+    await storage.createComplianceCard({
+      stateId: "NC",
+      title: "Required Lease Disclosures",
+      summary: "North Carolina requires specific disclosures in all residential lease agreements",
+      category: "disclosures",
+      content: {
+        sections: [
+          {
+            title: "Lead-Based Paint Disclosure",
+            content: "Required for properties built before 1978",
+          },
+          {
+            title: "Military Installation Proximity",
+            content: "Disclosure required if property is near a military installation",
+          },
+          {
+            title: "Security Deposit Terms",
+            content: "Must specify conditions for deposit deductions and timeline for return",
+          },
+        ],
+      },
+      sortOrder: 1,
+    });
+    console.log("  ✓ Created North Carolina compliance card");
+  } catch (error) {
+    console.log("  ⚠ North Carolina compliance card may already exist");
   }
 
   console.log("\n✅ Database seed completed!");
