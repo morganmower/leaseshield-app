@@ -1050,7 +1050,7 @@ export default function Landing() {
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, and SD</span>
+                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and NC</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
@@ -1116,7 +1116,7 @@ export default function Landing() {
               <AccordionItem value="item-1">
                 <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent>
-                  We currently serve landlords in Utah, Texas, North Dakota, and South Dakota with
+                  We currently serve landlords in Utah, Texas, North Dakota, South Dakota, and North Carolina with
                   comprehensive state-specific templates and compliance guidance. We're expanding to
                   additional states soon—sign up to get notified when your state is added!
                 </AccordionContent>
@@ -1222,7 +1222,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for UT, TX, ND, and SD properties
+              Comprehensive landlord protection for UT, TX, ND, SD, and NC properties
             </DialogDescription>
           </DialogHeader>
           
@@ -1259,7 +1259,7 @@ export default function Landing() {
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">4</div>
+                  <div className="text-2xl font-bold text-primary mb-1">5</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
