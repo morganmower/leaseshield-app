@@ -69,6 +69,9 @@ export default function Properties() {
     queryKey: ['/api/saved-documents'],
   });
 
+  // If trial expired (API returns 403), show only subscription CTA
+  const isTrialExpired = propertiesError !== null;
+
   // Calculate document counts per property
   const documentCounts = documents.reduce((acc, doc) => {
     if (doc.propertyId) {
@@ -313,6 +316,30 @@ export default function Properties() {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  // If trial expired (API returns 403), show only subscription CTA
+  if (isTrialExpired) {
+    return (
+      <div className="h-full overflow-auto flex items-center justify-center">
+        <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
+          <div className="text-center">
+            <Building2 className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Subscribe to receive updates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Organize your properties, track documents, and access all management features
+            </p>
+            <Link to="/subscribe">
+              <Button size="lg" data-testid="button-subscribe-properties-cta">
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </Card>
       </div>
     );
   }

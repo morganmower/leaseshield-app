@@ -66,6 +66,7 @@ function parseAIExplanation(text: string): ParsedExplanation | null {
 export default function Screening() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [trialExpired, setTrialExpired] = useState(false);
   
   // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
@@ -167,6 +168,23 @@ export default function Screening() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Check if trial expired by attempting to fetch templates
+  useEffect(() => {
+    const checkTrial = async () => {
+      if (isAuthenticated) {
+        try {
+          const response = await fetch('/api/templates?stateId=UT', { credentials: 'include' });
+          if (response.status === 403) {
+            setTrialExpired(true);
+          }
+        } catch (error) {
+          // Ignore errors, not fatal
+        }
+      }
+    };
+    checkTrial();
+  }, [isAuthenticated]);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -176,6 +194,30 @@ export default function Screening() {
   }
 
   if (!user) return null;
+
+  // If trial expired, show only subscription CTA
+  if (trialExpired) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center">
+        <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
+          <div className="text-center">
+            <Search className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Subscribe to receive updates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Get access to AI-powered screening helpers, legal templates, and real-time compliance updates
+            </p>
+            <Link to="/subscribe">
+              <Button size="lg" data-testid="button-subscribe-screening-cta">
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex-1 overflow-auto">

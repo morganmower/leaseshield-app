@@ -61,6 +61,30 @@ export default function Compliance() {
 
   if (!user) return null;
 
+  // If trial expired (API returns 403), show only subscription CTA
+  if (cardsError) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center">
+        <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
+          <div className="text-center">
+            <Shield className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Subscribe to receive updates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Get access to state-specific compliance guidance, legal requirements, and automatic updates when laws change
+            </p>
+            <Link to="/subscribe">
+              <Button size="lg" data-testid="button-subscribe-compliance-cta">
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex-1 overflow-auto">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

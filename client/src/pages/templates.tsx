@@ -144,7 +144,7 @@ export default function Templates() {
     }
   }, [user]); // Run when user loads
 
-  const { data: templates, isLoading: templatesLoading } = useQuery<Template[]>({
+  const { data: templates, isLoading: templatesLoading, error: templatesError } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
     enabled: isAuthenticated,
     queryFn: async () => {
@@ -173,6 +173,30 @@ export default function Templates() {
   }
 
   if (!user) return null;
+
+  // If trial expired (API returns 403), show only subscription CTA
+  if (templatesError) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center">
+        <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
+          <div className="text-center">
+            <FileText className="h-16 w-16 text-primary mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Subscribe to receive updates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              Get access to 37+ state-specific legal templates, automated wizards, and expert guidance
+            </p>
+            <Link to="/subscribe">
+              <Button size="lg" data-testid="button-subscribe-templates-cta">
+                Subscribe Now
+              </Button>
+            </Link>
+          </div>
+        </Card>
+      </div>
+    );
+  }
 
   const filteredTemplates = templates?.filter((template) => {
     const matchesSearch = template.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
