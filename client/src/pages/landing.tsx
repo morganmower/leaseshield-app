@@ -1185,10 +1185,7 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <p className="text-lg sm:text-xl text-foreground italic mb-4">
-              "The credit decoder alone saved me from renting to someone with four hidden evictions. That's $12k I didn't lose."
-            </p>
-            <p className="text-base text-muted-foreground font-semibold">
-              — Derek M., 34 units in Austin
+              "Stop paying $500+ every time you need a lawyer to review your lease.<br/>LeaseShield App = $10/month protection."
             </p>
           </motion.div>
         </div>
