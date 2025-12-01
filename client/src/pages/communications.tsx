@@ -36,6 +36,26 @@ export default function Communications() {
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
 
+  // Check subscription status
+  const hasActiveAccess = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'trialing';
+  
+  if (!hasActiveAccess) {
+    return (
+      <div className="container max-w-4xl mx-auto py-12 px-4">
+        <Card className="p-8 text-center">
+          <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+          <h2 className="text-2xl font-bold mb-2">Communications Templates</h2>
+          <p className="text-muted-foreground mb-6">
+            This feature requires an active subscription or free trial. Upgrade to access personalized communication templates for your tenants.
+          </p>
+          <Button onClick={() => window.location.href = '/subscribe'}>
+            Start Free Trial
+          </Button>
+        </Card>
+      </div>
+    );
+  }
+
   const { data: templates, isLoading } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
   });

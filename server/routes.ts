@@ -1010,7 +1010,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/communications', isAuthenticated, async (req: any, res) => {
+  app.post('/api/communications', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
     try {
       const user = await storage.getUser(getUserId(req));
       if (!user?.isAdmin) {
