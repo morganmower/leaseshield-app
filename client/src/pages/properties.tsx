@@ -21,6 +21,7 @@ const US_STATES = [
   { code: "ND", name: "North Dakota" },
   { code: "SD", name: "South Dakota" },
   { code: "NC", name: "North Carolina" },
+  { code: "OH", name: "Ohio" },
 ];
 
 const PROPERTY_TYPES = [

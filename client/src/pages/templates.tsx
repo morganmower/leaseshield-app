@@ -242,6 +242,7 @@ export default function Templates() {
                 <SelectItem value="ND">North Dakota</SelectItem>
                 <SelectItem value="SD">South Dakota</SelectItem>
                 <SelectItem value="NC">North Carolina</SelectItem>
+                <SelectItem value="OH">Ohio</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>

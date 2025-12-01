@@ -90,15 +90,16 @@ export default function Compliance() {
 
         {/* State Tabs */}
         <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
-          <TabsList className="grid w-full max-w-4xl grid-cols-5" data-testid="tabs-state-selector">
+          <TabsList className="grid w-full max-w-6xl grid-cols-6" data-testid="tabs-state-selector">
             <TabsTrigger value="UT" data-testid="tab-state-UT">Utah</TabsTrigger>
             <TabsTrigger value="TX" data-testid="tab-state-TX">Texas</TabsTrigger>
             <TabsTrigger value="ND" data-testid="tab-state-ND">North Dakota</TabsTrigger>
             <TabsTrigger value="SD" data-testid="tab-state-SD">South Dakota</TabsTrigger>
             <TabsTrigger value="NC" data-testid="tab-state-NC">North Carolina</TabsTrigger>
+            <TabsTrigger value="OH" data-testid="tab-state-OH">Ohio</TabsTrigger>
           </TabsList>
 
-          {["UT", "TX", "ND", "SD", "NC"].map((state) => (
+          {["UT", "TX", "ND", "SD", "NC", "OH"].map((state) => (
             <TabsContent key={state} value={state} className="space-y-8">
               {/* Compliance Cards Section */}
               <div>
