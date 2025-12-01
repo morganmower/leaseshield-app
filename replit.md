@@ -153,6 +153,9 @@ Update user-facing marketing text that references supported states:
 - **client/src/pages/dashboard.tsx** (line ~411): Update "Template Library" card description
   - Change: "Leases, applications, notices, and forms customized for UT, TX, ND, SD, and NC laws"
   - To: Include the new state code (e.g., "...UT, TX, ND, SD, NC, and OH laws")
+- **client/src/pages/landing.tsx** (line ~1264): Update FAQ "What states does LeaseShield App currently support?"
+  - Update AccordionContent to list all 8 states: "Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho"
+  - Note: Update each time a new state is added
 - Search for other hardcoded state lists in promotional or feature descriptions
 - Update any "supported states" list or "now available in" messaging
 
