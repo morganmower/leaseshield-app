@@ -56,6 +56,7 @@ export default function Landing() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [spotsRemaining, setSpotsRemaining] = useState(43);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -72,6 +73,16 @@ export default function Landing() {
   useEffect(() => {
     scrollToBottom();
   }, [chatMessages]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setSpotsRemaining(prev => {
+        if (prev <= 0) return 0;
+        return prev - 1;
+      });
+    }, 3600000); // Decrease by 1 every hour
+    return () => clearInterval(interval);
+  }, []);
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -304,7 +315,7 @@ export default function Landing() {
                       <span className="text-lg text-muted-foreground">/month forever</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Only for the first 200 founders • 7-day free trial
+                      {spotsRemaining} spots remaining • 7-day free trial
                     </p>
                   </div>
                   <Button
