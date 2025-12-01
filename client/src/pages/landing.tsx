@@ -491,7 +491,7 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">5</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">8</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">States Covered</div>
             </motion.div>
