@@ -149,7 +149,7 @@ export default function Landing() {
       icon: FileText,
       description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
-        "Residential lease agreements compliant with UT, TX, ND, and SD laws",
+        "Residential lease agreements compliant with UT, TX, ND, SD, and NC laws",
         "Rental application forms with fair housing compliance",
         "Move-in and move-out inspection checklists",
         "Lease addendums for pets, parking, utilities, and more",
