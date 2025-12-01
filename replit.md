@@ -148,6 +148,14 @@ Update the following files to include new state in dropdowns/tabs:
 - **client/src/pages/templates.tsx**: Add SelectItem for state in template filter
 - **client/src/pages/properties.tsx**: Add state to US_STATES array
 
+### Step 5.5: Update Dashboard & Marketing Copy
+Update user-facing marketing text that references supported states:
+- **client/src/pages/dashboard.tsx** (line ~411): Update "Template Library" card description
+  - Change: "Leases, applications, notices, and forms customized for UT, TX, ND, SD, and NC laws"
+  - To: Include the new state code (e.g., "...UT, TX, ND, SD, NC, and OH laws")
+- Search for other hardcoded state lists in promotional or feature descriptions
+- Update any "supported states" list or "now available in" messaging
+
 ### Step 6: Restart Application
 - Use `restart_workflow` on "Start application" workflow to reload server and hot-compile frontend changes
 
