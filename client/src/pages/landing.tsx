@@ -1050,7 +1050,7 @@ export default function Landing() {
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and NC</span>
+                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and North Carolina</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
@@ -1222,7 +1222,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for UT, TX, ND, SD, and NC properties
+              Comprehensive landlord protection for UT, TX, ND, SD, and North Carolina properties
             </DialogDescription>
           </DialogHeader>
           
