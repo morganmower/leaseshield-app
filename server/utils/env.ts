@@ -84,12 +84,20 @@ export function validateEnv(): EnvConfig {
     throw new Error('Missing required environment variables. Please check your .env file.');
   }
 
+  // Use test keys in development if available
+  const isDevMode = (process.env.NODE_ENV || 'development') === 'development';
+  const stripeSecretKey = isDevMode && process.env.TESTING_STRIPE_SECRET_KEY
+    ? process.env.TESTING_STRIPE_SECRET_KEY
+    : process.env.STRIPE_SECRET_KEY!;
+
   // Return typed config
   return {
     DATABASE_URL: process.env.DATABASE_URL!,
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY!,
+    STRIPE_SECRET_KEY: stripeSecretKey,
     STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
-    STRIPE_PRICE_ID: process.env.STRIPE_PRICE_ID,
+    STRIPE_PRICE_ID: isDevMode && process.env.TESTING_STRIPE_PRICE_ID
+      ? process.env.TESTING_STRIPE_PRICE_ID
+      : process.env.STRIPE_PRICE_ID,
     AI_INTEGRATIONS_OPENAI_API_KEY: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
     AI_INTEGRATIONS_OPENAI_BASE_URL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
     RESEND_API_KEY: process.env.RESEND_API_KEY,

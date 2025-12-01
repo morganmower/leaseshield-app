@@ -9,10 +9,15 @@ import { Button } from "@/components/ui/button";
 import { CheckCircle2 } from "lucide-react";
 import { Logo } from "@/components/logo";
 
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+// Use test key in development if available, otherwise use live key
+const stripePublicKey = import.meta.env.MODE === 'development' && import.meta.env.VITE_TESTING_STRIPE_PUBLIC_KEY
+  ? import.meta.env.VITE_TESTING_STRIPE_PUBLIC_KEY
+  : import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+
+if (!stripePublicKey) {
+  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY or VITE_TESTING_STRIPE_PUBLIC_KEY');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = loadStripe(stripePublicKey);
 
 function SubscribeForm() {
   const stripe = useStripe();
