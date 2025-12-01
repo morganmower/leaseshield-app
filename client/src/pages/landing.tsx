@@ -1129,6 +1129,31 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Testimonial */}
+      <section className="py-16 sm:py-20">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center"
+          >
+            <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+              <p className="text-lg sm:text-xl text-foreground font-medium mb-6 italic">
+                "I will recommend LeaseShield to every independent landlord I know. It will save them thousands and untold headaches with the entire tenancy process."
+              </p>
+              <div className="flex items-center justify-center">
+                <div className="text-center">
+                  <p className="font-semibold text-foreground">Brian H.</p>
+                  <p className="text-sm text-muted-foreground">Utah</p>
+                </div>
+              </div>
+            </Card>
+          </motion.div>
+        </div>
+      </section>
+
       {/* FAQ */}
       <section className="py-20 md:py-28 bg-muted/30">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
