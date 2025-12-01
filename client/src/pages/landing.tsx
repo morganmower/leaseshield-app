@@ -559,7 +559,7 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
           >
             <motion.div variants={fadeInUp}>
               <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
@@ -671,6 +671,64 @@ export default function Landing() {
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
                       <span>Quick access to all templates</span>
+                    </li>
+                  </ul>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <MessageCircle className="h-6 w-6 text-rose-600 dark:text-rose-500" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">Communications</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Pre-written, state-compliant tenant notices and messages. Track your communications with built-in templates for common scenarios.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Pre-written notice templates</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Customizable merge fields</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Copy & download quickly</span>
+                    </li>
+                  </ul>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center mb-4">
+                    <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+                  </div>
+                  <h3 className="font-display text-xl font-semibold mb-3">Rent Ledger</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Track rental payments and income simply. Excel template for quick setup or in-app tracking with payment status overview.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Excel/CSV download template</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>In-app tracking table</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <span>Payment status at a glance</span>
                     </li>
                   </ul>
                 </div>
