@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
-import westernVerifyLogo from "@assets/stock_images/western_verify_logo_55472c20.jpg";
+import westernVerifyLogo from "@assets/western_verify_logo_official.png";
 import {
   Accordion,
   AccordionContent,
