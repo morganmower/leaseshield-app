@@ -17,6 +17,7 @@ import {
   properties,
   savedDocuments,
   uploadedDocuments,
+  communicationTemplates,
   type User,
   type UpsertUser,
   type Template,
@@ -53,6 +54,8 @@ import {
   type InsertSavedDocument,
   type UploadedDocument,
   type InsertUploadedDocument,
+  type CommunicationTemplate,
+  type InsertCommunicationTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -203,6 +206,11 @@ export interface IStorage {
   getUploadedDocumentById(id: string, userId: string): Promise<UploadedDocument | undefined>;
   createUploadedDocument(document: InsertUploadedDocument): Promise<UploadedDocument>;
   deleteUploadedDocument(id: string, userId: string): Promise<boolean>;
+
+  // Communication template operations
+  getCommunicationTemplatesByState(stateId: string): Promise<CommunicationTemplate[]>;
+  getAllCommunicationTemplates(): Promise<CommunicationTemplate[]>;
+  createCommunicationTemplate(template: InsertCommunicationTemplate): Promise<CommunicationTemplate>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1061,6 +1069,31 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(uploadedDocuments.id, id), eq(uploadedDocuments.userId, userId)))
       .returning();
     return result.length > 0;
+  }
+
+  // Communication template operations
+  async getCommunicationTemplatesByState(stateId: string): Promise<CommunicationTemplate[]> {
+    return await db
+      .select()
+      .from(communicationTemplates)
+      .where(and(eq(communicationTemplates.stateId, stateId), eq(communicationTemplates.isActive, true)))
+      .orderBy(communicationTemplates.templateType);
+  }
+
+  async getAllCommunicationTemplates(): Promise<CommunicationTemplate[]> {
+    return await db
+      .select()
+      .from(communicationTemplates)
+      .where(eq(communicationTemplates.isActive, true))
+      .orderBy(communicationTemplates.stateId);
+  }
+
+  async createCommunicationTemplate(template: InsertCommunicationTemplate): Promise<CommunicationTemplate> {
+    const [newTemplate] = await db
+      .insert(communicationTemplates)
+      .values(template)
+      .returning();
+    return newTemplate;
   }
 }
 

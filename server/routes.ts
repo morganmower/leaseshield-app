@@ -4,7 +4,7 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireActiveSubscription } from "./subscriptionMiddleware";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema } from "@shared/schema";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
@@ -991,6 +991,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching legal updates:", error);
       res.status(500).json({ message: "Failed to fetch legal updates" });
+    }
+  });
+
+  // Communication templates routes
+  app.get('/api/communications', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+    try {
+      const { stateId } = req.query;
+      if (!stateId) {
+        const templates = await storage.getAllCommunicationTemplates();
+        return res.json(templates);
+      }
+      const templates = await storage.getCommunicationTemplatesByState(stateId as string);
+      res.json(templates);
+    } catch (error) {
+      console.error("Error fetching communication templates:", error);
+      res.status(500).json({ message: "Failed to fetch templates" });
+    }
+  });
+
+  app.post('/api/communications', isAuthenticated, async (req: any, res) => {
+    try {
+      const user = await storage.getUser(getUserId(req));
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin only" });
+      }
+      
+      const data = req.body;
+      const template = await storage.createCommunicationTemplate(data);
+      res.json(template);
+    } catch (error) {
+      console.error("Error creating communication template:", error);
+      res.status(500).json({ message: "Failed to create template" });
     }
   });
 

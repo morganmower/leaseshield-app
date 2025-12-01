@@ -592,3 +592,38 @@ export const insertUploadedDocumentSchema = createInsertSchema(uploadedDocuments
 });
 export type InsertUploadedDocument = z.infer<typeof insertUploadedDocumentSchema>;
 export type UploadedDocument = typeof uploadedDocuments.$inferSelect;
+
+// Communication templates - pre-written templates for landlord-to-tenant communication
+export const communicationTemplateTypeEnum = pgEnum('communication_template_type', [
+  'rent_reminder',
+  'welcome_letter',
+  'lease_renewal_notice',
+  'late_payment_notice',
+  'move_in_welcome',
+]);
+
+export const communicationTemplates = pgTable("communication_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  templateType: communicationTemplateTypeEnum("template_type").notNull(),
+  title: text("title").notNull(),
+  bodyText: text("body_text").notNull(), // Contains {{merge_fields}} like {{tenant_name}}, {{amount_due}}, {{due_date}}
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const communicationTemplatesRelations = relations(communicationTemplates, ({ one }) => ({
+  state: one(states, {
+    fields: [communicationTemplates.stateId],
+    references: [states.id],
+  }),
+}));
+
+export const insertCommunicationTemplateSchema = createInsertSchema(communicationTemplates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertCommunicationTemplate = z.infer<typeof insertCommunicationTemplateSchema>;
+export type CommunicationTemplate = typeof communicationTemplates.$inferSelect;

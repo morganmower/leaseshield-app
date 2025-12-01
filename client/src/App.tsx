@@ -32,6 +32,7 @@ import Properties from "@/pages/properties";
 import Compliance from "@/pages/compliance";
 import Screening from "@/pages/screening";
 import TenantIssues from "@/pages/tenant-issues";
+import Communications from "@/pages/communications";
 import Subscribe from "@/pages/subscribe";
 import Settings from "@/pages/settings";
 import Billing from "@/pages/billing";
@@ -93,6 +94,7 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening" component={Screening} />
       <Route path="/tenant-issues" component={TenantIssues} />
+      <Route path="/communications" component={Communications} />
       <Route path="/legal-updates" component={LegalUpdatesPage} />
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/settings" component={Settings} />

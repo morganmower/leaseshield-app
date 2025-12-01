@@ -12,6 +12,7 @@ import {
   LogOut,
   FolderOpen,
   Building2,
+  MessageCircle,
 } from "lucide-react";
 import {
   Sidebar,
@@ -78,6 +79,11 @@ const mainItems = [
     title: "Legal Updates",
     url: "/legal-updates",
     icon: BookOpen,
+  },
+  {
+    title: "Communications",
+    url: "/communications",
+    icon: MessageCircle,
   },
 ];
 
