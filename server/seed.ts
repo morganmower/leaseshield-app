@@ -10,6 +10,7 @@ async function seedDatabase() {
     { id: "TX", name: "Texas", description: "State-specific templates and compliance for Texas landlords" },
     { id: "ND", name: "North Dakota", description: "State-specific templates and compliance for North Dakota landlords" },
     { id: "SD", name: "South Dakota", description: "State-specific templates and compliance for South Dakota landlords" },
+    { id: "NC", name: "North Carolina", description: "State-specific templates and compliance for North Carolina landlords" },
   ];
 
   for (const state of statesToCreate) {

@@ -69,6 +69,7 @@ export class CourtListenerService {
     TX: ['court-of-appeals-of-texas', 'supreme-court-of-texas', 'court-of-appeals-of-the-united-states-fifth-circuit'],
     ND: ['court-of-appeals-of-north-dakota', 'supreme-court-of-north-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
     SD: ['court-of-appeals-of-south-dakota', 'supreme-court-of-south-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
+    NC: ['court-of-appeals-of-north-carolina', 'supreme-court-of-north-carolina', 'court-of-appeals-of-the-united-states-fourth-circuit'],
   };
 
   constructor() {

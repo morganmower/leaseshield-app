@@ -2,7 +2,7 @@ import { legiScanService } from './legiscan';
 import { storage } from './storage';
 import { getUncachableResendClient } from './resend';
 
-const MONITORED_STATES = ['UT', 'TX', 'ND', 'SD'];
+const MONITORED_STATES = ['UT', 'TX', 'ND', 'SD', 'NC'];
 
 export async function runMonthlyLegislativeMonitoring(): Promise<void> {
   console.log('🔍 Starting monthly legislative monitoring...');
