@@ -13,6 +13,7 @@ const STATE_NAMES: Record<string, string> = {
   NC: "North Carolina",
   OH: "Ohio",
   MI: "Michigan",
+  ID: "Idaho",
 };
 
 export function StateBadge({ stateId, className }: StateBadgeProps) {

@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports 7 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, and Michigan.
+LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports 8 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho.
 
 ## User Preferences
 Not specified.
@@ -166,5 +166,5 @@ Update user-facing marketing text that references supported states:
 - If compliance card requires specific notice periods (e.g., 30 days), template must include this in form field descriptions
 
 ### State Count
-- **Current supported states**: 7 (UT, TX, ND, SD, NC, OH, MI)
+- **Current supported states**: 8 (UT, TX, ND, SD, NC, OH, MI, ID)
 - **Expected per state**: 4 compliance cards, 7 templates, 2-3 legal updates
