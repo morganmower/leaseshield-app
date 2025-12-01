@@ -57,11 +57,16 @@ The platform utilizes a primary blue (#2563eb) and secondary slate gray (#475569
 
 When adding a new state to LeaseShield, follow this systematic process to ensure consistent integration across the entire platform. This maintains the "simplistic and does not break anything" approach.
 
-### Step 1: Database Seeding
+### Step 1: Database Seeding - State & Templates
 **File**: `server/seed.ts`
-- Add the new state code (e.g., "NC") to the `STATES` array
-- Format: `{ id: "STATE_CODE", name: "State Name", stateCode: "STATE_CODE" }`
-- Example: `{ id: "NC", name: "North Carolina", stateCode: "NC" }`
+- Add the new state code (e.g., "NC") to the `STATES` array at the top
+  - Format: `{ id: "STATE_CODE", name: "State Name", description: "..." }`
+  - Example: `{ id: "NC", name: "North Carolina", description: "State-specific templates and compliance for North Carolina landlords" }`
+- Add template entries for the new state to the `templateSamples` array
+  - Duplicate the 4 base templates (Residential Lease, Rental Application, Late Rent Notice, Move-In Checklist)
+  - Change `stateId: "UT"` to `stateId: "NEW_STATE"`
+  - Update state-specific field defaults (e.g., `defaultValue: "North Carolina"` for NC)
+  - Maintain unique `sortOrder` values (1-4) per state for ordering consistency
 
 ### Step 2: State Badge Component
 **File**: `client/src/components/state-badge.tsx`
@@ -154,6 +159,7 @@ grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 
 ### Verification Checklist
 - [ ] State appears in database seed
+- [ ] Templates seeded for new state
 - [ ] State badge displays correct name
 - [ ] State included in legislative monitoring
 - [ ] Court tracking configured for state
@@ -171,11 +177,12 @@ grep -r "Utah.*Texas" client/src/pages --include="*.tsx"
 - [ ] Document wizard (if applicable) shows state
 - [ ] Workflow restarted and no errors
 - [ ] Tested: Select new state and verify content appears
+- [ ] Tested: Verify templates appear for new state
 
 ### Quick Reference: Files Summary
 | File | Change Type | Location | Notes |
 |------|------------|----------|-------|
-| server/seed.ts | Array | STATES array | Creates state in database |
+| server/seed.ts | Arrays | STATES array + templateSamples | Creates state & templates in database |
 | client/src/components/state-badge.tsx | Switch case | State cases | Display state name |
 | server/legislativeMonitoring.ts | Array | MONITORED_STATES | Bill tracking |
 | server/courtListenerService.ts | Mappings | Court mappings | Case law tracking |

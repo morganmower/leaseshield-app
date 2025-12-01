@@ -123,6 +123,106 @@ async function seedDatabase() {
         ]
       },
     },
+    // North Carolina templates
+    {
+      title: "Residential Lease Agreement",
+      description: "Professional residential lease agreement with all required state disclosures",
+      category: "leasing" as const,
+      templateType: "lease" as const,
+      stateId: "NC",
+      version: 1,
+      sortOrder: 1,
+      fillableFormData: {
+        fields: [
+          { id: "landlordName", label: "Landlord Full Name", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordAddress", label: "Landlord Address", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordPhone", label: "Landlord Phone", type: "tel", required: true, category: "Landlord Information" },
+          { id: "landlordEmail", label: "Landlord Email", type: "email", required: true, category: "Landlord Information" },
+          { id: "tenantName", label: "Tenant Full Name", type: "text", required: true, category: "Tenant Information" },
+          { id: "tenantEmail", label: "Tenant Email", type: "email", required: false, category: "Tenant Information" },
+          { id: "tenantPhone", label: "Tenant Phone", type: "tel", required: false, category: "Tenant Information" },
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Property Details" },
+          { id: "propertyCity", label: "City", type: "text", required: true, category: "Property Details" },
+          { id: "propertyState", label: "State", type: "text", required: true, category: "Property Details", defaultValue: "North Carolina" },
+          { id: "propertyZip", label: "ZIP Code", type: "text", required: true, category: "Property Details" },
+          { id: "monthlyRent", label: "Monthly Rent Amount", type: "currency", required: true, category: "Financial Terms" },
+          { id: "securityDeposit", label: "Security Deposit", type: "currency", required: true, category: "Financial Terms" },
+          { id: "lateFeeDays", label: "Late Fee Grace Period (Days)", type: "number", required: true, category: "Financial Terms", defaultValue: "5" },
+          { id: "lateFeeAmount", label: "Late Fee Amount", type: "currency", required: true, category: "Financial Terms" },
+          { id: "leaseStartDate", label: "Lease Start Date", type: "date", required: true, category: "Lease Terms" },
+          { id: "leaseEndDate", label: "Lease End Date", type: "date", required: true, category: "Lease Terms" },
+          { id: "rentDueDay", label: "Rent Due Day of Month", type: "number", required: true, category: "Lease Terms", defaultValue: "1" },
+        ]
+      },
+    },
+    {
+      title: "Rental Application",
+      description: "Comprehensive rental application form compliant with Fair Housing requirements",
+      category: "screening" as const,
+      templateType: "application" as const,
+      stateId: "NC",
+      version: 1,
+      sortOrder: 2,
+      fillableFormData: {
+        fields: [
+          { id: "applicantName", label: "Full Name", type: "text", required: true, category: "Applicant Information" },
+          { id: "applicantPhone", label: "Phone Number", type: "tel", required: true, category: "Applicant Information" },
+          { id: "applicantEmail", label: "Email Address", type: "email", required: true, category: "Applicant Information" },
+          { id: "currentAddress", label: "Current Address", type: "text", required: true, category: "Applicant Information" },
+          { id: "moveInDate", label: "Desired Move-In Date", type: "date", required: true, category: "Applicant Information" },
+          { id: "employerName", label: "Employer Name", type: "text", required: true, category: "Employment Information" },
+          { id: "employerPhone", label: "Employer Phone", type: "tel", required: true, category: "Employment Information" },
+          { id: "monthlyIncome", label: "Monthly Income", type: "currency", required: true, category: "Employment Information" },
+          { id: "emergencyContact", label: "Emergency Contact Name", type: "text", required: true, category: "Emergency Contact" },
+          { id: "emergencyPhone", label: "Emergency Contact Phone", type: "tel", required: true, category: "Emergency Contact" },
+        ]
+      },
+    },
+    {
+      title: "Late Rent Notice",
+      description: "Formal notice for late rent payment with state-specific requirements",
+      category: "notices" as const,
+      templateType: "late_rent_notice" as const,
+      stateId: "NC",
+      version: 1,
+      sortOrder: 3,
+      fillableFormData: {
+        fields: [
+          { id: "landlordName", label: "Landlord Full Name", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordAddress", label: "Landlord Mailing Address", type: "text", required: true, category: "Landlord Information" },
+          { id: "landlordPhone", label: "Landlord Phone Number", type: "tel", required: true, category: "Landlord Information" },
+          { id: "landlordEmail", label: "Landlord Email Address", type: "email", required: false, category: "Landlord Information" },
+          { id: "tenantName", label: "Tenant Full Name", type: "text", required: true, category: "Tenant Information" },
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Property Details" },
+          { id: "leaseDate", label: "Lease Agreement Date", type: "date", required: false, category: "Lease Information" },
+          { id: "rentDueDate", label: "Rent Due Date", type: "date", required: true, category: "Payment Details" },
+          { id: "amountDue", label: "Rent Amount Due", type: "currency", required: true, category: "Payment Details" },
+          { id: "lateFeeAmount", label: "Late Fee Amount", type: "currency", required: false, category: "Payment Details", defaultValue: "0.00" },
+          { id: "payByDate", label: "Pay By Date (Deadline)", type: "date", required: true, category: "Payment Details" },
+          { id: "noticeDate", label: "Date of This Notice", type: "date", required: true, category: "Notice Information", defaultValue: "today" },
+          { id: "landlordSignature", label: "Landlord Signature", type: "text", required: false, category: "Signatures" },
+          { id: "dateSigned", label: "Date Signed", type: "date", required: false, category: "Signatures", defaultValue: "today" },
+        ]
+      },
+    },
+    {
+      title: "Move-In Checklist",
+      description: "Detailed move-in inspection checklist to document property condition",
+      category: "move_in_out" as const,
+      templateType: "move_in_checklist" as const,
+      stateId: "NC",
+      version: 1,
+      sortOrder: 4,
+      fillableFormData: {
+        fields: [
+          { id: "propertyAddress", label: "Property Address", type: "text", required: true, category: "Property Information" },
+          { id: "tenantName", label: "Tenant Name", type: "text", required: true, category: "Property Information" },
+          { id: "landlordName", label: "Landlord Name", type: "text", required: true, category: "Property Information" },
+          { id: "inspectionDate", label: "Inspection Date", type: "date", required: true, category: "Property Information", defaultValue: "today" },
+          { id: "moveInDate", label: "Move-In Date", type: "date", required: true, category: "Property Information" },
+        ]
+      },
+    },
   ];
 
   for (const template of templateSamples) {
