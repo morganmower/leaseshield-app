@@ -1832,7 +1832,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Credit Report Helper - explain credit terms using AI
-  app.post('/api/explain-credit-term', asyncHandler(async (req, res) => {
+  app.post('/api/explain-credit-term', isAuthenticated, requireActiveSubscription, asyncHandler(async (req, res) => {
     // Rate limiting (same as chat)
     const clientIp = getClientIp(req);
     if (!chatRateLimiter.check(clientIp)) {
@@ -1946,7 +1946,7 @@ TONE: Protective mentor helping a landlord make informed decisions.`
   }));
 
   // Criminal & Eviction Screening Helper - explain terms using AI
-  app.post('/api/explain-criminal-eviction-term', asyncHandler(async (req, res) => {
+  app.post('/api/explain-criminal-eviction-term', isAuthenticated, requireActiveSubscription, asyncHandler(async (req, res) => {
     // Rate limiting (same as chat and credit helper)
     const clientIp = getClientIp(req);
     if (!chatRateLimiter.check(clientIp)) {
