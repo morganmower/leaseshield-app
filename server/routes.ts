@@ -188,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create a payment intent directly for this subscription
       console.error(`[create-subscription] Creating payment intent for subscription ${subscription.id}`);
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: 1200, // $12 in cents
+        amount: 1000, // $10 in cents
         currency: 'usd',
         customer: customerId,
         description: `LeaseShield subscription - ${user.email}`,

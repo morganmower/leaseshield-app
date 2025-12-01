@@ -289,7 +289,7 @@ export default function Landing() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                   <div>
                     <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$12</span>
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
                       <span className="text-lg text-muted-foreground">/month</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
@@ -743,7 +743,7 @@ export default function Landing() {
           >
             <div className="inline-block bg-success/10 border border-success/20 rounded-lg px-6 py-4">
               <p className="text-lg font-semibold text-foreground mb-1">
-                LeaseShield App: Just $12/month
+                LeaseShield App: Just $10/month
               </p>
               <p className="text-sm text-muted-foreground">
                 One mistake costs more than 2 years of LeaseShield
@@ -799,7 +799,7 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
                       <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <span className="font-bold text-primary text-xs sm:text-sm">$12/month</span>
+                        <span className="font-bold text-primary text-xs sm:text-sm">$10/month</span>
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1030,7 +1030,7 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">LeaseShield App</h3>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$12</span>
+                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
@@ -1243,7 +1243,7 @@ export default function Landing() {
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">$12</div>
+                  <div className="text-2xl font-bold text-primary mb-1">$10</div>
                   <div className="text-sm text-muted-foreground">Per Month</div>
                 </div>
               </div>

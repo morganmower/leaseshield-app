@@ -74,7 +74,7 @@ export default function RefundPolicy() {
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p>
                   After your free trial ends, continued access to LeaseShield App requires a paid subscription 
-                  of <strong>$12/month</strong>.
+                  of <strong>$10/month</strong>.
                 </p>
                 <p>
                   <strong>Auto-Renewal:</strong> Subscriptions automatically renew on a monthly basis unless 

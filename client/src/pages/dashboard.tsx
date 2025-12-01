@@ -116,7 +116,7 @@ export default function Dashboard() {
                       Complete Your Subscription
                     </p>
                     <p className="text-sm text-muted-foreground mt-1">
-                      Subscribe to LeaseShield for $12/month and get access to all templates and compliance updates
+                      Subscribe to LeaseShield for $10/month and get access to all templates and compliance updates
                     </p>
                   </>
                 )}

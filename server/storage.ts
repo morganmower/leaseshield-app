@@ -562,7 +562,7 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.subscriptionStatus, 'canceled'));
 
-    // Calculate MRR (assuming $12/month)
+    // Calculate MRR (assuming $10/month)
     const activeCount = Number(activeSubscriptions[0]?.count || 0);
     const mrr = activeCount * 12;
 

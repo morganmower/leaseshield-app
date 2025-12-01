@@ -74,7 +74,7 @@ function SubscribeForm() {
         size="lg"
         data-testid="button-submit-payment"
       >
-        Subscribe Now - $12/month
+        Subscribe Now - $10/month
       </Button>
     </form>
   );
@@ -170,7 +170,7 @@ export default function Subscribe() {
           <Card className="p-8 md:col-span-2">
             <div className="mb-6">
               <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-display font-bold text-foreground">$12</span>
+                <span className="text-4xl font-display font-bold text-foreground">$10</span>
                 <span className="text-muted-foreground">/month</span>
               </div>
               <p className="text-sm text-muted-foreground">Cancel anytime</p>

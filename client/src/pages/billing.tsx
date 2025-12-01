@@ -148,7 +148,7 @@ export default function Billing() {
                 {user.subscriptionStatus === 'cancel_at_period_end' 
                   ? 'Cancelling at period end' 
                   : user.subscriptionStatus === 'active'
-                  ? 'LeaseShield App - $12/month'
+                  ? 'LeaseShield App - $10/month'
                   : user.subscriptionStatus === 'trialing'
                   ? 'LeaseShield App - 7-Day Free Trial'
                   : "No active subscription"}
@@ -192,7 +192,7 @@ export default function Billing() {
                   className="w-full sm:w-auto"
                   data-testid="button-upgrade-to-paid"
                 >
-                  Upgrade to Paid - $12/month
+                  Upgrade to Paid - $10/month
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
                 <p className="text-xs text-muted-foreground mt-2">

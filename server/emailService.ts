@@ -42,7 +42,7 @@ Don't lose access to:
 • Credit report decoder and tenant screening toolkit
 • Step-by-step workflows for handling tenant issues
 
-Continue your subscription for just $12/month and keep your rental business protected.
+Continue your subscription for just $10/month and keep your rental business protected.
 
 Log in to manage your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings
 
@@ -86,7 +86,7 @@ The LeaseShield App Team
         </ul>
       </div>
 
-      <p>Continue your subscription for just <strong>$12/month</strong> and keep your rental business protected.</p>
+      <p>Continue your subscription for just <strong>$10/month</strong> and keep your rental business protected.</p>
 
       <center>
         <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" class="cta-button">
@@ -278,7 +278,7 @@ The LeaseShield App Team
 
 Your 7-day free trial of LeaseShield App has ended.
 
-To continue protecting your rental business, please subscribe for just $12/month:
+To continue protecting your rental business, please subscribe for just $10/month:
 • State-specific legal templates for UT, TX, ND, SD
 • Real-time compliance updates and legal change notifications
 • Credit report decoder and tenant screening resources
@@ -319,7 +319,7 @@ The LeaseShield App Team
         <p style="margin: 0; color: #991b1b;"><strong>Your 7-day free trial of LeaseShield App has ended.</strong></p>
       </div>
 
-      <p>You still have access to view your previous data, but to continue using LeaseShield App and protecting your rental business, please subscribe for just <strong>$12/month</strong>.</p>
+      <p>You still have access to view your previous data, but to continue using LeaseShield App and protecting your rental business, please subscribe for just <strong>$10/month</strong>.</p>
 
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>With your subscription, you'll get:</strong></p>
