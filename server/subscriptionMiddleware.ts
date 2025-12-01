@@ -12,11 +12,6 @@ export async function requireActiveSubscription(req: any, res: any, next: any) {
       return res.status(401).json({ message: "User not found" });
     }
 
-    // Admins always have access
-    if (user.isAdmin) {
-      return next();
-    }
-
     // Users in trial mode can access everything (including incomplete status with trial)
     if (user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'incomplete') {
       const now = new Date();
