@@ -72,8 +72,36 @@ export default function Dashboard() {
 
   const isTrialing = user.subscriptionStatus === 'trialing';
   const isIncomplete = user.subscriptionStatus === 'incomplete';
+  
+  // Check if trial has expired
+  const trialExpired = isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
+  
   const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId;
-  const hasActiveSubscription = user.subscriptionStatus === 'active' || isTrialing;
+  const hasActiveSubscription = user.subscriptionStatus === 'active' || (isTrialing && !trialExpired);
+
+  // If trial has expired, show blocking screen
+  if (trialExpired) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center px-4">
+        <div className="text-center max-w-md">
+          <div className="mb-6">
+            <Bell className="h-16 w-16 text-primary mx-auto mb-4" />
+          </div>
+          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+            Trial Expired
+          </h1>
+          <p className="text-muted-foreground mb-6">
+            Your free trial has ended. Subscribe now to continue accessing all templates, compliance guidance, and AI tools.
+          </p>
+          <Link to="/subscribe">
+            <Button size="lg" data-testid="button-subscribe-expired">
+              Subscribe Now - $10/month
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
