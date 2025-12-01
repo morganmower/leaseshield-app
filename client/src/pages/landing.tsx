@@ -1258,9 +1258,8 @@ export default function Landing() {
               <AccordionItem value="item-1">
                 <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent>
-                  We currently serve landlords in Utah, Texas, North Dakota, South Dakota, and North Carolina with
-                  comprehensive state-specific templates and compliance guidance. We're expanding to
-                  additional states soon—sign up to get notified when your state is added!
+                  We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho</strong> with
+                  comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states—let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
