@@ -735,6 +735,24 @@ export default function Landing() {
               </Card>
             </motion.div>
           </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-12"
+          >
+            <Badge className="mb-4 bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-100">Bonus Tools</Badge>
+            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 sm:p-6">
+              <p className="text-sm sm:text-base font-semibold text-foreground mb-2">
+                ✓ Rent Ledger + Communications Tools
+              </p>
+              <p className="text-xs sm:text-sm text-muted-foreground">
+                Track rental payments and send compliant tenant notices—features most landlord associations overlook. Included with every LeaseShield membership.
+              </p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -956,10 +974,22 @@ export default function Landing() {
                         <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
                       </td>
                     </tr>
-                    <tr>
+                    <tr className="border-b">
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Compliance Alerts</td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center bg-primary/5">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Real-Time Updates</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <span className="text-muted-foreground text-xs sm:text-sm">Outdated PDFs</span>
                       </td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
