@@ -126,13 +126,19 @@ export default function Dashboard() {
                   <>
                     {(() => {
                       const daysLeft = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      const trialExpired = daysLeft <= 0;
+                      
                       return (
                         <>
                           <p className="font-medium text-foreground">
-                            Your free trial ends in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
+                            {trialExpired ? (
+                              <>Your free trial has ended ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})</>
+                            ) : (
+                              <>Your free trial ends in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})</>
+                            )}
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            Subscribe now to continue accessing all templates and compliance updates
+                            {trialExpired ? 'Subscribe now to regain access to all templates and compliance updates' : 'Subscribe now to continue accessing all templates and compliance updates'}
                           </p>
                         </>
                       );
