@@ -12,6 +12,7 @@ const STATE_NAMES: Record<string, string> = {
   SD: "South Dakota",
   NC: "North Carolina",
   OH: "Ohio",
+  MI: "Michigan",
 };
 
 export function StateBadge({ stateId, className }: StateBadgeProps) {

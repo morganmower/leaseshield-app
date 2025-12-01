@@ -165,6 +165,7 @@ export default function Settings() {
                   <SelectItem value="SD">South Dakota</SelectItem>
                   <SelectItem value="NC">North Carolina</SelectItem>
                   <SelectItem value="OH">Ohio</SelectItem>
+                  <SelectItem value="MI">Michigan</SelectItem>
                 </SelectContent>
               </Select>
             </div>
