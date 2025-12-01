@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
+import westernVerifyLogo from "@assets/stock_images/western_verify_logo_55472c20.jpg";
 import {
   Accordion,
   AccordionContent,
@@ -501,6 +502,35 @@ export default function Landing() {
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Access Anytime</div>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Partner Trust Section */}
+      <section className="py-12 sm:py-16 bg-muted/50 border-y">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex flex-col items-center justify-center gap-6 sm:gap-8"
+          >
+            <div className="text-center">
+              <p className="text-sm sm:text-base text-muted-foreground font-medium mb-2">Screening powered by</p>
+              <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground">Trusted Partner Integration</h3>
+            </div>
+            <div className="flex items-center justify-center">
+              <img 
+                src={westernVerifyLogo} 
+                alt="Western Verify - Tenant screening partner" 
+                className="h-12 sm:h-14 object-contain"
+                data-testid="img-western-verify-logo"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground max-w-md text-center">
+              Comprehensive tenant screening checks integrated directly into LeaseShield App for complete landlord protection.
+            </p>
           </motion.div>
         </div>
       </section>
