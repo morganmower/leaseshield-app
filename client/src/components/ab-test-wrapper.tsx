@@ -1,0 +1,136 @@
+import { useState, useEffect } from 'react';
+import { Card } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { CheckCircle2, Shield, Lock, Sparkles } from 'lucide-react';
+
+type ABVariant = 'trial' | 'paywall' | null;
+
+interface ABTestWrapperProps {
+  children: React.ReactNode;
+  testId?: string;
+}
+
+const AB_STORAGE_KEY = 'leaseshield_ab_variant';
+
+function getOrAssignVariant(): ABVariant {
+  if (typeof window === 'undefined') return 'trial';
+  
+  const stored = localStorage.getItem(AB_STORAGE_KEY);
+  if (stored === 'trial' || stored === 'paywall') {
+    return stored;
+  }
+  
+  const variant: ABVariant = Math.random() < 0.5 ? 'trial' : 'paywall';
+  localStorage.setItem(AB_STORAGE_KEY, variant);
+  
+  return variant;
+}
+
+export function ABTestWrapper({ children, testId = 'landing' }: ABTestWrapperProps) {
+  const [variant, setVariant] = useState<ABVariant>(null);
+
+  useEffect(() => {
+    setVariant(getOrAssignVariant());
+  }, []);
+
+  if (variant === null) {
+    return null;
+  }
+
+  if (variant === 'paywall') {
+    return <PaywallVariant testId={testId} />;
+  }
+
+  return <>{children}</>;
+}
+
+function PaywallVariant({ testId }: { testId: string }) {
+  const handlePaywallClick = () => {
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'paywall_start', { 
+        variant: 'paywall',
+        test_id: testId 
+      });
+    }
+    window.location.href = '/api/login?redirect=/subscribe';
+  };
+
+  return (
+    <div className="relative overflow-hidden">
+      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10 pointer-events-none" />
+      
+      <Card className="max-w-2xl mx-auto p-8 text-center border-2 border-primary/30 bg-gradient-to-br from-card to-primary/5">
+        <div className="mb-6">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+            <Shield className="h-8 w-8 text-primary" />
+          </div>
+          <Badge className="mb-4 bg-success text-success-foreground">
+            <Sparkles className="h-3 w-3 mr-1" />
+            Limited Time Offer
+          </Badge>
+        </div>
+
+        <h2 className="text-3xl font-display font-semibold text-foreground mb-4">
+          Start With $10 First Month
+        </h2>
+        
+        <p className="text-lg text-muted-foreground mb-6">
+          Get instant access to all LeaseShield features. No trial needed — just full protection from day one.
+        </p>
+
+        <div className="bg-muted/50 rounded-lg p-4 mb-6">
+          <p className="text-sm text-foreground font-medium mb-3">Everything included:</p>
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+            {[
+              'State-specific lease templates',
+              'AI credit report decoder',
+              'Compliance monitoring',
+              'Document assembly wizard',
+              'Tenant issue workflows',
+              '24/7 AI chat assistant',
+            ].map((feature) => (
+              <li key={feature} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                {feature}
+              </li>
+            ))}
+          </ul>
+        </div>
+
+        <Button 
+          size="lg" 
+          className="w-full sm:w-auto px-8"
+          onClick={handlePaywallClick}
+          data-testid="button-paywall-signup"
+        >
+          <Lock className="mr-2 h-4 w-4" />
+          Pay $10 Now — Full Access
+        </Button>
+
+        <p className="text-xs text-muted-foreground mt-4">
+          Cancel anytime. Money-back guarantee.
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+export function trackTrialStart() {
+  if (typeof window !== 'undefined') {
+    const variant = localStorage.getItem(AB_STORAGE_KEY);
+    if (variant !== 'paywall' && (window as any).gtag) {
+      (window as any).gtag('event', 'trial_start', { variant: variant || 'trial' });
+    }
+  }
+}
+
+export function trackABEvent(eventName: string, additionalData?: Record<string, any>) {
+  if (typeof window !== 'undefined' && (window as any).gtag) {
+    const variant = localStorage.getItem(AB_STORAGE_KEY) || 'trial';
+    (window as any).gtag('event', eventName, { 
+      variant, 
+      ...additionalData 
+    });
+  }
+}

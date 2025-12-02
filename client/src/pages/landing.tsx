@@ -25,6 +25,8 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { TrialValueMessage } from "@/components/trial-conversion-nudge";
+import { trackTrialStart, ABTestWrapper } from "@/components/ab-test-wrapper";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -243,7 +245,10 @@ export default function Landing() {
               Log In
             </Button>
             <Button
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/api/login";
+              }}
               data-testid="button-start-trial"
               className="text-sm sm:text-base px-3 sm:px-5"
             >
@@ -252,6 +257,9 @@ export default function Landing() {
           </div>
         </div>
       </header>
+
+      {/* Trial Value Message Banner */}
+      <TrialValueMessage />
 
       {/* Hero Section */}
       <section className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden">
@@ -306,32 +314,37 @@ export default function Landing() {
                 </div>
               </motion.div>
 
-              {/* Pricing Display */}
-              <motion.div 
-                variants={fadeInUp}
-                className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
-              >
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                  <div>
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
-                      <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
+              {/* Pricing Display - A/B Test Wrapped */}
+              <ABTestWrapper testId="hero-pricing">
+                <motion.div 
+                  variants={fadeInUp}
+                  className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
+                >
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                    <div>
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
+                        <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {spotsRemaining} spots remaining • 7-day free trial
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      {spotsRemaining} spots remaining • 7-day free trial
-                    </p>
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        trackTrialStart();
+                        window.location.href = "/api/login";
+                      }}
+                      className="w-full sm:w-auto whitespace-nowrap"
+                      data-testid="button-pricing-cta"
+                    >
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
                   </div>
-                  <Button
-                    size="lg"
-                    onClick={() => window.location.href = "/api/login"}
-                    className="w-full sm:w-auto whitespace-nowrap"
-                    data-testid="button-pricing-cta"
-                  >
-                    Start Free Trial
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </div>
-              </motion.div>
+                </motion.div>
+              </ABTestWrapper>
               
               <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
                 <Button

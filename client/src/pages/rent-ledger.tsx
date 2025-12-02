@@ -11,6 +11,8 @@ import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { RentLedgerEntry } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
+import { GatedFeature } from "@/components/gated-feature";
+import { useTrialProgress } from "@/hooks/useTrialProgress";
 
 export default function RentLedger() {
   const { user } = useAuth();
@@ -20,23 +22,14 @@ export default function RentLedger() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [amountExpected, setAmountExpected] = useState("");
   const [amountReceived, setAmountReceived] = useState("");
+  const { isDay5OrLater } = useTrialProgress();
 
-  // Check subscription status
-  const hasActiveAccess = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'trialing';
-  
-  if (!hasActiveAccess) {
+  if (!isDay5OrLater) {
     return (
       <div className="container max-w-4xl mx-auto py-12 px-4">
-        <Card className="p-8 text-center">
-          <DollarSign className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">Rent Ledger</h2>
-          <p className="text-muted-foreground mb-6">
-            This feature requires an active subscription or free trial. Upgrade to track your rental income and payment history.
-          </p>
-          <Button onClick={() => window.location.href = '/subscribe'}>
-            Start Free Trial
-          </Button>
-        </Card>
+        <GatedFeature dayRequired={5} featureName="Rent Ledger">
+          <div />
+        </GatedFeature>
       </div>
     );
   }

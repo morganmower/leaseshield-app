@@ -9,6 +9,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Copy, Download } from "lucide-react";
 import { useState } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
+import { GatedFeature } from "@/components/gated-feature";
+import { useTrialProgress } from "@/hooks/useTrialProgress";
 
 const STATE_NAMES: Record<string, string> = {
   UT: "Utah",
@@ -35,23 +37,14 @@ export default function Communications() {
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
+  const { isDay5OrLater } = useTrialProgress();
 
-  // Check subscription status
-  const hasActiveAccess = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'trialing';
-  
-  if (!hasActiveAccess) {
+  if (!isDay5OrLater) {
     return (
       <div className="container max-w-4xl mx-auto py-12 px-4">
-        <Card className="p-8 text-center">
-          <MessageCircle className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <h2 className="text-2xl font-bold mb-2">Communications Templates</h2>
-          <p className="text-muted-foreground mb-6">
-            This feature requires an active subscription or free trial. Upgrade to access personalized communication templates for your tenants.
-          </p>
-          <Button onClick={() => window.location.href = '/subscribe'}>
-            Start Free Trial
-          </Button>
-        </Card>
+        <GatedFeature dayRequired={5} featureName="Communications Templates">
+          <div />
+        </GatedFeature>
       </div>
     );
   }
