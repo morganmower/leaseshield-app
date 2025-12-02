@@ -347,6 +347,20 @@ export default function RentLedger() {
                           </TableRow>
                         );
                       })}
+                      {entries && entries.length > 0 && (() => {
+                        const totalCharge = entries.reduce((sum, e) => sum + (e.amountExpected / 100), 0);
+                        const totalPayment = entries.reduce((sum, e) => sum + ((e.amountReceived ?? 0) / 100), 0);
+                        const totalBalance = totalCharge - totalPayment;
+                        return (
+                          <TableRow className="border-t-2 border-t-primary font-bold bg-muted/50">
+                            <TableCell colSpan={3}>TOTALS</TableCell>
+                            <TableCell className="text-right font-mono">${totalCharge.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${totalPayment.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono">${totalBalance.toFixed(2)}</TableCell>
+                            <TableCell colSpan={2}></TableCell>
+                          </TableRow>
+                        );
+                      })()}
                     </TableBody>
                   </Table>
                 </div>
