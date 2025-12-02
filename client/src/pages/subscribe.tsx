@@ -158,6 +158,13 @@ export default function Subscribe() {
     setBillingPeriod(saved || 'monthly');
   }, []);
 
+  const handleBillingPeriodChange = (period: 'monthly' | 'yearly') => {
+    setBillingPeriod(period);
+    localStorage.setItem('billingPeriod', period);
+    // Trigger new subscription creation with the new period
+    setClientSecret('');
+  };
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       window.location.href = "/api/login";
@@ -261,6 +268,29 @@ export default function Subscribe() {
             <Logo iconSize={32} />
             <span className="font-display text-xl sm:text-2xl font-semibold">LeaseShield App</span>
           </div>
+        </div>
+
+        {/* Billing Period Selector */}
+        <div className="flex justify-center gap-3 mb-8">
+          <Button
+            type="button"
+            variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
+            onClick={() => handleBillingPeriodChange('monthly')}
+            className="px-6"
+            data-testid="button-billing-monthly"
+          >
+            Monthly - $10/month
+          </Button>
+          <Button
+            type="button"
+            variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
+            onClick={() => handleBillingPeriodChange('yearly')}
+            className="px-6"
+            data-testid="button-billing-yearly"
+          >
+            Annual - $100/year
+            <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
+          </Button>
         </div>
 
         {/* Progress Stepper */}
