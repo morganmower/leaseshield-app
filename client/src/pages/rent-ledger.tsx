@@ -12,20 +12,33 @@ import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { RentLedgerEntry } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 export default function RentLedger() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeTab, setActiveTab] = useState("fast");
   const [tenantName, setTenantName] = useState("");
-  const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
-  const [amountExpected, setAmountExpected] = useState("");
-  const [amountReceived, setAmountReceived] = useState("");
+  const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
+  const [type, setType] = useState<"charge" | "payment">("charge");
+  const [category, setCategory] = useState("Rent");
+  const [description, setDescription] = useState("");
+  const [chargeAmount, setChargeAmount] = useState("");
+  const [paymentAmount, setPaymentAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState("");
+  const [referenceNumber, setReferenceNumber] = useState("");
+  const [notes, setNotes] = useState("");
   const [editingEntry, setEditingEntry] = useState<RentLedgerEntry | null>(null);
   const [editTenantName, setEditTenantName] = useState("");
-  const [editMonth, setEditMonth] = useState("");
-  const [editCharge, setEditCharge] = useState("");
-  const [editPayment, setEditPayment] = useState("");
+  const [editEffectiveDate, setEditEffectiveDate] = useState("");
+  const [editType, setEditType] = useState<"charge" | "payment">("charge");
+  const [editCategory, setEditCategory] = useState("Rent");
+  const [editDescription, setEditDescription] = useState("");
+  const [editChargeAmount, setEditChargeAmount] = useState("");
+  const [editPaymentAmount, setEditPaymentAmount] = useState("");
+  const [editPaymentMethod, setEditPaymentMethod] = useState("");
+  const [editReferenceNumber, setEditReferenceNumber] = useState("");
+  const [editNotes, setEditNotes] = useState("");
 
   const { data: entries, isLoading } = useQuery<RentLedgerEntry[]>({
     queryKey: ["/api/rent-ledger"],
@@ -37,9 +50,15 @@ export default function RentLedger() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rent-ledger"] });
       setTenantName("");
-      setMonth(new Date().toISOString().slice(0, 7));
-      setAmountExpected("");
-      setAmountReceived("");
+      setEffectiveDate(new Date().toISOString().split('T')[0]);
+      setType("charge");
+      setCategory("Rent");
+      setDescription("");
+      setChargeAmount("");
+      setPaymentAmount("");
+      setPaymentMethod("");
+      setReferenceNumber("");
+      setNotes("");
       toast({ description: "Rent entry added successfully!" });
     },
     onError: () => toast({ description: "Failed to add entry", variant: "destructive" }),
@@ -68,25 +87,37 @@ export default function RentLedger() {
   const handleEditClick = (entry: RentLedgerEntry) => {
     setEditingEntry(entry);
     setEditTenantName(entry.tenantName);
-    setEditMonth(entry.month);
-    setEditCharge((entry.amountExpected / 100).toFixed(2));
-    setEditPayment(((entry.amountReceived ?? 0) / 100).toFixed(2));
+    setEditEffectiveDate(entry.effectiveDate ? new Date(entry.effectiveDate).toISOString().split('T')[0] : "");
+    setEditType((entry.type as "charge" | "payment") || "charge");
+    setEditCategory(entry.category || "Rent");
+    setEditDescription(entry.description || "");
+    setEditChargeAmount((entry.amountExpected / 100).toFixed(2));
+    setEditPaymentAmount(((entry.amountReceived ?? 0) / 100).toFixed(2));
+    setEditPaymentMethod(entry.paymentMethod || "");
+    setEditReferenceNumber(entry.referenceNumber || "");
+    setEditNotes(entry.notes || "");
   };
 
   const handleUpdateEntry = () => {
-    if (!editTenantName || !editMonth || !editCharge || !editingEntry) {
+    if (!editTenantName || !editEffectiveDate || !editingEntry) {
       toast({ description: "Please fill in all required fields", variant: "destructive" });
       return;
     }
     updateMutation.mutate({
       id: editingEntry.id,
+      userId: editingEntry.userId,
+      propertyId: editingEntry.propertyId,
       tenantName: editTenantName,
-      month: editMonth,
-      amountExpected: Math.round(parseFloat(editCharge) * 100),
-      amountReceived: Math.round(parseFloat(editPayment) * 100),
-      paymentDate: null,
-      propertyId: null,
-      notes: "",
+      month: editEffectiveDate.slice(0, 7),
+      effectiveDate: new Date(editEffectiveDate),
+      type: editType,
+      category: editCategory,
+      description: editDescription,
+      amountExpected: editType === "charge" ? Math.round(parseFloat(editChargeAmount || "0") * 100) : 0,
+      amountReceived: editType === "payment" ? Math.round(parseFloat(editPaymentAmount || "0") * 100) : 0,
+      paymentMethod: editPaymentMethod,
+      referenceNumber: editReferenceNumber,
+      notes: editNotes,
     });
   };
 
@@ -96,24 +127,24 @@ export default function RentLedger() {
       return;
     }
 
-    // Sort entries by date
-    const sortedEntries = [...entries].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+    const sortedEntries = [...entries].sort((a, b) => {
+      const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
+      const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
+      return dateA - dateB;
+    });
 
-    // Calculate totals and running balances
     let totalCharges = 0;
     let totalPayments = 0;
     let runningBalance = 0;
 
     const csvRows = [
-      // Header
       "RENT LEDGER REPORT",
       `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+      `Tenant: ${sortedEntries[0]?.tenantName || ""}`,
       "",
-      // Column headers
-      "Date,Tenant Name,Month,Charge Amount,Payment Received,Running Balance,Status",
+      "Date,Effective Date,Type,Category,Description,Charge Amount,Payment Amount,Running Balance,Payment Method,Ref #,Notes",
     ];
 
-    // Data rows with running balance
     sortedEntries.forEach((entry) => {
       const charge = entry.amountExpected / 100;
       const payment = (entry.amountReceived ?? 0) / 100;
@@ -121,25 +152,24 @@ export default function RentLedger() {
       totalCharges += charge;
       totalPayments += payment;
 
-      const status = payment >= charge ? "Paid" : payment > 0 ? "Partial" : "Pending";
       const dateStr = new Date(entry.createdAt).toLocaleDateString();
+      const effectiveDateStr = entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "";
+      const entryType = entry.type === "payment" ? "Payment" : "Charge";
+      const chargeDisplay = entry.type === "charge" ? charge.toFixed(2) : "0.00";
+      const paymentDisplay = entry.type === "payment" ? payment.toFixed(2) : "0.00";
 
       csvRows.push(
-        `"${dateStr}","${entry.tenantName}","${entry.month}","$${charge.toFixed(2)}","$${payment.toFixed(2)}","$${runningBalance.toFixed(2)}","${status}"`
+        `"${dateStr}","${effectiveDateStr}","${entryType}","${entry.category || ""}","${entry.description || ""}","$${chargeDisplay}","$${paymentDisplay}","$${runningBalance.toFixed(2)}","${entry.paymentMethod || ""}","${entry.referenceNumber || ""}","${(entry.notes || "").replace(/"/g, '""')}"`
       );
     });
 
-    // Totals row
     const totalBalance = totalCharges - totalPayments;
     csvRows.push("");
-    csvRows.push(`"TOTALS","","","$${totalCharges.toFixed(2)}","$${totalPayments.toFixed(2)}","$${totalBalance.toFixed(2)}",""`);
-
-    // Summary
-    csvRows.push("");
     csvRows.push("SUMMARY");
-    csvRows.push(`"Total Charges","$${totalCharges.toFixed(2)}""`);
-    csvRows.push(`"Total Payments","$${totalPayments.toFixed(2)}""`);
-    csvRows.push(`"Outstanding Balance","$${totalBalance.toFixed(2)}""`);
+    csvRows.push(`Total Charges,$${totalCharges.toFixed(2)}`);
+    csvRows.push(`Total Payments,$${totalPayments.toFixed(2)}`);
+    csvRows.push(`Outstanding Balance,$${totalBalance.toFixed(2)}`);
+    csvRows.push(`Status,${totalBalance === 0 ? "Paid / Current" : "Outstanding"}`);
 
     const csv = csvRows.join("\n");
     const element = document.createElement("a");
@@ -153,19 +183,28 @@ export default function RentLedger() {
   };
 
   const handleAddEntry = () => {
-    if (!tenantName || !month || !amountExpected) {
+    if (!tenantName || !effectiveDate) {
       toast({ description: "Please fill in required fields", variant: "destructive" });
       return;
     }
 
+    const chargeAmt = type === "charge" ? Math.round(parseFloat(chargeAmount || "0") * 100) : 0;
+    const paymentAmt = type === "payment" ? Math.round(parseFloat(paymentAmount || "0") * 100) : 0;
+
     createMutation.mutate({
-      tenantName,
-      month,
-      amountExpected: Math.round(parseFloat(amountExpected) * 100),
-      amountReceived: amountReceived ? Math.round(parseFloat(amountReceived) * 100) : 0,
-      paymentDate: null,
+      userId: user?.id,
       propertyId: null,
-      notes: "",
+      tenantName,
+      month: effectiveDate.slice(0, 7),
+      effectiveDate: new Date(effectiveDate),
+      type,
+      category,
+      description,
+      amountExpected: chargeAmt,
+      amountReceived: paymentAmt,
+      paymentMethod,
+      referenceNumber,
+      notes,
     });
   };
 
@@ -177,17 +216,17 @@ export default function RentLedger() {
           <h1 className="text-3xl font-bold">Rent Ledger</h1>
         </div>
         <p className="text-muted-foreground">
-          Track monthly rent payments and manage your rental income.
+          Professional rent tracking with detailed payments, fees, and documentation.
         </p>
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="fast" data-testid="tab-fast-path">Quick Download (Excel)</TabsTrigger>
-          <TabsTrigger value="slow" data-testid="tab-slow-path">Track Rent</TabsTrigger>
+          <TabsTrigger value="fast" data-testid="tab-fast-path">Export Report</TabsTrigger>
+          <TabsTrigger value="slow" data-testid="tab-slow-path">Track Entries</TabsTrigger>
         </TabsList>
 
-        {/* Fast Path - Excel Download */}
+        {/* Export Report */}
         <TabsContent value="fast">
           <Card className="p-6 space-y-4">
             <div>
@@ -203,25 +242,26 @@ export default function RentLedger() {
               </Button>
             </div>
             <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
-              <p className="font-semibold">What's included:</p>
+              <p className="font-semibold">Report includes:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>All itemized rent charges and payments with dates</li>
-                <li>Running balance calculation for each transaction</li>
-                <li>Status column (Paid, Partial, Pending)</li>
-                <li>Professional summary with total charges, payments, and outstanding balance</li>
-                <li>Ready to share with accountant, lender, or save for records</li>
+                <li>Transaction date and effective date for each entry</li>
+                <li>Transaction type (charge or payment) and category</li>
+                <li>Payment method and reference number for documentation</li>
+                <li>Running balance calculation</li>
+                <li>Professional summary with totals</li>
               </ul>
             </div>
           </Card>
         </TabsContent>
 
-        {/* Slow Path - In-App Tracking */}
+        {/* Track Entries */}
         <TabsContent value="slow">
           <div className="space-y-6">
             {/* Add Entry Form */}
             <Card className="p-6">
-              <h2 className="text-2xl font-bold mb-6">Add Rent Entry</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <h2 className="text-2xl font-bold mb-6">Add Ledger Entry</h2>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                 <div>
                   <Label htmlFor="tenant-name">Tenant Name *</Label>
                   <Input
@@ -232,44 +272,130 @@ export default function RentLedger() {
                     data-testid="input-tenant-name"
                   />
                 </div>
+                
                 <div>
-                  <Label htmlFor="month">Month *</Label>
+                  <Label htmlFor="effective-date">Effective Date *</Label>
                   <Input
-                    id="month"
-                    type="month"
-                    value={month}
-                    onChange={(e) => setMonth(e.target.value)}
-                    data-testid="input-month"
+                    id="effective-date"
+                    type="date"
+                    value={effectiveDate}
+                    onChange={(e) => setEffectiveDate(e.target.value)}
+                    data-testid="input-effective-date"
                   />
                 </div>
+
                 <div>
-                  <Label htmlFor="amount-expected">Charge Amount *</Label>
+                  <Label htmlFor="type">Transaction Type</Label>
+                  <Select value={type} onValueChange={(v) => setType(v as "charge" | "payment")}>
+                    <SelectTrigger id="type" data-testid="select-type">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="charge">Charge</SelectItem>
+                      <SelectItem value="payment">Payment</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select value={category} onValueChange={setCategory}>
+                    <SelectTrigger id="category" data-testid="select-category">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Rent">Rent</SelectItem>
+                      <SelectItem value="Late Fee">Late Fee</SelectItem>
+                      <SelectItem value="Utility">Utility</SelectItem>
+                      <SelectItem value="Deposit">Deposit</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="description">Description</Label>
                   <Input
-                    id="amount-expected"
-                    type="number"
-                    step="0.01"
-                    value={amountExpected}
-                    onChange={(e) => setAmountExpected(e.target.value)}
-                    placeholder="1500.00"
-                    data-testid="input-amount-expected"
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="e.g., December Rent, Late Fee - 5 days late"
+                    data-testid="input-description"
                   />
                 </div>
+
+                {type === "charge" ? (
+                  <div>
+                    <Label htmlFor="charge-amount">Charge Amount *</Label>
+                    <Input
+                      id="charge-amount"
+                      type="number"
+                      step="0.01"
+                      value={chargeAmount}
+                      onChange={(e) => setChargeAmount(e.target.value)}
+                      placeholder="1500.00"
+                      data-testid="input-charge-amount"
+                    />
+                  </div>
+                ) : (
+                  <div>
+                    <Label htmlFor="payment-amount">Payment Amount *</Label>
+                    <Input
+                      id="payment-amount"
+                      type="number"
+                      step="0.01"
+                      value={paymentAmount}
+                      onChange={(e) => setPaymentAmount(e.target.value)}
+                      placeholder="1500.00"
+                      data-testid="input-payment-amount"
+                    />
+                  </div>
+                )}
+
                 <div>
-                  <Label htmlFor="amount-received">Payment Received</Label>
+                  <Label htmlFor="payment-method">Payment Method</Label>
+                  <Select value={paymentMethod} onValueChange={setPaymentMethod}>
+                    <SelectTrigger id="payment-method" data-testid="select-payment-method">
+                      <SelectValue placeholder="Select method..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="Check">Check</SelectItem>
+                      <SelectItem value="Zelle">Zelle</SelectItem>
+                      <SelectItem value="Venmo">Venmo</SelectItem>
+                      <SelectItem value="ACH">ACH</SelectItem>
+                      <SelectItem value="Certified Funds">Certified Funds</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="reference-number">Reference # (Check #, Transaction ID)</Label>
                   <Input
-                    id="amount-received"
-                    type="number"
-                    step="0.01"
-                    value={amountReceived}
-                    onChange={(e) => setAmountReceived(e.target.value)}
-                    placeholder="1500.00"
-                    data-testid="input-amount-received"
+                    id="reference-number"
+                    value={referenceNumber}
+                    onChange={(e) => setReferenceNumber(e.target.value)}
+                    placeholder="e.g., CHK-1234 or TXN #9134"
+                    data-testid="input-reference-number"
+                  />
+                </div>
+
+                <div className="md:col-span-2">
+                  <Label htmlFor="notes">Notes</Label>
+                  <Input
+                    id="notes"
+                    value={notes}
+                    onChange={(e) => setNotes(e.target.value)}
+                    placeholder="e.g., Paid in full, NSF - bank returned payment"
+                    data-testid="input-notes"
                   />
                 </div>
               </div>
+
               <Button
                 onClick={handleAddEntry}
-                className="mt-6 gap-2"
+                className="gap-2"
                 disabled={createMutation.isPending}
                 data-testid="button-add-entry"
               >
@@ -278,9 +404,9 @@ export default function RentLedger() {
               </Button>
             </Card>
 
-            {/* Rent Ledger Table */}
+            {/* Ledger Table */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold mb-4">Rent Ledger History</h2>
+              <h2 className="text-xl font-bold mb-4">Ledger History</h2>
               {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
               ) : entries && entries.length > 0 ? (
@@ -289,44 +415,41 @@ export default function RentLedger() {
                     <TableHeader>
                       <TableRow>
                         <TableHead>Date</TableHead>
+                        <TableHead>Effective Date</TableHead>
                         <TableHead>Tenant</TableHead>
-                        <TableHead>Month</TableHead>
+                        <TableHead>Type</TableHead>
+                        <TableHead>Category</TableHead>
+                        <TableHead>Description</TableHead>
                         <TableHead className="text-right">Charge</TableHead>
                         <TableHead className="text-right">Payment</TableHead>
                         <TableHead className="text-right">Balance</TableHead>
-                        <TableHead className="text-center">Status</TableHead>
-                        <TableHead className="w-16">Action</TableHead>
+                        <TableHead>Method</TableHead>
+                        <TableHead>Ref #</TableHead>
+                        <TableHead className="w-20">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((entry, idx) => {
+                      {entries.sort((a, b) => {
+                        const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
+                        const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
+                        return dateB - dateA;
+                      }).map((entry, idx) => {
                         const expected = entry.amountExpected / 100;
                         const received = (entry.amountReceived ?? 0) / 100;
-                        const balance = expected - received;
-                        const status = received >= expected ? "Paid" : received > 0 ? "Partial" : "Pending";
                         return (
                           <TableRow key={entry.id}>
                             <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-sm">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
                             <TableCell className="font-medium">{entry.tenantName}</TableCell>
-                            <TableCell>{entry.month}</TableCell>
-                            <TableCell className="text-right font-mono">${expected.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${received.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-mono font-semibold">${balance.toFixed(2)}</TableCell>
-                            <TableCell className="text-center">
-                              <span
-                                className={`text-xs font-semibold px-2 py-1 rounded ${
-                                  status === "Paid"
-                                    ? "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100"
-                                    : status === "Partial"
-                                      ? "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100"
-                                      : "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-100"
-                                }`}
-                                data-testid={`status-${entry.id}`}
-                              >
-                                {status}
-                              </span>
-                            </TableCell>
-                            <TableCell className="flex gap-2">
+                            <TableCell><span className="text-xs bg-muted px-2 py-1 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
+                            <TableCell className="text-sm">{entry.category}</TableCell>
+                            <TableCell className="text-sm max-w-xs truncate">{entry.description || "-"}</TableCell>
+                            <TableCell className="text-right font-mono">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
+                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
+                            <TableCell className="text-right font-mono font-semibold">${(entry.amountExpected / 100 - (entry.amountReceived ?? 0) / 100).toFixed(2)}</TableCell>
+                            <TableCell className="text-sm">{entry.paymentMethod || "-"}</TableCell>
+                            <TableCell className="text-sm">{entry.referenceNumber || "-"}</TableCell>
+                            <TableCell className="flex gap-1">
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -347,20 +470,6 @@ export default function RentLedger() {
                           </TableRow>
                         );
                       })}
-                      {entries && entries.length > 0 && (() => {
-                        const totalCharge = entries.reduce((sum, e) => sum + (e.amountExpected / 100), 0);
-                        const totalPayment = entries.reduce((sum, e) => sum + ((e.amountReceived ?? 0) / 100), 0);
-                        const totalBalance = totalCharge - totalPayment;
-                        return (
-                          <TableRow className="border-t-2 border-t-primary font-bold bg-muted/50">
-                            <TableCell colSpan={3}>TOTALS</TableCell>
-                            <TableCell className="text-right font-mono">${totalCharge.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${totalPayment.toFixed(2)}</TableCell>
-                            <TableCell className="text-right font-mono">${totalBalance.toFixed(2)}</TableCell>
-                            <TableCell colSpan={2}></TableCell>
-                          </TableRow>
-                        );
-                      })()}
                     </TableBody>
                   </Table>
                 </div>
@@ -374,51 +483,127 @@ export default function RentLedger() {
 
       {/* Edit Modal */}
       <Dialog open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Rent Entry</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-tenant">Tenant Name</Label>
-              <Input
-                id="edit-tenant"
-                value={editTenantName}
-                onChange={(e) => setEditTenantName(e.target.value)}
-                data-testid="input-edit-tenant"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-month">Month</Label>
-              <Input
-                id="edit-month"
-                type="month"
-                value={editMonth}
-                onChange={(e) => setEditMonth(e.target.value)}
-                data-testid="input-edit-month"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-charge">Charge Amount</Label>
-              <Input
-                id="edit-charge"
-                type="number"
-                step="0.01"
-                value={editCharge}
-                onChange={(e) => setEditCharge(e.target.value)}
-                data-testid="input-edit-charge"
-              />
-            </div>
-            <div>
-              <Label htmlFor="edit-payment">Payment Received</Label>
-              <Input
-                id="edit-payment"
-                type="number"
-                step="0.01"
-                value={editPayment}
-                onChange={(e) => setEditPayment(e.target.value)}
-                data-testid="input-edit-payment"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="edit-tenant">Tenant Name</Label>
+                <Input
+                  id="edit-tenant"
+                  value={editTenantName}
+                  onChange={(e) => setEditTenantName(e.target.value)}
+                  data-testid="input-edit-tenant"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-effective-date">Effective Date</Label>
+                <Input
+                  id="edit-effective-date"
+                  type="date"
+                  value={editEffectiveDate}
+                  onChange={(e) => setEditEffectiveDate(e.target.value)}
+                  data-testid="input-edit-effective-date"
+                />
+              </div>
+              <div>
+                <Label htmlFor="edit-type">Type</Label>
+                <Select value={editType} onValueChange={(v) => setEditType(v as "charge" | "payment")}>
+                  <SelectTrigger id="edit-type" data-testid="select-edit-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="charge">Charge</SelectItem>
+                    <SelectItem value="payment">Payment</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-category">Category</Label>
+                <Select value={editCategory} onValueChange={setEditCategory}>
+                  <SelectTrigger id="edit-category" data-testid="select-edit-category">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Rent">Rent</SelectItem>
+                    <SelectItem value="Late Fee">Late Fee</SelectItem>
+                    <SelectItem value="Utility">Utility</SelectItem>
+                    <SelectItem value="Deposit">Deposit</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Input
+                  id="edit-description"
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  data-testid="input-edit-description"
+                />
+              </div>
+              {editType === "charge" ? (
+                <div>
+                  <Label htmlFor="edit-charge">Charge Amount</Label>
+                  <Input
+                    id="edit-charge"
+                    type="number"
+                    step="0.01"
+                    value={editChargeAmount}
+                    onChange={(e) => setEditChargeAmount(e.target.value)}
+                    data-testid="input-edit-charge"
+                  />
+                </div>
+              ) : (
+                <div>
+                  <Label htmlFor="edit-payment">Payment Amount</Label>
+                  <Input
+                    id="edit-payment"
+                    type="number"
+                    step="0.01"
+                    value={editPaymentAmount}
+                    onChange={(e) => setEditPaymentAmount(e.target.value)}
+                    data-testid="input-edit-payment"
+                  />
+                </div>
+              )}
+              <div>
+                <Label htmlFor="edit-payment-method">Payment Method</Label>
+                <Select value={editPaymentMethod} onValueChange={setEditPaymentMethod}>
+                  <SelectTrigger id="edit-payment-method" data-testid="select-edit-payment-method">
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Cash">Cash</SelectItem>
+                    <SelectItem value="Check">Check</SelectItem>
+                    <SelectItem value="Zelle">Zelle</SelectItem>
+                    <SelectItem value="Venmo">Venmo</SelectItem>
+                    <SelectItem value="ACH">ACH</SelectItem>
+                    <SelectItem value="Certified Funds">Certified Funds</SelectItem>
+                    <SelectItem value="Other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="edit-reference-number">Reference #</Label>
+                <Input
+                  id="edit-reference-number"
+                  value={editReferenceNumber}
+                  onChange={(e) => setEditReferenceNumber(e.target.value)}
+                  data-testid="input-edit-reference-number"
+                />
+              </div>
+              <div className="col-span-2">
+                <Label htmlFor="edit-notes">Notes</Label>
+                <Input
+                  id="edit-notes"
+                  value={editNotes}
+                  onChange={(e) => setEditNotes(e.target.value)}
+                  data-testid="input-edit-notes"
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>

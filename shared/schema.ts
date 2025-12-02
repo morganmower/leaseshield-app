@@ -635,11 +635,18 @@ export const rentLedgerEntries = pgTable("rent_ledger_entries", {
   userId: varchar("user_id").notNull().references(() => users.id),
   propertyId: varchar("property_id").references(() => properties.id),
   tenantName: text("tenant_name").notNull(),
-  month: varchar("month", { length: 7 }).notNull(), // YYYY-MM format
+  month: varchar("month", { length: 7 }).notNull(), // YYYY-MM format (kept for backward compatibility)
   amountExpected: integer("amount_expected").notNull(), // in cents
   amountReceived: integer("amount_received").default(0), // in cents
   paymentDate: timestamp("payment_date"), // when payment was received
   notes: text("notes"),
+  // New fields for professional ledger
+  effectiveDate: timestamp("effective_date"), // When charge/payment is effective (e.g., rent due date)
+  category: varchar("category", { length: 50 }).default("Rent"), // Rent, Late Fee, Utility, Deposit, Other
+  description: text("description"), // User-friendly description (e.g., "December Rent", "Late Fee - 5 days late")
+  paymentMethod: varchar("payment_method", { length: 50 }), // Cash, Check, Zelle, Venmo, ACH, Certified funds
+  referenceNumber: varchar("reference_number", { length: 100 }), // Check #, transaction ID, etc.
+  type: varchar("type", { length: 20 }).default("charge"), // charge or payment
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
