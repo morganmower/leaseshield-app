@@ -1083,7 +1083,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const updated = await storage.updateRentLedgerEntry(req.params.id, userId, req.body);
+      const validated = insertRentLedgerEntrySchema.parse({
+        ...req.body,
+        userId,
+      });
+
+      const updated = await storage.updateRentLedgerEntry(req.params.id, userId, validated);
       if (!updated) {
         return res.status(404).json({ message: "Entry not found" });
       }

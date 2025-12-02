@@ -109,7 +109,7 @@ export default function RentLedger() {
       propertyId: editingEntry.propertyId,
       tenantName: editTenantName,
       month: editEffectiveDate.slice(0, 7),
-      effectiveDate: new Date(editEffectiveDate),
+      effectiveDate: editEffectiveDate || new Date().toISOString().split('T')[0],
       type: editType,
       category: editCategory,
       description: editDescription,
