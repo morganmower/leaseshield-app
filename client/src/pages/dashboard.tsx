@@ -54,9 +54,9 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Show tour on first visit, then video modal (but not if trial expired)
+  // Show tour on first visit, then video modal
   useEffect(() => {
-    if (user && !isLoading && !trialExpired) {
+    if (user && !isLoading) {
       const hasSeenTour = localStorage.getItem('leaseshield_tour_seen');
       const hasSeenVideo = localStorage.getItem('leaseshield_video_seen');
       
@@ -68,7 +68,7 @@ export default function Dashboard() {
         setTimeout(() => setShowVideoModal(true), 500);
       }
     }
-  }, [user, isLoading, trialExpired]);
+  }, [user, isLoading]);
 
   const { data: recentUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
     queryKey: ["/api/legal-updates/recent"],
@@ -97,10 +97,7 @@ export default function Dashboard() {
 
   const isTrialing = user.subscriptionStatus === 'trialing';
   const isIncomplete = user.subscriptionStatus === 'incomplete';
-  
-  // Check if trial has expired
   const trialExpired = isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  
   const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId;
   const hasActiveSubscription = user.subscriptionStatus === 'active' || (isTrialing && !trialExpired);
 
