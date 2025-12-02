@@ -176,37 +176,6 @@ export default function RentLedger() {
         {/* Slow Path - In-App Tracking */}
         <TabsContent value="slow">
           <div className="space-y-6">
-            {/* Quick Action Buttons */}
-            <div className="flex flex-wrap gap-3">
-              <Button 
-                variant="outline" 
-                onClick={() => setActiveTab("slow")}
-                className="gap-2"
-                data-testid="button-add-rent-charge"
-              >
-                <Plus className="h-4 w-4" />
-                Add Rent Charge
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setActiveTab("slow")}
-                className="gap-2"
-                data-testid="button-add-payment"
-              >
-                <DollarSign className="h-4 w-4" />
-                Add Payment
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => setActiveTab("slow")}
-                className="gap-2"
-                data-testid="button-add-late-fee"
-              >
-                <Plus className="h-4 w-4" />
-                Add Late Fee
-              </Button>
-            </div>
-
             {/* Add Entry Form */}
             <Card className="p-6">
               <h2 className="text-2xl font-bold mb-6">Add Rent Entry</h2>
