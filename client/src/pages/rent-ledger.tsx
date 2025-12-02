@@ -6,11 +6,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus, Trash2, DollarSign } from "lucide-react";
+import { Download, Plus, Trash2, DollarSign, Edit2 } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { RentLedgerEntry } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 
 export default function RentLedger() {
   const { user } = useAuth();
@@ -20,6 +21,11 @@ export default function RentLedger() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [amountExpected, setAmountExpected] = useState("");
   const [amountReceived, setAmountReceived] = useState("");
+  const [editingEntry, setEditingEntry] = useState<RentLedgerEntry | null>(null);
+  const [editTenantName, setEditTenantName] = useState("");
+  const [editMonth, setEditMonth] = useState("");
+  const [editCharge, setEditCharge] = useState("");
+  const [editPayment, setEditPayment] = useState("");
 
   const { data: entries, isLoading } = useQuery<RentLedgerEntry[]>({
     queryKey: ["/api/rent-ledger"],
@@ -47,6 +53,42 @@ export default function RentLedger() {
       toast({ description: "Entry deleted" });
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async (data: any) =>
+      apiRequest("PUT", `/api/rent-ledger/${data.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-ledger"] });
+      setEditingEntry(null);
+      toast({ description: "Entry updated successfully!" });
+    },
+    onError: () => toast({ description: "Failed to update entry", variant: "destructive" }),
+  });
+
+  const handleEditClick = (entry: RentLedgerEntry) => {
+    setEditingEntry(entry);
+    setEditTenantName(entry.tenantName);
+    setEditMonth(entry.month);
+    setEditCharge((entry.amountExpected / 100).toFixed(2));
+    setEditPayment(((entry.amountReceived ?? 0) / 100).toFixed(2));
+  };
+
+  const handleUpdateEntry = () => {
+    if (!editTenantName || !editMonth || !editCharge || !editingEntry) {
+      toast({ description: "Please fill in all required fields", variant: "destructive" });
+      return;
+    }
+    updateMutation.mutate({
+      id: editingEntry.id,
+      tenantName: editTenantName,
+      month: editMonth,
+      amountExpected: Math.round(parseFloat(editCharge) * 100),
+      amountReceived: Math.round(parseFloat(editPayment) * 100),
+      paymentDate: null,
+      propertyId: null,
+      notes: "",
+    });
+  };
 
   const downloadExcelTemplate = () => {
     if (!entries || entries.length === 0) {
@@ -284,7 +326,15 @@ export default function RentLedger() {
                                 {status}
                               </span>
                             </TableCell>
-                            <TableCell>
+                            <TableCell className="flex gap-2">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handleEditClick(entry)}
+                                data-testid={`button-edit-${entry.id}`}
+                              >
+                                <Edit2 className="h-4 w-4" />
+                              </Button>
                               <Button
                                 size="icon"
                                 variant="ghost"
@@ -307,6 +357,74 @@ export default function RentLedger() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* Edit Modal */}
+      <Dialog open={!!editingEntry} onOpenChange={(open) => !open && setEditingEntry(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Edit Rent Entry</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="edit-tenant">Tenant Name</Label>
+              <Input
+                id="edit-tenant"
+                value={editTenantName}
+                onChange={(e) => setEditTenantName(e.target.value)}
+                data-testid="input-edit-tenant"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-month">Month</Label>
+              <Input
+                id="edit-month"
+                type="month"
+                value={editMonth}
+                onChange={(e) => setEditMonth(e.target.value)}
+                data-testid="input-edit-month"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-charge">Charge Amount</Label>
+              <Input
+                id="edit-charge"
+                type="number"
+                step="0.01"
+                value={editCharge}
+                onChange={(e) => setEditCharge(e.target.value)}
+                data-testid="input-edit-charge"
+              />
+            </div>
+            <div>
+              <Label htmlFor="edit-payment">Payment Received</Label>
+              <Input
+                id="edit-payment"
+                type="number"
+                step="0.01"
+                value={editPayment}
+                onChange={(e) => setEditPayment(e.target.value)}
+                data-testid="input-edit-payment"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setEditingEntry(null)}
+              data-testid="button-cancel-edit"
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateEntry}
+              disabled={updateMutation.isPending}
+              data-testid="button-save-edit"
+            >
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

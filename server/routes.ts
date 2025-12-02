@@ -1068,6 +1068,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.put('/api/rent-ledger/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const updated = await storage.updateRentLedgerEntry(req.params.id, userId, req.body);
+      if (!updated) {
+        return res.status(404).json({ message: "Entry not found" });
+      }
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating rent ledger entry:", error);
+      res.status(500).json({ message: "Failed to update entry" });
+    }
+  });
+
   app.delete('/api/rent-ledger/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
