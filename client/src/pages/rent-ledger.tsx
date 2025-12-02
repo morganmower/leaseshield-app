@@ -454,18 +454,18 @@ export default function RentLedger() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
-                        <TableHead>Effective Date</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Category</TableHead>
-                        <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Charge Amount</TableHead>
-                        <TableHead className="text-right">Payment Amount</TableHead>
-                        <TableHead className="text-right">Running Balance</TableHead>
-                        <TableHead>Payment Method</TableHead>
-                        <TableHead>Ref #</TableHead>
-                        <TableHead>Notes</TableHead>
-                        <TableHead className="w-20">Action</TableHead>
+                        <TableHead className="text-xs">Date</TableHead>
+                        <TableHead className="text-xs">Effective Date</TableHead>
+                        <TableHead className="text-xs">Type</TableHead>
+                        <TableHead className="text-xs">Category</TableHead>
+                        <TableHead className="text-xs">Description</TableHead>
+                        <TableHead className="text-xs text-right">Charge Amt</TableHead>
+                        <TableHead className="text-xs text-right">Payment Amt</TableHead>
+                        <TableHead className="text-xs text-right">Balance</TableHead>
+                        <TableHead className="text-xs">Method</TableHead>
+                        <TableHead className="text-xs">Ref #</TableHead>
+                        <TableHead className="text-xs">Notes</TableHead>
+                        <TableHead className="text-xs w-16">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -478,17 +478,17 @@ export default function RentLedger() {
                         const received = (entry.amountReceived ?? 0) / 100;
                         return (
                           <TableRow key={entry.id}>
-                            <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-sm">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
-                            <TableCell><span className="text-xs bg-muted px-2 py-1 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
-                            <TableCell className="text-sm">{entry.category}</TableCell>
-                            <TableCell className="text-sm max-w-xs truncate">{entry.description || "-"}</TableCell>
-                            <TableCell className="text-right font-mono">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
-                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
-                            <TableCell className="text-right font-mono font-semibold">${(entry.amountExpected / 100 - (entry.amountReceived ?? 0) / 100).toFixed(2)}</TableCell>
-                            <TableCell className="text-sm">{entry.paymentMethod || "-"}</TableCell>
-                            <TableCell className="text-sm">{entry.referenceNumber || "-"}</TableCell>
-                            <TableCell className="text-sm max-w-xs truncate">{entry.notes || "-"}</TableCell>
+                            <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
+                            <TableCell><span className="text-xs bg-muted px-1 py-0.5 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
+                            <TableCell className="text-xs">{entry.category}</TableCell>
+                            <TableCell className="text-xs max-w-xs truncate">{entry.description || "-"}</TableCell>
+                            <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
+                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
+                            <TableCell className="text-right font-mono font-semibold text-xs">${(entry.amountExpected / 100 - (entry.amountReceived ?? 0) / 100).toFixed(2)}</TableCell>
+                            <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
+                            <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
+                            <TableCell className="text-xs max-w-xs truncate">{entry.notes || "-"}</TableCell>
                             <TableCell className="flex gap-1">
                               <Button
                                 size="icon"
