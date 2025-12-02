@@ -121,6 +121,7 @@ export default function RentLedger() {
       month,
       amountExpected: Math.round(parseFloat(amountExpected) * 100),
       amountReceived: amountReceived ? Math.round(parseFloat(amountReceived) * 100) : 0,
+      paymentDate: null,
       propertyId: null,
       notes: "",
     });
