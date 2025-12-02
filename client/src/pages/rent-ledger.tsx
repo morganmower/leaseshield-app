@@ -99,8 +99,8 @@ export default function RentLedger() {
   };
 
   const handleUpdateEntry = () => {
-    if (!editTenantName || !editEffectiveDate || !editingEntry) {
-      toast({ description: "Please fill in all required fields", variant: "destructive" });
+    if (!editTenantName || !editingEntry) {
+      toast({ description: "Please enter tenant name", variant: "destructive" });
       return;
     }
     updateMutation.mutate({
@@ -183,8 +183,8 @@ export default function RentLedger() {
   };
 
   const handleAddEntry = () => {
-    if (!tenantName || !effectiveDate) {
-      toast({ description: "Please fill in required fields", variant: "destructive" });
+    if (!tenantName) {
+      toast({ description: "Please enter tenant name", variant: "destructive" });
       return;
     }
 
@@ -195,8 +195,8 @@ export default function RentLedger() {
       userId: user?.id,
       propertyId: null,
       tenantName,
-      month: effectiveDate.slice(0, 7),
-      effectiveDate: new Date(effectiveDate),
+      month: effectiveDate ? effectiveDate.slice(0, 7) : new Date().toISOString().slice(0, 7),
+      effectiveDate: effectiveDate ? new Date(effectiveDate) : new Date(),
       type,
       category,
       description,
@@ -274,7 +274,7 @@ export default function RentLedger() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="effective-date">Effective Date *</Label>
+                  <Label htmlFor="effective-date">Effective Date</Label>
                   <Input
                     id="effective-date"
                     type="date"
@@ -326,7 +326,7 @@ export default function RentLedger() {
 
                 {type === "charge" ? (
                   <div>
-                    <Label htmlFor="charge-amount">Charge Amount *</Label>
+                    <Label htmlFor="charge-amount">Charge Amount</Label>
                     <Input
                       id="charge-amount"
                       type="number"
@@ -339,7 +339,7 @@ export default function RentLedger() {
                   </div>
                 ) : (
                   <div>
-                    <Label htmlFor="payment-amount">Payment Amount *</Label>
+                    <Label htmlFor="payment-amount">Payment Amount</Label>
                     <Input
                       id="payment-amount"
                       type="number"
