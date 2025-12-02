@@ -1122,30 +1122,9 @@ export default function Landing() {
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-base sm:text-lg text-muted-foreground px-4 mb-8">
+            <p className="text-base sm:text-lg text-muted-foreground px-4">
               Everything you need to protect your rental business
             </p>
-            
-            {/* Billing Toggle */}
-            <div className="flex items-center justify-center gap-4 mb-6">
-              <span className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
-              <button
-                onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'yearly' : 'monthly')}
-                className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted hover-elevate active-elevate-2"
-              >
-                <span
-                  className={`inline-block h-6 w-6 transform rounded-full bg-foreground transition ${
-                    billingPeriod === 'yearly' ? 'translate-x-7' : 'translate-x-1'
-                  }`}
-                />
-              </button>
-              <div className="flex items-center gap-2">
-                <span className={`text-sm font-medium ${billingPeriod === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
-                {billingPeriod === 'yearly' && (
-                  <Badge className="bg-success text-success-foreground text-xs">Save $20</Badge>
-                )}
-              </div>
-            </div>
           </motion.div>
 
           <motion.div
@@ -1153,26 +1132,21 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
+            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
           >
+            {/* Monthly Card */}
             <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-2 mb-2">
                   <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  <Badge variant="outline" className="text-xs sm:text-sm">Most Popular</Badge>
+                  <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
                 </div>
-                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">LeaseShield App</h3>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Monthly</h3>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-foreground">
-                    {billingPeriod === 'monthly' ? '$10' : '$100'}
-                  </span>
-                  <span className="text-base sm:text-lg text-muted-foreground">
-                    {billingPeriod === 'monthly' ? '/month' : '/year'}
-                  </span>
+                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
-                {billingPeriod === 'yearly' && (
-                  <p className="text-xs sm:text-sm text-success font-semibold mt-1">Just $8.33/month when billed annually</p>
-                )}
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
               </div>
 
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
@@ -1182,23 +1156,19 @@ export default function Landing() {
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Real-time legal compliance updates for your state</span>
+                  <span className="text-sm sm:text-base">Real-time legal compliance updates</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Complete tenant screening toolkit & resources</span>
+                  <span className="text-sm sm:text-base">Tenant screening toolkit</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Step-by-step guidance for every document</span>
+                  <span className="text-sm sm:text-base">Email alerts for law changes</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Email alerts when laws change in your state</span>
-                </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Cancel anytime, no questions asked</span>
+                  <span className="text-sm sm:text-base">Cancel anytime</span>
                 </li>
               </ul>
 
@@ -1206,12 +1176,69 @@ export default function Landing() {
                 size="lg"
                 className="w-full text-sm sm:text-base"
                 onClick={() => {
-                  localStorage.setItem('billingPeriod', billingPeriod);
+                  localStorage.setItem('billingPeriod', 'monthly');
                   window.location.href = "/api/login";
                 }}
-                data-testid="button-pricing-trial"
+                data-testid="button-pricing-monthly"
               >
-                Start Your Free Trial
+                Start Free Trial
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Card>
+
+            {/* Annual Card - Best Value */}
+            <Card className="p-6 sm:p-8 border-2 border-success/40 shadow-lg relative overflow-hidden">
+              <div className="absolute top-0 right-0 bg-success text-success-foreground px-4 py-1 text-xs font-semibold rounded-bl-lg">
+                SAVE $20
+              </div>
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-2 mb-2">
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
+                  <Badge className="bg-success text-success-foreground text-xs">Best Value</Badge>
+                </div>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Annual</h3>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-4xl sm:text-5xl font-bold text-success">$100</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/year</span>
+                </div>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                  <span className="line-through">$120</span> • Just $8.33/month
+                </p>
+              </div>
+
+              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and NC</span>
+                </li>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Real-time legal compliance updates</span>
+                </li>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Tenant screening toolkit</span>
+                </li>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Email alerts for law changes</span>
+                </li>
+                <li className="flex items-start gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Cancel anytime</span>
+                </li>
+              </ul>
+
+              <Button
+                size="lg"
+                className="w-full text-sm sm:text-base bg-success hover:bg-success/90"
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', 'yearly');
+                  window.location.href = "/api/login";
+                }}
+                data-testid="button-pricing-annual"
+              >
+                Save $20 – Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Card>
