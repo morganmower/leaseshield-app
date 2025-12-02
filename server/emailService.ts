@@ -54,20 +54,29 @@ export class EmailService {
     const firstName = user.firstName || 'there';
 
     const template: EmailTemplate = {
-      subject: `Your LeaseShield App trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
+      subject: `Your LeaseShield App trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} – Subscribe Now`,
       textBody: `Hi ${firstName},
 
 Your 7-day free trial of LeaseShield App ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.
 
-Don't lose access to:
-• State-specific legal templates for UT, TX, ND, SD
-• Compliance cards keeping you up-to-date with landlord-tenant laws
-• Credit report decoder and tenant screening toolkit
-• Step-by-step workflows for handling tenant issues
+Ready to protect your rental business? You have two options:
 
-Continue your subscription for just $10/month and keep your rental business protected.
+🎁 OPTION 1: Continue with a subscription
+• Monthly: Just $10/month
+• Yearly: Only $100/year (save $20!)
+• Full access to all templates, compliance tools, and tenant screening helpers
 
-Log in to manage your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings
+⚡ OPTION 2: Or keep your trial experience going
+If you want to keep exploring before committing, you can continue your free trial access.
+
+What you get:
+✓ State-specific legal templates for UT, TX, ND, SD, NC, OH, MI, and ID
+✓ Compliance cards keeping you up-to-date with landlord-tenant laws
+✓ AI credit report decoder and tenant screening toolkit
+✓ Step-by-step workflows for handling tenant issues
+✓ 24/7 AI chat assistant
+
+Subscribe today and lock in these exclusive prices: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/subscribe
 
 Questions? We're here to help.
 
@@ -84,6 +93,8 @@ The LeaseShield App Team
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .pricing-box { background: #f0fdf4; border: 2px solid #22c55e; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .pricing-option { display: inline-block; width: 45%; margin-right: 5%; vertical-align: top; }
     .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
     .feature-list { background: #f1f5f9; padding: 20px; border-left: 4px solid #2563eb; margin: 20px 0; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
@@ -98,24 +109,43 @@ The LeaseShield App Team
       <p>Hi ${firstName},</p>
       
       <p>Your 7-day free trial of <strong>LeaseShield App</strong> ends in <strong>${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}</strong>.</p>
-      
-      <div class="feature-list">
-        <p style="margin-top: 0;"><strong>Don't lose access to:</strong></p>
-        <ul>
-          <li>State-specific legal templates for UT, TX, ND, SD</li>
-          <li>Compliance cards keeping you up-to-date with landlord-tenant laws</li>
-          <li>Credit report decoder and tenant screening toolkit</li>
-          <li>Step-by-step workflows for handling tenant issues</li>
-        </ul>
+
+      <p><strong>Ready to protect your rental business? You have two options:</strong></p>
+
+      <div class="pricing-box">
+        <h3 style="margin-top: 0; color: #22c55e;">✓ OPTION 1: Subscribe Today</h3>
+        <div class="pricing-option">
+          <strong>Monthly:</strong><br>
+          Just $10/month
+        </div>
+        <div class="pricing-option">
+          <strong>Yearly (Best Value):</strong><br>
+          $100/year (Save $20!)
+        </div>
+        <div style="clear: both;"></div>
+        <p style="margin-bottom: 0;"><em>Lock in these exclusive prices today</em></p>
       </div>
 
-      <p>Continue your subscription for just <strong>$10/month</strong> and keep your rental business protected.</p>
-
-      <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" class="cta-button">
-          Manage Subscription
+      <p style="text-align: center;">
+        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/subscribe" class="cta-button">
+          Subscribe Now
         </a>
-      </center>
+      </p>
+
+      <p style="text-align: center; color: #64748b;">
+        Or <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/login" style="color: #2563eb;">continue exploring your trial</a>
+      </p>
+      
+      <div class="feature-list">
+        <p style="margin-top: 0;"><strong>What you get with LeaseShield:</strong></p>
+        <ul style="margin-bottom: 0;">
+          <li>State-specific legal templates for all 8 states</li>
+          <li>Compliance cards keeping you up-to-date</li>
+          <li>AI credit report decoder and screening toolkit</li>
+          <li>Step-by-step tenant issue workflows</li>
+          <li>24/7 AI chat assistant for landlord questions</li>
+        </ul>
+      </div>
 
       <p style="margin-top: 30px; font-size: 14px; color: #64748b;">Questions? We're here to help.</p>
     </div>

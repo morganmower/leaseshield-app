@@ -30,7 +30,7 @@ import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialConversionNudge } from "@/components/trial-conversion-nudge";
-import { TrialProgressBanner, GatedFeature } from "@/components/gated-feature";
+import { TrialProgressBanner } from "@/components/gated-feature";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -275,32 +275,30 @@ export default function Dashboard() {
             </div>
 
             <div className="grid md:grid-cols-3 gap-4">
-              {/* Credit Report Helper - Unlocks Day 3 */}
-              <GatedFeature dayRequired={3} featureName="AI Credit Decoder">
-                <Link to="/screening">
-                  <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-credit-helper">
-                    <div className="flex items-start gap-3 mb-3">
-                      <div className="rounded-lg bg-cyan-500/20 dark:bg-cyan-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
-                        <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-500" />
-                      </div>
-                      <div className="flex-1">
-                        <Badge variant="secondary" className="mb-2 bg-primary/20 dark:bg-primary/30 text-primary border-primary/30">
-                          <Lightbulb className="h-3 w-3 mr-1" />
-                          AI Powered
-                        </Badge>
-                        <h3 className="font-semibold text-foreground mb-1">Credit Report Helper</h3>
-                      </div>
+              {/* Credit Report Helper */}
+              <Link to="/screening">
+                <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-credit-helper">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="rounded-lg bg-cyan-500/20 dark:bg-cyan-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                      <Search className="h-5 w-5 text-cyan-600 dark:text-cyan-500" />
                     </div>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Get instant AI explanations of credit terms, red flags, and questions to ask applicants
-                    </p>
-                    <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-credit-helper">
-                      Try It Now
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Card>
-                </Link>
-              </GatedFeature>
+                    <div className="flex-1">
+                      <Badge variant="secondary" className="mb-2 bg-primary/20 dark:bg-primary/30 text-primary border-primary/30">
+                        <Lightbulb className="h-3 w-3 mr-1" />
+                        AI Powered
+                      </Badge>
+                      <h3 className="font-semibold text-foreground mb-1">Credit Report Helper</h3>
+                    </div>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Get instant AI explanations of credit terms, red flags, and questions to ask applicants
+                  </p>
+                  <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-credit-helper">
+                    Try It Now
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </Card>
+              </Link>
 
               {/* Criminal & Eviction Helper */}
               <Link to="/screening">

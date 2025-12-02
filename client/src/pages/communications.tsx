@@ -9,8 +9,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Copy, Download } from "lucide-react";
 import { useState } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
-import { GatedFeature } from "@/components/gated-feature";
-import { useTrialProgress } from "@/hooks/useTrialProgress";
 
 const STATE_NAMES: Record<string, string> = {
   UT: "Utah",
@@ -37,17 +35,6 @@ export default function Communications() {
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
-  const { isDay5OrLater } = useTrialProgress();
-
-  if (!isDay5OrLater) {
-    return (
-      <div className="container max-w-4xl mx-auto py-12 px-4">
-        <GatedFeature dayRequired={5} featureName="Communications Templates">
-          <div />
-        </GatedFeature>
-      </div>
-    );
-  }
 
   const { data: templates, isLoading } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],

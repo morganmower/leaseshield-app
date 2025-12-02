@@ -11,8 +11,6 @@ import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { RentLedgerEntry } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
-import { GatedFeature } from "@/components/gated-feature";
-import { useTrialProgress } from "@/hooks/useTrialProgress";
 
 export default function RentLedger() {
   const { user } = useAuth();
@@ -22,17 +20,6 @@ export default function RentLedger() {
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
   const [amountExpected, setAmountExpected] = useState("");
   const [amountReceived, setAmountReceived] = useState("");
-  const { isDay5OrLater } = useTrialProgress();
-
-  if (!isDay5OrLater) {
-    return (
-      <div className="container max-w-4xl mx-auto py-12 px-4">
-        <GatedFeature dayRequired={5} featureName="Rent Ledger">
-          <div />
-        </GatedFeature>
-      </div>
-    );
-  }
 
   const { data: entries, isLoading } = useQuery<RentLedgerEntry[]>({
     queryKey: ["/api/rent-ledger"],
