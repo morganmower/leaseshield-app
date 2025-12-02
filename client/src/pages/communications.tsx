@@ -36,16 +36,18 @@ export default function Communications() {
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
 
-  const { data: templates, isLoading, error } = useQuery<CommunicationTemplate[]>({
+  const { data: templates = [], isLoading, error } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
     queryFn: async () => {
-      const response = await fetch(`/api/communications?stateId=${selectedState}`);
+      const url = `/api/communications?stateId=${selectedState}`;
+      const response = await fetch(url);
       if (!response.ok) {
+        console.error(`API error: ${response.status} ${response.statusText} for ${url}`);
         throw new Error(`Failed to fetch templates: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`Fetched ${data?.length || 0} templates for state ${selectedState}`);
-      return data || [];
+      console.log(`✅ Fetched ${Array.isArray(data) ? data.length : 0} templates for state ${selectedState}:`, data);
+      return Array.isArray(data) ? data : [];
     },
   });
 
@@ -133,6 +135,9 @@ export default function Communications() {
             <div>
               <Label className="text-base font-semibold mb-2 block">Available Templates</Label>
               <div className="space-y-2">
+                {error && (
+                  <p className="text-sm text-destructive">Error: {error.message}</p>
+                )}
                 {isLoading ? (
                   <p className="text-muted-foreground">Loading templates...</p>
                 ) : templates && templates.length > 0 ? (
@@ -152,7 +157,10 @@ export default function Communications() {
                     </Button>
                   ))
                 ) : (
-                  <p className="text-sm text-muted-foreground">No templates available for this state yet.</p>
+                  <div>
+                    <p className="text-sm text-muted-foreground">No templates available for this state yet.</p>
+                    <p className="text-xs text-muted-foreground mt-1">(Templates: {templates?.length || 0}, State: {selectedState})</p>
+                  </div>
                 )}
               </div>
             </div>
