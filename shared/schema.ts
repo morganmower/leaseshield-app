@@ -40,6 +40,7 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status"), // 'trialing', 'active', 'canceled', 'past_due'
   trialEndsAt: timestamp("trial_ends_at"),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
+  subscriptionExpiresAt: timestamp("subscription_expires_at"),
   // User preferences
   preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
