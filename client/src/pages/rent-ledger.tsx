@@ -283,19 +283,6 @@ export default function RentLedger() {
                 </div>
 
                 <div>
-                  <Label htmlFor="type">Transaction Type</Label>
-                  <Select value={type} onValueChange={(v) => setType(v as "charge" | "payment")}>
-                    <SelectTrigger id="type" data-testid="select-type">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="charge">Charge</SelectItem>
-                      <SelectItem value="payment">Payment</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div>
                   <Label htmlFor="category">Category</Label>
                   <Select value={category} onValueChange={setCategory}>
                     <SelectTrigger id="category" data-testid="select-category">
