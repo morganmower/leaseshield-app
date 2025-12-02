@@ -114,9 +114,9 @@ const slides = [
     color: "from-purple-500/20 to-purple-500/10",
     iconColor: "text-purple-500",
     points: [
-      "AI credit report decoder explains scores and terms",
-      "Fair Housing guidance on legal screening criteria",
-      "Criminal/eviction record interpretation tools"
+      "Ask AI anything about credit or criminal reports",
+      "Get AI suggestions on other questions to consider before hiring",
+      "Fair Housing guidance ensures legal, non-discriminatory screening"
     ]
   },
   {
