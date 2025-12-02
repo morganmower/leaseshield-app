@@ -1005,18 +1005,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/communications', isAuthenticated, async (req: any, res) => {
     try {
       const { stateId } = req.query;
-      console.log(`[communications] stateId=${stateId}, query=${JSON.stringify(req.query)}`);
+      console.log(`[communications] 🔍 Fetching templates - stateId=${stateId}, query=${JSON.stringify(req.query)}`);
       if (!stateId) {
         const templates = await storage.getAllCommunicationTemplates();
-        console.log(`[communications] returning all templates: ${templates.length}`);
+        console.log(`[communications] ✅ Returning all ${templates.length} templates`);
         return res.json(templates);
       }
+      console.log(`[communications] 📊 Database query starting for state: ${stateId}`);
       const templates = await storage.getCommunicationTemplatesByState(stateId as string);
-      console.log(`[communications] returning ${templates.length} templates for state ${stateId}`);
+      console.log(`[communications] ✅ Query successful - found ${templates.length} templates for state ${stateId}`);
+      if (templates.length === 0) {
+        console.warn(`[communications] ⚠️ WARNING: No templates found for state ${stateId}. Check database connectivity and data.`);
+      }
       res.json(templates);
-    } catch (error) {
-      console.error("Error fetching communication templates:", error);
-      res.status(500).json({ message: "Failed to fetch templates" });
+    } catch (error: any) {
+      console.error(`[communications] ❌ ERROR fetching templates:`, error?.message || error);
+      console.error(`[communications] Full error:`, error);
+      res.status(500).json({ message: "Failed to fetch templates", error: error?.message });
     }
   });
 
