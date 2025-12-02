@@ -1005,11 +1005,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/communications', isAuthenticated, async (req: any, res) => {
     try {
       const { stateId } = req.query;
+      console.log(`[communications] stateId=${stateId}, query=${JSON.stringify(req.query)}`);
       if (!stateId) {
         const templates = await storage.getAllCommunicationTemplates();
+        console.log(`[communications] returning all templates: ${templates.length}`);
         return res.json(templates);
       }
       const templates = await storage.getCommunicationTemplatesByState(stateId as string);
+      console.log(`[communications] returning ${templates.length} templates for state ${stateId}`);
       res.json(templates);
     } catch (error) {
       console.error("Error fetching communication templates:", error);
