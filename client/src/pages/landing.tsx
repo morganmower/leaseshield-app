@@ -1430,7 +1430,7 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base bg-success hover:bg-success/90"
+                className="w-full text-sm sm:text-base"
                 onClick={() => {
                   localStorage.setItem('billingPeriod', 'yearly');
                   window.location.href = "/api/login";
