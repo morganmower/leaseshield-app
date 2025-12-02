@@ -79,15 +79,16 @@ Each compliance card should include:
 - **sort_order**: 1-4 (determines display order)
 - **is_active**: true
 
-### Step 3: Create 7 Templates (SQL insert into `templates` table)
-Create all 7 template types aligned with compliance card requirements:
+### Step 3: Create 8 Templates (SQL insert into `templates` table)
+Create all 8 template types aligned with compliance card requirements:
 1. Residential Lease Agreement (category: leasing, template_type: lease)
 2. Month-to-Month Rental Agreement (category: leasing, template_type: lease)
 3. Rental Application (category: screening, template_type: application)
 4. Move-In Checklist (category: move_in_out, template_type: move_in_checklist)
-5. Three-Day Notice to Pay or Quit (category: notices, template_type: eviction_notice)
-6. Thirty-Day Notice for Lease Violation (category: notices, template_type: lease_violation_notice)
-7. Eviction Summons and Complaint (category: notices, template_type: eviction_notice)
+5. Move-Out Checklist (category: move_in_out, template_type: move_out_checklist)
+6. Three-Day Notice to Pay or Quit (category: notices, template_type: eviction_notice)
+7. Thirty-Day Notice for Lease Violation (category: notices, template_type: lease_violation_notice)
+8. Eviction Summons and Complaint (category: notices, template_type: eviction_notice)
 
 Each template includes:
 - **fillable_form_data**: JSONB with form fields including state-required disclosures and fields
@@ -173,4 +174,4 @@ Update user-facing marketing text that references supported states:
 
 ### State Count
 - **Current supported states**: 8 (UT, TX, ND, SD, NC, OH, MI, ID)
-- **Expected per state**: 4 compliance cards, 7 templates, 2-3 legal updates
+- **Expected per state**: 4 compliance cards, 8 templates (including move-in and move-out checklists), 2-3 legal updates
