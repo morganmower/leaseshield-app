@@ -36,17 +36,17 @@ export default function Communications() {
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
 
-  const { data: templates, isLoading } = useQuery<CommunicationTemplate[]>({
+  const { data: templates, isLoading, error } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
     queryFn: async () => {
       const response = await fetch(`/api/communications?stateId=${selectedState}`);
       if (!response.ok) {
-        console.error("Failed to fetch templates:", response.status, response.statusText);
-        throw new Error("Failed to fetch templates");
+        throw new Error(`Failed to fetch templates: ${response.status}`);
       }
-      return response.json();
+      const data = await response.json();
+      console.log(`Fetched ${data?.length || 0} templates for state ${selectedState}`);
+      return data || [];
     },
-    enabled: !!selectedState,
   });
 
   const extractMergeFields = (text: string): string[] => {
