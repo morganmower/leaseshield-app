@@ -7,6 +7,9 @@ export const useDashboardTour = (shouldShow: boolean) => {
   const startTour = useCallback(() => {
     // Dynamically import Shepherd
     import('shepherd.js').then(({ default: ShepherdClass }) => {
+      // Detect mobile for positioning adjustments
+      const isMobile = window.innerWidth < 768;
+      
       // Create tour instance
       const tour = new ShepherdClass.Tour({
         useModalOverlay: true,
@@ -16,6 +19,8 @@ export const useDashboardTour = (shouldShow: boolean) => {
           cancelIcon: {
             enabled: true,
           },
+          // Better positioning for mobile
+          popoverClass: isMobile ? 'shepherd-popover-mobile' : '',
         },
       });
 

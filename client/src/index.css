@@ -302,6 +302,55 @@
   }
 }
 
+/* Mobile Responsive Shepherd Tour Styles */
+@media (max-width: 640px) {
+  .shepherd-element {
+    max-width: 90vw !important;
+    margin: 0 auto !important;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 0 0 1px hsl(var(--border)) !important;
+  }
+
+  .shepherd-element .shepherd-header {
+    font-size: 1.1rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .shepherd-element .shepherd-text {
+    font-size: 0.875rem !important;
+    line-height: 1.5;
+  }
+
+  .shepherd-element .shepherd-footer {
+    flex-direction: column;
+    gap: 0.5rem !important;
+    padding-top: 0.75rem;
+  }
+
+  .shepherd-button-primary,
+  .shepherd-button-secondary {
+    width: 100% !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 0.8125rem !important;
+    min-height: 44px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+
+  .shepherd-button-primary:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  .shepherd-button-secondary:hover {
+    transform: translateY(-2px) !important;
+  }
+
+  .shepherd-button-primary:active,
+  .shepherd-button-secondary:active {
+    transform: translateY(0) !important;
+  }
+}
+
 /**
  * Using the elevate system.
  * Automatic contrast adjustment.
