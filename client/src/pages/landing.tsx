@@ -58,6 +58,7 @@ export default function Landing() {
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [spotsRemaining, setSpotsRemaining] = useState(43);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -1121,9 +1122,30 @@ export default function Landing() {
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
-            <p className="text-base sm:text-lg text-muted-foreground px-4">
+            <p className="text-base sm:text-lg text-muted-foreground px-4 mb-8">
               Everything you need to protect your rental business
             </p>
+            
+            {/* Billing Toggle */}
+            <div className="flex items-center justify-center gap-4 mb-6">
+              <span className={`text-sm font-medium ${billingPeriod === 'monthly' ? 'text-foreground' : 'text-muted-foreground'}`}>Monthly</span>
+              <button
+                onClick={() => setBillingPeriod(billingPeriod === 'monthly' ? 'yearly' : 'monthly')}
+                className="relative inline-flex h-8 w-14 items-center rounded-full bg-muted hover-elevate active-elevate-2"
+              >
+                <span
+                  className={`inline-block h-6 w-6 transform rounded-full bg-foreground transition ${
+                    billingPeriod === 'yearly' ? 'translate-x-7' : 'translate-x-1'
+                  }`}
+                />
+              </button>
+              <div className="flex items-center gap-2">
+                <span className={`text-sm font-medium ${billingPeriod === 'yearly' ? 'text-foreground' : 'text-muted-foreground'}`}>Yearly</span>
+                {billingPeriod === 'yearly' && (
+                  <Badge className="bg-success text-success-foreground text-xs">Save $20</Badge>
+                )}
+              </div>
+            </div>
           </motion.div>
 
           <motion.div
@@ -1140,10 +1162,17 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">LeaseShield App</h3>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
-                  <span className="text-base sm:text-lg text-muted-foreground">/month</span>
+                  <span className="text-4xl sm:text-5xl font-bold text-foreground">
+                    {billingPeriod === 'monthly' ? '$10' : '$100'}
+                  </span>
+                  <span className="text-base sm:text-lg text-muted-foreground">
+                    {billingPeriod === 'monthly' ? '/month' : '/year'}
+                  </span>
                 </div>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
+                {billingPeriod === 'yearly' && (
+                  <p className="text-xs sm:text-sm text-success font-semibold mt-1">Just $8.33/month when billed annually</p>
+                )}
               </div>
 
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
