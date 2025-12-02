@@ -316,11 +316,26 @@ async function runAllTests() {
   let browser: Browser | null = null;
   
   try {
-    browser = await puppeteer.launch({
+    // Find Chromium dynamically - check common locations
+    const { execSync } = await import('child_process');
+    let chromiumPath = '';
+    try {
+      chromiumPath = execSync('which chromium 2>/dev/null || which chromium-browser 2>/dev/null || which google-chrome 2>/dev/null', { encoding: 'utf8' }).trim();
+    } catch {
+      chromiumPath = process.env.CHROMIUM_PATH || process.env.PUPPETEER_EXECUTABLE_PATH || '';
+    }
+    
+    const launchOptions: any = {
       headless: true,
-      executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
       args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--disable-gpu'],
-    });
+    };
+    
+    if (chromiumPath) {
+      launchOptions.executablePath = chromiumPath;
+      console.log(`Using Chromium at: ${chromiumPath}`);
+    }
+    
+    browser = await puppeteer.launch(launchOptions);
     
     const page = await browser.newPage();
     await page.setViewport({ width: 1280, height: 800 });
