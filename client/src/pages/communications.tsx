@@ -40,9 +40,13 @@ export default function Communications() {
     queryKey: ["/api/communications", selectedState],
     queryFn: async () => {
       const response = await fetch(`/api/communications?stateId=${selectedState}`);
-      if (!response.ok) throw new Error("Failed to fetch templates");
+      if (!response.ok) {
+        console.error("Failed to fetch templates:", response.status, response.statusText);
+        throw new Error("Failed to fetch templates");
+      }
       return response.json();
     },
+    enabled: !!selectedState,
   });
 
   const extractMergeFields = (text: string): string[] => {
