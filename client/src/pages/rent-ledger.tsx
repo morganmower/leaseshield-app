@@ -121,9 +121,8 @@ export default function RentLedger() {
       month,
       amountExpected: Math.round(parseFloat(amountExpected) * 100),
       amountReceived: amountReceived ? Math.round(parseFloat(amountReceived) * 100) : 0,
-      paymentDate: amountReceived ? new Date().toISOString() : null,
       propertyId: null,
-      userId: "", // Will be set by server
+      notes: "",
     });
   };
 
