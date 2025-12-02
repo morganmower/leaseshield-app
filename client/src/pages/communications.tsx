@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { MessageCircle, Copy, Download } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
 
 const STATE_NAMES: Record<string, string> = {
@@ -35,6 +35,11 @@ export default function Communications() {
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
+
+  // Log when state changes to debug the issue
+  useEffect(() => {
+    console.log(`📍 State changed to: ${selectedState}`);
+  }, [selectedState]);
 
   const { data: templates = [], isLoading, error, refetch } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
