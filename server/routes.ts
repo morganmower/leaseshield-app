@@ -135,14 +135,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
+      const { billingPeriod } = req.body; // 'monthly' or 'yearly'
 
       if (!user) return res.status(404).json({ message: "User not found" });
       if (!user.email) return res.status(400).json({ message: 'No user email' });
 
-      const stripePriceId = process.env.STRIPE_PRICE_ID;
-      console.error(`[create-subscription] stripePriceId from env: "${stripePriceId}" (length: ${stripePriceId?.length})`);
+      // Get the appropriate price ID based on billing period
+      const stripePriceId = billingPeriod === 'yearly' 
+        ? process.env.STRIPE_PRICE_ID_YEARLY 
+        : process.env.STRIPE_PRICE_ID;
+      
+      console.error(`[create-subscription] billingPeriod: "${billingPeriod}", stripePriceId from env: "${stripePriceId}" (length: ${stripePriceId?.length})`);
       if (!stripePriceId) {
-        return res.status(500).json({ message: 'STRIPE_PRICE_ID not configured' });
+        return res.status(500).json({ message: `STRIPE_PRICE_ID${billingPeriod === 'yearly' ? '_YEARLY' : ''} not configured` });
       }
 
       // Reuse existing Stripe customer or create new one
@@ -187,14 +192,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Create a payment intent directly for this subscription
       console.error(`[create-subscription] Creating payment intent for subscription ${subscription.id}`);
+      const paymentAmount = billingPeriod === 'yearly' ? 10000 : 1000; // $100 or $10 in cents
       const paymentIntent = await stripe.paymentIntents.create({
-        amount: 1000, // $10 in cents
+        amount: paymentAmount,
         currency: 'usd',
         customer: customerId,
-        description: `LeaseShield subscription - ${user.email}`,
+        description: `LeaseShield ${billingPeriod === 'yearly' ? 'annual' : 'monthly'} subscription - ${user.email}`,
         metadata: {
           subscriptionId: subscription.id,
           userId: userId,
+          billingPeriod: billingPeriod || 'monthly',
         },
       });
 

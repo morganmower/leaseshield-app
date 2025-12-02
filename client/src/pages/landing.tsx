@@ -1205,7 +1205,10 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="w-full text-sm sm:text-base"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', billingPeriod);
+                  window.location.href = "/api/login";
+                }}
                 data-testid="button-pricing-trial"
               >
                 Start Your Free Trial

@@ -74,7 +74,7 @@ function SubscribeForm() {
         size="lg"
         data-testid="button-submit-payment"
       >
-        Subscribe Now - $10/month
+        Subscribe Now - {window.location.href.includes('yearly') || localStorage.getItem('billingPeriod') === 'yearly' ? '$100/year' : '$10/month'}
       </Button>
     </form>
   );
@@ -84,6 +84,13 @@ export default function Subscribe() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+
+  useEffect(() => {
+    // Get billing period from localStorage or default to monthly
+    const saved = localStorage.getItem('billingPeriod') as 'monthly' | 'yearly' | null;
+    setBillingPeriod(saved || 'monthly');
+  }, []);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -94,9 +101,9 @@ export default function Subscribe() {
   }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
-    if (isAuthenticated) {
-      console.log('🔄 Calling /api/create-subscription');
-      apiRequest("POST", "/api/create-subscription")
+    if (isAuthenticated && billingPeriod) {
+      console.log('🔄 Calling /api/create-subscription with period:', billingPeriod);
+      apiRequest("POST", "/api/create-subscription", { billingPeriod })
         .then(async (res) => {
           console.log('📡 Response status:', res.status);
           const text = await res.text();
@@ -128,7 +135,7 @@ export default function Subscribe() {
           });
         });
     }
-  }, [isAuthenticated, toast]);
+  }, [isAuthenticated, billingPeriod, toast]);
 
   if (isLoading) {
     return (
@@ -170,10 +177,16 @@ export default function Subscribe() {
           <Card className="p-8 md:col-span-2">
             <div className="mb-6">
               <div className="flex items-baseline gap-2 mb-2">
-                <span className="text-4xl font-display font-bold text-foreground">$10</span>
-                <span className="text-muted-foreground">/month</span>
+                <span className="text-4xl font-display font-bold text-foreground">
+                  {billingPeriod === 'yearly' ? '$100' : '$10'}
+                </span>
+                <span className="text-muted-foreground">
+                  {billingPeriod === 'yearly' ? '/year' : '/month'}
+                </span>
               </div>
-              <p className="text-sm text-muted-foreground">Cancel anytime</p>
+              <p className="text-sm text-muted-foreground">
+                {billingPeriod === 'yearly' ? 'Just $8.33/month billed annually • Save $20' : 'Cancel anytime'}
+              </p>
             </div>
 
             <ul className="space-y-4">
