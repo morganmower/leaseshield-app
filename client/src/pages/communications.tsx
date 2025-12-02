@@ -36,11 +36,12 @@ export default function Communications() {
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
 
-  const { data: templates = [], isLoading, error } = useQuery<CommunicationTemplate[]>({
+  const { data: templates = [], isLoading, error, refetch } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
     queryFn: async ({ queryKey }) => {
       const [_, state] = queryKey as [string, string];
       const url = `/api/communications?stateId=${state}`;
+      console.log(`🔄 Fetching templates for state ${state} from ${url}`);
       const response = await fetch(url);
       if (!response.ok) {
         console.error(`API error: ${response.status} ${response.statusText} for ${url}`);
@@ -50,7 +51,7 @@ export default function Communications() {
       console.log(`✅ Fetched ${Array.isArray(data) ? data.length : 0} templates for state ${state}:`, data);
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes instead of Infinity
+    staleTime: 0, // Force refetch on queryKey change
   });
 
   const extractMergeFields = (text: string): string[] => {
