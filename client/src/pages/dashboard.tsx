@@ -54,9 +54,9 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Show tour on first visit, then video modal
+  // Show tour on first visit, then video modal (but not if trial expired)
   useEffect(() => {
-    if (user && !isLoading) {
+    if (user && !isLoading && !trialExpired) {
       const hasSeenTour = localStorage.getItem('leaseshield_tour_seen');
       const hasSeenVideo = localStorage.getItem('leaseshield_video_seen');
       
@@ -68,7 +68,7 @@ export default function Dashboard() {
         setTimeout(() => setShowVideoModal(true), 500);
       }
     }
-  }, [user, isLoading]);
+  }, [user, isLoading, trialExpired]);
 
   const { data: recentUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
     queryKey: ["/api/legal-updates/recent"],
@@ -115,14 +115,21 @@ export default function Dashboard() {
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
             Trial Expired
           </h1>
-          <p className="text-muted-foreground mb-6">
+          <p className="text-muted-foreground mb-8">
             Your free trial has ended. Subscribe now to continue accessing all templates, compliance guidance, and AI tools.
           </p>
-          <Link to="/subscribe">
-            <Button size="lg" data-testid="button-subscribe-expired">
-              Subscribe Now - $10/month
-            </Button>
-          </Link>
+          <div className="flex flex-col gap-3">
+            <Link to="/subscribe?period=monthly">
+              <Button size="lg" className="w-full" data-testid="button-subscribe-monthly">
+                Subscribe - $10/month
+              </Button>
+            </Link>
+            <Link to="/subscribe?period=yearly">
+              <Button size="lg" variant="outline" className="w-full" data-testid="button-subscribe-yearly">
+                Subscribe - $100/year
+              </Button>
+            </Link>
+          </div>
         </div>
       </div>
     );
