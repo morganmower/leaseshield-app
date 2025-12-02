@@ -458,13 +458,11 @@ export default function RentLedger() {
                         <TableHead className="text-xs">Effective Date</TableHead>
                         <TableHead className="text-xs">Type</TableHead>
                         <TableHead className="text-xs">Category</TableHead>
-                        <TableHead className="text-xs">Description</TableHead>
                         <TableHead className="text-xs text-right">Charge Amt</TableHead>
                         <TableHead className="text-xs text-right">Payment Amt</TableHead>
                         <TableHead className="text-xs text-right">Balance</TableHead>
                         <TableHead className="text-xs">Method</TableHead>
                         <TableHead className="text-xs">Ref #</TableHead>
-                        <TableHead className="text-xs">Notes</TableHead>
                         <TableHead className="text-xs w-16">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -486,13 +484,11 @@ export default function RentLedger() {
                               <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
                               <TableCell><span className="text-xs bg-muted px-1 py-0.5 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
                               <TableCell className="text-xs">{entry.category}</TableCell>
-                              <TableCell className="text-xs max-w-xs truncate">{entry.description || "-"}</TableCell>
                               <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono font-semibold text-xs">${cumulativeBalance.toFixed(2)}</TableCell>
                               <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
                               <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
-                              <TableCell className="text-xs max-w-xs truncate">{entry.notes || "-"}</TableCell>
                               <TableCell className="flex gap-1">
                                 <Button
                                   size="icon"
