@@ -32,8 +32,7 @@ export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
   const [showTour, setShowTour] = useState(false);
-
-  useDashboardTour(showTour);
+  const { restartTour } = useDashboardTour(showTour);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -121,14 +120,26 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Welcome back{user.firstName ? `, ${user.firstName}` : ''}
-          </h1>
-          <p className="text-muted-foreground">
-            Your protective toolkit for confident property management
-          </p>
+        {/* Welcome Header with Help Button */}
+        <div className="mb-8 flex items-start justify-between">
+          <div>
+            <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+              Welcome back{user.firstName ? `, ${user.firstName}` : ''}
+            </h1>
+            <p className="text-muted-foreground">
+              Your protective toolkit for confident property management
+            </p>
+          </div>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => restartTour()}
+            data-testid="button-help-tour"
+            className="whitespace-nowrap"
+          >
+            <Lightbulb className="h-4 w-4 mr-2" />
+            Help
+          </Button>
         </div>
 
         {/* Subscription Banner - for trial, incomplete, or no subscription */}
