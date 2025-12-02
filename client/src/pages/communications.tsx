@@ -38,17 +38,19 @@ export default function Communications() {
 
   const { data: templates = [], isLoading, error } = useQuery<CommunicationTemplate[]>({
     queryKey: ["/api/communications", selectedState],
-    queryFn: async () => {
-      const url = `/api/communications?stateId=${selectedState}`;
+    queryFn: async ({ queryKey }) => {
+      const [_, state] = queryKey as [string, string];
+      const url = `/api/communications?stateId=${state}`;
       const response = await fetch(url);
       if (!response.ok) {
         console.error(`API error: ${response.status} ${response.statusText} for ${url}`);
         throw new Error(`Failed to fetch templates: ${response.status}`);
       }
       const data = await response.json();
-      console.log(`✅ Fetched ${Array.isArray(data) ? data.length : 0} templates for state ${selectedState}:`, data);
+      console.log(`✅ Fetched ${Array.isArray(data) ? data.length : 0} templates for state ${state}:`, data);
       return Array.isArray(data) ? data : [];
     },
+    staleTime: 5 * 60 * 1000, // 5 minutes instead of Infinity
   });
 
   const extractMergeFields = (text: string): string[] => {
