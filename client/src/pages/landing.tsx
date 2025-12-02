@@ -315,7 +315,7 @@ export default function Landing() {
                   <div>
                     <div className="flex items-baseline gap-2 mb-1">
                       <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
-                      <span className="text-lg text-muted-foreground">/month forever</span>
+                      <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
                     </div>
                     <p className="text-sm text-muted-foreground">
                       {spotsRemaining} spots remaining • 7-day free trial
@@ -1356,7 +1356,7 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <p className="text-lg sm:text-xl text-foreground italic mb-4">
-              "Stop paying $500+ every time you need a lawyer to review your lease.<br/>LeaseShield App = $10/month protection."
+              "Stop paying $500+ every time you need a lawyer to review your lease.<br/>LeaseShield App = $10/month or $100/year (save $20) protection."
             </p>
           </motion.div>
         </div>
@@ -1372,7 +1372,7 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Only 43 Founders Spots Left at $10/mo Forever
+              Only 43 Founders Spots Left at <strong>$10/mo or $100/year (save $20)</strong>
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-xl mx-auto px-4">
               Price increases to $15 next week
