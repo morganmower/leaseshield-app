@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -467,6 +467,65 @@ export default function Landing() {
                 </p>
               </Card>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Mid-Page Conversion CTA */}
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-background via-background to-primary/5">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-8 sm:mb-12"
+          >
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Stop Paying for Legal Answers. Start Using Attorney-Vetted Templates.
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Join hundreds of landlords who've replaced confusing DIY solutions with templates that actually protect them—and their wallets.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex justify-center"
+          >
+            <ABTestWrapper testId="mid-page-cta">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/api/login">
+                  <Button 
+                    size="lg"
+                    onClick={() => {
+                      trackTrialStart();
+                    }}
+                    className="px-8 whitespace-nowrap"
+                    data-testid="button-mid-trial-cta"
+                  >
+                    <Zap className="mr-2 h-4 w-4" />
+                    Start Your Free Trial
+                  </Button>
+                </Link>
+              </div>
+            </ABTestWrapper>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex justify-center mt-6"
+          >
+            <p className="text-sm text-muted-foreground text-center">
+              <CheckCircle2 className="inline h-4 w-4 mr-2 text-success" />
+              No credit card • Cancel anytime • 7-day free trial
+            </p>
           </motion.div>
         </div>
       </section>
