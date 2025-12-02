@@ -1316,7 +1316,7 @@ export default function Landing() {
               Simple, Transparent Pricing
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
-              Everything you need to protect your rental business
+              Stop wasting hours on forms. Stop losing sleep over compliance. Get everything a landlord actually needs, just once a month.
             </p>
           </motion.div>
 
