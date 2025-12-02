@@ -524,7 +524,7 @@ export default function Landing() {
           >
             <p className="text-sm text-muted-foreground text-center">
               <CheckCircle2 className="inline h-4 w-4 mr-2 text-success" />
-              No credit card • Cancel anytime • 7-day free trial
+              Money-back guarantee • Cancel anytime • All templates included
             </p>
           </motion.div>
         </div>
