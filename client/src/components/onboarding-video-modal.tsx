@@ -1,140 +1,282 @@
-import { useState, useEffect } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useState } from 'react';
+import { Dialog, DialogContent, DialogTitle } from '@/components/ui/dialog';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Play, X, Clock, CheckCircle2 } from 'lucide-react';
+import { 
+  Play, 
+  ChevronLeft, 
+  ChevronRight, 
+  FileText, 
+  Shield, 
+  Search, 
+  MessageCircle,
+  CheckCircle2,
+  Sparkles,
+  Home
+} from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface OnboardingVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalProps) {
-  const [showVideo, setShowVideo] = useState(false);
+const slides = [
+  {
+    id: 1,
+    title: "Welcome to LeaseShield",
+    subtitle: "Your rental protection starts here",
+    icon: Home,
+    color: "from-primary/20 to-primary/10",
+    iconColor: "text-primary",
+    points: [
+      "State-specific legal templates",
+      "Real-time compliance updates", 
+      "AI-powered assistance"
+    ]
+  },
+  {
+    id: 2,
+    title: "Legal Templates",
+    subtitle: "Professional documents in seconds",
+    icon: FileText,
+    color: "from-emerald-500/20 to-emerald-500/10",
+    iconColor: "text-emerald-500",
+    points: [
+      "Lease agreements customized for your state",
+      "Eviction notices with proper legal language",
+      "Move-in/out checklists to protect deposits"
+    ]
+  },
+  {
+    id: 3,
+    title: "Compliance Cards",
+    subtitle: "Know your state's laws",
+    icon: Shield,
+    color: "from-amber-500/20 to-amber-500/10", 
+    iconColor: "text-amber-500",
+    points: [
+      "Security deposit rules and limits",
+      "Required disclosures for your state",
+      "Eviction procedures step-by-step"
+    ]
+  },
+  {
+    id: 4,
+    title: "Tenant Screening",
+    subtitle: "Find great tenants safely",
+    icon: Search,
+    color: "from-purple-500/20 to-purple-500/10",
+    iconColor: "text-purple-500",
+    points: [
+      "Credit report decoder explains terms",
+      "Fair Housing compliance guidance",
+      "Western Verify integration for reports"
+    ]
+  },
+  {
+    id: 5,
+    title: "AI Assistant",
+    subtitle: "Get answers instantly",
+    icon: MessageCircle,
+    color: "from-blue-500/20 to-blue-500/10",
+    iconColor: "text-blue-500",
+    points: [
+      "Ask any landlord-tenant question",
+      "Available 24/7 in the chat widget",
+      "Trained on your state's specific laws"
+    ]
+  }
+];
 
-  const handleStartVideo = () => {
-    setShowVideo(true);
+export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalProps) {
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const handleNext = () => {
+    if (currentSlide < slides.length - 1) {
+      setDirection(1);
+      setCurrentSlide(prev => prev + 1);
+    }
   };
 
-  const handleSkip = () => {
-    localStorage.setItem('leaseshield_video_seen', 'true');
-    onClose();
+  const handlePrev = () => {
+    if (currentSlide > 0) {
+      setDirection(-1);
+      setCurrentSlide(prev => prev - 1);
+    }
   };
 
   const handleComplete = () => {
     localStorage.setItem('leaseshield_video_seen', 'true');
+    setCurrentSlide(0);
     onClose();
   };
 
   const handleClose = () => {
     localStorage.setItem('leaseshield_video_seen', 'true');
+    setCurrentSlide(0);
     onClose();
   };
 
   if (!isOpen) return null;
 
+  const slide = slides[currentSlide];
+  const SlideIcon = slide.icon;
+  const isLastSlide = currentSlide === slides.length - 1;
+
+  const slideVariants = {
+    enter: (direction: number) => ({
+      x: direction > 0 ? 300 : -300,
+      opacity: 0
+    }),
+    center: {
+      zIndex: 1,
+      x: 0,
+      opacity: 1
+    },
+    exit: (direction: number) => ({
+      zIndex: 0,
+      x: direction < 0 ? 300 : -300,
+      opacity: 0
+    })
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-2xl p-0 overflow-hidden" data-testid="modal-onboarding-video">
+      <DialogContent className="sm:max-w-xl p-0 overflow-hidden" data-testid="modal-onboarding-video">
+        <VisuallyHidden>
+          <DialogTitle>Quick Setup Guide</DialogTitle>
+        </VisuallyHidden>
         <div className="relative">
-          {!showVideo ? (
-            <div className="p-6 sm:p-8">
-              <DialogHeader className="mb-6">
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="default" className="bg-primary">
-                    <Clock className="h-3 w-3 mr-1" />
-                    3 min
-                  </Badge>
-                </div>
-                <DialogTitle className="text-2xl font-display">
-                  Quick Setup Guide
-                </DialogTitle>
-                <p className="text-muted-foreground mt-2">
-                  Learn how to protect your rentals in under 3 minutes
-                </p>
-              </DialogHeader>
-
-              <div 
-                className="relative aspect-video bg-gradient-to-br from-primary/20 to-primary/5 rounded-lg overflow-hidden mb-6 cursor-pointer group"
-                onClick={handleStartVideo}
-                data-testid="button-play-video"
-              >
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-                    <Play className="h-8 w-8 text-primary-foreground ml-1" />
-                  </div>
-                </div>
-                <div className="absolute bottom-4 left-4 right-4">
-                  <div className="bg-background/90 backdrop-blur-sm rounded-lg p-3">
-                    <p className="font-medium text-sm">What you'll learn:</p>
-                    <ul className="text-xs text-muted-foreground mt-1 space-y-1">
-                      <li className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-success" />
-                        Navigate the dashboard
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-success" />
-                        Download your first template
-                      </li>
-                      <li className="flex items-center gap-1">
-                        <CheckCircle2 className="h-3 w-3 text-success" />
-                        Use AI tools for screening
-                      </li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-3">
-                <Button 
-                  onClick={handleStartVideo} 
-                  className="flex-1"
-                  size="lg"
-                  data-testid="button-watch-video"
-                >
-                  <Play className="h-4 w-4 mr-2" />
-                  Watch Quick Guide
-                </Button>
-                <Button 
-                  variant="outline" 
-                  onClick={handleSkip}
-                  size="lg"
-                  data-testid="button-skip-video"
-                >
-                  Skip for now
-                </Button>
+          <div className="p-6 sm:p-8">
+            <div className="flex items-center justify-between mb-6">
+              <Badge variant="outline" className="text-xs">
+                <Sparkles className="h-3 w-3 mr-1" />
+                Quick Guide
+              </Badge>
+              <div className="flex items-center gap-1">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      setDirection(idx > currentSlide ? 1 : -1);
+                      setCurrentSlide(idx);
+                    }}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      idx === currentSlide 
+                        ? 'bg-primary w-6' 
+                        : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
+                    }`}
+                    data-testid={`button-slide-${idx}`}
+                  />
+                ))}
               </div>
             </div>
-          ) : (
-            <div className="relative">
+
+            <div className="relative h-[320px] overflow-hidden">
+              <AnimatePresence initial={false} custom={direction} mode="wait">
+                <motion.div
+                  key={currentSlide}
+                  custom={direction}
+                  variants={slideVariants}
+                  initial="enter"
+                  animate="center"
+                  exit="exit"
+                  transition={{
+                    x: { type: "spring", stiffness: 300, damping: 30 },
+                    opacity: { duration: 0.2 }
+                  }}
+                  className="absolute inset-0"
+                >
+                  <div className="text-center mb-6">
+                    <motion.div 
+                      className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${slide.color} flex items-center justify-center mx-auto mb-4`}
+                      initial={{ scale: 0.8, rotate: -10 }}
+                      animate={{ scale: 1, rotate: 0 }}
+                      transition={{ delay: 0.1, type: "spring" }}
+                    >
+                      <SlideIcon className={`h-10 w-10 ${slide.iconColor}`} />
+                    </motion.div>
+                    <motion.h2 
+                      className="text-2xl font-display font-semibold text-foreground mb-2"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: 0.15 }}
+                    >
+                      {slide.title}
+                    </motion.h2>
+                    <motion.p 
+                      className="text-muted-foreground"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: 0.2 }}
+                    >
+                      {slide.subtitle}
+                    </motion.p>
+                  </div>
+
+                  <motion.div 
+                    className="space-y-3 max-w-sm mx-auto"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.25 }}
+                  >
+                    {slide.points.map((point, idx) => (
+                      <motion.div
+                        key={idx}
+                        className="flex items-start gap-3 bg-muted/50 rounded-lg p-3"
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.3 + idx * 0.1 }}
+                      >
+                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                        <span className="text-sm text-foreground">{point}</span>
+                      </motion.div>
+                    ))}
+                  </motion.div>
+                </motion.div>
+              </AnimatePresence>
+            </div>
+
+            <div className="flex items-center justify-between mt-6 pt-4 border-t">
               <Button
                 variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2 z-10 bg-background/80 backdrop-blur-sm"
-                onClick={handleComplete}
-                data-testid="button-close-video"
+                onClick={handlePrev}
+                disabled={currentSlide === 0}
+                className="gap-1"
+                data-testid="button-prev-slide"
               >
-                <X className="h-4 w-4" />
+                <ChevronLeft className="h-4 w-4" />
+                Back
               </Button>
-              
-              <div className="aspect-video bg-black">
-                <div className="w-full h-full flex flex-col items-center justify-center text-white p-8">
-                  <div className="text-center max-w-md">
-                    <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                      <Play className="h-8 w-8 text-primary" />
-                    </div>
-                    <h3 className="text-xl font-semibold mb-2">Video Coming Soon</h3>
-                    <p className="text-gray-400 text-sm mb-6">
-                      We're creating a helpful walkthrough video. In the meantime, use the interactive tour!
-                    </p>
-                    <Button onClick={handleComplete} variant="secondary">
-                      Got it, let's explore!
-                    </Button>
-                  </div>
-                </div>
-              </div>
+
+              <span className="text-sm text-muted-foreground">
+                {currentSlide + 1} of {slides.length}
+              </span>
+
+              {isLastSlide ? (
+                <Button 
+                  onClick={handleComplete}
+                  className="gap-1"
+                  data-testid="button-complete-guide"
+                >
+                  Get Started
+                  <Play className="h-4 w-4" />
+                </Button>
+              ) : (
+                <Button 
+                  onClick={handleNext}
+                  className="gap-1"
+                  data-testid="button-next-slide"
+                >
+                  Next
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          )}
+          </div>
         </div>
       </DialogContent>
     </Dialog>
