@@ -469,47 +469,52 @@ export default function RentLedger() {
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {entries.sort((a, b) => {
-                        const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
-                        const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
-                        return dateB - dateA;
-                      }).map((entry) => {
-                        const expected = entry.amountExpected / 100;
-                        const received = (entry.amountReceived ?? 0) / 100;
-                        return (
-                          <TableRow key={entry.id}>
-                            <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
-                            <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
-                            <TableCell><span className="text-xs bg-muted px-1 py-0.5 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
-                            <TableCell className="text-xs">{entry.category}</TableCell>
-                            <TableCell className="text-xs max-w-xs truncate">{entry.description || "-"}</TableCell>
-                            <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
-                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
-                            <TableCell className="text-right font-mono font-semibold text-xs">${(entry.amountExpected / 100 - (entry.amountReceived ?? 0) / 100).toFixed(2)}</TableCell>
-                            <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
-                            <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
-                            <TableCell className="text-xs max-w-xs truncate">{entry.notes || "-"}</TableCell>
-                            <TableCell className="flex gap-1">
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => handleEditClick(entry)}
-                                data-testid={`button-edit-${entry.id}`}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                size="icon"
-                                variant="ghost"
-                                onClick={() => deleteMutation.mutate(entry.id)}
-                                data-testid={`button-delete-${entry.id}`}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </TableCell>
-                          </TableRow>
-                        );
-                      })}
+                      {(() => {
+                        const sortedEntries = entries.sort((a, b) => {
+                          const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
+                          const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
+                          return dateB - dateA;
+                        });
+                        let cumulativeBalance = 0;
+                        return sortedEntries.map((entry) => {
+                          const expected = entry.amountExpected / 100;
+                          const received = (entry.amountReceived ?? 0) / 100;
+                          cumulativeBalance += expected - received;
+                          return (
+                            <TableRow key={entry.id}>
+                              <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
+                              <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
+                              <TableCell><span className="text-xs bg-muted px-1 py-0.5 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
+                              <TableCell className="text-xs">{entry.category}</TableCell>
+                              <TableCell className="text-xs max-w-xs truncate">{entry.description || "-"}</TableCell>
+                              <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
+                              <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
+                              <TableCell className="text-right font-mono font-semibold text-xs">${cumulativeBalance.toFixed(2)}</TableCell>
+                              <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
+                              <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
+                              <TableCell className="text-xs max-w-xs truncate">{entry.notes || "-"}</TableCell>
+                              <TableCell className="flex gap-1">
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => handleEditClick(entry)}
+                                  data-testid={`button-edit-${entry.id}`}
+                                >
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => deleteMutation.mutate(entry.id)}
+                                  data-testid={`button-delete-${entry.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        });
+                      })()}
                     </TableBody>
                   </Table>
                 </div>
