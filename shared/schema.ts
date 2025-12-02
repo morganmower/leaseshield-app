@@ -667,6 +667,7 @@ export const insertRentLedgerEntrySchema = createInsertSchema(rentLedgerEntries)
   createdAt: true,
   updatedAt: true,
 }).extend({
+  month: z.string().optional(),
   effectiveDate: z.union([z.date(), z.string(), z.null()]).optional().transform((v) => 
     v ? (typeof v === 'string' ? new Date(v) : v) : new Date()
   ),
