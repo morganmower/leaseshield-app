@@ -108,7 +108,6 @@ export default function RentLedger() {
       userId: editingEntry.userId,
       propertyId: editingEntry.propertyId,
       tenantName: editTenantName,
-      month: editEffectiveDate.slice(0, 7),
       effectiveDate: editEffectiveDate || new Date().toISOString().split('T')[0],
       type: editType,
       category: editCategory,
@@ -195,8 +194,7 @@ export default function RentLedger() {
       userId: user?.id,
       propertyId: null,
       tenantName,
-      month: effectiveDate ? effectiveDate.slice(0, 7) : new Date().toISOString().slice(0, 7),
-      effectiveDate: effectiveDate ? new Date(effectiveDate) : new Date(),
+      effectiveDate: effectiveDate || new Date().toISOString().split('T')[0],
       type,
       category,
       description,
@@ -404,6 +402,48 @@ export default function RentLedger() {
               </Button>
             </Card>
 
+            {/* Summary Section */}
+            {entries && entries.length > 0 && (
+              <Card className="p-6 bg-muted/30 border-0">
+                <h2 className="text-lg font-bold mb-4">Summary</h2>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {(() => {
+                    let totalCharges = 0;
+                    let totalPayments = 0;
+                    entries.forEach((entry) => {
+                      totalCharges += entry.amountExpected / 100;
+                      totalPayments += (entry.amountReceived ?? 0) / 100;
+                    });
+                    const outstandingBalance = totalCharges - totalPayments;
+                    const status = outstandingBalance === 0 ? "Paid / Current" : "Outstanding";
+                    
+                    return (
+                      <>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Charges</p>
+                          <p className="text-2xl font-bold">${totalCharges.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Total Payments</p>
+                          <p className="text-2xl font-bold text-green-600 dark:text-green-400">${totalPayments.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Outstanding Balance</p>
+                          <p className="text-2xl font-bold">${outstandingBalance.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm text-muted-foreground mb-1">Status</p>
+                          <p className={`text-2xl font-bold ${outstandingBalance === 0 ? 'text-green-600 dark:text-green-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                            {status}
+                          </p>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              </Card>
+            )}
+
             {/* Ledger Table */}
             <Card className="p-6">
               <h2 className="text-xl font-bold mb-4">Ledger History</h2>
@@ -416,15 +456,15 @@ export default function RentLedger() {
                       <TableRow>
                         <TableHead>Date</TableHead>
                         <TableHead>Effective Date</TableHead>
-                        <TableHead>Tenant</TableHead>
                         <TableHead>Type</TableHead>
                         <TableHead>Category</TableHead>
                         <TableHead>Description</TableHead>
-                        <TableHead className="text-right">Charge</TableHead>
-                        <TableHead className="text-right">Payment</TableHead>
-                        <TableHead className="text-right">Balance</TableHead>
-                        <TableHead>Method</TableHead>
+                        <TableHead className="text-right">Charge Amount</TableHead>
+                        <TableHead className="text-right">Payment Amount</TableHead>
+                        <TableHead className="text-right">Running Balance</TableHead>
+                        <TableHead>Payment Method</TableHead>
                         <TableHead>Ref #</TableHead>
+                        <TableHead>Notes</TableHead>
                         <TableHead className="w-20">Action</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -433,14 +473,13 @@ export default function RentLedger() {
                         const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
                         const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
                         return dateB - dateA;
-                      }).map((entry, idx) => {
+                      }).map((entry) => {
                         const expected = entry.amountExpected / 100;
                         const received = (entry.amountReceived ?? 0) / 100;
                         return (
                           <TableRow key={entry.id}>
                             <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="text-sm">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
-                            <TableCell className="font-medium">{entry.tenantName}</TableCell>
                             <TableCell><span className="text-xs bg-muted px-2 py-1 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
                             <TableCell className="text-sm">{entry.category}</TableCell>
                             <TableCell className="text-sm max-w-xs truncate">{entry.description || "-"}</TableCell>
@@ -449,6 +488,7 @@ export default function RentLedger() {
                             <TableCell className="text-right font-mono font-semibold">${(entry.amountExpected / 100 - (entry.amountReceived ?? 0) / 100).toFixed(2)}</TableCell>
                             <TableCell className="text-sm">{entry.paymentMethod || "-"}</TableCell>
                             <TableCell className="text-sm">{entry.referenceNumber || "-"}</TableCell>
+                            <TableCell className="text-sm max-w-xs truncate">{entry.notes || "-"}</TableCell>
                             <TableCell className="flex gap-1">
                               <Button
                                 size="icon"
