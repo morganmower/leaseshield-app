@@ -741,7 +741,7 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mt-12"
+            className="text-center mt-4"
           >
             <Badge className="mb-4 bg-amber-100 dark:bg-amber-950 text-amber-900 dark:text-amber-100">Bonus Tools</Badge>
             <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 sm:p-6">
