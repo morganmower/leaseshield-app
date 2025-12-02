@@ -362,20 +362,20 @@ export default function Landing() {
                 variants={fadeInUp}
                 className="flex flex-col gap-2 text-sm text-muted-foreground"
               >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                   <span>Instant access</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                   <span>Money-back guarantee</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                   <span>Cancel anytime</span>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <div className="flex items-start gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
                   <span>Updates included</span>
                 </div>
               </motion.div>
