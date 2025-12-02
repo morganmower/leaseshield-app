@@ -1212,7 +1212,7 @@ export default function Landing() {
           >
             {/* AI Tools Preview */}
             <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-primary/20 bg-card">
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
                 <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center mb-4">
                   <Sparkles className="h-6 w-6 text-primary" />
                 </div>
