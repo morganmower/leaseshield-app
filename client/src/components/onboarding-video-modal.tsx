@@ -13,7 +13,12 @@ import {
   MessageCircle,
   CheckCircle2,
   Sparkles,
-  Home
+  LayoutDashboard,
+  FolderOpen,
+  Building2,
+  AlertCircle,
+  BookOpen,
+  DollarSign
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -26,66 +31,144 @@ const slides = [
   {
     id: 1,
     title: "Welcome to LeaseShield",
-    subtitle: "Your rental protection starts here",
-    icon: Home,
+    subtitle: "Your complete landlord protection toolkit",
+    icon: Sparkles,
     color: "from-primary/20 to-primary/10",
     iconColor: "text-primary",
     points: [
-      "State-specific legal templates",
-      "Real-time compliance updates", 
-      "AI-powered assistance"
+      "10+ state-specific legal templates",
+      "Real-time compliance law updates",
+      "AI-powered tenant screening assistance"
     ]
   },
   {
     id: 2,
-    title: "Legal Templates",
-    subtitle: "Professional documents in seconds",
-    icon: FileText,
-    color: "from-emerald-500/20 to-emerald-500/10",
-    iconColor: "text-emerald-500",
+    title: "Dashboard",
+    subtitle: "Your command center",
+    icon: LayoutDashboard,
+    color: "from-blue-500/20 to-blue-500/10",
+    iconColor: "text-blue-500",
     points: [
-      "Lease agreements customized for your state",
-      "Eviction notices with proper legal language",
-      "Move-in/out checklists to protect deposits"
+      "At-a-glance view of recent updates affecting your rentals",
+      "Quick access to latest legal changes in your states",
+      "See what templates are available this month"
     ]
   },
   {
     id: 3,
-    title: "Compliance Cards",
-    subtitle: "Know your state's laws",
-    icon: Shield,
-    color: "from-amber-500/20 to-amber-500/10", 
-    iconColor: "text-amber-500",
+    title: "Templates",
+    subtitle: "Professional legal documents ready to use",
+    icon: FileText,
+    color: "from-emerald-500/20 to-emerald-500/10",
+    iconColor: "text-emerald-500",
     points: [
-      "Security deposit rules and limits",
-      "Required disclosures for your state",
-      "Eviction procedures step-by-step"
+      "State-specific lease agreements that comply with local laws",
+      "Pre-filled templates with all required disclosures",
+      "Download as PDF or Word—no lawyers needed"
     ]
   },
   {
     id: 4,
-    title: "Tenant Screening",
-    subtitle: "Find great tenants safely",
-    icon: Search,
-    color: "from-purple-500/20 to-purple-500/10",
-    iconColor: "text-purple-500",
+    title: "My Documents",
+    subtitle: "Organize and manage all your files",
+    icon: FolderOpen,
+    color: "from-orange-500/20 to-orange-500/10",
+    iconColor: "text-orange-500",
     points: [
-      "Credit report decoder explains terms",
-      "Fair Housing compliance guidance",
-      "Western Verify integration for reports"
+      "Store templates you've downloaded or customized",
+      "Keep PDF uploads of signed leases and agreements",
+      "Link documents to specific properties for easy retrieval"
     ]
   },
   {
     id: 5,
-    title: "AI Assistant",
-    subtitle: "Get answers instantly",
-    icon: MessageCircle,
-    color: "from-blue-500/20 to-blue-500/10",
-    iconColor: "text-blue-500",
+    title: "Properties",
+    subtitle: "Manage your rental portfolio",
+    icon: Building2,
+    color: "from-indigo-500/20 to-indigo-500/10",
+    iconColor: "text-indigo-500",
     points: [
-      "Ask any landlord-tenant question",
-      "Available 24/7 in the chat widget",
-      "Trained on your state's specific laws"
+      "Store details for each rental property you own",
+      "Track state-specific requirements for each location",
+      "Attach documents and notes to individual properties"
+    ]
+  },
+  {
+    id: 6,
+    title: "Compliance",
+    subtitle: "Know what your state requires",
+    icon: Shield,
+    color: "from-red-500/20 to-red-500/10",
+    iconColor: "text-red-500",
+    points: [
+      "Required disclosures (lead paint, utilities, etc.)",
+      "Security deposit limits and handling procedures",
+      "Eviction notice requirements with exact timelines"
+    ]
+  },
+  {
+    id: 7,
+    title: "Screening",
+    subtitle: "Find and evaluate reliable tenants",
+    icon: Search,
+    color: "from-purple-500/20 to-purple-500/10",
+    iconColor: "text-purple-500",
+    points: [
+      "AI credit report decoder explains scores and terms",
+      "Fair Housing guidance on legal screening criteria",
+      "Criminal/eviction record interpretation tools"
+    ]
+  },
+  {
+    id: 8,
+    title: "Tenant Issues",
+    subtitle: "Step-by-step resolution guides",
+    icon: AlertCircle,
+    color: "from-yellow-500/20 to-yellow-500/10",
+    iconColor: "text-yellow-500",
+    points: [
+      "Late rent procedures with exact notice timelines",
+      "Lease violation steps and required documentation",
+      "State-specific eviction process guides"
+    ]
+  },
+  {
+    id: 9,
+    title: "Legal Updates",
+    subtitle: "Stay ahead of law changes",
+    icon: BookOpen,
+    color: "from-cyan-500/20 to-cyan-500/10",
+    iconColor: "text-cyan-500",
+    points: [
+      "New laws affecting security deposits or rent",
+      "Court rulings that impact your rights as a landlord",
+      "Automatic notifications when rules change"
+    ]
+  },
+  {
+    id: 10,
+    title: "Communications",
+    subtitle: "Professional tenant correspondence",
+    icon: MessageCircle,
+    color: "from-teal-500/20 to-teal-500/10",
+    iconColor: "text-teal-500",
+    points: [
+      "Templates for notices, requests, and reminders",
+      "Documented communication trail for disputes",
+      "Pre-written letters for common landlord situations"
+    ]
+  },
+  {
+    id: 11,
+    title: "Rent Ledger",
+    subtitle: "Track payments and keep records",
+    icon: DollarSign,
+    color: "from-green-500/20 to-green-500/10",
+    iconColor: "text-green-500",
+    points: [
+      "Record monthly rent payments from each tenant",
+      "Track late payments and payment patterns",
+      "Generate reports for tax time and disputes"
     ]
   }
 ];
@@ -170,6 +253,7 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
                         : 'bg-muted-foreground/30 hover:bg-muted-foreground/50'
                     }`}
                     data-testid={`button-slide-${idx}`}
+                    title={slides[idx].title}
                   />
                 ))}
               </div>
