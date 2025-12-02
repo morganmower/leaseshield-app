@@ -25,11 +25,15 @@ import {
 } from "lucide-react";
 import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
+import { useDashboardTour } from "@/hooks/useDashboardTour";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
+  const [showTour, setShowTour] = useState(false);
+
+  useDashboardTour(showTour);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -44,6 +48,17 @@ export default function Dashboard() {
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
+
+  // Show tour on first visit
+  useEffect(() => {
+    if (user && !isLoading) {
+      const hasSeenTour = localStorage.getItem('leaseshield_tour_seen');
+      if (!hasSeenTour) {
+        setShowTour(true);
+        localStorage.setItem('leaseshield_tour_seen', 'true');
+      }
+    }
+  }, [user, isLoading]);
 
   const { data: recentUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
     queryKey: ["/api/legal-updates/recent"],
@@ -517,7 +532,7 @@ export default function Dashboard() {
 
         {/* Recent Legal Updates */}
         {!updatesLoading && recentUpdates && recentUpdates.length > 0 && (
-          <div className="mb-12">
+          <div className="mb-12" data-testid="card-recent-updates">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-display font-semibold text-foreground">
                 Recent Compliance Updates
