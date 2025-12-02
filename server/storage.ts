@@ -1124,17 +1124,33 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createRentLedgerEntry(entry: InsertRentLedgerEntry): Promise<RentLedgerEntry> {
+    // Generate month from effectiveDate if not provided
+    const entryWithMonth = {
+      ...entry,
+      month: entry.month || (entry.effectiveDate 
+        ? new Date(entry.effectiveDate).toISOString().slice(0, 7)
+        : new Date().toISOString().slice(0, 7)
+      ),
+    };
     const [newEntry] = await db
       .insert(rentLedgerEntries)
-      .values(entry)
+      .values(entryWithMonth)
       .returning();
     return newEntry;
   }
 
   async updateRentLedgerEntry(id: string, userId: string, data: Partial<InsertRentLedgerEntry>): Promise<RentLedgerEntry | null> {
+    // Generate month from effectiveDate if not provided
+    const dataWithMonth = {
+      ...data,
+      month: data.month || (data.effectiveDate
+        ? new Date(data.effectiveDate).toISOString().slice(0, 7)
+        : undefined
+      ),
+    };
     const [updated] = await db
       .update(rentLedgerEntries)
-      .set({ ...data, updatedAt: new Date() })
+      .set({ ...dataWithMonth, updatedAt: new Date() })
       .where(and(eq(rentLedgerEntries.id, id), eq(rentLedgerEntries.userId, userId)))
       .returning();
     return updated || null;
