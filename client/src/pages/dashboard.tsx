@@ -150,16 +150,6 @@ export default function Dashboard() {
               <Play className="h-4 w-4 mr-2" />
               Quick Guide
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={() => restartTour()}
-              data-testid="button-help-tour"
-              className="whitespace-nowrap"
-            >
-              <Lightbulb className="h-4 w-4 mr-2" />
-              Tour
-            </Button>
             <ThemeToggle />
           </div>
         </div>
