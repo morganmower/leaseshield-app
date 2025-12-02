@@ -1002,7 +1002,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Communication templates routes
-  app.get('/api/communications', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/communications', isAuthenticated, async (req: any, res) => {
     try {
       const { stateId } = req.query;
       if (!stateId) {
@@ -1017,7 +1017,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/communications', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.post('/api/communications', isAuthenticated, async (req: any, res) => {
     try {
       const user = await storage.getUser(getUserId(req));
       if (!user?.isAdmin) {
@@ -1034,7 +1034,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Rent Ledger routes
-  app.get('/api/rent-ledger', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/rent-ledger', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -1048,7 +1048,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/rent-ledger', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.post('/api/rent-ledger', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -1068,7 +1068,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/rent-ledger/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.delete('/api/rent-ledger/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
