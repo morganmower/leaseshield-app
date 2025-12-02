@@ -70,11 +70,11 @@ function PaywallVariant({ testId }: { testId: string }) {
         </div>
 
         <h2 className="text-3xl font-display font-semibold text-foreground mb-4">
-          Full Access — No Trial Needed
+          Full Access — Everything Small Landlords Need to Stay Compliant
         </h2>
         
         <p className="text-lg text-muted-foreground mb-6">
-          Get instant access to all LeaseShield features. Just pick your plan and start today.
+          Instant access to all state-specific leases, notices, checklists, compliance letters, and screening tools.
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
@@ -91,15 +91,18 @@ function PaywallVariant({ testId }: { testId: string }) {
         </div>
 
         <div className="rounded-lg p-4 mb-6 border-2 border-muted">
-          <p className="text-sm text-foreground font-medium mb-3">Everything included:</p>
+          <p className="text-sm text-foreground font-medium mb-3">Everything Included:</p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
             {[
-              'State-specific lease templates',
-              'AI credit report decoder',
-              'Compliance monitoring',
-              'Document assembly wizard',
+              'State-specific leases & legal notices',
+              'Move-in / move-out checklists',
+              'Screening steps checklist',
+              'Adverse action letter templates',
+              'Credit report decoder (simple explanations)',
+              'Monthly legal & regulation updates',
               'Tenant issue workflows',
-              '24/7 AI chat assistant',
+              'Document assembly wizard',
+              '24/7 landlord compliance assistant',
             ].map((feature) => (
               <li key={feature} className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
