@@ -1,0 +1,51 @@
+⚠️ What needs improvement (to make “Full Access” truly effective)
+
+Based on what you currently have vs. what your survey data shows landlords want, there are 3 main areas where your copy falls short — and those gaps may be holding back throughput.
+
+1. The feature language doesn’t match what the majority explicitly asked for
+
+Your bullets list: “Compliance monitoring,” “Tenant issue workflows,” “AI credit report decoder,” “Document assembly wizard,” etc. — nice, but after reviewing your survey results, these are not the exact phrases landlords used.
+
+Survey-supported demand was strongest for:
+
+State-specific leases & notices (including late rent, eviction/violation, renewals)
+
+Move-in / move-out checklists
+
+Adverse action letters & compliance doc templates
+
+Credit / background report decoding and interpretation help
+
+Legal/regulation updates, especially for liability-creating regulation changes
+
+Your site’s “compliance monitoring” or “tenant issue workflows” feels more like generic SaaS-speak — landlords don’t hear those in their own language. When the copy isn’t aligned, the connection fails.
+
+Bottom line: To maximize conversions, the landing page must use exact user-language — the phrasing that triggers immediate recognition: “Yes — that’s exactly the pain I have.”
+
+2. The “why pay now” / urgency / value-benefit isn’t explicit enough
+
+The “Full Access — No Trial” message is fine, but doesn’t answer why a landlord should commit today instead of salting a few PDFs for free elsewhere. It lacks urgency and benefit framing.
+
+Landlords need to hear:
+
+“Avoid costly compliance mistakes.”
+
+“Save dozens of hours you’d waste researching / drafting / printing.”
+
+“Stay legally protected with up-to-date forms for your state.”
+
+“Stop wasting time on confusing credit reports — get clear guidance right away.”
+
+As is, the page mostly lists features, rather than selling the relief or selling the pain.
+
+3. Some of the high-value, survey-backed features are missing from the bullets altogether
+
+For example:
+
+Move-in / move-out checklists — not mentioned.
+
+Adverse-action letters / tenant-screening rejection letters — not explicit.
+
+Monthly or ongoing legal/regulation updates (so landlords know they stay current) — missing.
+
+Because these features drastically increase value to landlords (especially small ones), omitting them downplays the strength of LeaseShield and hurts perceived value.

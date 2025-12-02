@@ -643,7 +643,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-xl font-semibold mb-3">Leases & Notices</h3>
                   <p className="text-muted-foreground mb-4">
-                    State-specific leases, applications, and critical notices tailored to your exact legal requirements. The most-requested templates by landlords.
+                    Stop guessing what your state requires. Get attorney-quality leases, notices, and checklists that keep you compliant and protect your investment.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -672,7 +672,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-xl font-semibold mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
-                    Reduce liability with adverse action letters, legal compliance checklists, required disclosures, and monthly updates on law changes.
+                    Stay legally compliant without hiring an attorney. Adverse action letters, compliance checklists, and monthly legal updates—always protected when laws change.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -701,7 +701,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-xl font-semibold mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
-                    Understand credit reports, criminal history, and eviction records. AI-powered explanations help you make fair hiring decisions with confidence.
+                    Confidently screen tenants without legal mistakes. Simple credit report explanations and fair housing guidance—no confusing jargon, no discrimination risks.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
