@@ -56,7 +56,8 @@ export default function Communications() {
       console.log(`✅ Fetched ${Array.isArray(data) ? data.length : 0} templates for state ${state}:`, data);
       return Array.isArray(data) ? data : [];
     },
-    staleTime: 0, // Force refetch on queryKey change
+    staleTime: 0,
+    gcTime: 0, // Disable caching to force fresh fetch on state change
   });
 
   const extractMergeFields = (text: string): string[] => {
