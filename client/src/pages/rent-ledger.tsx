@@ -49,18 +49,65 @@ export default function RentLedger() {
   });
 
   const downloadExcelTemplate = () => {
-    const csv = `Tenant Name,Month (YYYY-MM),Amount Expected,Amount Received,Payment Date,Notes
-John Doe,${new Date().toISOString().slice(0, 7)},1500,0,,
-Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
+    if (!entries || entries.length === 0) {
+      toast({ description: "No entries to export. Add entries to the ledger first.", variant: "destructive" });
+      return;
+    }
 
+    // Sort entries by date
+    const sortedEntries = [...entries].sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+    // Calculate totals and running balances
+    let totalCharges = 0;
+    let totalPayments = 0;
+    let runningBalance = 0;
+
+    const csvRows = [
+      // Header
+      "RENT LEDGER REPORT",
+      `Generated: ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`,
+      "",
+      // Column headers
+      "Date,Tenant Name,Month,Charge Amount,Payment Received,Running Balance,Status",
+    ];
+
+    // Data rows with running balance
+    sortedEntries.forEach((entry) => {
+      const charge = entry.amountExpected / 100;
+      const payment = (entry.amountReceived ?? 0) / 100;
+      runningBalance += charge - payment;
+      totalCharges += charge;
+      totalPayments += payment;
+
+      const status = payment >= charge ? "Paid" : payment > 0 ? "Partial" : "Pending";
+      const dateStr = new Date(entry.createdAt).toLocaleDateString();
+
+      csvRows.push(
+        `"${dateStr}","${entry.tenantName}","${entry.month}","$${charge.toFixed(2)}","$${payment.toFixed(2)}","$${runningBalance.toFixed(2)}","${status}"`
+      );
+    });
+
+    // Totals row
+    const totalBalance = totalCharges - totalPayments;
+    csvRows.push("");
+    csvRows.push(`"TOTALS","","","$${totalCharges.toFixed(2)}","$${totalPayments.toFixed(2)}","$${totalBalance.toFixed(2)}",""`);
+
+    // Summary
+    csvRows.push("");
+    csvRows.push("SUMMARY");
+    csvRows.push(`"Total Charges","$${totalCharges.toFixed(2)}""`);
+    csvRows.push(`"Total Payments","$${totalPayments.toFixed(2)}""`);
+    csvRows.push(`"Outstanding Balance","$${totalBalance.toFixed(2)}""`);
+
+    const csv = csvRows.join("\n");
     const element = document.createElement("a");
     element.setAttribute("href", "data:text/csv;charset=utf-8," + encodeURIComponent(csv));
-    element.setAttribute("download", "rent-ledger-template.csv");
+    element.setAttribute("download", `rent-ledger-${new Date().toISOString().slice(0, 10)}.csv`);
     element.style.display = "none";
     document.body.appendChild(element);
     element.click();
     document.body.removeChild(element);
-    toast({ description: "Excel template downloaded!" });
+    toast({ description: "Professional rent ledger exported!" });
   };
 
   const handleAddEntry = () => {
@@ -102,23 +149,25 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
         <TabsContent value="fast">
           <Card className="p-6 space-y-4">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Quick Download</h2>
-              <p className="text-muted-foreground mb-6">Get started instantly with our pre-formatted Excel template</p>
+              <h2 className="text-2xl font-bold mb-2">Export Professional Report</h2>
+              <p className="text-muted-foreground mb-6">Download your complete rent ledger with all entries, running balances, and totals</p>
               <Button
                 onClick={downloadExcelTemplate}
                 className="gap-2"
                 data-testid="button-download-excel"
               >
                 <Download className="h-4 w-4" />
-                Download Excel Template
+                Export Rent Ledger (CSV/Excel)
               </Button>
             </div>
             <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
               <p className="font-semibold">What's included:</p>
               <ul className="list-disc list-inside space-y-1 text-muted-foreground">
-                <li>Pre-formatted columns for tenant name, month, expected & received amounts</li>
-                <li>Payment date and notes fields</li>
-                <li>Ready to share with accountant or save locally</li>
+                <li>All itemized rent charges and payments with dates</li>
+                <li>Running balance calculation for each transaction</li>
+                <li>Status column (Paid, Partial, Pending)</li>
+                <li>Professional summary with total charges, payments, and outstanding balance</li>
+                <li>Ready to share with accountant, lender, or save for records</li>
               </ul>
             </div>
           </Card>
