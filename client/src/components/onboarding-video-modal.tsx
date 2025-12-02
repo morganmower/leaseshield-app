@@ -175,7 +175,7 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
               </div>
             </div>
 
-            <div className="relative h-[320px] overflow-hidden">
+            <div className="relative min-h-[340px]">
               <AnimatePresence initial={false} custom={direction} mode="wait">
                 <motion.div
                   key={currentSlide}
@@ -188,19 +188,19 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
                     x: { type: "spring", stiffness: 300, damping: 30 },
                     opacity: { duration: 0.2 }
                   }}
-                  className="absolute inset-0"
+                  className="w-full"
                 >
-                  <div className="text-center mb-6">
+                  <div className="text-center mb-5">
                     <motion.div 
-                      className={`w-20 h-20 rounded-2xl bg-gradient-to-br ${slide.color} flex items-center justify-center mx-auto mb-4`}
+                      className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${slide.color} flex items-center justify-center mx-auto mb-3`}
                       initial={{ scale: 0.8, rotate: -10 }}
                       animate={{ scale: 1, rotate: 0 }}
                       transition={{ delay: 0.1, type: "spring" }}
                     >
-                      <SlideIcon className={`h-10 w-10 ${slide.iconColor}`} />
+                      <SlideIcon className={`h-8 w-8 ${slide.iconColor}`} />
                     </motion.div>
                     <motion.h2 
-                      className="text-2xl font-display font-semibold text-foreground mb-2"
+                      className="text-xl font-display font-semibold text-foreground mb-1"
                       initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.15 }}
@@ -208,7 +208,7 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
                       {slide.title}
                     </motion.h2>
                     <motion.p 
-                      className="text-muted-foreground"
+                      className="text-sm text-muted-foreground"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: 0.2 }}
@@ -218,7 +218,7 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
                   </div>
 
                   <motion.div 
-                    className="space-y-3 max-w-sm mx-auto"
+                    className="space-y-2 max-w-sm mx-auto"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.25 }}
@@ -226,12 +226,14 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
                     {slide.points.map((point, idx) => (
                       <motion.div
                         key={idx}
-                        className="flex items-start gap-3 bg-muted/50 rounded-lg p-3"
+                        className="flex items-center gap-3 bg-muted/50 rounded-lg p-3"
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         transition={{ delay: 0.3 + idx * 0.1 }}
                       >
-                        <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                        <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                          <CheckCircle2 className="h-4 w-4 text-white" />
+                        </div>
                         <span className="text-sm text-foreground">{point}</span>
                       </motion.div>
                     ))}
