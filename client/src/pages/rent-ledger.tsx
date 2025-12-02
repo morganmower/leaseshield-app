@@ -127,6 +127,37 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
         {/* Slow Path - In-App Tracking */}
         <TabsContent value="slow">
           <div className="space-y-6">
+            {/* Quick Action Buttons */}
+            <div className="flex flex-wrap gap-3">
+              <Button 
+                variant="outline" 
+                onClick={() => setActiveTab("slow")}
+                className="gap-2"
+                data-testid="button-add-rent-charge"
+              >
+                <Plus className="h-4 w-4" />
+                Add Rent Charge
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setActiveTab("slow")}
+                className="gap-2"
+                data-testid="button-add-payment"
+              >
+                <DollarSign className="h-4 w-4" />
+                Add Payment
+              </Button>
+              <Button 
+                variant="outline"
+                onClick={() => setActiveTab("slow")}
+                className="gap-2"
+                data-testid="button-add-late-fee"
+              >
+                <Plus className="h-4 w-4" />
+                Add Late Fee
+              </Button>
+            </div>
+
             {/* Add Entry Form */}
             <Card className="p-6">
               <h2 className="text-2xl font-bold mb-6">Add Rent Entry</h2>
@@ -152,7 +183,7 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
                   />
                 </div>
                 <div>
-                  <Label htmlFor="amount-expected">Amount Expected *</Label>
+                  <Label htmlFor="amount-expected">Charge Amount *</Label>
                   <Input
                     id="amount-expected"
                     type="number"
@@ -164,7 +195,7 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
                   />
                 </div>
                 <div>
-                  <Label htmlFor="amount-received">Amount Received</Label>
+                  <Label htmlFor="amount-received">Payment Received</Label>
                   <Input
                     id="amount-received"
                     type="number"
@@ -189,7 +220,7 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
 
             {/* Rent Ledger Table */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold mb-4">Rent Tracking</h2>
+              <h2 className="text-xl font-bold mb-4">Rent Ledger History</h2>
               {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
               ) : entries && entries.length > 0 ? (
@@ -197,26 +228,31 @@ Jane Smith,${new Date().toISOString().slice(0, 7)},1200,0,,`;
                   <Table>
                     <TableHeader>
                       <TableRow>
+                        <TableHead>Date</TableHead>
                         <TableHead>Tenant</TableHead>
                         <TableHead>Month</TableHead>
-                        <TableHead className="text-right">Expected</TableHead>
-                        <TableHead className="text-right">Received</TableHead>
-                        <TableHead className="text-right">Status</TableHead>
+                        <TableHead className="text-right">Charge</TableHead>
+                        <TableHead className="text-right">Payment</TableHead>
+                        <TableHead className="text-right">Balance</TableHead>
+                        <TableHead className="text-center">Status</TableHead>
                         <TableHead className="w-16">Action</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {entries.map((entry) => {
+                      {entries.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).map((entry, idx) => {
                         const expected = entry.amountExpected / 100;
                         const received = (entry.amountReceived ?? 0) / 100;
+                        const balance = expected - received;
                         const status = received >= expected ? "Paid" : received > 0 ? "Partial" : "Pending";
                         return (
                           <TableRow key={entry.id}>
+                            <TableCell className="text-sm">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell className="font-medium">{entry.tenantName}</TableCell>
                             <TableCell>{entry.month}</TableCell>
-                            <TableCell className="text-right">${expected.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">${received.toFixed(2)}</TableCell>
-                            <TableCell className="text-right">
+                            <TableCell className="text-right font-mono">${expected.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono text-green-600 dark:text-green-400">${received.toFixed(2)}</TableCell>
+                            <TableCell className="text-right font-mono font-semibold">${balance.toFixed(2)}</TableCell>
+                            <TableCell className="text-center">
                               <span
                                 className={`text-xs font-semibold px-2 py-1 rounded ${
                                   status === "Paid"
