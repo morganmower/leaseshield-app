@@ -103,17 +103,21 @@ export default function RentLedger() {
       toast({ description: "Please enter tenant name", variant: "destructive" });
       return;
     }
+    const chargeAmt = Math.round(parseFloat(editChargeAmount || "0") * 100);
+    const paymentAmt = Math.round(parseFloat(editPaymentAmount || "0") * 100);
+    const entryType = chargeAmt > 0 ? "charge" : "payment";
+
     updateMutation.mutate({
       id: editingEntry.id,
       userId: editingEntry.userId,
       propertyId: editingEntry.propertyId,
       tenantName: editTenantName,
       effectiveDate: editEffectiveDate || new Date().toISOString().split('T')[0],
-      type: editType,
+      type: entryType,
       category: editCategory,
       description: editDescription,
-      amountExpected: editType === "charge" ? Math.round(parseFloat(editChargeAmount || "0") * 100) : 0,
-      amountReceived: editType === "payment" ? Math.round(parseFloat(editPaymentAmount || "0") * 100) : 0,
+      amountExpected: chargeAmt,
+      amountReceived: paymentAmt,
       paymentMethod: editPaymentMethod,
       referenceNumber: editReferenceNumber,
       notes: editNotes,
@@ -187,15 +191,18 @@ export default function RentLedger() {
       return;
     }
 
-    const chargeAmt = type === "charge" ? Math.round(parseFloat(chargeAmount || "0") * 100) : 0;
-    const paymentAmt = type === "payment" ? Math.round(parseFloat(paymentAmount || "0") * 100) : 0;
+    const chargeAmt = Math.round(parseFloat(chargeAmount || "0") * 100);
+    const paymentAmt = Math.round(parseFloat(paymentAmount || "0") * 100);
+
+    // Determine type based on which amount is entered
+    const entryType = chargeAmt > 0 ? "charge" : "payment";
 
     createMutation.mutate({
       userId: user?.id,
       propertyId: null,
       tenantName,
       effectiveDate: effectiveDate || new Date().toISOString().split('T')[0],
-      type,
+      type: entryType,
       category,
       description,
       amountExpected: chargeAmt,
@@ -309,33 +316,31 @@ export default function RentLedger() {
                   />
                 </div>
 
-                {type === "charge" ? (
-                  <div>
-                    <Label htmlFor="charge-amount">Charge Amount</Label>
-                    <Input
-                      id="charge-amount"
-                      type="number"
-                      step="0.01"
-                      value={chargeAmount}
-                      onChange={(e) => setChargeAmount(e.target.value)}
-                      placeholder="1500.00"
-                      data-testid="input-charge-amount"
-                    />
-                  </div>
-                ) : (
-                  <div>
-                    <Label htmlFor="payment-amount">Payment Amount</Label>
-                    <Input
-                      id="payment-amount"
-                      type="number"
-                      step="0.01"
-                      value={paymentAmount}
-                      onChange={(e) => setPaymentAmount(e.target.value)}
-                      placeholder="1500.00"
-                      data-testid="input-payment-amount"
-                    />
-                  </div>
-                )}
+                <div>
+                  <Label htmlFor="charge-amount">Charge Amount</Label>
+                  <Input
+                    id="charge-amount"
+                    type="number"
+                    step="0.01"
+                    value={chargeAmount}
+                    onChange={(e) => setChargeAmount(e.target.value)}
+                    placeholder="0.00"
+                    data-testid="input-charge-amount"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="payment-amount">Payment Amount</Label>
+                  <Input
+                    id="payment-amount"
+                    type="number"
+                    step="0.01"
+                    value={paymentAmount}
+                    onChange={(e) => setPaymentAmount(e.target.value)}
+                    placeholder="0.00"
+                    data-testid="input-payment-amount"
+                  />
+                </div>
 
                 <div>
                   <Label htmlFor="payment-method">Payment Method</Label>
