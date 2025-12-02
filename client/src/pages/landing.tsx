@@ -1348,23 +1348,23 @@ export default function Landing() {
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and NC</span>
+                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Real-time legal compliance updates</span>
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Tenant screening toolkit</span>
+                  <span className="text-sm sm:text-base">Screening steps checklist</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Email alerts for law changes</span>
+                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Cancel anytime</span>
+                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
 
@@ -1408,23 +1408,23 @@ export default function Landing() {
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, SD, and NC</span>
+                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Real-time legal compliance updates</span>
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Tenant screening toolkit</span>
+                  <span className="text-sm sm:text-base">Screening steps checklist</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Email alerts for law changes</span>
+                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Cancel anytime</span>
+                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
 
@@ -1441,6 +1441,49 @@ export default function Landing() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Card>
+          </motion.div>
+
+          {/* Why LeaseShield Section */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="mt-16 sm:mt-20 pt-12 sm:pt-16 border-t"
+          >
+            <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-8 text-center">
+              Why LeaseShield Saves You Time, Risk & Stress
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+              <div className="flex gap-3">
+                <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-sm mb-1">Save Hours Each Month</p>
+                  <p className="text-sm text-muted-foreground">No more Googling forms or waiting on lawyer consultations</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Shield className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-sm mb-1">Avoid Costly Mistakes</p>
+                  <p className="text-sm text-muted-foreground">One compliance error costs thousands—we keep you protected</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-sm mb-1">Screen Tenants Confidently</p>
+                  <p className="text-sm text-muted-foreground">Simple credit reports & fair housing guidance—no legal risks</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-sm mb-1">Stay Current Automatically</p>
+                  <p className="text-sm text-muted-foreground">Monthly updates alert you when your state's laws change</p>
+                </div>
+              </div>
+            </div>
           </motion.div>
         </div>
       </section>
