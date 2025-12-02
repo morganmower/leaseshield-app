@@ -58,9 +58,7 @@ function PaywallVariant({ testId }: { testId: string }) {
 
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-primary/10 pointer-events-none" />
-      
-      <Card className="max-w-2xl mx-auto p-8 text-center border-2 border-primary/30 bg-gradient-to-br from-card to-primary/5">
+      <Card className="max-w-2xl mx-auto p-8 text-center border-2 border-primary/20">
         <div className="mb-6">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
             <Shield className="h-8 w-8 text-primary" />
@@ -79,22 +77,20 @@ function PaywallVariant({ testId }: { testId: string }) {
           Get instant access to all LeaseShield features. Just pick your plan and start today.
         </p>
 
-        <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-6 mb-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-            <div className="text-center p-4 rounded-lg bg-card/50">
-              <p className="text-sm text-muted-foreground mb-1">Monthly</p>
-              <p className="text-3xl font-bold text-foreground">$10</p>
-              <p className="text-xs text-muted-foreground">/month</p>
-            </div>
-            <div className="text-center p-4 rounded-lg bg-success/10 border-2 border-success/30">
-              <p className="text-sm text-success font-semibold mb-1">BEST VALUE</p>
-              <p className="text-3xl font-bold text-foreground">$100</p>
-              <p className="text-xs text-muted-foreground">/year (save $20)</p>
-            </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+          <div className="text-center p-4 rounded-lg border-2 border-muted">
+            <p className="text-sm text-muted-foreground mb-1">Monthly</p>
+            <p className="text-3xl font-bold text-foreground">$10</p>
+            <p className="text-xs text-muted-foreground">/month</p>
+          </div>
+          <div className="text-center p-4 rounded-lg border-2 border-success/50 bg-success/5">
+            <p className="text-sm text-success font-semibold mb-1">BEST VALUE</p>
+            <p className="text-3xl font-bold text-foreground">$100</p>
+            <p className="text-xs text-muted-foreground">/year (save $20)</p>
           </div>
         </div>
 
-        <div className="bg-muted/50 rounded-lg p-4 mb-6">
+        <div className="rounded-lg p-4 mb-6 border-2 border-muted">
           <p className="text-sm text-foreground font-medium mb-3">Everything included:</p>
           <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
             {[
