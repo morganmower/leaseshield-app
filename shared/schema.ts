@@ -666,6 +666,10 @@ export const insertRentLedgerEntrySchema = createInsertSchema(rentLedgerEntries)
   id: true,
   createdAt: true,
   updatedAt: true,
+}).extend({
+  effectiveDate: z.union([z.date(), z.string(), z.null()]).optional().transform((v) => 
+    v ? (typeof v === 'string' ? new Date(v) : v) : new Date()
+  ),
 });
 export type InsertRentLedgerEntry = z.infer<typeof insertRentLedgerEntrySchema>;
 export type RentLedgerEntry = typeof rentLedgerEntries.$inferSelect;
