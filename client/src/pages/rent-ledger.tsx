@@ -456,7 +456,6 @@ export default function RentLedger() {
                       <TableRow>
                         <TableHead className="text-xs">Date</TableHead>
                         <TableHead className="text-xs">Effective Date</TableHead>
-                        <TableHead className="text-xs">Type</TableHead>
                         <TableHead className="text-xs">Category</TableHead>
                         <TableHead className="text-xs text-right">Charge Amt</TableHead>
                         <TableHead className="text-xs text-right">Payment Amt</TableHead>
@@ -482,7 +481,6 @@ export default function RentLedger() {
                             <TableRow key={entry.id}>
                               <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                               <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
-                              <TableCell><span className="text-xs bg-muted px-1 py-0.5 rounded">{entry.type === "payment" ? "Payment" : "Charge"}</span></TableCell>
                               <TableCell className="text-xs">{entry.category}</TableCell>
                               <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
