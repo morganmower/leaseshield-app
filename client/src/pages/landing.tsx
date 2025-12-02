@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2 } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -1105,6 +1105,127 @@ export default function Landing() {
                 </div>
               </div>
             </Card>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Dashboard Preview / Sneak Peek */}
+      <section className="py-16 md:py-24 bg-muted/30" data-testid="section-preview">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-10"
+          >
+            <Badge variant="outline" className="mb-4">
+              <Building2 className="h-3 w-3 mr-1" />
+              Sneak Peek
+            </Badge>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Your Protection Dashboard
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Everything you need in one organized workspace. No clutter, just tools that work.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+          >
+            {/* AI Tools Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-primary/20 bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">AI Protection Center</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Credit report decoder, screening guidance, and 24/7 AI assistant
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Credit Decoder</Badge>
+                  <Badge variant="secondary" className="text-xs">AI Chat</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Templates Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{templateCount}+ Legal Templates</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  State-specific lease agreements, notices, and compliance forms
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">UT</Badge>
+                  <Badge variant="secondary" className="text-xs">TX</Badge>
+                  <Badge variant="secondary" className="text-xs">NC</Badge>
+                  <Badge variant="secondary" className="text-xs">+5</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Compliance Updates Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Compliance Alerts</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Real-time law changes with plain-English explanations
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Monthly Updates</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Screening Tools Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Search className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Screening Toolkit</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Application workflows and Western Verify integration
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Checklists</Badge>
+                  <Badge variant="secondary" className="text-xs">Reports</Badge>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-10"
+          >
+            <Button
+              size="lg"
+              onClick={() => window.location.href = "/api/login"}
+              data-testid="button-preview-cta"
+            >
+              Get Access Now
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            <p className="text-sm text-muted-foreground mt-3">
+              7-day free trial. No credit card required.
+            </p>
           </motion.div>
         </div>
       </section>

@@ -21,17 +21,21 @@ import {
   AlertTriangle,
   Gavel,
   CheckCircle2,
-  Wand2
+  Wand2,
+  Play
 } from "lucide-react";
 import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
 import { useDashboardTour } from "@/hooks/useDashboardTour";
+import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
   const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
   const [showTour, setShowTour] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const { restartTour } = useDashboardTour(showTour);
 
   useEffect(() => {
@@ -48,13 +52,18 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Show tour on first visit
+  // Show tour on first visit, then video modal
   useEffect(() => {
     if (user && !isLoading) {
       const hasSeenTour = localStorage.getItem('leaseshield_tour_seen');
+      const hasSeenVideo = localStorage.getItem('leaseshield_video_seen');
+      
       if (!hasSeenTour) {
         setShowTour(true);
         localStorage.setItem('leaseshield_tour_seen', 'true');
+      } else if (!hasSeenVideo) {
+        // Show video after tour is done
+        setTimeout(() => setShowVideoModal(true), 500);
       }
     }
   }, [user, isLoading]);
@@ -121,7 +130,7 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background">
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Welcome Header with Help Button */}
-        <div className="mb-8 flex items-start justify-between">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
               Welcome back{user.firstName ? `, ${user.firstName}` : ''}
@@ -130,16 +139,29 @@ export default function Dashboard() {
               Your protective toolkit for confident property management
             </p>
           </div>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => restartTour()}
-            data-testid="button-help-tour"
-            className="whitespace-nowrap"
-          >
-            <Lightbulb className="h-4 w-4 mr-2" />
-            Help
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowVideoModal(true)}
+              data-testid="button-video-guide"
+              className="whitespace-nowrap"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Quick Guide
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => restartTour()}
+              data-testid="button-help-tour"
+              className="whitespace-nowrap"
+            >
+              <Lightbulb className="h-4 w-4 mr-2" />
+              Tour
+            </Button>
+            <ThemeToggle />
+          </div>
         </div>
 
         {/* Subscription Banner - for trial, incomplete, or no subscription */}
@@ -714,6 +736,12 @@ export default function Dashboard() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Onboarding Video Modal */}
+      <OnboardingVideoModal 
+        isOpen={showVideoModal} 
+        onClose={() => setShowVideoModal(false)} 
+      />
     </div>
   );
 }
