@@ -72,12 +72,27 @@ function PaywallVariant({ testId }: { testId: string }) {
         </div>
 
         <h2 className="text-3xl font-display font-semibold text-foreground mb-4">
-          Start With $10 First Month
+          Full Access — No Trial Needed
         </h2>
         
         <p className="text-lg text-muted-foreground mb-6">
-          Get instant access to all LeaseShield features. No trial needed — just full protection from day one.
+          Get instant access to all LeaseShield features. Just pick your plan and start today.
         </p>
+
+        <div className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-6 mb-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
+            <div className="text-center p-4 rounded-lg bg-card/50">
+              <p className="text-sm text-muted-foreground mb-1">Monthly</p>
+              <p className="text-3xl font-bold text-foreground">$10</p>
+              <p className="text-xs text-muted-foreground">/month</p>
+            </div>
+            <div className="text-center p-4 rounded-lg bg-success/10 border-2 border-success/30">
+              <p className="text-sm text-success font-semibold mb-1">BEST VALUE</p>
+              <p className="text-3xl font-bold text-foreground">$100</p>
+              <p className="text-xs text-muted-foreground">/year (save $20)</p>
+            </div>
+          </div>
+        </div>
 
         <div className="bg-muted/50 rounded-lg p-4 mb-6">
           <p className="text-sm text-foreground font-medium mb-3">Everything included:</p>
@@ -105,7 +120,7 @@ function PaywallVariant({ testId }: { testId: string }) {
           data-testid="button-paywall-signup"
         >
           <Lock className="mr-2 h-4 w-4" />
-          Pay $10 Now — Full Access
+          Choose Plan & Get Started
         </Button>
 
         <p className="text-xs text-muted-foreground mt-4">
