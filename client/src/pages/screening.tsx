@@ -275,353 +275,375 @@ export default function Screening() {
           </div>
         </div>
 
-        {/* AI Credit Report Helper - Hero Feature */}
-        <div className="mb-12" id="ai-helpers" data-section="credit-helper">
-          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
-                <Lightbulb className="h-7 w-7 text-primary dark:text-primary" />
+        {/* Quick Start Guide */}
+        <div className="mb-8 bg-gradient-to-r from-primary/10 to-primary/5 dark:from-primary/10 dark:to-transparent border border-primary/20 rounded-xl p-6" id="ai-helpers">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-4 flex items-center gap-2">
+            <Lightbulb className="h-6 w-6 text-primary" />
+            AI Screening Helpers - Quick Start
+          </h2>
+          <div className="grid md:grid-cols-2 gap-4">
+            <div className="bg-background/80 dark:bg-background/40 rounded-lg p-4 border">
+              <div className="flex items-center gap-2 mb-2">
+                <CreditCard className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Credit Report Helper</h3>
               </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-                  AI Credit Report Helper
-                </h2>
-                <p className="text-foreground dark:text-foreground/90 mb-3">
-                  Get instant explanations of credit report terms, plus the exact questions you should ask your applicant
-                </p>
-                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  Powered by AI
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Privacy Notice */}
-          <div className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-foreground">
-                  <strong>Privacy Notice:</strong> For your safety, please do not upload your actual credit report or type Social Security numbers, full account numbers, or exact dollar amounts. We do not store or review your full credit report.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Home Screen */}
-          {helperScreen === 'home' && (
-            <>
-              {explanation === 'Subscribe to use this AI helper' ? (
-                <Card className="p-8 bg-primary/10 border-primary/20">
-                  <div className="text-center">
-                    <CreditCard className="h-12 w-12 text-primary mx-auto mb-4" />
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      Subscribe to receive updates
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                      Get access to AI-powered screening helpers, legal templates, and real-time compliance updates
-                    </p>
-                    <Link to="/subscribe">
-                      <Button size="lg" data-testid="button-subscribe-screening">
-                        Subscribe Now
-                      </Button>
-                    </Link>
-                  </div>
-                </Card>
-              ) : (
-                <Card className="p-6 shadow-lg">
-                  <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
-                  <p className="text-muted-foreground mb-6">
-                    This AI-powered tool helps you understand credit report terms AND gives you actionable questions to ask your applicant. Choose an option below:
-                  </p>
-                  
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    <Button 
-                      onClick={() => {
-                        setHelperScreen('learn');
-                        setExplanation('');
-                      }}
-                      className="flex-1"
-                      data-testid="button-learn-credit-report"
-                    >
-                      <FileText className="mr-2 h-4 w-4" />
-                      Learn How to Read a Credit Report
-                    </Button>
-                    <Button 
-                      onClick={() => {
-                        setHelperScreen('ask');
-                        setUserQuestion('');
-                        setExplanation('');
-                      }}
-                      variant="default"
-                      className="flex-1"
-                      data-testid="button-ask-question"
-                    >
-                      <Lightbulb className="mr-2 h-4 w-4" />
-                      Ask About a Credit Term (AI)
-                    </Button>
-                  </div>
-                </Card>
-              )}
-            </>
-          )}
-
-          {/* Learn Screen */}
-          {helperScreen === 'learn' && (
-            <Card className="p-6 shadow-lg">
-              <div className="mb-4">
-                <Button 
-                  onClick={() => setHelperScreen('home')}
-                  variant="ghost"
-                  size="sm"
-                  data-testid="button-back-to-home"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              </div>
-
-              <h3 className="font-semibold text-lg mb-4">Learn How to Read a Credit Report</h3>
-              <p className="text-muted-foreground mb-6">
-                Below are common parts of a credit report with explanations. This is for educational purposes only.
+              <p className="text-sm text-muted-foreground mb-2">
+                Paste credit report sections or type terms like "charge-off" or "collection"
               </p>
-
-              <div className="space-y-4">
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    Credit Score
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    A number that summarizes how risky you are as a borrower. Higher is better. Scores range from 300-850.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    Payment History
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Shows if bills were paid on time or late. This is the most important factor in credit scoring.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    Collections
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Accounts that were not paid and sent to a collection agency. Major red flag for landlords.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <XCircle className="h-5 w-5 text-destructive" />
-                    Charge-off
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    A debt the lender has given up collecting, but it can still hurt your credit score significantly.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5 text-amber-600" />
-                    Utilization
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    How much of your credit limit you are using. For example, using $500 of a $1,000 limit is 50%. Lower is better (under 30% is ideal).
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <Search className="h-5 w-5 text-primary" />
-                    Inquiries
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Who has checked your credit recently (for example, a bank or car dealer). Too many inquiries can indicate credit shopping.
-                  </p>
-                </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => document.getElementById('credit-helper-input')?.focus()}
+                data-testid="button-jump-to-credit"
+              >
+                Jump to Credit Helper
+              </Button>
+            </div>
+            <div className="bg-background/80 dark:bg-background/40 rounded-lg p-4 border">
+              <div className="flex items-center gap-2 mb-2">
+                <AlertTriangle className="h-5 w-5 text-primary" />
+                <h3 className="font-semibold text-foreground">Criminal/Eviction Helper</h3>
               </div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Paste criminal charges or type terms like "misdemeanor" or "eviction"
+              </p>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => document.getElementById('criminal-helper-input')?.focus()}
+                data-testid="button-jump-to-criminal"
+              >
+                Jump to Criminal Helper
+              </Button>
+            </div>
+          </div>
+        </div>
 
-              <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
+        {/* AI Credit Report Helper - Direct Input */}
+        <div className="mb-8" data-section="credit-helper">
+          <Card className="p-6 shadow-lg border-2 border-primary/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                <CreditCard className="h-6 w-6 text-primary" />
+              </div>
+              <div>
+                <h2 className="text-xl font-display font-semibold text-foreground">
+                  Credit Report AI Helper
+                </h2>
                 <p className="text-sm text-muted-foreground">
-                  <strong className="text-foreground">Tip:</strong> When looking at your tenant's credit report, match these terms to understand what they mean and how they impact their creditworthiness.
+                  Paste credit info or type a term - get instant explanation
                 </p>
               </div>
-            </Card>
-          )}
-
-          {/* Ask Screen - AI Powered */}
-          {helperScreen === 'ask' && (
-            <Card className="p-6 shadow-lg">
-              <div className="mb-4">
-                <Button 
-                  onClick={() => {
-                    setHelperScreen('home');
-                    setUserQuestion('');
-                    setExplanation('');
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  data-testid="button-back-from-ask"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
+              <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
+                <Lightbulb className="h-3 w-3 mr-1" />
+                AI
+              </Badge>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-3 text-sm">
+                <p className="text-muted-foreground">
+                  <strong className="text-foreground">Examples:</strong> "charge-off" • "30 days late" • "collection" • paste a section of a credit report
+                </p>
               </div>
 
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-semibold text-lg">Ask About a Credit Term</h3>
-                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  AI Powered
-                </Badge>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 mb-4">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-foreground font-medium">What you'll get:</p>
-                  </div>
-                  <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                    <li>Plain-English explanation of the term</li>
-                    <li>Warning signs to watch for</li>
-                    <li>Specific questions to ask your applicant</li>
-                  </ul>
-                </div>
+              <Textarea
+                id="credit-helper-input"
+                placeholder="Paste credit report info here, or type a term like 'charge-off' or 'collection'"
+                value={userQuestion}
+                onChange={(e) => setUserQuestion(e.target.value)}
+                className="min-h-[100px] text-base"
+                data-testid="textarea-credit-question"
+              />
 
-                <div className="text-sm text-muted-foreground space-y-2">
-                  <p><strong className="text-foreground">How to use:</strong></p>
-                  <p>1. Look at your tenant's credit report</p>
-                  <p>2. Type any term you see, such as:</p>
-                  <ul className="ml-6 space-y-1 list-disc">
-                    <li><em>"account closed by creditor"</em> - What does this mean?</li>
-                    <li><em>"maxed out credit card"</em> - Is this a red flag?</li>
-                    <li><em>"medical collections"</em> - Should I be concerned?</li>
-                    <li><em>"bankruptcy chapter 7"</em> - How recent is too recent?</li>
-                    <li><em>"hard inquiry from payday lender"</em> - What's the risk?</li>
-                    <li><em>"authorized user on account"</em> - Does this count?</li>
-                  </ul>
-                  <p>3. Get instant AI-powered guidance tailored for landlords</p>
-                </div>
+              <Button 
+                onClick={handleExplain}
+                disabled={isExplaining || !userQuestion.trim()}
+                className="w-full"
+                size="lg"
+                data-testid="button-get-credit-explanation"
+              >
+                <Lightbulb className="mr-2 h-4 w-4" />
+                {isExplaining ? 'Analyzing...' : 'Get AI Explanation'}
+              </Button>
 
-                <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-destructive font-medium">
-                      For your safety: Do not type Social Security numbers, full account numbers, or exact dollar amounts.
-                    </p>
+              {isExplaining && (
+                <div className="bg-muted/50 border border-muted rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                    <p className="text-sm text-muted-foreground">Analyzing and preparing guidance...</p>
                   </div>
                 </div>
+              )}
 
-                <Textarea
-                  placeholder="Example: charge-off"
-                  value={userQuestion}
-                  onChange={(e) => setUserQuestion(e.target.value)}
-                  className="min-h-[100px] text-base"
-                  data-testid="textarea-credit-question"
-                />
-
-                <Button 
-                  onClick={handleExplain}
-                  disabled={isExplaining || !userQuestion.trim()}
-                  className="w-full"
-                  size="lg"
-                  data-testid="button-get-explanation"
-                >
-                  <Lightbulb className="mr-2 h-4 w-4" />
-                  {isExplaining ? 'Getting explanation...' : 'Get AI Explanation'}
-                </Button>
-
-                {isExplaining && (
-                  <div className="bg-muted/50 border border-muted rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                      <p className="text-sm text-muted-foreground">
-                        Analyzing your question and preparing actionable guidance...
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {!isExplaining && explanation && (() => {
-                  const parsed = parseAIExplanation(explanation);
-                  
-                  if (!parsed) {
-                    return (
-                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg" data-testid="container-credit-explanation">
-                        <div className="flex items-start gap-3 mb-4">
-                          <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
-                            <div className="text-foreground dark:text-foreground/95 whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-primary/20 dark:border-primary/30">
-                          <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-muted-foreground">
-                              This information is for general education only. It is not legal or financial advice. Always consult with legal counsel for specific situations.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
+              {!isExplaining && explanation && (() => {
+                const parsed = parseAIExplanation(explanation);
+                
+                if (!parsed) {
                   return (
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg space-y-4" data-testid="container-credit-explanation">
-                      {parsed.whatItMeans && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="h-5 w-5 text-primary" />
-                            <h4 className="font-semibold text-foreground">What it means</h4>
-                          </div>
-                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7" data-testid="text-credit-explanation">{parsed.whatItMeans}</p>
-                        </div>
-                      )}
-                      
-                      {parsed.whatToWatchFor && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-                            <h4 className="font-semibold text-foreground">What to watch for</h4>
-                          </div>
-                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
-                        </div>
-                      )}
-                      
-                      {parsed.questionsToAsk && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HelpCircle className="h-5 w-5 text-primary" />
-                            <h4 className="font-semibold text-foreground">Questions to ask</h4>
-                          </div>
-                          <div className="ml-7 text-foreground dark:text-foreground/95 leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
-                        </div>
-                      )}
-                      
-                      <div className="pt-4 border-t border-primary/20 dark:border-primary/30">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-muted-foreground">
-                            This information is for general education only. It is not legal or financial advice. Always consult with legal counsel for specific situations.
-                          </p>
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-credit-explanation">
+                      <div className="flex items-start gap-3 mb-4">
+                        <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
+                          <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
                         </div>
                       </div>
                     </div>
                   );
-                })()}
+                }
+                
+                return (
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg space-y-4" data-testid="container-credit-explanation">
+                    {parsed.whatItMeans && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-foreground">What it means</h4>
+                        </div>
+                        <p className="text-foreground leading-relaxed ml-7" data-testid="text-credit-explanation">{parsed.whatItMeans}</p>
+                      </div>
+                    )}
+                    
+                    {parsed.whatToWatchFor && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-5 w-5 text-amber-600" />
+                          <h4 className="font-semibold text-foreground">What to watch for</h4>
+                        </div>
+                        <p className="text-foreground leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
+                      </div>
+                    )}
+                    
+                    {parsed.questionsToAsk && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <HelpCircle className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-foreground">Questions to ask</h4>
+                        </div>
+                        <div className="ml-7 text-foreground leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
+                      </div>
+                    )}
+                    
+                    <div className="pt-4 border-t border-primary/20">
+                      <p className="text-xs text-muted-foreground">
+                        This is educational guidance only, not legal advice. Always apply consistent criteria to all applicants.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Collapsible Learn Section */}
+              <Accordion type="single" collapsible className="mt-4">
+                <AccordionItem value="learn-credit" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline" data-testid="accordion-learn-credit">
+                    <span className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4" />
+                      Learn: Common Credit Report Terms
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="grid gap-3 text-sm">
+                      <div className="flex gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div><strong>Credit Score (300-850):</strong> Higher is better. Shows overall creditworthiness.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div><strong>Payment History:</strong> Shows if bills were paid on time - most important factor.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                        <div><strong>Collections:</strong> Unpaid accounts sent to collection agency - major red flag.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <XCircle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                        <div><strong>Charge-off:</strong> Lender gave up collecting - severely hurts credit.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <HelpCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div><strong>Utilization:</strong> % of credit limit used - under 30% is ideal.</div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </Card>
+        </div>
+
+        {/* AI Criminal/Eviction Helper - Direct Input */}
+        <div className="mb-8" id="criminal-helper" data-section="criminal-helper">
+          <Card className="p-6 shadow-lg border-2 border-primary/20">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                <AlertTriangle className="h-6 w-6 text-primary" />
               </div>
-            </Card>
-          )}
+              <div>
+                <h2 className="text-xl font-display font-semibold text-foreground">
+                  Criminal & Eviction AI Helper
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  Paste charges or type a term - get Fair Housing guidance
+                </p>
+              </div>
+              <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
+                <Lightbulb className="h-3 w-3 mr-1" />
+                AI
+              </Badge>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="bg-muted/30 rounded-lg p-3 text-sm">
+                <p className="text-muted-foreground">
+                  <strong className="text-foreground">Examples:</strong> "misdemeanor" • "eviction" • paste a list of charges with dates • "felony DUI from 10 years ago"
+                </p>
+              </div>
+
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <p className="text-sm text-foreground flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Privacy:</strong> Don't include SSNs or full names. Charge descriptions and dates are fine.</span>
+                </p>
+              </div>
+
+              <Textarea
+                id="criminal-helper-input"
+                placeholder="Paste criminal/eviction records here, or type a term like 'misdemeanor' or 'eviction'"
+                value={criminalUserQuestion}
+                onChange={(e) => setCriminalUserQuestion(e.target.value)}
+                className="min-h-[120px] text-base"
+                data-testid="textarea-criminal-question"
+              />
+
+              <Button 
+                onClick={handleCriminalExplain}
+                disabled={isCriminalExplaining || !criminalUserQuestion.trim()}
+                className="w-full"
+                size="lg"
+                data-testid="button-get-criminal-explanation"
+              >
+                <Lightbulb className="mr-2 h-4 w-4" />
+                {isCriminalExplaining ? 'Analyzing...' : 'Get AI Explanation'}
+              </Button>
+
+              {isCriminalExplaining && (
+                <div className="bg-muted/50 border border-muted rounded-lg p-4">
+                  <div className="flex items-center gap-2">
+                    <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
+                    <p className="text-sm text-muted-foreground">Analyzing and preparing Fair Housing guidance...</p>
+                  </div>
+                </div>
+              )}
+
+              {!isCriminalExplaining && criminalExplanation && (() => {
+                const parsed = parseAIExplanation(criminalExplanation);
+                
+                if (!parsed) {
+                  return (
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-criminal-explanation">
+                      <div className="flex items-start gap-3 mb-4">
+                        <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                        <div className="flex-1">
+                          <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
+                          <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg space-y-4" data-testid="container-criminal-explanation">
+                    {parsed.whatItMeans && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <FileText className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-foreground">What it means</h4>
+                        </div>
+                        <p className="text-foreground leading-relaxed ml-7" data-testid="text-criminal-explanation">{parsed.whatItMeans}</p>
+                      </div>
+                    )}
+                    
+                    {parsed.whatToWatchFor && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertTriangle className="h-5 w-5 text-amber-600" />
+                          <h4 className="font-semibold text-foreground">What to watch for</h4>
+                        </div>
+                        <p className="text-foreground leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
+                      </div>
+                    )}
+                    
+                    {parsed.questionsToAsk && (
+                      <div>
+                        <div className="flex items-center gap-2 mb-2">
+                          <HelpCircle className="h-5 w-5 text-primary" />
+                          <h4 className="font-semibold text-foreground">Legal considerations</h4>
+                        </div>
+                        <div className="ml-7 text-foreground leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
+                      </div>
+                    )}
+                    
+                    <div className="pt-4 border-t border-primary/20">
+                      <p className="text-xs text-muted-foreground">
+                        This is educational guidance only, not legal advice. Fair Housing requires individualized assessment - never use blanket bans.
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* Collapsible Learn Section */}
+              <Accordion type="single" collapsible className="mt-4">
+                <AccordionItem value="learn-criminal" className="border rounded-lg">
+                  <AccordionTrigger className="px-4 hover:no-underline" data-testid="accordion-learn-criminal">
+                    <span className="flex items-center gap-2 text-sm">
+                      <FileText className="h-4 w-4" />
+                      Learn: Criminal Screening Basics
+                    </span>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4">
+                    <div className="grid gap-3 text-sm">
+                      <div className="flex gap-2">
+                        <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
+                        <div><strong>No Blanket Bans:</strong> Fair Housing prohibits automatic denial for all criminal history.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div><strong>Individualized Assessment:</strong> Consider nature, severity, and how long ago.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div><strong>Consistent Criteria:</strong> Apply same standards to ALL applicants.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <HelpCircle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                        <div><strong>7-Year Rule:</strong> Many states limit how far back you can look.</div>
+                      </div>
+                      <div className="flex gap-2">
+                        <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                        <div><strong>Evictions:</strong> Recent evictions (3 years) are more concerning than old ones.</div>
+                      </div>
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
+            </div>
+          </Card>
+        </div>
+
+        {/* Privacy Notice - Moved below helpers */}
+        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+            <div className="flex-1">
+              <p className="text-sm text-foreground">
+                <strong>Privacy Notice:</strong> We do not store or review your full reports. For safety, avoid typing Social Security numbers or full account numbers.
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Credit Report Decoder */}
@@ -830,337 +852,6 @@ export default function Screening() {
               </div>
             </div>
           </Card>
-        </div>
-
-        {/* AI Criminal & Eviction Screening Helper - Hero Feature */}
-        <div className="mb-12" id="criminal-helper" data-section="criminal-helper">
-          <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
-            <div className="flex items-start gap-4 mb-4">
-              <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-7 w-7 text-primary dark:text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-2xl font-display font-semibold text-foreground mb-2">
-                  AI Criminal & Eviction Screening Helper
-                </h2>
-                <p className="text-foreground dark:text-foreground/90 mb-3">
-                  Get instant explanations of screening terms, Fair Housing guidance, and legal considerations for evaluating criminal and eviction records
-                </p>
-                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  Powered by AI
-                </Badge>
-              </div>
-            </div>
-          </div>
-
-          {/* Privacy & Fair Housing Notice */}
-          <div className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-            <div className="flex items-start gap-3">
-              <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-              <div className="flex-1">
-                <p className="text-sm text-foreground mb-2">
-                  <strong>Privacy & Compliance Notice:</strong> For your safety, do not enter Social Security numbers, case numbers, docket numbers, or specific names of individuals. We do not store or review your screening reports.
-                </p>
-                <p className="text-sm text-foreground">
-                  <strong>Fair Housing Reminder:</strong> Blanket bans on criminal history violate Fair Housing laws. Always apply consistent, documented criteria to all applicants and consider individual circumstances.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* Home Screen */}
-          {criminalHelperScreen === 'home' && (
-            <Card className="p-6 shadow-lg">
-              <h3 className="font-semibold text-lg mb-4">How this tool works</h3>
-              <p className="text-muted-foreground mb-6">
-                This AI-powered tool helps you understand criminal and eviction screening terms AND provides Fair Housing guidance. Choose an option below:
-              </p>
-              
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Button 
-                  onClick={() => {
-                    setCriminalHelperScreen('learn');
-                    setCriminalExplanation('');
-                  }}
-                  className="flex-1"
-                  data-testid="button-learn-criminal-screening"
-                >
-                  <FileText className="mr-2 h-4 w-4" />
-                  Learn About Background Screening
-                </Button>
-                <Button 
-                  onClick={() => {
-                    setCriminalHelperScreen('ask');
-                    setCriminalUserQuestion('');
-                    setCriminalExplanation('');
-                  }}
-                  variant="default"
-                  className="flex-1"
-                  data-testid="button-ask-criminal-question"
-                >
-                  <Lightbulb className="mr-2 h-4 w-4" />
-                  Ask About a Screening Term (AI)
-                </Button>
-              </div>
-            </Card>
-          )}
-
-          {/* Learn Screen */}
-          {criminalHelperScreen === 'learn' && (
-            <Card className="p-6 shadow-lg">
-              <div className="mb-4">
-                <Button 
-                  onClick={() => setCriminalHelperScreen('home')}
-                  variant="ghost"
-                  size="sm"
-                  data-testid="button-back-to-criminal-home"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              </div>
-
-              <h3 className="font-semibold text-lg mb-4">Learn About Background Screening</h3>
-              <p className="text-muted-foreground mb-6">
-                Below are critical Fair Housing and legal compliance concepts. This is for educational purposes only - always consult legal counsel.
-              </p>
-
-              <div className="space-y-4">
-                <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-lg border-2 border-amber-500/30">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-amber-600" />
-                    Fair Housing Laws (CRITICAL)
-                  </h4>
-                  <p className="text-sm text-foreground mb-2">
-                    <strong>You CANNOT have blanket bans on all criminal history.</strong> Fair Housing laws prohibit policies that create disparate impact discrimination. You must consider:
-                  </p>
-                  <ul className="text-sm text-muted-foreground space-y-1 ml-4 list-disc">
-                    <li>Nature and severity of the offense</li>
-                    <li>How long ago it occurred</li>
-                    <li>Relevance to safe tenancy</li>
-                    <li>Individual circumstances and rehabilitation</li>
-                  </ul>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    Felony vs. Misdemeanor
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Felonies are serious crimes (often punishable by more than 1 year in prison). Misdemeanors are less serious offenses. Fair Housing requires individualized assessment - not automatic denials.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
-                    Consistent Criteria (REQUIRED)
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    You MUST apply identical screening standards to ALL applicants. Write your criteria down and follow it uniformly. Inconsistent criteria create Fair Housing violations and discrimination claims.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <CheckCircle className="h-5 w-5 text-primary" />
-                    Eviction Records
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Past evictions show rental payment history. Recent evictions (within 3 years) are more concerning. Ask about circumstances - not all evictions mean the tenant was at fault. Consider job loss, medical issues, or landlord disputes.
-                  </p>
-                </div>
-
-                <div className="bg-muted/30 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-foreground mb-2 flex items-center gap-2">
-                    <HelpCircle className="h-5 w-5 text-primary" />
-                    7-Year Rule & State Restrictions
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    Many states limit how far back you can look at criminal records (often 7 years for non-convictions, or "ban the box" laws). Some prohibit asking about arrests without convictions. Check your state laws BEFORE screening.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-6 p-4 bg-destructive/10 border-2 border-destructive/30 rounded-lg">
-                <div className="flex items-start gap-2">
-                  <AlertTriangle className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
-                  <div>
-                    <p className="text-sm text-foreground font-semibold mb-1">Legal Compliance Required</p>
-                    <p className="text-sm text-muted-foreground">
-                      Criminal and eviction screening is heavily regulated by Fair Housing laws, state statutes, and local ordinances. Violating these laws can result in expensive lawsuits and penalties. Always consult with a Fair Housing attorney about your screening policies and document all decisions consistently.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          )}
-
-          {/* Ask Screen - AI Powered */}
-          {criminalHelperScreen === 'ask' && (
-            <Card className="p-6 shadow-lg">
-              <div className="mb-4">
-                <Button 
-                  onClick={() => {
-                    setCriminalHelperScreen('home');
-                    setCriminalUserQuestion('');
-                    setCriminalExplanation('');
-                  }}
-                  variant="ghost"
-                  size="sm"
-                  data-testid="button-back-from-criminal-ask"
-                >
-                  <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-2 mb-4">
-                <h3 className="font-semibold text-lg">Ask About a Screening Term</h3>
-                <Badge variant="secondary" className="bg-primary/20 dark:bg-primary/30 text-primary dark:text-primary border-primary/30 dark:border-primary/40">
-                  <Lightbulb className="h-3 w-3 mr-1" />
-                  AI Powered
-                </Badge>
-              </div>
-              
-              <div className="space-y-4">
-                <div className="bg-primary/5 dark:bg-primary/10 border border-primary/20 dark:border-primary/30 rounded-lg p-4 mb-4">
-                  <div className="flex items-start gap-2 mb-2">
-                    <Lightbulb className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-foreground font-medium">What you'll get:</p>
-                  </div>
-                  <ul className="text-sm text-muted-foreground space-y-1 ml-6">
-                    <li>Plain-English explanation of the term</li>
-                    <li>Fair Housing and legal considerations</li>
-                    <li>Compliance reminders and best practices</li>
-                  </ul>
-                </div>
-
-                <div className="text-sm text-muted-foreground space-y-2">
-                  <p><strong className="text-foreground">How to use:</strong></p>
-                  <p>1. Look at your criminal or eviction screening report</p>
-                  <p>2. Type a term OR paste a list of charges, such as:</p>
-                  <ul className="ml-6 space-y-1 list-disc">
-                    <li><em>"dismissed charge"</em> - Does this still matter?</li>
-                    <li><em>"misdemeanor theft from 10 years ago"</em> - Can I deny for this?</li>
-                    <li>Paste multiple charges with dates for risk analysis</li>
-                    <li>Ask about state-specific rules (e.g., "for Utah")</li>
-                  </ul>
-                  <p>3. Get Fair Housing-compliant AI guidance instantly</p>
-                </div>
-
-                <div className="bg-destructive/10 dark:bg-destructive/20 border border-destructive/20 dark:border-destructive/30 rounded-lg p-3">
-                  <div className="flex items-start gap-2">
-                    <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                    <p className="text-sm text-destructive font-medium">
-                      For your safety: Do not include Social Security numbers or full names of individuals.
-                    </p>
-                  </div>
-                </div>
-
-                <Textarea
-                  placeholder="Paste charges from a report, or type a term like 'misdemeanor' or 'eviction'"
-                  value={criminalUserQuestion}
-                  onChange={(e) => setCriminalUserQuestion(e.target.value)}
-                  className="min-h-[120px] text-base"
-                  data-testid="textarea-criminal-question"
-                />
-
-                <Button 
-                  onClick={handleCriminalExplain}
-                  disabled={isCriminalExplaining || !criminalUserQuestion.trim()}
-                  className="w-full"
-                  size="lg"
-                  data-testid="button-get-criminal-explanation"
-                >
-                  <Lightbulb className="mr-2 h-4 w-4" />
-                  {isCriminalExplaining ? 'Getting explanation...' : 'Get AI Explanation'}
-                </Button>
-
-                {isCriminalExplaining && (
-                  <div className="bg-muted/50 border border-muted rounded-lg p-4">
-                    <div className="flex items-center gap-2">
-                      <div className="animate-spin w-4 h-4 border-2 border-primary border-t-transparent rounded-full" />
-                      <p className="text-sm text-muted-foreground">
-                        Analyzing your question and preparing compliance guidance...
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {!isCriminalExplaining && criminalExplanation && (() => {
-                  const parsed = parseAIExplanation(criminalExplanation);
-                  
-                  if (!parsed) {
-                    return (
-                      <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg" data-testid="container-criminal-explanation">
-                        <div className="flex items-start gap-3 mb-4">
-                          <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                          <div className="flex-1">
-                            <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
-                            <div className="text-foreground dark:text-foreground/95 whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
-                          </div>
-                        </div>
-                        <div className="mt-4 pt-4 border-t border-primary/20 dark:border-primary/30">
-                          <div className="flex items-start gap-2">
-                            <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                            <p className="text-xs text-muted-foreground">
-                              This information is for general education only. It is not legal advice. Always consult with legal counsel for specific situations and Fair Housing compliance.
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  }
-                  
-                  return (
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 p-6 rounded-lg space-y-4" data-testid="container-criminal-explanation">
-                      {parsed.whatItMeans && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <FileText className="h-5 w-5 text-primary" />
-                            <h4 className="font-semibold text-foreground">What it means</h4>
-                          </div>
-                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7" data-testid="text-criminal-explanation">{parsed.whatItMeans}</p>
-                        </div>
-                      )}
-                      
-                      {parsed.whatToWatchFor && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-500" />
-                            <h4 className="font-semibold text-foreground">What to watch for</h4>
-                          </div>
-                          <p className="text-foreground dark:text-foreground/95 leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
-                        </div>
-                      )}
-                      
-                      {parsed.questionsToAsk && (
-                        <div>
-                          <div className="flex items-center gap-2 mb-2">
-                            <HelpCircle className="h-5 w-5 text-primary" />
-                            <h4 className="font-semibold text-foreground">Legal considerations</h4>
-                          </div>
-                          <div className="ml-7 text-foreground dark:text-foreground/95 leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
-                        </div>
-                      )}
-                      
-                      <div className="pt-4 border-t border-primary/20 dark:border-primary/30">
-                        <div className="flex items-start gap-2">
-                          <AlertTriangle className="h-3 w-3 text-muted-foreground mt-0.5 flex-shrink-0" />
-                          <p className="text-xs text-muted-foreground">
-                            This information is for general education only. It is not legal advice. Always consult with legal counsel for specific situations and Fair Housing compliance.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })()}
-              </div>
-            </Card>
-          )}
         </div>
 
         {/* Criminal & Eviction Screening */}
