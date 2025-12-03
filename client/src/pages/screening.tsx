@@ -25,42 +25,66 @@ import {
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
 
-interface ParsedExplanation {
-  whatItMeans: string;
-  whatToWatchFor: string;
-  questionsToAsk: string;
+interface ParsedSection {
+  title: string;
+  content: string;
+  type: 'info' | 'warning' | 'questions' | 'protection' | 'liability';
 }
 
-function parseAIExplanation(text: string): ParsedExplanation | null {
+function parseAIExplanation(text: string): ParsedSection[] | null {
   if (!text) return null;
   
-  const sections: ParsedExplanation = {
-    whatItMeans: '',
-    whatToWatchFor: '',
-    questionsToAsk: ''
-  };
+  const sections: ParsedSection[] = [];
   
-  const whatItMeansMatch = text.match(/What it means:?\s*\n([\s\S]*?)(?=\n\s*What to watch for:|$)/i);
-  const whatToWatchForMatch = text.match(/What to watch for:?\s*\n([\s\S]*?)(?=\n\s*Questions to ask:|$)/i);
-  const questionsToAskMatch = text.match(/Questions to ask:?\s*\n([\s\S]*?)$/i);
+  const sectionPatterns = [
+    { pattern: /\*\*WHAT THIS MEANS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'What This Means', type: 'info' as const },
+    { pattern: /\*\*YOUR LIABILITY AS A LANDLORD\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Your Liability as a Landlord', type: 'liability' as const },
+    { pattern: /\*\*RED FLAGS TO WATCH FOR\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Red Flags to Watch For', type: 'warning' as const },
+    { pattern: /\*\*FAIR HOUSING REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Requirements', type: 'warning' as const },
+    { pattern: /\*\*FAIR HOUSING CONSIDERATIONS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Considerations', type: 'warning' as const },
+    { pattern: /\*\*QUESTIONS TO ASK THE APPLICANT\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Questions to Ask the Applicant', type: 'questions' as const },
+    { pattern: /\*\*STEPS TO PROTECT YOURSELF\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Steps to Protect Yourself', type: 'protection' as const },
+    { pattern: /\*\*COMPLIANCE REMINDER\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Compliance Reminder', type: 'info' as const },
+  ];
   
-  if (whatItMeansMatch) {
-    sections.whatItMeans = whatItMeansMatch[1].trim();
+  for (const { pattern, title, type } of sectionPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1].trim()) {
+      sections.push({ title, content: match[1].trim(), type });
+    }
   }
   
-  if (whatToWatchForMatch) {
-    sections.whatToWatchFor = whatToWatchForMatch[1].trim();
-  }
+  return sections.length > 0 ? sections : null;
+}
+
+function formatContent(content: string): JSX.Element {
+  const lines = content.split('\n').filter(line => line.trim());
   
-  if (questionsToAskMatch) {
-    sections.questionsToAsk = questionsToAskMatch[1].trim();
-  }
-  
-  if (sections.whatItMeans || sections.whatToWatchFor || sections.questionsToAsk) {
-    return sections;
-  }
-  
-  return null;
+  return (
+    <div className="space-y-2">
+      {lines.map((line, i) => {
+        const trimmed = line.trim();
+        if (trimmed.startsWith('•') || trimmed.startsWith('-')) {
+          return (
+            <div key={i} className="flex items-start gap-2 ml-2">
+              <span className="text-primary mt-1.5 text-xs">•</span>
+              <span>{trimmed.replace(/^[•-]\s*/, '')}</span>
+            </div>
+          );
+        }
+        if (/^\d+\./.test(trimmed)) {
+          const num = trimmed.match(/^(\d+)\./)?.[1];
+          return (
+            <div key={i} className="flex items-start gap-2 ml-2">
+              <span className="text-primary font-semibold min-w-[20px]">{num}.</span>
+              <span className="italic">{trimmed.replace(/^\d+\.\s*/, '').replace(/^[""]|[""]$/g, '')}</span>
+            </div>
+          );
+        }
+        return <p key={i}>{trimmed}</p>;
+      })}
+    </div>
+  );
 }
 
 export default function Screening() {
@@ -377,58 +401,52 @@ export default function Screening() {
               )}
 
               {!isExplaining && explanation && (() => {
-                const parsed = parseAIExplanation(explanation);
+                const sections = parseAIExplanation(explanation);
                 
-                if (!parsed) {
+                if (!sections) {
                   return (
                     <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-credit-explanation">
-                      <div className="flex items-start gap-3 mb-4">
-                        <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
-                          <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
-                        </div>
-                      </div>
+                      <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
                     </div>
                   );
                 }
                 
+                const getIcon = (type: string) => {
+                  switch (type) {
+                    case 'liability': return <AlertTriangle className="h-5 w-5 text-destructive" />;
+                    case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+                    case 'questions': return <HelpCircle className="h-5 w-5 text-primary" />;
+                    case 'protection': return <CheckCircle className="h-5 w-5 text-success" />;
+                    default: return <FileText className="h-5 w-5 text-primary" />;
+                  }
+                };
+                
+                const getBgColor = (type: string) => {
+                  switch (type) {
+                    case 'liability': return 'bg-destructive/5 border-destructive/20';
+                    case 'warning': return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
+                    case 'questions': return 'bg-primary/5 border-primary/20';
+                    case 'protection': return 'bg-success/5 border-success/20';
+                    default: return 'bg-muted/30 border-muted';
+                  }
+                };
+                
                 return (
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg space-y-4" data-testid="container-credit-explanation">
-                    {parsed.whatItMeans && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold text-foreground">What it means</h4>
+                  <div className="space-y-4" data-testid="container-credit-explanation">
+                    {sections.map((section, idx) => (
+                      <div key={idx} className={`p-4 rounded-lg border ${getBgColor(section.type)}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          {getIcon(section.type)}
+                          <h4 className="font-semibold text-foreground">{section.title}</h4>
                         </div>
-                        <p className="text-foreground leading-relaxed ml-7" data-testid="text-credit-explanation">{parsed.whatItMeans}</p>
-                      </div>
-                    )}
-                    
-                    {parsed.whatToWatchFor && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className="h-5 w-5 text-amber-600" />
-                          <h4 className="font-semibold text-foreground">What to watch for</h4>
+                        <div className="text-foreground text-sm leading-relaxed ml-7">
+                          {formatContent(section.content)}
                         </div>
-                        <p className="text-foreground leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
                       </div>
-                    )}
+                    ))}
                     
-                    {parsed.questionsToAsk && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <HelpCircle className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold text-foreground">Questions to ask</h4>
-                        </div>
-                        <div className="ml-7 text-foreground leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
-                      </div>
-                    )}
-                    
-                    <div className="pt-4 border-t border-primary/20">
-                      <p className="text-xs text-muted-foreground">
-                        This is educational guidance only, not legal advice. Always apply consistent criteria to all applicants.
-                      </p>
+                    <div className="pt-2 text-xs text-muted-foreground">
+                      This is educational guidance only, not legal advice. Always apply consistent criteria to all applicants.
                     </div>
                   </div>
                 );
@@ -538,58 +556,52 @@ export default function Screening() {
               )}
 
               {!isCriminalExplaining && criminalExplanation && (() => {
-                const parsed = parseAIExplanation(criminalExplanation);
+                const sections = parseAIExplanation(criminalExplanation);
                 
-                if (!parsed) {
+                if (!sections) {
                   return (
                     <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-criminal-explanation">
-                      <div className="flex items-start gap-3 mb-4">
-                        <Lightbulb className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
-                        <div className="flex-1">
-                          <h4 className="font-semibold text-foreground text-lg mb-3">Explanation</h4>
-                          <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
-                        </div>
-                      </div>
+                      <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
                     </div>
                   );
                 }
                 
+                const getIcon = (type: string) => {
+                  switch (type) {
+                    case 'liability': return <AlertTriangle className="h-5 w-5 text-destructive" />;
+                    case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
+                    case 'questions': return <HelpCircle className="h-5 w-5 text-primary" />;
+                    case 'protection': return <CheckCircle className="h-5 w-5 text-success" />;
+                    default: return <FileText className="h-5 w-5 text-primary" />;
+                  }
+                };
+                
+                const getBgColor = (type: string) => {
+                  switch (type) {
+                    case 'liability': return 'bg-destructive/5 border-destructive/20';
+                    case 'warning': return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
+                    case 'questions': return 'bg-primary/5 border-primary/20';
+                    case 'protection': return 'bg-success/5 border-success/20';
+                    default: return 'bg-muted/30 border-muted';
+                  }
+                };
+                
                 return (
-                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg space-y-4" data-testid="container-criminal-explanation">
-                    {parsed.whatItMeans && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <FileText className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold text-foreground">What it means</h4>
+                  <div className="space-y-4" data-testid="container-criminal-explanation">
+                    {sections.map((section, idx) => (
+                      <div key={idx} className={`p-4 rounded-lg border ${getBgColor(section.type)}`}>
+                        <div className="flex items-center gap-2 mb-3">
+                          {getIcon(section.type)}
+                          <h4 className="font-semibold text-foreground">{section.title}</h4>
                         </div>
-                        <p className="text-foreground leading-relaxed ml-7" data-testid="text-criminal-explanation">{parsed.whatItMeans}</p>
-                      </div>
-                    )}
-                    
-                    {parsed.whatToWatchFor && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <AlertTriangle className="h-5 w-5 text-amber-600" />
-                          <h4 className="font-semibold text-foreground">What to watch for</h4>
+                        <div className="text-foreground text-sm leading-relaxed ml-7">
+                          {formatContent(section.content)}
                         </div>
-                        <p className="text-foreground leading-relaxed ml-7">{parsed.whatToWatchFor}</p>
                       </div>
-                    )}
+                    ))}
                     
-                    {parsed.questionsToAsk && (
-                      <div>
-                        <div className="flex items-center gap-2 mb-2">
-                          <HelpCircle className="h-5 w-5 text-primary" />
-                          <h4 className="font-semibold text-foreground">Legal considerations</h4>
-                        </div>
-                        <div className="ml-7 text-foreground leading-relaxed whitespace-pre-wrap">{parsed.questionsToAsk}</div>
-                      </div>
-                    )}
-                    
-                    <div className="pt-4 border-t border-primary/20">
-                      <p className="text-xs text-muted-foreground">
-                        This is educational guidance only, not legal advice. Fair Housing requires individualized assessment - never use blanket bans.
-                      </p>
+                    <div className="pt-2 text-xs text-muted-foreground">
+                      This is educational guidance only, not legal advice. Fair Housing requires individualized assessment - never use blanket bans.
                     </div>
                   </div>
                 );
