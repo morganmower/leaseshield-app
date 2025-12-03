@@ -172,7 +172,10 @@ export default function TenantIssues() {
   });
 
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  const isPayingMember = ((user?.subscriptionStatus === 'active' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true) && !templatesError);
+  const hasActiveSubscription = user?.subscriptionStatus === 'active';
+  const hasActiveTrial = user?.subscriptionStatus === 'trialing' && !trialExpired;
+  const isAdmin = user?.isAdmin === true;
+  const hasAccess = hasActiveSubscription || hasActiveTrial || isAdmin;
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   useEffect(() => {
@@ -195,7 +198,7 @@ export default function TenantIssues() {
   };
 
   const handleTemplateDownload = async (templateName: string) => {
-    if (!isPayingMember) {
+    if (!hasAccess) {
       setShowUpgradeDialog(true);
       return;
     }
@@ -316,7 +319,7 @@ export default function TenantIssues() {
         </div>
 
         {/* Subscription CTA if user doesn't have active subscription or templates error */}
-        {!isPayingMember && (
+        {!hasAccess && (
           <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
             <div className="text-center">
               <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
@@ -336,7 +339,7 @@ export default function TenantIssues() {
         )}
 
         {/* Workflows Grid - only shown to paying members */}
-        {isPayingMember && (
+        {hasAccess && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map((workflow) => {
             const Icon = workflow.icon;
@@ -478,7 +481,7 @@ export default function TenantIssues() {
                             <FileText className="h-4 w-4 text-muted-foreground" />
                             <span className="text-foreground">{template}</span>
                           </div>
-                          {isPayingMember ? (
+                          {hasAccess ? (
                             <Download className="h-4 w-4 text-muted-foreground" />
                           ) : (
                             <Lock className="h-4 w-4 text-muted-foreground" />
@@ -487,7 +490,7 @@ export default function TenantIssues() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground mt-3">
-                      {isPayingMember 
+                      {hasAccess 
                         ? "Click any template to download instantly"
                         : "Upgrade to access and download templates"}
                     </p>
