@@ -11,6 +11,15 @@ async function seedDatabase() {
     { id: "ND", name: "North Dakota", description: "State-specific templates and compliance for North Dakota landlords" },
     { id: "SD", name: "South Dakota", description: "State-specific templates and compliance for South Dakota landlords" },
     { id: "NC", name: "North Carolina", description: "State-specific templates and compliance for North Carolina landlords" },
+    { id: "OH", name: "Ohio", description: "State-specific templates and compliance for Ohio landlords" },
+    { id: "MI", name: "Michigan", description: "State-specific templates and compliance for Michigan landlords" },
+    { id: "ID", name: "Idaho", description: "State-specific templates and compliance for Idaho landlords" },
+    { id: "WY", name: "Wyoming", description: "State-specific templates and compliance for Wyoming landlords" },
+    { id: "CA", name: "California", description: "State-specific templates and compliance for California landlords" },
+    { id: "VA", name: "Virginia", description: "State-specific templates and compliance for Virginia landlords" },
+    { id: "NV", name: "Nevada", description: "State-specific templates and compliance for Nevada landlords" },
+    { id: "AZ", name: "Arizona", description: "State-specific templates and compliance for Arizona landlords" },
+    { id: "FL", name: "Florida", description: "State-specific templates and compliance for Florida landlords" },
   ];
 
   for (const state of statesToCreate) {

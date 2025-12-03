@@ -293,6 +293,491 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 3,
   },
+
+  // WYOMING Compliance Cards
+  {
+    stateId: "WY",
+    title: "Required Lease Disclosures",
+    summary: "Wyoming requires specific disclosures to protect landlords and tenants under state law",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978. Must provide EPA-approved pamphlet and disclosure form.",
+        },
+        {
+          title: "Landlord/Agent Identity",
+          content: "Lease must disclose the name and address of landlord or authorized agent for legal notices.",
+        },
+        {
+          title: "Methamphetamine Contamination",
+          content: "If property was previously used for meth production, landlord must disclose this information.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "WY",
+    title: "Security Deposit Rules",
+    summary: "Wyoming limits deposits and sets clear return deadlines under Wyo. Stat. § 1-21-1207",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "No State Limit",
+          content: "Wyoming has no statutory limit on security deposit amounts, but market typically keeps them at 1-2 months rent.",
+        },
+        {
+          title: "30-Day Return Requirement",
+          content: "Landlords must return deposit or provide itemized deductions within 30 days of lease termination.",
+        },
+        {
+          title: "Written Itemization Required",
+          content: "Any deductions must be itemized in writing with description of damages and costs.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "WY",
+    title: "Eviction Notice Requirements",
+    summary: "Wyoming Statutes specify notice periods before eviction proceedings can begin",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "3-Day Notice (Non-Payment)",
+          content: "For unpaid rent, serve 3-day notice to pay or quit before filing eviction.",
+        },
+        {
+          title: "3-Day Notice (Lease Violations)",
+          content: "For lease violations, provide 3-day notice to cure or vacate.",
+        },
+        {
+          title: "Written Notice Required",
+          content: "All eviction notices must be in writing and properly delivered to tenant.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+
+  // CALIFORNIA Compliance Cards
+  {
+    stateId: "CA",
+    title: "Required Lease Disclosures",
+    summary: "California has extensive disclosure requirements under Civil Code and Health & Safety Code",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for pre-1978 properties. Must provide EPA pamphlet and signed disclosure form.",
+        },
+        {
+          title: "Mold Disclosure",
+          content: "Landlords must disclose known mold contamination. California provides specific booklet requirements.",
+        },
+        {
+          title: "Bed Bug Disclosure",
+          content: "Must disclose known bed bug infestations and provide bed bug informational notice.",
+        },
+        {
+          title: "Flooding and Natural Hazards",
+          content: "Must disclose if property is in flood zone, fire hazard zone, or earthquake fault zone.",
+        },
+        {
+          title: "Demolition Intent",
+          content: "If planning to demolish or convert within 3 years, must disclose in writing.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "CA",
+    title: "Security Deposit Limits & Return",
+    summary: "California strictly limits deposits and requires 21-day return under Civil Code § 1950.5",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Deposit Limits",
+          content: "Maximum 2 months rent for unfurnished, 3 months for furnished. Starting 2024, limits reduced for many landlords.",
+        },
+        {
+          title: "21-Day Return Requirement",
+          content: "Landlords must return deposit or provide itemized statement within 21 days of move-out.",
+        },
+        {
+          title: "Itemized Deductions",
+          content: "Must provide receipts or good faith estimates for all deductions. Tenant can request receipts.",
+        },
+        {
+          title: "Bad Faith Penalties",
+          content: "Wrongful withholding can result in statutory damages up to twice the deposit amount.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "CA",
+    title: "Eviction Notice Requirements",
+    summary: "California eviction procedures are strictly regulated under Code of Civil Procedure",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "3-Day Notice (Non-Payment)",
+          content: "For unpaid rent, serve 3-day notice to pay or quit. Must be served properly.",
+        },
+        {
+          title: "3-Day Notice (Lease Violations)",
+          content: "For curable lease violations, 3-day notice to cure or quit required.",
+        },
+        {
+          title: "Just Cause Required",
+          content: "Under AB 1482, most tenants after 12 months have just cause eviction protections.",
+        },
+        {
+          title: "Rent Control Considerations",
+          content: "Many cities have additional rent control and eviction protections—check local ordinances.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+  {
+    stateId: "CA",
+    title: "Rent Control & Tenant Protections",
+    summary: "California's Tenant Protection Act (AB 1482) provides statewide rent caps and just cause protections",
+    category: "fair_housing",
+    content: {
+      sections: [
+        {
+          title: "Statewide Rent Cap",
+          content: "Annual rent increases limited to 5% plus local CPI, or 10% maximum for covered properties.",
+        },
+        {
+          title: "Just Cause Eviction",
+          content: "After 12 months, tenants can only be evicted for enumerated 'just causes' with proper notice.",
+        },
+        {
+          title: "Relocation Assistance",
+          content: "No-fault evictions require payment of one month's rent as relocation assistance.",
+        },
+      ],
+    },
+    sortOrder: 4,
+  },
+
+  // VIRGINIA Compliance Cards
+  {
+    stateId: "VA",
+    title: "Required Lease Disclosures",
+    summary: "Virginia Residential Landlord and Tenant Act requires specific written disclosures",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal law.",
+        },
+        {
+          title: "Move-In Inspection Report",
+          content: "Must provide written move-in inspection report within 5 days of occupancy.",
+        },
+        {
+          title: "Mold Disclosure",
+          content: "Must disclose visible mold contamination before lease signing.",
+        },
+        {
+          title: "Defective Drywall Notice",
+          content: "Must disclose if property contains defective drywall installed 2004-2007.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "VA",
+    title: "Security Deposit Rules",
+    summary: "Virginia limits deposits to 2 months and requires 45-day return under Va. Code § 55.1-1226",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Maximum Deposit",
+          content: "Security deposits cannot exceed 2 months' rent.",
+        },
+        {
+          title: "45-Day Return Requirement",
+          content: "Landlord must return deposit or provide itemized list within 45 days of move-out.",
+        },
+        {
+          title: "Interest Not Required",
+          content: "Virginia does not require landlords to pay interest on security deposits.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "VA",
+    title: "Eviction Notice Requirements",
+    summary: "Virginia law specifies notice periods and procedures for eviction proceedings",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "5-Day Pay or Quit",
+          content: "For unpaid rent, serve 5-day notice to pay or quit before filing.",
+        },
+        {
+          title: "21/30-Day Notice (Lease Violations)",
+          content: "21-day notice for first violation with right to cure; 30-day for repeat violations.",
+        },
+        {
+          title: "30-Day Termination Notice",
+          content: "Month-to-month tenancies require 30-day written notice to terminate.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+
+  // NEVADA Compliance Cards
+  {
+    stateId: "NV",
+    title: "Required Lease Disclosures",
+    summary: "Nevada Revised Statutes require specific disclosures for residential leases",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal requirements.",
+        },
+        {
+          title: "Move-In Checklist",
+          content: "Must provide move-in checklist documenting property condition at tenancy start.",
+        },
+        {
+          title: "Foreclosure Status",
+          content: "Must disclose if property is in foreclosure before signing lease.",
+        },
+        {
+          title: "Landlord Contact Information",
+          content: "Must provide name and address of landlord or authorized agent.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "NV",
+    title: "Security Deposit Rules",
+    summary: "Nevada limits deposits to 3 months and requires 30-day return under NRS 118A.242",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Maximum Deposit",
+          content: "Security deposits cannot exceed 3 months' rent.",
+        },
+        {
+          title: "30-Day Return Requirement",
+          content: "Landlord must return deposit or provide itemized statement within 30 days.",
+        },
+        {
+          title: "Disposition Statement",
+          content: "Written itemization of any deductions must be provided with remaining balance.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "NV",
+    title: "Eviction Notice Requirements",
+    summary: "Nevada law specifies notice periods for eviction proceedings under NRS 40.253-40.254",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "7-Day Pay or Quit",
+          content: "For unpaid rent, serve 7-day judicial notice through constable or sheriff.",
+        },
+        {
+          title: "5-Day Notice (Lease Violations)",
+          content: "For lease violations, provide 5-day notice to cure or quit.",
+        },
+        {
+          title: "30-Day Termination Notice",
+          content: "Month-to-month tenancies require 30-day written notice to terminate.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+
+  // ARIZONA Compliance Cards
+  {
+    stateId: "AZ",
+    title: "Required Lease Disclosures",
+    summary: "Arizona Residential Landlord and Tenant Act requires specific written disclosures",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal requirements.",
+        },
+        {
+          title: "Move-In Inspection",
+          content: "Must provide move-in inspection checklist for tenant to note existing conditions.",
+        },
+        {
+          title: "Bed Bug Disclosure",
+          content: "Must provide written educational materials about bed bugs at lease signing.",
+        },
+        {
+          title: "Pool Safety Notice",
+          content: "Properties with pools must provide pool safety notice per A.R.S. § 36-1681.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "AZ",
+    title: "Security Deposit Rules",
+    summary: "Arizona limits deposits to 1.5 months and requires 14-day return under A.R.S. § 33-1321",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Maximum Deposit",
+          content: "Security deposits cannot exceed 1.5 months' rent.",
+        },
+        {
+          title: "14-Day Return Requirement",
+          content: "Landlord must return deposit or provide itemized statement within 14 business days.",
+        },
+        {
+          title: "Nonrefundable Fees",
+          content: "Nonrefundable fees must be clearly labeled as such in writing.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "AZ",
+    title: "Eviction Notice Requirements",
+    summary: "Arizona law specifies notice periods for eviction proceedings under A.R.S. § 33-1368",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "5-Day Pay or Quit",
+          content: "For unpaid rent, serve 5-day notice to pay or quit before filing eviction.",
+        },
+        {
+          title: "10-Day Notice (Lease Violations)",
+          content: "For curable lease violations, provide 10-day notice with right to cure.",
+        },
+        {
+          title: "Immediate Eviction",
+          content: "Immediate eviction allowed for serious violations like illegal activity or health hazards.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+
+  // FLORIDA Compliance Cards
+  {
+    stateId: "FL",
+    title: "Required Lease Disclosures",
+    summary: "Florida Statutes Chapter 83 requires specific disclosures for residential leases",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal requirements.",
+        },
+        {
+          title: "Radon Gas Disclosure",
+          content: "Must include statutory radon gas disclosure language in all leases per F.S. § 404.056.",
+        },
+        {
+          title: "Security Deposit Location",
+          content: "Must disclose where deposit is held and whether interest will be paid.",
+        },
+        {
+          title: "Landlord Contact Information",
+          content: "Must provide name and address of landlord or authorized agent for notices.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "FL",
+    title: "Security Deposit Rules",
+    summary: "Florida has no deposit limit but strict return requirements under F.S. § 83.49",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "No State Limit",
+          content: "Florida has no statutory limit on security deposit amounts.",
+        },
+        {
+          title: "15/30-Day Return Requirement",
+          content: "15 days if no deductions claimed; 30 days if claiming deductions with itemized notice.",
+        },
+        {
+          title: "Written Notice Required",
+          content: "If claiming deductions, must send written notice by certified mail within 30 days.",
+        },
+        {
+          title: "Forfeiture for Non-Compliance",
+          content: "Failure to give proper notice forfeits right to make any deductions.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "FL",
+    title: "Eviction Notice Requirements",
+    summary: "Florida law specifies notice periods for eviction proceedings under F.S. § 83.56",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "3-Day Pay or Quit",
+          content: "For unpaid rent, serve 3-day notice to pay or vacate (excluding weekends/holidays).",
+        },
+        {
+          title: "7-Day Notice (Lease Violations)",
+          content: "For curable lease violations, provide 7-day notice with right to cure.",
+        },
+        {
+          title: "7-Day Unconditional Quit",
+          content: "For material non-curable violations, 7-day unconditional notice to vacate.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
 ];
 
 async function seedComplianceCards() {
