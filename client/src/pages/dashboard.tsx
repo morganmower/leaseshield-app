@@ -301,7 +301,7 @@ export default function Dashboard() {
               </Link>
 
               {/* Criminal & Eviction Helper */}
-              <Link to="/screening?helper=criminal">
+              <Link to="/screening#criminal-helper">
                 <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-criminal-helper">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="rounded-lg bg-amber-500/20 dark:bg-amber-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">

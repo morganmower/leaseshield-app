@@ -69,18 +69,15 @@ export default function Screening() {
   const [location] = useLocation();
   const [trialExpired, setTrialExpired] = useState(false);
   
-  // Determine which helper to show based on URL query param
-  const urlParams = new URLSearchParams(location.split('?')[1] || '');
-  const helperParam = urlParams.get('helper') || 'credit';
+  // Check if URL has hash for criminal helper
+  const hasHash = typeof window !== 'undefined' && window.location.hash === '#criminal-helper';
   
-  // Scroll to appropriate helper on mount
+  // Scroll to criminal helper section on mount when hash is present
   useEffect(() => {
-    if (helperParam === 'criminal') {
-      // Try multiple times to find and scroll to the criminal helper section
+    if (hasHash || window.location.hash === '#criminal-helper') {
       const scrollToCriminal = () => {
         const criminalSection = document.getElementById('criminal-helper');
         if (criminalSection) {
-          // Use scrollIntoView which works regardless of scroll container
           criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           return true;
         }
@@ -88,9 +85,9 @@ export default function Screening() {
       };
       
       // Retry multiple times to handle page load timing
-      const timer1 = setTimeout(() => scrollToCriminal(), 150);
-      const timer2 = setTimeout(() => scrollToCriminal(), 400);
-      const timer3 = setTimeout(() => scrollToCriminal(), 800);
+      const timer1 = setTimeout(() => scrollToCriminal(), 200);
+      const timer2 = setTimeout(() => scrollToCriminal(), 500);
+      const timer3 = setTimeout(() => scrollToCriminal(), 1000);
       
       return () => {
         clearTimeout(timer1);
@@ -98,7 +95,7 @@ export default function Screening() {
         clearTimeout(timer3);
       };
     }
-  }, [helperParam]);
+  }, [hasHash]);
   
   // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
