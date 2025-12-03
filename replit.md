@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports 8 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho.
+LeaseShield App is a subscription-based SaaS platform designed for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to help landlords protect their investments and ensure legal compliance. The platform currently supports 14 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida.
 
 ## User Preferences
 Not specified.
@@ -155,10 +155,10 @@ Update user-facing marketing text that references supported states:
   - Change: "Leases, applications, notices, and forms customized for UT, TX, ND, SD, and NC laws"
   - To: Include the new state code (e.g., "...UT, TX, ND, SD, NC, and OH laws")
 - **client/src/pages/landing.tsx** (line ~1264): Update FAQ "What states does LeaseShield App currently support?"
-  - Update AccordionContent to list all 8 states: "Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho"
+  - Update AccordionContent to list all 14 states: "Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida"
   - Note: Update each time a new state is added
 - **client/src/pages/landing.tsx** (line ~1699): Update footer "States" list
-  - Add all 8 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho
+  - Add all 14 states: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, Florida
   - Note: Update each time a new state is added
 - Search for other hardcoded state lists in promotional or feature descriptions
 - Update any "supported states" list or "now available in" messaging
@@ -173,5 +173,5 @@ Update user-facing marketing text that references supported states:
 - If compliance card requires specific notice periods (e.g., 30 days), template must include this in form field descriptions
 
 ### State Count
-- **Current supported states**: 8 (UT, TX, ND, SD, NC, OH, MI, ID)
+- **Current supported states**: 14 (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL)
 - **Expected per state**: 4 compliance cards, 8 templates (including move-in and move-out checklists), 2-3 legal updates
