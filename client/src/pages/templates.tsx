@@ -40,16 +40,11 @@ export default function Templates() {
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   const handleTemplateAction = async (action: 'download' | 'fill', templateId: string) => {
-    if (!isPayingMember) {
-      setShowUpgradeDialog(true);
-      return;
-    }
-
     if (action === 'fill') {
-      // Navigate to document wizard
+      // Navigate to document wizard - let the wizard page handle access control
       setLocation(`/templates/${templateId}/fill`);
     } else {
-      // Download blank template
+      // Download blank template - let backend handle access control
       try {
         toast({
           title: 'Download Started',
@@ -60,6 +55,12 @@ export default function Templates() {
         const templateResponse = await fetch(`/api/templates/${templateId}`, {
           credentials: 'include',
         });
+        
+        // Backend returns 403 if subscription/trial expired
+        if (templateResponse.status === 403) {
+          setShowUpgradeDialog(true);
+          return;
+        }
         
         if (!templateResponse.ok) {
           throw new Error('Failed to fetch template details');
@@ -85,6 +86,12 @@ export default function Templates() {
             'Content-Type': 'application/json',
           },
         });
+
+        // Backend returns 403 if subscription/trial expired
+        if (response.status === 403) {
+          setShowUpgradeDialog(true);
+          return;
+        }
 
         if (!response.ok) {
           throw new Error('Failed to generate document');
@@ -145,9 +152,11 @@ export default function Templates() {
     }
   }, [user]); // Run when user loads
 
-  const { data: templates, isLoading: templatesLoading, error: templatesError } = useQuery<Template[]>({
+  const { data: templates, isLoading: templatesLoading, error: templatesError, refetch } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
     enabled: isAuthenticated,
+    retry: 1,
+    staleTime: 0,
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedState && selectedState !== "all") {
@@ -159,7 +168,10 @@ export default function Templates() {
       const url = `/api/templates${params.toString() ? `?${params.toString()}` : ''}`;
       const response = await fetch(url, { credentials: 'include' });
       if (!response.ok) {
-        throw new Error('Failed to fetch templates');
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || 'Failed to fetch templates') as Error & { status?: number };
+        error.status = response.status;
+        throw error;
       }
       return response.json();
     },
@@ -175,24 +187,52 @@ export default function Templates() {
 
   if (!user) return null;
 
-  // If trial expired (API returns 403), show only subscription CTA
-  if (templatesError) {
+  // Only show subscription CTA if API explicitly returns 403 (subscription required)
+  const is403Error = templatesError && (templatesError as Error & { status?: number }).status === 403;
+  if (is403Error) {
     return (
       <div className="flex-1 overflow-auto flex items-center justify-center">
         <Card className="p-12 bg-primary/10 border-primary/20 max-w-md">
           <div className="text-center">
             <FileText className="h-16 w-16 text-primary mx-auto mb-6" />
             <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
-              Subscribe to receive updates
+              Subscribe to Access Templates
             </h2>
             <p className="text-muted-foreground mb-8">
               Get access to 37+ state-specific legal templates, automated wizards, and expert guidance
             </p>
-            <Link to="/subscribe">
-              <Button size="lg" data-testid="button-subscribe-templates-cta">
-                Subscribe Now
+            <div className="flex gap-3 justify-center">
+              <Button variant="outline" onClick={() => refetch()} data-testid="button-retry-templates">
+                Retry
               </Button>
-            </Link>
+              <Link to="/subscribe">
+                <Button size="lg" data-testid="button-subscribe-templates-cta">
+                  Subscribe Now
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </Card>
+      </div>
+    );
+  }
+  
+  // For non-403 errors, show retry option
+  if (templatesError) {
+    return (
+      <div className="flex-1 overflow-auto flex items-center justify-center">
+        <Card className="p-12 max-w-md">
+          <div className="text-center">
+            <AlertTriangle className="h-16 w-16 text-amber-500 mx-auto mb-6" />
+            <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
+              Unable to Load Templates
+            </h2>
+            <p className="text-muted-foreground mb-8">
+              There was an issue loading templates. Please try again.
+            </p>
+            <Button onClick={() => refetch()} data-testid="button-retry-templates">
+              Try Again
+            </Button>
           </div>
         </Card>
       </div>
@@ -378,11 +418,7 @@ export default function Templates() {
                     onClick={() => handleTemplateAction('download', template.id)}
                     data-testid={`button-download-${template.id}`}
                   >
-                    {!isPayingMember ? (
-                      <Lock className="mr-2 h-4 w-4" />
-                    ) : (
-                      <Download className="mr-2 h-4 w-4" />
-                    )}
+                    <Download className="mr-2 h-4 w-4" />
                     Download
                   </Button>
                   {template.fillableFormData ? (
@@ -393,7 +429,6 @@ export default function Templates() {
                       onClick={() => handleTemplateAction('fill', template.id)}
                       data-testid={`button-fill-${template.id}`}
                     >
-                      {!isPayingMember && <Lock className="mr-2 h-4 w-4" />}
                       Fill Online
                     </Button>
                   ) : null}

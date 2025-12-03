@@ -78,23 +78,23 @@ export default function Screening() {
     if (helperParam === 'criminal') {
       // Try multiple times to find and scroll to the criminal helper section
       const scrollToCriminal = () => {
-        const criminalSection = document.querySelector('[data-section="criminal-helper"]');
+        // Try both id selector and data-section attribute
+        const criminalSection = document.getElementById('criminal-helper') || 
+                               document.querySelector('[data-section="criminal-helper"]');
         if (criminalSection) {
-          criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          // Use scrollIntoView with offset to account for any fixed headers
+          const yOffset = -100;
+          const y = criminalSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
+          window.scrollTo({ top: y, behavior: 'smooth' });
           return true;
         }
         return false;
       };
       
-      // Immediate attempt
-      if (scrollToCriminal()) return;
-      
-      // Retry after 100ms
+      // Retry multiple times to handle page load timing
       const timer1 = setTimeout(() => scrollToCriminal(), 100);
-      // Retry after 300ms as backup
-      const timer2 = setTimeout(() => scrollToCriminal(), 300);
-      // Retry after 600ms as final attempt
-      const timer3 = setTimeout(() => scrollToCriminal(), 600);
+      const timer2 = setTimeout(() => scrollToCriminal(), 500);
+      const timer3 = setTimeout(() => scrollToCriminal(), 1000);
       
       return () => {
         clearTimeout(timer1);
@@ -840,7 +840,7 @@ export default function Screening() {
         </div>
 
         {/* AI Criminal & Eviction Screening Helper - Hero Feature */}
-        <div className="mb-12" data-section="criminal-helper">
+        <div className="mb-12" id="criminal-helper" data-section="criminal-helper">
           <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-4 mb-4">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
