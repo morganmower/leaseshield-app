@@ -30,7 +30,6 @@ import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialConversionNudge } from "@/components/trial-conversion-nudge";
-import { TrialProgressBanner } from "@/components/gated-feature";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -234,9 +233,6 @@ export default function Dashboard() {
 
         {/* Trial Conversion Nudge - Day 3-6 reminders */}
         <TrialConversionNudge />
-
-        {/* Trial Progress Banner - Shows feature unlock progress */}
-        <TrialProgressBanner />
 
         {/* Legal Updates Alert */}
         {unreadCount && unreadCount.count > 0 && (
