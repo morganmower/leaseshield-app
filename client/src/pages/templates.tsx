@@ -35,7 +35,8 @@ export default function Templates() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const isPayingMember = user?.subscriptionStatus === 'active' || user?.isAdmin === true;
+  const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
+  const isPayingMember = (user?.subscriptionStatus === 'active' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   const handleTemplateAction = async (action: 'download' | 'fill', templateId: string) => {

@@ -171,7 +171,8 @@ export default function TenantIssues() {
     },
   });
 
-  const isPayingMember = (user?.subscriptionStatus === 'active' || user?.isAdmin === true) && !templatesError;
+  const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
+  const isPayingMember = ((user?.subscriptionStatus === 'active' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true) && !templatesError);
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   useEffect(() => {
