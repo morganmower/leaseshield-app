@@ -6,10 +6,29 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { StateBadge } from "@/components/state-badge";
-import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, MapPin } from "lucide-react";
 import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
+
+const SUPPORTED_STATES = [
+  { code: "UT", name: "Utah" },
+  { code: "TX", name: "Texas" },
+  { code: "ND", name: "N. Dakota" },
+  { code: "SD", name: "S. Dakota" },
+  { code: "NC", name: "N. Carolina" },
+  { code: "OH", name: "Ohio" },
+  { code: "MI", name: "Michigan" },
+  { code: "ID", name: "Idaho" },
+  { code: "WY", name: "Wyoming" },
+  { code: "CA", name: "California" },
+  { code: "VA", name: "Virginia" },
+  { code: "NV", name: "Nevada" },
+  { code: "AZ", name: "Arizona" },
+  { code: "FL", name: "Florida" },
+];
 
 export default function Compliance() {
   const { toast } = useToast();
@@ -112,26 +131,46 @@ export default function Compliance() {
           </div>
         </div>
 
-        {/* State Tabs */}
-        <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
-          <TabsList className="grid w-full max-w-7xl grid-cols-7 sm:grid-cols-14" data-testid="tabs-state-selector">
-            <TabsTrigger value="UT" data-testid="tab-state-UT">Utah</TabsTrigger>
-            <TabsTrigger value="TX" data-testid="tab-state-TX">Texas</TabsTrigger>
-            <TabsTrigger value="ND" data-testid="tab-state-ND">N. Dakota</TabsTrigger>
-            <TabsTrigger value="SD" data-testid="tab-state-SD">S. Dakota</TabsTrigger>
-            <TabsTrigger value="NC" data-testid="tab-state-NC">N. Carolina</TabsTrigger>
-            <TabsTrigger value="OH" data-testid="tab-state-OH">Ohio</TabsTrigger>
-            <TabsTrigger value="MI" data-testid="tab-state-MI">Michigan</TabsTrigger>
-            <TabsTrigger value="ID" data-testid="tab-state-ID">Idaho</TabsTrigger>
-            <TabsTrigger value="WY" data-testid="tab-state-WY">Wyoming</TabsTrigger>
-            <TabsTrigger value="CA" data-testid="tab-state-CA">California</TabsTrigger>
-            <TabsTrigger value="VA" data-testid="tab-state-VA">Virginia</TabsTrigger>
-            <TabsTrigger value="NV" data-testid="tab-state-NV">Nevada</TabsTrigger>
-            <TabsTrigger value="AZ" data-testid="tab-state-AZ">Arizona</TabsTrigger>
-            <TabsTrigger value="FL" data-testid="tab-state-FL">Florida</TabsTrigger>
-          </TabsList>
+        {/* State Selector - Mobile Dropdown */}
+        <div className="md:hidden mb-6">
+          <Select value={selectedState} onValueChange={setSelectedState}>
+            <SelectTrigger className="w-full" data-testid="select-state-mobile">
+              <div className="flex items-center gap-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <SelectValue placeholder="Select a state" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              {SUPPORTED_STATES.map((state) => (
+                <SelectItem key={state.code} value={state.code} data-testid={`select-state-${state.code}`}>
+                  {state.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-          {["UT", "TX", "ND", "SD", "NC", "OH", "MI", "ID", "WY", "CA", "VA", "NV", "AZ", "FL"].map((state) => (
+        {/* State Tabs - Desktop Scrollable */}
+        <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
+          <div className="hidden md:block mb-4">
+            <ScrollArea className="w-full whitespace-nowrap">
+              <TabsList className="inline-flex h-10 items-center justify-start gap-1 bg-muted p-1 rounded-md" data-testid="tabs-state-selector">
+                {SUPPORTED_STATES.map((state) => (
+                  <TabsTrigger 
+                    key={state.code} 
+                    value={state.code} 
+                    data-testid={`tab-state-${state.code}`}
+                    className="px-3 py-1.5 text-sm whitespace-nowrap"
+                  >
+                    {state.name}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+              <ScrollBar orientation="horizontal" />
+            </ScrollArea>
+          </div>
+
+          {SUPPORTED_STATES.map(({ code: state }) => (
             <TabsContent key={state} value={state} className="space-y-8">
               {/* Compliance Cards Section */}
               <div>
