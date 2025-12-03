@@ -164,7 +164,7 @@ export default function Landing() {
       icon: FileText,
       description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
-        "Residential lease agreements compliant with UT, TX, ND, SD, and NC laws",
+        "Residential lease agreements compliant with all 14 supported state laws",
         "Rental application forms with fair housing compliance",
         "Move-in and move-out inspection checklists",
         "Lease addendums for pets, parking, utilities, and more",
@@ -565,7 +565,7 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">8</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">14</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">States Covered</div>
             </motion.div>
@@ -1541,7 +1541,7 @@ export default function Landing() {
               <AccordionItem value="item-1">
                 <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent>
-                  We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho</strong> with
+                  We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida</strong> with
                   comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states—let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
@@ -1643,7 +1643,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for UT, TX, ND, SD, NC, OH, MI, and ID properties
+              Comprehensive landlord protection for all 14 supported states
             </DialogDescription>
           </DialogHeader>
           
@@ -1680,7 +1680,7 @@ export default function Landing() {
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">8</div>
+                  <div className="text-2xl font-bold text-primary mb-1">14</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
@@ -1982,14 +1982,11 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">States</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Utah</li>
-                <li>Texas</li>
-                <li>North Dakota</li>
-                <li>South Dakota</li>
-                <li>North Carolina</li>
-                <li>Ohio</li>
-                <li>Michigan</li>
-                <li>Idaho</li>
+                <li>Utah, Texas, North Dakota</li>
+                <li>South Dakota, North Carolina, Ohio</li>
+                <li>Michigan, Idaho, Wyoming</li>
+                <li>California, Virginia, Nevada</li>
+                <li>Arizona, Florida</li>
               </ul>
             </div>
             <div>

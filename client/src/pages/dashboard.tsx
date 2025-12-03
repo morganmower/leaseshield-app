@@ -460,7 +460,7 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4">
-                  Leases, applications, notices, and forms customized for UT, TX, ND, SD, NC, OH, MI, and ID laws
+                  Leases, applications, notices, and forms customized for all 14 supported state laws
                 </p>
                 <Button variant="outline" size="sm" className="w-full" data-testid="button-browse-templates">
                   <FileText className="mr-2 h-4 w-4" />
