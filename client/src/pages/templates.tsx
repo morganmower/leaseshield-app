@@ -310,6 +310,12 @@ export default function Templates() {
                 <SelectItem value="OH">Ohio</SelectItem>
                 <SelectItem value="MI">Michigan</SelectItem>
                 <SelectItem value="ID">Idaho</SelectItem>
+                <SelectItem value="WY">Wyoming</SelectItem>
+                <SelectItem value="CA">California</SelectItem>
+                <SelectItem value="VA">Virginia</SelectItem>
+                <SelectItem value="NV">Nevada</SelectItem>
+                <SelectItem value="AZ">Arizona</SelectItem>
+                <SelectItem value="FL">Florida</SelectItem>
               </SelectContent>
             </Select>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>

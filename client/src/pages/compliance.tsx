@@ -114,18 +114,24 @@ export default function Compliance() {
 
         {/* State Tabs */}
         <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
-          <TabsList className="grid w-full max-w-7xl grid-cols-8" data-testid="tabs-state-selector">
+          <TabsList className="grid w-full max-w-7xl grid-cols-7 sm:grid-cols-14" data-testid="tabs-state-selector">
             <TabsTrigger value="UT" data-testid="tab-state-UT">Utah</TabsTrigger>
             <TabsTrigger value="TX" data-testid="tab-state-TX">Texas</TabsTrigger>
-            <TabsTrigger value="ND" data-testid="tab-state-ND">North Dakota</TabsTrigger>
-            <TabsTrigger value="SD" data-testid="tab-state-SD">South Dakota</TabsTrigger>
-            <TabsTrigger value="NC" data-testid="tab-state-NC">North Carolina</TabsTrigger>
+            <TabsTrigger value="ND" data-testid="tab-state-ND">N. Dakota</TabsTrigger>
+            <TabsTrigger value="SD" data-testid="tab-state-SD">S. Dakota</TabsTrigger>
+            <TabsTrigger value="NC" data-testid="tab-state-NC">N. Carolina</TabsTrigger>
             <TabsTrigger value="OH" data-testid="tab-state-OH">Ohio</TabsTrigger>
             <TabsTrigger value="MI" data-testid="tab-state-MI">Michigan</TabsTrigger>
             <TabsTrigger value="ID" data-testid="tab-state-ID">Idaho</TabsTrigger>
+            <TabsTrigger value="WY" data-testid="tab-state-WY">Wyoming</TabsTrigger>
+            <TabsTrigger value="CA" data-testid="tab-state-CA">California</TabsTrigger>
+            <TabsTrigger value="VA" data-testid="tab-state-VA">Virginia</TabsTrigger>
+            <TabsTrigger value="NV" data-testid="tab-state-NV">Nevada</TabsTrigger>
+            <TabsTrigger value="AZ" data-testid="tab-state-AZ">Arizona</TabsTrigger>
+            <TabsTrigger value="FL" data-testid="tab-state-FL">Florida</TabsTrigger>
           </TabsList>
 
-          {["UT", "TX", "ND", "SD", "NC", "OH", "MI", "ID"].map((state) => (
+          {["UT", "TX", "ND", "SD", "NC", "OH", "MI", "ID", "WY", "CA", "VA", "NV", "AZ", "FL"].map((state) => (
             <TabsContent key={state} value={state} className="space-y-8">
               {/* Compliance Cards Section */}
               <div>

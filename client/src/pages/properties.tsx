@@ -24,6 +24,12 @@ const US_STATES = [
   { code: "OH", name: "Ohio" },
   { code: "MI", name: "Michigan" },
   { code: "ID", name: "Idaho" },
+  { code: "WY", name: "Wyoming" },
+  { code: "CA", name: "California" },
+  { code: "VA", name: "Virginia" },
+  { code: "NV", name: "Nevada" },
+  { code: "AZ", name: "Arizona" },
+  { code: "FL", name: "Florida" },
 ];
 
 const PROPERTY_TYPES = [
