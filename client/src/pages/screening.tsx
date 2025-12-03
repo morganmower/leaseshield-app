@@ -40,6 +40,8 @@ function parseAIExplanation(text: string): ParsedSection[] | null {
     { pattern: /\*\*WHAT THIS MEANS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'What This Means', type: 'info' as const },
     { pattern: /\*\*YOUR LIABILITY AS A LANDLORD\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Your Liability as a Landlord', type: 'liability' as const },
     { pattern: /\*\*RED FLAGS TO WATCH FOR\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Red Flags to Watch For', type: 'warning' as const },
+    { pattern: /\*\*FCRA & FAIR HOUSING COMPLIANCE\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'FCRA & Fair Housing Compliance', type: 'warning' as const },
+    { pattern: /\*\*FAIR HOUSING & HUD REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing & HUD Requirements', type: 'warning' as const },
     { pattern: /\*\*FAIR HOUSING REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Requirements', type: 'warning' as const },
     { pattern: /\*\*FAIR HOUSING CONSIDERATIONS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Considerations', type: 'warning' as const },
     { pattern: /\*\*QUESTIONS TO ASK THE APPLICANT\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Questions to Ask the Applicant', type: 'questions' as const },

@@ -2024,6 +2024,11 @@ REQUIRED RESPONSE STRUCTURE (use these exact headers):
 • [Another warning sign]
 • [Pattern to look for]
 
+**FCRA & FAIR HOUSING COMPLIANCE**
+• [FCRA adverse action notice requirement if denying based on credit]
+• [Equal application of criteria to all applicants]
+• [Documentation requirement]
+
 **QUESTIONS TO ASK THE APPLICANT**
 1. "[Specific conversational question]"
 2. "[Follow-up question to dig deeper]"
@@ -2056,6 +2061,11 @@ A charge-off means the lender gave up trying to collect this debt after many mis
 • Multiple charge-offs = pattern of not paying debts
 • Recent charge-offs (within 2 years) are more concerning
 • Large dollar amounts indicate bigger financial problems
+
+**FCRA & FAIR HOUSING COMPLIANCE**
+• FCRA requires: If you deny based on credit, you MUST provide an adverse action notice with the credit bureau's contact info
+• Apply the same credit criteria to ALL applicants equally - inconsistency = discrimination lawsuit risk
+• Document your minimum credit score/criteria IN WRITING before screening
 
 **QUESTIONS TO ASK THE APPLICANT**
 1. "I see there was an issue with [account type] - can you tell me what happened?"
@@ -2165,10 +2175,11 @@ REQUIRED RESPONSE STRUCTURE (use these exact headers):
 • [Financial risk - unpaid rent, eviction costs, potential lawsuits]
 • [Risk level and what factors increase/decrease it]
 
-**FAIR HOUSING REQUIREMENTS**
-• [Key legal requirement - you MUST do individual assessment]
-• [What you CAN and CANNOT consider legally]
-• [Discrimination warning if applicable]
+**FAIR HOUSING & HUD REQUIREMENTS**
+• [Key legal requirement - you MUST do individual assessment per HUD guidance]
+• [What you CAN and CANNOT consider legally under Fair Housing Act]
+• [HUD's 2016 guidance on criminal records - blanket bans = disparate impact liability]
+• [Discrimination warning - lawsuits can cost $50,000+]
 
 **QUESTIONS TO ASK THE APPLICANT**
 1. "[Specific conversational question about the situation]"
@@ -2200,10 +2211,11 @@ A felony drug possession conviction is a serious criminal offense related to con
 • 5-year gap reduces risk - look for signs of stability and recovery
 • Risk level: MEDIUM - requires individual assessment
 
-**FAIR HOUSING REQUIREMENTS**
-• You CANNOT automatically deny for any criminal history - that's illegal discrimination
-• You CAN consider: severity, time passed, relevance to tenancy, rehabilitation evidence
-• HUD says blanket bans have "disparate impact" - you could be sued
+**FAIR HOUSING & HUD REQUIREMENTS**
+• HUD's 2016 guidance: You CANNOT automatically deny for any criminal history - blanket bans = illegal discrimination
+• Individual assessment REQUIRED: Consider severity, time passed, relevance to tenancy, rehabilitation evidence
+• HUD says blanket bans have "disparate impact" on protected classes - lawsuits can cost $50,000+
+• Document your criteria IN WRITING and apply equally to ALL applicants
 
 **QUESTIONS TO ASK THE APPLICANT**
 1. "I see something on your background check from 2019 - would you like to share what happened and what's changed since then?"
