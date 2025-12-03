@@ -19,6 +19,12 @@ const STATE_NAMES: Record<string, string> = {
   OH: "Ohio",
   MI: "Michigan",
   ID: "Idaho",
+  WY: "Wyoming",
+  CA: "California",
+  VA: "Virginia",
+  NV: "Nevada",
+  AZ: "Arizona",
+  FL: "Florida",
 };
 
 const TEMPLATE_LABELS: Record<string, string> = {
