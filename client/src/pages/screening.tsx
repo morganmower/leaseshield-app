@@ -365,15 +365,26 @@ export default function Screening() {
             </div>
             
             <div className="space-y-4">
-              <div className="bg-muted/30 rounded-lg p-3 text-sm">
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">Examples:</strong> "charge-off" • "30 days late" • "collection" • paste a section of a credit report
+              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                <p className="text-sm text-foreground flex items-start gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, account numbers, or names of people. Just describe what you see.</span>
                 </p>
+              </div>
+
+              <div className="bg-muted/30 rounded-lg p-3 text-sm">
+                <p className="text-foreground font-medium mb-2">Try asking:</p>
+                <ul className="text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>"What does charge-off mean and should I be worried?"</li>
+                  <li>"Applicant has 3 collections totaling $2,400 - what questions should I ask?"</li>
+                  <li>"Credit score is 580 with 2 late payments - is this risky?"</li>
+                  <li>"High credit card balances near limits - what does this tell me?"</li>
+                </ul>
               </div>
 
               <Textarea
                 id="credit-helper-input"
-                placeholder="Paste credit report info here, or type a term like 'charge-off' or 'collection'"
+                placeholder="Example: 'Applicant has a charge-off from 2022 - what should I ask them?'"
                 value={userQuestion}
                 onChange={(e) => setUserQuestion(e.target.value)}
                 className="min-h-[100px] text-base"
@@ -513,22 +524,26 @@ export default function Screening() {
             </div>
             
             <div className="space-y-4">
-              <div className="bg-muted/30 rounded-lg p-3 text-sm">
-                <p className="text-muted-foreground">
-                  <strong className="text-foreground">Examples:</strong> "misdemeanor" • "eviction" • paste a list of charges with dates • "felony DUI from 10 years ago"
-                </p>
-              </div>
-
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-foreground flex items-start gap-2">
                   <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Privacy:</strong> Don't include SSNs or full names. Charge descriptions and dates are fine.</span>
+                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, case numbers, or names of people. Just describe the charges or records.</span>
                 </p>
+              </div>
+
+              <div className="bg-muted/30 rounded-lg p-3 text-sm">
+                <p className="text-foreground font-medium mb-2">Try asking:</p>
+                <ul className="text-muted-foreground space-y-1 ml-4 list-disc">
+                  <li>"Applicant has a misdemeanor theft from 5 years ago - can I ask about it?"</li>
+                  <li>"What questions should I ask about a DUI conviction?"</li>
+                  <li>"Eviction filed in 2021 but dismissed - should I be concerned?"</li>
+                  <li>"Multiple drug charges from 8 years ago - what's my liability if I rent to them?"</li>
+                </ul>
               </div>
 
               <Textarea
                 id="criminal-helper-input"
-                placeholder="Paste criminal/eviction records here, or type a term like 'misdemeanor' or 'eviction'"
+                placeholder="Example: 'Applicant has an eviction from 2022 - what should I ask them?'"
                 value={criminalUserQuestion}
                 onChange={(e) => setCriminalUserQuestion(e.target.value)}
                 className="min-h-[120px] text-base"
