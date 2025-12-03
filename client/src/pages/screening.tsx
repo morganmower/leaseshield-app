@@ -76,12 +76,31 @@ export default function Screening() {
   // Scroll to appropriate helper on mount
   useEffect(() => {
     if (helperParam === 'criminal') {
-      setTimeout(() => {
+      // Try multiple times to find and scroll to the criminal helper section
+      const scrollToCriminal = () => {
         const criminalSection = document.querySelector('[data-section="criminal-helper"]');
         if (criminalSection) {
           criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          return true;
         }
-      }, 300);
+        return false;
+      };
+      
+      // Immediate attempt
+      if (scrollToCriminal()) return;
+      
+      // Retry after 100ms
+      const timer1 = setTimeout(() => scrollToCriminal(), 100);
+      // Retry after 300ms as backup
+      const timer2 = setTimeout(() => scrollToCriminal(), 300);
+      // Retry after 600ms as final attempt
+      const timer3 = setTimeout(() => scrollToCriminal(), 600);
+      
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+        clearTimeout(timer3);
+      };
     }
   }, [helperParam]);
   
