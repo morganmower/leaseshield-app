@@ -1041,14 +1041,12 @@ export default function Screening() {
                 <div className="text-sm text-muted-foreground space-y-2">
                   <p><strong className="text-foreground">How to use:</strong></p>
                   <p>1. Look at your criminal or eviction screening report</p>
-                  <p>2. Type any term or situation you see, such as:</p>
+                  <p>2. Type a term OR paste a list of charges, such as:</p>
                   <ul className="ml-6 space-y-1 list-disc">
                     <li><em>"dismissed charge"</em> - Does this still matter?</li>
                     <li><em>"misdemeanor theft from 10 years ago"</em> - Can I deny for this?</li>
-                    <li><em>"unlawful detainer judgment"</em> - What is this?</li>
-                    <li><em>"felony DUI"</em> - How should I evaluate this?</li>
-                    <li><em>"eviction filed but not completed"</em> - Red flag or not?</li>
-                    <li><em>"expunged record"</em> - Am I allowed to consider it?</li>
+                    <li>Paste multiple charges with dates for risk analysis</li>
+                    <li>Ask about state-specific rules (e.g., "for Utah")</li>
                   </ul>
                   <p>3. Get Fair Housing-compliant AI guidance instantly</p>
                 </div>
@@ -1057,16 +1055,16 @@ export default function Screening() {
                   <div className="flex items-start gap-2">
                     <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-destructive font-medium">
-                      For your safety: Do not type Social Security numbers, case numbers, or specific names.
+                      For your safety: Do not include Social Security numbers or full names of individuals.
                     </p>
                   </div>
                 </div>
 
                 <Textarea
-                  placeholder="Example: misdemeanor"
+                  placeholder="Paste charges from a report, or type a term like 'misdemeanor' or 'eviction'"
                   value={criminalUserQuestion}
                   onChange={(e) => setCriminalUserQuestion(e.target.value)}
-                  className="min-h-[100px] text-base"
+                  className="min-h-[120px] text-base"
                   data-testid="textarea-criminal-question"
                 />
 

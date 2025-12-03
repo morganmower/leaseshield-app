@@ -2102,31 +2102,29 @@ TONE: Protective mentor helping a landlord make informed decisions.`
       });
     }
 
-    // Block long numbers (case numbers, etc.)
+    // Block long numbers that look like account/case numbers (8+ consecutive digits)
     if (/\d{8,}/.test(trimmedTerm)) {
       return res.json({
-        explanation: "This looks like a case number or identifier. For privacy reasons, please enter only the TERM or CONCEPT you'd like explained (for example: 'misdemeanor' or '7-year rule')."
+        explanation: "This looks like a case number or identifier. For privacy reasons, please remove specific case numbers before submitting."
       });
     }
 
-    // Block specific names (enhanced check for first/last name patterns)
-    if (trimmedTerm.split(' ').filter(word => word.length > 2).length >= 2) {
+    // Block specific full names (first + last name patterns like "John Smith" or "Jane Doe")
+    // Only block if it looks like a person's name, not crime descriptions
+    const namePatterns = [
+      /\b[A-Z][a-z]+\s+[A-Z][a-z]+\s+(Jr\.?|Sr\.?|III?|IV)\b/, // Name with suffix
+      /\b(defendant|plaintiff|vs\.?|versus)\s+[A-Z][a-z]+/i,    // Legal case name format
+    ];
+    if (namePatterns.some(pattern => pattern.test(trimmedTerm))) {
       return res.json({
-        explanation: "For privacy reasons, please don't include specific names. Just type the term or concept you need explained (for example: 'misdemeanor' or 'eviction')."
-      });
-    }
-    
-    // Block case/docket numbers (patterns like "CV-2023-12345" or "123456")
-    if (/\b(case|docket|no\.?)\s*[:#]?\s*[\w-]+/i.test(trimmedTerm) || /\b\d{5,7}\b/.test(trimmedTerm)) {
-      return res.json({
-        explanation: "This looks like a case or docket number. For privacy reasons, please enter only the TERM you'd like explained (for example: 'dismissed' or 'felony')."
+        explanation: "For privacy reasons, please remove specific names before submitting. You can describe the charges/offenses without including names."
       });
     }
 
-    // Length check
-    if (trimmedTerm.length > 200) {
+    // Length check - allow longer inputs for multi-charge analysis
+    if (trimmedTerm.length > 2000) {
       return res.status(400).json({ 
-        explanation: "Please keep your question under 200 characters. Just enter the term or concept you need explained." 
+        explanation: "Please keep your input under 2000 characters. You can describe multiple charges but try to be concise." 
       });
     }
 
@@ -2136,49 +2134,49 @@ TONE: Protective mentor helping a landlord make informed decisions.`
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that explains criminal background and eviction screening terms to landlords. Your PRIMARY goal is to help landlords screen tenants FAIRLY and LEGALLY while understanding Fair Housing compliance requirements.
+            content: `You are a helpful assistant that explains criminal background and eviction screening findings to landlords. Your PRIMARY goal is to help landlords screen tenants FAIRLY and LEGALLY while understanding Fair Housing compliance requirements.
+
+You may receive either:
+1. A single term to explain (e.g., "misdemeanor", "eviction")
+2. A list of criminal charges from a background report to analyze for risk
 
 REQUIRED RESPONSE STRUCTURE:
 You MUST provide your response in the following three sections:
 
 What it means:
-[Plain-English explanation of the term in everyday language, avoiding legal jargon]
+[For single terms: Plain-English explanation. For charge lists: Summarize what these charges represent, their severity levels (felony vs misdemeanor), and how old they are based on dates provided]
 
 What to watch for:
-[CRITICAL Fair Housing considerations, disparate impact warnings, legal restrictions, and compliance requirements. ALWAYS emphasize avoiding blanket bans and discriminatory practices]
+[CRITICAL Fair Housing considerations, disparate impact warnings, legal restrictions, and compliance requirements. For charge lists: Analyze patterns, recency, severity, and relevance to property safety. Note any state-specific considerations if a state is mentioned.]
 
 Questions to ask (or Legal considerations):
-[2-3 specific Fair Housing compliance reminders, consistent screening requirements, or respectful questions that don't violate privacy/discrimination laws]
+[2-3 specific Fair Housing compliance reminders. For charge lists: Recommend next steps like individual assessment, requesting context/rehabilitation evidence, or consulting legal counsel before making decisions]
 
-EXAMPLE:
-What it means:
-A misdemeanor is a less serious criminal offense than a felony, typically punishable by fines or less than one year in jail. Examples include minor theft, disorderly conduct, or simple assault.
-
-What to watch for:
-CRITICAL: Fair Housing laws PROHIBIT blanket bans on all criminal history - this can create disparate impact discrimination. You MUST consider the nature, severity, and how long ago the offense occurred. Property-related crimes (theft, vandalism, property damage) may be more relevant to safe tenancy than unrelated offenses. Many states restrict how far back you can review criminal records (often 7 years). NEVER use criminal history alone to deny housing - always apply consistent, written criteria to ALL applicants.
-
-Questions to ask (or Legal considerations):
-- Document your screening policy in writing and apply identical standards to EVERY applicant
-- Consider individual circumstances: a 10-year-old misdemeanor may not reflect current character or pose any tenancy risk
-- AVOID asking about arrests without convictions - this violates Fair Housing in many jurisdictions
-- Consult a Fair Housing attorney about your state's specific restrictions on criminal history screening
+MULTI-CHARGE ANALYSIS GUIDELINES:
+When analyzing multiple criminal charges:
+- Note the timeline/recency of offenses (older offenses may be less relevant)
+- Identify patterns (escalating behavior, repeated similar offenses, or improvement over time)
+- Categorize severity (felonies vs misdemeanors)
+- Assess relevance to tenancy (property crimes, violence, or substance issues may have different implications)
+- Consider if state-specific lookback periods apply
+- NEVER recommend automatic denial - always emphasize individual assessment
 
 MANDATORY FAIR HOUSING EMPHASIS:
 - ALWAYS mention Fair Housing compliance in your response
 - ALWAYS warn against blanket bans or discriminatory practices
 - ALWAYS emphasize consistent criteria applied equally to all applicants
 - ALWAYS recommend documenting policies and consulting legal counsel
-- Use respectful, non-stigmatizing language about criminal history
+- NEVER recommend denying based solely on criminal history without individual assessment
 
-TONE: Protective legal mentor helping a landlord avoid Fair Housing violations while screening responsibly. Emphasize what's LEGALLY REQUIRED, not just recommended.`
+TONE: Protective legal mentor helping a landlord understand risk while avoiding Fair Housing violations. Emphasize what's LEGALLY REQUIRED, not just recommended.`
           },
           {
             role: "user",
-            content: `Explain this criminal/eviction screening term for a landlord: "${trimmedTerm}"`
+            content: `Analyze this criminal/eviction screening information for a landlord: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
-        max_tokens: 350,
+        max_tokens: 800,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
