@@ -71,19 +71,19 @@ export default function Screening() {
   
   // Determine which helper to show based on URL query param
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
-  const tabParam = urlParams.get('tab') || 'credit';
+  const helperParam = urlParams.get('helper') || 'credit';
   
   // Scroll to appropriate helper on mount
   useEffect(() => {
-    if (tabParam === 'criminal') {
+    if (helperParam === 'criminal') {
       setTimeout(() => {
         const criminalSection = document.querySelector('[data-section="criminal-helper"]');
         if (criminalSection) {
-          criminalSection.scrollIntoView({ behavior: 'smooth' });
+          criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         }
-      }, 100);
+      }, 300);
     }
-  }, [tabParam]);
+  }, [helperParam]);
   
   // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');

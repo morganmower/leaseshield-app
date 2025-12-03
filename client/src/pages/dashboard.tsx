@@ -276,7 +276,7 @@ export default function Dashboard() {
 
             <div className="grid md:grid-cols-3 gap-4">
               {/* Credit Report Helper */}
-              <Link to="/screening?tab=credit">
+              <Link to="/screening?helper=credit">
                 <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-credit-helper">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="rounded-lg bg-cyan-500/20 dark:bg-cyan-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
@@ -301,7 +301,7 @@ export default function Dashboard() {
               </Link>
 
               {/* Criminal & Eviction Helper */}
-              <Link to="/screening?tab=criminal">
+              <Link to="/screening?helper=criminal">
                 <Card className="p-5 hover-elevate active-elevate-2 cursor-pointer h-full" data-testid="card-ai-criminal-helper">
                   <div className="flex items-start gap-3 mb-3">
                     <div className="rounded-lg bg-amber-500/20 dark:bg-amber-500/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
