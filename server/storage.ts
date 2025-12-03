@@ -416,14 +416,14 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(legalUpdates)
       .where(and(eq(legalUpdates.stateId, stateId), eq(legalUpdates.isActive, true)))
-      .orderBy(desc(legalUpdates.createdAt));
+      .orderBy(desc(legalUpdates.effectiveDate));
   }
 
   async getAllLegalUpdates(): Promise<LegalUpdate[]> {
     return await db
       .select()
       .from(legalUpdates)
-      .orderBy(desc(legalUpdates.createdAt));
+      .orderBy(desc(legalUpdates.effectiveDate));
   }
 
   async getRecentLegalUpdates(limit: number = 10): Promise<LegalUpdate[]> {
@@ -431,7 +431,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(legalUpdates)
       .where(eq(legalUpdates.isActive, true))
-      .orderBy(desc(legalUpdates.createdAt))
+      .orderBy(desc(legalUpdates.effectiveDate))
       .limit(limit);
   }
 
