@@ -602,6 +602,7 @@ export default function Screening() {
             </Card>
           )}
         </div>
+        }
 
         {/* Credit Report Decoder */}
         <div className="mb-12">
@@ -1312,7 +1313,7 @@ export default function Screening() {
             </div>
           </Card>
         </div>
-        )}
+        }
       </div>
     </div>
   );

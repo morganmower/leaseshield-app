@@ -416,7 +416,7 @@ export default function Templates() {
                   {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
                 </p>
                 <p>
-                  Upgrade now for just <strong>$10/month</strong> to access our complete library of 37+ state-specific templates.
+                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 37+ state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>
