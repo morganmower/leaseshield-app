@@ -78,23 +78,19 @@ export default function Screening() {
     if (helperParam === 'criminal') {
       // Try multiple times to find and scroll to the criminal helper section
       const scrollToCriminal = () => {
-        // Try both id selector and data-section attribute
-        const criminalSection = document.getElementById('criminal-helper') || 
-                               document.querySelector('[data-section="criminal-helper"]');
+        const criminalSection = document.getElementById('criminal-helper');
         if (criminalSection) {
-          // Use scrollIntoView with offset to account for any fixed headers
-          const yOffset = -100;
-          const y = criminalSection.getBoundingClientRect().top + window.pageYOffset + yOffset;
-          window.scrollTo({ top: y, behavior: 'smooth' });
+          // Use scrollIntoView which works regardless of scroll container
+          criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
           return true;
         }
         return false;
       };
       
       // Retry multiple times to handle page load timing
-      const timer1 = setTimeout(() => scrollToCriminal(), 100);
-      const timer2 = setTimeout(() => scrollToCriminal(), 500);
-      const timer3 = setTimeout(() => scrollToCriminal(), 1000);
+      const timer1 = setTimeout(() => scrollToCriminal(), 150);
+      const timer2 = setTimeout(() => scrollToCriminal(), 400);
+      const timer3 = setTimeout(() => scrollToCriminal(), 800);
       
       return () => {
         clearTimeout(timer1);
