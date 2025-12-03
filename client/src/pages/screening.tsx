@@ -22,7 +22,7 @@ import {
   Lightbulb,
   ArrowLeft,
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
 
 interface ParsedExplanation {
@@ -66,19 +66,27 @@ function parseAIExplanation(text: string): ParsedExplanation | null {
 export default function Screening() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const [location] = useLocation();
   const [trialExpired, setTrialExpired] = useState(false);
   
+  // Determine which helper to show based on URL query param
+  const urlParams = new URLSearchParams(location.split('?')[1] || '');
+  const tabParam = urlParams.get('tab') || 'credit';
+  
   // Credit Report Helper state
-  const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
+  const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>(tabParam === 'credit' ? 'home' : 'home');
   const [userQuestion, setUserQuestion] = useState('');
   const [explanation, setExplanation] = useState('');
   const [isExplaining, setIsExplaining] = useState(false);
 
   // Criminal & Eviction Helper state
-  const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
+  const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>(tabParam === 'criminal' ? 'home' : 'home');
   const [criminalUserQuestion, setCriminalUserQuestion] = useState('');
   const [criminalExplanation, setCriminalExplanation] = useState('');
   const [isCriminalExplaining, setIsCriminalExplaining] = useState(false);
+  
+  // Track which helper section to show
+  const [activeHelper, setActiveHelper] = useState<'credit' | 'criminal'>(tabParam === 'criminal' ? 'criminal' : 'credit');
 
   const handleExplain = async () => {
     const input = userQuestion.trim();
@@ -247,7 +255,7 @@ export default function Screening() {
         </div>
 
         {/* AI Credit Report Helper - Hero Feature */}
-        <div className="mb-12" id="ai-helpers">
+        {activeHelper === 'credit' && <div className="mb-12" id="ai-helpers">
           <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-4 mb-4">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-14 h-14 flex items-center justify-center flex-shrink-0">
@@ -804,6 +812,7 @@ export default function Screening() {
         </div>
 
         {/* AI Criminal & Eviction Screening Helper - Hero Feature */}
+        {activeHelper === 'criminal' && (
         <div className="mb-12">
           <div className="bg-gradient-to-br from-primary/20 via-primary/10 to-primary/5 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 mb-6">
             <div className="flex items-start gap-4 mb-4">
@@ -1303,6 +1312,7 @@ export default function Screening() {
             </div>
           </Card>
         </div>
+        )}
       </div>
     </div>
   );
