@@ -1988,24 +1988,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
 
-    // Block long numbers (likely account numbers, loan numbers, etc.)
-    if (/\d{8,}/.test(trimmedTerm)) {
+    // Block long numbers that look like account numbers (10+ consecutive digits)
+    if (/\d{10,}/.test(trimmedTerm)) {
       return res.json({
-        explanation: "This looks like an account or loan number. For privacy reasons, please enter only the WORD or PHRASE you'd like explained (for example: 'utilization' or '30 days late')."
+        explanation: "This looks like an account number. For privacy reasons, please remove specific account numbers before submitting."
       });
     }
 
-    // Block dollar amounts
-    if (/\$\s*\d+/.test(trimmedTerm) || /\d+\s*dollars?/i.test(trimmedTerm)) {
-      return res.json({
-        explanation: "For privacy reasons, please don't enter dollar amounts. Just type the term or phrase you'd like explained."
-      });
-    }
-
-    // Length check
-    if (trimmedTerm.length > 200) {
+    // Length check - allow longer inputs for multi-item credit analysis
+    if (trimmedTerm.length > 2000) {
       return res.status(400).json({ 
-        explanation: "Please keep your question under 200 characters. Just enter the word or phrase you need explained." 
+        explanation: "Please keep your input under 2000 characters. You can describe multiple credit items but try to be concise." 
       });
     }
 
@@ -2015,19 +2008,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that explains credit report terms to landlords reviewing tenant applications. Your goal is to help landlords understand what they're seeing AND know what questions to ask applicants.
+            content: `You are a helpful assistant that explains credit report information to landlords reviewing tenant applications. Your goal is to help landlords understand what they're seeing AND know what questions to ask applicants.
+
+You may receive either:
+1. A single credit term to explain (e.g., "charge-off", "collection")
+2. A section of a credit report with multiple items to analyze
 
 REQUIRED RESPONSE STRUCTURE:
 You MUST provide your response in the following three sections:
 
 What it means:
-[Plain-English explanation of the term in everyday language]
+[For single terms: Plain-English explanation. For credit report sections: Summarize the overall credit picture - number of accounts, any late payments, collections, etc.]
 
 What to watch for:
-[Specific warning signs, red flags, or concerns landlords should be aware of]
+[For single terms: Specific warning signs. For credit sections: Identify patterns of concern (multiple late payments, recent collections, high utilization) or positive signs (long account history, on-time payments)]
 
 Questions to ask:
 [2-3 specific questions the landlord should respectfully ask the applicant to understand their situation better]
+
+MULTI-ITEM ANALYSIS GUIDELINES:
+When analyzing multiple credit items:
+- Note patterns (recurring late payments, multiple collections from same time period)
+- Consider recency (recent issues vs. old resolved problems)
+- Identify mix of account types (revolving, installment, mortgage)
+- Look for signs of recovery (paying down balances, no recent negatives)
+- Calculate approximate utilization if balances and limits are shown
 
 EXAMPLE:
 What it means:
@@ -2053,11 +2058,11 @@ TONE: Protective mentor helping a landlord make informed decisions.`
           },
           {
             role: "user",
-            content: `Explain this credit report term for a landlord: "${trimmedTerm}"`
+            content: `Analyze this credit report information for a landlord: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
-        max_tokens: 300,
+        max_tokens: 800,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
