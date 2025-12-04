@@ -168,7 +168,11 @@ export default function Dashboard() {
                 {(isTrialing || user.subscriptionStatus === 'incomplete') && user.trialEndsAt ? (
                   <>
                     {(() => {
-                      const daysLeft = Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                      const today = new Date();
+                      today.setHours(0, 0, 0, 0);
+                      const endDate = new Date(user.trialEndsAt);
+                      endDate.setHours(0, 0, 0, 0);
+                      const daysLeft = Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                       const trialExpired = daysLeft <= 0;
                       
                       return (
@@ -214,7 +218,11 @@ export default function Dashboard() {
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500 mt-0.5" />
               <div className="flex-1">
                 {(() => {
-                  const daysLeft = Math.ceil((new Date(user.subscriptionEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  const endDate = new Date(user.subscriptionEndsAt);
+                  endDate.setHours(0, 0, 0, 0);
+                  const daysLeft = Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
                   return (
                     <>
                       <p className="font-medium text-emerald-900 dark:text-emerald-100">
