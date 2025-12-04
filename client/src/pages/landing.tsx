@@ -228,11 +228,8 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo iconSize={32} />
-            <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield<span className="hidden sm:inline"> App</span>
-            </span>
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
+            <Logo variant="horizontal" size="md" />
           </Link>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
@@ -1963,9 +1960,8 @@ export default function Landing() {
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Logo iconSize={28} />
-                <span className="font-display font-semibold text-lg">LeaseShield App</span>
+              <div className="mb-4">
+                <Logo variant="horizontal" size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Your protective mentor for confident, risk-free property management.
@@ -2023,8 +2019,7 @@ export default function Landing() {
                 <div className="bg-primary text-primary-foreground rounded-t-lg">
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-2">
-                      <Logo iconSize={20} className="brightness-0 invert" />
-                      <span className="font-semibold">LeaseShield Assistant</span>
+                      <Logo variant="horizontal" size="sm" className="brightness-0 invert h-6" />
                     </div>
                     <Button
                       size="icon"

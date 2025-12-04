@@ -135,16 +135,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-6 border-b">
+      <SidebarHeader className="p-4 border-b">
         <Link href="/dashboard">
-          <div className="flex items-center gap-4 cursor-pointer hover-elevate rounded-lg p-4 -m-4 transition-all">
-            <div className="flex items-center justify-center w-14 h-14 rounded-lg bg-primary/10">
-              <Logo iconSize={32} />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-2xl font-bold">LeaseShield</span>
-              <span className="text-sm text-muted-foreground">Landlord Protection</span>
-            </div>
+          <div className="flex items-center cursor-pointer hover-elevate rounded-lg p-2 -m-2 transition-all">
+            <Logo variant="horizontal" size="lg" />
           </div>
         </Link>
       </SidebarHeader>
