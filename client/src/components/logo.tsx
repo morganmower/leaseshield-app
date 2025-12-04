@@ -7,7 +7,7 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Logo({ className = "", variant = 'horizontal', size = 'md' }: LogoProps) {
+export function Logo({ className = "", variant = 'horizontal', size }: LogoProps) {
   const sizeClasses = {
     sm: variant === 'stacked' ? 'h-20' : 'h-8',
     md: variant === 'stacked' ? 'h-28' : 'h-10',
@@ -15,12 +15,15 @@ export function Logo({ className = "", variant = 'horizontal', size = 'md' }: Lo
     xl: variant === 'stacked' ? 'h-48' : 'h-20',
   };
 
+  const hasCustomSize = className.includes('w-') || className.includes('h-');
+  const appliedSizeClass = hasCustomSize ? '' : sizeClasses[size || 'md'];
+
   if (variant === 'stacked') {
     return (
       <img 
         src={logoStacked} 
         alt="LeaseShield App - Landlord Protection" 
-        className={`${sizeClasses[size]} w-auto object-contain ${className}`}
+        className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain ${className}`}
       />
     );
   }
@@ -29,7 +32,7 @@ export function Logo({ className = "", variant = 'horizontal', size = 'md' }: Lo
     <img 
       src={logoHorizontal} 
       alt="LeaseShield App - Landlord Protection" 
-      className={`${sizeClasses[size]} w-auto object-contain ${className}`}
+      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain ${className}`}
     />
   );
 }
