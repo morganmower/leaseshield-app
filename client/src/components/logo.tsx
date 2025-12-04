@@ -12,7 +12,7 @@ export function Logo({ className = "", variant = 'horizontal', size }: LogoProps
     sm: variant === 'stacked' ? 'h-20' : 'h-8',
     md: variant === 'stacked' ? 'h-28' : 'h-10',
     lg: variant === 'stacked' ? 'h-36' : 'h-16',
-    xl: variant === 'stacked' ? 'h-48' : 'h-24',
+    xl: variant === 'stacked' ? 'h-48' : 'h-28',
   };
 
   const hasCustomSize = className.includes('w-') || className.includes('h-');
