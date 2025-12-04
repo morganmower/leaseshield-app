@@ -11,8 +11,8 @@ export function Logo({ className = "", variant = 'horizontal', size }: LogoProps
   const sizeClasses = {
     sm: variant === 'stacked' ? 'h-20' : 'h-8',
     md: variant === 'stacked' ? 'h-28' : 'h-10',
-    lg: variant === 'stacked' ? 'h-36' : 'h-14',
-    xl: variant === 'stacked' ? 'h-48' : 'h-20',
+    lg: variant === 'stacked' ? 'h-36' : 'h-16',
+    xl: variant === 'stacked' ? 'h-48' : 'h-24',
   };
 
   const hasCustomSize = className.includes('w-') || className.includes('h-');
