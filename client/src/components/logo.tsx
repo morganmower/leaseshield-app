@@ -9,10 +9,10 @@ interface LogoProps {
 
 export function Logo({ className = "", variant = 'horizontal', size = 'md' }: LogoProps) {
   const sizeClasses = {
-    sm: variant === 'stacked' ? 'h-16' : 'h-8',
-    md: variant === 'stacked' ? 'h-24' : 'h-10',
-    lg: variant === 'stacked' ? 'h-32' : 'h-12',
-    xl: variant === 'stacked' ? 'h-40' : 'h-16',
+    sm: variant === 'stacked' ? 'h-20' : 'h-8',
+    md: variant === 'stacked' ? 'h-28' : 'h-10',
+    lg: variant === 'stacked' ? 'h-36' : 'h-14',
+    xl: variant === 'stacked' ? 'h-48' : 'h-20',
   };
 
   if (variant === 'stacked') {
