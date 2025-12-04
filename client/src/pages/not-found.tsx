@@ -7,11 +7,8 @@ export default function NotFound() {
   return (
     <div className="min-h-screen w-full flex flex-col items-center justify-center bg-background px-4">
       <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-4">
-          <Logo iconSize={36} />
-          <span className="font-display text-3xl font-semibold text-foreground">
-            LeaseShield App
-          </span>
+        <div className="flex items-center justify-center mb-4">
+          <Logo variant="horizontal" size="lg" />
         </div>
       </div>
 

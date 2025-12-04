@@ -110,8 +110,7 @@ export function ChatWidget() {
               <div className="bg-primary text-primary-foreground rounded-t-lg">
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-2">
-                    <Logo iconSize={20} className="brightness-0 invert" />
-                    <span className="font-semibold">LeaseShield Assistant</span>
+                    <Logo variant="horizontal" size="sm" className="brightness-0 invert h-6" />
                   </div>
                   <Button
                     size="icon"

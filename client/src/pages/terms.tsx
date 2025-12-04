@@ -10,9 +10,8 @@ export default function Terms() {
       <header className="border-b bg-background sticky top-0 z-50">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
-            <a href="/" className="flex items-center gap-2">
-              <Logo className="h-8 w-8" />
-              <span className="font-display text-lg font-semibold">LeaseShield App</span>
+            <a href="/" className="flex items-center">
+              <Logo variant="horizontal" size="md" />
             </a>
             <Button
               onClick={() => window.location.href = "/"}

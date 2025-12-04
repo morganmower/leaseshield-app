@@ -28,8 +28,7 @@ export default function HelpCenter() {
   const faqs = [
     {
       category: "Account Access",
-      icon: Logo,
-      iconSize: 24,
+      icon: Shield,
       questions: [
         {
           q: "How do I log in to my account?",
@@ -135,11 +134,8 @@ export default function HelpCenter() {
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo iconSize={32} />
-            <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield App
-            </span>
+          <a href="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
+            <Logo variant="horizontal" size="md" />
           </a>
           <div className="flex items-center gap-2">
             <Button
@@ -221,11 +217,7 @@ export default function HelpCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
-                    {section.iconSize ? (
-                      <section.icon iconSize={section.iconSize} />
-                    ) : (
-                      <section.icon className="h-6 w-6 text-primary" />
-                    )}
+                    <section.icon className="h-6 w-6 text-primary" />
                     {section.category}
                   </CardTitle>
                 </CardHeader>

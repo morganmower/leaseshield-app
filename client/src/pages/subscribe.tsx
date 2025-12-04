@@ -264,9 +264,8 @@ export default function Subscribe() {
       <div className="container max-w-3xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">
-          <div className="flex items-center justify-center gap-3 mb-3 sm:mb-4 flex-wrap">
-            <Logo iconSize={32} />
-            <span className="font-display text-xl sm:text-2xl font-semibold">LeaseShield App</span>
+          <div className="flex items-center justify-center mb-3 sm:mb-4">
+            <Logo variant="horizontal" size="lg" />
           </div>
         </div>
 
