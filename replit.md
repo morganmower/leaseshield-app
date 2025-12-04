@@ -9,7 +9,13 @@ Not specified.
 ## System Architecture
 
 ### UI/UX Decisions
-The platform uses a blue and slate gray color scheme with a light gray background. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone.
+The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, matching the LeaseShield logo branding. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone.
+
+### Logo & Branding
+- **Logo Files**: Horizontal logo at `client/src/assets/logo-horizontal.png`, stacked logo at `client/src/assets/logo-stacked.png`
+- **Logo Sizes**: sm (h-8), md (h-12), lg (h-16), xl (h-32) for horizontal variant
+- **Primary Color**: Teal/turquoise (HSL 168 76% 42%)
+- **Text Color**: Navy blue (HSL 215 35% 20%)
 
 ### Technical Implementations
 - **Frontend**: React, TypeScript, TanStack Query, Wouter, Shadcn UI.
