@@ -137,8 +137,8 @@ export function AppSidebar() {
     <Sidebar>
       <SidebarHeader className="p-4 border-b">
         <Link href="/dashboard" className="block w-full">
-          <div className="flex items-center justify-center cursor-pointer hover-elevate rounded-lg p-2 -m-2 transition-all">
-            <Logo variant="horizontal" className="w-full h-auto max-h-16" />
+          <div className="flex w-full items-center justify-center cursor-pointer hover-elevate rounded-lg p-2 -m-2 transition-all">
+            <Logo variant="horizontal" className="w-full h-auto" />
           </div>
         </Link>
       </SidebarHeader>
