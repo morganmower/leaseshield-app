@@ -1,5 +1,5 @@
-import logoHorizontal from "@assets/leaseshield_logo_transparent_horiz_jpg_1764884034160.png";
-import logoStacked from "@assets/leashield_logo_transparent_jpg_1764884038236.png";
+import logoHorizontal from "@/assets/logo-horizontal.png";
+import logoStacked from "@/assets/logo-stacked.png";
 
 interface LogoProps {
   className?: string;
