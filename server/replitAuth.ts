@@ -114,8 +114,15 @@ function isAllowedDomain(hostname: string): boolean {
     /^127\.0\.0\.1$/,         // Local development
   ];
   
-  // Check if hostname matches any allowed pattern
-  return replitDomainPatterns.some(pattern => pattern.test(hostname));
+  // Allow custom domains
+  const customDomains = [
+    'leaseshieldapp.com',
+    'www.leaseshieldapp.com',
+  ];
+  
+  // Check if hostname matches any allowed pattern or custom domain
+  return replitDomainPatterns.some(pattern => pattern.test(hostname)) ||
+         customDomains.includes(hostname);
 }
 
 // Security: Normalize and validate hostname

@@ -12,6 +12,7 @@ import { setupEmailSequences } from "./emailSequenceSetup";
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
   private trialExpiryInterval: NodeJS.Timeout | null = null;
+  private trialExpirationEnrollmentInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
   private emailSequenceInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringLastRun: Date | null = null;
@@ -249,7 +250,7 @@ export class ScheduledJobs {
 
       for (const user of expiringUsers) {
         // Check if user is already enrolled in this sequence
-        const existingEnrollment = await storage.getActiveEnrollment(user.id, trialSequence.id);
+        const existingEnrollment = await storage.getActiveEnrollmentByUserAndSequence(user.id, trialSequence.id);
         if (existingEnrollment) {
           console.log(`  Skipping ${user.email} - already enrolled in trial expiration sequence`);
           continue;
@@ -402,6 +403,13 @@ export class ScheduledJobs {
     );
     setTimeout(() => this.checkTrialExpiry(), 90 * 1000);
 
+    // Check for trial expiration enrollments every 6 hours
+    this.trialExpirationEnrollmentInterval = setInterval(
+      () => this.checkTrialExpirationEnrollments(),
+      6 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.checkTrialExpirationEnrollments(), 2 * 60 * 1000);
+
     // Check for legislative monitoring daily
     this.legislativeMonitoringInterval = setInterval(
       () => this.checkLegislativeMonitoring(),
@@ -431,6 +439,11 @@ export class ScheduledJobs {
     if (this.trialExpiryInterval) {
       clearInterval(this.trialExpiryInterval);
       this.trialExpiryInterval = null;
+    }
+
+    if (this.trialExpirationEnrollmentInterval) {
+      clearInterval(this.trialExpirationEnrollmentInterval);
+      this.trialExpirationEnrollmentInterval = null;
     }
 
     if (this.legislativeMonitoringInterval) {
