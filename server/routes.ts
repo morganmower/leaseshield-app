@@ -2318,6 +2318,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json({ reply });
   }));
 
+  // Download logos endpoint
+  app.get('/api/download/logos/:filename', async (req, res) => {
+    const filename = req.params.filename;
+    if (!filename.match(/^leaseshield-logo-(horizontal|stacked)\.jpg$/)) {
+      return res.status(400).json({ error: 'Invalid filename' });
+    }
+    
+    const filePath = path.join('attached_assets', filename);
+    try {
+      res.download(filePath);
+    } catch (error) {
+      res.status(404).json({ error: 'File not found' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
