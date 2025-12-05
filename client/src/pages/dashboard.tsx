@@ -1,7 +1,8 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -22,7 +23,9 @@ import {
   Gavel,
   CheckCircle2,
   Wand2,
-  Play
+  Play,
+  GraduationCap,
+  Clock
 } from "lucide-react";
 import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
@@ -82,6 +85,32 @@ export default function Dashboard() {
   const { data: allTemplates } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
     enabled: isAuthenticated,
+  });
+
+  // AI Training interest
+  const { data: trainingInterest } = useQuery<{ registered: boolean }>({
+    queryKey: ["/api/training-interest"],
+    enabled: isAuthenticated,
+  });
+
+  const registerTrainingInterest = useMutation({
+    mutationFn: async () => {
+      return apiRequest("POST", "/api/training-interest");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/training-interest"] });
+      toast({
+        title: "You're on the list!",
+        description: "We'll notify you when AI Training for Landlords launches.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Something went wrong",
+        description: "Please try again later.",
+        variant: "destructive",
+      });
+    },
   });
 
   if (isLoading) {
@@ -498,6 +527,47 @@ export default function Dashboard() {
                 </Button>
               </Card>
             </Link>
+
+            {/* AI Training for Landlords - Coming Soon */}
+            <Card className="p-6 transition-all h-full border-dashed border-2 border-primary/30" data-testid="card-ai-training-coming-soon">
+              <div className="flex items-start gap-3 mb-4">
+                <div className="rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                  <GraduationCap className="h-6 w-6 text-indigo-600 dark:text-indigo-500" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-display font-semibold text-foreground mb-1">AI Training for Landlords</h3>
+                  <Badge variant="secondary" className="text-xs bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800">
+                    <Clock className="h-3 w-3 mr-1" />
+                    Coming Soon
+                  </Badge>
+                </div>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Live 4-hour workshops teaching you to use AI for marketing, screening, and understanding new laws
+              </p>
+              {trainingInterest?.registered ? (
+                <div className="flex items-center justify-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3">
+                  <CheckCircle2 className="h-4 w-4" />
+                  <span>You'll be notified when we launch!</span>
+                </div>
+              ) : (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  onClick={() => registerTrainingInterest.mutate()}
+                  disabled={registerTrainingInterest.isPending}
+                  data-testid="button-notify-training"
+                >
+                  {registerTrainingInterest.isPending ? (
+                    <div className="animate-spin w-4 h-4 border-2 border-indigo-600 border-t-transparent rounded-full mr-2" />
+                  ) : (
+                    <Bell className="mr-2 h-4 w-4" />
+                  )}
+                  Notify Me When Available
+                </Button>
+              )}
+            </Card>
           </div>
         </div>
 
