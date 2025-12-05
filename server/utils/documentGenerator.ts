@@ -1,4 +1,5 @@
 import puppeteer from 'puppeteer';
+import { execSync } from 'child_process';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -37,7 +38,6 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
   // All user input is HTML-escaped before rendering to prevent injection attacks.
   
   // Try to find Chromium executable dynamically
-  const { execSync } = require('child_process');
   let chromiumPath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
   try {
     chromiumPath = execSync('which chromium').toString().trim();
