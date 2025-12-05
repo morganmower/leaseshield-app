@@ -225,7 +225,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('❌ /api/create-subscription error:', error.message);
-      return res.status(500).json({ message: error.message || "Failed to create subscription" });
+      return res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -261,7 +261,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error("Error cancelling subscription:", error);
-      res.status(500).json({ message: error.message || "Failed to cancel subscription" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -288,7 +288,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ url: session.url });
     } catch (error: any) {
       console.error("Error creating portal session:", error);
-      res.status(500).json({ message: error.message || "Failed to create portal session" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1025,7 +1025,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error(`[communications] ❌ ERROR fetching templates:`, error?.message || error);
       console.error(`[communications] Full error:`, error);
-      res.status(500).json({ message: "Failed to fetch templates", error: error?.message });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1471,7 +1471,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ reviews: enrichedReviews, total: enrichedReviews.length });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Error fetching template review queue:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1509,7 +1510,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, template, version, notificationsSent });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Error approving template update:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1531,7 +1533,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json({ success: true, reviewId: id, status: 'rejected' });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Error rejecting template update:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1552,7 +1555,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         versions,
       });
     } catch (error: any) {
-      res.status(500).json({ message: error.message });
+      console.error("Error fetching template versions:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1609,7 +1613,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     } catch (error: any) {
       console.error('Error restoring template version:', error);
-      res.status(500).json({ message: error.message || 'Failed to restore version' });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1663,7 +1667,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.send(pdfBuffer);
     } catch (error: any) {
       console.error('Document generation error:', error);
-      res.status(500).json({ message: error.message || 'Failed to generate document' });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -1920,7 +1924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('Error running legislative monitoring:', error);
       return res.status(500).json({ 
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to run monitoring' 
+        message: "Something went wrong. Please try again."
       });
     }
   });
@@ -1953,7 +1957,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error('❌ Cron monitoring failed:', error);
       return res.status(500).json({ 
         success: false,
-        message: error instanceof Error ? error.message : 'Monitoring failed' 
+        message: "Something went wrong. Please try again."
       });
     }
   });
