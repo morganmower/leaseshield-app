@@ -1001,6 +1001,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.patch('/api/uploaded-documents/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
+      const { fileName, propertyId, description } = req.body;
+      
+      const updates: { fileName?: string; propertyId?: string | null; description?: string | null } = {};
+      if (fileName !== undefined) updates.fileName = fileName;
+      if (propertyId !== undefined) updates.propertyId = propertyId === "none" || propertyId === "" ? null : propertyId;
+      if (description !== undefined) updates.description = description || null;
+
+      const updated = await storage.updateUploadedDocument(req.params.id, userId, updates);
+      if (!updated) {
+        return res.status(404).json({ message: "Document not found" });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating uploaded document:", error);
+      res.status(500).json({ message: "Failed to update document" });
+    }
+  });
+
   app.delete('/api/uploaded-documents/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);

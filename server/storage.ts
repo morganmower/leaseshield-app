@@ -1124,6 +1124,15 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
+  async updateUploadedDocument(id: string, userId: string, updates: { fileName?: string; propertyId?: string | null; description?: string | null }): Promise<UploadedDocument | undefined> {
+    const [updated] = await db
+      .update(uploadedDocuments)
+      .set(updates)
+      .where(and(eq(uploadedDocuments.id, id), eq(uploadedDocuments.userId, userId)))
+      .returning();
+    return updated;
+  }
+
   // Communication template operations
   async getCommunicationTemplatesByState(stateId: string): Promise<CommunicationTemplate[]> {
     return await db

@@ -37,6 +37,10 @@ export default function MyDocuments() {
   const [uploadPropertyId, setUploadPropertyId] = useState<string>("none");
   const [uploadDescription, setUploadDescription] = useState("");
   const [deleteUploadedDocId, setDeleteUploadedDocId] = useState<string | null>(null);
+  const [editUploadedDoc, setEditUploadedDoc] = useState<UploadedDocument | null>(null);
+  const [editFileName, setEditFileName] = useState("");
+  const [editPropertyId, setEditPropertyId] = useState<string>("none");
+  const [editDescription, setEditDescription] = useState("");
 
   const { data: documents = [], isLoading } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],
@@ -222,6 +226,39 @@ export default function MyDocuments() {
       toast({
         title: "Delete Failed",
         description: "Failed to delete the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUploadedMutation = useMutation({
+    mutationFn: async ({ id, fileName, propertyId, description }: {
+      id: string;
+      fileName: string;
+      propertyId: string;
+      description: string;
+    }) => {
+      const response = await fetch(`/api/uploaded-documents/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ fileName, propertyId, description }),
+      });
+      if (!response.ok) throw new Error('Failed to update document');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      setEditUploadedDoc(null);
+      toast({
+        title: "Document Updated",
+        description: "Your document has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update the document.",
         variant: "destructive",
       });
     },
@@ -448,6 +485,19 @@ export default function MyDocuments() {
                       <Button
                         size="sm"
                         variant="outline"
+                        onClick={() => {
+                          setEditUploadedDoc(document);
+                          setEditFileName(document.fileName);
+                          setEditPropertyId(document.propertyId || "none");
+                          setEditDescription(document.description || "");
+                        }}
+                        data-testid={`button-edit-uploaded-${document.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
                         onClick={() => setDeleteUploadedDocId(document.id)}
                         data-testid={`button-delete-uploaded-${document.id}`}
                       >
@@ -640,6 +690,87 @@ export default function MyDocuments() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Edit Uploaded Document Dialog */}
+        <Dialog open={!!editUploadedDoc} onOpenChange={(open) => !open && setEditUploadedDoc(null)}>
+          <DialogContent data-testid="dialog-edit-uploaded-document">
+            <DialogHeader>
+              <DialogTitle>Edit Document</DialogTitle>
+              <DialogDescription>
+                Update the document name, property assignment, or description.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-document-name">Document Name *</Label>
+                <Input
+                  id="edit-document-name"
+                  value={editFileName}
+                  onChange={(e) => setEditFileName(e.target.value)}
+                  data-testid="input-edit-document-name"
+                />
+              </div>
+
+              {properties.length > 0 && (
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-property-select">Property</Label>
+                  <Select
+                    value={editPropertyId}
+                    onValueChange={setEditPropertyId}
+                  >
+                    <SelectTrigger id="edit-property-select" data-testid="select-edit-property">
+                      <SelectValue placeholder="Select a property" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Property</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Add notes about this document..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-edit-description"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setEditUploadedDoc(null)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editUploadedDoc && editFileName.trim()) {
+                    updateUploadedMutation.mutate({
+                      id: editUploadedDoc.id,
+                      fileName: editFileName.trim(),
+                      propertyId: editPropertyId,
+                      description: editDescription,
+                    });
+                  }
+                }} 
+                disabled={!editFileName.trim() || updateUploadedMutation.isPending}
+                data-testid="button-save-edit"
+              >
+                {updateUploadedMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
