@@ -32,7 +32,7 @@ export function Logo({ className = "", variant = 'horizontal', size }: LogoProps
     <img 
       src={logoHorizontal} 
       alt="LeaseShield App - Landlord Protection" 
-      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain scale-y-150 ${className}`}
+      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain scale-125 ${className}`}
     />
   );
 }
