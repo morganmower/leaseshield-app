@@ -198,20 +198,15 @@ export function ChatWidget() {
       </AnimatePresence>
 
       {!chatOpen && (
-        <div className="flex flex-col items-end gap-2">
-          <div className="hidden sm:block bg-card border shadow-lg rounded-lg px-3 py-2 text-xs text-muted-foreground max-w-[200px]">
-            <AlertCircle className="h-3 w-3 inline mr-1" />
-            AI assistant • Info only, not legal advice
-          </div>
-          <Button
-            size="lg"
-            onClick={() => setChatOpen(true)}
-            className="h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-2xl"
-            data-testid="button-toggle-chat"
-          >
-            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-          </Button>
-        </div>
+        <Button
+          size="icon"
+          onClick={() => setChatOpen(true)}
+          className="h-10 w-10 rounded-full shadow-lg opacity-70 hover:opacity-100 transition-opacity"
+          data-testid="button-toggle-chat"
+          title="AI Assistant (Info only, not legal advice)"
+        >
+          <MessageCircle className="h-4 w-4" />
+        </Button>
       )}
     </div>
   );
