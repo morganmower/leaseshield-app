@@ -7,15 +7,26 @@ import { validateEnv } from "./utils/env";
 
 // Content Security Policy middleware
 const cspMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  const isDev = process.env.NODE_ENV === 'development';
+  
   // Skip CSP for Vite dev server assets in development
-  if (process.env.NODE_ENV === 'development' && !req.path.startsWith('/api')) {
+  if (isDev && !req.path.startsWith('/api')) {
     return next();
   }
   
+  // Production CSP is stricter - development allows unsafe-inline/eval for HMR
+  const scriptSrc = isDev 
+    ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com"
+    : "script-src 'self' https://js.stripe.com";
+    
+  const styleSrc = isDev
+    ? "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"
+    : "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com"; // Inline needed for Tailwind
+  
   res.setHeader('Content-Security-Policy', [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
-    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    scriptSrc,
+    styleSrc,
     "font-src 'self' https://fonts.gstatic.com",
     "img-src 'self' data: blob: https:",
     "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
@@ -33,6 +44,11 @@ const cspMiddleware = (req: Request, res: Response, next: NextFunction) => {
   res.setHeader('X-XSS-Protection', '1; mode=block');
   res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  
+  // Strict Transport Security (HSTS) - enforce HTTPS
+  if (!isDev) {
+    res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  }
   
   next();
 };

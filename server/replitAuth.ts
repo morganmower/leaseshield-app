@@ -80,6 +80,42 @@ async function upsertUser(claims: any) {
   }
 }
 
+// Security: Validate hostname against allowed domains to prevent host-header hijacking
+function isAllowedDomain(hostname: string): boolean {
+  // Allow Replit domains (development and production)
+  const replitDomainPatterns = [
+    /^.*\.replit\.dev$/,      // Development domains
+    /^.*\.repl\.co$/,         // Alternative Replit domains
+    /^.*\.replit\.app$/,      // Production/deployed domains
+    /^localhost$/,            // Local development
+    /^127\.0\.0\.1$/,         // Local development
+  ];
+  
+  // Check if hostname matches any allowed pattern
+  return replitDomainPatterns.some(pattern => pattern.test(hostname));
+}
+
+// Security: Normalize and validate hostname
+function getValidatedHostname(req: any): string | null {
+  const hostname = req.hostname;
+  
+  // Validate hostname format (basic sanitization)
+  if (!hostname || typeof hostname !== 'string') {
+    return null;
+  }
+  
+  // Remove any port numbers
+  const cleanHostname = hostname.split(':')[0].toLowerCase();
+  
+  // Validate against allowed domains
+  if (!isAllowedDomain(cleanHostname)) {
+    console.error(`[Auth Security] Rejected hostname: ${cleanHostname}`);
+    return null;
+  }
+  
+  return cleanHostname;
+}
+
 export async function setupAuth(app: Express) {
   app.set("trust proxy", 1);
   app.use(getSession());
@@ -121,22 +157,31 @@ export async function setupAuth(app: Express) {
   passport.deserializeUser((user: Express.User, cb) => cb(null, user));
 
   app.get("/api/login", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const validatedHostname = getValidatedHostname(req);
+    if (!validatedHostname) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+    ensureStrategy(validatedHostname);
+    passport.authenticate(`replitauth:${validatedHostname}`, {
       prompt: "login consent",
       scope: ["openid", "email", "profile", "offline_access"],
     })(req, res, next);
   });
 
   app.get("/api/callback", (req, res, next) => {
-    ensureStrategy(req.hostname);
-    passport.authenticate(`replitauth:${req.hostname}`, {
+    const validatedHostname = getValidatedHostname(req);
+    if (!validatedHostname) {
+      return res.status(400).json({ message: "Invalid request" });
+    }
+    ensureStrategy(validatedHostname);
+    passport.authenticate(`replitauth:${validatedHostname}`, {
       successReturnToOrRedirect: "/",
       failureRedirect: "/api/login",
     })(req, res, next);
   });
 
   app.get("/api/logout", (req, res) => {
+    const validatedHostname = getValidatedHostname(req);
     // First logout from passport
     req.logout(() => {
       // Then explicitly destroy the session to ensure complete cleanup
@@ -146,11 +191,12 @@ export async function setupAuth(app: Express) {
         }
         // Clear session cookie
         res.clearCookie('connect.sid');
-        // Redirect to Replit's end session URL
+        // Redirect to Replit's end session URL (use validated hostname or fallback)
+        const redirectHost = validatedHostname || req.hostname;
         res.redirect(
           client.buildEndSessionUrl(config, {
             client_id: process.env.REPL_ID!,
-            post_logout_redirect_uri: `${req.protocol}://${req.hostname}`,
+            post_logout_redirect_uri: `https://${redirectHost}`,
           }).href
         );
       });
