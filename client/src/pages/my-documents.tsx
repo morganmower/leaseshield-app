@@ -348,7 +348,7 @@ export default function MyDocuments() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Calendar className="h-4 w-4" />
                       <span data-testid={`text-created-date-${document.id}`}>
-                        {format(new Date(document.createdAt), 'MMM d, yyyy')}
+                        {document.createdAt ? format(new Date(document.createdAt), 'MMM d, yyyy') : 'Recently created'}
                       </span>
                     </div>
                     {document.propertyId && (
@@ -422,7 +422,7 @@ export default function MyDocuments() {
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4" />
                         <span data-testid={`text-uploaded-date-${document.id}`}>
-                          {format(new Date(document.uploadedAt), 'MMM d, yyyy')}
+                          {document.createdAt ? format(new Date(document.createdAt), 'MMM d, yyyy') : 'Recently uploaded'}
                         </span>
                       </div>
                       {document.propertyId && (
