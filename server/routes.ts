@@ -151,6 +151,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // To make a user admin in development, update the database directly:
   // UPDATE users SET "isAdmin" = true WHERE id = '<user-id>';
 
+  // AI Training Interest - track users who want to be notified about workshops
+  app.post('/api/training-interest', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check if user already registered interest
+      const existingInterest = await storage.getTrainingInterest(userId);
+      if (existingInterest) {
+        return res.json({ message: "Already registered", interest: existingInterest });
+      }
+      
+      // Save the interest with user's email for easy export
+      const interest = await storage.createTrainingInterest({
+        userId,
+        email: user.email || undefined,
+      });
+      
+      res.json({ message: "Successfully registered for notifications", interest });
+    } catch (error) {
+      console.error("Error saving training interest:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Check if user has registered training interest
+  app.get('/api/training-interest', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const interest = await storage.getTrainingInterest(userId);
+      res.json({ registered: !!interest, interest });
+    } catch (error) {
+      console.error("Error checking training interest:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
   // Stripe subscription routes
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
     try {

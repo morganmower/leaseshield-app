@@ -59,6 +59,9 @@ import {
   type InsertCommunicationTemplate,
   type RentLedgerEntry,
   type InsertRentLedgerEntry,
+  type TrainingInterest,
+  type InsertTrainingInterest,
+  trainingInterest,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -221,6 +224,10 @@ export interface IStorage {
   createRentLedgerEntry(entry: InsertRentLedgerEntry): Promise<RentLedgerEntry>;
   updateRentLedgerEntry(id: string, userId: string, data: Partial<InsertRentLedgerEntry>): Promise<RentLedgerEntry | null>;
   deleteRentLedgerEntry(id: string, userId: string): Promise<boolean>;
+
+  // Training interest operations
+  getTrainingInterest(userId: string): Promise<TrainingInterest | undefined>;
+  createTrainingInterest(interest: InsertTrainingInterest): Promise<TrainingInterest>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1162,6 +1169,23 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(rentLedgerEntries.id, id), eq(rentLedgerEntries.userId, userId)))
       .returning();
     return result.length > 0;
+  }
+
+  // Training interest operations
+  async getTrainingInterest(userId: string): Promise<TrainingInterest | undefined> {
+    const [interest] = await db
+      .select()
+      .from(trainingInterest)
+      .where(eq(trainingInterest.userId, userId));
+    return interest;
+  }
+
+  async createTrainingInterest(interest: InsertTrainingInterest): Promise<TrainingInterest> {
+    const [newInterest] = await db
+      .insert(trainingInterest)
+      .values(interest)
+      .returning();
+    return newInterest;
   }
 }
 
