@@ -3,6 +3,20 @@
 ## Overview
 LeaseShield App is a subscription-based SaaS platform for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect investments and ensure legal compliance. The platform currently supports 14 states (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL).
 
+## Project Documentation
+
+### Key Documentation Files
+- **[README.md](./README.md)** — Business plan, mission statement, monetization strategy, competitive positioning, and feature overview. This is the foundational document explaining the project's purpose and goals.
+- **[progress.md](./progress.md)** — Detailed feature implementation checklist with checkbox tracking. Shows completed vs. pending features, organized by category. Use this to track development progress and identify remaining work.
+- **[replit.md](./replit.md)** (this file) — Technical architecture, system design decisions, and AI agent context. Maintains session memory and project state.
+
+### Documentation Purposes
+| File | Purpose | When to Update |
+|------|---------|----------------|
+| README.md | Business context, goals, monetization | Major feature additions, business pivots |
+| progress.md | Feature tracking, implementation status | After completing features, sprint planning |
+| replit.md | Technical architecture, AI context | Architecture changes, new integrations |
+
 ## User Preferences
 Not specified.
 
