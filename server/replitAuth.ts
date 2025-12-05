@@ -77,6 +77,29 @@ async function upsertUser(claims: any) {
       subscriptionStatus: "trialing",
       trialEndsAt,
     });
+
+    // Enroll new user in welcome email sequence
+    try {
+      const welcomeSequence = await storage.getEmailSequenceByTrigger('signup');
+      if (welcomeSequence) {
+        const steps = await storage.getEmailSequenceSteps(welcomeSequence.id);
+        const firstStep = steps[0];
+        const nextSendAt = firstStep 
+          ? new Date(Date.now() + firstStep.delayHours * 60 * 60 * 1000)
+          : null;
+        
+        await storage.createEnrollment({
+          userId: claims["sub"],
+          sequenceId: welcomeSequence.id,
+          currentStep: 0,
+          status: 'active',
+          nextSendAt,
+        });
+        console.log(`✅ New user ${claims["sub"]} enrolled in welcome sequence`);
+      }
+    } catch (enrollError) {
+      console.error('Error enrolling user in welcome sequence:', enrollError);
+    }
   }
 }
 

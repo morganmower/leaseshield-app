@@ -1,5 +1,8 @@
 // Email notification service for LeaseShield App
 import { Resend } from 'resend';
+import { storage } from './storage';
+import { aiContentService } from './aiContentService';
+import type { EmailSequenceStep, User } from '@shared/schema';
 
 interface EmailTemplate {
   subject: string;
@@ -477,6 +480,237 @@ Sent from LeaseShield App Contact Form
       { email: 'support@leaseshieldapp.com', firstName: 'Support', lastName: 'Team' },
       template
     );
+  }
+
+  // AI-powered email methods
+  async sendAIEmail(
+    user: User,
+    step: EmailSequenceStep,
+    sequenceId: string,
+    emailType: 'sequence' | 'transactional' | 'notification' = 'sequence'
+  ): Promise<{ success: boolean; resendId?: string }> {
+    if (!user.email) {
+      console.error(`❌ Cannot send email to user ${user.id} - no email address`);
+      return { success: false };
+    }
+
+    try {
+      const content = await aiContentService.generateEmailContent(
+        user.id,
+        step.aiPrompt || '',
+        step.subject,
+        step.fallbackBody
+      );
+
+      let resendId: string | undefined;
+      
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
+          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          to: user.email,
+          subject: content.subject,
+          html: content.htmlBody,
+          text: content.textBody,
+        });
+
+        if (result.error) {
+          console.error(`❌ Failed to send AI email to ${user.email}:`, result.error);
+          
+          await storage.createEmailEvent({
+            userId: user.id,
+            email: user.email,
+            sequenceId,
+            stepId: step.id,
+            emailType,
+            subject: content.subject,
+            status: 'failed',
+            aiGenerated: content.isAiGenerated,
+            aiContentCached: content.isAiGenerated ? content.textBody : null,
+            metadata: { error: result.error.message },
+          });
+          
+          return { success: false };
+        }
+        
+        resendId = result.data?.id;
+      } else {
+        console.log('📧 AI Email Service - Sending email:');
+        console.log(`  To: ${user.email}`);
+        console.log(`  Subject: ${content.subject}`);
+        console.log(`  AI Generated: ${content.isAiGenerated}`);
+        console.log('  ⚠️  RESEND_API_KEY not set - email not actually sent');
+      }
+
+      await storage.createEmailEvent({
+        userId: user.id,
+        email: user.email,
+        resendId,
+        sequenceId,
+        stepId: step.id,
+        emailType,
+        subject: content.subject,
+        status: 'sent',
+        aiGenerated: content.isAiGenerated,
+        aiContentCached: content.isAiGenerated ? content.textBody : null,
+      });
+
+      console.log(`✅ AI email sent to ${user.email} (${content.subject})`);
+      return { success: true, resendId };
+    } catch (error) {
+      console.error(`❌ Error sending AI email to ${user.email}:`, error);
+      
+      try {
+        await storage.createEmailEvent({
+          userId: user.id,
+          email: user.email,
+          sequenceId,
+          stepId: step.id,
+          emailType,
+          subject: step.subject,
+          status: 'failed',
+          aiGenerated: false,
+          metadata: { error: error instanceof Error ? error.message : 'Unknown error' },
+        });
+      } catch (logError) {
+        console.error('Failed to log email error:', logError);
+      }
+      
+      return { success: false };
+    }
+  }
+
+  async sendWelcomeEmail(user: User): Promise<boolean> {
+    if (!user.email) return false;
+
+    try {
+      const content = await aiContentService.generateWelcomeEmail(user.id);
+      
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
+          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          to: user.email,
+          subject: content.subject,
+          html: content.htmlBody,
+          text: content.textBody,
+        });
+
+        if (result.error) {
+          console.error(`❌ Failed to send welcome email:`, result.error);
+          return false;
+        }
+
+        await storage.createEmailEvent({
+          userId: user.id,
+          email: user.email,
+          resendId: result.data?.id,
+          emailType: 'transactional',
+          subject: content.subject,
+          status: 'sent',
+          aiGenerated: content.isAiGenerated,
+          aiContentCached: content.isAiGenerated ? content.textBody : null,
+        });
+
+        console.log(`✅ Welcome email sent to ${user.email}`);
+        return true;
+      } else {
+        console.log('📧 Would send welcome email to:', user.email);
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Error sending welcome email:', error);
+      return false;
+    }
+  }
+
+  async sendDocumentConfirmationEmail(user: User, templateTitle: string): Promise<boolean> {
+    if (!user.email) return false;
+
+    try {
+      const content = await aiContentService.generateDocumentDownloadConfirmation(user.id, templateTitle);
+      
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
+          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          to: user.email,
+          subject: content.subject,
+          html: content.htmlBody,
+          text: content.textBody,
+        });
+
+        if (result.error) {
+          console.error(`❌ Failed to send document confirmation email:`, result.error);
+          return false;
+        }
+
+        await storage.createEmailEvent({
+          userId: user.id,
+          email: user.email,
+          resendId: result.data?.id,
+          emailType: 'transactional',
+          subject: content.subject,
+          status: 'sent',
+          aiGenerated: content.isAiGenerated,
+          aiContentCached: content.isAiGenerated ? content.textBody : null,
+          metadata: { templateTitle },
+        });
+
+        console.log(`✅ Document confirmation email sent to ${user.email}`);
+        return true;
+      } else {
+        console.log('📧 Would send document confirmation email to:', user.email);
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Error sending document confirmation email:', error);
+      return false;
+    }
+  }
+
+  async sendReengagementEmail(user: User): Promise<boolean> {
+    if (!user.email) return false;
+
+    try {
+      const content = await aiContentService.generateReengagementEmail(user.id);
+      
+      if (process.env.RESEND_API_KEY) {
+        const resend = new Resend(process.env.RESEND_API_KEY);
+        const result = await resend.emails.send({
+          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          to: user.email,
+          subject: content.subject,
+          html: content.htmlBody,
+          text: content.textBody,
+        });
+
+        if (result.error) {
+          console.error(`❌ Failed to send re-engagement email:`, result.error);
+          return false;
+        }
+
+        await storage.createEmailEvent({
+          userId: user.id,
+          email: user.email,
+          resendId: result.data?.id,
+          emailType: 'transactional',
+          subject: content.subject,
+          status: 'sent',
+          aiGenerated: content.isAiGenerated,
+          aiContentCached: content.isAiGenerated ? content.textBody : null,
+        });
+
+        console.log(`✅ Re-engagement email sent to ${user.email}`);
+        return true;
+      } else {
+        console.log('📧 Would send re-engagement email to:', user.email);
+        return true;
+      }
+    } catch (error) {
+      console.error('❌ Error sending re-engagement email:', error);
+      return false;
+    }
   }
 }
 

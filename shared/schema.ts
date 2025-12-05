@@ -696,3 +696,135 @@ export const insertTrainingInterestSchema = createInsertSchema(trainingInterest)
 });
 export type InsertTrainingInterest = z.infer<typeof insertTrainingInterestSchema>;
 export type TrainingInterest = typeof trainingInterest.$inferSelect;
+
+// Email Sequences - Define reusable email campaigns
+export const emailSequences = pgTable("email_sequences", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "Welcome Series", "Onboarding Tips"
+  description: text("description"),
+  trigger: varchar("trigger", { length: 50 }).notNull(), // "signup", "subscription", "inactive", "manual"
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const emailSequenceRelations = relations(emailSequences, ({ many }) => ({
+  steps: many(emailSequenceSteps),
+  enrollments: many(emailSequenceEnrollments),
+}));
+
+export const insertEmailSequenceSchema = createInsertSchema(emailSequences).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertEmailSequence = z.infer<typeof insertEmailSequenceSchema>;
+export type EmailSequence = typeof emailSequences.$inferSelect;
+
+// Email Sequence Steps - Individual emails in a sequence
+export const emailSequenceSteps = pgTable("email_sequence_steps", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sequenceId: varchar("sequence_id").notNull().references(() => emailSequences.id, { onDelete: "cascade" }),
+  stepNumber: integer("step_number").notNull(), // Order in the sequence
+  name: varchar("name", { length: 100 }).notNull(), // e.g., "Welcome Email", "Day 3 Tips"
+  subject: text("subject").notNull(), // Can include {{placeholders}} for AI
+  aiPrompt: text("ai_prompt"), // OpenAI prompt for personalized content
+  fallbackBody: text("fallback_body").notNull(), // Static fallback if AI unavailable
+  delayHours: integer("delay_hours").default(0).notNull(), // Hours after previous step (or enrollment)
+  isActive: boolean("is_active").default(true).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const emailSequenceStepsRelations = relations(emailSequenceSteps, ({ one }) => ({
+  sequence: one(emailSequences, {
+    fields: [emailSequenceSteps.sequenceId],
+    references: [emailSequences.id],
+  }),
+}));
+
+export const insertEmailSequenceStepSchema = createInsertSchema(emailSequenceSteps).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertEmailSequenceStep = z.infer<typeof insertEmailSequenceStepSchema>;
+export type EmailSequenceStep = typeof emailSequenceSteps.$inferSelect;
+
+// Email Sequence Enrollments - Track user progress through sequences
+export const emailSequenceEnrollments = pgTable("email_sequence_enrollments", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  sequenceId: varchar("sequence_id").notNull().references(() => emailSequences.id, { onDelete: "cascade" }),
+  currentStep: integer("current_step").default(0).notNull(), // 0 = not started yet
+  status: varchar("status", { length: 20 }).default("active").notNull(), // active, completed, paused, unsubscribed
+  nextSendAt: timestamp("next_send_at"), // When to send next email
+  enrolledAt: timestamp("enrolled_at").defaultNow().notNull(),
+  completedAt: timestamp("completed_at"),
+  lastSentAt: timestamp("last_sent_at"),
+});
+
+export const emailSequenceEnrollmentsRelations = relations(emailSequenceEnrollments, ({ one }) => ({
+  user: one(users, {
+    fields: [emailSequenceEnrollments.userId],
+    references: [users.id],
+  }),
+  sequence: one(emailSequences, {
+    fields: [emailSequenceEnrollments.sequenceId],
+    references: [emailSequences.id],
+  }),
+}));
+
+export const insertEmailSequenceEnrollmentSchema = createInsertSchema(emailSequenceEnrollments).omit({
+  id: true,
+  enrolledAt: true,
+  completedAt: true,
+  lastSentAt: true,
+});
+export type InsertEmailSequenceEnrollment = z.infer<typeof insertEmailSequenceEnrollmentSchema>;
+export type EmailSequenceEnrollment = typeof emailSequenceEnrollments.$inferSelect;
+
+// Email Events - Track every email sent and engagement
+export const emailEvents = pgTable("email_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").references(() => users.id, { onDelete: "set null" }),
+  email: varchar("email", { length: 255 }).notNull(),
+  resendId: varchar("resend_id", { length: 100 }), // ID from Resend API
+  sequenceId: varchar("sequence_id").references(() => emailSequences.id, { onDelete: "set null" }),
+  stepId: varchar("step_id").references(() => emailSequenceSteps.id, { onDelete: "set null" }),
+  emailType: varchar("email_type", { length: 50 }).notNull(), // "sequence", "transactional", "notification"
+  subject: text("subject").notNull(),
+  status: varchar("status", { length: 20 }).default("sent").notNull(), // sent, delivered, opened, clicked, bounced, failed
+  aiGenerated: boolean("ai_generated").default(false).notNull(),
+  aiContentCached: text("ai_content_cached"), // Store AI-generated content for auditing
+  sentAt: timestamp("sent_at").defaultNow().notNull(),
+  deliveredAt: timestamp("delivered_at"),
+  openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
+  bouncedAt: timestamp("bounced_at"),
+  metadata: jsonb("metadata"), // Additional data (click URLs, bounce reason, etc.)
+});
+
+export const emailEventsRelations = relations(emailEvents, ({ one }) => ({
+  user: one(users, {
+    fields: [emailEvents.userId],
+    references: [users.id],
+  }),
+  sequence: one(emailSequences, {
+    fields: [emailEvents.sequenceId],
+    references: [emailSequences.id],
+  }),
+  step: one(emailSequenceSteps, {
+    fields: [emailEvents.stepId],
+    references: [emailSequenceSteps.id],
+  }),
+}));
+
+export const insertEmailEventSchema = createInsertSchema(emailEvents).omit({
+  id: true,
+  sentAt: true,
+  deliveredAt: true,
+  openedAt: true,
+  clickedAt: true,
+  bouncedAt: true,
+});
+export type InsertEmailEvent = z.infer<typeof insertEmailEventSchema>;
+export type EmailEvent = typeof emailEvents.$inferSelect;

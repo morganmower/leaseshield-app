@@ -7,11 +7,13 @@ import { db } from "./db";
 import { users } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
 import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
+import { setupEmailSequences } from "./emailSequenceSetup";
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
   private trialExpiryInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
+  private emailSequenceInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringLastRun: Date | null = null;
 
   // Check for trials ending soon and send reminder emails (2 days before)
@@ -210,6 +212,79 @@ export class ScheduledJobs {
     }
   }
 
+  // Process pending email sequence steps
+  async processEmailSequences(): Promise<void> {
+    try {
+      console.log('📧 Processing email sequences...');
+
+      const pendingEnrollments = await storage.getPendingEnrollments();
+      console.log(`  Found ${pendingEnrollments.length} enrollments ready to process`);
+
+      for (const enrollment of pendingEnrollments) {
+        try {
+          const sequence = await storage.getEmailSequenceById(enrollment.sequenceId);
+          if (!sequence || !sequence.isActive) {
+            console.log(`  Skipping enrollment ${enrollment.id} - sequence inactive`);
+            continue;
+          }
+
+          const steps = await storage.getEmailSequenceSteps(enrollment.sequenceId);
+          const nextStepIndex = enrollment.currentStep;
+          
+          if (nextStepIndex >= steps.length) {
+            await storage.updateEnrollment(enrollment.id, {
+              status: 'completed',
+              completedAt: new Date(),
+            });
+            console.log(`  ✓ Completed sequence for enrollment ${enrollment.id}`);
+            continue;
+          }
+
+          const step = steps[nextStepIndex];
+          if (!step || !step.isActive) {
+            continue;
+          }
+
+          const user = await storage.getUser(enrollment.userId);
+          if (!user || !user.email) {
+            console.log(`  Skipping enrollment ${enrollment.id} - user has no email`);
+            continue;
+          }
+
+          const result = await emailService.sendAIEmail(user, step, enrollment.sequenceId);
+          
+          if (result.success) {
+            const nextStep = nextStepIndex + 1;
+            const isComplete = nextStep >= steps.length;
+            
+            let nextSendAt: Date | null = null;
+            if (!isComplete && steps[nextStep]) {
+              nextSendAt = new Date(Date.now() + steps[nextStep].delayHours * 60 * 60 * 1000);
+            }
+
+            await storage.updateEnrollment(enrollment.id, {
+              currentStep: nextStep,
+              status: isComplete ? 'completed' : 'active',
+              nextSendAt,
+              lastSentAt: new Date(),
+              completedAt: isComplete ? new Date() : undefined,
+            });
+
+            console.log(`  ✓ Sent step ${step.stepNumber} to ${user.email}`);
+          } else {
+            console.log(`  ⚠ Failed to send step ${step.stepNumber} to ${user.email}`);
+          }
+        } catch (enrollmentError) {
+          console.error(`  ❌ Error processing enrollment ${enrollment.id}:`, enrollmentError);
+        }
+      }
+
+      console.log('✅ Email sequence processing complete');
+    } catch (error) {
+      console.error('❌ Error processing email sequences:', error);
+    }
+  }
+
   // Check if legislative monitoring should run (monthly on the 1st)
   async checkLegislativeMonitoring(): Promise<void> {
     try {
@@ -242,8 +317,11 @@ export class ScheduledJobs {
   }
 
   // Start all scheduled jobs
-  start(): void {
+  async start(): Promise<void> {
     console.log('🚀 Starting scheduled jobs...');
+
+    // Set up email sequences on startup
+    await setupEmailSequences();
 
     // Check for trial reminders every 6 hours
     this.trialReminderInterval = setInterval(
@@ -266,6 +344,13 @@ export class ScheduledJobs {
     );
     setTimeout(() => this.checkLegislativeMonitoring(), 2 * 60 * 1000);
 
+    // Process email sequences every hour
+    this.emailSequenceInterval = setInterval(
+      () => this.processEmailSequences(),
+      60 * 60 * 1000
+    );
+    setTimeout(() => this.processEmailSequences(), 3 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -286,6 +371,11 @@ export class ScheduledJobs {
     if (this.legislativeMonitoringInterval) {
       clearInterval(this.legislativeMonitoringInterval);
       this.legislativeMonitoringInterval = null;
+    }
+
+    if (this.emailSequenceInterval) {
+      clearInterval(this.emailSequenceInterval);
+      this.emailSequenceInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

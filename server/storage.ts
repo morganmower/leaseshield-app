@@ -19,6 +19,10 @@ import {
   uploadedDocuments,
   communicationTemplates,
   rentLedgerEntries,
+  emailSequences,
+  emailSequenceSteps,
+  emailSequenceEnrollments,
+  emailEvents,
   type User,
   type UpsertUser,
   type Template,
@@ -61,6 +65,14 @@ import {
   type InsertRentLedgerEntry,
   type TrainingInterest,
   type InsertTrainingInterest,
+  type EmailSequence,
+  type InsertEmailSequence,
+  type EmailSequenceStep,
+  type InsertEmailSequenceStep,
+  type EmailSequenceEnrollment,
+  type InsertEmailSequenceEnrollment,
+  type EmailEvent,
+  type InsertEmailEvent,
   trainingInterest,
 } from "@shared/schema";
 import { db } from "./db";
@@ -228,6 +240,30 @@ export interface IStorage {
   // Training interest operations
   getTrainingInterest(userId: string): Promise<TrainingInterest | undefined>;
   createTrainingInterest(interest: InsertTrainingInterest): Promise<TrainingInterest>;
+
+  // Email sequence operations
+  getEmailSequences(): Promise<EmailSequence[]>;
+  getEmailSequenceByTrigger(trigger: string): Promise<EmailSequence | undefined>;
+  getEmailSequenceById(id: string): Promise<EmailSequence | undefined>;
+  createEmailSequence(sequence: InsertEmailSequence): Promise<EmailSequence>;
+  
+  // Email sequence step operations
+  getEmailSequenceSteps(sequenceId: string): Promise<EmailSequenceStep[]>;
+  getEmailSequenceStep(id: string): Promise<EmailSequenceStep | undefined>;
+  createEmailSequenceStep(step: InsertEmailSequenceStep): Promise<EmailSequenceStep>;
+  
+  // Email sequence enrollment operations
+  getActiveEnrollments(): Promise<EmailSequenceEnrollment[]>;
+  getEnrollmentsByUser(userId: string): Promise<EmailSequenceEnrollment[]>;
+  getActiveEnrollmentByUserAndSequence(userId: string, sequenceId: string): Promise<EmailSequenceEnrollment | undefined>;
+  createEnrollment(enrollment: InsertEmailSequenceEnrollment): Promise<EmailSequenceEnrollment>;
+  updateEnrollment(id: string, data: Partial<EmailSequenceEnrollment>): Promise<EmailSequenceEnrollment>;
+  getPendingEnrollments(): Promise<EmailSequenceEnrollment[]>;
+  
+  // Email event operations
+  createEmailEvent(event: InsertEmailEvent): Promise<EmailEvent>;
+  updateEmailEventStatus(resendId: string, status: string, timestamp: Date): Promise<EmailEvent | undefined>;
+  getEmailEventsByUser(userId: string): Promise<EmailEvent[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1186,6 +1222,134 @@ export class DatabaseStorage implements IStorage {
       .values(interest)
       .returning();
     return newInterest;
+  }
+
+  // Email sequence operations
+  async getEmailSequences(): Promise<EmailSequence[]> {
+    return await db.select().from(emailSequences).orderBy(emailSequences.name);
+  }
+
+  async getEmailSequenceByTrigger(trigger: string): Promise<EmailSequence | undefined> {
+    const [sequence] = await db
+      .select()
+      .from(emailSequences)
+      .where(and(eq(emailSequences.trigger, trigger), eq(emailSequences.isActive, true)));
+    return sequence;
+  }
+
+  async getEmailSequenceById(id: string): Promise<EmailSequence | undefined> {
+    const [sequence] = await db.select().from(emailSequences).where(eq(emailSequences.id, id));
+    return sequence;
+  }
+
+  async createEmailSequence(sequence: InsertEmailSequence): Promise<EmailSequence> {
+    const [newSequence] = await db.insert(emailSequences).values(sequence).returning();
+    return newSequence;
+  }
+
+  // Email sequence step operations
+  async getEmailSequenceSteps(sequenceId: string): Promise<EmailSequenceStep[]> {
+    return await db
+      .select()
+      .from(emailSequenceSteps)
+      .where(eq(emailSequenceSteps.sequenceId, sequenceId))
+      .orderBy(emailSequenceSteps.stepNumber);
+  }
+
+  async getEmailSequenceStep(id: string): Promise<EmailSequenceStep | undefined> {
+    const [step] = await db.select().from(emailSequenceSteps).where(eq(emailSequenceSteps.id, id));
+    return step;
+  }
+
+  async createEmailSequenceStep(step: InsertEmailSequenceStep): Promise<EmailSequenceStep> {
+    const [newStep] = await db.insert(emailSequenceSteps).values(step).returning();
+    return newStep;
+  }
+
+  // Email sequence enrollment operations
+  async getActiveEnrollments(): Promise<EmailSequenceEnrollment[]> {
+    return await db
+      .select()
+      .from(emailSequenceEnrollments)
+      .where(eq(emailSequenceEnrollments.status, "active"));
+  }
+
+  async getEnrollmentsByUser(userId: string): Promise<EmailSequenceEnrollment[]> {
+    return await db
+      .select()
+      .from(emailSequenceEnrollments)
+      .where(eq(emailSequenceEnrollments.userId, userId));
+  }
+
+  async getActiveEnrollmentByUserAndSequence(userId: string, sequenceId: string): Promise<EmailSequenceEnrollment | undefined> {
+    const [enrollment] = await db
+      .select()
+      .from(emailSequenceEnrollments)
+      .where(
+        and(
+          eq(emailSequenceEnrollments.userId, userId),
+          eq(emailSequenceEnrollments.sequenceId, sequenceId),
+          eq(emailSequenceEnrollments.status, "active")
+        )
+      );
+    return enrollment;
+  }
+
+  async createEnrollment(enrollment: InsertEmailSequenceEnrollment): Promise<EmailSequenceEnrollment> {
+    const [newEnrollment] = await db.insert(emailSequenceEnrollments).values(enrollment).returning();
+    return newEnrollment;
+  }
+
+  async updateEnrollment(id: string, data: Partial<EmailSequenceEnrollment>): Promise<EmailSequenceEnrollment> {
+    const [updated] = await db
+      .update(emailSequenceEnrollments)
+      .set(data)
+      .where(eq(emailSequenceEnrollments.id, id))
+      .returning();
+    return updated;
+  }
+
+  async getPendingEnrollments(): Promise<EmailSequenceEnrollment[]> {
+    const now = new Date();
+    return await db
+      .select()
+      .from(emailSequenceEnrollments)
+      .where(
+        and(
+          eq(emailSequenceEnrollments.status, "active"),
+          sql`${emailSequenceEnrollments.nextSendAt} <= ${now}`
+        )
+      );
+  }
+
+  // Email event operations
+  async createEmailEvent(event: InsertEmailEvent): Promise<EmailEvent> {
+    const [newEvent] = await db.insert(emailEvents).values(event).returning();
+    return newEvent;
+  }
+
+  async updateEmailEventStatus(resendId: string, status: string, timestamp: Date): Promise<EmailEvent | undefined> {
+    const updateData: Record<string, any> = { status };
+    
+    if (status === "delivered") updateData.deliveredAt = timestamp;
+    else if (status === "opened") updateData.openedAt = timestamp;
+    else if (status === "clicked") updateData.clickedAt = timestamp;
+    else if (status === "bounced") updateData.bouncedAt = timestamp;
+    
+    const [updated] = await db
+      .update(emailEvents)
+      .set(updateData)
+      .where(eq(emailEvents.resendId, resendId))
+      .returning();
+    return updated;
+  }
+
+  async getEmailEventsByUser(userId: string): Promise<EmailEvent[]> {
+    return await db
+      .select()
+      .from(emailEvents)
+      .where(eq(emailEvents.userId, userId))
+      .orderBy(desc(emailEvents.sentAt));
   }
 }
 
