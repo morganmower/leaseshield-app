@@ -26,6 +26,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -122,6 +123,11 @@ const accountItems = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+  const { setOpenMobile } = useSidebar();
+
+  const handleNavClick = () => {
+    setOpenMobile(false);
+  };
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -136,7 +142,7 @@ export function AppSidebar() {
   return (
     <Sidebar>
       <SidebarHeader className="p-4 border-b">
-        <Link href="/dashboard">
+        <Link href="/dashboard" onClick={handleNavClick}>
           <div className="flex items-center cursor-pointer hover-elevate rounded-lg p-2 -m-2 transition-all overflow-hidden">
             <Logo variant="horizontal" className="h-56 -my-8" />
           </div>
@@ -153,7 +159,7 @@ export function AppSidebar() {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.title}</span>
                     </Link>
@@ -175,7 +181,7 @@ export function AppSidebar() {
               {resourceItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.title}</span>
                     </Link>
@@ -197,7 +203,7 @@ export function AppSidebar() {
               {accountItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase()}`}>
                       <item.icon className="h-5 w-5" />
                       <span className="font-medium">{item.title}</span>
                     </Link>
