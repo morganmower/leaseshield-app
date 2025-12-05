@@ -1333,47 +1333,67 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin blog routes
-  app.get('/api/admin/blog', isAuthenticated, async (req, res) => {
+  // Admin blog routes (admin only)
+  app.get('/api/admin/blog', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
       const posts = await storage.getAllBlogPosts({});
       res.json(posts);
     } catch (error) {
       console.error("Error fetching all blog posts:", error);
-      res.status(500).json({ message: "Failed to fetch blog posts" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
-  app.post('/api/admin/blog', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/blog', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
       const validatedData = insertBlogPostSchema.parse(req.body);
       const post = await storage.createBlogPost(validatedData);
       res.json(post);
     } catch (error) {
       console.error("Error creating blog post:", error);
-      res.status(500).json({ message: "Failed to create blog post" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
-  app.patch('/api/admin/blog/:id', isAuthenticated, async (req, res) => {
+  app.patch('/api/admin/blog/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
       const { id } = req.params;
       const post = await storage.updateBlogPost(id, req.body);
       res.json(post);
     } catch (error) {
       console.error("Error updating blog post:", error);
-      res.status(500).json({ message: "Failed to update blog post" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
-  app.delete('/api/admin/blog/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/admin/blog/:id', isAuthenticated, async (req: any, res) => {
     try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
       const { id } = req.params;
       await storage.deleteBlogPost(id);
       res.json({ success: true });
     } catch (error) {
       console.error("Error deleting blog post:", error);
-      res.status(500).json({ message: "Failed to delete blog post" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 

@@ -5,6 +5,38 @@ import { scheduledJobs } from "./scheduledJobs";
 import { closePool } from "./db";
 import { validateEnv } from "./utils/env";
 
+// Content Security Policy middleware
+const cspMiddleware = (req: Request, res: Response, next: NextFunction) => {
+  // Skip CSP for Vite dev server assets in development
+  if (process.env.NODE_ENV === 'development' && !req.path.startsWith('/api')) {
+    return next();
+  }
+  
+  res.setHeader('Content-Security-Policy', [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://js.stripe.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https:",
+    "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+    "connect-src 'self' https://api.stripe.com https://api.openai.com wss:",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
+  ].join('; '));
+  
+  // Additional security headers
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  
+  next();
+};
+
 // Validate environment variables on startup
 try {
   validateEnv();
@@ -36,6 +68,9 @@ app.use((req, res, next) => {
 
 app.use(express.json({ limit: '10mb' })); // Add size limit to prevent large payloads
 app.use(express.urlencoded({ extended: false, limit: '10mb' }));
+
+// Apply security headers
+app.use(cspMiddleware);
 
 // Catch body parsing errors
 app.use((err: any, req: any, res: any, next: any) => {

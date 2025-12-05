@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Calendar, Eye, ArrowLeft, Tag } from "lucide-react";
 import { motion } from "framer-motion";
+import { useMemo } from "react";
+import DOMPurify from "dompurify";
 import type { BlogPost } from "@shared/schema";
 
 const fadeInUp = {
@@ -21,6 +23,16 @@ export default function BlogPostPage() {
     queryKey: [`/api/blog/${slug}`],
     enabled: !!slug,
   });
+
+  // Sanitize HTML content to prevent XSS attacks
+  const sanitizedContent = useMemo(() => {
+    if (!post?.content) return '';
+    return DOMPurify.sanitize(post.content, {
+      ALLOWED_TAGS: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'a', 'ul', 'ol', 'li', 'strong', 'em', 'blockquote', 'code', 'pre', 'br', 'hr', 'div', 'span'],
+      ALLOWED_ATTR: ['href', 'target', 'rel', 'class'],
+      ALLOW_DATA_ATTR: false,
+    });
+  }, [post?.content]);
 
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "";
@@ -108,7 +120,7 @@ export default function BlogPostPage() {
             <div className="flex items-center gap-2">
               <span>By {post.author}</span>
             </div>
-            {post.viewCount > 0 && (
+            {(post.viewCount ?? 0) > 0 && (
               <div className="flex items-center gap-2">
                 <Eye className="h-4 w-4" />
                 <span>{post.viewCount} views</span>
@@ -147,7 +159,7 @@ export default function BlogPostPage() {
           <Card className="p-8">
             <div 
               className="prose prose-slate dark:prose-invert max-w-none"
-              dangerouslySetInnerHTML={{ __html: post.content }}
+              dangerouslySetInnerHTML={{ __html: sanitizedContent }}
               data-testid="text-post-content"
             />
           </Card>
