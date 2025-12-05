@@ -4,7 +4,8 @@ import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
 import { requireActiveSubscription } from "./subscriptionMiddleware";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema } from "@shared/schema";
+import { z } from "zod";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
@@ -117,16 +118,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User preferences
+  // User preferences - with strict input validation
+  const userPreferencesSchema = z.object({
+    preferredState: z.string().length(2).regex(/^[A-Z]{2}$/).optional(),
+  });
+  
   app.patch('/api/user/settings', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { preferredState } = req.body;
-      const user = await storage.updateUserPreferences(userId, { preferredState });
+      
+      // Validate input to prevent malicious data
+      const validatedData = userPreferencesSchema.parse(req.body);
+      
+      // Only allow supported states
+      const supportedStates = ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL'];
+      if (validatedData.preferredState && !supportedStates.includes(validatedData.preferredState)) {
+        return res.status(400).json({ message: "Invalid state selection" });
+      }
+      
+      const user = await storage.updateUserPreferences(userId, validatedData);
       res.json(user);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
       console.error("Error updating user preferences:", error);
-      res.status(500).json({ message: "Failed to update preferences" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -525,10 +542,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const property = await storage.createProperty({
+      // Validate input to prevent malicious data
+      const validatedData = insertPropertySchema.parse({
         ...req.body,
         userId,
       });
+      
+      const property = await storage.createProperty(validatedData);
 
       await storage.trackEvent({
         userId,
@@ -538,8 +558,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(property);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
       console.error("Error creating property:", error);
-      res.status(500).json({ message: "Failed to create property" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -550,14 +573,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
-      const updatedProperty = await storage.updateProperty(req.params.id, userId, req.body);
+      // Validate input to prevent malicious data
+      const validatedData = insertPropertySchema.partial().parse(req.body);
+      
+      const updatedProperty = await storage.updateProperty(req.params.id, userId, validatedData);
       if (!updatedProperty) {
         return res.status(404).json({ message: "Property not found" });
       }
       res.json(updatedProperty);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
       console.error("Error updating property:", error);
-      res.status(500).json({ message: "Failed to update property" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -621,37 +650,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
       
-      const { templateId, templateName, templateVersion, documentName, formData, stateCode, propertyId } = req.body;
+      // Validate input to prevent malicious data
+      const validatedData = insertSavedDocumentSchema.parse({
+        ...req.body,
+        userId,
+        propertyId: req.body.propertyId || null,
+      });
       
       // Validate propertyId ownership if provided
-      if (propertyId) {
-        const property = await storage.getProperty(propertyId, userId);
+      if (validatedData.propertyId) {
+        const property = await storage.getProperty(validatedData.propertyId, userId);
         if (!property) {
           return res.status(403).json({ message: "Property not found or access denied" });
         }
       }
       
-      const savedDocument = await storage.createSavedDocument({
-        userId,
-        templateId,
-        templateName,
-        templateVersion,
-        documentName,
-        formData,
-        stateCode,
-        propertyId: propertyId || null,
-      });
+      const savedDocument = await storage.createSavedDocument(validatedData);
 
       await storage.trackEvent({
         userId,
         eventType: 'document_saved',
-        eventData: { templateId, documentName },
+        eventData: { templateId: validatedData.templateId, documentName: validatedData.documentName },
       });
 
       res.json(savedDocument);
     } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
       console.error("Error saving document:", error);
-      res.status(500).json({ message: "Failed to save document" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -730,6 +758,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Uploaded Documents routes
+  // Schema for uploaded document metadata
+  const uploadedDocumentMetadataSchema = z.object({
+    propertyId: z.string().uuid().optional().nullable(),
+    description: z.string().max(500).optional().nullable(),
+  });
+  
   app.post('/api/uploaded-documents', isAuthenticated, upload.single('file'), async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -741,11 +775,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "No file uploaded" });
       }
 
-      const { propertyId, description } = req.body;
+      // Validate metadata to prevent malicious data
+      const validatedMetadata = uploadedDocumentMetadataSchema.parse({
+        propertyId: req.body.propertyId || null,
+        description: req.body.description || null,
+      });
 
       // Validate propertyId ownership if provided
-      if (propertyId) {
-        const property = await storage.getProperty(propertyId, userId);
+      if (validatedMetadata.propertyId) {
+        const property = await storage.getProperty(validatedMetadata.propertyId, userId);
         if (!property) {
           // Clean up uploaded file if property validation fails
           await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
@@ -755,12 +793,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const uploadedDocument = await storage.createUploadedDocument({
         userId,
-        propertyId: propertyId || null,
+        propertyId: validatedMetadata.propertyId,
         fileName: req.file.originalname,
         fileUrl: req.file.path,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
-        description: description || null,
+        description: validatedMetadata.description,
       });
 
       await storage.trackEvent({
@@ -775,8 +813,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (req.file) {
         await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
       }
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ message: "Invalid input data", errors: error.errors });
+      }
       console.error("Error uploading document:", error);
-      res.status(500).json({ message: "Failed to upload document" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
