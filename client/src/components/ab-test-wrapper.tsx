@@ -104,9 +104,9 @@ function PaywallVariant({ testId }: { testId: string }) {
               'Document assembly wizard',
               '24/7 landlord compliance assistant',
             ].map((feature) => (
-              <li key={feature} className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                {feature}
+              <li key={feature} className="flex gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-[3px]" />
+                <span>{feature}</span>
               </li>
             ))}
           </ul>
