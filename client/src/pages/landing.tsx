@@ -294,7 +294,7 @@ export default function Landing() {
                 className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 leading-relaxed"
               >
                 Built to Fill the Everyday Gaps No Association Is Designed to Cover...<br />
-                2025 leases & notices · credit decoder · move-in checklists · zero-noise updates
+                2025 leases & notices · credit decoder · move-in checklists · zero-noise updates · AI help every step
               </motion.p>
 
               {/* Cost Calculator */}
