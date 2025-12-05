@@ -674,3 +674,25 @@ export const insertRentLedgerEntrySchema = createInsertSchema(rentLedgerEntries)
 });
 export type InsertRentLedgerEntry = z.infer<typeof insertRentLedgerEntrySchema>;
 export type RentLedgerEntry = typeof rentLedgerEntries.$inferSelect;
+
+// AI Training Interest - track users who want to be notified about upcoming workshops
+export const trainingInterest = pgTable("training_interest", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  email: varchar("email"), // Cached from user record for easy export
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const trainingInterestRelations = relations(trainingInterest, ({ one }) => ({
+  user: one(users, {
+    fields: [trainingInterest.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertTrainingInterestSchema = createInsertSchema(trainingInterest).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTrainingInterest = z.infer<typeof insertTrainingInterestSchema>;
+export type TrainingInterest = typeof trainingInterest.$inferSelect;
