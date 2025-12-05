@@ -92,7 +92,7 @@ function PaywallVariant({ testId }: { testId: string }) {
 
         <div className="rounded-lg p-4 mb-6 border-2 border-muted">
           <p className="text-sm text-foreground font-medium mb-3">Everything Included:</p>
-          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-muted-foreground">
+          <ul className="space-y-2 text-sm text-muted-foreground">
             {[
               'State-specific leases & legal notices',
               'Move-in / move-out checklists',
@@ -104,8 +104,8 @@ function PaywallVariant({ testId }: { testId: string }) {
               'Document assembly wizard',
               '24/7 landlord compliance assistant',
             ].map((feature) => (
-              <li key={feature} className="flex gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-[3px]" />
+              <li key={feature} className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
                 <span>{feature}</span>
               </li>
             ))}
