@@ -96,7 +96,7 @@ export function ChatWidget() {
   };
 
   return (
-    <div className="fixed bottom-6 right-6 z-50">
+    <div className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50">
       <AnimatePresence>
         {chatOpen && (
           <motion.div
@@ -104,9 +104,9 @@ export function ChatWidget() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
-            className="mb-4"
+            className="mb-4 fixed inset-4 sm:inset-auto sm:relative sm:mb-4"
           >
-            <Card className="w-[380px] h-[500px] flex flex-col shadow-2xl border-primary/20">
+            <Card className="w-full h-full sm:w-[380px] sm:h-[500px] flex flex-col shadow-2xl border-primary/20">
               <div className="bg-primary text-primary-foreground rounded-t-lg">
                 <div className="flex items-center justify-between p-4">
                   <div className="flex items-center gap-2">
@@ -197,26 +197,22 @@ export function ChatWidget() {
         )}
       </AnimatePresence>
 
-      <div className="flex flex-col items-end gap-2">
-        {!chatOpen && (
-          <div className="bg-card border shadow-lg rounded-lg px-3 py-2 text-xs text-muted-foreground max-w-[200px]">
+      {!chatOpen && (
+        <div className="flex flex-col items-end gap-2">
+          <div className="hidden sm:block bg-card border shadow-lg rounded-lg px-3 py-2 text-xs text-muted-foreground max-w-[200px]">
             <AlertCircle className="h-3 w-3 inline mr-1" />
             AI assistant • Info only, not legal advice
           </div>
-        )}
-        <Button
-          size="lg"
-          onClick={() => setChatOpen(!chatOpen)}
-          className="h-14 w-14 rounded-full shadow-2xl"
-          data-testid="button-toggle-chat"
-        >
-          {chatOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <MessageCircle className="h-6 w-6" />
-          )}
-        </Button>
-      </div>
+          <Button
+            size="lg"
+            onClick={() => setChatOpen(true)}
+            className="h-12 w-12 sm:h-14 sm:w-14 rounded-full shadow-2xl"
+            data-testid="button-toggle-chat"
+          >
+            <MessageCircle className="h-5 w-5 sm:h-6 sm:w-6" />
+          </Button>
+        </div>
+      )}
     </div>
   );
 }
