@@ -286,15 +286,14 @@ export default function Landing() {
                 variants={fadeInUp}
                 className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-foreground leading-tight mb-6"
               >
-                The Daily-Use Toolkit Your Association Doesn't Give You
+                The Daily-Use Toolkit Associations Aren't Built For
               </motion.h1>
               
               <motion.p 
                 variants={fadeInUp}
                 className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 leading-relaxed"
               >
-                Keep your association for lobbying and networking.<br />
-                <strong>Get LeaseShield App for the tools you actually use every week:</strong><br />
+                Built to Fill the Everyday Gaps No Association Is Designed to Cover...<br />
                 2025 leases & notices · credit decoder · move-in checklists · zero-noise updates
               </motion.p>
 
