@@ -139,6 +139,67 @@ If you ever have questions, our support team is here to help.`,
     });
     console.log(`    → Added Step 1: Subscription Confirmed (immediate)`);
 
+    // Trial Expiration Sequence
+    const trialExpirationSequence = await storage.createEmailSequence({
+      name: 'Trial Expiration',
+      description: 'Remind users before their trial expires to encourage conversion',
+      trigger: 'trial_expiring',
+      isActive: true,
+    });
+    console.log(`  ✓ Created Trial Expiration sequence`);
+
+    await storage.createEmailSequenceStep({
+      sequenceId: trialExpirationSequence.id,
+      stepNumber: 1,
+      name: '3 Days Before Expiration',
+      subject: 'Your LeaseShield trial ends in 3 days',
+      aiPrompt: `Write a friendly reminder email that the user's trial expires in 3 days.
+Highlight what they've accomplished so far (documents created, templates used, etc).
+Emphasize what they'll lose access to if they don't subscribe.
+Mention the affordable price ($10/month or $100/year).
+Create urgency without being pushy.
+Include a clear call-to-action to subscribe.`,
+      fallbackBody: `Your LeaseShield trial ends in just 3 days!
+
+We hope you've been enjoying access to our state-specific legal templates, compliance guidance, and landlord tools.
+
+When your trial ends, you'll lose access to:
+• All legal document templates and notices
+• Compliance guidance for your state
+• AI-powered screening helpers
+• Saved documents and properties
+
+The good news? You can keep everything for just $10/month (or save with our $100/year plan).
+
+Don't let your hard work disappear – subscribe today and keep protecting your rental business.`,
+      delayHours: 0,
+      isActive: true,
+    });
+    console.log(`    → Added Step 1: 3 Days Before Expiration`);
+
+    await storage.createEmailSequenceStep({
+      sequenceId: trialExpirationSequence.id,
+      stepNumber: 2,
+      name: '1 Day Before Expiration',
+      subject: 'Last chance: Your trial expires tomorrow',
+      aiPrompt: `Write an urgent but friendly final reminder that the trial expires tomorrow.
+This is their last chance email.
+Personalize based on their usage - what documents they've created, what state they're in.
+Emphasize the value they've gotten and what they'll lose.
+Make the subscription CTA very prominent.
+Keep it short and action-focused.`,
+      fallbackBody: `This is your last chance – your LeaseShield trial expires tomorrow!
+
+After tomorrow, you'll lose access to all your saved documents, templates, and compliance tools.
+
+Subscribe now for just $10/month to keep everything you've built and continue protecting your rental business with state-specific legal guidance.
+
+Don't wait – subscribe today before your trial ends.`,
+      delayHours: 48,
+      isActive: true,
+    });
+    console.log(`    → Added Step 2: 1 Day Before Expiration (48 hours after step 1)`);
+
     console.log('✅ Email sequences setup complete!');
   } catch (error) {
     console.error('❌ Error setting up email sequences:', error);

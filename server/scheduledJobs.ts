@@ -212,6 +212,71 @@ export class ScheduledJobs {
     }
   }
 
+  // Enroll users in trial expiration sequence 3 days before expiry
+  async checkTrialExpirationEnrollments(): Promise<void> {
+    try {
+      console.log('🔔 Checking for trial expiration enrollments...');
+
+      const now = new Date();
+      // Find users whose trial ends in 3 days (between 72-78 hours from now)
+      const threeDaysFromNow = new Date(now.getTime() + 72 * 60 * 60 * 1000);
+      const threeDaysAndSixHours = new Date(now.getTime() + 78 * 60 * 60 * 1000);
+
+      const expiringUsers = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.subscriptionStatus, 'trialing'),
+            gte(users.trialEndsAt, threeDaysFromNow),
+            lt(users.trialEndsAt, threeDaysAndSixHours)
+          )
+        );
+
+      console.log(`  Found ${expiringUsers.length} users with trials expiring in ~3 days`);
+
+      if (expiringUsers.length === 0) return;
+
+      // Get the trial expiration sequence
+      const trialSequence = await storage.getEmailSequenceByTrigger('trial_expiring');
+      if (!trialSequence || !trialSequence.isActive) {
+        console.log('  Trial expiration sequence not found or inactive');
+        return;
+      }
+
+      const steps = await storage.getEmailSequenceSteps(trialSequence.id);
+      const firstStep = steps[0];
+
+      for (const user of expiringUsers) {
+        // Check if user is already enrolled in this sequence
+        const existingEnrollment = await storage.getActiveEnrollment(user.id, trialSequence.id);
+        if (existingEnrollment) {
+          console.log(`  Skipping ${user.email} - already enrolled in trial expiration sequence`);
+          continue;
+        }
+
+        // Enroll user in trial expiration sequence
+        const nextSendAt = firstStep
+          ? new Date(Date.now() + firstStep.delayHours * 60 * 60 * 1000)
+          : null;
+
+        await storage.createEnrollment({
+          userId: user.id,
+          sequenceId: trialSequence.id,
+          currentStep: 0,
+          status: 'active',
+          nextSendAt,
+        });
+
+        console.log(`  ✓ Enrolled ${user.email} in trial expiration sequence`);
+      }
+
+      console.log('✅ Trial expiration enrollment check complete');
+    } catch (error) {
+      console.error('❌ Error checking trial expiration enrollments:', error);
+    }
+  }
+
   // Process pending email sequence steps
   async processEmailSequences(): Promise<void> {
     try {
