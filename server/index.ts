@@ -4,6 +4,12 @@ import { setupVite, serveStatic, log } from "./vite";
 import { scheduledJobs } from "./scheduledJobs";
 import { closePool } from "./db";
 import { validateEnv } from "./utils/env";
+import { RateLimiter } from "./utils/validation";
+
+// Rate limiters for different endpoint types
+const authRateLimiter = new RateLimiter(10, 60 * 1000); // 10 auth attempts per minute
+const apiRateLimiter = new RateLimiter(100, 60 * 1000); // 100 API requests per minute
+const strictRateLimiter = new RateLimiter(5, 60 * 1000); // 5 requests per minute for sensitive ops
 
 // Content Security Policy middleware
 const cspMiddleware = (req: Request, res: Response, next: NextFunction) => {
@@ -87,6 +93,68 @@ app.use(express.urlencoded({ extended: false, limit: '10mb' }));
 
 // Apply security headers
 app.use(cspMiddleware);
+
+// CORS configuration - restrict to allowed origins
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const origin = req.headers.origin;
+  const allowedOriginPatterns = [
+    /^https:\/\/.*\.replit\.dev$/,
+    /^https:\/\/.*\.repl\.co$/,
+    /^https:\/\/.*\.replit\.app$/,
+  ];
+  
+  // Check if origin matches any allowed pattern
+  if (origin && allowedOriginPatterns.some(pattern => pattern.test(origin))) {
+    res.setHeader('Access-Control-Allow-Origin', origin);
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+  }
+  
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Max-Age', '86400'); // 24 hours
+  
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(204).end();
+  }
+  
+  next();
+});
+
+// Rate limiting middleware - protect against brute force and abuse
+app.use((req: Request, res: Response, next: NextFunction) => {
+  const clientIp = req.ip || req.socket.remoteAddress || 'unknown';
+  
+  // Auth endpoints - strict rate limiting
+  if (req.path === '/api/login' || req.path === '/api/callback') {
+    if (!authRateLimiter.check(clientIp)) {
+      log(`Rate limited auth request from ${clientIp}`);
+      return res.status(429).json({ 
+        message: 'Too many login attempts. Please wait a minute and try again.' 
+      });
+    }
+  }
+  // Sensitive admin operations - very strict
+  else if (req.path.startsWith('/api/admin') && req.method !== 'GET') {
+    if (!strictRateLimiter.check(clientIp)) {
+      log(`Rate limited admin request from ${clientIp}`);
+      return res.status(429).json({ 
+        message: 'Too many requests. Please slow down.' 
+      });
+    }
+  }
+  // General API rate limiting
+  else if (req.path.startsWith('/api')) {
+    if (!apiRateLimiter.check(clientIp)) {
+      log(`Rate limited API request from ${clientIp}`);
+      return res.status(429).json({ 
+        message: 'Too many requests. Please slow down.' 
+      });
+    }
+  }
+  
+  next();
+});
 
 // Catch body parsing errors
 app.use((err: any, req: any, res: any, next: any) => {
