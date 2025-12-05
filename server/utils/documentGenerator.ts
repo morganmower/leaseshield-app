@@ -35,9 +35,20 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
   // Running in --no-sandbox mode for Replit environment compatibility.
   // Security is maintained through comprehensive HTML escaping of all user input.
   // All user input is HTML-escaped before rendering to prevent injection attacks.
+  
+  // Try to find Chromium executable dynamically
+  const { execSync } = require('child_process');
+  let chromiumPath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+  try {
+    chromiumPath = execSync('which chromium').toString().trim();
+    console.log('📄 Using Chromium at:', chromiumPath);
+  } catch (e) {
+    console.log('📄 Falling back to default Chromium path');
+  }
+  
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    executablePath: chromiumPath,
     args: [
       '--no-sandbox', // Required for Replit containerized environment
       '--disable-setuid-sandbox', // Required for Replit containerized environment
