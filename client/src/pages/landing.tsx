@@ -2108,26 +2108,17 @@ export default function Landing() {
         </AnimatePresence>
 
         {/* Chat Toggle Button */}
-        <div className="flex flex-col items-end gap-2">
-          {!chatOpen && (
-            <div className="bg-card border shadow-lg rounded-lg px-3 py-2 text-xs text-muted-foreground max-w-[200px]">
-              <AlertCircle className="h-3 w-3 inline mr-1" />
-              AI assistant • Info only, not legal advice
-            </div>
-          )}
+        {!chatOpen && (
           <Button
-            size="lg"
-            onClick={() => setChatOpen(!chatOpen)}
-            className="h-14 w-14 rounded-full shadow-2xl"
+            size="icon"
+            onClick={() => setChatOpen(true)}
+            className="h-10 w-10 rounded-full shadow-lg opacity-70 hover:opacity-100 transition-opacity"
             data-testid="button-toggle-chat"
+            title="AI Assistant (Info only, not legal advice)"
           >
-            {chatOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <MessageCircle className="h-6 w-6" />
-            )}
+            <MessageCircle className="h-4 w-4" />
           </Button>
-        </div>
+        )}
       </div>
     </div>
   );
