@@ -1,5 +1,31 @@
 import { storage } from "./storage";
 
+// Admin-only middleware - checks if user has isAdmin flag
+export async function requireAdmin(req: any, res: any, next: any) {
+  try {
+    const userId = req.user?.claims?.sub;
+    if (!userId) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const user = await storage.getUser(userId);
+    if (!user) {
+      return res.status(401).json({ message: "User not found" });
+    }
+
+    if (!user.isAdmin) {
+      console.log(`[Admin] DENIED for user ${userId}: isAdmin=false`);
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    console.log(`[Admin] User ${userId}: isAdmin=true, allowing access`);
+    return next();
+  } catch (error) {
+    console.error("Error in admin middleware:", error);
+    return res.status(500).json({ message: "Internal server error" });
+  }
+}
+
 export async function requireActiveSubscription(req: any, res: any, next: any) {
   try {
     const userId = req.user?.claims?.sub;

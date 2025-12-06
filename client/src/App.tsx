@@ -48,6 +48,21 @@ import LegalUpdatesPage from "@/pages/legal-updates";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 
+// Admin route wrapper - redirects non-admin users to dashboard
+function AdminRoute({ component: Component }: { component: React.ComponentType }) {
+  const { user, isLoading } = useAuth();
+  
+  if (isLoading) {
+    return null;
+  }
+  
+  if (!user?.isAdmin) {
+    return <Redirect to="/dashboard" />;
+  }
+  
+  return <Component />;
+}
+
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
 
@@ -101,13 +116,13 @@ function Router() {
       <Route path="/subscribe" component={Subscribe} />
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
-      <Route path="/admin" component={Admin} />
-      <Route path="/admin/dashboard" component={AdminDashboard} />
-      <Route path="/admin/templates" component={AdminTemplates} />
-      <Route path="/admin/compliance" component={AdminCompliance} />
-      <Route path="/admin/legal-updates" component={AdminLegalUpdates} />
-      <Route path="/admin/legislative-monitoring" component={AdminLegislativeMonitoring} />
-      <Route path="/admin/analytics" component={AdminAnalytics} />
+      <Route path="/admin">{() => <AdminRoute component={Admin} />}</Route>
+      <Route path="/admin/dashboard">{() => <AdminRoute component={AdminDashboard} />}</Route>
+      <Route path="/admin/templates">{() => <AdminRoute component={AdminTemplates} />}</Route>
+      <Route path="/admin/compliance">{() => <AdminRoute component={AdminCompliance} />}</Route>
+      <Route path="/admin/legal-updates">{() => <AdminRoute component={AdminLegalUpdates} />}</Route>
+      <Route path="/admin/legislative-monitoring">{() => <AdminRoute component={AdminLegislativeMonitoring} />}</Route>
+      <Route path="/admin/analytics">{() => <AdminRoute component={AdminAnalytics} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

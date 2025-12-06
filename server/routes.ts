@@ -2,7 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireActiveSubscription } from "./subscriptionMiddleware";
+import { requireActiveSubscription, requireAdmin } from "./subscriptionMiddleware";
 import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema } from "@shared/schema";
 import { z } from "zod";
@@ -565,7 +565,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Create template
-  app.post('/api/admin/templates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/templates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertTemplateSchema.parse(req.body);
       const template = await storage.createTemplate(validatedData);
@@ -585,7 +585,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update template
-  app.put('/api/admin/templates/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/templates/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertTemplateSchema.partial().parse(req.body);
@@ -598,7 +598,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete template
-  app.delete('/api/admin/templates/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/templates/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       await storage.deleteTemplate(id);
@@ -1076,7 +1076,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all compliance cards
-  app.get('/api/admin/compliance-cards', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/compliance-cards', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const cards = await storage.getAllComplianceCards();
       res.json(cards);
@@ -1087,7 +1087,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Create compliance card
-  app.post('/api/admin/compliance-cards', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/compliance-cards', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertComplianceCardSchema.parse(req.body);
       const card = await storage.createComplianceCard(validatedData);
@@ -1099,7 +1099,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update compliance card
-  app.put('/api/admin/compliance-cards/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/compliance-cards/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertComplianceCardSchema.partial().parse(req.body);
@@ -1112,7 +1112,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete compliance card
-  app.delete('/api/admin/compliance-cards/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/compliance-cards/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       await storage.deleteComplianceCard(id);
@@ -1305,7 +1305,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Get all legal updates
-  app.get('/api/admin/legal-updates', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/legal-updates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const updates = await storage.getAllLegalUpdates();
       res.json(updates);
@@ -1316,7 +1316,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Create legal update
-  app.post('/api/admin/legal-updates', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/legal-updates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const validatedData = insertLegalUpdateSchema.parse(req.body);
       const update = await storage.createLegalUpdate(validatedData);
@@ -1332,7 +1332,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Update legal update
-  app.put('/api/admin/legal-updates/:id', isAuthenticated, async (req: any, res) => {
+  app.put('/api/admin/legal-updates/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       const validatedData = insertLegalUpdateSchema.partial().parse(req.body);
@@ -1345,7 +1345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Delete legal update
-  app.delete('/api/admin/legal-updates/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/legal-updates/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const { id } = req.params;
       await storage.deleteLegalUpdate(id);
@@ -1407,7 +1407,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin analytics
-  app.get('/api/admin/analytics', isAuthenticated, async (req, res) => {
+  app.get('/api/admin/analytics', isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const summary = await storage.getAnalyticsSummary();
       res.json(summary);
@@ -1417,7 +1417,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/users', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1507,7 +1507,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin blog routes (admin only)
-  app.get('/api/admin/blog', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/blog', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1522,7 +1522,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/admin/blog', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/blog', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1538,7 +1538,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.patch('/api/admin/blog/:id', isAuthenticated, async (req: any, res) => {
+  app.patch('/api/admin/blog/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1554,7 +1554,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/admin/blog/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/admin/blog/:id', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1571,7 +1571,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Send legal update notifications (admin only)
-  app.post('/api/admin/notify-legal-update/:updateId', isAuthenticated, async (req, res) => {
+  app.post('/api/admin/notify-legal-update/:updateId', isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { updateId } = req.params;
       
@@ -1649,7 +1649,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Get template review queue
-  app.get("/api/admin/template-review-queue", isAuthenticated, async (req, res) => {
+  app.get("/api/admin/template-review-queue", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const reviews = await storage.getAllTemplateReviewQueue({
         status: req.query.status as string | undefined,
@@ -1670,7 +1670,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Approve template update
-  app.patch("/api/admin/template-review-queue/:id/approve", isAuthenticated, async (req, res) => {
+  app.patch("/api/admin/template-review-queue/:id/approve", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { approvalNotes, versionNotes, lastUpdateReason, pdfUrl, fillableFormData } = req.body;
@@ -1709,7 +1709,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin - Reject template update
-  app.patch("/api/admin/template-review-queue/:id/reject", isAuthenticated, async (req, res) => {
+  app.patch("/api/admin/template-review-queue/:id/reject", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const { id } = req.params;
       const { approvalNotes } = req.body;
@@ -1869,7 +1869,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // ==========================================
 
   // Get all monitored bills (admin only)
-  app.get('/api/admin/legislative-bills', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/legislative-bills', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1929,7 +1929,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/admin/case-law', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/case-law', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1952,7 +1952,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get template review queue (admin only)
-  app.get('/api/admin/template-review-queue', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/template-review-queue', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -1974,7 +1974,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Approve a template update (admin only)
-  app.post('/api/admin/template-review/:id/approve', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/template-review/:id/approve', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -2033,7 +2033,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reject a template update (admin only)
-  app.post('/api/admin/template-review/:id/reject', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/template-review/:id/reject', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -2073,7 +2073,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get monitoring run history (admin only)
-  app.get('/api/admin/monitoring-runs', isAuthenticated, async (req: any, res) => {
+  app.get('/api/admin/monitoring-runs', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
@@ -2092,7 +2092,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Manually trigger legislative monitoring run (admin only)
-  app.post('/api/admin/legislative-monitoring/run', isAuthenticated, async (req: any, res) => {
+  app.post('/api/admin/legislative-monitoring/run', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);
