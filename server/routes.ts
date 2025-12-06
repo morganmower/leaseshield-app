@@ -121,6 +121,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // User preferences - with strict input validation
   const userPreferencesSchema = z.object({
     preferredState: z.string().length(2).regex(/^[A-Z]{2}$/).optional(),
+    // Notification preferences
+    notifyLegalUpdates: z.boolean().optional(),
+    notifyTemplateRevisions: z.boolean().optional(),
+    notifyBillingAlerts: z.boolean().optional(),
+    notifyTips: z.boolean().optional(),
+    // Profile info
+    businessName: z.string().max(100).optional().nullable(),
+    phoneNumber: z.string().max(20).optional().nullable(),
   });
   
   app.patch('/api/user/settings', isAuthenticated, async (req: any, res) => {

@@ -99,7 +99,15 @@ export interface IStorage {
   // User operations
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  updateUserPreferences(id: string, data: { preferredState?: string }): Promise<User>;
+  updateUserPreferences(id: string, data: { 
+    preferredState?: string;
+    notifyLegalUpdates?: boolean;
+    notifyTemplateRevisions?: boolean;
+    notifyBillingAlerts?: boolean;
+    notifyTips?: boolean;
+    businessName?: string | null;
+    phoneNumber?: string | null;
+  }): Promise<User>;
   updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User>;
   getAllActiveUsers(): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
@@ -292,7 +300,15 @@ export class DatabaseStorage implements IStorage {
     }, 'upsertUser');
   }
 
-  async updateUserPreferences(id: string, data: { preferredState?: string }): Promise<User> {
+  async updateUserPreferences(id: string, data: { 
+    preferredState?: string;
+    notifyLegalUpdates?: boolean;
+    notifyTemplateRevisions?: boolean;
+    notifyBillingAlerts?: boolean;
+    notifyTips?: boolean;
+    businessName?: string | null;
+    phoneNumber?: string | null;
+  }): Promise<User> {
     return handleDbOperation(async () => {
       const [user] = await db
         .update(users)
