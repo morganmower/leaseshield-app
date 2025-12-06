@@ -537,33 +537,39 @@ export default function MyDocuments() {
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
-                <Label htmlFor="file-upload">Select File *</Label>
-                <div className="border-2 border-dashed border-primary/50 rounded-lg p-6 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex items-center justify-center">
-                  <Input
+                <Label>Select File *</Label>
+                <div 
+                  className="border-2 border-dashed border-primary/50 rounded-lg p-8 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex items-center justify-center"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <input
                     id="file-upload"
                     type="file"
                     accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                    className="w-auto cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:font-medium hover:file:bg-primary/90"
+                    className="sr-only"
                     onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) {
-                      if (file.size > 20 * 1024 * 1024) {
-                        toast({
-                          title: "File Too Large",
-                          description: "Please select a file smaller than 20MB.",
-                          variant: "destructive",
-                        });
-                        e.target.value = '';
-                        return;
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 20 * 1024 * 1024) {
+                          toast({
+                            title: "File Too Large",
+                            description: "Please select a file smaller than 20MB.",
+                            variant: "destructive",
+                          });
+                          e.target.value = '';
+                          return;
+                        }
+                        setUploadFile(file);
+                        if (!uploadDocumentName) {
+                          setUploadDocumentName(file.name);
+                        }
                       }
-                      setUploadFile(file);
-                      if (!uploadDocumentName) {
-                        setUploadDocumentName(file.name);
-                      }
-                    }
-                  }}
-                  data-testid="input-file-upload"
-                />
+                    }}
+                    data-testid="input-file-upload"
+                  />
+                  <Button type="button" data-testid="button-choose-file">
+                    Choose File
+                  </Button>
                 </div>
                 {uploadFile && (
                   <p className="text-sm text-muted-foreground mt-2">
