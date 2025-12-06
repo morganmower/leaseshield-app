@@ -538,7 +538,7 @@ export default function MyDocuments() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="file-upload">Select File *</Label>
-                <div className="border-2 border-dashed border-primary/50 rounded-lg p-4 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+                <div className="border-2 border-dashed border-primary/50 rounded-lg p-6 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex items-center justify-center">
                   <Input
                     id="file-upload"
                     type="file"
