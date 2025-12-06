@@ -131,31 +131,33 @@ export default function HelpCenter() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo variant="horizontal" size="md" />
-          </a>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-login"
-            >
-              Log In
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = "/"}
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
+      {/* Header - only show for non-authenticated users */}
+      {!isAuthenticated && (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <a href="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
+              <Logo variant="horizontal" size="md" />
+            </a>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = "/api/login"}
+                data-testid="button-login"
+              >
+                Log In
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = "/"}
+                data-testid="button-back-home"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b">

@@ -538,11 +538,13 @@ export default function MyDocuments() {
             <div className="grid gap-4 py-4">
               <div className="grid gap-2">
                 <Label htmlFor="file-upload">Select File *</Label>
-                <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  onChange={(e) => {
+                <div className="border-2 border-dashed border-primary/50 rounded-lg p-4 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer">
+                  <Input
+                    id="file-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="cursor-pointer file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:bg-primary file:text-primary-foreground file:font-medium hover:file:bg-primary/90"
+                    onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) {
                       if (file.size > 20 * 1024 * 1024) {
@@ -562,8 +564,9 @@ export default function MyDocuments() {
                   }}
                   data-testid="input-file-upload"
                 />
+                </div>
                 {uploadFile && (
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mt-2">
                     Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
                   </p>
                 )}

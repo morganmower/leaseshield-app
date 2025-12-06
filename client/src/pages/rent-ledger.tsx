@@ -17,7 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function RentLedger() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("fast");
+  const [activeTab, setActiveTab] = useState("track");
   const [tenantName, setTenantName] = useState("");
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState<"charge" | "payment">("charge");
@@ -227,12 +227,12 @@ export default function RentLedger() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="fast" data-testid="tab-fast-path">Export Report</TabsTrigger>
-          <TabsTrigger value="slow" data-testid="tab-slow-path">Track Entries</TabsTrigger>
+          <TabsTrigger value="track" data-testid="tab-track-entries">Track Entries</TabsTrigger>
+          <TabsTrigger value="export" data-testid="tab-export-report">Export Report</TabsTrigger>
         </TabsList>
 
         {/* Export Report */}
-        <TabsContent value="fast">
+        <TabsContent value="export">
           <Card className="p-6 space-y-4">
             <div>
               <h2 className="text-2xl font-bold mb-2">Export Professional Report</h2>
@@ -260,7 +260,7 @@ export default function RentLedger() {
         </TabsContent>
 
         {/* Track Entries */}
-        <TabsContent value="slow">
+        <TabsContent value="track">
           <div className="space-y-6">
             {/* Add Entry Form */}
             <Card className="p-6">

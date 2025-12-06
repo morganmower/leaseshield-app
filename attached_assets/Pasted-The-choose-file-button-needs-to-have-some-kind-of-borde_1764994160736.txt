@@ -1,0 +1,36 @@
+The choose file button needs to have some kind of border or bubble around it to indicate it can be clicked on
+ 
+image.png
+On templates if I try to download a template it says download starting but it never does and reports download failed like 30 seconds later on all the templates
+ 
+image.png
+ 
+ 
+The same thing happens when generating a pre filled template. This doesn’t work and just fails out after 30 seconds
+ 
+image.png
+ 
+This isn't a bug but the UI on the screening screen could be improved maybe putting each item in a drop down menu instead of scrolling past information you don’t need. Not a big deal but not great user experience, its presenting too much at once
+Confirmed templates don’t download on any page including tenant issues
+
+ 
+image.png
+The dates on the communication screen should be a calendrer drop down consistnet with other pages in the app. Again not a bug but inconsistent ui/ux
+ 
+image.png
+ 
+ 
+The downloads of these templates does work though
+The text in the late payment notice is displaying the \n line breaks instead of appearing as line breaks, in case you don’t know. In html and most code /n is a line break. Users don’t normally see this. Like in a word document that \n exists but the document reader knows it’s a line break. For some reason its showing in the welcome letter, lease renewal notice, and late payment notice communication template and not the others.
+
+ 
+image.png
+Maybe I don’t understand but on the rent ledger page when I try to download the rent ledger I get an error for no entires to report. Which is correct. But the track entries should show first by default not the export page. As you need entries first. This wasn't immediately clear to me. It should open onto track entries and track entries should be on the left of the toggle
+ 
+image.png
+The help center page is loading an iframe of the public health center page for none logged in users, which is fine. But it is showing the login prompt again and back to home at the top. The navigation bar for the public site is loading which is a little weird and confusing. Instead it could just navigate to the help center instead of loading a new iframe
+ 
+image.png
+The template management section seems a little non functional. These only take a discription and don't let you actually create your own template with content that you can fill out in the future. All you can really do is change the name and delete the default templates as far as I can tell
+ 
+image.png

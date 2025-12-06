@@ -6,7 +6,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Copy, Download } from "lucide-react";
+import { MessageCircle, Copy, Download, Calendar } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
 
@@ -34,6 +37,46 @@ const TEMPLATE_LABELS: Record<string, string> = {
   late_payment_notice: "Late Payment Notice",
   move_in_welcome: "Move-In Welcome",
 };
+
+function DatePickerField({ 
+  field, 
+  value, 
+  onChange 
+}: { 
+  field: string; 
+  value: string | undefined; 
+  onChange: (value: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          className="w-full justify-start text-left font-normal"
+          data-testid={`input-${field}`}
+        >
+          <Calendar className="mr-2 h-4 w-4" />
+          {value || `Select ${field.replace(/_/g, " ")}`}
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-0" align="start">
+        <CalendarComponent
+          mode="single"
+          selected={value ? new Date(value) : undefined}
+          onSelect={(date) => {
+            if (date) {
+              onChange(format(date, "MMMM d, yyyy"));
+              setOpen(false);
+            }
+          }}
+          initialFocus
+        />
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export default function Communications() {
   const { user } = useAuth();
@@ -83,6 +126,8 @@ export default function Communications() {
     Object.entries(fields).forEach(([key, value]) => {
       rendered = rendered.replace(new RegExp(`\\{\\{${key}\\}\\}`, "g"), value);
     });
+    // Convert literal \n to actual newlines for proper display
+    rendered = rendered.replace(/\\n/g, '\n');
     return rendered;
   };
 
@@ -196,25 +241,37 @@ export default function Communications() {
                 <div className="space-y-4 p-4 bg-muted/50 rounded-lg">
                   <h3 className="font-semibold">Customize Template</h3>
                   <div className="space-y-3">
-                    {Object.keys(mergeFields).map((field) => (
-                      <div key={field}>
-                        <Label htmlFor={`field-${field}`} className="capitalize text-sm">
-                          {field.replace(/_/g, " ")}
-                        </Label>
-                        <Input
-                          id={`field-${field}`}
-                          value={mergeFields[field]}
-                          onChange={(e) =>
-                            setMergeFields((prev) => ({
-                              ...prev,
-                              [field]: e.target.value,
-                            }))
-                          }
-                          placeholder={`Enter ${field.replace(/_/g, " ")}`}
-                          data-testid={`input-${field}`}
-                        />
-                      </div>
-                    ))}
+                    {Object.keys(mergeFields).map((field) => {
+                      const isDateField = field.toLowerCase().includes('date');
+                      
+                      return (
+                        <div key={field}>
+                          <Label htmlFor={`field-${field}`} className="capitalize text-sm">
+                            {field.replace(/_/g, " ")}
+                          </Label>
+                          {isDateField ? (
+                            <DatePickerField
+                              field={field}
+                              value={mergeFields[field]}
+                              onChange={(value) => setMergeFields((prev) => ({ ...prev, [field]: value }))}
+                            />
+                          ) : (
+                            <Input
+                              id={`field-${field}`}
+                              value={mergeFields[field]}
+                              onChange={(e) =>
+                                setMergeFields((prev) => ({
+                                  ...prev,
+                                  [field]: e.target.value,
+                                }))
+                              }
+                              placeholder={`Enter ${field.replace(/_/g, " ")}`}
+                              data-testid={`input-${field}`}
+                            />
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               )}

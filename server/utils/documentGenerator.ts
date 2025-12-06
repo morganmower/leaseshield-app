@@ -46,24 +46,49 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
     console.log('📄 Falling back to default Chromium path');
   }
   
+  console.log('📄 Launching Chromium browser...');
+  const startTime = Date.now();
+  
   const browser = await puppeteer.launch({
     headless: true,
     executablePath: chromiumPath,
+    timeout: 30000, // 30 second timeout for browser launch
     args: [
       '--no-sandbox', // Required for Replit containerized environment
       '--disable-setuid-sandbox', // Required for Replit containerized environment
       '--disable-dev-shm-usage', // Required for containerized environments
       '--disable-gpu', // Not needed for PDF generation
       '--single-process', // More stable in containerized environments
-      '--no-zygote' // More stable in containerized environments
+      '--no-zygote', // More stable in containerized environments
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-default-apps',
+      '--disable-sync',
+      '--disable-translate',
+      '--mute-audio',
+      '--hide-scrollbars',
     ]
   });
+  
+  console.log(`📄 Browser launched in ${Date.now() - startTime}ms`);
 
   try {
     const page = await browser.newPage();
     
-    // Set content
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    // Set default timeouts for all operations
+    page.setDefaultTimeout(30000); // 30 second default timeout
+    page.setDefaultNavigationTimeout(15000); // 15 second navigation timeout
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({ width: 816, height: 1056 }); // Letter size at 96 DPI
+    
+    // Set content with faster loading - no external resources to wait for
+    console.log('📄 Setting page content...');
+    await page.setContent(htmlContent, { 
+      waitUntil: 'domcontentloaded', // Faster than networkidle0 since we have no external resources
+    });
+    
+    console.log(`📄 Page content set in ${Date.now() - startTime}ms`);
 
     // Generate PDF with professional attorney-quality margins (1 inch standard)
     const pdfBuffer = await page.pdf({
@@ -74,12 +99,18 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
         right: '1in',
         bottom: '1in',
         left: '1in',
-      }
+      },
     });
+    
+    console.log(`📄 PDF generated successfully in ${Date.now() - startTime}ms`);
 
     return Buffer.from(pdfBuffer);
+  } catch (error) {
+    console.error('📄 Error generating PDF:', error);
+    throw error;
   } finally {
     await browser.close();
+    console.log(`📄 Browser closed. Total time: ${Date.now() - startTime}ms`);
   }
 }
 
