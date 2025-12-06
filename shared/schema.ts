@@ -44,6 +44,14 @@ export const users = pgTable("users", {
   // User preferences
   preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
+  // Notification preferences
+  notifyLegalUpdates: boolean("notify_legal_updates").default(true),
+  notifyTemplateRevisions: boolean("notify_template_revisions").default(true),
+  notifyBillingAlerts: boolean("notify_billing_alerts").default(true),
+  notifyTips: boolean("notify_tips").default(false),
+  // Communication defaults
+  businessName: varchar("business_name"),
+  phoneNumber: varchar("phone_number"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
