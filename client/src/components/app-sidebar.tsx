@@ -122,7 +122,7 @@ const accountItems = [
 
 export function AppSidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { setOpenMobile } = useSidebar();
 
   const handleNavClick = () => {
@@ -261,7 +261,10 @@ export function AppSidebar() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => window.location.href = "/api/logout"}
+              onClick={() => {
+                logout();
+                window.location.href = "/";
+              }}
               data-testid="button-logout"
               className="text-destructive focus:text-destructive"
             >

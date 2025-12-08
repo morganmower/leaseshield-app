@@ -16,6 +16,9 @@ import { ErrorBoundary } from "@/components/error-boundary";
 import { ChatWidget } from "@/components/chat-widget";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
+import Login from "@/pages/login";
+import Signup from "@/pages/signup";
+import ForgotPassword from "@/pages/forgot-password";
 import Privacy from "@/pages/privacy";
 import Terms from "@/pages/terms";
 import RefundPolicy from "@/pages/refund-policy";
@@ -74,6 +77,9 @@ function Router() {
     return (
       <Switch>
         <Route path="/" component={Landing} />
+        <Route path="/login" component={Login} />
+        <Route path="/signup" component={Signup} />
+        <Route path="/forgot-password" component={ForgotPassword} />
         <Route path="/privacy" component={Privacy} />
         <Route path="/terms" component={Terms} />
         <Route path="/refund-policy" component={RefundPolicy} />
@@ -129,7 +135,7 @@ function Router() {
 }
 
 function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, logout, isLoggingOut } = useAuth();
   const [, setLocation] = useLocation();
 
   if (!isAuthenticated) {
@@ -139,6 +145,11 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const style = {
     "--sidebar-width": "16rem",
     "--sidebar-width-icon": "3rem",
+  };
+
+  const handleLogout = () => {
+    logout();
+    setLocation("/");
   };
 
   return (
@@ -174,11 +185,12 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => window.location.href = "/api/logout"}
+                onClick={handleLogout}
+                disabled={isLoggingOut}
                 data-testid="button-header-logout"
               >
                 <LogOut className="h-4 w-4 mr-2" />
-                Log Out
+                {isLoggingOut ? "Logging out..." : "Log Out"}
               </Button>
               <ThemeToggle />
             </div>

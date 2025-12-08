@@ -89,7 +89,7 @@ export default function Contact() {
           <div className="flex items-center gap-2">
             <Button
               variant="ghost"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
               data-testid="button-login"
             >
               Log In

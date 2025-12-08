@@ -178,7 +178,7 @@ export default function BlogPostPage() {
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               size="lg"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
               data-testid="button-start-trial"
             >
               Start 7-Day Free Trial

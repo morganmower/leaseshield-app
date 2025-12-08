@@ -53,7 +53,7 @@ function PaywallVariant({ testId }: { testId: string }) {
         test_id: testId 
       });
     }
-    window.location.href = '/api/login?redirect=/subscribe';
+    window.location.href = '/login?redirect=/subscribe';
   };
 
   return (

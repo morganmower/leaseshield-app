@@ -7,9 +7,8 @@ import { eq } from 'drizzle-orm';
 import { z } from 'zod';
 import {
   generateAccessToken,
-  generateRefreshToken,
-  generateRefreshTokenHash,
-  verifyRefreshToken,
+  generateRefreshTokenValue,
+  hashToken,
   getRefreshTokenExpiry,
   extractTokenFromHeader,
   verifyAccessToken,
@@ -46,7 +45,8 @@ router.post('/signup', async (req: Request, res: Response) => {
       return res.status(400).json({ message: parsed.error.errors[0].message });
     }
 
-    const { email, password, firstName, lastName } = parsed.data;
+    const { email: rawEmail, password, firstName, lastName } = parsed.data;
+    const email = rawEmail.toLowerCase().trim();
 
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existingUser.length > 0) {
@@ -74,11 +74,12 @@ router.post('/signup', async (req: Request, res: Response) => {
     };
 
     const accessToken = generateAccessToken(tokenPayload);
-    const refreshTokenValue = generateRefreshTokenHash();
+    const refreshTokenValue = generateRefreshTokenValue();
+    const hashedRefreshToken = hashToken(refreshTokenValue);
 
     await db.insert(refreshTokens).values({
       userId: newUser.id,
-      token: refreshTokenValue,
+      token: hashedRefreshToken,
       expiresAt: getRefreshTokenExpiry(),
     });
 
@@ -116,7 +117,8 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(400).json({ message: parsed.error.errors[0].message });
     }
 
-    const { email, password } = parsed.data;
+    const { email: rawEmail, password } = parsed.data;
+    const email = rawEmail.toLowerCase().trim();
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (!user) {
@@ -139,13 +141,14 @@ router.post('/login', async (req: Request, res: Response) => {
     };
 
     const accessToken = generateAccessToken(tokenPayload);
-    const refreshTokenValue = generateRefreshTokenHash();
+    const refreshTokenValue = generateRefreshTokenValue();
+    const hashedRefreshToken = hashToken(refreshTokenValue);
 
     await db.delete(refreshTokens).where(eq(refreshTokens.userId, user.id));
 
     await db.insert(refreshTokens).values({
       userId: user.id,
-      token: refreshTokenValue,
+      token: hashedRefreshToken,
       expiresAt: getRefreshTokenExpiry(),
     });
 
@@ -190,7 +193,8 @@ router.post('/logout', async (req: Request, res: Response) => {
     const refreshTokenValue = req.cookies?.refreshToken;
     
     if (refreshTokenValue) {
-      await db.delete(refreshTokens).where(eq(refreshTokens.token, refreshTokenValue));
+      const hashedToken = hashToken(refreshTokenValue);
+      await db.delete(refreshTokens).where(eq(refreshTokens.token, hashedToken));
     }
 
     res.clearCookie('refreshToken', { path: '/' });
@@ -209,10 +213,12 @@ router.post('/refresh', async (req: Request, res: Response) => {
       return res.status(401).json({ message: 'No refresh token provided' });
     }
 
+    const hashedToken = hashToken(refreshTokenValue);
+
     const [storedToken] = await db
       .select()
       .from(refreshTokens)
-      .where(eq(refreshTokens.token, refreshTokenValue))
+      .where(eq(refreshTokens.token, hashedToken))
       .limit(1);
 
     if (!storedToken) {
@@ -221,14 +227,14 @@ router.post('/refresh', async (req: Request, res: Response) => {
     }
 
     if (new Date() > storedToken.expiresAt) {
-      await db.delete(refreshTokens).where(eq(refreshTokens.token, refreshTokenValue));
+      await db.delete(refreshTokens).where(eq(refreshTokens.token, hashedToken));
       res.clearCookie('refreshToken', { path: '/' });
       return res.status(401).json({ message: 'Refresh token expired' });
     }
 
     const [user] = await db.select().from(users).where(eq(users.id, storedToken.userId)).limit(1);
     if (!user) {
-      await db.delete(refreshTokens).where(eq(refreshTokens.token, refreshTokenValue));
+      await db.delete(refreshTokens).where(eq(refreshTokens.token, hashedToken));
       res.clearCookie('refreshToken', { path: '/' });
       return res.status(401).json({ message: 'User not found' });
     }
@@ -241,11 +247,12 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
     const accessToken = generateAccessToken(tokenPayload);
 
-    const newRefreshTokenValue = generateRefreshTokenHash();
-    await db.delete(refreshTokens).where(eq(refreshTokens.token, refreshTokenValue));
+    const newRefreshTokenValue = generateRefreshTokenValue();
+    const newHashedToken = hashToken(newRefreshTokenValue);
+    await db.delete(refreshTokens).where(eq(refreshTokens.token, hashedToken));
     await db.insert(refreshTokens).values({
       userId: user.id,
-      token: newRefreshTokenValue,
+      token: newHashedToken,
       expiresAt: getRefreshTokenExpiry(),
     });
 
@@ -281,6 +288,48 @@ router.post('/refresh', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Refresh token error:', error);
     return res.status(500).json({ message: 'Failed to refresh token' });
+  }
+});
+
+router.get('/user', async (req: Request, res: Response) => {
+  try {
+    const token = extractTokenFromHeader(req.headers.authorization);
+    if (!token) {
+      return res.status(401).json({ message: 'No access token provided' });
+    }
+
+    const decoded = verifyAccessToken(token);
+    if (!decoded) {
+      return res.status(401).json({ message: 'Invalid or expired token' });
+    }
+
+    const [user] = await db.select().from(users).where(eq(users.id, decoded.userId)).limit(1);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    return res.json({
+      id: user.id,
+      email: user.email,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      isAdmin: user.isAdmin,
+      preferredState: user.preferredState,
+      hasCompletedOnboarding: user.hasCompletedOnboarding,
+      subscriptionStatus: user.subscriptionStatus,
+      trialEndsAt: user.trialEndsAt,
+      subscriptionEndsAt: user.subscriptionEndsAt,
+      stripeCustomerId: user.stripeCustomerId,
+      businessName: user.businessName,
+      phoneNumber: user.phoneNumber,
+      notifyLegalUpdates: user.notifyLegalUpdates,
+      notifyTemplateRevisions: user.notifyTemplateRevisions,
+      notifyBillingAlerts: user.notifyBillingAlerts,
+      notifyTips: user.notifyTips,
+    });
+  } catch (error) {
+    console.error('Get user error:', error);
+    return res.status(500).json({ message: 'Failed to get user info' });
   }
 });
 
@@ -333,7 +382,8 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       return res.status(400).json({ message: parsed.error.errors[0].message });
     }
 
-    const { email } = parsed.data;
+    const { email: rawEmail } = parsed.data;
+    const email = rawEmail.toLowerCase().trim();
 
     const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     
@@ -342,15 +392,18 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
+    const hashedResetToken = hashToken(resetToken);
     const resetExpires = new Date();
     resetExpires.setHours(resetExpires.getHours() + 1);
 
     await db.update(users).set({
-      passwordResetToken: resetToken,
+      passwordResetToken: hashedResetToken,
       passwordResetExpires: resetExpires,
     }).where(eq(users.id, user.id));
 
-    console.log(`Password reset token for ${email}: ${resetToken}`);
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
+    }
 
     return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
   } catch (error) {
@@ -367,11 +420,12 @@ router.post('/reset-password', async (req: Request, res: Response) => {
     }
 
     const { token, password } = parsed.data;
+    const hashedResetToken = hashToken(token);
 
     const [user] = await db
       .select()
       .from(users)
-      .where(eq(users.passwordResetToken, token))
+      .where(eq(users.passwordResetToken, hashedResetToken))
       .limit(1);
 
     if (!user) {

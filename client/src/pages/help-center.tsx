@@ -19,7 +19,7 @@ export default function HelpCenter() {
   const handleQuickLinkClick = (href: string) => {
     // If not authenticated and trying to access protected routes, redirect to login
     if (!isAuthenticated && (href === '/templates' || href === '/compliance' || href === '/screening')) {
-      window.location.href = '/api/login';
+      window.location.href = '/login';
     } else {
       setLocation(href);
     }
@@ -141,7 +141,7 @@ export default function HelpCenter() {
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => window.location.href = "/login"}
                 data-testid="button-login"
               >
                 Log In
