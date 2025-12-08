@@ -23,7 +23,7 @@ export function Logo({ className = "", variant = 'horizontal', size }: LogoProps
       <img 
         src={logoStacked} 
         alt="LeaseShield App - Landlord Protection" 
-        className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain ${className}`}
+        className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain dark:brightness-0 dark:invert ${className}`}
       />
     );
   }
@@ -32,7 +32,7 @@ export function Logo({ className = "", variant = 'horizontal', size }: LogoProps
     <img 
       src={logoHorizontal} 
       alt="LeaseShield App - Landlord Protection" 
-      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain ${className}`}
+      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain dark:brightness-0 dark:invert ${className}`}
     />
   );
 }
@@ -47,7 +47,7 @@ export function LogoIcon({ className = "", size = 32 }: LogoIconProps) {
     <img 
       src={logoStacked} 
       alt="LeaseShield" 
-      className={`object-contain object-top ${className}`}
+      className={`object-contain object-top dark:brightness-0 dark:invert ${className}`}
       style={{ width: size, height: size, objectPosition: 'center top' }}
     />
   );
