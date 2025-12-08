@@ -274,8 +274,11 @@ app.use((req, res, next) => {
   }, () => {
     log(`serving on port ${port}`);
     
-    // Start scheduled jobs (trial reminders, legal update notifications)
-    scheduledJobs.start();
+    // Delay starting scheduled jobs to allow health checks to pass first
+    // This ensures the server is fully ready before heavy operations begin
+    setTimeout(() => {
+      scheduledJobs.start();
+    }, 5000); // 5 second delay
   });
 
   // Graceful shutdown
