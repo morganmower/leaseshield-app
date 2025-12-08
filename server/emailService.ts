@@ -2,6 +2,7 @@
 import { Resend } from 'resend';
 import { storage } from './storage';
 import { aiContentService } from './aiContentService';
+import { getUncachableResendClient } from './resend';
 import type { EmailSequenceStep, User } from '@shared/schema';
 
 interface EmailTemplate {
@@ -19,11 +20,11 @@ interface EmailRecipient {
 export class EmailService {
   private async sendEmail(to: EmailRecipient, template: EmailTemplate): Promise<boolean> {
     try {
-      // Use Resend if API key is available
-      if (process.env.RESEND_API_KEY) {
-        const resend = new Resend(process.env.RESEND_API_KEY);
-        const result = await resend.emails.send({
-          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+      // Try to use the Resend connector first
+      try {
+        const { client, fromEmail } = await getUncachableResendClient();
+        const result = await client.emails.send({
+          from: `LeaseShield App <${fromEmail}>`,
           to: to.email,
           subject: template.subject,
           html: template.htmlBody,
@@ -37,14 +38,34 @@ export class EmailService {
         
         console.log(`✅ Email sent to ${to.email} (${template.subject})`);
         return true;
-      } else {
-        // Fallback: just log if no API key
-        console.log('📧 Email Service - Sending email:');
-        console.log(`  To: ${to.email} (${to.firstName} ${to.lastName})`);
-        console.log(`  Subject: ${template.subject}`);
-        console.log(`  Body Preview: ${template.textBody.substring(0, 100)}...`);
-        console.log('  ⚠️  RESEND_API_KEY not set - email not actually sent');
-        return true;
+      } catch (connectorError) {
+        // Fallback to RESEND_API_KEY if connector fails
+        if (process.env.RESEND_API_KEY) {
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          const result = await resend.emails.send({
+            from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+            to: to.email,
+            subject: template.subject,
+            html: template.htmlBody,
+            text: template.textBody,
+          });
+          
+          if (result.error) {
+            console.error(`❌ Failed to send email to ${to.email}:`, result.error);
+            return false;
+          }
+          
+          console.log(`✅ Email sent to ${to.email} (${template.subject})`);
+          return true;
+        } else {
+          // No connector and no API key - log the email
+          console.log('📧 Email Service - Would send email:');
+          console.log(`  To: ${to.email} (${to.firstName} ${to.lastName})`);
+          console.log(`  Subject: ${template.subject}`);
+          console.log(`  Body Preview: ${template.textBody.substring(0, 100)}...`);
+          console.log('  ⚠️  Resend not configured - email not actually sent');
+          return false;
+        }
       }
     } catch (error) {
       console.error(`❌ Error sending email to ${to.email}:`, error);
