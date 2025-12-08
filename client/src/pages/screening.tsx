@@ -646,11 +646,11 @@ export default function Screening() {
                     <div className="grid gap-3 text-sm">
                       <div className="flex gap-2">
                         <AlertTriangle className="h-4 w-4 text-destructive mt-0.5 flex-shrink-0" />
-                        <div><strong>No Blanket Bans:</strong> Fair Housing prohibits automatic denial for all criminal history.</div>
+                        <div><strong>No Blanket Bans:</strong> You CAN deny for specific crimes, but you CANNOT deny everyone with any criminal history regardless of offense.</div>
                       </div>
                       <div className="flex gap-2">
                         <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
-                        <div><strong>Individualized Assessment:</strong> Consider nature, severity, and how long ago.</div>
+                        <div><strong>Individualized Assessment:</strong> Consider nature of crime, severity, time elapsed, and relevance to tenancy.</div>
                       </div>
                       <div className="flex gap-2">
                         <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />

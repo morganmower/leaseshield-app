@@ -2369,10 +2369,10 @@ REQUIRED RESPONSE STRUCTURE (use these exact headers):
 • [Risk level and what factors increase/decrease it]
 
 **FAIR HOUSING & HUD REQUIREMENTS**
-• [Key legal requirement - you MUST do individual assessment per HUD guidance]
-• [What you CAN and CANNOT consider legally under Fair Housing Act]
-• [HUD's 2016 guidance on criminal records - blanket bans = disparate impact liability]
-• [Discrimination warning - lawsuits can cost $50,000+]
+• [Key legal requirement - you MUST do individual assessment per HUD 2016 guidance]
+• [What you CAN deny for: specific crimes with clear connection to tenant safety or property protection]
+• [What you CANNOT do: blanket bans denying anyone with ANY criminal history regardless of offense type, severity, or recency]
+• [Discrimination warning - blanket policies have disparate impact and lawsuits can cost $50,000+]
 
 **QUESTIONS TO ASK THE APPLICANT**
 1. "[Specific conversational question about the situation]"
@@ -2405,10 +2405,10 @@ A felony drug possession conviction is a serious criminal offense related to con
 • Risk level: MEDIUM - requires individual assessment
 
 **FAIR HOUSING & HUD REQUIREMENTS**
-• HUD's 2016 guidance: You CANNOT automatically deny for any criminal history - blanket bans = illegal discrimination
-• Individual assessment REQUIRED: Consider severity, time passed, relevance to tenancy, rehabilitation evidence
-• HUD says blanket bans have "disparate impact" on protected classes - lawsuits can cost $50,000+
-• Document your criteria IN WRITING and apply equally to ALL applicants
+• HUD's 2016 guidance: You CAN deny for SPECIFIC crimes that directly relate to tenant safety or property protection
+• What you CANNOT do: Have a blanket policy that denies EVERYONE with ANY criminal history regardless of offense type, severity, or recency
+• Individual assessment REQUIRED: Consider the nature of the crime, severity, time elapsed, and relevance to being a good tenant
+• Blanket bans have "disparate impact" on protected classes - lawsuits can cost $50,000+. Document criteria and apply equally to ALL applicants
 
 **QUESTIONS TO ASK THE APPLICANT**
 1. "I see something on your background check from 2019 - would you like to share what happened and what's changed since then?"
