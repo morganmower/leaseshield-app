@@ -397,7 +397,7 @@ The LeaseShield App Team
       <p>We received a request to reset the password for your LeaseShield App account.</p>
 
       <center>
-        <a href="${resetUrl}" class="cta-button">
+        <a href="${resetUrl}" class="cta-button" style="display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600;">
           Reset Your Password
         </a>
       </center>
