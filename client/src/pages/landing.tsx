@@ -310,6 +310,16 @@ export default function Landing() {
                 </div>
               </motion.div>
 
+              {/* Shield Icon Anchor */}
+              <motion.div 
+                variants={fadeInUp}
+                className="flex justify-center mb-4"
+              >
+                <div className="rounded-full bg-primary/10 p-3">
+                  <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+                </div>
+              </motion.div>
+
               {/* Pricing Display - A/B Test Wrapped */}
               <ABTestWrapper testId="hero-pricing">
                 <motion.div 
