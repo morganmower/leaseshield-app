@@ -15,6 +15,7 @@ export class ScheduledJobs {
   private trialExpirationEnrollmentInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
   private emailSequenceInterval: NodeJS.Timeout | null = null;
+  private renewalReminderInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringLastRun: Date | null = null;
 
   // Check for trials ending soon and send reminder emails (2 days before)
@@ -351,6 +352,45 @@ export class ScheduledJobs {
     }
   }
 
+  // Check for yearly subscriptions nearing renewal and send reminder emails
+  async checkRenewalReminders(): Promise<void> {
+    try {
+      console.log('🔄 Checking for subscription renewal reminders...');
+
+      const usersNeedingReminder = await storage.getUsersNeedingRenewalReminder();
+      
+      console.log(`  Found ${usersNeedingReminder.length} yearly subscribers needing renewal reminder`);
+
+      for (const user of usersNeedingReminder) {
+        if (user.email && user.subscriptionEndsAt) {
+          console.log(`  Sending renewal reminder to ${user.email}...`);
+          
+          const success = await emailService.sendRenewalReminderEmail(
+            {
+              email: user.email,
+              firstName: user.firstName || undefined,
+              lastName: user.lastName || undefined,
+            },
+            user.subscriptionEndsAt,
+            100 // $100/year
+          );
+
+          if (success) {
+            // Update the renewal reminder sent timestamp
+            await storage.updateUserStripeInfo(user.id, {
+              renewalReminderSentAt: new Date(),
+            });
+            console.log(`  ✅ Renewal reminder sent to ${user.email}`);
+          }
+        }
+      }
+
+      console.log('✅ Renewal reminder check complete');
+    } catch (error) {
+      console.error('❌ Error checking renewal reminders:', error);
+    }
+  }
+
   // Check if legislative monitoring should run (monthly on the 1st)
   async checkLegislativeMonitoring(): Promise<void> {
     try {
@@ -424,6 +464,13 @@ export class ScheduledJobs {
     );
     setTimeout(() => this.processEmailSequences(), 3 * 60 * 1000);
 
+    // Check for renewal reminders every 12 hours
+    this.renewalReminderInterval = setInterval(
+      () => this.checkRenewalReminders(),
+      12 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.checkRenewalReminders(), 4 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -454,6 +501,11 @@ export class ScheduledJobs {
     if (this.emailSequenceInterval) {
       clearInterval(this.emailSequenceInterval);
       this.emailSequenceInterval = null;
+    }
+
+    if (this.renewalReminderInterval) {
+      clearInterval(this.renewalReminderInterval);
+      this.renewalReminderInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

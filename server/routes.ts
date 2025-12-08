@@ -395,10 +395,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
               ? 'cancel_at_period_end' 
               : subscription.status;
             
+            // Get billing interval and period end from subscription
+            const billingInterval = subscription.items.data[0]?.plan?.interval || 'month';
+            const periodEnd = (subscription as any).current_period_end;
+            const subscriptionEndsAt = periodEnd 
+              ? new Date(periodEnd * 1000)
+              : undefined;
+            
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: status,
+              billingInterval,
+              subscriptionEndsAt,
+              // Clear payment failed timestamp if subscription is now active
+              paymentFailedAt: status === 'active' ? null : undefined,
             });
-            console.log(`Updated user ${userResults[0].id} subscription status to ${status}`);
+            console.log(`Updated user ${userResults[0].id} subscription: status=${status}, interval=${billingInterval}, ends=${subscriptionEndsAt?.toISOString()}`);
           }
           break;
         }
@@ -423,11 +434,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
-            // Payment successful - update to active (Stripe will also send subscription.updated)
+            // Payment successful - update to active and clear any payment failure state
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: 'active',
+              paymentFailedAt: null, // Clear payment failed timestamp on successful payment
             });
-            console.log(`User ${userResults[0].id} payment succeeded - marked as active`);
+            console.log(`User ${userResults[0].id} payment succeeded - marked as active, cleared payment failed state`);
           }
           break;
         }
@@ -438,10 +450,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
-            await storage.updateUserStripeInfo(userResults[0].id, {
+            const user = userResults[0];
+            await storage.updateUserStripeInfo(user.id, {
               subscriptionStatus: 'past_due',
+              paymentFailedAt: new Date(),
             });
-            console.log(`User ${userResults[0].id} payment failed - marked as past_due`);
+            console.log(`User ${user.id} payment failed - marked as past_due`);
+            
+            // Send payment failed email notification
+            if (user.email && user.notifyBillingAlerts) {
+              try {
+                const { emailService } = await import('./emailService');
+                await emailService.sendPaymentFailedEmail(
+                  { email: user.email, firstName: user.firstName || undefined },
+                );
+                console.log(`Payment failed email sent to ${user.email}`);
+              } catch (emailError) {
+                console.error('Failed to send payment failed email:', emailError);
+              }
+            }
           }
           break;
         }

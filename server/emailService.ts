@@ -511,6 +511,197 @@ The LeaseShield App Team
     return this.sendEmail(user, template);
   }
 
+  async sendPaymentFailedEmail(user: EmailRecipient): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+
+    const template: EmailTemplate = {
+      subject: 'Action required: Your LeaseShield payment failed',
+      textBody: `Hi ${firstName},
+
+We were unable to process your LeaseShield App subscription payment.
+
+To continue using LeaseShield and protect your rental business, please update your payment method:
+
+${baseUrl}/subscription
+
+What happens next:
+- Your access remains active while we retry the payment
+- We'll attempt to charge your card again in a few days
+- If payment continues to fail, your subscription will be paused
+
+Need help? Reply to this email or contact us anytime.
+
+Best regards,
+The LeaseShield App Team
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .alert-box { background: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0; }
+    .info-box { background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Payment Failed</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <div class="alert-box">
+        <p style="margin: 0; color: #991b1b;"><strong>We were unable to process your LeaseShield App subscription payment.</strong></p>
+      </div>
+
+      <p>To continue using LeaseShield and protecting your rental business, please update your payment method:</p>
+
+      <center>
+        <a href="${baseUrl}/subscription" class="cta-button" style="color: #ffffff !important;">
+          Update Payment Method
+        </a>
+      </center>
+
+      <div class="info-box">
+        <p style="margin-top: 0;"><strong>What happens next:</strong></p>
+        <ul style="margin-bottom: 0;">
+          <li>Your access remains active while we retry the payment</li>
+          <li>We'll attempt to charge your card again in a few days</li>
+          <li>If payment continues to fail, your subscription will be paused</li>
+        </ul>
+      </div>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">Need help? Reply to this email or contact us anytime.</p>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
+  async sendRenewalReminderEmail(user: EmailRecipient, renewalDate: Date, amount: number = 100): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+    
+    const formattedDate = renewalDate.toLocaleDateString('en-US', { 
+      weekday: 'long', 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric' 
+    });
+    const daysUntilRenewal = Math.ceil((renewalDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+
+    const template: EmailTemplate = {
+      subject: `Your LeaseShield subscription renews in ${daysUntilRenewal} days`,
+      textBody: `Hi ${firstName},
+
+Your LeaseShield App annual subscription will automatically renew on ${formattedDate} for $${amount}.
+
+You don't need to do anything - your subscription will continue uninterrupted.
+
+If you'd like to:
+- Update your payment method: ${baseUrl}/subscription
+- Switch to monthly billing: ${baseUrl}/subscription
+- Cancel your subscription: ${baseUrl}/subscription
+
+Your subscription includes:
+- State-specific legal templates for all 14 states
+- Real-time compliance updates and legal change notifications
+- AI credit report decoder and tenant screening resources
+- Expert guidance for handling tenant issues
+- 24/7 AI chat assistant
+
+Thank you for being a LeaseShield subscriber!
+
+Best regards,
+The LeaseShield App Team
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .renewal-box { background: #f0fdfa; border: 2px solid #14b8a6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+    .feature-list { background: #f1f5f9; padding: 20px; border-radius: 6px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 5px; font-weight: 600; }
+    .secondary-link { display: inline-block; color: #14b8a6; padding: 12px 24px; text-decoration: none; margin: 10px 5px; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Subscription Renewal Notice</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <div class="renewal-box">
+        <p style="margin: 0; font-size: 18px;">Your annual subscription renews in</p>
+        <p style="margin: 10px 0; font-size: 36px; font-weight: bold; color: #14b8a6;">${daysUntilRenewal} days</p>
+        <p style="margin: 0; color: #64748b;">${formattedDate} &bull; $${amount}/year</p>
+      </div>
+
+      <p><strong>You don't need to do anything</strong> - your subscription will continue uninterrupted and you'll keep full access to all LeaseShield features.</p>
+
+      <div class="feature-list">
+        <p style="margin-top: 0;"><strong>Your subscription includes:</strong></p>
+        <ul style="margin-bottom: 0;">
+          <li>State-specific legal templates for all 14 states</li>
+          <li>Real-time compliance updates and legal change notifications</li>
+          <li>AI credit report decoder and tenant screening resources</li>
+          <li>Expert guidance for handling tenant issues</li>
+          <li>24/7 AI chat assistant</li>
+        </ul>
+      </div>
+
+      <p style="text-align: center;">Need to make changes?</p>
+      <center>
+        <a href="${baseUrl}/subscription" class="cta-button" style="color: #ffffff !important;">
+          Manage Subscription
+        </a>
+      </center>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b; text-align: center;">Thank you for being a LeaseShield subscriber!</p>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
   async sendContactFormEmail(formData: { firstName: string; lastName: string; email: string; phone: string; message: string }): Promise<boolean> {
     const { firstName, lastName, email, phone, message } = formData;
 

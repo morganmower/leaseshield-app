@@ -121,6 +121,29 @@ export default function Billing() {
       </div>
 
       <div className="space-y-6">
+        {/* Payment Failed Alert */}
+        {user.subscriptionStatus === 'past_due' && (
+          <Card className="p-6 border-red-500 bg-red-50 dark:bg-red-950/30">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">Payment Failed</h2>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                  We were unable to process your payment. Please update your payment method to continue using LeaseShield without interruption.
+                </p>
+                <Button 
+                  onClick={() => managePaymentMutation.mutate()}
+                  disabled={managePaymentMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-fix-payment"
+                >
+                  {managePaymentMutation.isPending ? "Opening..." : "Update Payment Method"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* No Stripe Customer - Need to Subscribe */}
         {!user.stripeCustomerId && (user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'active') && (
           <Card className="p-6 border-primary/50 bg-primary/5">
@@ -147,18 +170,36 @@ export default function Billing() {
               <p className="text-muted-foreground mt-1">
                 {user.subscriptionStatus === 'cancel_at_period_end' 
                   ? 'Cancelling at period end' 
+                  : user.subscriptionStatus === 'past_due'
+                  ? 'LeaseShield App - Payment Required'
                   : user.subscriptionStatus === 'active'
-                  ? 'LeaseShield App - $10/month'
+                  ? `LeaseShield App - ${(user as any).billingInterval === 'year' ? '$100/year' : '$10/month'}`
                   : user.subscriptionStatus === 'trialing'
                   ? 'LeaseShield App - 7-Day Free Trial'
                   : "No active subscription"}
               </p>
               {user.subscriptionStatus && (
                 <p className="text-xs text-muted-foreground mt-1">
-                  Status: {user.subscriptionStatus}
+                  Status: {user.subscriptionStatus === 'past_due' ? 'Payment Failed' : user.subscriptionStatus}
                 </p>
               )}
             </div>
+
+            {user.subscriptionEndsAt && user.subscriptionStatus !== 'cancel_at_period_end' && (
+              <div>
+                <Label className="text-sm font-medium text-foreground">
+                  Next Renewal
+                </Label>
+                <p className="text-muted-foreground mt-1">
+                  {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
+                    weekday: 'long',
+                    month: 'long', 
+                    day: 'numeric', 
+                    year: 'numeric' 
+                  })}
+                </p>
+              </div>
+            )}
 
             {user.trialEndsAt && (
               <div>
@@ -204,7 +245,7 @@ export default function Billing() {
         </Card>
 
         {/* Payment Method */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end') && user.stripeCustomerId && (
+        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end' || user.subscriptionStatus === 'past_due') && user.stripeCustomerId && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
             

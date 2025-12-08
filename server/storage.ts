@@ -108,7 +108,9 @@ export interface IStorage {
     businessName?: string | null;
     phoneNumber?: string | null;
   }): Promise<User>;
-  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User>;
+  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User>;
+  getUsersNeedingRenewalReminder(): Promise<User[]>;
+  getUsersWithPaymentFailed(): Promise<User[]>;
   getAllActiveUsers(): Promise<User[]>;
   getAllUsers(): Promise<User[]>;
   getUsersByState(stateId: string): Promise<User[]>;
@@ -324,7 +326,7 @@ export class DatabaseStorage implements IStorage {
     }, 'updateUserPreferences');
   }
 
-  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string }): Promise<User> {
+  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User> {
     return handleDbOperation(async () => {
       const [user] = await db
         .update(users)
@@ -338,6 +340,38 @@ export class DatabaseStorage implements IStorage {
 
       return user;
     }, 'updateUserStripeInfo');
+  }
+
+  async getUsersNeedingRenewalReminder(): Promise<User[]> {
+    return handleDbOperation(async () => {
+      const sevenDaysFromNow = new Date();
+      sevenDaysFromNow.setDate(sevenDaysFromNow.getDate() + 7);
+      
+      const fourDaysFromNow = new Date();
+      fourDaysFromNow.setDate(fourDaysFromNow.getDate() + 4);
+      
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      
+      return await db.select().from(users).where(
+        sql`${users.subscriptionStatus} = 'active' 
+            AND ${users.billingInterval} = 'year'
+            AND ${users.subscriptionEndsAt} IS NOT NULL
+            AND ${users.subscriptionEndsAt} <= ${sevenDaysFromNow}
+            AND ${users.subscriptionEndsAt} > ${fourDaysFromNow}
+            AND (${users.renewalReminderSentAt} IS NULL 
+                 OR ${users.renewalReminderSentAt} < ${thirtyDaysAgo})
+            AND ${users.notifyBillingAlerts} = true`
+      );
+    }, 'getUsersNeedingRenewalReminder');
+  }
+
+  async getUsersWithPaymentFailed(): Promise<User[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(users).where(
+        sql`${users.subscriptionStatus} = 'past_due' AND ${users.paymentFailedAt} IS NOT NULL`
+      );
+    }, 'getUsersWithPaymentFailed');
   }
 
   async getAllActiveUsers(): Promise<User[]> {

@@ -28,9 +28,12 @@ export const users = pgTable("users", {
   stripeCustomerId: varchar("stripe_customer_id"),
   stripeSubscriptionId: varchar("stripe_subscription_id"),
   subscriptionStatus: varchar("subscription_status"), // 'trialing', 'active', 'canceled', 'past_due'
+  billingInterval: varchar("billing_interval"), // 'month' or 'year'
   trialEndsAt: timestamp("trial_ends_at"),
   subscriptionEndsAt: timestamp("subscription_ends_at"),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
+  renewalReminderSentAt: timestamp("renewal_reminder_sent_at"), // Track when we sent renewal reminder
+  paymentFailedAt: timestamp("payment_failed_at"), // Track when payment failed for banner display
   // User preferences
   preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
