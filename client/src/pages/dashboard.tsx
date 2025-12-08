@@ -398,7 +398,7 @@ export default function Dashboard() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {/* Document Assembly Wizard */}
             <Link to="/templates">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-document-wizard">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-document-wizard">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <Wand2 className="h-6 w-6 text-primary" />
@@ -408,10 +408,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">Attorney-Quality PDFs</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Choose a template, fill out guided forms, and generate professional legal documents instantly
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-launch-wizard">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-launch-wizard">
                   <Wand2 className="mr-2 h-4 w-4" />
                   Choose Template
                 </Button>
@@ -420,7 +420,7 @@ export default function Dashboard() {
 
             {/* Legislative Monitoring */}
             <Link to="/compliance">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-legislative-monitoring">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-legislative-monitoring">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <Gavel className="h-6 w-6 text-amber-600 dark:text-amber-500" />
@@ -430,10 +430,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">Automatic Updates</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   AI tracks state laws monthly and auto-updates your templates when legislation changes
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-monitoring">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-view-monitoring">
                   <Bell className="mr-2 h-4 w-4" />
                   View Updates
                 </Button>
@@ -442,7 +442,7 @@ export default function Dashboard() {
 
             {/* Multi-Property Management */}
             <Link to="/properties">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-property-management">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-property-management">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
@@ -452,10 +452,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">Organize Everything</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Manage multiple properties and link documents to specific rental units
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-manage-properties">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-manage-properties">
                   <Building2 className="mr-2 h-4 w-4" />
                   Manage Properties
                 </Button>
@@ -464,7 +464,7 @@ export default function Dashboard() {
 
             {/* Tenant Issue Workflows */}
             <Link to="/tenant-issues">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-tenant-workflows">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-tenant-workflows">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <AlertCircle className="h-6 w-6 text-rose-600 dark:text-rose-500" />
@@ -474,10 +474,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">Step-by-Step Guides</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   State-specific resolution guides for late rent, repairs, violations, and evictions
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-workflows">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-view-workflows">
                   <ArrowRight className="mr-2 h-4 w-4" />
                   View Workflows
                 </Button>
@@ -486,7 +486,7 @@ export default function Dashboard() {
 
             {/* Template Library */}
             <Link to="/templates">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-template-library">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-template-library">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <FileText className="h-6 w-6 text-violet-600 dark:text-violet-500" />
@@ -496,10 +496,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">State-Specific</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Leases, applications, notices, and forms customized for all 14 supported state laws
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-browse-templates">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-browse-templates">
                   <FileText className="mr-2 h-4 w-4" />
                   Browse Templates
                 </Button>
@@ -508,7 +508,7 @@ export default function Dashboard() {
 
             {/* Compliance Cards */}
             <Link to="/compliance">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full" data-testid="card-compliance-cards">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-compliance-cards">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-blue-500/20 to-blue-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                     <Shield className="h-6 w-6 text-blue-600 dark:text-blue-500" />
@@ -518,10 +518,10 @@ export default function Dashboard() {
                     <Badge variant="secondary" className="text-xs">Before & After Examples</Badge>
                   </div>
                 </div>
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-grow">
                   Before/after compliance cards showing exactly how to meet state requirements
                 </p>
-                <Button variant="outline" size="sm" className="w-full" data-testid="button-view-compliance">
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-view-compliance">
                   <Shield className="mr-2 h-4 w-4" />
                   View Guidance
                 </Button>
@@ -529,7 +529,7 @@ export default function Dashboard() {
             </Link>
 
             {/* AI Training for Landlords - Coming Soon */}
-            <Card className="p-6 transition-all h-full border-dashed border-2 border-primary/30" data-testid="card-ai-training-coming-soon">
+            <Card className="p-6 transition-all h-full flex flex-col border-dashed border-2 border-primary/30" data-testid="card-ai-training-coming-soon">
               <div className="flex items-start gap-3 mb-4">
                 <div className="rounded-xl bg-gradient-to-br from-indigo-500/20 to-indigo-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                   <GraduationCap className="h-6 w-6 text-indigo-600 dark:text-indigo-500" />
@@ -542,11 +542,11 @@ export default function Dashboard() {
                   </Badge>
                 </div>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
+              <p className="text-sm text-muted-foreground mb-4 flex-grow">
                 Live 4-hour workshops teaching you to use AI for marketing, screening, and understanding new laws
               </p>
               {trainingInterest?.registered ? (
-                <div className="flex items-center justify-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3">
+                <div className="flex items-center justify-center gap-2 text-sm text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/20 rounded-lg p-3 mt-auto">
                   <CheckCircle2 className="h-4 w-4" />
                   <span>You'll be notified when we launch!</span>
                 </div>
@@ -554,7 +554,7 @@ export default function Dashboard() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
+                  className="w-full mt-auto border-indigo-300 dark:border-indigo-700 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
                   onClick={() => registerTrainingInterest.mutate()}
                   disabled={registerTrainingInterest.isPending}
                   data-testid="button-notify-training"
