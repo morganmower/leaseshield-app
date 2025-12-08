@@ -78,7 +78,7 @@ export class EmailService {
     const firstName = user.firstName || 'there';
 
     const template: EmailTemplate = {
-      subject: `Your LeaseShield App trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''} – Subscribe Now`,
+      subject: `Your LeaseShield trial ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}`,
       textBody: `Hi ${firstName},
 
 Your 7-day free trial of LeaseShield App ends in ${daysRemaining} day${daysRemaining !== 1 ? 's' : ''}.
@@ -119,8 +119,8 @@ The LeaseShield App Team
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
     .pricing-box { background: #f0fdf4; border: 2px solid #22c55e; padding: 20px; border-radius: 8px; margin: 20px 0; }
     .pricing-option { display: inline-block; width: 45%; margin-right: 5%; vertical-align: top; }
-    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
-    .feature-list { background: #f1f5f9; padding: 20px; border-left: 4px solid #2563eb; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .feature-list { background: #f0fdfa; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
   </style>
 </head>
@@ -157,7 +157,7 @@ The LeaseShield App Team
       </p>
 
       <p style="text-align: center; color: #64748b;">
-        Or <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/login" style="color: #2563eb;">continue exploring your trial</a>
+        Or <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/login" style="color: #14b8a6;">continue exploring your trial</a>
       </p>
       
       <div class="feature-list">
@@ -219,8 +219,8 @@ The LeaseShield App Team
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: ${impactLevel === 'high' ? '#dc2626' : impactLevel === 'medium' ? '#ea580c' : '#475569'}; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
-    .alert-box { background: ${impactLevel === 'high' ? '#fef2f2' : impactLevel === 'medium' ? '#fff7ed' : '#f1f5f9'}; padding: 20px; border-left: 4px solid ${impactLevel === 'high' ? '#dc2626' : impactLevel === 'medium' ? '#ea580c' : '#2563eb'}; margin: 20px 0; }
-    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+    .alert-box { background: ${impactLevel === 'high' ? '#fef2f2' : impactLevel === 'medium' ? '#fff7ed' : '#f0fdfa'}; padding: 20px; border-left: 4px solid ${impactLevel === 'high' ? '#dc2626' : impactLevel === 'medium' ? '#ea580c' : '#14b8a6'}; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
   </style>
 </head>
@@ -300,14 +300,14 @@ The LeaseShield App Team
     .header { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: white; padding: 40px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
     .feature-list { background: #f1f5f9; padding: 20px; border-left: 4px solid #10b981; margin: 20px 0; }
-    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1 style="margin: 0; font-size: 32px;">🎉 Welcome to LeaseShield App!</h1>
+      <h1 style="margin: 0; font-size: 32px;">Welcome to LeaseShield App!</h1>
       <p style="margin: 10px 0 0 0; font-size: 18px; opacity: 0.9;">Your subscription is now active</p>
     </div>
     <div class="content">
@@ -336,7 +336,7 @@ The LeaseShield App Team
     
     <div class="footer">
       <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
-      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" style="color: #2563eb;">Settings</a></p>
+      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" style="color: #14b8a6;">Settings</a></p>
     </div>
   </div>
 </body>
@@ -381,7 +381,7 @@ The LeaseShield App Team
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
     .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
-    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
     .warning-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 20px 0; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
   </style>
@@ -397,14 +397,14 @@ The LeaseShield App Team
       <p>We received a request to reset the password for your LeaseShield App account.</p>
 
       <center>
-        <a href="${resetUrl}" class="cta-button" style="display: inline-block; background-color: #2563eb; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600;">
+        <a href="${resetUrl}" class="cta-button" style="display: inline-block; background-color: #14b8a6; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600;">
           Reset Your Password
         </a>
       </center>
 
       <p style="text-align: center; font-size: 14px; color: #64748b;">
         Or copy and paste this link into your browser:<br>
-        <a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a>
+        <a href="${resetUrl}" style="color: #14b8a6; word-break: break-all;">${resetUrl}</a>
       </p>
 
       <div class="warning-box">
@@ -461,8 +461,8 @@ The LeaseShield App Team
     .header { background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
     .alert-box { background: #fef2f2; padding: 20px; border-left: 4px solid #dc2626; margin: 20px 0; }
-    .feature-list { background: #f1f5f9; padding: 20px; border-left: 4px solid #2563eb; margin: 20px 0; }
-    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; }
+    .feature-list { background: #f0fdfa; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
   </style>
 </head>
@@ -539,7 +539,7 @@ Sent from LeaseShield App Contact Form
     .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
     .info-box { background: #f1f5f9; padding: 15px; border-radius: 6px; margin: 20px 0; }
-    .message-box { background: #ffffff; border: 2px solid #2563eb; padding: 20px; border-radius: 6px; margin: 20px 0; }
+    .message-box { background: #ffffff; border: 2px solid #14b8a6; padding: 20px; border-radius: 6px; margin: 20px 0; }
     .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
     .label { font-weight: 600; color: #1e293b; }
   </style>
