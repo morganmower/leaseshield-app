@@ -12,6 +12,7 @@ import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
 import { useState, useEffect } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
+import { getAccessToken } from "@/lib/queryClient";
 
 const STATE_NAMES: Record<string, string> = {
   UT: "Utah",
@@ -96,7 +97,11 @@ export default function Communications() {
       const [_, state] = queryKey as [string, string];
       const url = `/api/communications?stateId=${state}`;
       console.log(`🔄 Fetching templates for state ${state} from ${url}`);
-      const response = await fetch(url);
+      const token = getAccessToken();
+      const response = await fetch(url, {
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) {
         console.error(`API error: ${response.status} ${response.statusText} for ${url}`);
         throw new Error(`Failed to fetch templates: ${response.status}`);
