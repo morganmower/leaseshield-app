@@ -325,6 +325,88 @@ The LeaseShield App Team
 
     return this.sendEmail(user, template);
   }
+  async sendPasswordResetEmail(user: EmailRecipient, resetToken: string): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+    
+    // Build the reset URL
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'http://localhost:5000';
+    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`;
+
+    const template: EmailTemplate = {
+      subject: 'Reset your LeaseShield App password',
+      textBody: `Hi ${firstName},
+
+We received a request to reset your password for your LeaseShield App account.
+
+Click the link below to reset your password:
+${resetUrl}
+
+This link will expire in 1 hour for security reasons.
+
+If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+
+Best regards,
+The LeaseShield App Team
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .cta-button { display: inline-block; background: #2563eb; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .warning-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 6px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Password Reset Request</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <p>We received a request to reset the password for your LeaseShield App account.</p>
+
+      <center>
+        <a href="${resetUrl}" class="cta-button">
+          Reset Your Password
+        </a>
+      </center>
+
+      <p style="text-align: center; font-size: 14px; color: #64748b;">
+        Or copy and paste this link into your browser:<br>
+        <a href="${resetUrl}" style="color: #2563eb; word-break: break-all;">${resetUrl}</a>
+      </p>
+
+      <div class="warning-box">
+        <p style="margin: 0;"><strong>This link will expire in 1 hour</strong> for security reasons.</p>
+      </div>
+
+      <p style="margin-top: 30px; font-size: 14px; color: #64748b;">
+        If you didn't request a password reset, you can safely ignore this email. Your password will remain unchanged.
+      </p>
+    </div>
+    
+    <div class="footer">
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
   async sendTrialExpiredEmail(user: EmailRecipient): Promise<boolean> {
     const firstName = user.firstName || 'there';
 

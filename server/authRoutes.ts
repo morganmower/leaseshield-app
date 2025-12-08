@@ -14,6 +14,7 @@ import {
   verifyAccessToken,
   TokenPayload,
 } from './jwt';
+import { emailService } from './emailService';
 
 const router = Router();
 
@@ -401,8 +402,15 @@ router.post('/forgot-password', async (req: Request, res: Response) => {
       passwordResetExpires: resetExpires,
     }).where(eq(users.id, user.id));
 
+    // Send password reset email
+    const emailSent = await emailService.sendPasswordResetEmail(
+      { email: user.email, firstName: user.firstName || undefined, lastName: user.lastName || undefined },
+      resetToken
+    );
+
     if (process.env.NODE_ENV === 'development') {
-      console.log(`[DEV ONLY] Password reset token for ${email}: ${resetToken}`);
+      console.log(`[DEV] Password reset email ${emailSent ? 'sent' : 'failed'} for ${email}`);
+      console.log(`[DEV ONLY] Password reset token: ${resetToken}`);
     }
 
     return res.json({ message: 'If an account with that email exists, a password reset link has been sent.' });
