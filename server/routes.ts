@@ -1,8 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import cookieParser from "cookie-parser";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
-import { requireActiveSubscription, requireAdmin } from "./subscriptionMiddleware";
+import { isAuthenticated, requireAccess, requireAdmin } from "./jwtAuth";
+import authRoutes from "./authRoutes";
 import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema } from "@shared/schema";
 import { z } from "zod";
@@ -86,7 +87,7 @@ const upload = multer({
 
 // Helper to get user ID from request with validation
 function getUserId(req: any): string {
-  const userId = req.user?.claims?.sub;
+  const userId = req.user?.id || req.userId;
   if (!userId) {
     throw new Error('User ID not found in request');
   }
@@ -99,24 +100,11 @@ function getClientIp(req: any): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Auth middleware
-  await setupAuth(app);
-
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = getUserId(req);
-      const user = await storage.getUser(userId);
-      if (!user) {
-        return res.status(404).json({ message: "User not found" });
-      }
-      // Return full user object with subscription and trial info
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // Cookie parser for refresh tokens
+  app.use(cookieParser());
+  
+  // JWT Auth routes
+  app.use('/api/auth', authRoutes);
 
   // User preferences - with strict input validation
   const userPreferencesSchema = z.object({
@@ -545,7 +533,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/templates', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/templates', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const { stateId, category } = req.query;
       const templates = await storage.getAllTemplates({
@@ -559,7 +547,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/templates/:id', isAuthenticated, requireActiveSubscription, async (req, res) => {
+  app.get('/api/templates/:id', isAuthenticated, requireAccess, async (req, res) => {
     try {
       const template = await storage.getTemplate(req.params.id);
       if (!template) {
@@ -618,7 +606,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Property routes
-  app.get('/api/properties', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -649,7 +637,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/properties', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.post('/api/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -680,7 +668,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/properties/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.put('/api/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -704,7 +692,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/properties/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.delete('/api/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -723,7 +711,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Saved Documents routes
-  app.get('/api/saved-documents', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/saved-documents', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -737,7 +725,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/saved-documents/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/saved-documents/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -757,7 +745,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/saved-documents', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.post('/api/saved-documents', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -797,7 +785,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/saved-documents/:id/download', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/saved-documents/:id/download', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -845,7 +833,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/saved-documents/:id', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.delete('/api/saved-documents/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       if (!userId) {
@@ -1069,7 +1057,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Compliance routes
-  app.get('/api/compliance-cards', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/compliance-cards', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const { stateId } = req.query;
       if (!stateId) {
@@ -1132,7 +1120,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Legal updates routes
-  app.get('/api/legal-updates', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/legal-updates', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const { stateId } = req.query;
       if (!stateId) {
@@ -1302,7 +1290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/legal-updates/recent', isAuthenticated, requireActiveSubscription, async (req: any, res) => {
+  app.get('/api/legal-updates/recent', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const updates = await storage.getRecentLegalUpdates(5);
       res.json(updates);
@@ -2164,7 +2152,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Credit Report Helper - explain credit terms using AI
-  app.post('/api/explain-credit-term', isAuthenticated, requireActiveSubscription, asyncHandler(async (req, res) => {
+  app.post('/api/explain-credit-term', isAuthenticated, requireAccess, asyncHandler(async (req, res) => {
     // Rate limiting (same as chat)
     const clientIp = getClientIp(req);
     if (!chatRateLimiter.check(clientIp)) {
@@ -2307,7 +2295,7 @@ TONE: Protective mentor looking out for the landlord's investment.`
   }));
 
   // Criminal & Eviction Screening Helper - explain terms using AI
-  app.post('/api/explain-criminal-eviction-term', isAuthenticated, requireActiveSubscription, asyncHandler(async (req, res) => {
+  app.post('/api/explain-criminal-eviction-term', isAuthenticated, requireAccess, asyncHandler(async (req, res) => {
     // Rate limiting (same as chat and credit helper)
     const clientIp = getClientIp(req);
     if (!chatRateLimiter.check(clientIp)) {
