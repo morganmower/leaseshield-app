@@ -316,12 +316,14 @@ export default function Landing() {
                 variants={fadeInUp}
                 className="flex justify-center mb-4"
               >
-                <div className="rounded-full bg-primary/10 p-4">
-                  <img 
-                    src={leaseShieldIcon} 
-                    alt="LeaseShield" 
-                    className="h-14 w-14 sm:h-16 sm:w-16 object-contain"
-                  />
+                <div className="rounded-full bg-primary/20 p-1.5">
+                  <div className="rounded-full bg-white p-3">
+                    <img 
+                      src={leaseShieldIcon} 
+                      alt="LeaseShield" 
+                      className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
+                    />
+                  </div>
                 </div>
               </motion.div>
 
