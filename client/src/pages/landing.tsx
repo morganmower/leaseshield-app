@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
 import westernVerifyLogo from "@assets/western_verify_logo_official.png";
+import leaseShieldIcon from "@assets/image_1765210101470.png";
 import {
   Accordion,
   AccordionContent,
@@ -310,13 +311,17 @@ export default function Landing() {
                 </div>
               </motion.div>
 
-              {/* Shield Icon Anchor */}
+              {/* LeaseShield Brand Icon Anchor */}
               <motion.div 
                 variants={fadeInUp}
                 className="flex justify-center mb-4"
               >
-                <div className="rounded-full bg-primary/10 p-3">
-                  <Shield className="h-10 w-10 sm:h-12 sm:w-12 text-primary" />
+                <div className="rounded-full bg-primary/10 p-4">
+                  <img 
+                    src={leaseShieldIcon} 
+                    alt="LeaseShield" 
+                    className="h-14 w-14 sm:h-16 sm:w-16 object-contain"
+                  />
                 </div>
               </motion.div>
 
