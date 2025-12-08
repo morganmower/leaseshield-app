@@ -185,6 +185,11 @@ app.use((req, res, next) => {
   next();
 });
 
+// Simple health check endpoint - responds immediately without any DB or heavy operations
+app.get('/health', (_req, res) => {
+  res.status(200).json({ status: 'ok', timestamp: Date.now() });
+});
+
 app.use((req, res, next) => {
   // Log ALL incoming requests immediately
   if (req.path.startsWith("/api")) {
