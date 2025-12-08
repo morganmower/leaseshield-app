@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, getAccessToken } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -88,9 +88,13 @@ export default function Properties() {
 
   const createMutation = useMutation({
     mutationFn: async (data: Partial<InsertProperty>) => {
+      const token = getAccessToken();
       const response = await fetch("/api/properties", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         credentials: "include",
         body: JSON.stringify(data),
       });
@@ -117,9 +121,13 @@ export default function Properties() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<InsertProperty> }) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/properties/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         credentials: "include",
         body: JSON.stringify(data),
       });
@@ -147,9 +155,11 @@ export default function Properties() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/properties/${id}`, {
         method: "DELETE",
         credentials: "include",
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) throw new Error("Failed to delete property");
       return response.json();
@@ -188,10 +198,12 @@ export default function Properties() {
         formData.append('description', description);
       }
       
+      const token = getAccessToken();
       const response = await fetch('/api/uploaded-documents', {
         method: 'POST',
         credentials: 'include',
         body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) throw new Error('Failed to upload document');
       return response.json();

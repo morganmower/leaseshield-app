@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, getAccessToken } from "@/lib/queryClient";
 import type { SavedDocument, Property, UploadedDocument } from "@shared/schema";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -53,7 +53,11 @@ export default function MyDocuments() {
   const { data: properties = [] } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
     queryFn: async () => {
-      const response = await fetch('/api/properties', { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch('/api/properties', { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch properties');
       return response.json();
     },
@@ -61,8 +65,10 @@ export default function MyDocuments() {
 
   const downloadMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/saved-documents/${id}/download`, {
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to download document');
@@ -96,9 +102,11 @@ export default function MyDocuments() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/saved-documents/${id}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to delete document');
@@ -139,10 +147,12 @@ export default function MyDocuments() {
         formData.append('description', description);
       }
       
+      const token = getAccessToken();
       const response = await fetch('/api/uploaded-documents', {
         method: 'POST',
         credentials: 'include',
         body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) throw new Error('Failed to upload document');
       return response.json();
@@ -170,8 +180,10 @@ export default function MyDocuments() {
 
   const downloadUploadedMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/uploaded-documents/${id}/download`, {
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to download document');
@@ -205,9 +217,11 @@ export default function MyDocuments() {
 
   const deleteUploadedMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/uploaded-documents/${id}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to delete document');
@@ -238,9 +252,13 @@ export default function MyDocuments() {
       propertyId: string;
       description: string;
     }) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/uploaded-documents/${id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         credentials: 'include',
         body: JSON.stringify({ fileName, propertyId, description }),
       });

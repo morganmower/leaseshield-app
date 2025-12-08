@@ -11,6 +11,7 @@ import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel 
 import type { LegalUpdate, CaseLawMonitoring } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
+import { getAccessToken } from "@/lib/queryClient";
 
 export default function LegalUpdatesPage() {
   const { toast } = useToast();
@@ -44,7 +45,11 @@ export default function LegalUpdatesPage() {
     enabled: isAuthenticated && !!selectedState,
     queryFn: async () => {
       const url = `/api/legal-updates?stateId=${selectedState}`;
-      const response = await fetch(url, { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch legal updates');
       return response.json();
     },
@@ -55,7 +60,11 @@ export default function LegalUpdatesPage() {
     enabled: isAuthenticated && !!selectedState,
     queryFn: async () => {
       const url = `/api/case-law?stateId=${selectedState}`;
-      const response = await fetch(url, { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch case law');
       return response.json();
     },

@@ -12,6 +12,7 @@ import { StateBadge } from "@/components/state-badge";
 import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, MapPin } from "lucide-react";
 import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
+import { getAccessToken } from "@/lib/queryClient";
 
 const SUPPORTED_STATES = [
   { code: "UT", name: "Utah" },
@@ -62,7 +63,11 @@ export default function Compliance() {
     enabled: isAuthenticated && !!selectedState,
     queryFn: async () => {
       const url = `/api/compliance-cards?stateId=${selectedState}`;
-      const response = await fetch(url, { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch compliance cards');
       }

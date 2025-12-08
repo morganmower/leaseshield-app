@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, FileText, Download, Loader2, Save, Building2 } from "lucide-react";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
 import type { Template, Property } from "@shared/schema";
 import { useState, useEffect } from "react";
 
@@ -40,7 +40,11 @@ export default function DocumentWizard() {
   const { data: template, isLoading } = useQuery<Template>({
     queryKey: ["/api/templates", templateId],
     queryFn: async () => {
-      const response = await fetch(`/api/templates/${templateId}`);
+      const token = getAccessToken();
+      const response = await fetch(`/api/templates/${templateId}`, {
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch template');
       }
@@ -54,7 +58,11 @@ export default function DocumentWizard() {
     queryKey: ['/api/saved-documents', documentId],
     queryFn: async () => {
       if (!documentId) return null;
-      const response = await fetch(`/api/saved-documents/${documentId}`, { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch(`/api/saved-documents/${documentId}`, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch saved document');
       return response.json();
     },
@@ -65,7 +73,11 @@ export default function DocumentWizard() {
   const { data: properties = [] } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
     queryFn: async () => {
-      const response = await fetch('/api/properties', { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch('/api/properties', { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch properties');
       return response.json();
     },
@@ -184,11 +196,15 @@ export default function DocumentWizard() {
       stateCode: string | null;
       propertyId?: string | null;
     }) => {
+      const token = getAccessToken();
       const response = await fetch('/api/saved-documents', {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify(data),
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
       });
       if (!response.ok) {
         throw new Error('Failed to save document');
@@ -207,12 +223,14 @@ export default function DocumentWizard() {
   // Generate document mutation
   const generateMutation = useMutation({
     mutationFn: async (fieldValues: Record<string, string>) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/documents/generate`, {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({ templateId, fieldValues }),
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
       });
 

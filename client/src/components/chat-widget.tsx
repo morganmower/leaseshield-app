@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Logo } from "@/components/logo";
 import { useToast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
+import { getAccessToken } from "@/lib/queryClient";
 
 interface ChatMessage {
   text: string;
@@ -48,10 +49,15 @@ export function ChatWidget() {
     setIsTyping(true);
 
     try {
+      const token = getAccessToken();
       const res = await fetch("/api/chat", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { 
+          "Content-Type": "application/json",
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
         body: JSON.stringify({ message: text }),
+        credentials: 'include',
       });
 
       const data = await res.json();

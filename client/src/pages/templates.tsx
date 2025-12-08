@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
+import { getAccessToken } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -52,8 +53,10 @@ export default function Templates() {
         });
 
         // Fetch template details to get field definitions
+        const token = getAccessToken();
         const templateResponse = await fetch(`/api/templates/${templateId}`, {
           credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         
         // Backend returns 403 if subscription/trial expired
@@ -84,6 +87,7 @@ export default function Templates() {
           body: JSON.stringify({ templateId, fieldValues: blankFieldValues }),
           headers: {
             'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {})
           },
         });
 
@@ -166,7 +170,11 @@ export default function Templates() {
         params.append("category", selectedCategory);
       }
       const url = `/api/templates${params.toString() ? `?${params.toString()}` : ''}`;
-      const response = await fetch(url, { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         const error = new Error(errorData.message || 'Failed to fetch templates') as Error & { status?: number };

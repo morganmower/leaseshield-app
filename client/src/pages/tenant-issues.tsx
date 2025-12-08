@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getAccessToken } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
@@ -165,7 +166,11 @@ export default function TenantIssues() {
     queryKey: ["/api/templates"],
     enabled: isAuthenticated,
     queryFn: async () => {
-      const response = await fetch('/api/templates', { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch('/api/templates', { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
@@ -225,8 +230,10 @@ export default function TenantIssues() {
       });
 
       // Fetch template details to get field definitions
+      const token = getAccessToken();
       const templateResponse = await fetch(`/api/templates/${template.id}`, {
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       
       if (!templateResponse.ok) {
@@ -251,6 +258,7 @@ export default function TenantIssues() {
         body: JSON.stringify({ templateId: template.id, fieldValues: blankFieldValues }),
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
       });
 

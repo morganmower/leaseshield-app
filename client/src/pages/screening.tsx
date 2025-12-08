@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getAccessToken } from "@/lib/queryClient";
 import {
   Accordion,
   AccordionContent,
@@ -147,10 +148,12 @@ export default function Screening() {
     setExplanation('');
 
     try {
+      const token = getAccessToken();
       const response = await fetch('/api/explain-credit-term', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ term: input }),
         credentials: 'include',
@@ -184,10 +187,12 @@ export default function Screening() {
     setCriminalExplanation('');
 
     try {
+      const token = getAccessToken();
       const response = await fetch('/api/explain-criminal-eviction-term', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ term: input }),
         credentials: 'include',
@@ -228,7 +233,11 @@ export default function Screening() {
     const checkTrial = async () => {
       if (isAuthenticated) {
         try {
-          const response = await fetch('/api/templates?stateId=UT', { credentials: 'include' });
+          const token = getAccessToken();
+          const response = await fetch('/api/templates?stateId=UT', { 
+            credentials: 'include',
+            headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+          });
           if (response.status === 403) {
             setTrialExpired(true);
           }
