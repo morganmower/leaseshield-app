@@ -52,6 +52,10 @@ localPort = 40715
 externalPort = 3000
 
 [[ports]]
+localPort = 41981
+externalPort = 8008
+
+[[ports]]
 localPort = 44593
 externalPort = 6800
 
@@ -87,3 +91,5 @@ integrations = ["javascript_stripe:1.0.0", "javascript_database:1.0.0", "javascr
 [userenv.shared]
 STRIPE_PRICE_ID = "price_1SZZV72NBvTl7hWPJBZmhcof"
 STRIPE_PRICE_ID_YEARLY = "price_1SZhOr2NBvTl7hWPUprFVbfe"
+JWT_SECRET = "be4544607a5b9132a6b2e5847bba47327c6af82d04378652a66781425622ffd668d4ec213513447f71f75f34319da8b17dd37d0980b8983e69e16117b4b4fca4"
+JWT_REFRESH_SECRET = "bfce295236b24a8b58dfe2abcd535f29b5b144a6f75de1569951373d5d04735a20d2fd5382d942a94b5bdd254afc362c564845999e141cfd21936864036549b5"
