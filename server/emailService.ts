@@ -43,7 +43,7 @@ export class EmailService {
         if (process.env.RESEND_API_KEY) {
           const resend = new Resend(process.env.RESEND_API_KEY);
           const result = await resend.emails.send({
-            from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+            from: 'LeaseShield App <support@leaseshieldapp.com>',
             to: to.email,
             subject: template.subject,
             html: template.htmlBody,
@@ -610,7 +610,7 @@ Sent from LeaseShield App Contact Form
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const result = await resend.emails.send({
-          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          from: 'LeaseShield App <support@leaseshieldapp.com>',
           to: user.email,
           subject: content.subject,
           html: content.htmlBody,
@@ -692,7 +692,7 @@ Sent from LeaseShield App Contact Form
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const result = await resend.emails.send({
-          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          from: 'LeaseShield App <support@leaseshieldapp.com>',
           to: user.email,
           subject: content.subject,
           html: content.htmlBody,
@@ -736,7 +736,7 @@ Sent from LeaseShield App Contact Form
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const result = await resend.emails.send({
-          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          from: 'LeaseShield App <support@leaseshieldapp.com>',
           to: user.email,
           subject: content.subject,
           html: content.htmlBody,
@@ -781,7 +781,7 @@ Sent from LeaseShield App Contact Form
       if (process.env.RESEND_API_KEY) {
         const resend = new Resend(process.env.RESEND_API_KEY);
         const result = await resend.emails.send({
-          from: 'LeaseShield App <noreply@leaseshieldapp.com>',
+          from: 'LeaseShield App <support@leaseshieldapp.com>',
           to: user.email,
           subject: content.subject,
           html: content.htmlBody,
