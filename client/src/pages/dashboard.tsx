@@ -629,7 +629,7 @@ export default function Dashboard() {
                   <p className="text-sm text-muted-foreground mb-4">
                     Stay current with state-specific requirements and updates
                   </p>
-                  <div className="text-sm font-medium flex items-center">
+                  <div className="text-sm font-medium text-primary hover:text-primary/80 flex items-center">
                     View Compliance
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </div>
