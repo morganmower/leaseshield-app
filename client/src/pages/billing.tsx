@@ -367,77 +367,43 @@ export default function Billing() {
           </div>
         </Card>
 
-        {/* Payment Method */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end' || user.subscriptionStatus === 'past_due' || user.subscriptionStatus === 'incomplete') && user.stripeCustomerId && (
+        {/* Manage Billing - Opens Stripe Portal */}
+        {user.stripeCustomerId && (
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Manage Billing</h2>
             
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Manage your payment method, view billing history, and update your card details.
-              </p>
-              
-              <Button 
-                variant="outline"
-                onClick={() => managePaymentMutation.mutate()}
-                disabled={managePaymentMutation.isPending}
-                data-testid="button-manage-payment"
-              >
-                {managePaymentMutation.isPending ? "Opening..." : "Manage Payment Method"}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Cancel Subscription */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'incomplete') && user.stripeSubscriptionId && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Cancel Subscription</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Opens Stripe's secure billing center where you can:
+            </p>
             
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Cancel your subscription at any time. You'll retain access to all features until the end of your billing period.
-              </p>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    disabled={cancelSubscriptionMutation.isPending}
-                    data-testid="button-cancel-subscription"
-                  >
-                    {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                      Cancel Subscription?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Your subscription will be cancelled at the end of your current billing period. 
-                      You'll continue to have access to all features until then, and your card will 
-                      not be charged again.
-                      <br /><br />
-                      Are you sure you want to cancel?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="button-cancel-dialog">
-                      Keep Subscription
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => cancelSubscriptionMutation.mutate()}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      data-testid="button-confirm-cancel"
-                    >
-                      Yes, Cancel Subscription
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            <ul className="text-sm text-muted-foreground mb-6 space-y-2">
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Update or change your payment card
+              </li>
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                View all invoices and payment history
+              </li>
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Cancel your subscription
+              </li>
+            </ul>
+            
+            <Button 
+              onClick={() => managePaymentMutation.mutate()}
+              disabled={managePaymentMutation.isPending}
+              size="lg"
+              data-testid="button-manage-billing"
+            >
+              {managePaymentMutation.isPending ? "Opening..." : "Open Billing Portal"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            
+            <p className="text-xs text-muted-foreground mt-3">
+              Opens in a new tab for security
+            </p>
           </Card>
         )}
       </div>
