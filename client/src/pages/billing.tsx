@@ -178,80 +178,109 @@ export default function Billing() {
           <h2 className="text-xl font-semibold text-foreground mb-6">Subscription Status</h2>
 
           <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-foreground">Current Plan</Label>
-              <p className="text-muted-foreground mt-1">
-                {user.subscriptionStatus === 'cancel_at_period_end' 
-                  ? 'Cancelling at period end' 
-                  : user.subscriptionStatus === 'past_due'
-                  ? 'LeaseShield App - Payment Required'
-                  : user.subscriptionStatus === 'active'
-                  ? `LeaseShield App - ${(user as any).billingInterval === 'year' ? '$100/year' : '$10/month'}`
-                  : user.subscriptionStatus === 'trialing'
-                  ? 'LeaseShield App - 7-Day Free Trial'
-                  : "No active subscription"}
-              </p>
-              {user.subscriptionStatus && (
-                <p className="text-xs text-muted-foreground mt-1">
-                  Status: {user.subscriptionStatus === 'past_due' ? 'Payment Failed' : user.subscriptionStatus}
-                </p>
-              )}
-            </div>
+            {/* Active Subscriber */}
+            {user.subscriptionStatus === 'active' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">
+                    LeaseShield App - {(user as any).billingInterval === 'year' ? '$100/year' : '$10/month'}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">Active Subscriber</p>
+                </div>
+                {user.subscriptionEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Next Renewal</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
 
-            {user.subscriptionEndsAt && user.subscriptionStatus !== 'cancel_at_period_end' && (
+            {/* Cancelling at period end */}
+            {user.subscriptionStatus === 'cancel_at_period_end' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">LeaseShield App - Cancelling</p>
+                  <p className="text-xs text-orange-600 mt-1">Access until period end</p>
+                </div>
+                {user.subscriptionEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Access Until</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Trial User */}
+            {user.subscriptionStatus === 'trialing' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">LeaseShield App - Free Trial</p>
+                  <p className="text-xs text-blue-600 mt-1">Trial Period</p>
+                </div>
+                {user.trialEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Trial Ends</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
+                    </p>
+                  </div>
+                )}
+                {!user.stripeCustomerId && (
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={() => window.location.href = '/subscribe'}
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      data-testid="button-upgrade-to-paid"
+                    >
+                      Upgrade to Paid - $10/month
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Past Due */}
+            {user.subscriptionStatus === 'past_due' && (
               <div>
-                <Label className="text-sm font-medium text-foreground">
-                  Next Renewal
-                </Label>
-                <p className="text-muted-foreground mt-1">
-                  {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
-                    weekday: 'long',
-                    month: 'long', 
-                    day: 'numeric', 
-                    year: 'numeric' 
-                  })}
-                </p>
+                <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                <p className="text-muted-foreground mt-1">LeaseShield App - Payment Required</p>
+                <p className="text-xs text-red-600 mt-1">Payment Failed</p>
               </div>
             )}
 
-            {user.trialEndsAt && (
+            {/* No subscription / other status */}
+            {!['active', 'cancel_at_period_end', 'trialing', 'past_due'].includes(user.subscriptionStatus || '') && (
               <div>
-                <Label className="text-sm font-medium text-foreground">
-                  Trial Ends
-                </Label>
-                <p className="text-muted-foreground mt-1">
-                  {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">
-                  {Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24))} days remaining
-                </p>
-              </div>
-            )}
-
-            {user.subscriptionStatus === 'cancel_at_period_end' && user.stripeCustomerId && (
-              <div className="p-4 bg-muted rounded-lg border">
-                <p className="text-sm text-muted-foreground">
-                  Your subscription has been cancelled and will end at the end of your billing period. 
-                  You'll retain access to all features until then.
-                </p>
-              </div>
-            )}
-
-            {/* Upgrade Button for Trial Users */}
-            {user.subscriptionStatus === 'trialing' && !user.stripeCustomerId && (
-              <div className="pt-4 border-t">
-                <Button 
-                  onClick={() => window.location.href = '/subscribe'}
-                  size="lg"
-                  className="w-full sm:w-auto"
-                  data-testid="button-upgrade-to-paid"
-                >
-                  Upgrade to Paid - $10/month
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Start your paid subscription now and skip the trial wait
-                </p>
+                <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                <p className="text-muted-foreground mt-1">No active subscription</p>
+                <div className="pt-4">
+                  <Button 
+                    onClick={() => window.location.href = '/subscribe'}
+                    size="lg"
+                    data-testid="button-subscribe"
+                  >
+                    Subscribe - $10/month
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
