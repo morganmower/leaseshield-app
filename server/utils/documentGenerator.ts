@@ -575,29 +575,29 @@ function getRentalApplicationContent(fieldValues: FieldValue, stateId: string): 
     <h1>RENTAL APPLICATION</h1>
     
     <h2>1. APPLICANT INFORMATION</h2>
-    <p>Full Name: ${escapeHtml(String(fieldValues.tenantName) || '_____________________')} | Date of Birth: _____________</p>
-    <p>Social Security Number (last 4): _____________ | Email: ${escapeHtml(String(fieldValues.tenantEmail) || '_____________________')}</p>
-    <p>Phone: ${escapeHtml(String(fieldValues.tenantPhone) || '_____________________')} | Driver's License #: _____________________</p>
+    <p><strong>Full Name:</strong> ${escapeHtml(String(fieldValues.applicantName) || '_____________________')}</p>
+    <p><strong>Date of Birth:</strong> ${escapeHtml(String(fieldValues.applicantDOB) || '_____________________')}</p>
+    <p><strong>Social Security Number:</strong> ${escapeHtml(String(fieldValues.applicantSSN) || '_____________________')}</p>
+    <p><strong>Phone:</strong> ${escapeHtml(String(fieldValues.applicantPhone) || '_____________________')}</p>
+    <p><strong>Email:</strong> ${escapeHtml(String(fieldValues.applicantEmail) || '_____________________')}</p>
     
-    <h2>2. PROPERTY INFORMATION</h2>
-    <p>Address of Rental Property: ${escapeHtml(String(fieldValues.propertyAddress) || '_____________________')}</p>
-    <p>Desired Move-In Date: ${escapeHtml(String(fieldValues.leaseStartDate) || '_____________________')} | Lease Term: _____________</p>
+    <h2>2. CURRENT RESIDENCE</h2>
+    <p><strong>Current Address:</strong> ${escapeHtml(String(fieldValues.currentAddress) || '_____________________')}</p>
+    <p><strong>Current Landlord:</strong> ${escapeHtml(String(fieldValues.currentLandlord) || '_____________________')}</p>
+    <p><strong>Landlord Phone:</strong> ${escapeHtml(String(fieldValues.currentLandlordPhone) || '_____________________')}</p>
+    <p><strong>Time at Current Address:</strong> ${escapeHtml(String(fieldValues.monthsAtCurrentAddress) || '_____')} months</p>
     
     <h2>3. EMPLOYMENT INFORMATION</h2>
-    <p>Current Employer: _____________________ | Position: _____________________</p>
-    <p>Employment Duration: _____________________ | Monthly Gross Income: $_____________________</p>
-    <p>Work Phone: _____________________ | Supervisor Name: _____________________</p>
+    <p><strong>Current Employer:</strong> ${escapeHtml(String(fieldValues.employer) || '_____________________')}</p>
+    <p><strong>Job Title:</strong> ${escapeHtml(String(fieldValues.jobTitle) || '_____________________')}</p>
+    <p><strong>Employer Phone:</strong> ${escapeHtml(String(fieldValues.employerPhone) || '_____________________')}</p>
+    <p><strong>Monthly Gross Income:</strong> $${escapeHtml(String(fieldValues.monthlyIncome) || '_____________________')}</p>
     
-    <h2>4. RENTAL HISTORY</h2>
-    <p>Previous Address: _____________________ | Landlord/Property Manager: _____________________</p>
-    <p>Monthly Rent: $_____ | Reason for Moving: _____________________</p>
-    <p>Would your previous landlord recommend you as a tenant? ☐ Yes ☐ No ☐ Unknown</p>
+    <h2>4. EMERGENCY CONTACT</h2>
+    <p><strong>Emergency Contact Name:</strong> ${escapeHtml(String(fieldValues.emergencyContact) || '_____________________')}</p>
+    <p><strong>Emergency Contact Phone:</strong> ${escapeHtml(String(fieldValues.emergencyPhone) || '_____________________')}</p>
     
-    <h2>5. FINANCIAL REFERENCES</h2>
-    <p>Bank Name: _____________________ | Account Type: _____________________ | Approximate Balance: $_____________</p>
-    <p>Credit Card Issuer: _____________________ | Credit Limit: $_____________________ </p>
-    
-    <h2>6. BACKGROUND AUTHORIZATION AND ACKNOWLEDGMENTS</h2>
+    <h2>5. BACKGROUND AUTHORIZATION AND ACKNOWLEDGMENTS</h2>
     <p>I/We authorize Landlord to conduct a comprehensive background investigation including but not limited to credit report, criminal background check, eviction history, and tenant history verification. I/We understand that false or misleading information on this application may result in immediate denial or termination of tenancy.</p>
     <p>I/We certify that all information provided is true and accurate. I/We acknowledge receipt of the Fair Housing Notice and agree to comply with all lease terms and applicable laws.</p>
     ${getStateDisclosuresExpanded(stateId)}
