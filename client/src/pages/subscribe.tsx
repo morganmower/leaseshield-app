@@ -227,7 +227,16 @@ export default function Subscribe() {
       window.location.href = "/login";
       return;
     }
-  }, [isAuthenticated, isLoading]);
+    // Redirect active subscribers to billing page
+    if (!isLoading && user?.subscriptionStatus === 'active') {
+      toast({
+        title: "Already Subscribed",
+        description: "You already have an active subscription.",
+      });
+      window.location.href = "/billing";
+      return;
+    }
+  }, [isAuthenticated, isLoading, user, toast]);
 
   useEffect(() => {
     if (isAuthenticated && billingPeriod && !clientSecret) {
