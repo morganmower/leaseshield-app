@@ -69,6 +69,9 @@ function SubscribeForm() {
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  
+  // Detect if we're in an iframe (Replit preview)
+  const isInIframe = window.self !== window.top;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -90,11 +93,21 @@ function SubscribeForm() {
 
       if (error) {
         setIsProcessing(false);
-        toast({
-          title: "Payment Failed",
-          description: error.message,
-          variant: "destructive",
-        });
+        
+        // Check if this is a redirect permission error (iframe issue)
+        if (error.message?.includes('permission') || error.message?.includes('navigate')) {
+          toast({
+            title: "Open in New Tab Required",
+            description: "Your card requires extra verification. Please click the 'Open in New Tab' button below to complete payment.",
+            variant: "destructive",
+          });
+        } else {
+          toast({
+            title: "Payment Failed",
+            description: error.message,
+            variant: "destructive",
+          });
+        }
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast({
           title: "Payment Successful!",
@@ -105,14 +118,12 @@ function SubscribeForm() {
           window.location.href = '/dashboard';
         }, 1000);
       } else if (paymentIntent && paymentIntent.status === 'requires_action') {
-        // 3DS or other authentication required - let Stripe handle it
         toast({
           title: "Additional verification required",
           description: "Please complete the verification step.",
         });
         setIsProcessing(false);
       } else {
-        // Payment processing
         toast({
           title: "Processing payment...",
           description: "Please wait while we confirm your payment.",
@@ -123,18 +134,49 @@ function SubscribeForm() {
       }
     } catch (err: any) {
       setIsProcessing(false);
-      toast({
-        title: "Payment Error",
-        description: err.message || "An unexpected error occurred. Please try again.",
-        variant: "destructive",
-      });
+      
+      // Check if this is a redirect permission error
+      if (err.message?.includes('permission') || err.message?.includes('navigate') || err.message?.includes('href')) {
+        toast({
+          title: "Open in New Tab Required",
+          description: "Your card requires extra verification. Please click the 'Open in New Tab' button below.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Payment Error",
+          description: err.message || "An unexpected error occurred. Please try again.",
+          variant: "destructive",
+        });
+      }
     }
+  };
+  
+  const openInNewTab = () => {
+    window.open(window.location.href, '_blank');
   };
 
   const billingPeriod = localStorage.getItem('billingPeriod') === 'yearly' ? 'yearly' : 'monthly';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {isInIframe && (
+        <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
+          <p className="text-amber-800 dark:text-amber-200">
+            For the best payment experience, we recommend opening in a new tab:
+          </p>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="mt-2"
+            onClick={openInNewTab}
+            data-testid="button-open-new-tab"
+          >
+            Open in New Tab
+          </Button>
+        </div>
+      )}
       <PaymentElement 
         options={{
           layout: 'tabs',
