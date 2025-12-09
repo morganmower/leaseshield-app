@@ -365,6 +365,81 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Sync subscription status from Stripe (finds any active subscription for customer)
+  app.post('/api/sync-subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.stripeCustomerId) {
+        return res.status(400).json({ message: "No Stripe customer found" });
+      }
+
+      // List all subscriptions for this customer
+      const subscriptions = await stripe.subscriptions.list({
+        customer: user.stripeCustomerId,
+        status: 'all',
+        limit: 10,
+      });
+
+      console.log(`[sync-subscription] Found ${subscriptions.data.length} subscriptions for customer ${user.stripeCustomerId}`);
+
+      // Find an active or trialing subscription
+      const activeSub = subscriptions.data.find(
+        sub => sub.status === 'active' || sub.status === 'trialing'
+      );
+
+      if (activeSub) {
+        const billingInterval = activeSub.items.data[0]?.plan?.interval || 'month';
+        const periodEnd = (activeSub as any).current_period_end;
+        const subscriptionEndsAt = periodEnd ? new Date(periodEnd * 1000) : undefined;
+
+        await storage.updateUserStripeInfo(userId, {
+          stripeSubscriptionId: activeSub.id,
+          subscriptionStatus: activeSub.status,
+          billingInterval,
+          subscriptionEndsAt,
+          paymentFailedAt: undefined,
+        });
+
+        console.log(`[sync-subscription] ✅ Synced active subscription ${activeSub.id} for user ${userId}`);
+        return res.json({
+          message: "Subscription synced",
+          status: activeSub.status,
+          subscriptionId: activeSub.id,
+          endsAt: subscriptionEndsAt,
+        });
+      }
+
+      // No active subscription found - check if there's a past_due one
+      const pastDueSub = subscriptions.data.find(sub => sub.status === 'past_due');
+      if (pastDueSub) {
+        await storage.updateUserStripeInfo(userId, {
+          stripeSubscriptionId: pastDueSub.id,
+          subscriptionStatus: 'past_due',
+        });
+        console.log(`[sync-subscription] Found past_due subscription ${pastDueSub.id}`);
+        return res.json({ message: "Found past due subscription", status: 'past_due' });
+      }
+
+      // No subscription found - reset to trial
+      await storage.updateUserStripeInfo(userId, {
+        stripeSubscriptionId: undefined,
+        subscriptionStatus: 'trialing',
+      });
+
+      console.log(`[sync-subscription] No active subscription found, reset to trialing`);
+      return res.json({ message: "No active subscription found", status: 'trialing' });
+    } catch (error: any) {
+      console.error("Error syncing subscription:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
   // Cancel subscription
   app.post('/api/cancel-subscription', isAuthenticated, async (req: any, res) => {
     try {
