@@ -239,7 +239,7 @@ export function AppSidebar() {
                       : user?.email || "User"}
                   </span>
                   <span className="text-xs text-muted-foreground truncate w-full">
-                    {user?.subscriptionStatus === 'active' ? 'Pro Plan' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
+                    {user?.subscriptionStatus === 'active' ? 'Active Subscriber' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
                   </span>
                 </div>
               </div>
