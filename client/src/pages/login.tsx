@@ -38,11 +38,13 @@ export default function Login() {
       const response = await apiRequest("POST", "/api/auth/login", data);
       return response.json();
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       if (data.accessToken) {
         localStorage.setItem("accessToken", data.accessToken);
       }
-      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      // Wait for auth query to refetch before navigating
+      await queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      await queryClient.refetchQueries({ queryKey: ["/api/auth/user"] });
       toast({
         title: "Welcome back!",
         description: "You have successfully logged in.",
