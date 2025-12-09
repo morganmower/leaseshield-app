@@ -192,7 +192,175 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Stripe subscription routes
+  
+  // Step 1: Create SetupIntent to collect payment method (no invoice created)
+  app.post('/api/create-setup-intent', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.email) return res.status(400).json({ message: 'No user email' });
+
+      // Check if user already has an active subscription
+      if (user.subscriptionStatus === 'active') {
+        return res.status(400).json({ message: "You already have an active subscription" });
+      }
+
+      // Reuse existing Stripe customer or create new one
+      let customerId: string | null = user.stripeCustomerId;
+      
+      // Verify customer exists in current Stripe environment
+      if (customerId) {
+        try {
+          await stripe.customers.retrieve(customerId);
+        } catch (error: any) {
+          if (error.message?.includes('No such customer')) {
+            console.log(`[create-setup-intent] Customer ${customerId} not found, creating new one`);
+            customerId = null;
+          } else {
+            throw error;
+          }
+        }
+      }
+      
+      if (!customerId) {
+        const customer = await stripe.customers.create({
+          email: user.email,
+          name: user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : undefined,
+          metadata: { userId },
+        });
+        customerId = customer.id;
+        await storage.updateUserStripeInfo(userId, { stripeCustomerId: customerId });
+      }
+
+      // Create SetupIntent - this does NOT create an invoice
+      const setupIntent = await stripe.setupIntents.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        metadata: {
+          userId: userId,
+        },
+      });
+
+      console.log(`[create-setup-intent] ✅ SetupIntent ${setupIntent.id} created for customer ${customerId}`);
+
+      return res.json({
+        clientSecret: setupIntent.client_secret,
+        customerId: customerId,
+      });
+    } catch (error: any) {
+      console.error('❌ /api/create-setup-intent error:', error.message);
+      return res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Step 2: Create subscription after payment method is confirmed (invoice created and paid immediately)
+  app.post('/api/complete-subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      const { paymentMethodId, billingPeriod } = req.body;
+
+      if (!user) return res.status(404).json({ message: "User not found" });
+      if (!user.stripeCustomerId) return res.status(400).json({ message: "No Stripe customer found" });
+      if (!paymentMethodId) return res.status(400).json({ message: "Payment method required" });
+
+      // Check if user already has an active subscription
+      if (user.subscriptionStatus === 'active') {
+        return res.status(400).json({ message: "You already have an active subscription" });
+      }
+
+      // Get the appropriate price ID based on billing period
+      const stripePriceId = billingPeriod === 'yearly' 
+        ? process.env.STRIPE_PRICE_ID_YEARLY 
+        : process.env.STRIPE_PRICE_ID;
+      
+      if (!stripePriceId) {
+        return res.status(500).json({ message: `STRIPE_PRICE_ID${billingPeriod === 'yearly' ? '_YEARLY' : ''} not configured` });
+      }
+
+      // Set payment method as default for invoices
+      // Note: SetupIntent with customer already attaches the payment method,
+      // so we just need to set it as the default - no need to attach again
+      await stripe.customers.update(user.stripeCustomerId, {
+        invoice_settings: {
+          default_payment_method: paymentMethodId,
+        },
+      });
+
+      // Clean up any stale incomplete subscriptions first
+      try {
+        const existingSubscriptions = await stripe.subscriptions.list({
+          customer: user.stripeCustomerId,
+          status: 'all',
+        });
+        
+        for (const sub of existingSubscriptions.data) {
+          if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
+            console.log(`[complete-subscription] Canceling stale subscription ${sub.id}`);
+            await stripe.subscriptions.cancel(sub.id);
+          }
+        }
+      } catch (err: any) {
+        console.log(`[complete-subscription] Error cleaning up old subscriptions: ${err.message}`);
+      }
+
+      // Create subscription - payment method is already attached, so invoice is paid immediately
+      const subscription = await stripe.subscriptions.create({
+        customer: user.stripeCustomerId,
+        items: [{ price: stripePriceId }],
+        default_payment_method: paymentMethodId,
+        payment_settings: { 
+          save_default_payment_method: 'on_subscription',
+        },
+        metadata: {
+          userId: userId,
+          billingPeriod: billingPeriod || 'monthly',
+        },
+        expand: ['latest_invoice'],
+      });
+
+      // Determine billing interval from the subscription
+      const billingInterval = subscription.items.data[0]?.price?.recurring?.interval === 'year' ? 'yearly' : 'monthly';
+      
+      // Get subscription end date
+      const periodEnd = (subscription as any).current_period_end as number | undefined;
+      const subscriptionEndsAt = periodEnd ? new Date(periodEnd * 1000) : undefined;
+
+      // Update user's subscription status
+      await storage.updateUserStripeInfo(userId, {
+        stripeSubscriptionId: subscription.id,
+        subscriptionStatus: subscription.status,
+        billingInterval,
+        subscriptionEndsAt,
+        paymentFailedAt: null,
+      });
+
+      console.log(`[complete-subscription] ✅ Subscription ${subscription.id} created with status ${subscription.status}`);
+
+      return res.json({
+        success: true,
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        subscriptionEndsAt,
+      });
+    } catch (error: any) {
+      console.error('❌ /api/complete-subscription error:', error.message);
+      
+      // Handle specific Stripe errors
+      if (error.type === 'StripeCardError') {
+        return res.status(400).json({ message: error.message });
+      }
+      
+      return res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // DEPRECATED: Legacy endpoint - creates invoice before payment
+  // Use /api/create-setup-intent + /api/complete-subscription instead
   app.post('/api/create-subscription', isAuthenticated, async (req: any, res) => {
+    console.warn('[DEPRECATED] /api/create-subscription called - use SetupIntent flow instead');
     try {
       const userId = getUserId(req);
       const user = await storage.getUser(userId);

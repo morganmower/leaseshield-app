@@ -64,7 +64,11 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
   );
 }
 
-function SubscribeForm() {
+interface SubscribeFormProps {
+  billingPeriod: 'monthly' | 'yearly';
+}
+
+function SubscribeForm({ billingPeriod }: SubscribeFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
@@ -80,7 +84,8 @@ function SubscribeForm() {
     setIsProcessing(true);
 
     try {
-      const { error, paymentIntent } = await stripe.confirmPayment({
+      // Step 1: Confirm the SetupIntent to save the payment method
+      const { error, setupIntent } = await stripe.confirmSetup({
         elements,
         confirmParams: {
           return_url: `${window.location.origin}/dashboard`,
@@ -95,71 +100,53 @@ function SubscribeForm() {
           description: error.message,
           variant: "destructive",
         });
-      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        // Call confirm-payment endpoint to sync subscription status from Stripe
-        try {
-          const response = await apiRequest("POST", "/api/confirm-payment", {});
-          const data = await response.json();
-          
-          if (data.success) {
-            toast({
-              title: "Payment Successful!",
-              description: "You are now subscribed to LeaseShield App!",
-            });
-            
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 1000);
-          } else if (response.status === 202) {
-            // Payment still processing, wait and retry
-            toast({
-              title: "Processing...",
-              description: "Finalizing your subscription...",
-            });
-            
-            // Wait a bit and retry
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const retryResponse = await apiRequest("POST", "/api/confirm-payment", {});
-            const retryData = await retryResponse.json();
-            
-            if (retryData.success) {
-              toast({
-                title: "Payment Successful!",
-                description: "You are now subscribed to LeaseShield App!",
-              });
-            }
-            
-            setTimeout(() => {
-              window.location.href = '/dashboard';
-            }, 1000);
-          } else {
-            throw new Error(data.message || 'Failed to confirm subscription');
-          }
-        } catch (confirmError) {
-          console.error('Error confirming payment:', confirmError);
-          // Still redirect - webhook should handle it
-          toast({
-            title: "Payment Successful!",
-            description: "Activating your subscription...",
-          });
-          setTimeout(() => {
-            window.location.href = '/dashboard';
-          }, 2000);
-        }
-      } else if (paymentIntent && paymentIntent.status === 'requires_action') {
-        toast({
-          title: "Additional verification required",
-          description: "Please complete the verification step.",
-        });
+        return;
+      }
+
+      if (!setupIntent || setupIntent.status !== 'succeeded') {
         setIsProcessing(false);
-      } else {
         toast({
-          title: "Processing payment...",
-          description: "Please wait while we confirm your payment.",
+          title: "Setup Incomplete",
+          description: "Please complete the payment method verification.",
+          variant: "destructive",
         });
+        return;
+      }
+
+      // Step 2: Create the subscription with the confirmed payment method
+      const paymentMethodId = setupIntent.payment_method;
+      
+      if (!paymentMethodId) {
+        throw new Error('No payment method found');
+      }
+
+      toast({
+        title: "Processing...",
+        description: "Creating your subscription...",
+      });
+
+      const response = await apiRequest("POST", "/api/complete-subscription", {
+        paymentMethodId,
+        billingPeriod,
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Failed to create subscription');
+      }
+
+      if (data.success) {
+        toast({
+          title: "Payment Successful!",
+          description: "You are now subscribed to LeaseShield App!",
+        });
+        
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 2000);
+        }, 1000);
+      } else {
+        throw new Error(data.message || 'Subscription creation failed');
       }
     } catch (err: any) {
       setIsProcessing(false);
@@ -170,8 +157,6 @@ function SubscribeForm() {
       });
     }
   };
-
-  const billingPeriod = localStorage.getItem('billingPeriod') === 'yearly' ? 'yearly' : 'monthly';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
@@ -209,8 +194,7 @@ export default function Subscribe() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
+  const [isLoadingSetup, setIsLoadingSetup] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('billingPeriod') as 'monthly' | 'yearly' | null;
@@ -238,38 +222,32 @@ export default function Subscribe() {
     }
   }, [isAuthenticated, isLoading, user, toast]);
 
-  // Only create subscription when user clicks "Continue to Payment"
-  const handleContinueToPayment = async () => {
-    if (!isAuthenticated || isCreatingSubscription) return;
-    
-    setIsCreatingSubscription(true);
-    console.log('Creating subscription with period:', billingPeriod);
-    
-    try {
-      const res = await apiRequest("POST", "/api/create-subscription", { billingPeriod });
-      const text = await res.text();
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        throw new Error(`Invalid response from server: ${text}`);
-      }
-      if (!res.ok) {
-        throw new Error(data.message || `HTTP ${res.status}: Failed to create subscription`);
-      }
-      setClientSecret(data.clientSecret);
-      setShowPaymentForm(true);
-    } catch (error: any) {
-      const errorMessage = error.message || "Failed to initialize payment. Please try again.";
-      toast({
-        title: "Subscription Error",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsCreatingSubscription(false);
+  // Create SetupIntent when user is authenticated (no invoice created!)
+  useEffect(() => {
+    if (isAuthenticated && !clientSecret && !isLoadingSetup) {
+      setIsLoadingSetup(true);
+      console.log('Creating SetupIntent for payment method collection');
+      
+      apiRequest("POST", "/api/create-setup-intent", {})
+        .then(async (res) => {
+          const data = await res.json();
+          if (!res.ok) {
+            throw new Error(data.message || 'Failed to initialize payment');
+          }
+          setClientSecret(data.clientSecret);
+        })
+        .catch((error) => {
+          toast({
+            title: "Setup Error",
+            description: error.message || "Failed to initialize payment. Please try again.",
+            variant: "destructive",
+          });
+        })
+        .finally(() => {
+          setIsLoadingSetup(false);
+        });
     }
-  };
+  }, [isAuthenticated, clientSecret, isLoadingSetup, toast]);
 
   const stripeAppearance: Appearance = {
     theme: 'stripe',
@@ -328,33 +306,31 @@ export default function Subscribe() {
           </div>
         </div>
 
-        {/* Billing Period Selector - only show before payment form */}
-        {!showPaymentForm && (
-          <div className="flex justify-center gap-3 mb-8">
-            <Button
-              type="button"
-              variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
-              onClick={() => handleBillingPeriodChange('monthly')}
-              className="px-6"
-              data-testid="button-billing-monthly"
-            >
-              Monthly - $10/month
-            </Button>
-            <Button
-              type="button"
-              variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
-              onClick={() => handleBillingPeriodChange('yearly')}
-              className="px-6"
-              data-testid="button-billing-yearly"
-            >
-              Annual - $100/year
-              <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
-            </Button>
-          </div>
-        )}
+        {/* Billing Period Selector */}
+        <div className="flex justify-center gap-3 mb-8">
+          <Button
+            type="button"
+            variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
+            onClick={() => handleBillingPeriodChange('monthly')}
+            className="px-6"
+            data-testid="button-billing-monthly"
+          >
+            Monthly - $10/month
+          </Button>
+          <Button
+            type="button"
+            variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
+            onClick={() => handleBillingPeriodChange('yearly')}
+            className="px-6"
+            data-testid="button-billing-yearly"
+          >
+            Annual - $100/year
+            <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
+          </Button>
+        </div>
 
         {/* Progress Stepper */}
-        <ProgressStepper currentStep={showPaymentForm ? 2 : 1} />
+        <ProgressStepper currentStep={2} />
 
         <div className="grid md:grid-cols-5 gap-6 sm:gap-8">
           {/* Plan Details */}
@@ -412,90 +388,51 @@ export default function Subscribe() {
             </div>
           </Card>
 
-          {/* Payment Form or Continue Button */}
+          {/* Payment Form */}
           <Card className="p-6 sm:p-8 md:col-span-3">
-            {!showPaymentForm ? (
-              /* Step 1: Show Continue button - no subscription created yet */
-              <div className="flex flex-col items-center justify-center min-h-[300px] gap-6">
-                <div className="text-center">
-                  <h2 className="text-xl font-semibold mb-2">Ready to Get Started?</h2>
-                  <p className="text-muted-foreground">
-                    You've selected the {billingPeriod === 'yearly' ? 'Annual' : 'Monthly'} plan at {billingPeriod === 'yearly' ? '$100/year' : '$10/month'}
-                  </p>
+            <div className="flex items-center gap-2 mb-6">
+              <Lock className="h-5 w-5 text-primary" />
+              <h2 className="text-xl font-semibold">Secure Payment</h2>
+            </div>
+            
+            {clientSecret ? (
+              <Elements 
+                stripe={stripePromise} 
+                options={{ 
+                  clientSecret,
+                  appearance: stripeAppearance,
+                }}
+              >
+                <SubscribeForm billingPeriod={billingPeriod} />
+              </Elements>
+            ) : (
+              <div className="flex flex-col items-center justify-center min-h-[200px] gap-4">
+                <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+                <p className="text-muted-foreground">Setting up secure payment...</p>
+              </div>
+            )}
+
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                <div className="flex items-center gap-1">
+                  <Lock className="h-3 w-3" />
+                  <span>256-bit SSL</span>
                 </div>
-                
-                <Button
-                  onClick={handleContinueToPayment}
-                  disabled={isCreatingSubscription}
-                  size="lg"
-                  className="px-8"
-                  data-testid="button-continue-payment"
-                >
-                  {isCreatingSubscription ? (
-                    <span className="flex items-center gap-2">
-                      <div className="animate-spin w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
-                      Setting up payment...
-                    </span>
-                  ) : (
-                    <>
-                      <CreditCard className="h-4 w-4 mr-2" />
-                      Continue to Payment
-                    </>
-                  )}
-                </Button>
-                
-                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                  <div className="flex items-center gap-1">
-                    <Lock className="h-3 w-3" />
-                    <span>256-bit SSL</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Shield className="h-3 w-3" />
-                    <span>Stripe Secured</span>
-                  </div>
+                <div className="flex items-center gap-1">
+                  <Shield className="h-3 w-3" />
+                  <span>Stripe Secured</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <CreditCard className="h-3 w-3" />
+                  <span>PCI Compliant</span>
                 </div>
               </div>
-            ) : (
-              /* Step 2: Show payment form after subscription is created */
-              <>
-                <div className="flex items-center gap-2 mb-6">
-                  <Lock className="h-5 w-5 text-primary" />
-                  <h2 className="text-xl font-semibold">Secure Payment</h2>
-                </div>
-                
-                <Elements 
-                  stripe={stripePromise} 
-                  options={{ 
-                    clientSecret,
-                    appearance: stripeAppearance,
-                  }}
-                >
-                  <SubscribeForm />
-                </Elements>
+            </div>
 
-                <div className="mt-6 pt-6 border-t border-border">
-                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                    <div className="flex items-center gap-1">
-                      <Lock className="h-3 w-3" />
-                      <span>256-bit SSL</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Shield className="h-3 w-3" />
-                      <span>Stripe Secured</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <CreditCard className="h-3 w-3" />
-                      <span>PCI Compliant</span>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  By subscribing, you agree to our Terms of Service and Privacy Policy.
-                  Your subscription will automatically renew until canceled.
-                </p>
-              </>
-            )}
+            <p className="text-xs text-muted-foreground text-center mt-4">
+              By subscribing, you agree to our Terms of Service and Privacy Policy.
+              Your subscription will automatically renew until canceled.
+            </p>
           </Card>
         </div>
 
