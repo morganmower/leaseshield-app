@@ -223,8 +223,9 @@ export default function Subscribe() {
   }, [isAuthenticated, isLoading, user, toast]);
 
   // Create SetupIntent when user is authenticated (no invoice created!)
+  // Only create if user doesn't already have an active subscription
   useEffect(() => {
-    if (isAuthenticated && !clientSecret && !isLoadingSetup) {
+    if (isAuthenticated && !clientSecret && !isLoadingSetup && user?.subscriptionStatus !== 'active') {
       setIsLoadingSetup(true);
       console.log('Creating SetupIntent for payment method collection');
       
@@ -247,7 +248,7 @@ export default function Subscribe() {
           setIsLoadingSetup(false);
         });
     }
-  }, [isAuthenticated, clientSecret, isLoadingSetup, toast]);
+  }, [isAuthenticated, clientSecret, isLoadingSetup, toast, user]);
 
   const stripeAppearance: Appearance = {
     theme: 'stripe',
