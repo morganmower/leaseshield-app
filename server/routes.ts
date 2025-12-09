@@ -203,28 +203,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "You already have an active subscription" });
       }
 
-      // If user has an existing incomplete subscription, try to reuse it
-      if (user.stripeSubscriptionId && user.subscriptionStatus === 'incomplete') {
+      // SAFEGUARD: Cancel any existing incomplete/past_due subscriptions to prevent invoice clutter
+      if (user.stripeCustomerId) {
         try {
-          const existingSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
-            expand: ['latest_invoice.payment_intent'],
-          }) as Stripe.Subscription;
+          const existingSubscriptions = await stripe.subscriptions.list({
+            customer: user.stripeCustomerId,
+            status: 'all',
+          });
           
-          if (existingSub.status === 'incomplete' || existingSub.status === 'active') {
-            const invoice = existingSub.latest_invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
-            const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
-            
-            if (paymentIntent?.client_secret) {
-              console.log(`[create-subscription] Reusing existing subscription ${existingSub.id}`);
-              return res.json({
-                subscriptionId: existingSub.id,
-                clientSecret: paymentIntent.client_secret,
-                paymentIntentId: paymentIntent.id,
-              });
+          for (const sub of existingSubscriptions.data) {
+            // Only cancel truly abandoned checkouts - NOT past_due (which are legitimate subscriptions retrying payment)
+            if (sub.status === 'incomplete' || sub.status === 'incomplete_expired') {
+              console.log(`[create-subscription] Canceling stale subscription ${sub.id} (status: ${sub.status})`);
+              await stripe.subscriptions.cancel(sub.id);
+              
+              // Also void the associated invoice if it's still open
+              if (sub.latest_invoice) {
+                const invoiceId = typeof sub.latest_invoice === 'string' ? sub.latest_invoice : sub.latest_invoice.id;
+                try {
+                  const invoice = await stripe.invoices.retrieve(invoiceId);
+                  if (invoice.status === 'open' || invoice.status === 'draft') {
+                    await stripe.invoices.voidInvoice(invoiceId);
+                    console.log(`[create-subscription] Voided invoice ${invoiceId}`);
+                  }
+                } catch (invoiceErr: any) {
+                  console.log(`[create-subscription] Could not void invoice ${invoiceId}: ${invoiceErr.message}`);
+                }
+              }
             }
           }
         } catch (err: any) {
-          console.log(`[create-subscription] Could not reuse existing subscription: ${err.message}`);
+          console.log(`[create-subscription] Error cleaning up old subscriptions: ${err.message}`);
+          // Continue anyway - we'll create a new subscription
         }
       }
 
