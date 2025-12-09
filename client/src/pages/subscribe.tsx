@@ -209,6 +209,8 @@ export default function Subscribe() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [isCreatingSubscription, setIsCreatingSubscription] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('billingPeriod') as 'monthly' | 'yearly' | null;
@@ -218,8 +220,6 @@ export default function Subscribe() {
   const handleBillingPeriodChange = (period: 'monthly' | 'yearly') => {
     setBillingPeriod(period);
     localStorage.setItem('billingPeriod', period);
-    // Trigger new subscription creation with the new period
-    setClientSecret('');
   };
 
   useEffect(() => {
@@ -238,36 +238,38 @@ export default function Subscribe() {
     }
   }, [isAuthenticated, isLoading, user, toast]);
 
-  useEffect(() => {
-    if (isAuthenticated && billingPeriod && !clientSecret) {
-      console.log('Creating subscription with period:', billingPeriod);
-      apiRequest("POST", "/api/create-subscription", { billingPeriod })
-        .then(async (res) => {
-          const text = await res.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            throw new Error(`Invalid response from server: ${text}`);
-          }
-          if (!res.ok) {
-            throw new Error(data.message || `HTTP ${res.status}: Failed to create subscription`);
-          }
-          return data;
-        })
-        .then((data) => {
-          setClientSecret(data.clientSecret);
-        })
-        .catch((error) => {
-          const errorMessage = error.message || "Failed to initialize payment. Please try again.";
-          toast({
-            title: "Subscription Error",
-            description: errorMessage,
-            variant: "destructive",
-          });
-        });
+  // Only create subscription when user clicks "Continue to Payment"
+  const handleContinueToPayment = async () => {
+    if (!isAuthenticated || isCreatingSubscription) return;
+    
+    setIsCreatingSubscription(true);
+    console.log('Creating subscription with period:', billingPeriod);
+    
+    try {
+      const res = await apiRequest("POST", "/api/create-subscription", { billingPeriod });
+      const text = await res.text();
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        throw new Error(`Invalid response from server: ${text}`);
+      }
+      if (!res.ok) {
+        throw new Error(data.message || `HTTP ${res.status}: Failed to create subscription`);
+      }
+      setClientSecret(data.clientSecret);
+      setShowPaymentForm(true);
+    } catch (error: any) {
+      const errorMessage = error.message || "Failed to initialize payment. Please try again.";
+      toast({
+        title: "Subscription Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+    } finally {
+      setIsCreatingSubscription(false);
     }
-  }, [isAuthenticated, billingPeriod, toast, clientSecret]);
+  };
 
   const stripeAppearance: Appearance = {
     theme: 'stripe',
@@ -316,15 +318,6 @@ export default function Subscribe() {
 
   if (!user) return null;
 
-  if (!clientSecret) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen gap-4">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
-        <p className="text-muted-foreground">Setting up secure payment...</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-background py-6 sm:py-12">
       <div className="container max-w-3xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
@@ -335,31 +328,33 @@ export default function Subscribe() {
           </div>
         </div>
 
-        {/* Billing Period Selector */}
-        <div className="flex justify-center gap-3 mb-8">
-          <Button
-            type="button"
-            variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
-            onClick={() => handleBillingPeriodChange('monthly')}
-            className="px-6"
-            data-testid="button-billing-monthly"
-          >
-            Monthly - $10/month
-          </Button>
-          <Button
-            type="button"
-            variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
-            onClick={() => handleBillingPeriodChange('yearly')}
-            className="px-6"
-            data-testid="button-billing-yearly"
-          >
-            Annual - $100/year
-            <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
-          </Button>
-        </div>
+        {/* Billing Period Selector - only show before payment form */}
+        {!showPaymentForm && (
+          <div className="flex justify-center gap-3 mb-8">
+            <Button
+              type="button"
+              variant={billingPeriod === 'monthly' ? 'default' : 'outline'}
+              onClick={() => handleBillingPeriodChange('monthly')}
+              className="px-6"
+              data-testid="button-billing-monthly"
+            >
+              Monthly - $10/month
+            </Button>
+            <Button
+              type="button"
+              variant={billingPeriod === 'yearly' ? 'default' : 'outline'}
+              onClick={() => handleBillingPeriodChange('yearly')}
+              className="px-6"
+              data-testid="button-billing-yearly"
+            >
+              Annual - $100/year
+              <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
+            </Button>
+          </div>
+        )}
 
         {/* Progress Stepper */}
-        <ProgressStepper currentStep={2} />
+        <ProgressStepper currentStep={showPaymentForm ? 2 : 1} />
 
         <div className="grid md:grid-cols-5 gap-6 sm:gap-8">
           {/* Plan Details */}
@@ -417,44 +412,90 @@ export default function Subscribe() {
             </div>
           </Card>
 
-          {/* Payment Form */}
+          {/* Payment Form or Continue Button */}
           <Card className="p-6 sm:p-8 md:col-span-3">
-            <div className="flex items-center gap-2 mb-6">
-              <Lock className="h-5 w-5 text-primary" />
-              <h2 className="text-xl font-semibold">Secure Payment</h2>
-            </div>
-            
-            <Elements 
-              stripe={stripePromise} 
-              options={{ 
-                clientSecret,
-                appearance: stripeAppearance,
-              }}
-            >
-              <SubscribeForm />
-            </Elements>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
-                <div className="flex items-center gap-1">
-                  <Lock className="h-3 w-3" />
-                  <span>256-bit SSL</span>
+            {!showPaymentForm ? (
+              /* Step 1: Show Continue button - no subscription created yet */
+              <div className="flex flex-col items-center justify-center min-h-[300px] gap-6">
+                <div className="text-center">
+                  <h2 className="text-xl font-semibold mb-2">Ready to Get Started?</h2>
+                  <p className="text-muted-foreground">
+                    You've selected the {billingPeriod === 'yearly' ? 'Annual' : 'Monthly'} plan at {billingPeriod === 'yearly' ? '$100/year' : '$10/month'}
+                  </p>
                 </div>
-                <div className="flex items-center gap-1">
-                  <Shield className="h-3 w-3" />
-                  <span>Stripe Secured</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <CreditCard className="h-3 w-3" />
-                  <span>PCI Compliant</span>
+                
+                <Button
+                  onClick={handleContinueToPayment}
+                  disabled={isCreatingSubscription}
+                  size="lg"
+                  className="px-8"
+                  data-testid="button-continue-payment"
+                >
+                  {isCreatingSubscription ? (
+                    <span className="flex items-center gap-2">
+                      <div className="animate-spin w-4 h-4 border-2 border-primary-foreground border-t-transparent rounded-full" />
+                      Setting up payment...
+                    </span>
+                  ) : (
+                    <>
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Continue to Payment
+                    </>
+                  )}
+                </Button>
+                
+                <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1">
+                    <Lock className="h-3 w-3" />
+                    <span>256-bit SSL</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <Shield className="h-3 w-3" />
+                    <span>Stripe Secured</span>
+                  </div>
                 </div>
               </div>
-            </div>
+            ) : (
+              /* Step 2: Show payment form after subscription is created */
+              <>
+                <div className="flex items-center gap-2 mb-6">
+                  <Lock className="h-5 w-5 text-primary" />
+                  <h2 className="text-xl font-semibold">Secure Payment</h2>
+                </div>
+                
+                <Elements 
+                  stripe={stripePromise} 
+                  options={{ 
+                    clientSecret,
+                    appearance: stripeAppearance,
+                  }}
+                >
+                  <SubscribeForm />
+                </Elements>
 
-            <p className="text-xs text-muted-foreground text-center mt-4">
-              By subscribing, you agree to our Terms of Service and Privacy Policy.
-              Your subscription will automatically renew until canceled.
-            </p>
+                <div className="mt-6 pt-6 border-t border-border">
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Lock className="h-3 w-3" />
+                      <span>256-bit SSL</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Shield className="h-3 w-3" />
+                      <span>Stripe Secured</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <CreditCard className="h-3 w-3" />
+                      <span>PCI Compliant</span>
+                    </div>
+                  </div>
+                </div>
+
+                <p className="text-xs text-muted-foreground text-center mt-4">
+                  By subscribing, you agree to our Terms of Service and Privacy Policy.
+                  Your subscription will automatically renew until canceled.
+                </p>
+              </>
+            )}
           </Card>
         </div>
 
