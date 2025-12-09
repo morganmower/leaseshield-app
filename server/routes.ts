@@ -386,9 +386,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create portal session
+      const domain = process.env.REPLIT_DOMAINS?.split(',')[0];
+      const returnUrl = domain 
+        ? `https://${domain}/billing`
+        : 'http://localhost:5000/billing';
+      
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
-        return_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/billing`,
+        return_url: returnUrl,
       });
 
       res.json({ url: session.url });
