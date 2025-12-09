@@ -247,7 +247,7 @@ export default function Billing() {
         </Card>
 
         {/* Payment Method */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end' || user.subscriptionStatus === 'past_due') && user.stripeCustomerId && (
+        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end' || user.subscriptionStatus === 'past_due' || user.subscriptionStatus === 'incomplete') && user.stripeCustomerId && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
             
@@ -269,7 +269,7 @@ export default function Billing() {
         )}
 
         {/* Cancel Subscription */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing') && user.stripeSubscriptionId && (
+        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'incomplete') && user.stripeSubscriptionId && (
           <Card className="p-6">
             <h2 className="text-xl font-semibold text-foreground mb-6">Cancel Subscription</h2>
             
