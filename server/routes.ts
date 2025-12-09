@@ -100,6 +100,9 @@ function getClientIp(req: any): string {
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Trust proxy - required for secure cookies behind Replit's HTTPS proxy
+  app.set('trust proxy', 1);
+  
   // Cookie parser for refresh tokens
   app.use(cookieParser());
   
