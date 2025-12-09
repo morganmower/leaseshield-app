@@ -302,34 +302,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the client secret from the subscription's invoice payment intent
       let invoice = subscription.latest_invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent | string };
-      console.error(`[create-subscription] Subscription status: ${subscription.status}`);
-      console.error(`[create-subscription] Invoice from subscription: ${invoice ? `id=${invoice.id}, status=${invoice.status}` : 'null'}`);
       
       // If payment_intent is not expanded, fetch the invoice explicitly
       if (!invoice?.payment_intent || typeof invoice.payment_intent === 'string') {
-        console.error(`[create-subscription] Fetching invoice explicitly with payment_intent expansion...`);
         const invoiceId = typeof invoice === 'string' ? invoice : invoice?.id;
         if (invoiceId) {
           invoice = await stripe.invoices.retrieve(invoiceId, {
             expand: ['payment_intent'],
           }) as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
-          console.error(`[create-subscription] Fetched invoice: ${invoice.id}`);
-          console.error(`[create-subscription] Invoice collection_method: ${invoice.collection_method}`);
-          console.error(`[create-subscription] Invoice amount_due: ${invoice.amount_due}, amount_paid: ${invoice.amount_paid}`);
-          console.error(`[create-subscription] Invoice payment_intent raw: ${invoice.payment_intent}`);
           
           // If still no payment_intent, try to finalize the invoice to create one
           if (!invoice.payment_intent && invoice.status === 'draft') {
-            console.error(`[create-subscription] Invoice is draft, finalizing...`);
             invoice = await stripe.invoices.finalizeInvoice(invoiceId, {
               expand: ['payment_intent'],
             }) as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
           }
           
-          // If still no payment_intent, the invoice might need to be paid differently
-          // Try creating a payment intent manually for the invoice
+          // If still no payment_intent on open invoice, create PaymentIntent manually
           if (!invoice.payment_intent && invoice.status === 'open') {
-            console.error(`[create-subscription] No payment_intent on open invoice, creating PaymentIntent manually...`);
+            console.log(`[create-subscription] Creating PaymentIntent manually for invoice ${invoice.id}`);
             const paymentIntentData = await stripe.paymentIntents.create({
               amount: invoice.amount_due,
               currency: invoice.currency,
@@ -341,8 +332,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
               setup_future_usage: 'off_session',
             });
-            console.error(`[create-subscription] Created manual PaymentIntent: ${paymentIntentData.id}`);
-            // Return this payment intent instead
             return res.json({
               subscriptionId: subscription.id,
               clientSecret: paymentIntentData.client_secret,
@@ -355,15 +344,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       
       if (!paymentIntent?.client_secret) {
-        console.error(`[create-subscription] ❌ No client_secret from subscription invoice`);
-        console.error(`[create-subscription] ❌ Invoice status: ${invoice?.status}, total: ${invoice?.total}`);
-        console.error(`[create-subscription] ❌ paymentIntent: ${JSON.stringify(paymentIntent)}`);
+        console.error(`[create-subscription] ❌ No client_secret - invoice status: ${invoice?.status}, total: ${invoice?.total}`);
         throw new Error('Failed to create payment intent for subscription');
       }
 
-      console.error(`[create-subscription] ✅ Subscription created: ${subscription.id}`);
-      console.error(`[create-subscription] ✅ Payment intent from invoice: ${paymentIntent.id}`);
-      console.error(`[create-subscription] ✅ Client secret: ${paymentIntent.client_secret?.substring(0, 20)}...`);
+      console.log(`[create-subscription] ✅ Subscription ${subscription.id} created`);
 
       // Return subscription and payment intent details
       return res.json({
