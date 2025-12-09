@@ -71,15 +71,19 @@ export default function Properties() {
     queryKey: ["/api/properties"],
   });
 
-  const { data: documents = [] } = useQuery<SavedDocument[]>({
+  const { data: savedDocuments = [] } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],
+  });
+
+  const { data: uploadedDocuments = [] } = useQuery<UploadedDocument[]>({
+    queryKey: ['/api/uploaded-documents'],
   });
 
   // If trial expired (API returns 403), show only subscription CTA
   const isTrialExpired = propertiesError !== null;
 
-  // Calculate document counts per property
-  const documentCounts = documents.reduce((acc, doc) => {
+  // Calculate document counts per property (combining saved and uploaded documents)
+  const documentCounts = [...savedDocuments, ...uploadedDocuments].reduce((acc, doc) => {
     if (doc.propertyId) {
       acc[doc.propertyId] = (acc[doc.propertyId] || 0) + 1;
     }
