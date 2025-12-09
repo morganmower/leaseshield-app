@@ -321,7 +321,7 @@ export default function Billing() {
             </Button>
             
             <p className="text-xs text-muted-foreground mt-3">
-              Opens in a new tab for security
+              You'll be redirected to Stripe's secure portal
             </p>
           </Card>
         )}
