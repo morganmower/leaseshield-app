@@ -240,30 +240,18 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Active Subscription Banner - show days remaining until renewal */}
-        {user.subscriptionStatus === 'active' && user.subscriptionEndsAt && (
+        {/* Active Subscription Banner - simple confirmation */}
+        {user.subscriptionStatus === 'active' && (
           <Card className="mb-8 p-4 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800">
             <div className="flex items-start gap-3">
               <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500 mt-0.5" />
               <div className="flex-1">
-                {(() => {
-                  const today = new Date();
-                  today.setHours(0, 0, 0, 0);
-                  const endDate = new Date(user.subscriptionEndsAt);
-                  endDate.setHours(0, 0, 0, 0);
-                  const daysLeft = Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                  const isYearly = user.billingInterval === 'year';
-                  return (
-                    <>
-                      <p className="font-medium text-emerald-900 dark:text-emerald-100">
-                        Your {isYearly ? 'yearly' : 'monthly'} subscription renews in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
-                      </p>
-                      <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                        You have full access to all LeaseShield features{isYearly ? ' — $100/year plan' : ' — $10/month plan'}
-                      </p>
-                    </>
-                  );
-                })()}
+                <p className="font-medium text-emerald-900 dark:text-emerald-100">
+                  Active Subscriber
+                </p>
+                <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
+                  You have full access to all LeaseShield features
+                </p>
               </div>
             </div>
           </Card>
