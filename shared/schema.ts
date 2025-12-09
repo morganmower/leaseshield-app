@@ -107,6 +107,12 @@ export const templateTypeEnum = pgEnum('template_type', [
   'security_deposit_return',
 ]);
 
+// Generation mode for templates - wizard (landlord fills) vs static (blank download for tenant/applicant)
+export const generationModeEnum = pgEnum('generation_mode', [
+  'wizard',  // Landlord fills out form, generates customized PDF
+  'static',  // Blank template download (e.g., rental applications filled by tenants)
+]);
+
 // Templates library
 export const templates = pgTable("templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -118,6 +124,8 @@ export const templates = pgTable("templates", {
   // File storage - could be URLs or file paths
   pdfUrl: text("pdf_url"),
   fillableFormData: jsonb("fillable_form_data"), // JSON structure for fillable fields
+  // Generation mode: wizard = landlord fills form, static = blank download for applicants
+  generationMode: generationModeEnum("generation_mode").default('wizard'),
   // Metadata
   version: integer("version").default(1),
   versionNotes: text("version_notes"), // What changed in this version
