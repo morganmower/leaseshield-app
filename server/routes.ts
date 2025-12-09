@@ -302,10 +302,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Get the client secret from the subscription's invoice payment intent
       const invoice = subscription.latest_invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
+      console.error(`[create-subscription] Subscription status: ${subscription.status}`);
+      console.error(`[create-subscription] Invoice: ${invoice ? `id=${invoice.id}, status=${invoice.status}` : 'null'}`);
+      console.error(`[create-subscription] Invoice payment_intent type: ${typeof invoice?.payment_intent}`);
+      console.error(`[create-subscription] Invoice payment_intent: ${JSON.stringify(invoice?.payment_intent)?.substring(0, 200)}`);
+      
       const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
       
       if (!paymentIntent?.client_secret) {
         console.error(`[create-subscription] ❌ No client_secret from subscription invoice`);
+        console.error(`[create-subscription] ❌ paymentIntent: ${JSON.stringify(paymentIntent)}`);
         throw new Error('Failed to create payment intent for subscription');
       }
 
