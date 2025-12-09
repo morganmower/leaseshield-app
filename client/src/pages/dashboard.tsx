@@ -126,7 +126,7 @@ export default function Dashboard() {
   const isTrialing = user.subscriptionStatus === 'trialing';
   const isIncomplete = user.subscriptionStatus === 'incomplete';
   const trialExpired = isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId;
+  const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId || !user.subscriptionStatus;
   const hasActiveSubscription = user.subscriptionStatus === 'active' || (isTrialing && !trialExpired);
 
   // If trial has expired, show blocking screen
