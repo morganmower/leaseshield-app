@@ -583,7 +583,7 @@ export const uploadedDocuments = pgTable("uploaded_documents", {
   propertyId: varchar("property_id").references(() => properties.id),
   fileName: text("file_name").notNull(), // Original filename
   fileUrl: text("file_url").notNull(), // Storage path
-  fileType: varchar("file_type", { length: 50 }), // pdf, docx, etc
+  fileType: varchar("file_type", { length: 100 }), // MIME type like application/pdf
   fileSize: integer("file_size"), // Size in bytes
   description: text("description"), // Optional user description
   createdAt: timestamp("created_at").defaultNow().notNull(),
