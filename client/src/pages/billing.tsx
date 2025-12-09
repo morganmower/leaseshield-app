@@ -73,6 +73,38 @@ export default function Billing() {
     },
   });
 
+  const cancelIncompleteSubscriptionMutation = useMutation({
+    mutationFn: async () => {
+      const res = await apiRequest("POST", "/api/cancel-incomplete-subscription", {});
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
+      toast({
+        title: "Subscription Cancelled",
+        description: "Incomplete subscription has been cancelled. You can try subscribing again.",
+      });
+    },
+    onError: (error: Error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to cancel subscription. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const managePaymentMutation = useMutation({
     mutationFn: async () => {
       const res = await apiRequest("POST", "/api/create-portal-session", {});
@@ -142,6 +174,38 @@ export default function Billing() {
                 >
                   {managePaymentMutation.isPending ? "Opening..." : "Update Payment Method"}
                 </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
+        {/* Incomplete Subscription - Payment didn't go through */}
+        {user.subscriptionStatus === 'incomplete' && (
+          <Card className="p-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-950/30">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-yellow-800 dark:text-yellow-200 mb-2">Incomplete Subscription</h2>
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mb-4">
+                  Your subscription payment didn't complete. You can cancel this incomplete subscription and try again.
+                </p>
+                <div className="flex gap-3 flex-wrap">
+                  <Button 
+                    onClick={() => cancelIncompleteSubscriptionMutation.mutate()}
+                    disabled={cancelIncompleteSubscriptionMutation.isPending}
+                    variant="outline"
+                    className="border-yellow-600 text-yellow-700 hover:bg-yellow-100"
+                    data-testid="button-cancel-incomplete"
+                  >
+                    {cancelIncompleteSubscriptionMutation.isPending ? "Cancelling..." : "Cancel & Start Fresh"}
+                  </Button>
+                  <Button 
+                    onClick={() => window.location.href = '/subscribe'}
+                    data-testid="button-retry-subscribe"
+                  >
+                    Try Payment Again <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           </Card>

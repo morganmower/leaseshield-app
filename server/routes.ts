@@ -401,6 +401,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Cancel incomplete subscription immediately (for failed payment attempts)
+  app.post('/api/cancel-incomplete-subscription', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      if (!user.stripeSubscriptionId) {
+        return res.status(400).json({ message: "No subscription found" });
+      }
+
+      // Get current subscription status from Stripe
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId);
+      
+      if (subscription.status !== 'incomplete' && subscription.status !== 'incomplete_expired') {
+        return res.status(400).json({ message: "Subscription is not incomplete" });
+      }
+
+      // Cancel immediately (not at period end)
+      await stripe.subscriptions.cancel(user.stripeSubscriptionId);
+
+      // Clear user subscription info
+      await storage.updateUserStripeInfo(userId, {
+        stripeSubscriptionId: undefined,
+        subscriptionStatus: 'trialing', // Reset to trial status
+      });
+
+      console.log(`✓ Incomplete subscription ${user.stripeSubscriptionId} cancelled for user ${userId}`);
+
+      res.json({ message: 'Incomplete subscription cancelled successfully' });
+    } catch (error: any) {
+      console.error("Error cancelling incomplete subscription:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
   // Create Stripe Customer Portal session for payment method management
   app.post('/api/create-portal-session', isAuthenticated, async (req: any, res) => {
     try {
