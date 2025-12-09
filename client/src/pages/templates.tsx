@@ -40,26 +40,67 @@ export default function Templates() {
   const isPayingMember = (user?.subscriptionStatus === 'active' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
-  const handleTemplateAction = async (action: 'download' | 'fill', templateId: string) => {
+  const handleTemplateAction = async (action: 'download' | 'download-blank' | 'fill', templateId: string) => {
     if (action === 'fill') {
-      // Navigate to document wizard - let the wizard page handle access control
       setLocation(`/templates/${templateId}/fill`);
+    } else if (action === 'download-blank') {
+      try {
+        toast({
+          title: 'Download Started',
+          description: 'Your blank form is being downloaded...',
+        });
+
+        const token = getAccessToken();
+        const response = await fetch(`/api/templates/${templateId}/download-blank`, {
+          credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+
+        if (response.status === 403) {
+          setShowUpgradeDialog(true);
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error('Failed to download blank form');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const contentDisposition = response.headers.get('Content-Disposition');
+        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || 'Rental_Application.pdf';
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+
+        toast({
+          title: 'Download Complete',
+          description: 'Your blank form has been downloaded successfully.',
+        });
+      } catch (error) {
+        toast({
+          title: 'Download Failed',
+          description: 'Failed to download blank form. Please try again.',
+          variant: 'destructive',
+        });
+      }
     } else {
-      // Download blank template - let backend handle access control
       try {
         toast({
           title: 'Download Started',
           description: 'Your template is being downloaded...',
         });
 
-        // Fetch template details to get field definitions
         const token = getAccessToken();
         const templateResponse = await fetch(`/api/templates/${templateId}`, {
           credentials: 'include',
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
         
-        // Backend returns 403 if subscription/trial expired
         if (templateResponse.status === 403) {
           setShowUpgradeDialog(true);
           return;
@@ -72,7 +113,6 @@ export default function Templates() {
         const template = await templateResponse.json();
         const fillableData = template.fillableFormData as { fields?: Array<{ id: string; label: string }> };
         
-        // Create blank field values with underscores for manual filling
         const blankFieldValues: Record<string, string> = {};
         if (fillableData?.fields) {
           fillableData.fields.forEach(field => {
@@ -80,7 +120,6 @@ export default function Templates() {
           });
         }
 
-        // Generate blank template with placeholder values
         const response = await fetch('/api/documents/generate', {
           method: 'POST',
           credentials: 'include',
@@ -91,7 +130,6 @@ export default function Templates() {
           },
         });
 
-        // Backend returns 403 if subscription/trial expired
         if (response.status === 403) {
           setShowUpgradeDialog(true);
           return;
@@ -425,27 +463,42 @@ export default function Templates() {
                 </p>
 
                 <div className="flex gap-2">
-                  <Button
-                    variant="default"
-                    size="sm"
-                    className="flex-1"
-                    onClick={() => handleTemplateAction('download', template.id)}
-                    data-testid={`button-download-${template.id}`}
-                  >
-                    <Download className="mr-2 h-4 w-4" />
-                    Download
-                  </Button>
-                  {template.fillableFormData ? (
+                  {template.generationMode === 'static' ? (
                     <Button
-                      variant="outline"
+                      variant="default"
                       size="sm"
                       className="flex-1"
-                      onClick={() => handleTemplateAction('fill', template.id)}
-                      data-testid={`button-fill-${template.id}`}
+                      onClick={() => handleTemplateAction('download-blank', template.id)}
+                      data-testid={`button-download-blank-${template.id}`}
                     >
-                      Fill Online
+                      <Download className="mr-2 h-4 w-4" />
+                      Download Blank Form
                     </Button>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Button
+                        variant="default"
+                        size="sm"
+                        className="flex-1"
+                        onClick={() => handleTemplateAction('download', template.id)}
+                        data-testid={`button-download-${template.id}`}
+                      >
+                        <Download className="mr-2 h-4 w-4" />
+                        Download
+                      </Button>
+                      {template.fillableFormData ? (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleTemplateAction('fill', template.id)}
+                          data-testid={`button-fill-${template.id}`}
+                        >
+                          Fill Online
+                        </Button>
+                      ) : null}
+                    </>
+                  )}
                 </div>
               </Card>
             ))}

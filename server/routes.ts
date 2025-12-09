@@ -587,6 +587,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Download blank static template (for templates like Rental Applications filled by tenants)
+  app.get('/api/templates/:id/download-blank', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const template = await storage.getTemplate(req.params.id);
+      
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Only allow blank downloads for static templates (e.g., rental applications)
+      if (template.generationMode !== 'static') {
+        return res.status(400).json({ message: "This template requires filling out via the wizard" });
+      }
+
+      // Import document generator
+      const { generateBlankApplicationPdf } = await import('./utils/blankApplicationGenerator');
+
+      // Generate a professional blank rental application PDF
+      const pdfBuffer = await generateBlankApplicationPdf({
+        templateTitle: template.title,
+        stateId: template.stateId,
+        version: template.version || 1,
+        updatedAt: template.updatedAt || new Date(),
+      });
+
+      // Set response headers
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
+      res.send(pdfBuffer);
+
+      // Track analytics event
+      await storage.trackEvent({
+        userId,
+        eventType: 'blank_template_downloaded',
+        eventData: { templateId: template.id, templateTitle: template.title },
+      });
+    } catch (error: any) {
+      console.error('Error downloading blank template:', error);
+      res.status(500).json({ message: "Failed to download template" });
+    }
+  });
+
   // Admin: Create template
   app.post('/api/admin/templates', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
