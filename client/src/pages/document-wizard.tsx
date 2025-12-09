@@ -293,11 +293,13 @@ export default function DocumentWizard() {
   });
 
   const onSubmit = (data: Record<string, string>) => {
-    // Format currency fields
+    // Format fields for document generation
+    // Note: Currency values are sent without $ prefix - the server template adds it
     const formattedData = Object.entries(data).reduce((acc, [key, value]) => {
       const field = fields.find(f => f.id === key);
       if (field?.type === 'currency' && value) {
-        acc[key] = `$${value}`;
+        // Keep just the number - server template adds $ prefix
+        acc[key] = value;
       } else if (field?.type === 'date' && value) {
         acc[key] = new Date(value).toLocaleDateString('en-US', { 
           year: 'numeric', 
