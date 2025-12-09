@@ -40,12 +40,13 @@ export default function Billing() {
 
   const cancelSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/cancel-subscription", {});
+      const res = await apiRequest("POST", "/api/cancel-subscription", {});
+      return await res.json();
     },
-    onSuccess: (response: any) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      const cancelDate = response.cancelAt 
-        ? new Date(response.cancelAt * 1000).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
+      const cancelDate = data.cancelAt 
+        ? new Date(data.cancelAt * 1000).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })
         : 'the end of your billing period';
       toast({
         title: "Subscription Cancelled",
@@ -74,11 +75,12 @@ export default function Billing() {
 
   const managePaymentMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/create-portal-session", {});
+      const res = await apiRequest("POST", "/api/create-portal-session", {});
+      return await res.json();
     },
-    onSuccess: (response: any) => {
-      if (response.url) {
-        window.location.href = response.url;
+    onSuccess: (data: any) => {
+      if (data.url) {
+        window.location.href = data.url;
       }
     },
     onError: (error: Error) => {
