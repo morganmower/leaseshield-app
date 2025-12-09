@@ -79,38 +79,55 @@ function SubscribeForm() {
 
     setIsProcessing(true);
 
-    const { error } = await stripe.confirmPayment({
-      elements,
-      confirmParams: {
-        return_url: `${window.location.origin}/dashboard`,
-      },
-      redirect: 'if_required',
-    });
+    try {
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: {
+          return_url: `${window.location.origin}/dashboard`,
+        },
+        redirect: 'if_required',
+      });
 
-    if (error) {
+      if (error) {
+        setIsProcessing(false);
+        toast({
+          title: "Payment Failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else if (paymentIntent && paymentIntent.status === 'succeeded') {
+        toast({
+          title: "Payment Successful!",
+          description: "You are now subscribed to LeaseShield App!",
+        });
+        
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+      } else if (paymentIntent && paymentIntent.status === 'requires_action') {
+        // 3DS or other authentication required - let Stripe handle it
+        toast({
+          title: "Additional verification required",
+          description: "Please complete the verification step.",
+        });
+        setIsProcessing(false);
+      } else {
+        // Payment processing
+        toast({
+          title: "Processing payment...",
+          description: "Please wait while we confirm your payment.",
+        });
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 2000);
+      }
+    } catch (err: any) {
       setIsProcessing(false);
       toast({
-        title: "Payment Failed",
-        description: error.message,
+        title: "Payment Error",
+        description: err.message || "An unexpected error occurred. Please try again.",
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Payment Successful!",
-        description: "You are now subscribed to LeaseShield App!",
-      });
-      
-      setTimeout(() => {
-        try {
-          if (window.top && window.top !== window) {
-            window.top.location.href = '/dashboard';
-          } else {
-            window.location.href = '/dashboard';
-          }
-        } catch (e) {
-          window.location.href = '/dashboard';
-        }
-      }, 1000);
     }
   };
 
