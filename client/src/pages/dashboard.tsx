@@ -252,13 +252,14 @@ export default function Dashboard() {
                   const endDate = new Date(user.subscriptionEndsAt);
                   endDate.setHours(0, 0, 0, 0);
                   const daysLeft = Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+                  const isYearly = user.billingInterval === 'year';
                   return (
                     <>
                       <p className="font-medium text-emerald-900 dark:text-emerald-100">
-                        Your subscription renews in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
+                        Your {isYearly ? 'yearly' : 'monthly'} subscription renews in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})
                       </p>
                       <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                        You have full access to all LeaseShield features
+                        You have full access to all LeaseShield features{isYearly ? ' — $100/year plan' : ' — $10/month plan'}
                       </p>
                     </>
                   );
