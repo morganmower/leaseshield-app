@@ -64,19 +64,49 @@ function ProgressStepper({ currentStep }: { currentStep: number }) {
   );
 }
 
-function SubscribeForm() {
+// Payment methods that require redirects (wallets/apps)
+const REDIRECT_PAYMENT_METHODS = ['amazon_pay', 'link', 'paypal', 'cashapp', 'klarna', 'affirm', 'afterpay_clearpay', 'wechat_pay', 'alipay', 'grabpay'];
+
+function SubscribeForm({ clientSecret }: { clientSecret: string }) {
   const stripe = useStripe();
   const elements = useElements();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
+  const [paymentMethodType, setPaymentMethodType] = useState<string>('card');
   
   // Detect if we're in an iframe (Replit preview)
   const isInIframe = window.self !== window.top;
+  
+  // Check if current payment method requires redirect
+  const requiresRedirect = REDIRECT_PAYMENT_METHODS.includes(paymentMethodType);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!stripe || !elements) {
+      return;
+    }
+
+    // If in iframe and using a redirect payment method, open new tab first
+    if (isInIframe && requiresRedirect) {
+      // Store the client secret in localStorage so the new tab can access it
+      localStorage.setItem('stripe_client_secret', clientSecret);
+      localStorage.setItem('payment_redirect_mode', 'true');
+      
+      // Open new tab and let user complete payment there
+      const newTab = window.open(window.location.href, '_blank');
+      if (newTab) {
+        toast({
+          title: "Opening secure payment window",
+          description: "Please complete your payment in the new tab.",
+        });
+      } else {
+        toast({
+          title: "Pop-up blocked",
+          description: "Please allow pop-ups and try again, or open this page in a new tab manually.",
+          variant: "destructive",
+        });
+      }
       return;
     }
 
@@ -93,26 +123,20 @@ function SubscribeForm() {
 
       if (error) {
         setIsProcessing(false);
-        
-        // Check if this is a redirect permission error (iframe issue)
-        if (error.message?.includes('permission') || error.message?.includes('navigate')) {
-          toast({
-            title: "Open in New Tab Required",
-            description: "Your card requires extra verification. Please click the 'Open in New Tab' button below to complete payment.",
-            variant: "destructive",
-          });
-        } else {
-          toast({
-            title: "Payment Failed",
-            description: error.message,
-            variant: "destructive",
-          });
-        }
+        toast({
+          title: "Payment Failed",
+          description: error.message,
+          variant: "destructive",
+        });
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast({
           title: "Payment Successful!",
           description: "You are now subscribed to LeaseShield App!",
         });
+        
+        // Clear any stored payment data
+        localStorage.removeItem('stripe_client_secret');
+        localStorage.removeItem('payment_redirect_mode');
         
         setTimeout(() => {
           window.location.href = '/dashboard';
@@ -134,53 +158,28 @@ function SubscribeForm() {
       }
     } catch (err: any) {
       setIsProcessing(false);
-      
-      // Check if this is a redirect permission error
-      if (err.message?.includes('permission') || err.message?.includes('navigate') || err.message?.includes('href')) {
-        toast({
-          title: "Open in New Tab Required",
-          description: "Your card requires extra verification. Please click the 'Open in New Tab' button below.",
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Payment Error",
-          description: err.message || "An unexpected error occurred. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Payment Error",
+        description: err.message || "An unexpected error occurred. Please try again.",
+        variant: "destructive",
+      });
     }
-  };
-  
-  const openInNewTab = () => {
-    window.open(window.location.href, '_blank');
   };
 
   const billingPeriod = localStorage.getItem('billingPeriod') === 'yearly' ? 'yearly' : 'monthly';
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {isInIframe && (
-        <div className="p-3 bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-lg text-sm">
-          <p className="text-amber-800 dark:text-amber-200">
-            For the best payment experience, we recommend opening in a new tab:
-          </p>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            className="mt-2"
-            onClick={openInNewTab}
-            data-testid="button-open-new-tab"
-          >
-            Open in New Tab
-          </Button>
-        </div>
-      )}
       <PaymentElement 
         options={{
           layout: 'tabs',
           business: { name: 'LeaseShield App' },
+        }}
+        onChange={(event) => {
+          // Track which payment method is selected
+          if (event.value?.type) {
+            setPaymentMethodType(event.value.type);
+          }
         }}
       />
       <Button
@@ -211,10 +210,23 @@ export default function Subscribe() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const [clientSecret, setClientSecret] = useState("");
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
+  const [usedStoredSecret, setUsedStoredSecret] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('billingPeriod') as 'monthly' | 'yearly' | null;
     setBillingPeriod(saved || 'monthly');
+    
+    // Check if we're in a redirect from the parent tab (for wallet payments)
+    const storedSecret = localStorage.getItem('stripe_client_secret');
+    const isRedirectMode = localStorage.getItem('payment_redirect_mode');
+    
+    if (storedSecret && isRedirectMode === 'true') {
+      console.log('Using stored client secret from redirect');
+      setClientSecret(storedSecret);
+      setUsedStoredSecret(true);
+      // Clear the redirect flag (but keep secret until payment completes)
+      localStorage.removeItem('payment_redirect_mode');
+    }
   }, []);
 
   const handleBillingPeriodChange = (period: 'monthly' | 'yearly') => {
@@ -222,6 +234,7 @@ export default function Subscribe() {
     localStorage.setItem('billingPeriod', period);
     // Trigger new subscription creation with the new period
     setClientSecret('');
+    setUsedStoredSecret(false);
   };
 
   useEffect(() => {
@@ -232,7 +245,12 @@ export default function Subscribe() {
   }, [isAuthenticated, isLoading]);
 
   useEffect(() => {
-    if (isAuthenticated && billingPeriod) {
+    // Skip API call if we already have a client secret from sessionStorage
+    if (usedStoredSecret && clientSecret) {
+      return;
+    }
+    
+    if (isAuthenticated && billingPeriod && !clientSecret) {
       console.log('Creating subscription with period:', billingPeriod);
       apiRequest("POST", "/api/create-subscription", { billingPeriod })
         .then(async (res) => {
@@ -260,7 +278,7 @@ export default function Subscribe() {
           });
         });
     }
-  }, [isAuthenticated, billingPeriod, toast]);
+  }, [isAuthenticated, billingPeriod, toast, usedStoredSecret, clientSecret]);
 
   const stripeAppearance: Appearance = {
     theme: 'stripe',
@@ -424,7 +442,7 @@ export default function Subscribe() {
                 appearance: stripeAppearance,
               }}
             >
-              <SubscribeForm />
+              <SubscribeForm clientSecret={clientSecret} />
             </Elements>
 
             <div className="mt-6 pt-6 border-t border-border">
