@@ -198,6 +198,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!user) return res.status(404).json({ message: "User not found" });
       if (!user.email) return res.status(400).json({ message: 'No user email' });
 
+      // Check if user already has an active subscription
+      if (user.subscriptionStatus === 'active') {
+        return res.status(400).json({ message: "You already have an active subscription" });
+      }
+
+      // If user has an existing incomplete subscription, try to reuse it
+      if (user.stripeSubscriptionId && user.subscriptionStatus === 'incomplete') {
+        try {
+          const existingSub = await stripe.subscriptions.retrieve(user.stripeSubscriptionId, {
+            expand: ['latest_invoice.payment_intent'],
+          }) as Stripe.Subscription;
+          
+          if (existingSub.status === 'incomplete' || existingSub.status === 'active') {
+            const invoice = existingSub.latest_invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
+            const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+            
+            if (paymentIntent?.client_secret) {
+              console.log(`[create-subscription] Reusing existing subscription ${existingSub.id}`);
+              return res.json({
+                subscriptionId: existingSub.id,
+                clientSecret: paymentIntent.client_secret,
+                paymentIntentId: paymentIntent.id,
+              });
+            }
+          }
+        } catch (err: any) {
+          console.log(`[create-subscription] Could not reuse existing subscription: ${err.message}`);
+        }
+      }
+
       // Get the appropriate price ID based on billing period
       const stripePriceId = billingPeriod === 'yearly' 
         ? process.env.STRIPE_PRICE_ID_YEARLY 
