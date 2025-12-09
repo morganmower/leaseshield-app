@@ -94,6 +94,17 @@ function Router() {
         <Route path="/subscribe" component={Subscribe} />
         <Route path="/logos" component={LogoPicker} />
         <Route path="/logo-colors" component={LogoColors} />
+        {/* Redirect protected routes to login */}
+        <Route path="/dashboard">{() => <Redirect to="/login" />}</Route>
+        <Route path="/templates">{() => <Redirect to="/login" />}</Route>
+        <Route path="/billing">{() => <Redirect to="/login" />}</Route>
+        <Route path="/subscription">{() => <Redirect to="/login" />}</Route>
+        <Route path="/properties">{() => <Redirect to="/login" />}</Route>
+        <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
+        <Route path="/screening">{() => <Redirect to="/login" />}</Route>
+        <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
+        <Route path="/settings">{() => <Redirect to="/login" />}</Route>
+        <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
         <Route component={NotFound} />
       </Switch>
     );
