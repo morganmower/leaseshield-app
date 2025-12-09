@@ -255,6 +255,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         amount: paymentAmount,
         currency: 'usd',
         customer: customerId,
+        payment_method_types: ['card'], // Only allow card payments for simplicity
         description: `LeaseShield ${billingPeriod === 'yearly' ? 'annual' : 'monthly'} subscription - ${user.email}`,
         metadata: {
           subscriptionId: subscription.id,
