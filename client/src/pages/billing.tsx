@@ -68,8 +68,8 @@ export default function Billing() {
     },
     onSuccess: (data: any) => {
       if (data.url) {
-        // Open in new tab since Stripe portal doesn't work in iframes
-        window.open(data.url, '_blank');
+        // Navigate in same tab so auth persists on return
+        window.location.href = data.url;
       }
     },
     onError: (error: Error) => {
