@@ -18,6 +18,17 @@ import { emailService } from './emailService';
 
 const router = Router();
 
+// Helper to get cookie options - uses req.secure which respects trust proxy
+function getCookieOptions(req: Request) {
+  return {
+    httpOnly: true,
+    secure: req.secure || req.headers['x-forwarded-proto'] === 'https',
+    sameSite: 'lax' as const,
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    path: '/',
+  };
+}
+
 const signupSchema = z.object({
   email: z.string().email('Invalid email address'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
@@ -84,13 +95,7 @@ router.post('/signup', async (req: Request, res: Response) => {
       expiresAt: getRefreshTokenExpiry(),
     });
 
-    res.cookie('refreshToken', refreshTokenValue, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    res.cookie('refreshToken', refreshTokenValue, getCookieOptions(req));
 
     return res.status(201).json({
       message: 'Account created successfully',
@@ -153,13 +158,7 @@ router.post('/login', async (req: Request, res: Response) => {
       expiresAt: getRefreshTokenExpiry(),
     });
 
-    res.cookie('refreshToken', refreshTokenValue, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    res.cookie('refreshToken', refreshTokenValue, getCookieOptions(req));
 
     return res.json({
       message: 'Login successful',
@@ -257,13 +256,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
       expiresAt: getRefreshTokenExpiry(),
     });
 
-    res.cookie('refreshToken', newRefreshTokenValue, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-      path: '/',
-    });
+    res.cookie('refreshToken', newRefreshTokenValue, getCookieOptions(req));
 
     return res.json({
       accessToken,
