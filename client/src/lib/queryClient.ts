@@ -111,8 +111,10 @@ export async function apiRequest(
     let token = getAccessToken();
     let res = await makeRequest(token);
 
-    // If unauthorized and we have a refresh token, try to refresh
-    if (res.status === 401 && !url.includes("/api/auth/")) {
+    // If unauthorized and we have a refresh token, try to refresh (skip only for login/logout/signup/refresh)
+    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh"];
+    const shouldSkipRefresh = skipRefreshEndpoints.some(e => url.includes(e));
+    if (res.status === 401 && !shouldSkipRefresh) {
       const newToken = await refreshAccessToken();
       if (newToken) {
         res = await makeRequest(newToken);
@@ -158,8 +160,11 @@ export const getQueryFn: <T>(options: {
     let token = getAccessToken();
     let res = await makeRequest(token);
 
-    // If unauthorized and not an auth endpoint, try to refresh token
-    if (res.status === 401 && !queryKey[0]?.toString().includes("/api/auth/")) {
+    // If unauthorized, try to refresh token (skip only for login/logout/signup/refresh endpoints)
+    const endpoint = queryKey[0]?.toString() || "";
+    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh"];
+    const shouldSkipRefresh = skipRefreshEndpoints.some(e => endpoint.includes(e));
+    if (res.status === 401 && !shouldSkipRefresh) {
       try {
         const refreshRes = await fetch("/api/auth/refresh", {
           method: "POST",
