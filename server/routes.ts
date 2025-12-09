@@ -235,12 +235,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         await storage.updateUserStripeInfo(userId, { stripeCustomerId: customerId });
       }
 
-      // Create subscription without payment method (will attach later)
+      // Create subscription with payment_behavior: 'default_incomplete' and expand the invoice
+      // This creates a subscription with an incomplete invoice that we can pay
       const subscription = await stripe.subscriptions.create({
         customer: customerId,
         items: [{ price: stripePriceId }],
         payment_behavior: 'default_incomplete',
-        payment_settings: { save_default_payment_method: 'on_subscription' },
+        payment_settings: { 
+          save_default_payment_method: 'on_subscription',
+          payment_method_types: ['card'], // Only allow card payments
+        },
+        expand: ['latest_invoice.payment_intent'],
+        metadata: {
+          userId: userId,
+          billingPeriod: billingPeriod || 'monthly',
+        },
       });
 
       await storage.updateUserStripeInfo(userId, {
@@ -248,28 +257,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         subscriptionStatus: 'incomplete',
       });
 
-      // Create a payment intent directly for this subscription
-      console.error(`[create-subscription] Creating payment intent for subscription ${subscription.id}`);
-      const paymentAmount = billingPeriod === 'yearly' ? 10000 : 1000; // $100 or $10 in cents
-      const paymentIntent = await stripe.paymentIntents.create({
-        amount: paymentAmount,
-        currency: 'usd',
-        customer: customerId,
-        payment_method_types: ['card'], // Only allow card payments for simplicity
-        description: `LeaseShield ${billingPeriod === 'yearly' ? 'annual' : 'monthly'} subscription - ${user.email}`,
-        metadata: {
-          subscriptionId: subscription.id,
-          userId: userId,
-          billingPeriod: billingPeriod || 'monthly',
-        },
-      });
-
-      if (!paymentIntent.client_secret) {
-        console.error(`[create-subscription] ❌ Payment intent has no client_secret`);
-        throw new Error('Failed to create payment intent');
+      // Get the client secret from the subscription's invoice payment intent
+      const invoice = subscription.latest_invoice as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
+      const paymentIntent = invoice?.payment_intent as Stripe.PaymentIntent;
+      
+      if (!paymentIntent?.client_secret) {
+        console.error(`[create-subscription] ❌ No client_secret from subscription invoice`);
+        throw new Error('Failed to create payment intent for subscription');
       }
 
-      console.error(`[create-subscription] ✅ Payment intent created: ${paymentIntent.id}`);
+      console.error(`[create-subscription] ✅ Subscription created: ${subscription.id}`);
+      console.error(`[create-subscription] ✅ Payment intent from invoice: ${paymentIntent.id}`);
       console.error(`[create-subscription] ✅ Client secret: ${paymentIntent.client_secret?.substring(0, 20)}...`);
 
       // Return subscription and payment intent details
@@ -281,6 +279,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error: any) {
       console.error('❌ /api/create-subscription error:', error.message);
       return res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Confirm payment and activate subscription (backup to webhook)
+  app.post('/api/confirm-payment', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      if (!user.stripeSubscriptionId) {
+        return res.status(400).json({ message: "No subscription found" });
+      }
+      
+      console.log(`[confirm-payment] Checking subscription ${user.stripeSubscriptionId} for user ${userId}`);
+      
+      // Retrieve the actual subscription from Stripe to get authoritative status
+      const subscription = await stripe.subscriptions.retrieve(user.stripeSubscriptionId) as Stripe.Subscription;
+      
+      console.log(`[confirm-payment] Stripe subscription status: ${subscription.status}`);
+      
+      if (subscription.status === 'active' || subscription.status === 'trialing') {
+        // Subscription is active - sync status from Stripe
+        const billingInterval = subscription.items.data[0]?.plan?.interval || 'month';
+        const periodEnd = (subscription as any).current_period_end;
+        const subscriptionEndsAt = periodEnd 
+          ? new Date(periodEnd * 1000)
+          : undefined;
+        
+        await storage.updateUserStripeInfo(userId, {
+          subscriptionStatus: subscription.status,
+          billingInterval,
+          subscriptionEndsAt,
+          paymentFailedAt: null,
+        });
+        
+        console.log(`[confirm-payment] ✅ User ${userId} subscription synced: status=${subscription.status}, ends=${subscriptionEndsAt?.toISOString()}`);
+        
+        res.json({ success: true, subscriptionEndsAt, status: subscription.status });
+      } else if (subscription.status === 'incomplete') {
+        // Still waiting for payment to complete
+        console.log(`[confirm-payment] Subscription still incomplete, payment may be processing`);
+        res.status(202).json({ message: "Payment is still processing", status: subscription.status });
+      } else {
+        console.log(`[confirm-payment] Unexpected subscription status: ${subscription.status}`);
+        res.status(400).json({ message: "Subscription is not active", status: subscription.status });
+      }
+    } catch (error: any) {
+      console.error('❌ /api/confirm-payment error:', error.message);
+      return res.status(500).json({ message: "Failed to confirm payment" });
     }
   });
 
@@ -469,6 +520,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
               } catch (emailError) {
                 console.error('Failed to send payment failed email:', emailError);
               }
+            }
+          }
+          break;
+        }
+
+        case 'payment_intent.succeeded': {
+          const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string };
+          const invoiceId = paymentIntent.invoice;
+          
+          console.log(`💰 Payment intent succeeded: ${paymentIntent.id}, invoiceId: ${invoiceId}`);
+          
+          // For subscription payments, the invoice will tell us which subscription
+          if (invoiceId) {
+            try {
+              const invoice = await stripe.invoices.retrieve(invoiceId) as Stripe.Invoice & { subscription?: string };
+              const subscriptionId = invoice.subscription;
+              
+              if (subscriptionId) {
+                // Retrieve the subscription to get actual status and period end
+                const subscription = await stripe.subscriptions.retrieve(subscriptionId) as Stripe.Subscription;
+                const customerId = subscription.customer as string;
+                
+                const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
+                if (userResults.length > 0) {
+                  const billingInterval = subscription.items.data[0]?.plan?.interval || 'month';
+                  const periodEnd = (subscription as any).current_period_end;
+                  const subscriptionEndsAt = periodEnd 
+                    ? new Date(periodEnd * 1000)
+                    : undefined;
+                  
+                  await storage.updateUserStripeInfo(userResults[0].id, {
+                    subscriptionStatus: subscription.status,
+                    billingInterval,
+                    subscriptionEndsAt,
+                    paymentFailedAt: null,
+                  });
+                  
+                  console.log(`✅ User ${userResults[0].id} subscription activated via payment_intent.succeeded: status=${subscription.status}`);
+                }
+              }
+            } catch (err: any) {
+              console.error(`Failed to process payment_intent.succeeded for invoice ${invoiceId}:`, err.message);
             }
           }
           break;

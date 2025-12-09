@@ -96,14 +96,56 @@ function SubscribeForm() {
           variant: "destructive",
         });
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
-        toast({
-          title: "Payment Successful!",
-          description: "You are now subscribed to LeaseShield App!",
-        });
-        
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+        // Call confirm-payment endpoint to sync subscription status from Stripe
+        try {
+          const response = await apiRequest("POST", "/api/confirm-payment", {});
+          const data = await response.json();
+          
+          if (data.success) {
+            toast({
+              title: "Payment Successful!",
+              description: "You are now subscribed to LeaseShield App!",
+            });
+            
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 1000);
+          } else if (response.status === 202) {
+            // Payment still processing, wait and retry
+            toast({
+              title: "Processing...",
+              description: "Finalizing your subscription...",
+            });
+            
+            // Wait a bit and retry
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            const retryResponse = await apiRequest("POST", "/api/confirm-payment", {});
+            const retryData = await retryResponse.json();
+            
+            if (retryData.success) {
+              toast({
+                title: "Payment Successful!",
+                description: "You are now subscribed to LeaseShield App!",
+              });
+            }
+            
+            setTimeout(() => {
+              window.location.href = '/dashboard';
+            }, 1000);
+          } else {
+            throw new Error(data.message || 'Failed to confirm subscription');
+          }
+        } catch (confirmError) {
+          console.error('Error confirming payment:', confirmError);
+          // Still redirect - webhook should handle it
+          toast({
+            title: "Payment Successful!",
+            description: "Activating your subscription...",
+          });
+          setTimeout(() => {
+            window.location.href = '/dashboard';
+          }, 2000);
+        }
       } else if (paymentIntent && paymentIntent.status === 'requires_action') {
         toast({
           title: "Additional verification required",
