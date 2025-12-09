@@ -313,7 +313,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           invoice = await stripe.invoices.retrieve(invoiceId, {
             expand: ['payment_intent'],
           }) as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
-          console.error(`[create-subscription] Fetched invoice: ${invoice.id}, payment_intent type: ${typeof invoice.payment_intent}`);
+          console.error(`[create-subscription] Fetched invoice: ${invoice.id}`);
+          console.error(`[create-subscription] Invoice collection_method: ${invoice.collection_method}`);
+          console.error(`[create-subscription] Invoice amount_due: ${invoice.amount_due}, amount_paid: ${invoice.amount_paid}`);
+          console.error(`[create-subscription] Invoice payment_intent raw: ${invoice.payment_intent}`);
+          
+          // If still no payment_intent, try to finalize the invoice to create one
+          if (!invoice.payment_intent && invoice.status === 'draft') {
+            console.error(`[create-subscription] Invoice is draft, finalizing...`);
+            invoice = await stripe.invoices.finalizeInvoice(invoiceId, {
+              expand: ['payment_intent'],
+            }) as Stripe.Invoice & { payment_intent?: Stripe.PaymentIntent };
+          }
+          
+          // If still no payment_intent, the invoice might need to be paid differently
+          // Try creating a payment intent manually for the invoice
+          if (!invoice.payment_intent && invoice.status === 'open') {
+            console.error(`[create-subscription] No payment_intent on open invoice, creating PaymentIntent manually...`);
+            const paymentIntentData = await stripe.paymentIntents.create({
+              amount: invoice.amount_due,
+              currency: invoice.currency,
+              customer: customerId,
+              metadata: {
+                invoice_id: invoice.id,
+                subscription_id: subscription.id,
+                userId: userId,
+              },
+              setup_future_usage: 'off_session',
+            });
+            console.error(`[create-subscription] Created manual PaymentIntent: ${paymentIntentData.id}`);
+            // Return this payment intent instead
+            return res.json({
+              subscriptionId: subscription.id,
+              clientSecret: paymentIntentData.client_secret,
+              paymentIntentId: paymentIntentData.id,
+            });
+          }
         }
       }
       
