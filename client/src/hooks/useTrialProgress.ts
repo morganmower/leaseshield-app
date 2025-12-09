@@ -21,7 +21,7 @@ export function useTrialProgress(): TrialProgress {
 
   return useMemo(() => {
     const isTrialing = user?.subscriptionStatus === 'trialing';
-    const hasActiveSubscription = user?.subscriptionStatus === 'active';
+    const hasActiveSubscription = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end';
     const trialEndDate = user?.trialEndsAt ? new Date(user.trialEndsAt) : null;
     
     const totalDays = 7;

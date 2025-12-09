@@ -37,7 +37,7 @@ export default function Templates() {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  const isPayingMember = (user?.subscriptionStatus === 'active' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
+  const isPayingMember = (user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
   const handleTemplateAction = async (action: 'download' | 'download-blank' | 'fill', templateId: string) => {

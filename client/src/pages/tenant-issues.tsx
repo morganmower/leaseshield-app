@@ -177,7 +177,7 @@ export default function TenantIssues() {
   });
 
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  const hasActiveSubscription = user?.subscriptionStatus === 'active';
+  const hasActiveSubscription = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end';
   const hasActiveTrial = user?.subscriptionStatus === 'trialing' && !trialExpired;
   const isAdmin = user?.isAdmin === true;
   const hasAccess = hasActiveSubscription || hasActiveTrial || isAdmin;

@@ -125,9 +125,10 @@ export default function Dashboard() {
 
   const isTrialing = user.subscriptionStatus === 'trialing';
   const isIncomplete = user.subscriptionStatus === 'incomplete';
+  const isCancelAtPeriodEnd = user.subscriptionStatus === 'cancel_at_period_end';
   const trialExpired = isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
   const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId || !user.subscriptionStatus;
-  const hasActiveSubscription = user.subscriptionStatus === 'active' || (isTrialing && !trialExpired);
+  const hasActiveSubscription = user.subscriptionStatus === 'active' || isCancelAtPeriodEnd || (isTrialing && !trialExpired);
 
   // If trial has expired, show blocking screen
   if (trialExpired) {

@@ -750,8 +750,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create portal session
       const domain = process.env.REPLIT_DOMAINS?.split(',')[0];
       const returnUrl = domain 
-        ? `https://${domain}/billing`
-        : 'http://localhost:5000/billing';
+        ? `https://${domain}/dashboard`
+        : 'http://localhost:5000/dashboard';
       
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,

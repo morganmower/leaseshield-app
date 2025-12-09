@@ -48,6 +48,7 @@ export const requireAccess: RequestHandler = async (req: Request, res: Response,
 
   const hasActiveSubscription = 
     user.subscriptionStatus === 'active' || 
+    user.subscriptionStatus === 'cancel_at_period_end' ||
     user.subscriptionStatus === 'trialing';
 
   if (!hasActiveSubscription) {
