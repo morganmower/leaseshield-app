@@ -6,10 +6,10 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus, Trash2, DollarSign, Edit2 } from "lucide-react";
+import { Download, Plus, Trash2, DollarSign, Edit2, Building2 } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { RentLedgerEntry } from "@shared/schema";
+import type { RentLedgerEntry, Property } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -39,9 +39,16 @@ export default function RentLedger() {
   const [editPaymentMethod, setEditPaymentMethod] = useState("");
   const [editReferenceNumber, setEditReferenceNumber] = useState("");
   const [editNotes, setEditNotes] = useState("");
+  const [propertyId, setPropertyId] = useState<string>("");
+  const [editPropertyId, setEditPropertyId] = useState<string>("");
+  const [filterPropertyId, setFilterPropertyId] = useState<string>("all");
 
   const { data: entries, isLoading } = useQuery<RentLedgerEntry[]>({
     queryKey: ["/api/rent-ledger"],
+  });
+
+  const { data: properties = [] } = useQuery<Property[]>({
+    queryKey: ["/api/properties"],
   });
 
   const createMutation = useMutation({
@@ -59,6 +66,7 @@ export default function RentLedger() {
       setPaymentMethod("");
       setReferenceNumber("");
       setNotes("");
+      setPropertyId("");
       toast({ description: "Rent entry added successfully!" });
     },
     onError: () => toast({ description: "Failed to add entry", variant: "destructive" }),
@@ -96,6 +104,7 @@ export default function RentLedger() {
     setEditPaymentMethod(entry.paymentMethod || "");
     setEditReferenceNumber(entry.referenceNumber || "");
     setEditNotes(entry.notes || "");
+    setEditPropertyId(entry.propertyId || "");
   };
 
   const handleUpdateEntry = () => {
@@ -110,7 +119,7 @@ export default function RentLedger() {
     updateMutation.mutate({
       id: editingEntry.id,
       userId: editingEntry.userId,
-      propertyId: editingEntry.propertyId,
+      propertyId: editPropertyId || null,
       tenantName: editTenantName,
       effectiveDate: editEffectiveDate || new Date().toISOString().split('T')[0],
       type: entryType,
@@ -199,7 +208,7 @@ export default function RentLedger() {
 
     createMutation.mutate({
       userId: user?.id,
-      propertyId: null,
+      propertyId: propertyId || null,
       tenantName,
       effectiveDate: effectiveDate || new Date().toISOString().split('T')[0],
       type: entryType,
@@ -305,6 +314,25 @@ export default function RentLedger() {
                   </Select>
                 </div>
 
+                {properties.length > 0 && (
+                  <div>
+                    <Label htmlFor="property">Property (Optional)</Label>
+                    <Select value={propertyId || "none"} onValueChange={(v) => setPropertyId(v === "none" ? "" : v)}>
+                      <SelectTrigger id="property" data-testid="select-property">
+                        <SelectValue placeholder="No property selected" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">No property</SelectItem>
+                        {properties.map((property) => (
+                          <SelectItem key={property.id} value={property.id}>
+                            {property.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
                 <div className="md:col-span-2">
                   <Label htmlFor="description">Description</Label>
                   <Input
@@ -397,12 +425,28 @@ export default function RentLedger() {
             {/* Summary Section */}
             {entries && entries.length > 0 && (
               <Card className="p-6 bg-muted/30 border-0">
-                <h2 className="text-lg font-bold mb-4">Summary</h2>
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-lg font-bold">Summary</h2>
+                  {filterPropertyId !== "all" && (
+                    <span className="text-sm text-muted-foreground">
+                      Filtered: {filterPropertyId === "unassigned" 
+                        ? "Unassigned entries" 
+                        : properties.find(p => p.id === filterPropertyId)?.name || ""}
+                    </span>
+                  )}
+                </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {(() => {
+                    // Filter entries for summary calculation
+                    const filteredEntries = entries.filter((entry) => {
+                      if (filterPropertyId === "all") return true;
+                      if (filterPropertyId === "unassigned") return !entry.propertyId;
+                      return entry.propertyId === filterPropertyId;
+                    });
+                    
                     let totalCharges = 0;
                     let totalPayments = 0;
-                    entries.forEach((entry) => {
+                    filteredEntries.forEach((entry) => {
                       totalCharges += entry.amountExpected / 100;
                       totalPayments += (entry.amountReceived ?? 0) / 100;
                     });
@@ -438,7 +482,28 @@ export default function RentLedger() {
 
             {/* Ledger Table */}
             <Card className="p-6">
-              <h2 className="text-xl font-bold mb-4">Ledger History</h2>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                <h2 className="text-xl font-bold">Ledger History</h2>
+                {properties.length > 0 && (
+                  <div className="flex items-center gap-2">
+                    <Building2 className="h-4 w-4 text-muted-foreground" />
+                    <Select value={filterPropertyId} onValueChange={setFilterPropertyId}>
+                      <SelectTrigger className="w-[200px]" data-testid="select-filter-property">
+                        <SelectValue placeholder="Filter by property" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Properties</SelectItem>
+                        <SelectItem value="unassigned">Unassigned</SelectItem>
+                        {properties.map((property) => (
+                          <SelectItem key={property.id} value={property.id}>
+                            {property.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
               {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
               ) : entries && entries.length > 0 ? (
@@ -448,6 +513,7 @@ export default function RentLedger() {
                       <TableRow>
                         <TableHead className="text-xs">Date</TableHead>
                         <TableHead className="text-xs">Effective Date</TableHead>
+                        {properties.length > 0 && <TableHead className="text-xs">Property</TableHead>}
                         <TableHead className="text-xs">Category</TableHead>
                         <TableHead className="text-xs text-right">Charge Amt</TableHead>
                         <TableHead className="text-xs text-right">Payment Amt</TableHead>
@@ -459,12 +525,30 @@ export default function RentLedger() {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        const sortedEntries = entries.sort((a, b) => {
+                        // Filter entries by property if filter is active
+                        const filteredEntries = entries.filter((entry) => {
+                          if (filterPropertyId === "all") return true;
+                          if (filterPropertyId === "unassigned") return !entry.propertyId;
+                          return entry.propertyId === filterPropertyId;
+                        });
+                        
+                        const sortedEntries = filteredEntries.sort((a, b) => {
                           const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
                           const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
                           return dateB - dateA;
                         });
                         let cumulativeBalance = 0;
+                        
+                        if (sortedEntries.length === 0) {
+                          return (
+                            <TableRow>
+                              <TableCell colSpan={properties.length > 0 ? 10 : 9} className="text-center text-muted-foreground py-8">
+                                No entries for this property filter
+                              </TableCell>
+                            </TableRow>
+                          );
+                        }
+                        
                         return sortedEntries.map((entry) => {
                           const expected = entry.amountExpected / 100;
                           const received = (entry.amountReceived ?? 0) / 100;
@@ -473,6 +557,14 @@ export default function RentLedger() {
                             <TableRow key={entry.id}>
                               <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
                               <TableCell className="text-xs">{entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "-"}</TableCell>
+                              {properties.length > 0 && (
+                                <TableCell className="text-xs">
+                                  {entry.propertyId 
+                                    ? properties.find(p => p.id === entry.propertyId)?.name || "-"
+                                    : <span className="text-muted-foreground">-</span>
+                                  }
+                                </TableCell>
+                              )}
                               <TableCell className="text-xs">{entry.category}</TableCell>
                               <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
@@ -566,6 +658,24 @@ export default function RentLedger() {
                   </SelectContent>
                 </Select>
               </div>
+              {properties.length > 0 && (
+                <div>
+                  <Label htmlFor="edit-property">Property (Optional)</Label>
+                  <Select value={editPropertyId || "none"} onValueChange={(v) => setEditPropertyId(v === "none" ? "" : v)}>
+                    <SelectTrigger id="edit-property" data-testid="select-edit-property">
+                      <SelectValue placeholder="No property selected" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No property</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="col-span-2">
                 <Label htmlFor="edit-description">Description</Label>
                 <Input
