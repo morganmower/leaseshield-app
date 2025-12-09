@@ -114,6 +114,11 @@ function Router() {
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
+      {/* Redirect auth pages to dashboard when logged in */}
+      <Route path="/login">{() => <Redirect to="/dashboard" />}</Route>
+      <Route path="/signup">{() => <Redirect to="/dashboard" />}</Route>
+      <Route path="/forgot-password">{() => <Redirect to="/dashboard" />}</Route>
+      <Route path="/reset-password">{() => <Redirect to="/dashboard" />}</Route>
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/refund-policy" component={RefundPolicy} />
