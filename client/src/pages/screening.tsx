@@ -159,9 +159,28 @@ export default function Screening() {
         credentials: 'include',
       });
 
+      if (response.status === 401) {
+        setExplanation('Your session expired. Please log in again.');
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to use the AI helper.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
       if (response.status === 403) {
         setExplanation('Subscribe to use this AI helper');
         setHelperScreen('home');
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setExplanation(errorData.message || 'Unable to get explanation. Please try again.');
         return;
       }
 
@@ -198,9 +217,28 @@ export default function Screening() {
         credentials: 'include',
       });
 
+      if (response.status === 401) {
+        setCriminalExplanation('Your session expired. Please log in again.');
+        toast({
+          title: "Session Expired",
+          description: "Please log in again to use the AI helper.",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 1500);
+        return;
+      }
+
       if (response.status === 403) {
         setCriminalExplanation('Subscribe to use this AI helper');
         setCriminalHelperScreen('home');
+        return;
+      }
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        setCriminalExplanation(errorData.message || 'Unable to get explanation. Please try again.');
         return;
       }
 
