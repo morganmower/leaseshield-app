@@ -8,9 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Send, Mail, Users, MessageSquare, Clock, ChevronDown, ChevronUp } from "lucide-react";
+import { Send, Mail, Users, MessageSquare, Clock, ChevronDown, ChevronUp, User as UserIcon } from "lucide-react";
 import { format } from "date-fns";
 import type { BroadcastMessage, BroadcastReply, User } from "@shared/schema";
 
@@ -24,7 +25,8 @@ export default function AdminBroadcasts() {
   const { toast } = useToast();
   const [subject, setSubject] = useState("");
   const [content, setContent] = useState("");
-  const [audience, setAudience] = useState<"trial" | "active" | "all">("all");
+  const [audience, setAudience] = useState<"trial" | "active" | "all" | "individual">("all");
+  const [selectedUserId, setSelectedUserId] = useState<string>("");
   const [expandedBroadcast, setExpandedBroadcast] = useState<string | null>(null);
 
   const { data: broadcasts, isLoading: broadcastsLoading } = useQuery<BroadcastWithReplies[]>({
@@ -35,24 +37,31 @@ export default function AdminBroadcasts() {
     queryKey: ["/api/admin/broadcasts/audience-counts"],
   });
 
+  const { data: allUsers } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
+  });
+
   const sendBroadcastMutation = useMutation({
-    mutationFn: async (data: { subject: string; content: string; audience: string }) => {
+    mutationFn: async (data: { subject: string; content: string; audience: string; userId?: string }) => {
       const res = await apiRequest("POST", "/api/admin/broadcasts", data);
       return await res.json();
     },
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/broadcasts"] });
       toast({
-        title: "Broadcast Sent",
-        description: `Message sent to ${data.recipientCount} users.`,
+        title: "Message Sent",
+        description: data.recipientCount === 1 
+          ? "Message sent to 1 user." 
+          : `Message sent to ${data.recipientCount} users.`,
       });
       setSubject("");
       setContent("");
+      setSelectedUserId("");
     },
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: error.message || "Failed to send broadcast.",
+        description: error.message || "Failed to send message.",
         variant: "destructive",
       });
     },
@@ -77,7 +86,20 @@ export default function AdminBroadcasts() {
       });
       return;
     }
-    sendBroadcastMutation.mutate({ subject, content, audience });
+    if (audience === "individual" && !selectedUserId) {
+      toast({
+        title: "Select a User",
+        description: "Please select a user to send the message to.",
+        variant: "destructive",
+      });
+      return;
+    }
+    sendBroadcastMutation.mutate({ 
+      subject, 
+      content, 
+      audience,
+      userId: audience === "individual" ? selectedUserId : undefined,
+    });
   };
 
   const getAudienceLabel = (aud: string) => {
@@ -85,6 +107,7 @@ export default function AdminBroadcasts() {
       case "trial": return "Trial Users";
       case "active": return "Active Subscribers";
       case "all": return "All Users";
+      case "individual": return "Individual User";
       default: return aud;
     }
   };
@@ -153,8 +176,33 @@ export default function AdminBroadcasts() {
                       Active Subscribers ({getAudienceCount("active")})
                     </Label>
                   </div>
+                  <div className="flex items-center space-x-2">
+                    <RadioGroupItem value="individual" id="individual" data-testid="radio-audience-individual" />
+                    <Label htmlFor="individual" className="cursor-pointer">
+                      <UserIcon className="h-4 w-4 inline mr-1" />
+                      Individual User
+                    </Label>
+                  </div>
                 </RadioGroup>
               </div>
+
+              {audience === "individual" && (
+                <div className="space-y-2">
+                  <Label>Select User</Label>
+                  <Select value={selectedUserId} onValueChange={setSelectedUserId}>
+                    <SelectTrigger data-testid="select-user">
+                      <SelectValue placeholder="Choose a user..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {allUsers?.map((user) => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {user.email} {user.firstName ? `(${user.firstName} ${user.lastName || ''})` : ''}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="space-y-2">
                 <Label htmlFor="subject">Subject</Label>

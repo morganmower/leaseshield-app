@@ -3058,6 +3058,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // ===== BROADCAST MESSAGING ENDPOINTS =====
+
+  // Get all users for admin
+  app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const users = await storage.getAllUsers();
+      res.json(users);
+    } catch (error) {
+      console.error("Error getting users:", error);
+      res.status(500).json({ message: "Failed to get users" });
+    }
+  });
   
   // Get audience counts for admin broadcast form
   app.get('/api/admin/broadcasts/audience-counts', isAuthenticated, requireAdmin, async (req, res) => {
@@ -3102,24 +3113,31 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   // Send a broadcast message
   app.post('/api/admin/broadcasts', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-      const userId = getUserId(req);
-      const { subject, content, audience } = req.body;
+      const adminUserId = getUserId(req);
+      const { subject, content, audience, userId: targetUserId } = req.body;
 
       if (!subject || !content || !audience) {
         return res.status(400).json({ message: "Subject, content, and audience are required" });
+      }
+
+      if (audience === 'individual' && !targetUserId) {
+        return res.status(400).json({ message: "User ID is required for individual messages" });
       }
 
       // Create the broadcast
       const broadcast = await storage.createBroadcast({
         subject,
         content,
-        audience,
-        sentByUserId: userId,
+        audience: audience === 'individual' ? `individual:${targetUserId}` : audience,
+        sentByUserId: adminUserId,
       });
 
       // Get target users based on audience
       let targetUsers: any[] = [];
-      if (audience === 'trial') {
+      if (audience === 'individual') {
+        const user = await storage.getUser(targetUserId);
+        if (user) targetUsers = [user];
+      } else if (audience === 'trial') {
         targetUsers = await storage.getTrialingUsers();
       } else if (audience === 'active') {
         targetUsers = await storage.getAllActiveUsers();
