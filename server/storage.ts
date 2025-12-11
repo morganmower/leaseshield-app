@@ -74,6 +74,15 @@ import {
   type EmailEvent,
   type InsertEmailEvent,
   trainingInterest,
+  broadcastMessages,
+  broadcastRecipients,
+  broadcastReplies,
+  type BroadcastMessage,
+  type InsertBroadcastMessage,
+  type BroadcastRecipient,
+  type InsertBroadcastRecipient,
+  type BroadcastReply,
+  type InsertBroadcastReply,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -274,6 +283,21 @@ export interface IStorage {
   createEmailEvent(event: InsertEmailEvent): Promise<EmailEvent>;
   updateEmailEventStatus(resendId: string, status: string, timestamp: Date): Promise<EmailEvent | undefined>;
   getEmailEventsByUser(userId: string): Promise<EmailEvent[]>;
+
+  // Broadcast operations
+  createBroadcast(broadcast: InsertBroadcastMessage): Promise<BroadcastMessage>;
+  getAllBroadcasts(): Promise<BroadcastMessage[]>;
+  getBroadcastById(id: string): Promise<BroadcastMessage | undefined>;
+  createBroadcastRecipient(recipient: InsertBroadcastRecipient): Promise<BroadcastRecipient>;
+  getBroadcastRecipientsByBroadcastId(broadcastId: string): Promise<BroadcastRecipient[]>;
+  getUserBroadcastRecipients(userId: string): Promise<(BroadcastRecipient & { broadcast: BroadcastMessage })[]>;
+  getUnreadBroadcastCount(userId: string): Promise<number>;
+  markBroadcastAsRead(broadcastId: string, userId: string): Promise<void>;
+  createBroadcastReply(reply: InsertBroadcastReply): Promise<BroadcastReply>;
+  getBroadcastRepliesByBroadcastId(broadcastId: string): Promise<(BroadcastReply & { user: User })[]>;
+  markBroadcastReplyAsRead(replyId: string): Promise<void>;
+  getTrialingUsers(): Promise<User[]>;
+  updateBroadcastRecipientCount(broadcastId: string, count: number): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1409,6 +1433,114 @@ export class DatabaseStorage implements IStorage {
       .from(emailEvents)
       .where(eq(emailEvents.userId, userId))
       .orderBy(desc(emailEvents.sentAt));
+  }
+
+  // Broadcast operations
+  async createBroadcast(broadcast: InsertBroadcastMessage): Promise<BroadcastMessage> {
+    const [newBroadcast] = await db.insert(broadcastMessages).values(broadcast).returning();
+    return newBroadcast;
+  }
+
+  async getAllBroadcasts(): Promise<BroadcastMessage[]> {
+    return await db
+      .select()
+      .from(broadcastMessages)
+      .orderBy(desc(broadcastMessages.createdAt));
+  }
+
+  async getBroadcastById(id: string): Promise<BroadcastMessage | undefined> {
+    const [broadcast] = await db
+      .select()
+      .from(broadcastMessages)
+      .where(eq(broadcastMessages.id, id));
+    return broadcast;
+  }
+
+  async createBroadcastRecipient(recipient: InsertBroadcastRecipient): Promise<BroadcastRecipient> {
+    const [newRecipient] = await db.insert(broadcastRecipients).values(recipient).returning();
+    return newRecipient;
+  }
+
+  async getBroadcastRecipientsByBroadcastId(broadcastId: string): Promise<BroadcastRecipient[]> {
+    return await db
+      .select()
+      .from(broadcastRecipients)
+      .where(eq(broadcastRecipients.broadcastId, broadcastId));
+  }
+
+  async getUserBroadcastRecipients(userId: string): Promise<(BroadcastRecipient & { broadcast: BroadcastMessage })[]> {
+    const results = await db
+      .select()
+      .from(broadcastRecipients)
+      .innerJoin(broadcastMessages, eq(broadcastRecipients.broadcastId, broadcastMessages.id))
+      .where(eq(broadcastRecipients.userId, userId))
+      .orderBy(desc(broadcastMessages.createdAt));
+    
+    return results.map(r => ({
+      ...r.broadcast_recipients,
+      broadcast: r.broadcast_messages,
+    }));
+  }
+
+  async getUnreadBroadcastCount(userId: string): Promise<number> {
+    const result = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(broadcastRecipients)
+      .where(and(
+        eq(broadcastRecipients.userId, userId),
+        eq(broadcastRecipients.isRead, false)
+      ));
+    return Number(result[0]?.count || 0);
+  }
+
+  async markBroadcastAsRead(broadcastId: string, userId: string): Promise<void> {
+    await db
+      .update(broadcastRecipients)
+      .set({ isRead: true, readAt: new Date() })
+      .where(and(
+        eq(broadcastRecipients.broadcastId, broadcastId),
+        eq(broadcastRecipients.userId, userId)
+      ));
+  }
+
+  async createBroadcastReply(reply: InsertBroadcastReply): Promise<BroadcastReply> {
+    const [newReply] = await db.insert(broadcastReplies).values(reply).returning();
+    return newReply;
+  }
+
+  async getBroadcastRepliesByBroadcastId(broadcastId: string): Promise<(BroadcastReply & { user: User })[]> {
+    const results = await db
+      .select()
+      .from(broadcastReplies)
+      .innerJoin(users, eq(broadcastReplies.userId, users.id))
+      .where(eq(broadcastReplies.broadcastId, broadcastId))
+      .orderBy(desc(broadcastReplies.createdAt));
+    
+    return results.map(r => ({
+      ...r.broadcast_replies,
+      user: r.users,
+    }));
+  }
+
+  async markBroadcastReplyAsRead(replyId: string): Promise<void> {
+    await db
+      .update(broadcastReplies)
+      .set({ isReadByAdmin: true, readByAdminAt: new Date() })
+      .where(eq(broadcastReplies.id, replyId));
+  }
+
+  async getTrialingUsers(): Promise<User[]> {
+    return await db
+      .select()
+      .from(users)
+      .where(eq(users.subscriptionStatus, "trialing"));
+  }
+
+  async updateBroadcastRecipientCount(broadcastId: string, count: number): Promise<void> {
+    await db
+      .update(broadcastMessages)
+      .set({ recipientCount: count })
+      .where(eq(broadcastMessages.id, broadcastId));
   }
 }
 

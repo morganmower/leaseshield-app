@@ -3057,6 +3057,235 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // ===== BROADCAST MESSAGING ENDPOINTS =====
+  
+  // Get audience counts for admin broadcast form
+  app.get('/api/admin/broadcasts/audience-counts', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const trialUsers = await storage.getTrialingUsers();
+      const activeUsers = await storage.getAllActiveUsers();
+      res.json({
+        trial: trialUsers.length,
+        active: activeUsers.length,
+        all: trialUsers.length + activeUsers.length,
+      });
+    } catch (error) {
+      console.error("Error getting audience counts:", error);
+      res.status(500).json({ message: "Failed to get audience counts" });
+    }
+  });
+
+  // Get all broadcasts with replies for admin
+  app.get('/api/admin/broadcasts', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const broadcasts = await storage.getAllBroadcasts();
+      const broadcastsWithReplies = await Promise.all(
+        broadcasts.map(async (broadcast) => {
+          const replies = await storage.getBroadcastRepliesByBroadcastId(broadcast.id);
+          const recipients = await storage.getBroadcastRecipientsByBroadcastId(broadcast.id);
+          const readCount = recipients.filter(r => r.isRead).length;
+          return {
+            ...broadcast,
+            replies,
+            recipientCount: recipients.length,
+            readCount,
+          };
+        })
+      );
+      res.json(broadcastsWithReplies);
+    } catch (error) {
+      console.error("Error getting broadcasts:", error);
+      res.status(500).json({ message: "Failed to get broadcasts" });
+    }
+  });
+
+  // Send a broadcast message
+  app.post('/api/admin/broadcasts', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const userId = getUserId(req);
+      const { subject, content, audience } = req.body;
+
+      if (!subject || !content || !audience) {
+        return res.status(400).json({ message: "Subject, content, and audience are required" });
+      }
+
+      // Create the broadcast
+      const broadcast = await storage.createBroadcast({
+        subject,
+        content,
+        audience,
+        sentByUserId: userId,
+      });
+
+      // Get target users based on audience
+      let targetUsers: any[] = [];
+      if (audience === 'trial') {
+        targetUsers = await storage.getTrialingUsers();
+      } else if (audience === 'active') {
+        targetUsers = await storage.getAllActiveUsers();
+      } else {
+        const trialUsers = await storage.getTrialingUsers();
+        const activeUsers = await storage.getAllActiveUsers();
+        const uniqueUserIds = new Set<string>();
+        targetUsers = [...trialUsers, ...activeUsers].filter(u => {
+          if (uniqueUserIds.has(u.id)) return false;
+          uniqueUserIds.add(u.id);
+          return true;
+        });
+      }
+
+      // Create recipient records and send emails
+      const { client, fromEmail } = await getUncachableResendClient();
+      const domain = req.get('host') || 'leaseshield.app';
+      const baseUrl = req.secure || req.headers['x-forwarded-proto'] === 'https' 
+        ? `https://${domain}` 
+        : `http://${domain}`;
+
+      let emailSuccessCount = 0;
+      for (const user of targetUsers) {
+        // Create recipient record
+        await storage.createBroadcastRecipient({
+          broadcastId: broadcast.id,
+          userId: user.id,
+          isRead: false,
+          emailSent: false,
+        });
+
+        // Send email notification
+        if (user.email) {
+          try {
+            await client.emails.send({
+              from: fromEmail,
+              to: user.email,
+              subject: "You have a new message from LeaseShield",
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #14b8a6;">New Message from LeaseShield</h2>
+                  <p>Hi${user.firstName ? ` ${user.firstName}` : ''},</p>
+                  <p>You have an unread message waiting for you in your LeaseShield account.</p>
+                  <p style="margin: 24px 0;">
+                    <a href="${baseUrl}/messages" style="background-color: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                      View Message
+                    </a>
+                  </p>
+                  <p style="color: #666; font-size: 14px;">
+                    Or copy this link: ${baseUrl}/messages
+                  </p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                  <p style="color: #999; font-size: 12px;">
+                    LeaseShield - Protecting landlords with legal templates and compliance guidance.
+                  </p>
+                </div>
+              `,
+              text: `Hi${user.firstName ? ` ${user.firstName}` : ''},\n\nYou have an unread message waiting for you in your LeaseShield account.\n\nView it here: ${baseUrl}/messages\n\nLeaseShield - Protecting landlords with legal templates and compliance guidance.`,
+            });
+            emailSuccessCount++;
+          } catch (emailError) {
+            console.error(`Failed to send broadcast email to ${user.email}:`, emailError);
+          }
+        }
+      }
+
+      // Update recipient count
+      await storage.updateBroadcastRecipientCount(broadcast.id, targetUsers.length);
+
+      res.json({
+        ...broadcast,
+        recipientCount: targetUsers.length,
+        emailsSent: emailSuccessCount,
+      });
+    } catch (error) {
+      console.error("Error sending broadcast:", error);
+      res.status(500).json({ message: "Failed to send broadcast" });
+    }
+  });
+
+  // Mark a broadcast reply as read (admin)
+  app.post('/api/admin/broadcasts/replies/:replyId/read', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { replyId } = req.params;
+      await storage.markBroadcastReplyAsRead(replyId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking reply as read:", error);
+      res.status(500).json({ message: "Failed to mark reply as read" });
+    }
+  });
+
+  // Get user's messages (broadcasts they received)
+  app.get('/api/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const recipients = await storage.getUserBroadcastRecipients(userId);
+      
+      // Get user's own replies for each broadcast
+      const messagesWithReplies = await Promise.all(
+        recipients.map(async (recipient) => {
+          const allReplies = await storage.getBroadcastRepliesByBroadcastId(recipient.broadcastId);
+          const userReplies = allReplies.filter(r => r.userId === userId);
+          return {
+            ...recipient,
+            userReplies,
+          };
+        })
+      );
+      
+      res.json(messagesWithReplies);
+    } catch (error) {
+      console.error("Error getting user messages:", error);
+      res.status(500).json({ message: "Failed to get messages" });
+    }
+  });
+
+  // Get unread message count for user
+  app.get('/api/messages/unread-count', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const count = await storage.getUnreadBroadcastCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error getting unread count:", error);
+      res.status(500).json({ message: "Failed to get unread count" });
+    }
+  });
+
+  // Mark a message as read
+  app.post('/api/messages/:broadcastId/read', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { broadcastId } = req.params;
+      await storage.markBroadcastAsRead(broadcastId, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error marking message as read:", error);
+      res.status(500).json({ message: "Failed to mark message as read" });
+    }
+  });
+
+  // Reply to a broadcast message
+  app.post('/api/messages/:broadcastId/reply', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { broadcastId } = req.params;
+      const { content } = req.body;
+
+      if (!content || !content.trim()) {
+        return res.status(400).json({ message: "Reply content is required" });
+      }
+
+      const reply = await storage.createBroadcastReply({
+        broadcastId,
+        userId,
+        content: content.trim(),
+      });
+
+      res.json(reply);
+    } catch (error) {
+      console.error("Error creating reply:", error);
+      res.status(500).json({ message: "Failed to send reply" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

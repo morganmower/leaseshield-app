@@ -49,6 +49,7 @@ import AdminLegalUpdates from "@/pages/admin-legal-updates";
 import AdminAnalytics from "@/pages/admin-analytics";
 import AdminDashboard from "@/pages/admin-dashboard";
 import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
+import AdminBroadcasts from "@/pages/admin-broadcasts";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
@@ -149,6 +150,7 @@ function Router() {
       <Route path="/admin/legal-updates">{() => <AdminRoute component={AdminLegalUpdates} />}</Route>
       <Route path="/admin/legislative-monitoring">{() => <AdminRoute component={AdminLegislativeMonitoring} />}</Route>
       <Route path="/admin/analytics">{() => <AdminRoute component={AdminAnalytics} />}</Route>
+      <Route path="/admin/broadcasts">{() => <AdminRoute component={AdminBroadcasts} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
