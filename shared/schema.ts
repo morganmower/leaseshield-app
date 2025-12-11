@@ -855,6 +855,7 @@ export const broadcastAudienceEnum = pgEnum('broadcast_audience', [
   'trial',      // Only trial users
   'active',     // Only active subscribers
   'all',        // Both trial and active
+  'individual', // Single user
 ]);
 
 export const broadcastMessages = pgTable("broadcast_messages", {

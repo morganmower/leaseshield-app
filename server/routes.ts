@@ -3128,7 +3128,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const broadcast = await storage.createBroadcast({
         subject,
         content,
-        audience: audience === 'individual' ? `individual:${targetUserId}` : audience,
+        audience: audience === 'individual' ? 'individual' : audience,
         sentByUserId: adminUserId,
       });
 
