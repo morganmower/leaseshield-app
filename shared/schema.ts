@@ -849,3 +849,98 @@ export const insertEmailEventSchema = createInsertSchema(emailEvents).omit({
 });
 export type InsertEmailEvent = z.infer<typeof insertEmailEventSchema>;
 export type EmailEvent = typeof emailEvents.$inferSelect;
+
+// Broadcast Messages - Admin sends messages to trial/active users
+export const broadcastAudienceEnum = pgEnum('broadcast_audience', [
+  'trial',      // Only trial users
+  'active',     // Only active subscribers
+  'all',        // Both trial and active
+]);
+
+export const broadcastMessages = pgTable("broadcast_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subject: text("subject").notNull(),
+  content: text("content").notNull(),
+  audience: broadcastAudienceEnum("audience").notNull(),
+  sentByUserId: varchar("sent_by_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  recipientCount: integer("recipient_count").default(0),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const broadcastMessagesRelations = relations(broadcastMessages, ({ one, many }) => ({
+  sentBy: one(users, {
+    fields: [broadcastMessages.sentByUserId],
+    references: [users.id],
+  }),
+  recipients: many(broadcastRecipients),
+  replies: many(broadcastReplies),
+}));
+
+export const insertBroadcastMessageSchema = createInsertSchema(broadcastMessages).omit({
+  id: true,
+  createdAt: true,
+  recipientCount: true,
+});
+export type InsertBroadcastMessage = z.infer<typeof insertBroadcastMessageSchema>;
+export type BroadcastMessage = typeof broadcastMessages.$inferSelect;
+
+// Broadcast Recipients - Track which users received which broadcasts
+export const broadcastRecipients = pgTable("broadcast_recipients", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  broadcastId: varchar("broadcast_id").notNull().references(() => broadcastMessages.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  isRead: boolean("is_read").default(false),
+  readAt: timestamp("read_at"),
+  emailSent: boolean("email_sent").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const broadcastRecipientsRelations = relations(broadcastRecipients, ({ one }) => ({
+  broadcast: one(broadcastMessages, {
+    fields: [broadcastRecipients.broadcastId],
+    references: [broadcastMessages.id],
+  }),
+  user: one(users, {
+    fields: [broadcastRecipients.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertBroadcastRecipientSchema = createInsertSchema(broadcastRecipients).omit({
+  id: true,
+  createdAt: true,
+  readAt: true,
+});
+export type InsertBroadcastRecipient = z.infer<typeof insertBroadcastRecipientSchema>;
+export type BroadcastRecipient = typeof broadcastRecipients.$inferSelect;
+
+// Broadcast Replies - User replies to broadcasts (private to admin)
+export const broadcastReplies = pgTable("broadcast_replies", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  broadcastId: varchar("broadcast_id").notNull().references(() => broadcastMessages.id, { onDelete: "cascade" }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  isReadByAdmin: boolean("is_read_by_admin").default(false),
+  readByAdminAt: timestamp("read_by_admin_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const broadcastRepliesRelations = relations(broadcastReplies, ({ one }) => ({
+  broadcast: one(broadcastMessages, {
+    fields: [broadcastReplies.broadcastId],
+    references: [broadcastMessages.id],
+  }),
+  user: one(users, {
+    fields: [broadcastReplies.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertBroadcastReplySchema = createInsertSchema(broadcastReplies).omit({
+  id: true,
+  createdAt: true,
+  isReadByAdmin: true,
+  readByAdminAt: true,
+});
+export type InsertBroadcastReply = z.infer<typeof insertBroadcastReplySchema>;
+export type BroadcastReply = typeof broadcastReplies.$inferSelect;
