@@ -14,7 +14,10 @@ import {
   Building2,
   MessageCircle,
   DollarSign,
+  Mail,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -125,6 +128,12 @@ export function AppSidebar() {
   const { user, logout } = useAuth();
   const { setOpenMobile } = useSidebar();
 
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/messages/unread-count"],
+    refetchInterval: 30000,
+  });
+  const unreadCount = unreadData?.count || 0;
+
   const handleNavClick = () => {
     setOpenMobile(false);
   };
@@ -200,6 +209,23 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/messages"} className="h-10">
+                  <Link href="/messages" onClick={handleNavClick} data-testid="link-messages">
+                    <Mail className="h-5 w-5" />
+                    <span className="font-medium flex-1">Messages</span>
+                    {unreadCount > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="ml-auto h-5 min-w-5 px-1.5 text-xs animate-pulse"
+                        data-testid="badge-unread-messages"
+                      >
+                        {unreadCount > 9 ? "9+" : unreadCount}
+                      </Badge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
               {accountItems
                 .filter((item) => item.title !== "Admin" || user?.isAdmin)
                 .map((item) => (

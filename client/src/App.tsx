@@ -51,6 +51,7 @@ import AdminDashboard from "@/pages/admin-dashboard";
 import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
 import AdminBroadcasts from "@/pages/admin-broadcasts";
 import LegalUpdatesPage from "@/pages/legal-updates";
+import Messages from "@/pages/messages";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 
@@ -106,6 +107,7 @@ function Router() {
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
         <Route path="/settings">{() => <Redirect to="/login" />}</Route>
         <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
+        <Route path="/messages">{() => <Redirect to="/login" />}</Route>
         <Route component={NotFound} />
       </Switch>
     );
@@ -143,6 +145,7 @@ function Router() {
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/subscription" component={Billing} />
+      <Route path="/messages" component={Messages} />
       <Route path="/admin">{() => <AdminRoute component={Admin} />}</Route>
       <Route path="/admin/dashboard">{() => <AdminRoute component={AdminDashboard} />}</Route>
       <Route path="/admin/templates">{() => <AdminRoute component={AdminTemplates} />}</Route>
