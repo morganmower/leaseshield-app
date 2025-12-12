@@ -245,7 +245,7 @@ export default function Landing() {
             <Button
               onClick={() => {
                 trackTrialStart();
-                window.location.href = "/login";
+                window.location.href = "/signup";
               }}
               data-testid="button-start-trial"
               className="text-sm sm:text-base px-3 sm:px-5"
@@ -347,7 +347,7 @@ export default function Landing() {
                       size="lg"
                       onClick={() => {
                         trackTrialStart();
-                        window.location.href = "/login";
+                        window.location.href = "/signup";
                       }}
                       className="w-full sm:w-auto whitespace-nowrap"
                       data-testid="button-pricing-cta"
@@ -511,7 +511,7 @@ export default function Landing() {
           >
             <ABTestWrapper testId="mid-page-cta">
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/login">
+                <Link to="/signup">
                   <Button 
                     size="lg"
                     onClick={() => {
@@ -1081,7 +1081,7 @@ export default function Landing() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => window.location.href = "/signup"}
               data-testid="button-comparison-trial"
               className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
             >
@@ -1179,7 +1179,7 @@ export default function Landing() {
                     </p>
                     <Button
                       size="lg"
-                      onClick={() => window.location.href = "/login"}
+                      onClick={() => window.location.href = "/signup"}
                       data-testid="button-roi-trial"
                       className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
                     >
@@ -1302,7 +1302,7 @@ export default function Landing() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => window.location.href = "/signup"}
               data-testid="button-preview-cta"
             >
               Get Access Now
@@ -1386,7 +1386,7 @@ export default function Landing() {
                 className="w-full text-sm sm:text-base"
                 onClick={() => {
                   localStorage.setItem('billingPeriod', 'monthly');
-                  window.location.href = "/login";
+                  window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-monthly"
               >
@@ -1446,7 +1446,7 @@ export default function Landing() {
                 className="w-full text-sm sm:text-base"
                 onClick={() => {
                   localStorage.setItem('billingPeriod', 'yearly');
-                  window.location.href = "/login";
+                  window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-annual"
               >
@@ -1635,7 +1635,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/login"}
+                onClick={() => window.location.href = "/signup"}
                 data-testid="button-final-cta"
                 className="text-base px-8"
               >
@@ -1704,7 +1704,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="w-full text-base"
-                onClick={() => window.location.href = "/login"}
+                onClick={() => window.location.href = "/signup"}
                 data-testid="button-features-dialog-trial"
               >
                 Start Your 7-Day Free Trial
@@ -1750,7 +1750,7 @@ export default function Landing() {
                 <Button
                   size="lg"
                   className="w-full"
-                  onClick={() => window.location.href = "/login"}
+                  onClick={() => window.location.href = "/signup"}
                   data-testid="button-dialog-start-trial"
                 >
                   Start Your Free Trial
@@ -1832,7 +1832,7 @@ export default function Landing() {
                 size="lg"
                 onClick={() => {
                   setShowBenefitsDialog(false);
-                  window.location.href = "/login";
+                  window.location.href = "/signup";
                 }}
               >
                 Start Your Free Trial
@@ -1943,7 +1943,7 @@ export default function Landing() {
                 className="w-full"
                 onClick={() => {
                   setShowTemplatePreview(false);
-                  window.location.href = "/login";
+                  window.location.href = "/signup";
                 }}
                 data-testid="button-preview-trial"
               >
