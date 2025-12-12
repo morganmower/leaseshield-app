@@ -2858,24 +2858,29 @@ TONE: Protective mentor looking out for the landlord's investment.`
     const trimmedTerm = term.trim();
 
     // Privacy and safety checks
-    // Block Social Security Numbers
+    // Block Social Security Numbers (XXX-XX-XXXX format or 9 consecutive digits NOT in date format)
+    // SSN format: 3 digits, hyphen, 2 digits, hyphen, 4 digits
     if (/\b\d{3}-\d{2}-\d{4}\b/.test(trimmedTerm) || 
-        /\b\d{9}\b/.test(trimmedTerm) ||
         /\bssn\b/i.test(trimmedTerm)) {
       return res.json({
         explanation: "For your safety, please do not enter Social Security numbers or personal identifiers. Just type the term or concept you'd like explained (for example: 'felony' or 'eviction record')."
       });
     }
-
-    // Block long numbers that look like account/case numbers (8+ consecutive digits)
-    if (/\d{8,}/.test(trimmedTerm)) {
+    
+    // Check for 9 consecutive digits that are NOT dates (MMDDYYYY or similar)
+    // Remove dates (MM/DD/YYYY, MM-DD-YYYY) before checking for long number sequences
+    const textWithoutDates = trimmedTerm.replace(/\b\d{1,2}[\/\-]\d{1,2}[\/\-]\d{2,4}\b/g, '');
+    // Also remove statute numbers like "76-6-301" which are legal codes, not personal info
+    const textWithoutStatutes = textWithoutDates.replace(/\b\d{1,3}-\d{1,3}-\d{1,4}\b/g, '');
+    // Check for remaining 9+ consecutive digits that could be SSNs or account numbers
+    if (/\d{9,}/.test(textWithoutStatutes)) {
       return res.json({
-        explanation: "This looks like a case number or identifier. For privacy reasons, please remove specific case numbers before submitting."
+        explanation: "This appears to contain a long number that could be a personal identifier. For privacy, please remove any account numbers, case numbers, or other long numeric identifiers."
       });
     }
 
     // Block specific full names (first + last name patterns like "John Smith" or "Jane Doe")
-    // Only block if it looks like a person's name, not crime descriptions
+    // Only block if it looks like a person's name with legal suffixes or in case format
     const namePatterns = [
       /\b[A-Z][a-z]+\s+[A-Z][a-z]+\s+(Jr\.?|Sr\.?|III?|IV)\b/, // Name with suffix
       /\b(defendant|plaintiff|vs\.?|versus)\s+[A-Z][a-z]+/i,    // Legal case name format
