@@ -1063,16 +1063,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This template requires filling out via the wizard" });
       }
 
-      // Import document generator
-      const { generateBlankApplicationPdf } = await import('./utils/blankApplicationGenerator');
-
-      // Generate a professional blank rental application PDF
-      const pdfBuffer = await generateBlankApplicationPdf({
-        templateTitle: template.title,
-        stateId: template.stateId,
-        version: template.version || 1,
-        updatedAt: template.updatedAt || new Date(),
-      });
+      let pdfBuffer: Buffer;
+      
+      // Route to appropriate generator based on template type
+      if (template.templateType === 'move_out_checklist' || template.templateType === 'move_in_checklist') {
+        // Use move-out/move-in checklist generator
+        const { generateMoveOutChecklistPdf } = await import('./utils/moveOutChecklistGenerator');
+        pdfBuffer = await generateMoveOutChecklistPdf({
+          templateTitle: template.title,
+          stateId: template.stateId,
+          version: template.version || 1,
+          updatedAt: template.updatedAt || new Date(),
+        });
+      } else {
+        // Default to rental application generator for other static templates
+        const { generateBlankApplicationPdf } = await import('./utils/blankApplicationGenerator');
+        pdfBuffer = await generateBlankApplicationPdf({
+          templateTitle: template.title,
+          stateId: template.stateId,
+          version: template.version || 1,
+          updatedAt: template.updatedAt || new Date(),
+        });
+      }
 
       // Set response headers
       res.setHeader('Content-Type', 'application/pdf');
