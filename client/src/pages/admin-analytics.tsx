@@ -10,6 +10,7 @@ interface AnalyticsSummary {
     total: number;
     active: number;
     trialing: number;
+    expiredTrials: number;
     canceled: number;
     mrr: number;
   };
@@ -151,6 +152,7 @@ export default function AdminAnalyticsPage() {
                     data={[
                       { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
                       { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
+                      { name: 'Expired Trials', value: analytics?.subscriptions.expiredTrials || 0, color: '#f97316' },
                       { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
                     ]}
                     cx="50%"
@@ -164,6 +166,7 @@ export default function AdminAnalyticsPage() {
                     {[
                       { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
                       { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
+                      { name: 'Expired Trials', value: analytics?.subscriptions.expiredTrials || 0, color: '#f97316' },
                       { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -190,6 +193,15 @@ export default function AdminAnalyticsPage() {
                   </span>
                   <span className="font-bold" data-testid="text-trialing-count">
                     {analytics?.subscriptions.trialing || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
+                    Expired Trials
+                  </span>
+                  <span className="font-bold" data-testid="text-expired-trials-count">
+                    {analytics?.subscriptions.expiredTrials || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">

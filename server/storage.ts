@@ -688,10 +688,27 @@ export class DatabaseStorage implements IStorage {
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.subscriptionStatus, 'active'));
+    // Count only ACTIVE trials (not expired)
     const trialing = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
-      .where(eq(users.subscriptionStatus, 'trialing'));
+      .where(
+        and(
+          eq(users.subscriptionStatus, 'trialing'),
+          sql`(${users.trialEndsAt} IS NULL OR ${users.trialEndsAt} >= NOW())`
+        )
+      );
+    
+    // Count expired trials separately
+    const expiredTrials = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(
+        and(
+          eq(users.subscriptionStatus, 'trialing'),
+          sql`${users.trialEndsAt} < NOW()`
+        )
+      );
     const canceled = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
@@ -742,6 +759,7 @@ export class DatabaseStorage implements IStorage {
         total: totalUsersCount,
         active: activeCount,
         trialing: Number(trialing[0]?.count || 0),
+        expiredTrials: Number(expiredTrials[0]?.count || 0),
         canceled: Number(canceled[0]?.count || 0),
         mrr,
       },
