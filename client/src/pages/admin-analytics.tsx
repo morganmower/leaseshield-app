@@ -268,7 +268,10 @@ export default function AdminAnalyticsPage() {
               <p className="text-muted-foreground">Loading trial users...</p>
             ) : users ? (
               (() => {
-                const trialingUsers = users.filter(u => u.subscriptionStatus === "trialing");
+                const trialingUsers = users.filter(u => 
+                  u.subscriptionStatus === "trialing" && 
+                  (!u.trialEndsAt || new Date(u.trialEndsAt) >= new Date())
+                );
                 return trialingUsers.length > 0 ? (
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm" data-testid="table-trialing-users">
@@ -369,21 +372,26 @@ export default function AdminAnalyticsPage() {
                             {user.email || "—"}
                           </td>
                           <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
-                            {user.subscriptionStatus ? (
-                              <Badge
-                                variant={
-                                  user.subscriptionStatus === "active"
-                                    ? "default"
-                                    : user.subscriptionStatus === "trialing"
-                                    ? "secondary"
-                                    : "outline"
-                                }
-                              >
-                                {user.subscriptionStatus}
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline">No subscription</Badge>
-                            )}
+                            {(() => {
+                              const isTrialExpired = user.subscriptionStatus === 'trialing' && 
+                                user.trialEndsAt && new Date(user.trialEndsAt) < new Date();
+                              
+                              if (isTrialExpired) {
+                                return <Badge variant="destructive">Trial Expired</Badge>;
+                              } else if (user.subscriptionStatus === 'active') {
+                                return <Badge variant="default">Active</Badge>;
+                              } else if (user.subscriptionStatus === 'trialing') {
+                                return <Badge variant="secondary">Trialing</Badge>;
+                              } else if (user.subscriptionStatus === 'canceled' || user.subscriptionStatus === 'cancel_at_period_end') {
+                                return <Badge variant="outline">Canceled</Badge>;
+                              } else if (user.subscriptionStatus === 'past_due') {
+                                return <Badge variant="destructive">Past Due</Badge>;
+                              } else if (user.subscriptionStatus) {
+                                return <Badge variant="outline">{user.subscriptionStatus}</Badge>;
+                              } else {
+                                return <Badge variant="outline">No subscription</Badge>;
+                              }
+                            })()}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
                             {user.trialEndsAt
