@@ -749,8 +749,20 @@ export class DatabaseStorage implements IStorage {
       .from(analyticsEvents)
       .where(eq(analyticsEvents.eventType, 'western_verify_click'));
 
+    const creditHelperUses = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.eventType, 'credit_helper_use'));
+
+    const criminalHelperUses = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(analyticsEvents)
+      .where(eq(analyticsEvents.eventType, 'criminal_helper_use'));
+
     const totalDownloads = Number(templateDownloads[0]?.count || 0);
     const totalWesternClicks = Number(westernVerifyClicks[0]?.count || 0);
+    const totalCreditHelperUses = Number(creditHelperUses[0]?.count || 0);
+    const totalCriminalHelperUses = Number(criminalHelperUses[0]?.count || 0);
     const totalUsersCount = Number(totalUsers[0]?.count || 0);
     const avgDownloadsPerUser = totalUsersCount > 0 ? totalDownloads / totalUsersCount : 0;
 
@@ -771,6 +783,8 @@ export class DatabaseStorage implements IStorage {
       usage: {
         totalDownloads,
         westernVerifyClicks: totalWesternClicks,
+        creditHelperUses: totalCreditHelperUses,
+        criminalHelperUses: totalCriminalHelperUses,
         avgDownloadsPerUser,
       },
     };

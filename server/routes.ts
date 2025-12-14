@@ -2828,6 +2828,16 @@ TONE: Protective mentor looking out for the landlord's investment.`
       const explanation = completion.choices[0]?.message?.content || 
         "I couldn't generate an explanation. Please try rephrasing your question.";
 
+      // Track credit helper usage
+      const userId = getUserId(req);
+      if (userId) {
+        await storage.trackEvent({
+          userId,
+          eventType: 'credit_helper_use',
+          eventData: { termLength: trimmedTerm.length },
+        });
+      }
+
       res.json({ explanation });
     } catch (error) {
       console.error('Error explaining credit term:', error);
@@ -2983,6 +2993,16 @@ TONE: Protective mentor who helps landlords avoid BOTH bad tenants AND discrimin
 
       const explanation = completion.choices[0]?.message?.content || 
         "I couldn't generate an explanation. Please try rephrasing your question.";
+
+      // Track criminal/eviction helper usage
+      const userId = getUserId(req);
+      if (userId) {
+        await storage.trackEvent({
+          userId,
+          eventType: 'criminal_helper_use',
+          eventData: { termLength: trimmedTerm.length },
+        });
+      }
 
       res.json({ explanation });
     } catch (error) {

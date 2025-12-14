@@ -22,6 +22,8 @@ interface AnalyticsSummary {
   usage: {
     totalDownloads: number;
     westernVerifyClicks: number;
+    creditHelperUses: number;
+    criminalHelperUses: number;
     avgDownloadsPerUser: number;
   };
 }
@@ -228,6 +230,8 @@ export default function AdminAnalyticsPage() {
                   data={[
                     { name: 'Template Downloads', value: analytics?.usage.totalDownloads || 0, color: '#3b82f6' },
                     { name: 'Western Verify Clicks', value: analytics?.usage.westernVerifyClicks || 0, color: '#8b5cf6' },
+                    { name: 'Credit Helper', value: analytics?.usage.creditHelperUses || 0, color: '#22c55e' },
+                    { name: 'Criminal Helper', value: analytics?.usage.criminalHelperUses || 0, color: '#f97316' },
                   ]}
                   margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
                 >
@@ -255,6 +259,24 @@ export default function AdminAnalyticsPage() {
                   </span>
                   <span className="font-bold" data-testid="text-western-verify-clicks">
                     {analytics?.usage.westernVerifyClicks || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Credit Helper Uses
+                  </span>
+                  <span className="font-bold" data-testid="text-credit-helper-uses">
+                    {analytics?.usage.creditHelperUses || 0}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Criminal Helper Uses
+                  </span>
+                  <span className="font-bold" data-testid="text-criminal-helper-uses">
+                    {analytics?.usage.criminalHelperUses || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
