@@ -225,18 +225,18 @@ export default function AdminAnalyticsPage() {
               <CardDescription>Platform usage metrics</CardDescription>
             </CardHeader>
             <CardContent>
-              <ResponsiveContainer width="100%" height={250}>
+              <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={[
-                    { name: 'Template Downloads', value: analytics?.usage.totalDownloads || 0, color: '#3b82f6' },
-                    { name: 'Western Verify Clicks', value: analytics?.usage.westernVerifyClicks || 0, color: '#8b5cf6' },
+                    { name: 'Downloads', value: analytics?.usage.totalDownloads || 0, color: '#3b82f6' },
+                    { name: 'Western Verify', value: analytics?.usage.westernVerifyClicks || 0, color: '#8b5cf6' },
                     { name: 'Credit Helper', value: analytics?.usage.creditHelperUses || 0, color: '#22c55e' },
                     { name: 'Criminal Helper', value: analytics?.usage.criminalHelperUses || 0, color: '#f97316' },
                   ]}
-                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  margin={{ top: 20, right: 20, left: 20, bottom: 60 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" angle={-15} textAnchor="end" height={80} />
+                  <XAxis dataKey="name" angle={-30} textAnchor="end" height={70} interval={0} />
                   <YAxis />
                   <Tooltip />
                   <Bar dataKey="value" fill="#3b82f6" />
