@@ -547,14 +547,17 @@ export default function RentalApplications() {
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="unitLabel">Unit Label *</Label>
+                <Label htmlFor="unitLabel">Unit Label</Label>
                 <Input
                   id="unitLabel"
-                  placeholder="e.g., Unit 101, Apt A, House"
+                  placeholder="e.g., Unit 101, Apt A (optional)"
                   value={unitForm.unitLabel}
                   onChange={(e) => setUnitForm({ unitLabel: e.target.value })}
                   data-testid="input-rental-unit-label"
                 />
+                <p className="text-xs text-muted-foreground">
+                  Leave blank if the property is a single unit (e.g., a house)
+                </p>
               </div>
             </div>
             <DialogFooter>
@@ -566,7 +569,7 @@ export default function RentalApplications() {
                   addUnitPropertyId &&
                   createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm })
                 }
-                disabled={!unitForm.unitLabel || createUnitMutation.isPending}
+                disabled={createUnitMutation.isPending}
                 data-testid="button-submit-rental-unit"
               >
                 {createUnitMutation.isPending ? "Adding..." : "Add Unit"}
@@ -707,40 +710,47 @@ function UnitRow({ unit, propertyId }: { unit: RentalUnit; propertyId: string })
   };
 
   return (
-    <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg" data-testid={`row-rental-unit-${unit.id}`}>
-      <div className="flex items-center gap-3">
-        <Home className="h-4 w-4 text-muted-foreground" />
-        <span className="font-medium">{unit.unitLabel}</span>
-        {activeLinks.length > 0 && (
-          <Badge variant="secondary" className="text-xs">
-            {activeLinks.length} active link{activeLinks.length !== 1 ? "s" : ""}
-          </Badge>
-        )}
+    <div className="p-3 bg-muted/50 rounded-lg space-y-2" data-testid={`row-rental-unit-${unit.id}`}>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Home className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium">{unit.unitLabel || "Main Unit"}</span>
+          {activeLinks.length > 0 && (
+            <Badge variant="secondary" className="text-xs">
+              {activeLinks.length} active link{activeLinks.length !== 1 ? "s" : ""}
+            </Badge>
+          )}
+        </div>
+        <div className="flex items-center gap-2">
+          {activeLinks.length > 0 ? (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => copyLink(activeLinks[0].publicToken)}
+              data-testid={`button-copy-link-${unit.id}`}
+            >
+              <Copy className="h-3 w-3 mr-1" />
+              Copy Link
+            </Button>
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => createLinkMutation.mutate()}
+              disabled={createLinkMutation.isPending}
+              data-testid={`button-create-link-${unit.id}`}
+            >
+              <LinkIcon className="h-3 w-3 mr-1" />
+              {createLinkMutation.isPending ? "Creating..." : "Create Link"}
+            </Button>
+          )}
+        </div>
       </div>
-      <div className="flex items-center gap-2">
-        {activeLinks.length > 0 ? (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => copyLink(activeLinks[0].publicToken)}
-            data-testid={`button-copy-link-${unit.id}`}
-          >
-            <Copy className="h-3 w-3 mr-1" />
-            Copy Link
-          </Button>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => createLinkMutation.mutate()}
-            disabled={createLinkMutation.isPending}
-            data-testid={`button-create-link-${unit.id}`}
-          >
-            <LinkIcon className="h-3 w-3 mr-1" />
-            {createLinkMutation.isPending ? "Creating..." : "Create Link"}
-          </Button>
-        )}
-      </div>
+      {activeLinks.length > 0 && (
+        <p className="text-xs text-muted-foreground pl-7">
+          Share this link with all interested applicants. Each person can submit their own application.
+        </p>
+      )}
     </div>
   );
 }

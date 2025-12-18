@@ -3576,14 +3576,10 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
-      
-      if (!unitLabel) {
-        return res.status(400).json({ message: "Unit label is required" });
-      }
 
       const unit = await storage.createRentalUnit({
         propertyId: req.params.propertyId,
-        unitLabel,
+        unitLabel: unitLabel || "",
         coverPageOverrideEnabled: coverPageOverrideEnabled || false,
         coverPageOverrideJson: coverPageOverrideJson || null,
         fieldSchemaOverrideEnabled: fieldSchemaOverrideEnabled || false,
