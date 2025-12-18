@@ -25,7 +25,9 @@ import {
   Wand2,
   Play,
   GraduationCap,
-  Clock
+  Clock,
+  Users,
+  ClipboardList
 } from "lucide-react";
 import type { LegalUpdate, Template } from "@shared/schema";
 import { Link } from "wouter";
@@ -430,24 +432,27 @@ export default function Dashboard() {
               </Card>
             </Link>
 
-            {/* Multi-Property Management */}
-            <Link to="/properties">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col" data-testid="card-property-management">
+            {/* Rental Applications - NEW FEATURE */}
+            <Link to="/rental-applications">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full flex flex-col border-2 border-primary/30" data-testid="card-rental-applications">
                 <div className="flex items-start gap-3 mb-4">
                   <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                    <Building2 className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+                    <ClipboardList className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
                   </div>
                   <div className="flex-1">
-                    <h3 className="font-display font-semibold text-foreground mb-1">Property Portfolio</h3>
-                    <Badge variant="secondary" className="text-xs">Organize Everything</Badge>
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <h3 className="font-display font-semibold text-foreground">Rental Applications</h3>
+                      <Badge className="bg-primary text-primary-foreground text-xs">NEW</Badge>
+                    </div>
+                    <Badge variant="secondary" className="text-xs">Direct to Screening</Badge>
                   </div>
                 </div>
                 <p className="text-sm text-muted-foreground mb-4 flex-grow">
-                  Manage multiple properties and link documents to specific rental units
+                  Online applications feed directly into tenant screening - collect, review, and screen applicants in one flow
                 </p>
-                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-manage-properties">
-                  <Building2 className="mr-2 h-4 w-4" />
-                  Manage Properties
+                <Button variant="outline" size="sm" className="w-full mt-auto" data-testid="button-view-applications">
+                  <ClipboardList className="mr-2 h-4 w-4" />
+                  View Applications
                 </Button>
               </Card>
             </Link>

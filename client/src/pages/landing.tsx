@@ -593,6 +593,59 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* NEW FEATURE: Rental Applications Banner */}
+      <section className="py-12 sm:py-16 bg-gradient-to-r from-emerald-500/10 via-primary/5 to-emerald-500/10 border-y-2 border-primary/20">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex flex-col lg:flex-row items-center justify-between gap-8"
+          >
+            <div className="flex-1 text-center lg:text-left">
+              <div className="flex items-center justify-center lg:justify-start gap-2 mb-3">
+                <Badge className="bg-primary text-primary-foreground px-3 py-1">NEW FEATURE</Badge>
+              </div>
+              <h3 className="font-display text-2xl sm:text-3xl font-semibold text-foreground mb-3">
+                Rental Applications Direct to Screening
+              </h3>
+              <p className="text-base sm:text-lg text-muted-foreground max-w-xl mb-4">
+                Create shareable application links for your properties. Applicants complete state-compliant forms that feed directly into tenant screening - one seamless flow from application to approval.
+              </p>
+              <ul className="flex flex-wrap justify-center lg:justify-start gap-4 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <span>State-specific disclosures</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <span>Auto-updates with new laws</span>
+                </li>
+                <li className="flex items-center gap-2">
+                  <CheckCircle2 className="h-4 w-4 text-success" />
+                  <span>FCRA compliant</span>
+                </li>
+              </ul>
+            </div>
+            <div className="flex-shrink-0">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
+                className="px-8"
+                data-testid="button-applications-cta"
+              >
+                <Sparkles className="mr-2 h-4 w-4" />
+                Try It Free
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Partner Trust Section */}
       <section className="py-12 sm:py-16 bg-muted/50 border-y">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

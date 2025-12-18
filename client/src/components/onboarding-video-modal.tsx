@@ -18,7 +18,8 @@ import {
   Building2,
   AlertCircle,
   BookOpen,
-  DollarSign
+  DollarSign,
+  ClipboardList
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -82,6 +83,19 @@ const slides = [
   },
   {
     id: 5,
+    title: "Rental Applications",
+    subtitle: "NEW: Direct to screening integration",
+    icon: ClipboardList,
+    color: "from-emerald-500/20 to-emerald-500/10",
+    iconColor: "text-emerald-500",
+    points: [
+      "Create shareable application links for each property",
+      "Applications feed directly into tenant screening",
+      "State-specific compliance disclosures auto-included"
+    ]
+  },
+  {
+    id: 6,
     title: "Properties",
     subtitle: "Manage your rental portfolio",
     icon: Building2,
@@ -94,7 +108,7 @@ const slides = [
     ]
   },
   {
-    id: 6,
+    id: 7,
     title: "Compliance",
     subtitle: "Know what your state requires",
     icon: Shield,
@@ -107,7 +121,7 @@ const slides = [
     ]
   },
   {
-    id: 7,
+    id: 8,
     title: "Screening",
     subtitle: "Find and evaluate reliable tenants",
     icon: Search,
@@ -120,7 +134,7 @@ const slides = [
     ]
   },
   {
-    id: 8,
+    id: 9,
     title: "Tenant Issues",
     subtitle: "Step-by-step resolution guides",
     icon: AlertCircle,
@@ -133,7 +147,7 @@ const slides = [
     ]
   },
   {
-    id: 9,
+    id: 10,
     title: "Legal Updates",
     subtitle: "Stay ahead of law changes",
     icon: BookOpen,
@@ -146,7 +160,7 @@ const slides = [
     ]
   },
   {
-    id: 10,
+    id: 11,
     title: "Communications",
     subtitle: "Professional tenant correspondence",
     icon: MessageCircle,
@@ -159,7 +173,7 @@ const slides = [
     ]
   },
   {
-    id: 11,
+    id: 12,
     title: "Rent Ledger",
     subtitle: "Track payments and keep records",
     icon: DollarSign,
