@@ -385,6 +385,7 @@ export interface IStorage {
 
   // Rental Application System - Screening order operations
   getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined>;
+  getRentalScreeningOrderByReference(referenceNumber: string): Promise<RentalScreeningOrder | undefined>;
   createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder>;
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
 
@@ -1908,6 +1909,13 @@ export class DatabaseStorage implements IStorage {
       const [order] = await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.submissionId, submissionId));
       return order;
     }, 'getRentalScreeningOrder');
+  }
+
+  async getRentalScreeningOrderByReference(referenceNumber: string): Promise<RentalScreeningOrder | undefined> {
+    return handleDbOperation(async () => {
+      const [order] = await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.referenceNumber, referenceNumber));
+      return order;
+    }, 'getRentalScreeningOrderByReference');
   }
 
   async createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder> {

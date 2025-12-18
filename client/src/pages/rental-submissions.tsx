@@ -45,6 +45,8 @@ import {
   Paperclip,
   Download,
   Printer,
+  ExternalLink,
+  ShieldCheck,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -116,6 +118,19 @@ interface Decision {
   decidedAt: string;
   notes: string | null;
   denialReasons?: DenialReason[];
+}
+
+interface ScreeningOrder {
+  id: string;
+  submissionId: string;
+  referenceNumber: string;
+  status: "not_sent" | "sent" | "in_progress" | "complete" | "error";
+  invitationId: string | null;
+  reportId: string | null;
+  reportUrl: string | null;
+  errorMessage: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 const denialReasonCategories = [
@@ -219,6 +234,38 @@ export default function RentalSubmissions() {
       return res.json();
     },
     enabled: !!selectedSubmission,
+  });
+
+  const { data: screeningOrder, refetch: refetchScreening } = useQuery<ScreeningOrder | null>({
+    queryKey: ["/api/rental/submissions", selectedSubmission, "screening"],
+    queryFn: async () => {
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/screening`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!selectedSubmission,
+  });
+
+  const screeningMutation = useMutation({
+    mutationFn: async (submissionId: string) => {
+      return apiRequest("POST", `/api/rental/submissions/${submissionId}/screening`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "screening"] });
+      toast({ title: "Screening Requested", description: "The applicant will receive an email to complete screening." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to request screening. Please check DigitalDelve credentials.", 
+        variant: "destructive" 
+      });
+    },
   });
 
   const updateMutation = useMutation({
@@ -457,8 +504,80 @@ export default function RentalSubmissions() {
                 </div>
               )}
 
+              <div className="mt-4 pt-4 border-t">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Background Screening</span>
+                  </div>
+                  {!screeningOrder ? (
+                    <Button
+                      size="sm"
+                      onClick={() => selectedSubmission && screeningMutation.mutate(selectedSubmission)}
+                      disabled={screeningMutation.isPending || submissionDetail.status === 'started'}
+                      data-testid="button-request-screening"
+                    >
+                      {screeningMutation.isPending ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                          Requesting...
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck className="h-4 w-4 mr-1" />
+                          Request Screening
+                        </>
+                      )}
+                    </Button>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      <Badge 
+                        variant={screeningOrder.status === 'complete' ? 'default' : 'secondary'}
+                        data-testid="badge-screening-status"
+                      >
+                        {screeningOrder.status === 'sent' && 'Invitation Sent'}
+                        {screeningOrder.status === 'in_progress' && 'In Progress'}
+                        {screeningOrder.status === 'complete' && 'Complete'}
+                        {screeningOrder.status === 'error' && 'Error'}
+                        {screeningOrder.status === 'not_sent' && 'Not Sent'}
+                      </Badge>
+                      {screeningOrder.status === 'complete' && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            const token = getAccessToken();
+                            fetch(`/api/rental/submissions/${screeningOrder.submissionId}/screening/report-url`, {
+                              headers: token ? { Authorization: `Bearer ${token}` } : {},
+                            })
+                              .then(res => res.json())
+                              .then(data => {
+                                if (data.url) {
+                                  window.open(data.url, '_blank');
+                                }
+                              });
+                          }}
+                          data-testid="button-view-report"
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          View Report
+                        </Button>
+                      )}
+                    </div>
+                  )}
+                </div>
+                {screeningOrder?.status === 'error' && screeningOrder.errorMessage && (
+                  <p className="text-sm text-red-500 mt-2">{screeningOrder.errorMessage}</p>
+                )}
+                {screeningOrder && (
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Reference: {screeningOrder.referenceNumber}
+                  </p>
+                )}
+              </div>
+
               {submissionDetail.landlordNotes && (
-                <div className="bg-muted p-3 rounded-md">
+                <div className="bg-muted p-3 rounded-md mt-4">
                   <p className="text-sm font-medium mb-1">Notes</p>
                   <p className="text-sm text-muted-foreground">{submissionDetail.landlordNotes}</p>
                 </div>

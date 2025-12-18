@@ -96,12 +96,15 @@ declare module 'http' {
   }
 }
 
-// IMPORTANT: Stripe webhook must receive raw body for signature verification
-// Apply raw body parser ONLY to webhook route, JSON parser to all other routes
+// IMPORTANT: Webhooks must receive raw body for signature verification
+// Apply raw/text body parser ONLY to webhook routes, JSON parser to all other routes
 app.use((req, res, next) => {
   if (req.path === '/api/stripe-webhook') {
     // Use raw body parser for Stripe webhook
     express.raw({ type: 'application/json' })(req, res, next);
+  } else if (req.path.startsWith('/api/webhooks/digitaldelve/')) {
+    // Use text body parser for DigitalDelve XML webhooks
+    express.text({ type: ['application/xml', 'text/xml', '*/*'], limit: '1mb' })(req, res, next);
   } else {
     // Use JSON parser for all other routes
     next();

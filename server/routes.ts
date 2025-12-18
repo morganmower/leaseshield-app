@@ -3977,6 +3977,328 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // ============================================================
+  // SCREENING ROUTES (DigitalDelve Integration)
+  // ============================================================
+
+  // Get screening order for a submission
+  app.get('/api/rental/submissions/:id/screening', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const screeningOrder = await storage.getRentalScreeningOrder(submission.id);
+      res.json(screeningOrder || null);
+    } catch (error) {
+      console.error("Error getting screening order:", error);
+      res.status(500).json({ message: "Failed to get screening order" });
+    }
+  });
+
+  // Request screening for a submission
+  app.post('/api/rental/submissions/:id/screening', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if screening already exists
+      const existingOrder = await storage.getRentalScreeningOrder(submission.id);
+      if (existingOrder) {
+        return res.status(400).json({ message: "Screening already requested for this submission" });
+      }
+
+      // Get primary applicant info
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      const primaryApplicant = people.find(p => p.role === 'applicant');
+      
+      if (!primaryApplicant) {
+        return res.status(400).json({ message: "No primary applicant found" });
+      }
+
+      const formData = primaryApplicant.formJson as Record<string, any>;
+      
+      // Import DigitalDelve service
+      const { processScreeningRequest } = await import('./digitalDelveService');
+      
+      // Determine base URL for webhooks
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      
+      const { invitationId } = req.body;
+      
+      const result = await processScreeningRequest(
+        submission.id,
+        {
+          firstName: primaryApplicant.firstName || "",
+          lastName: primaryApplicant.lastName || "",
+          email: primaryApplicant.email || "",
+          phone: primaryApplicant.phone || formData.phone,
+          ssn: formData.ssn,
+          dob: formData.dob,
+          address: formData.currentAddress,
+          city: formData.currentCity,
+          state: formData.currentState,
+          zip: formData.currentZip,
+        },
+        baseUrl,
+        invitationId
+      );
+
+      if (result.success) {
+        // Update submission status
+        await storage.updateRentalSubmission(submission.id, { status: 'screening_requested' });
+        
+        // Log event
+        await storage.logRentalApplicationEvent({
+          submissionId: submission.id,
+          eventType: 'screening_requested',
+          metadataJson: { orderId: result.order?.id },
+        });
+        
+        res.json({ success: true, order: result.order });
+      } else {
+        res.status(500).json({ message: result.error || "Failed to request screening" });
+      }
+    } catch (error) {
+      console.error("Error requesting screening:", error);
+      res.status(500).json({ message: "Failed to request screening" });
+    }
+  });
+
+  // Get available screening invitations (packages)
+  app.get('/api/rental/screening/invitations', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const { retrieveInvitations } = await import('./digitalDelveService');
+      const result = await retrieveInvitations();
+      
+      if (result.success) {
+        res.json(result.invitations || []);
+      } else {
+        res.status(500).json({ message: result.error || "Failed to retrieve invitations" });
+      }
+    } catch (error) {
+      console.error("Error getting screening invitations:", error);
+      res.status(500).json({ message: "Failed to get screening invitations" });
+    }
+  });
+
+  // Verify DigitalDelve credentials
+  app.post('/api/rental/screening/verify', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const { verifyCredentials } = await import('./digitalDelveService');
+      const result = await verifyCredentials();
+      
+      res.json({ success: result.success, error: result.error });
+    } catch (error: any) {
+      console.error("Error verifying credentials:", error);
+      res.status(500).json({ success: false, error: error.message || "Failed to verify credentials" });
+    }
+  });
+
+  // Get SSO URL to view report - by submissionId
+  app.get('/api/rental/submissions/:submissionId/screening/report-url', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      // Get the order by submissionId
+      const order = await storage.getRentalScreeningOrder(req.params.submissionId);
+      if (!order) {
+        return res.status(404).json({ message: "Screening order not found" });
+      }
+
+      // Verify ownership via submission
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the SSO URL
+      const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
+      const result = await getViewReportByRefSsoUrl(order.referenceNumber);
+      
+      if (result.success && result.url) {
+        res.json({ url: result.url });
+      } else {
+        res.status(500).json({ message: result.error || "Failed to get report URL" });
+      }
+    } catch (error) {
+      console.error("Error getting report URL:", error);
+      res.status(500).json({ message: "Failed to get report URL" });
+    }
+  });
+
+  // Get SSO URL to view report (by orderId - legacy)
+  app.get('/api/rental/screening/:orderId/report-url', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      // Get the order
+      const order = await storage.getRentalScreeningOrder(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Screening order not found" });
+      }
+
+      // Verify ownership via submission
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the SSO URL
+      const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
+      const result = await getViewReportByRefSsoUrl(order.referenceNumber);
+      
+      if (result.success && result.url) {
+        res.json({ url: result.url });
+      } else {
+        res.status(500).json({ message: result.error || "Failed to get report URL" });
+      }
+    } catch (error) {
+      console.error("Error getting report URL:", error);
+      res.status(500).json({ message: "Failed to get report URL" });
+    }
+  });
+
+  // ============================================================
+  // WEBHOOK ROUTES (No Auth - called by DigitalDelve)
+  // ============================================================
+
+  function verifyWebhookToken(token: string | undefined): boolean {
+    const webhookSecret = process.env.DIGITAL_DELVE_WEBHOOK_SECRET;
+    if (!webhookSecret) {
+      console.warn("DIGITAL_DELVE_WEBHOOK_SECRET not set - webhooks are unprotected");
+      return true;
+    }
+    return token === webhookSecret;
+  }
+
+  // Status update webhook from DigitalDelve
+  app.post('/api/webhooks/digitaldelve/status', async (req, res) => {
+    try {
+      const token = req.query.token as string | undefined;
+      if (!verifyWebhookToken(token)) {
+        console.warn("Invalid webhook token received for status webhook");
+        return res.status(401).send("Unauthorized");
+      }
+
+      console.log("Received DigitalDelve status webhook");
+      
+      const xml = typeof req.body === 'string' ? req.body : '';
+      
+      if (!xml || xml.length < 20 || !xml.includes('<')) {
+        console.warn("Invalid XML body received:", xml?.substring(0, 100));
+        return res.status(400).send("Invalid XML body");
+      }
+
+      const { handleStatusWebhook } = await import('./digitalDelveService');
+      const success = await handleStatusWebhook(xml);
+      
+      if (success) {
+        res.status(200).send("OK");
+      } else {
+        res.status(400).send("Failed to process webhook");
+      }
+    } catch (error) {
+      console.error("Error processing status webhook:", error);
+      res.status(500).send("Internal error");
+    }
+  });
+
+  // Result webhook from DigitalDelve
+  app.post('/api/webhooks/digitaldelve/result', async (req, res) => {
+    try {
+      const token = req.query.token as string | undefined;
+      if (!verifyWebhookToken(token)) {
+        console.warn("Invalid webhook token received for result webhook");
+        return res.status(401).send("Unauthorized");
+      }
+
+      console.log("Received DigitalDelve result webhook");
+      
+      const xml = typeof req.body === 'string' ? req.body : '';
+      
+      if (!xml || xml.length < 20 || !xml.includes('<')) {
+        console.warn("Invalid XML body received:", xml?.substring(0, 100));
+        return res.status(400).send("Invalid XML body");
+      }
+
+      const { handleResultWebhook } = await import('./digitalDelveService');
+      const success = await handleResultWebhook(xml);
+      
+      if (success) {
+        res.status(200).send("OK");
+      } else {
+        res.status(400).send("Failed to process webhook");
+      }
+    } catch (error) {
+      console.error("Error processing result webhook:", error);
+      res.status(500).send("Internal error");
+    }
+  });
+
+  // ============================================================
   // PUBLIC RENTAL APPLICATION ROUTES (No Auth Required)
   // ============================================================
 
