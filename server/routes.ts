@@ -5035,6 +5035,60 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Debug endpoint to show exact XML that would be sent to Western Verify
+  app.get('/api/debug/screening-xml', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const username = process.env.DIGITAL_DELVE_USERNAME || "(not set)";
+      const password = process.env.DIGITAL_DELVE_PASSWORD || "(not set)";
+      const webhookSecret = process.env.DIGITAL_DELVE_WEBHOOK_SECRET || "";
+      
+      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+      const host = req.headers['x-forwarded-host'] || req.headers.host;
+      const baseUrl = `${protocol}://${host}`;
+      const tokenParam = webhookSecret ? `?token=${encodeURIComponent(webhookSecret)}` : "";
+      
+      const sampleXml = `<?xml version="1.0"?>
+<SSO>
+  <Authentication>
+    <UserName>${username}</UserName>
+    <Password>${password}</Password>
+  </Authentication>
+  <Function>AppScreen</Function>
+  <ResultPostURL>${baseUrl}/api/webhooks/digitaldelve/result${tokenParam}</ResultPostURL>
+  <StatusPostURL>${baseUrl}/api/webhooks/digitaldelve/status${tokenParam}</StatusPostURL>
+  <InvitationId>C6BC580D-5E1A-4F51-A93B-927F5CFD5F9E</InvitationId>
+  <Applicant>
+    <ReferenceNumber>LS-{submissionId}-{timestamp}</ReferenceNumber>
+    <FirstName>{firstName}</FirstName>
+    <LastName>{lastName}</LastName>
+    <EmailAddress>{email}</EmailAddress>
+  </Applicant>
+</SSO>`;
+
+      const authOnlyXml = `<?xml version="1.0"?>
+<SSO>
+  <Authentication>
+    <UserName>${username}</UserName>
+    <Password>${password}</Password>
+  </Authentication>
+  <Function>AuthOnly</Function>
+</SSO>`;
+
+      res.json({
+        endpoint: "https://secure.westernverify.com/listeners/sso.cfm",
+        credentials: {
+          username,
+          passwordSet: !!process.env.DIGITAL_DELVE_PASSWORD,
+        },
+        authOnlyXml,
+        appScreenXml: sampleXml,
+      });
+    } catch (error) {
+      console.error("Error generating debug XML:", error);
+      res.status(500).json({ message: "Failed to generate debug XML" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
