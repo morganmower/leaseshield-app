@@ -92,6 +92,7 @@ import {
   rentalSubmissionAcknowledgements,
   rentalScreeningOrders,
   rentalDecisions,
+  rentalDenialReasons,
   rentalDecisionLetters,
   rentalApplicationEvents,
   type RentalProperty,
@@ -112,6 +113,8 @@ import {
   type InsertRentalScreeningOrder,
   type RentalDecision,
   type InsertRentalDecision,
+  type RentalDenialReason,
+  type InsertRentalDenialReason,
   type RentalDecisionLetter,
   type InsertRentalDecisionLetter,
   type RentalApplicationEvent,
@@ -388,6 +391,11 @@ export interface IStorage {
   // Rental Application System - Decision operations
   getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
   createRentalDecision(decision: InsertRentalDecision): Promise<RentalDecision>;
+
+  // Rental Application System - Denial reason operations
+  getRentalDenialReasons(decisionId: string): Promise<RentalDenialReason[]>;
+  createRentalDenialReason(reason: InsertRentalDenialReason): Promise<RentalDenialReason>;
+  createRentalDenialReasons(reasons: InsertRentalDenialReason[]): Promise<RentalDenialReason[]>;
 
   // Rental Application System - Decision letter operations
   getRentalDecisionLetters(submissionId: string): Promise<RentalDecisionLetter[]>;
@@ -1929,6 +1937,28 @@ export class DatabaseStorage implements IStorage {
       const [newDecision] = await db.insert(rentalDecisions).values(decision).returning();
       return newDecision;
     }, 'createRentalDecision');
+  }
+
+  // Rental Denial Reason operations
+  async getRentalDenialReasons(decisionId: string): Promise<RentalDenialReason[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalDenialReasons).where(eq(rentalDenialReasons.decisionId, decisionId)).orderBy(desc(rentalDenialReasons.createdAt));
+    }, 'getRentalDenialReasons');
+  }
+
+  async createRentalDenialReason(reason: InsertRentalDenialReason): Promise<RentalDenialReason> {
+    return handleDbOperation(async () => {
+      const [newReason] = await db.insert(rentalDenialReasons).values(reason).returning();
+      return newReason;
+    }, 'createRentalDenialReason');
+  }
+
+  async createRentalDenialReasons(reasons: InsertRentalDenialReason[]): Promise<RentalDenialReason[]> {
+    return handleDbOperation(async () => {
+      if (reasons.length === 0) return [];
+      const newReasons = await db.insert(rentalDenialReasons).values(reasons).returning();
+      return newReasons;
+    }, 'createRentalDenialReasons');
   }
 
   // Rental Decision Letter operations

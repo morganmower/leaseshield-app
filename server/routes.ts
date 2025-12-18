@@ -3888,7 +3888,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "A decision has already been made for this application" });
       }
 
-      const { decision, notes } = req.body;
+      const { decision, notes, denialReasons } = req.body;
       if (!decision || !['approved', 'denied'].includes(decision)) {
         return res.status(400).json({ message: "Decision must be 'approved' or 'denied'" });
       }
@@ -3901,14 +3901,25 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         notes: notes || null,
       });
 
+      // If denied, store the denial reasons
+      let reasons: any[] = [];
+      if (decision === 'denied' && denialReasons && Array.isArray(denialReasons) && denialReasons.length > 0) {
+        const reasonsToInsert = denialReasons.map((r: { category: string; detail?: string }) => ({
+          decisionId: newDecision.id,
+          category: r.category as any,
+          detail: r.detail || null,
+        }));
+        reasons = await storage.createRentalDenialReasons(reasonsToInsert);
+      }
+
       // Log the decision event
       await storage.logRentalApplicationEvent({
         submissionId: submission.id,
         eventType: `decision_${decision}`,
-        metadataJson: { decisionId: newDecision.id, decidedBy: userId, notes },
+        metadataJson: { decisionId: newDecision.id, decidedBy: userId, notes, denialReasons: reasons.map(r => r.category) },
       });
 
-      res.status(201).json(newDecision);
+      res.status(201).json({ ...newDecision, denialReasons: reasons });
     } catch (error) {
       console.error("Error creating decision:", error);
       res.status(500).json({ message: "Failed to create decision" });
@@ -3940,7 +3951,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       const decision = await storage.getRentalDecision(submission.id);
-      res.json(decision || null);
+      if (!decision) {
+        return res.json(null);
+      }
+      
+      // Include denial reasons if it's a denial
+      const denialReasons = decision.decision === 'denied' 
+        ? await storage.getRentalDenialReasons(decision.id) 
+        : [];
+      
+      res.json({ ...decision, denialReasons });
     } catch (error) {
       console.error("Error getting decision:", error);
       res.status(500).json({ message: "Failed to get decision" });

@@ -1268,6 +1268,7 @@ export const rentalDecisionsRelations = relations(rentalDecisions, ({ one, many 
     references: [users.id],
   }),
   letters: many(rentalDecisionLetters),
+  denialReasons: many(rentalDenialReasons),
 }));
 
 export const insertRentalDecisionSchema = createInsertSchema(rentalDecisions).omit({
@@ -1276,6 +1277,41 @@ export const insertRentalDecisionSchema = createInsertSchema(rentalDecisions).om
 });
 export type InsertRentalDecision = z.infer<typeof insertRentalDecisionSchema>;
 export type RentalDecision = typeof rentalDecisions.$inferSelect;
+
+// Denial Reason Category Enum
+export const denialReasonCategoryEnum = pgEnum('denial_reason_category', [
+  'credit',
+  'criminal',
+  'eviction',
+  'rental_history',
+  'income',
+  'incomplete',
+  'false_information',
+  'other',
+]);
+
+// Rental Denial Reasons - structured denial reasons for FCRA compliance
+export const rentalDenialReasons = pgTable("rental_denial_reasons", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  decisionId: varchar("decision_id").notNull().references(() => rentalDecisions.id, { onDelete: 'cascade' }),
+  category: denialReasonCategoryEnum("category").notNull(),
+  detail: text("detail"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalDenialReasonsRelations = relations(rentalDenialReasons, ({ one }) => ({
+  decision: one(rentalDecisions, {
+    fields: [rentalDenialReasons.decisionId],
+    references: [rentalDecisions.id],
+  }),
+}));
+
+export const insertRentalDenialReasonSchema = createInsertSchema(rentalDenialReasons).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalDenialReason = z.infer<typeof insertRentalDenialReasonSchema>;
+export type RentalDenialReason = typeof rentalDenialReasons.$inferSelect;
 
 // Rental Decision Letter Type Enum
 export const rentalLetterTypeEnum = pgEnum('rental_letter_type', [
