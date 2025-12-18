@@ -200,19 +200,22 @@ export async function retrieveInvitations(): Promise<{ success: boolean; invitat
 export async function sendAppScreenRequest(data: AppScreenRequest): Promise<DigitalDelveResponse> {
   const { username, password } = getCredentials();
 
-  const xml = `<?xml version="1.0"?>
-<RequestXML>
+  // Western Verify uses OrderXML format with specific structure
+  // Default to TENANTVALUENOALIAS package for tenant screening
+  const serviceCode = data.invitationId || "TENANTVALUENOALIAS";
+  
+  const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<OrderXML>
+  <Method>NEW ORDER</Method>
   <Authentication>
     <Username>${escapeXml(username)}</Username>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
-  <Function>AppScreen</Function>
-  <AppScreen>
-    ${data.invitationId ? `<InvitationID>${escapeXml(data.invitationId)}</InvitationID>` : ''}
-    <ClientRef>${escapeXml(data.referenceNumber)}</ClientRef>
+  <Order>
+    <BillingReferenceCode>${escapeXml(data.referenceNumber)}</BillingReferenceCode>
     <StatusPostUrl>${escapeXml(data.statusPostUrl)}</StatusPostUrl>
     <ResultPostUrl>${escapeXml(data.resultPostUrl)}</ResultPostUrl>
-    <Candidate>
+    <Subject>
       <FirstName>${escapeXml(data.firstName)}</FirstName>
       <LastName>${escapeXml(data.lastName)}</LastName>
       <Email>${escapeXml(data.email)}</Email>
@@ -223,9 +226,14 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
       ${data.city ? `<City>${escapeXml(data.city)}</City>` : ''}
       ${data.state ? `<State>${escapeXml(data.state)}</State>` : ''}
       ${data.zip ? `<Zip>${escapeXml(data.zip)}</Zip>` : ''}
-    </Candidate>
-  </AppScreen>
-</RequestXML>`;
+    </Subject>
+    <Services>
+      <Service>
+        <ServiceCode>${escapeXml(serviceCode)}</ServiceCode>
+      </Service>
+    </Services>
+  </Order>
+</OrderXML>`;
 
   try {
     const { body } = await sendXmlRequest(xml);
