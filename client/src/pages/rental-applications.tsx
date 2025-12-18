@@ -96,6 +96,7 @@ export default function RentalApplications() {
   });
 
   const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
+  const [autoScreening, setAutoScreening] = useState(false);
 
   const { data: properties = [], isLoading, error, refetch } = useQuery<RentalProperty[]>({
     queryKey: ["/api/rental/properties"],
@@ -135,7 +136,7 @@ export default function RentalApplications() {
   });
 
   const updatePropertyMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -144,7 +145,7 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -155,6 +156,7 @@ export default function RentalApplications() {
       setEditingProperty(null);
       setPropertyForm({ name: "", address: "", city: "", state: "", zipCode: "" });
       setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
+      setAutoScreening(false);
       toast({ title: "Property Updated", description: "Your rental property has been updated." });
     },
     onError: () => {
@@ -231,6 +233,7 @@ export default function RentalApplications() {
       zipCode: property.zipCode || "",
     });
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
+    setAutoScreening((property as any).autoScreening ?? false);
     setIsEditPropertyOpen(true);
   };
 
@@ -585,6 +588,26 @@ export default function RentalApplications() {
                   </div>
                 </div>
               </div>
+              
+              <div className="space-y-2 pt-4 border-t">
+                <Label className="text-sm font-medium">Screening Settings</Label>
+                <p className="text-xs text-muted-foreground">
+                  Configure how tenant screening is handled for this property
+                </p>
+                
+                <div className="flex items-center justify-between pt-2">
+                  <div>
+                    <Label htmlFor="auto-screening" className="text-sm">Auto-Screening</Label>
+                    <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
+                  </div>
+                  <Switch 
+                    id="auto-screening" 
+                    checked={autoScreening} 
+                    onCheckedChange={setAutoScreening}
+                    data-testid="switch-auto-screening"
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditPropertyOpen(false)}>
@@ -593,7 +616,7 @@ export default function RentalApplications() {
               <Button
                 onClick={() =>
                   editingProperty &&
-                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements })
+                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements, autoScreening })
                 }
                 disabled={!propertyForm.name || updatePropertyMutation.isPending}
                 data-testid="button-update-rental-property"

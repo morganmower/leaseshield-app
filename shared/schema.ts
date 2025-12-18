@@ -1014,6 +1014,7 @@ export const rentalProperties = pgTable("rental_properties", {
   defaultCoverPageJson: jsonb("default_cover_page_json").notNull(), // Cover page content (title, intro, sections)
   defaultFieldSchemaJson: jsonb("default_field_schema_json").notNull(), // Field visibility toggles
   requiredDocumentTypes: jsonb("required_document_types").$type<DocumentRequirementsConfig>(), // Which documents are required
+  autoScreening: boolean("auto_screening").default(false).notNull(), // Automatically request screening on submission
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
