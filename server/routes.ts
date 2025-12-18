@@ -4674,13 +4674,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Submission not found" });
       }
 
-      // Verify landlord owns the property via application link
+      // Verify landlord owns the property via application link -> unit -> property
       const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
       if (!link) {
         return res.status(404).json({ message: "Link not found" });
       }
       
-      const property = await storage.getProperty(link.propertyId);
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      const property = await storage.getRentalProperty(unit.propertyId);
       if (!property || property.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
@@ -4721,13 +4726,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Submission not found" });
       }
 
-      // Verify landlord owns the property
+      // Verify landlord owns the property via link -> unit -> property
       const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
       if (!link) {
         return res.status(404).json({ message: "Link not found" });
       }
       
-      const property = await storage.getProperty(link.propertyId);
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      const property = await storage.getRentalProperty(unit.propertyId);
       if (!property || property.userId !== userId) {
         return res.status(403).json({ message: "Forbidden" });
       }
