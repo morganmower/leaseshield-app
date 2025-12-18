@@ -5035,8 +5035,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // Debug endpoint to show exact XML that would be sent to Western Verify
-  app.get('/api/debug/screening-xml', isAuthenticated, requireAccess, async (req: any, res) => {
+  // Debug endpoint to show exact XML that would be sent to Western Verify (no auth required for debugging)
+  app.get('/api/debug/screening-xml', async (req: any, res) => {
     try {
       const username = process.env.DIGITAL_DELVE_USERNAME || "(not set)";
       const password = process.env.DIGITAL_DELVE_PASSWORD || "(not set)";
