@@ -47,6 +47,8 @@ import {
   Printer,
   ExternalLink,
   ShieldCheck,
+  Upload,
+  Trash2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -192,6 +194,10 @@ export default function RentalSubmissions() {
   const [selectedDenialReasons, setSelectedDenialReasons] = useState<string[]>([]);
   const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
   const [filterTab, setFilterTab] = useState<"all" | "approved" | "denied" | "pending">("all");
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadPersonId, setUploadPersonId] = useState<string | null>(null);
+  const [uploadFileType, setUploadFileType] = useState<string>("other");
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
 
   const { data: submissions, isLoading: isLoadingSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions"],
@@ -306,6 +312,61 @@ export default function RentalSubmissions() {
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to record decision.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const uploadFileMutation = useMutation({
+    mutationFn: async ({ submissionId, personId, fileType, file }: { 
+      submissionId: string; 
+      personId: string;
+      fileType: string;
+      file: File;
+    }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('personId', personId);
+      formData.append('fileType', fileType);
+      
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental/submissions/${submissionId}/files`, {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        body: formData,
+      });
+      if (!res.ok) throw new Error("Failed to upload file");
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "files"] });
+      toast({ title: "Success", description: "Document uploaded successfully." });
+      setIsUploadDialogOpen(false);
+      setUploadFile(null);
+      setUploadPersonId(null);
+      setUploadFileType("other");
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to upload document.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: async ({ submissionId, fileId }: { submissionId: string; fileId: string }) => {
+      return apiRequest("DELETE", `/api/rental/submissions/${submissionId}/files/${fileId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "files"] });
+      toast({ title: "Success", description: "Document deleted." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to delete document.", 
         variant: "destructive" 
       });
     },
@@ -835,11 +896,24 @@ export default function RentalSubmissions() {
           </Card>
 
           <Card data-testid="card-documents">
-            <CardHeader>
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
               <CardTitle className="text-lg flex items-center gap-2">
                 <Paperclip className="h-5 w-5" />
                 Uploaded Documents
               </CardTitle>
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (submissionDetail.people.length > 0) {
+                    setUploadPersonId(submissionDetail.people[0].id);
+                  }
+                  setIsUploadDialogOpen(true);
+                }}
+                data-testid="button-upload-document"
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Add Document
+              </Button>
             </CardHeader>
             <CardContent>
               {isLoadingFiles ? (
@@ -852,11 +926,24 @@ export default function RentalSubmissions() {
                   const personFiles = submissionFiles?.[person.id] || [];
                   return (
                     <div key={`docs-${person.id}`} className="mb-4 last:mb-0" data-testid={`docs-person-${person.id}`}>
-                      <div className="text-sm font-medium mb-2 flex items-center gap-2">
-                        <span>{person.firstName} {person.lastName}</span>
-                        <Badge variant="outline" className="text-xs">
-                          {roleLabels[person.role] || person.role}
-                        </Badge>
+                      <div className="text-sm font-medium mb-2 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span>{person.firstName} {person.lastName}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {roleLabels[person.role] || person.role}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setUploadPersonId(person.id);
+                            setIsUploadDialogOpen(true);
+                          }}
+                          data-testid={`button-upload-for-${person.id}`}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
                       </div>
                       {personFiles.length === 0 ? (
                         <p className="text-sm text-muted-foreground" data-testid={`text-no-docs-${person.id}`}>No documents uploaded.</p>
@@ -877,17 +964,34 @@ export default function RentalSubmissions() {
                                   </p>
                                 </div>
                               </div>
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  window.open(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
-                                }}
-                                data-testid={`button-download-${file.id}`}
-                              >
-                                <Download className="h-4 w-4 mr-1" />
-                                Download
-                              </Button>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    window.open(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
+                                  }}
+                                  data-testid={`button-download-${file.id}`}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    if (confirm("Are you sure you want to delete this document?")) {
+                                      deleteFileMutation.mutate({ 
+                                        submissionId: selectedSubmission!, 
+                                        fileId: file.id 
+                                      });
+                                    }
+                                  }}
+                                  data-testid={`button-delete-${file.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -1016,6 +1120,106 @@ export default function RentalSubmissions() {
               >
                 {decisionMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {pendingDecision === "approved" ? "Approve" : "Deny"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upload Document</DialogTitle>
+              <DialogDescription>
+                Add a document to this application. Select the person and document type.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div>
+                <Label className="text-sm font-medium">Person</Label>
+                <Select 
+                  value={uploadPersonId || ""} 
+                  onValueChange={setUploadPersonId}
+                >
+                  <SelectTrigger data-testid="select-upload-person">
+                    <SelectValue placeholder="Select person" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {submissionDetail?.people.map((person) => (
+                      <SelectItem key={person.id} value={person.id}>
+                        {person.firstName} {person.lastName} ({roleLabels[person.role] || person.role})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Document Type</Label>
+                <Select 
+                  value={uploadFileType} 
+                  onValueChange={setUploadFileType}
+                >
+                  <SelectTrigger data-testid="select-upload-type">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="id">ID / Driver's License</SelectItem>
+                    <SelectItem value="income">Proof of Income</SelectItem>
+                    <SelectItem value="bank">Bank Statement</SelectItem>
+                    <SelectItem value="reference">Reference Letter</SelectItem>
+                    <SelectItem value="other">Other Document</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-sm font-medium">File</Label>
+                <input
+                  type="file"
+                  accept=".pdf,.jpg,.jpeg,.png"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setUploadFile(e.target.files[0]);
+                    }
+                  }}
+                  className="mt-1 block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-primary file:text-primary-foreground
+                    hover:file:bg-primary/90
+                    cursor-pointer"
+                  data-testid="input-upload-file"
+                />
+                <p className="text-xs text-muted-foreground mt-1">
+                  Accepts PDF, JPG, or PNG files up to 10MB
+                </p>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsUploadDialogOpen(false);
+                  setUploadFile(null);
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (selectedSubmission && uploadPersonId && uploadFile) {
+                    uploadFileMutation.mutate({
+                      submissionId: selectedSubmission,
+                      personId: uploadPersonId,
+                      fileType: uploadFileType,
+                      file: uploadFile,
+                    });
+                  }
+                }}
+                disabled={!uploadPersonId || !uploadFile || uploadFileMutation.isPending}
+                data-testid="button-confirm-upload"
+              >
+                {uploadFileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Upload
               </Button>
             </DialogFooter>
           </DialogContent>

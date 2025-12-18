@@ -4685,13 +4685,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Unit not found" });
       }
       
-      const property = await storage.getRentalProperty(unit.propertyId);
-      if (!property || property.userId !== userId) {
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
       // Get all people in the submission
-      const people = await storage.getRentalSubmissionPeopleBySubmission(req.params.submissionId);
+      const people = await storage.getRentalSubmissionPeople(req.params.submissionId);
       
       // Get files for each person
       const filesByPerson: Record<string, any[]> = {};
@@ -4737,8 +4737,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Unit not found" });
       }
       
-      const property = await storage.getRentalProperty(unit.propertyId);
-      if (!property || property.userId !== userId) {
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
         return res.status(403).json({ message: "Forbidden" });
       }
 
@@ -4748,8 +4748,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Verify the file belongs to this submission
-      const people = await storage.getRentalSubmissionPeopleBySubmission(req.params.submissionId);
-      const personIds = people.map(p => p.id);
+      const people = await storage.getRentalSubmissionPeople(req.params.submissionId);
+      const personIds = people.map((p: { id: string }) => p.id);
       if (!personIds.includes(file.personId)) {
         return res.status(403).json({ message: "File not part of this submission" });
       }
@@ -4758,6 +4758,124 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error) {
       console.error("Error downloading file:", error);
       res.status(500).json({ message: "Failed to download file" });
+    }
+  });
+
+  // Landlord: Upload a file to a submission (manual document upload)
+  app.post('/api/rental/submissions/:submissionId/files', isAuthenticated, applicantUpload.single('file'), async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { personId, fileType } = req.body;
+      if (!personId || !fileType) {
+        return res.status(400).json({ message: "personId and fileType are required" });
+      }
+
+      const submission = await storage.getRentalSubmission(req.params.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns the property via link -> unit -> property
+      const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+      if (!link) {
+        return res.status(404).json({ message: "Link not found" });
+      }
+      
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Verify the person belongs to this submission
+      const people = await storage.getRentalSubmissionPeople(req.params.submissionId);
+      const person = people.find((p: { id: string }) => p.id === personId);
+      if (!person) {
+        return res.status(400).json({ message: "Person not found in this submission" });
+      }
+
+      // Save file record to database
+      const newFile = await storage.createRentalSubmissionFile({
+        personId,
+        fileType,
+        originalName: req.file.originalname,
+        storedPath: req.file.path,
+        mimeType: req.file.mimetype,
+        fileSize: req.file.size,
+      });
+
+      res.status(201).json(newFile);
+    } catch (error) {
+      console.error("Error uploading landlord file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Landlord: Delete a file from a submission
+  app.delete('/api/rental/submissions/:submissionId/files/:fileId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const submission = await storage.getRentalSubmission(req.params.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns the property via link -> unit -> property
+      const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+      if (!link) {
+        return res.status(404).json({ message: "Link not found" });
+      }
+      
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const file = await storage.getRentalSubmissionFile(req.params.fileId);
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      // Verify the file belongs to this submission
+      const people = await storage.getRentalSubmissionPeople(req.params.submissionId);
+      const personIds = people.map((p: { id: string }) => p.id);
+      if (!personIds.includes(file.personId)) {
+        return res.status(403).json({ message: "File not part of this submission" });
+      }
+
+      // Delete from disk
+      try {
+        await fs.unlink(file.storedPath);
+      } catch (e) {
+        console.error("Error deleting file from disk:", e);
+      }
+
+      await storage.deleteRentalSubmissionFile(req.params.fileId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting landlord file:", error);
+      res.status(500).json({ message: "Failed to delete file" });
     }
   });
 
