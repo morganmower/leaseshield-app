@@ -4093,11 +4093,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         
         res.json({ success: true, order: result.order });
       } else {
+        console.error("Screening request failed:", result.error);
         res.status(500).json({ message: result.error || "Failed to request screening" });
       }
-    } catch (error) {
-      console.error("Error requesting screening:", error);
-      res.status(500).json({ message: "Failed to request screening" });
+    } catch (error: any) {
+      console.error("Error requesting screening:", error?.message || error);
+      console.error("Stack:", error?.stack);
+      res.status(500).json({ message: error?.message || "Failed to request screening" });
     }
   });
 
