@@ -15,6 +15,7 @@ import {
   MessageCircle,
   DollarSign,
   Mail,
+  Users,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -64,6 +65,11 @@ const mainItems = [
     title: "Properties",
     url: "/properties",
     icon: Building2,
+  },
+  {
+    title: "Applications",
+    url: "/rental-applications",
+    icon: Users,
   },
   {
     title: "Compliance",

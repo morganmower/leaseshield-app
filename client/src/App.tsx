@@ -54,6 +54,7 @@ import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
+import RentalApplications from "@/pages/rental-applications";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -102,6 +103,7 @@ function Router() {
         <Route path="/billing">{() => <Redirect to="/login" />}</Route>
         <Route path="/subscription">{() => <Redirect to="/login" />}</Route>
         <Route path="/properties">{() => <Redirect to="/login" />}</Route>
+        <Route path="/rental-applications">{() => <Redirect to="/login" />}</Route>
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
         <Route path="/screening">{() => <Redirect to="/login" />}</Route>
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
@@ -135,6 +137,7 @@ function Router() {
       <Route path="/templates/:id/fill" component={DocumentWizard} />
       <Route path="/my-documents" component={MyDocuments} />
       <Route path="/properties" component={Properties} />
+      <Route path="/rental-applications" component={RentalApplications} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening" component={Screening} />
       <Route path="/tenant-issues" component={TenantIssues} />
