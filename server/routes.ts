@@ -4662,7 +4662,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // Landlord: Get all files for a submission
-  app.get('/api/rental-submissions/:submissionId/files', isAuthenticated, async (req, res) => {
+  app.get('/api/rental/submissions/:submissionId/files', isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -4709,7 +4709,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // Landlord: Download a file
-  app.get('/api/rental-submissions/:submissionId/files/:fileId/download', isAuthenticated, async (req, res) => {
+  app.get('/api/rental/submissions/:submissionId/files/:fileId/download', isAuthenticated, async (req, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
