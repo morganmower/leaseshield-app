@@ -759,6 +759,141 @@ export default function Apply() {
                     )}
                   </div>
                 )}
+
+                <div className="space-y-2">
+                  <Label>Desired Move-in Date *</Label>
+                  <Input
+                    type="date"
+                    value={formData.desiredMoveInDate || ""}
+                    onChange={(e) => updateField("desiredMoveInDate", e.target.value)}
+                    data-testid="input-desired-movein"
+                  />
+                  <p className="text-xs text-muted-foreground">When would you like to move into this property?</p>
+                </div>
+
+                {/* Occupants Section */}
+                <div className="pt-4 border-t space-y-4">
+                  <div>
+                    <h3 className="font-semibold">Additional Occupants</h3>
+                    <p className="text-sm text-muted-foreground">
+                      List any other people who will live in the unit but are not signing the lease (e.g., children, elderly parents)
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label>Will anyone else be living with you?</Label>
+                    <div className="flex gap-4">
+                      <Button
+                        type="button"
+                        variant={formData.hasOccupants === true ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          updateField("hasOccupants", true);
+                          if (!formData.occupants?.length) {
+                            updateField("occupants", [{ name: "", relationship: "", age: "" }]);
+                          }
+                        }}
+                        data-testid="button-occupants-yes"
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={formData.hasOccupants === false ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => {
+                          updateField("hasOccupants", false);
+                          updateField("occupants", []);
+                        }}
+                        data-testid="button-occupants-no"
+                      >
+                        No
+                      </Button>
+                    </div>
+                  </div>
+
+                  {formData.hasOccupants && (
+                    <div className="space-y-3">
+                      {(formData.occupants || []).map((occupant: { name: string; relationship: string; age: string }, idx: number) => (
+                        <div key={idx} className="border rounded-lg p-3 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Occupant {idx + 1}</span>
+                            {idx > 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const updated = [...(formData.occupants || [])];
+                                  updated.splice(idx, 1);
+                                  updateField("occupants", updated);
+                                }}
+                                data-testid={`button-remove-occupant-${idx}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-3 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Full Name</Label>
+                              <Input
+                                value={occupant.name || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.occupants || [])];
+                                  updated[idx] = { ...updated[idx], name: e.target.value };
+                                  updateField("occupants", updated);
+                                }}
+                                placeholder="John Doe"
+                                data-testid={`input-occupant-name-${idx}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Relationship</Label>
+                              <Input
+                                value={occupant.relationship || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.occupants || [])];
+                                  updated[idx] = { ...updated[idx], relationship: e.target.value };
+                                  updateField("occupants", updated);
+                                }}
+                                placeholder="Child, Parent, etc."
+                                data-testid={`input-occupant-relationship-${idx}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Age</Label>
+                              <Input
+                                type="number"
+                                value={occupant.age || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.occupants || [])];
+                                  updated[idx] = { ...updated[idx], age: e.target.value };
+                                  updateField("occupants", updated);
+                                }}
+                                placeholder="Age"
+                                data-testid={`input-occupant-age-${idx}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const updated = [...(formData.occupants || []), { name: "", relationship: "", age: "" }];
+                          updateField("occupants", updated);
+                        }}
+                        data-testid="button-add-occupant"
+                      >
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Another Occupant
+                      </Button>
+                    </div>
+                  )}
+                </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
                 <Button variant="outline" onClick={() => setCurrentStep(0)}>
@@ -1390,7 +1525,25 @@ export default function Apply() {
                         <span>{formData.phone}</span>
                       </>
                     )}
+                    {formData.desiredMoveInDate && (
+                      <>
+                        <span className="text-muted-foreground">Desired Move-in:</span>
+                        <span>{new Date(formData.desiredMoveInDate).toLocaleDateString()}</span>
+                      </>
+                    )}
                   </div>
+                  {formData.hasOccupants && formData.occupants?.length > 0 && (
+                    <div className="pt-2 border-t mt-2">
+                      <span className="text-sm text-muted-foreground">Additional Occupants:</span>
+                      <ul className="text-sm mt-1 space-y-1">
+                        {formData.occupants.map((occ: { name: string; relationship: string; age: string }, idx: number) => (
+                          <li key={idx}>
+                            {occ.name} ({occ.relationship}{occ.age ? `, age ${occ.age}` : ""})
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
 
                 <div className="bg-muted/50 p-4 rounded-lg space-y-3">
