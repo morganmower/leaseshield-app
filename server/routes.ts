@@ -85,6 +85,50 @@ const upload = multer({
   }
 });
 
+// Configure multer for applicant document uploads (PDF, JPG, PNG)
+const applicantUploadStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = 'uploads/applicants';
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error as Error, uploadDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueId = randomUUID();
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${uniqueId}${ext}`);
+  }
+});
+
+const applicantUpload = multer({
+  storage: applicantUploadStorage,
+  limits: { 
+    fileSize: 10 * 1024 * 1024 // 10MB max file size
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedMimeTypes = [
+      'application/pdf',
+      'image/jpeg',
+      'image/jpg',
+      'image/png',
+    ];
+    const allowedExtensions = /\.(pdf|jpg|jpeg|png)$/i;
+    
+    const ext = path.extname(file.originalname).toLowerCase();
+    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
+    const extensionValid = allowedExtensions.test(ext);
+    
+    if (mimeTypeValid && extensionValid) {
+      cb(null, true);
+    } else {
+      cb(new Error('Only PDF, JPG, and PNG files are allowed'));
+    }
+  }
+});
+
 // Helper to get user ID from request with validation
 function getUserId(req: any): string {
   const userId = req.user?.id || req.userId;
@@ -4068,6 +4112,97 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error) {
       console.error("Error inviting person:", error);
       res.status(500).json({ message: "Failed to send invite" });
+    }
+  });
+
+  // Applicant document upload endpoint
+  app.post('/api/apply/person/:personToken/upload', applicantUpload.single('file'), async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const { fileType } = req.body;
+      if (!fileType) {
+        return res.status(400).json({ message: "File type is required" });
+      }
+
+      const fileRecord = await storage.createRentalSubmissionFile({
+        personId: person.id,
+        fileType,
+        originalName: req.file.originalname,
+        storedPath: req.file.path,
+        fileSize: req.file.size,
+        mimeType: req.file.mimetype,
+      });
+
+      res.status(201).json({
+        id: fileRecord.id,
+        fileType: fileRecord.fileType,
+        originalName: fileRecord.originalName,
+        fileSize: fileRecord.fileSize,
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
+  // Get applicant's uploaded files
+  app.get('/api/apply/person/:personToken/files', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const files = await storage.getRentalSubmissionFiles(person.id);
+      res.json(files.map(f => ({
+        id: f.id,
+        fileType: f.fileType,
+        originalName: f.originalName,
+        fileSize: f.fileSize,
+        createdAt: f.createdAt,
+      })));
+    } catch (error) {
+      console.error("Error getting files:", error);
+      res.status(500).json({ message: "Failed to load files" });
+    }
+  });
+
+  // Delete applicant's uploaded file
+  app.delete('/api/apply/person/:personToken/files/:fileId', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const file = await storage.getRentalSubmissionFile(req.params.fileId);
+      if (!file || file.personId !== person.id) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      // Delete from disk
+      try {
+        await fs.unlink(file.storedPath);
+      } catch (e) {
+        console.error("Error deleting file from disk:", e);
+      }
+
+      await storage.deleteRentalSubmissionFile(req.params.fileId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting file:", error);
+      res.status(500).json({ message: "Failed to delete file" });
     }
   });
 

@@ -369,6 +369,7 @@ export interface IStorage {
 
   // Rental Application System - File operations
   getRentalSubmissionFiles(personId: string): Promise<RentalSubmissionFile[]>;
+  getRentalSubmissionFile(id: string): Promise<RentalSubmissionFile | undefined>;
   createRentalSubmissionFile(file: InsertRentalSubmissionFile): Promise<RentalSubmissionFile>;
   deleteRentalSubmissionFile(id: string): Promise<boolean>;
 
@@ -1848,6 +1849,13 @@ export class DatabaseStorage implements IStorage {
     return handleDbOperation(async () => {
       return await db.select().from(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.personId, personId));
     }, 'getRentalSubmissionFiles');
+  }
+
+  async getRentalSubmissionFile(id: string): Promise<RentalSubmissionFile | undefined> {
+    return handleDbOperation(async () => {
+      const [file] = await db.select().from(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, id));
+      return file;
+    }, 'getRentalSubmissionFile');
   }
 
   async createRentalSubmissionFile(file: InsertRentalSubmissionFile): Promise<RentalSubmissionFile> {

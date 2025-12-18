@@ -1,0 +1,179 @@
+1) Add a retention config file
+retention.js
+// retention.js
+// Default retention settings (can later be overridden per property/unit)
+
+module.exports = {
+  denied_or_withdrawn: {
+    // keep general uploads for 2 years
+    uploads_days: 730,
+
+    // bank statements are higher-risk, keep shorter
+    bank_statements_days: 120
+  },
+
+  approved_tenant: {
+    // keep uploads during tenancy + 7 years after move-out
+    // For MVP, we just treat "approved" as 7 years.
+    uploads_days: 2555,
+
+    // bank statements: keep 2 years by default (adjust as you wish)
+    bank_statements_days: 730
+  }
+};
+
+2) Add the cleanup job
+cleanup.js
+// cleanup.js
+const fs = require("fs");
+const path = require("path");
+const { all, run } = require("./db");
+const retention = require("./retention");
+
+function daysAgoIso(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
+// Utility: safely delete a file on disk (ignore if missing)
+function safeUnlink(filePath) {
+  try {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  } catch (e) {
+    // log but don't crash cleanup
+    console.warn("Failed to delete file:", filePath, e.message || e);
+  }
+}
+
+// Determine retention days based on submission status + file type
+function retentionDaysFor({ submissionStatus, fileType }) {
+  const isBank = fileType === "bank_statements";
+
+  if (submissionStatus === "approved") {
+    return isBank ? retention.approved_tenant.bank_statements_days : retention.approved_tenant.uploads_days;
+  }
+
+  // Treat everything else as denied/withdrawn/not-approved for retention purposes in MVP
+  // (You can refine this once you track move-out dates, etc.)
+  return isBank ? retention.denied_or_withdrawn.bank_statements_days : retention.denied_or_withdrawn.uploads_days;
+}
+
+async function cleanupExpiredUploads() {
+  // Pull all uploads with their submission status
+  const rows = await all(`
+    SELECT
+      sf.id as file_id,
+      sf.stored_path,
+      sf.file_type,
+      sf.created_at as file_created_at,
+      sp.submission_id,
+      s.status as submission_status
+    FROM submission_files sf
+    JOIN submission_people sp ON sp.id = sf.submission_person_id
+    JOIN submissions s ON s.id = sp.submission_id
+  `);
+
+  let deletedCount = 0;
+
+  for (const r of rows) {
+    const keepDays = retentionDaysFor({
+      submissionStatus: (r.submission_status || "").toLowerCase(),
+      fileType: r.file_type
+    });
+
+    // Anything older than cutoff gets deleted
+    const cutoffIso = daysAgoIso(keepDays);
+
+    // Compare as ISO strings (SQLite stores datetime('now') which is comparable)
+    if (r.file_created_at && r.file_created_at < cutoffIso) {
+      // stored_path in our app is like "/uploads/filename.ext"
+      // Convert to disk path:
+      const diskPath = path.join(__dirname, r.stored_path.replace(/^\/+/, "")); // remove leading slash
+
+      safeUnlink(diskPath);
+
+      // Remove DB row
+      await run(`DELETE FROM submission_files WHERE id = ?`, [r.file_id]);
+
+      deletedCount++;
+    }
+  }
+
+  return { deletedCount, scannedCount: rows.length };
+}
+
+async function cleanupOldSubmissions() {
+  // Optional: If you want to prune abandoned "started" submissions after 30 days.
+  // Comment this out if you prefer to keep everything.
+  const cutoff = daysAgoIso(30);
+
+  // Delete old "started" submissions that were never submitted.
+  // NOTE: This only deletes submissions row. You may want to cascade people/files/acks.
+  // Safer to leave this disabled until you’re sure.
+  return { deletedCount: 0, note: "disabled_by_default" };
+}
+
+async function runCleanup() {
+  const started = new Date();
+
+  const uploads = await cleanupExpiredUploads();
+  const submissions = await cleanupOldSubmissions();
+
+  const elapsedMs = Date.now() - started.getTime();
+
+  console.log(
+    `[CLEANUP] done in ${elapsedMs}ms | uploads scanned=${uploads.scannedCount} deleted=${uploads.deletedCount} | submissions=${JSON.stringify(
+      submissions
+    )}`
+  );
+
+  return { uploads, submissions, elapsedMs };
+}
+
+module.exports = { runCleanup };
+
+3) Wire it into your server to run daily
+
+In your server.js, add this near the top:
+
+const { runCleanup } = require("./cleanup");
+
+
+Then add this near the bottom (before app.listen or right after it):
+
+// Run cleanup once on startup (optional)
+runCleanup().catch((e) => console.error("[CLEANUP] startup error:", e));
+
+// Run cleanup every 24 hours
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+setInterval(() => {
+  runCleanup().catch((e) => console.error("[CLEANUP] interval error:", e));
+}, ONE_DAY_MS);
+
+
+That’s the simplest Replit-friendly scheduler (Replit doesn’t give you a real cron by default).
+
+4) Optional: Add a manual admin endpoint (helpful for testing)
+
+Add this to server.js:
+
+app.post("/admin/run-cleanup", async (req, res) => {
+  try {
+    const result = await runCleanup();
+    res.json({ ok: true, result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
+
+Then you can test by calling:
+
+curl -X POST https://YOUR-REPLIT-APP/admin/run-cleanup
+
+One important note (so you don’t get surprised)
+
+This deletes files based on file upload age + submission status. In MVP, that’s the right tradeoff.
+
+Later (V2), when you track move-out date, you’ll change approved retention from “fixed 7 years” to “move_out_date + 7 years”.

@@ -1,0 +1,50 @@
+Do a tiered, configurable retention policy (landlord can change it), with safe defaults:
+
+Denied / Withdrawn applications
+
+Default: retain 2 years, then auto-delete uploads unless landlord manually archives/exported.
+Why: aligns with the “many jurisdictions require at least two years” concept and keeps sensitive docs from sitting around forever. 
+Snappt
+
+Approved / Moved-in tenants
+
+Default: keep during tenancy + 7 years after move-out (or configurable).
+Why: common “defensive recordkeeping” guidance for leases/tenant files is 6–7 years in many discussions. 
+REI Hub
++3
+All Property Management
++3
+Buildium
++3
+
+Highly sensitive financial uploads (bank statements)
+
+Default: keep 90–180 days for denied/withdrawn, and 2 years for approved tenants (or “tenancy + 1 year”), unless landlord opts longer.
+Why: bank statements are high-risk to store. Landlords usually only need them to verify income during decisioning, not forever.
+
+Replit-ready policy text (paste into your app)
+Applicant upload notice
+
+Document Review Notice
+Documents uploaded here (including identification, paystubs, and bank statements) are provided for landlord/property manager review only. LeaseShield does not verify authenticity or interpret financial documents and does not make rental decisions.
+
+Retention disclosure (simple + clear)
+
+Document Storage & Retention
+Uploaded documents are stored to support the rental application process and recordkeeping. By default, documents for denied or withdrawn applications are retained for 2 years, and documents for approved tenants are retained for the duration of tenancy plus 7 years, unless the landlord/property manager configures different retention settings. Applicants should upload only documents requested by the landlord/property manager.
+
+Replit-ready defaults (JSON settings)
+{
+  "retention": {
+    "denied_or_withdrawn": {
+      "application_data_days": 730,
+      "uploads_days": 730,
+      "bank_statements_days": 120
+    },
+    "approved_tenant": {
+      "application_data_days": 2555,
+      "uploads_days": 2555,
+      "bank_statements_days": 730
+    }
+  }
+}

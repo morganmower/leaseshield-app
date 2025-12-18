@@ -1,0 +1,106 @@
+1) Applicant Upload Step Copy
+Title
+
+Upload Required Documents
+
+Helper text
+
+Please upload the documents below so the property manager can review your application.
+Accepted formats: PDF, JPG, PNG. Keep files clear and readable.
+
+Disclosure box (important)
+
+Document Review Notice
+Documents uploaded here are collected for landlord review only. LeaseShield does not verify, authenticate, or interpret financial documents and does not make rental decisions. The landlord/property manager is solely responsible for reviewing documents and making any approval/denial decision.
+
+2) Landlord Review Page Copy
+Section title
+
+Applicant Documents
+
+Completeness note
+
+LeaseShield tracks whether documents are uploaded. LeaseShield does not verify authenticity, completeness, or accuracy.
+
+Disclaimer (short)
+
+Reminder: Files are provided by the applicant for landlord review. You are responsible for verifying information and complying with all applicable laws.
+
+3) Upload Types Schema (copy/paste JSON)
+
+Use this in your schema.uploads (property default, with unit overrides allowed):
+
+{
+  "uploads": {
+    "gov_id": {
+      "label": "Government-issued ID (Driver License / State ID)",
+      "required": true,
+      "accepted": ["pdf", "jpg", "jpeg", "png"],
+      "maxFiles": 2
+    },
+    "paystubs_30_days": {
+      "label": "Paystubs (most recent 30 days)",
+      "required": true,
+      "accepted": ["pdf", "jpg", "jpeg", "png"],
+      "maxFiles": 10
+    },
+    "bank_statements": {
+      "label": "Bank statements (if paystubs are unavailable)",
+      "required": false,
+      "accepted": ["pdf", "jpg", "jpeg", "png"],
+      "maxFiles": 6
+    },
+    "tax_docs_self_employed": {
+      "label": "Self-employed tax documents (Schedule C / 1099, if applicable)",
+      "required": false,
+      "accepted": ["pdf", "jpg", "jpeg", "png"],
+      "maxFiles": 10
+    },
+    "other_income": {
+      "label": "Other income documentation (if applicable)",
+      "required": false,
+      "accepted": ["pdf", "jpg", "jpeg", "png"],
+      "maxFiles": 10
+    }
+  }
+}
+
+4) Terms / Legal Stub (paste into your Terms page)
+Document Uploads and Review
+
+LeaseShield may allow applicants to upload documents (including identification documents, paystubs, bank statements, and tax documents) for the purpose of facilitating a rental application workflow. LeaseShield does not verify, authenticate, or interpret any uploaded documents and does not provide legal, financial, or underwriting advice. Landlords and property managers are solely responsible for reviewing documents, verifying information, and making any rental decision.
+
+No Decisioning
+
+LeaseShield is a software platform that helps users collect and organize information. LeaseShield does not determine an applicant’s eligibility, does not approve or deny applicants, and does not provide recommendations about whether to approve or deny.
+
+Sensitive Data
+
+Applicants should only upload documents requested by the landlord/property manager. Users are responsible for complying with applicable privacy, data security, and record-retention obligations.
+
+5) Data Retention Policy Stub (simple + safe)
+Document Storage and Retention
+
+Uploaded documents are stored to support the rental application workflow. LeaseShield may retain documents for a limited period consistent with providing the service and supporting customer recordkeeping. Landlords/property managers are responsible for exporting or retaining copies of records they need for compliance purposes.
+
+(When you’re ready, you can replace “limited period” with an exact number of days like 90/180.)
+
+6) Tiny UI “Upload Consent” Checkbox (optional, recommended)
+
+Checkbox label
+I understand that the documents I upload will be shared with the landlord/property manager for review, and that LeaseShield does not verify or interpret these documents.
+
+7) Replit snippet to enforce accepted file types (Node + multer)
+
+Drop this into your upload handler to block risky formats:
+
+const allowedExt = new Set([".pdf", ".jpg", ".jpeg", ".png"]);
+
+function fileFilter(req, file, cb) {
+  const ext = (require("path").extname(file.originalname) || "").toLowerCase();
+  if (!allowedExt.has(ext)) return cb(new Error("Unsupported file type."), false);
+  cb(null, true);
+}
+
+// Example usage:
+// const upload = multer({ storage, fileFilter, limits: { fileSize: 10 * 1024 * 1024 } }); // 10MB
