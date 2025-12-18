@@ -55,6 +55,7 @@ import Messages from "@/pages/messages";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 import RentalApplications from "@/pages/rental-applications";
+import RentalSubmissions from "@/pages/rental-submissions";
 import Apply from "@/pages/apply";
 
 // Admin route wrapper - redirects non-admin users to dashboard
@@ -108,6 +109,7 @@ function Router() {
         <Route path="/subscription">{() => <Redirect to="/login" />}</Route>
         <Route path="/properties">{() => <Redirect to="/login" />}</Route>
         <Route path="/rental-applications">{() => <Redirect to="/login" />}</Route>
+        <Route path="/rental-submissions">{() => <Redirect to="/login" />}</Route>
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
         <Route path="/screening">{() => <Redirect to="/login" />}</Route>
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
@@ -142,6 +144,7 @@ function Router() {
       <Route path="/my-documents" component={MyDocuments} />
       <Route path="/properties" component={Properties} />
       <Route path="/rental-applications" component={RentalApplications} />
+      <Route path="/rental-submissions" component={RentalSubmissions} />
       {/* Public application form (also accessible when logged in) */}
       <Route path="/apply/:token" component={Apply} />
       <Route path="/apply/join/:token" component={Apply} />

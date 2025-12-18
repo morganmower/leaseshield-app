@@ -16,6 +16,7 @@ import {
   DollarSign,
   Mail,
   Users,
+  FileCheck2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -70,6 +71,11 @@ const mainItems = [
     title: "Applications",
     url: "/rental-applications",
     icon: Users,
+  },
+  {
+    title: "Submissions",
+    url: "/rental-submissions",
+    icon: FileCheck2,
   },
   {
     title: "Compliance",

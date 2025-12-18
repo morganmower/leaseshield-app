@@ -3613,6 +3613,230 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // ============================================================
+  // LANDLORD SUBMISSION MANAGEMENT ROUTES (Authenticated)
+  // ============================================================
+
+  // List all submissions for landlord's properties
+  app.get('/api/rental/submissions', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submissions = await storage.getRentalSubmissionsByUserId(userId);
+      
+      // Enrich with property/unit info and people
+      const enriched = await Promise.all(submissions.map(async (sub) => {
+        const people = await storage.getRentalSubmissionPeople(sub.id);
+        const appLink = sub.applicationLinkId ? await storage.getRentalApplicationLink(sub.applicationLinkId) : null;
+        let propertyName = "Unknown";
+        let unitLabel = "";
+        if (appLink) {
+          const unit = await storage.getRentalUnit(appLink.unitId);
+          if (unit) {
+            const property = await storage.getRentalProperty(unit.propertyId, userId);
+            if (property) {
+              propertyName = property.name;
+              unitLabel = unit.unitLabel;
+            }
+          }
+        }
+        const primaryApplicant = people.find(p => p.role === 'applicant');
+        return {
+          ...sub,
+          propertyName,
+          unitLabel,
+          primaryApplicant: primaryApplicant ? {
+            firstName: primaryApplicant.firstName,
+            lastName: primaryApplicant.lastName,
+            email: primaryApplicant.email,
+          } : null,
+          peopleCount: people.length,
+        };
+      }));
+      
+      res.json(enriched);
+    } catch (error) {
+      console.error("Error fetching submissions:", error);
+      res.status(500).json({ message: "Failed to fetch submissions" });
+    }
+  });
+
+  // Get specific submission with all people
+  app.get('/api/rental/submissions/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      const events = await storage.getRentalApplicationEvents(submission.id);
+
+      res.json({
+        ...submission,
+        propertyName: property.name,
+        unitLabel: unit.unitLabel,
+        people,
+        events,
+      });
+    } catch (error) {
+      console.error("Error fetching submission:", error);
+      res.status(500).json({ message: "Failed to fetch submission" });
+    }
+  });
+
+  // Update submission status (approve/deny/etc)
+  app.patch('/api/rental/submissions/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { status, landlordNotes, screeningTier } = req.body;
+      const updates: any = {};
+      if (status) updates.status = status;
+      if (landlordNotes !== undefined) updates.landlordNotes = landlordNotes;
+      if (screeningTier) updates.screeningTier = screeningTier;
+
+      const updated = await storage.updateRentalSubmission(req.params.id, updates);
+
+      // Log the status change event
+      if (status) {
+        await storage.logRentalApplicationEvent({
+          submissionId: submission.id,
+          eventType: `status_changed_to_${status}`,
+          metadataJson: { previousStatus: submission.status, newStatus: status, changedBy: userId },
+        });
+      }
+
+      res.json(updated);
+    } catch (error) {
+      console.error("Error updating submission:", error);
+      res.status(500).json({ message: "Failed to update submission" });
+    }
+  });
+
+  // Create a decision (approve/deny) for a submission
+  app.post('/api/rental/submissions/:id/decision', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Check if a decision already exists
+      const existingDecision = await storage.getRentalDecision(submission.id);
+      if (existingDecision) {
+        return res.status(400).json({ message: "A decision has already been made for this application" });
+      }
+
+      const { decision, notes } = req.body;
+      if (!decision || !['approved', 'denied'].includes(decision)) {
+        return res.status(400).json({ message: "Decision must be 'approved' or 'denied'" });
+      }
+
+      const newDecision = await storage.createRentalDecision({
+        submissionId: submission.id,
+        decision,
+        decidedAt: new Date(),
+        decidedByUserId: userId,
+        notes: notes || null,
+      });
+
+      // Log the decision event
+      await storage.logRentalApplicationEvent({
+        submissionId: submission.id,
+        eventType: `decision_${decision}`,
+        metadataJson: { decisionId: newDecision.id, decidedBy: userId, notes },
+      });
+
+      res.status(201).json(newDecision);
+    } catch (error) {
+      console.error("Error creating decision:", error);
+      res.status(500).json({ message: "Failed to create decision" });
+    }
+  });
+
+  // Get decision for a submission
+  app.get('/api/rental/submissions/:id/decision', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const decision = await storage.getRentalDecision(submission.id);
+      res.json(decision || null);
+    } catch (error) {
+      console.error("Error getting decision:", error);
+      res.status(500).json({ message: "Failed to get decision" });
+    }
+  });
+
+  // ============================================================
   // PUBLIC RENTAL APPLICATION ROUTES (No Auth Required)
   // ============================================================
 

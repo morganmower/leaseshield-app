@@ -351,6 +351,7 @@ export interface IStorage {
   // Rental Application System - Application link operations
   getRentalApplicationLinksByUnitId(unitId: string): Promise<RentalApplicationLink[]>;
   getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined>;
+  getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined>;
   createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
   deactivateRentalApplicationLink(id: string): Promise<boolean>;
 
@@ -1755,6 +1756,13 @@ export class DatabaseStorage implements IStorage {
       const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.publicToken, token));
       return link;
     }, 'getRentalApplicationLinkByToken');
+  }
+
+  async getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined> {
+    return handleDbOperation(async () => {
+      const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.id, id));
+      return link;
+    }, 'getRentalApplicationLink');
   }
 
   async createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink> {
