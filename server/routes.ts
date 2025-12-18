@@ -3341,6 +3341,277 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // ============================================================
+  // RENTAL APPLICATION SYSTEM - API Routes
+  // ============================================================
+
+  // Import default templates from schema
+  const { defaultCoverPageTemplate, defaultFieldSchemaTemplate } = await import("@shared/schema");
+
+  // Rental Property CRUD
+  app.get('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const properties = await storage.getRentalPropertiesByUserId(userId);
+      res.json(properties);
+    } catch (error) {
+      console.error("Error getting rental properties:", error);
+      res.status(500).json({ message: "Failed to get properties" });
+    }
+  });
+
+  app.get('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const property = await storage.getRentalProperty(req.params.id, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      res.json(property);
+    } catch (error) {
+      console.error("Error getting rental property:", error);
+      res.status(500).json({ message: "Failed to get property" });
+    }
+  });
+
+  app.post('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson } = req.body;
+      
+      if (!name) {
+        return res.status(400).json({ message: "Property name is required" });
+      }
+
+      const property = await storage.createRentalProperty({
+        userId,
+        name,
+        address: address || null,
+        city: city || null,
+        state: state || null,
+        zipCode: zipCode || null,
+        defaultCoverPageJson: defaultCoverPageJson || defaultCoverPageTemplate,
+        defaultFieldSchemaJson: defaultFieldSchemaJson || defaultFieldSchemaTemplate,
+      });
+
+      res.status(201).json(property);
+    } catch (error) {
+      console.error("Error creating rental property:", error);
+      res.status(500).json({ message: "Failed to create property" });
+    }
+  });
+
+  app.patch('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson } = req.body;
+      
+      const property = await storage.updateRentalProperty(req.params.id, userId, {
+        name,
+        address,
+        city,
+        state,
+        zipCode,
+        defaultCoverPageJson,
+        defaultFieldSchemaJson,
+      });
+
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      res.json(property);
+    } catch (error) {
+      console.error("Error updating rental property:", error);
+      res.status(500).json({ message: "Failed to update property" });
+    }
+  });
+
+  app.delete('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      await storage.deleteRentalProperty(req.params.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting rental property:", error);
+      res.status(500).json({ message: "Failed to delete property" });
+    }
+  });
+
+  // Rental Unit CRUD
+  app.get('/api/rental/properties/:propertyId/units', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Verify property ownership
+      const property = await storage.getRentalProperty(req.params.propertyId, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+      const units = await storage.getRentalUnitsByPropertyId(req.params.propertyId);
+      res.json(units);
+    } catch (error) {
+      console.error("Error getting rental units:", error);
+      res.status(500).json({ message: "Failed to get units" });
+    }
+  });
+
+  app.post('/api/rental/properties/:propertyId/units', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Verify property ownership
+      const property = await storage.getRentalProperty(req.params.propertyId, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+      
+      if (!unitLabel) {
+        return res.status(400).json({ message: "Unit label is required" });
+      }
+
+      const unit = await storage.createRentalUnit({
+        propertyId: req.params.propertyId,
+        unitLabel,
+        coverPageOverrideEnabled: coverPageOverrideEnabled || false,
+        coverPageOverrideJson: coverPageOverrideJson || null,
+        fieldSchemaOverrideEnabled: fieldSchemaOverrideEnabled || false,
+        fieldSchemaOverrideJson: fieldSchemaOverrideJson || null,
+      });
+
+      res.status(201).json(unit);
+    } catch (error) {
+      console.error("Error creating rental unit:", error);
+      res.status(500).json({ message: "Failed to create unit" });
+    }
+  });
+
+  app.patch('/api/rental/units/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Get the unit first to verify ownership via property
+      const existingUnit = await storage.getRentalUnit(req.params.id);
+      if (!existingUnit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      // Verify property ownership
+      const property = await storage.getRentalProperty(existingUnit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+      
+      const unit = await storage.updateRentalUnit(req.params.id, {
+        unitLabel,
+        coverPageOverrideEnabled,
+        coverPageOverrideJson,
+        fieldSchemaOverrideEnabled,
+        fieldSchemaOverrideJson,
+      });
+
+      res.json(unit);
+    } catch (error) {
+      console.error("Error updating rental unit:", error);
+      res.status(500).json({ message: "Failed to update unit" });
+    }
+  });
+
+  app.delete('/api/rental/units/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Get the unit first to verify ownership via property
+      const existingUnit = await storage.getRentalUnit(req.params.id);
+      if (!existingUnit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      
+      // Verify property ownership
+      const property = await storage.getRentalProperty(existingUnit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      await storage.deleteRentalUnit(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting rental unit:", error);
+      res.status(500).json({ message: "Failed to delete unit" });
+    }
+  });
+
+  // Application Link Management
+  app.get('/api/rental/units/:unitId/links', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Verify ownership via unit -> property
+      const unit = await storage.getRentalUnit(req.params.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const links = await storage.getRentalApplicationLinksByUnitId(req.params.unitId);
+      res.json(links);
+    } catch (error) {
+      console.error("Error getting application links:", error);
+      res.status(500).json({ message: "Failed to get links" });
+    }
+  });
+
+  app.post('/api/rental/units/:unitId/links', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      // Verify ownership via unit -> property
+      const unit = await storage.getRentalUnit(req.params.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Merge schemas: unit overrides or property defaults
+      const coverPage = unit.coverPageOverrideEnabled && unit.coverPageOverrideJson 
+        ? unit.coverPageOverrideJson 
+        : property.defaultCoverPageJson;
+      const fieldSchema = unit.fieldSchemaOverrideEnabled && unit.fieldSchemaOverrideJson
+        ? unit.fieldSchemaOverrideJson
+        : property.defaultFieldSchemaJson;
+
+      // Generate public token
+      const publicToken = randomUUID().replace(/-/g, '');
+
+      const link = await storage.createRentalApplicationLink({
+        unitId: req.params.unitId,
+        publicToken,
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel },
+        isActive: true,
+        expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
+      });
+
+      res.status(201).json(link);
+    } catch (error) {
+      console.error("Error creating application link:", error);
+      res.status(500).json({ message: "Failed to create link" });
+    }
+  });
+
+  app.post('/api/rental/links/:id/deactivate', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      await storage.deactivateRentalApplicationLink(req.params.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deactivating link:", error);
+      res.status(500).json({ message: "Failed to deactivate link" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

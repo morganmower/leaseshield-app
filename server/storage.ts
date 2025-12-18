@@ -83,6 +83,41 @@ import {
   type InsertBroadcastRecipient,
   type BroadcastReply,
   type InsertBroadcastReply,
+  rentalProperties,
+  rentalUnits,
+  rentalApplicationLinks,
+  rentalSubmissions,
+  rentalSubmissionPeople,
+  rentalSubmissionFiles,
+  rentalSubmissionAcknowledgements,
+  rentalScreeningOrders,
+  rentalDecisions,
+  rentalDecisionLetters,
+  rentalApplicationEvents,
+  type RentalProperty,
+  type InsertRentalProperty,
+  type RentalUnit,
+  type InsertRentalUnit,
+  type RentalApplicationLink,
+  type InsertRentalApplicationLink,
+  type RentalSubmission,
+  type InsertRentalSubmission,
+  type RentalSubmissionPerson,
+  type InsertRentalSubmissionPerson,
+  type RentalSubmissionFile,
+  type InsertRentalSubmissionFile,
+  type RentalSubmissionAcknowledgement,
+  type InsertRentalSubmissionAcknowledgement,
+  type RentalScreeningOrder,
+  type InsertRentalScreeningOrder,
+  type RentalDecision,
+  type InsertRentalDecision,
+  type RentalDecisionLetter,
+  type InsertRentalDecisionLetter,
+  type RentalApplicationEvent,
+  type InsertRentalApplicationEvent,
+  defaultCoverPageTemplate,
+  defaultFieldSchemaTemplate,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -298,6 +333,65 @@ export interface IStorage {
   markBroadcastReplyAsRead(replyId: string): Promise<void>;
   getTrialingUsers(): Promise<User[]>;
   updateBroadcastRecipientCount(broadcastId: string, count: number): Promise<void>;
+
+  // Rental Application System - Property operations
+  getRentalPropertiesByUserId(userId: string): Promise<RentalProperty[]>;
+  getRentalProperty(id: string, userId: string): Promise<RentalProperty | undefined>;
+  createRentalProperty(property: InsertRentalProperty): Promise<RentalProperty>;
+  updateRentalProperty(id: string, userId: string, property: Partial<InsertRentalProperty>): Promise<RentalProperty | null>;
+  deleteRentalProperty(id: string, userId: string): Promise<boolean>;
+
+  // Rental Application System - Unit operations
+  getRentalUnitsByPropertyId(propertyId: string): Promise<RentalUnit[]>;
+  getRentalUnit(id: string): Promise<RentalUnit | undefined>;
+  createRentalUnit(unit: InsertRentalUnit): Promise<RentalUnit>;
+  updateRentalUnit(id: string, unit: Partial<InsertRentalUnit>): Promise<RentalUnit | null>;
+  deleteRentalUnit(id: string): Promise<boolean>;
+
+  // Rental Application System - Application link operations
+  getRentalApplicationLinksByUnitId(unitId: string): Promise<RentalApplicationLink[]>;
+  getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined>;
+  createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
+  deactivateRentalApplicationLink(id: string): Promise<boolean>;
+
+  // Rental Application System - Submission operations
+  getRentalSubmissionsByUserId(userId: string): Promise<RentalSubmission[]>;
+  getRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
+  createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission>;
+  updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null>;
+
+  // Rental Application System - Submission people operations
+  getRentalSubmissionPeople(submissionId: string): Promise<RentalSubmissionPerson[]>;
+  getRentalSubmissionPersonByToken(token: string): Promise<RentalSubmissionPerson | undefined>;
+  createRentalSubmissionPerson(person: InsertRentalSubmissionPerson): Promise<RentalSubmissionPerson>;
+  updateRentalSubmissionPerson(id: string, person: Partial<InsertRentalSubmissionPerson>): Promise<RentalSubmissionPerson | null>;
+
+  // Rental Application System - File operations
+  getRentalSubmissionFiles(personId: string): Promise<RentalSubmissionFile[]>;
+  createRentalSubmissionFile(file: InsertRentalSubmissionFile): Promise<RentalSubmissionFile>;
+  deleteRentalSubmissionFile(id: string): Promise<boolean>;
+
+  // Rental Application System - Acknowledgement operations
+  createRentalSubmissionAcknowledgement(ack: InsertRentalSubmissionAcknowledgement): Promise<RentalSubmissionAcknowledgement>;
+  getRentalSubmissionAcknowledgements(submissionId: string): Promise<RentalSubmissionAcknowledgement[]>;
+
+  // Rental Application System - Screening order operations
+  getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined>;
+  createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder>;
+  updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
+
+  // Rental Application System - Decision operations
+  getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
+  createRentalDecision(decision: InsertRentalDecision): Promise<RentalDecision>;
+
+  // Rental Application System - Decision letter operations
+  getRentalDecisionLetters(submissionId: string): Promise<RentalDecisionLetter[]>;
+  createRentalDecisionLetter(letter: InsertRentalDecisionLetter): Promise<RentalDecisionLetter>;
+  updateRentalDecisionLetter(id: string, letter: Partial<InsertRentalDecisionLetter>): Promise<RentalDecisionLetter | null>;
+
+  // Rental Application System - Event logging
+  logRentalApplicationEvent(event: InsertRentalApplicationEvent): Promise<RentalApplicationEvent>;
+  getRentalApplicationEvents(submissionId: string): Promise<RentalApplicationEvent[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1573,6 +1667,279 @@ export class DatabaseStorage implements IStorage {
       .update(broadcastMessages)
       .set({ recipientCount: count })
       .where(eq(broadcastMessages.id, broadcastId));
+  }
+
+  // ============================================================
+  // RENTAL APPLICATION SYSTEM - Implementation
+  // ============================================================
+
+  // Rental Property operations
+  async getRentalPropertiesByUserId(userId: string): Promise<RentalProperty[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalProperties).where(eq(rentalProperties.userId, userId)).orderBy(desc(rentalProperties.createdAt));
+    }, 'getRentalPropertiesByUserId');
+  }
+
+  async getRentalProperty(id: string, userId: string): Promise<RentalProperty | undefined> {
+    return handleDbOperation(async () => {
+      const [property] = await db.select().from(rentalProperties).where(and(eq(rentalProperties.id, id), eq(rentalProperties.userId, userId)));
+      return property;
+    }, 'getRentalProperty');
+  }
+
+  async createRentalProperty(property: InsertRentalProperty): Promise<RentalProperty> {
+    return handleDbOperation(async () => {
+      const [newProperty] = await db.insert(rentalProperties).values(property).returning();
+      return newProperty;
+    }, 'createRentalProperty');
+  }
+
+  async updateRentalProperty(id: string, userId: string, property: Partial<InsertRentalProperty>): Promise<RentalProperty | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalProperties).set({ ...property, updatedAt: new Date() }).where(and(eq(rentalProperties.id, id), eq(rentalProperties.userId, userId))).returning();
+      return updated || null;
+    }, 'updateRentalProperty');
+  }
+
+  async deleteRentalProperty(id: string, userId: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const result = await db.delete(rentalProperties).where(and(eq(rentalProperties.id, id), eq(rentalProperties.userId, userId)));
+      return true;
+    }, 'deleteRentalProperty');
+  }
+
+  // Rental Unit operations
+  async getRentalUnitsByPropertyId(propertyId: string): Promise<RentalUnit[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalUnits).where(eq(rentalUnits.propertyId, propertyId)).orderBy(rentalUnits.unitLabel);
+    }, 'getRentalUnitsByPropertyId');
+  }
+
+  async getRentalUnit(id: string): Promise<RentalUnit | undefined> {
+    return handleDbOperation(async () => {
+      const [unit] = await db.select().from(rentalUnits).where(eq(rentalUnits.id, id));
+      return unit;
+    }, 'getRentalUnit');
+  }
+
+  async createRentalUnit(unit: InsertRentalUnit): Promise<RentalUnit> {
+    return handleDbOperation(async () => {
+      const [newUnit] = await db.insert(rentalUnits).values(unit).returning();
+      return newUnit;
+    }, 'createRentalUnit');
+  }
+
+  async updateRentalUnit(id: string, unit: Partial<InsertRentalUnit>): Promise<RentalUnit | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalUnits).set({ ...unit, updatedAt: new Date() }).where(eq(rentalUnits.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalUnit');
+  }
+
+  async deleteRentalUnit(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      await db.delete(rentalUnits).where(eq(rentalUnits.id, id));
+      return true;
+    }, 'deleteRentalUnit');
+  }
+
+  // Rental Application Link operations
+  async getRentalApplicationLinksByUnitId(unitId: string): Promise<RentalApplicationLink[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.unitId, unitId)).orderBy(desc(rentalApplicationLinks.createdAt));
+    }, 'getRentalApplicationLinksByUnitId');
+  }
+
+  async getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined> {
+    return handleDbOperation(async () => {
+      const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.publicToken, token));
+      return link;
+    }, 'getRentalApplicationLinkByToken');
+  }
+
+  async createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink> {
+    return handleDbOperation(async () => {
+      const [newLink] = await db.insert(rentalApplicationLinks).values(link).returning();
+      return newLink;
+    }, 'createRentalApplicationLink');
+  }
+
+  async deactivateRentalApplicationLink(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      await db.update(rentalApplicationLinks).set({ isActive: false }).where(eq(rentalApplicationLinks.id, id));
+      return true;
+    }, 'deactivateRentalApplicationLink');
+  }
+
+  // Rental Submission operations
+  async getRentalSubmissionsByUserId(userId: string): Promise<RentalSubmission[]> {
+    return handleDbOperation(async () => {
+      const results = await db
+        .select({ submission: rentalSubmissions })
+        .from(rentalSubmissions)
+        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
+        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
+        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
+        .where(eq(rentalProperties.userId, userId))
+        .orderBy(desc(rentalSubmissions.createdAt));
+      return results.map(r => r.submission);
+    }, 'getRentalSubmissionsByUserId');
+  }
+
+  async getRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
+    return handleDbOperation(async () => {
+      const [submission] = await db.select().from(rentalSubmissions).where(eq(rentalSubmissions.id, id));
+      return submission;
+    }, 'getRentalSubmission');
+  }
+
+  async createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission> {
+    return handleDbOperation(async () => {
+      const [newSubmission] = await db.insert(rentalSubmissions).values(submission).returning();
+      return newSubmission;
+    }, 'createRentalSubmission');
+  }
+
+  async updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalSubmissions).set({ ...submission, updatedAt: new Date() }).where(eq(rentalSubmissions.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalSubmission');
+  }
+
+  // Rental Submission People operations
+  async getRentalSubmissionPeople(submissionId: string): Promise<RentalSubmissionPerson[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalSubmissionPeople).where(eq(rentalSubmissionPeople.submissionId, submissionId));
+    }, 'getRentalSubmissionPeople');
+  }
+
+  async getRentalSubmissionPersonByToken(token: string): Promise<RentalSubmissionPerson | undefined> {
+    return handleDbOperation(async () => {
+      const [person] = await db.select().from(rentalSubmissionPeople).where(eq(rentalSubmissionPeople.inviteToken, token));
+      return person;
+    }, 'getRentalSubmissionPersonByToken');
+  }
+
+  async createRentalSubmissionPerson(person: InsertRentalSubmissionPerson): Promise<RentalSubmissionPerson> {
+    return handleDbOperation(async () => {
+      const [newPerson] = await db.insert(rentalSubmissionPeople).values(person).returning();
+      return newPerson;
+    }, 'createRentalSubmissionPerson');
+  }
+
+  async updateRentalSubmissionPerson(id: string, person: Partial<InsertRentalSubmissionPerson>): Promise<RentalSubmissionPerson | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalSubmissionPeople).set({ ...person, updatedAt: new Date() }).where(eq(rentalSubmissionPeople.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalSubmissionPerson');
+  }
+
+  // Rental Submission File operations
+  async getRentalSubmissionFiles(personId: string): Promise<RentalSubmissionFile[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.personId, personId));
+    }, 'getRentalSubmissionFiles');
+  }
+
+  async createRentalSubmissionFile(file: InsertRentalSubmissionFile): Promise<RentalSubmissionFile> {
+    return handleDbOperation(async () => {
+      const [newFile] = await db.insert(rentalSubmissionFiles).values(file).returning();
+      return newFile;
+    }, 'createRentalSubmissionFile');
+  }
+
+  async deleteRentalSubmissionFile(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      await db.delete(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, id));
+      return true;
+    }, 'deleteRentalSubmissionFile');
+  }
+
+  // Rental Submission Acknowledgement operations
+  async createRentalSubmissionAcknowledgement(ack: InsertRentalSubmissionAcknowledgement): Promise<RentalSubmissionAcknowledgement> {
+    return handleDbOperation(async () => {
+      const [newAck] = await db.insert(rentalSubmissionAcknowledgements).values(ack).returning();
+      return newAck;
+    }, 'createRentalSubmissionAcknowledgement');
+  }
+
+  async getRentalSubmissionAcknowledgements(submissionId: string): Promise<RentalSubmissionAcknowledgement[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalSubmissionAcknowledgements).where(eq(rentalSubmissionAcknowledgements.submissionId, submissionId));
+    }, 'getRentalSubmissionAcknowledgements');
+  }
+
+  // Rental Screening Order operations
+  async getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined> {
+    return handleDbOperation(async () => {
+      const [order] = await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.submissionId, submissionId));
+      return order;
+    }, 'getRentalScreeningOrder');
+  }
+
+  async createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder> {
+    return handleDbOperation(async () => {
+      const [newOrder] = await db.insert(rentalScreeningOrders).values(order).returning();
+      return newOrder;
+    }, 'createRentalScreeningOrder');
+  }
+
+  async updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalScreeningOrders).set({ ...order, updatedAt: new Date() }).where(eq(rentalScreeningOrders.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalScreeningOrder');
+  }
+
+  // Rental Decision operations
+  async getRentalDecision(submissionId: string): Promise<RentalDecision | undefined> {
+    return handleDbOperation(async () => {
+      const [decision] = await db.select().from(rentalDecisions).where(eq(rentalDecisions.submissionId, submissionId));
+      return decision;
+    }, 'getRentalDecision');
+  }
+
+  async createRentalDecision(decision: InsertRentalDecision): Promise<RentalDecision> {
+    return handleDbOperation(async () => {
+      const [newDecision] = await db.insert(rentalDecisions).values(decision).returning();
+      return newDecision;
+    }, 'createRentalDecision');
+  }
+
+  // Rental Decision Letter operations
+  async getRentalDecisionLetters(submissionId: string): Promise<RentalDecisionLetter[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalDecisionLetters).where(eq(rentalDecisionLetters.submissionId, submissionId)).orderBy(desc(rentalDecisionLetters.createdAt));
+    }, 'getRentalDecisionLetters');
+  }
+
+  async createRentalDecisionLetter(letter: InsertRentalDecisionLetter): Promise<RentalDecisionLetter> {
+    return handleDbOperation(async () => {
+      const [newLetter] = await db.insert(rentalDecisionLetters).values(letter).returning();
+      return newLetter;
+    }, 'createRentalDecisionLetter');
+  }
+
+  async updateRentalDecisionLetter(id: string, letter: Partial<InsertRentalDecisionLetter>): Promise<RentalDecisionLetter | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalDecisionLetters).set(letter).where(eq(rentalDecisionLetters.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalDecisionLetter');
+  }
+
+  // Rental Application Event logging
+  async logRentalApplicationEvent(event: InsertRentalApplicationEvent): Promise<RentalApplicationEvent> {
+    return handleDbOperation(async () => {
+      const [newEvent] = await db.insert(rentalApplicationEvents).values(event).returning();
+      return newEvent;
+    }, 'logRentalApplicationEvent');
+  }
+
+  async getRentalApplicationEvents(submissionId: string): Promise<RentalApplicationEvent[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalApplicationEvents).where(eq(rentalApplicationEvents.submissionId, submissionId)).orderBy(desc(rentalApplicationEvents.createdAt));
+    }, 'getRentalApplicationEvents');
   }
 }
 
