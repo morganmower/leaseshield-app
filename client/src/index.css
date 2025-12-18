@@ -501,22 +501,34 @@
     overflow: visible !important;
   }
 
-  /* Hide elements that shouldn't print */
-  .print\\:hidden,
+  /* Hide sidebar and navigation elements */
+  .print\:hidden,
   nav,
   aside,
   [data-sidebar],
+  [data-sidebar="sidebar"],
   .sidebar,
   button:not([data-print]),
   .no-print {
     display: none !important;
+    width: 0 !important;
+    min-width: 0 !important;
+    visibility: hidden !important;
+  }
+
+  /* Reset the sidebar wrapper to not offset content */
+  [data-slot="sidebar-wrapper"] {
+    display: block !important;
+    --sidebar-width: 0 !important;
+    padding-left: 0 !important;
+    margin-left: 0 !important;
   }
 
   /* Reset container widths for printing */
   .container {
     max-width: 100% !important;
     width: 100% !important;
-    padding: 0 !important;
+    padding: 1rem !important;
     margin: 0 !important;
   }
 
@@ -530,5 +542,13 @@
   .flex-1 {
     flex: none !important;
     height: auto !important;
+    width: 100% !important;
+  }
+
+  /* Make main content full width */
+  main {
+    width: 100% !important;
+    margin-left: 0 !important;
+    padding-left: 0 !important;
   }
 }
