@@ -548,6 +548,33 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
 export type InsertProperty = z.infer<typeof insertPropertySchema>;
 export type Property = typeof properties.$inferSelect;
 
+// Retention Settings - per-property document retention configuration
+export const retentionSettings = pgTable("retention_settings", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  propertyId: varchar("property_id").notNull().references(() => properties.id).unique(),
+  deniedUploadsDays: integer("denied_uploads_days").notNull().default(730),
+  deniedBankStatementsDays: integer("denied_bank_statements_days").notNull().default(120),
+  approvedUploadsDays: integer("approved_uploads_days").notNull().default(2555),
+  approvedBankStatementsDays: integer("approved_bank_statements_days").notNull().default(730),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const retentionSettingsRelations = relations(retentionSettings, ({ one }) => ({
+  property: one(properties, {
+    fields: [retentionSettings.propertyId],
+    references: [properties.id],
+  }),
+}));
+
+export const insertRetentionSettingsSchema = createInsertSchema(retentionSettings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRetentionSettings = z.infer<typeof insertRetentionSettingsSchema>;
+export type RetentionSettings = typeof retentionSettings.$inferSelect;
+
 // Saved Documents - user document history
 export const savedDocuments = pgTable("saved_documents", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

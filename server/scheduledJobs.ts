@@ -8,6 +8,7 @@ import { users } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
 import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 import { setupEmailSequences } from "./emailSequenceSetup";
+import { runUploadCleanup } from "./cleanup";
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
@@ -16,6 +17,7 @@ export class ScheduledJobs {
   private legislativeMonitoringInterval: NodeJS.Timeout | null = null;
   private emailSequenceInterval: NodeJS.Timeout | null = null;
   private renewalReminderInterval: NodeJS.Timeout | null = null;
+  private uploadCleanupInterval: NodeJS.Timeout | null = null;
   private legislativeMonitoringLastRun: Date | null = null;
 
   // Check for trials ending soon and send reminder emails (2 days before)
@@ -471,6 +473,13 @@ export class ScheduledJobs {
     );
     setTimeout(() => this.checkRenewalReminders(), 4 * 60 * 1000);
 
+    // Run upload cleanup daily
+    this.uploadCleanupInterval = setInterval(
+      () => runUploadCleanup().catch(e => console.error('[CLEANUP] interval error:', e)),
+      24 * 60 * 60 * 1000
+    );
+    setTimeout(() => runUploadCleanup().catch(e => console.error('[CLEANUP] startup error:', e)), 5 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -506,6 +515,11 @@ export class ScheduledJobs {
     if (this.renewalReminderInterval) {
       clearInterval(this.renewalReminderInterval);
       this.renewalReminderInterval = null;
+    }
+
+    if (this.uploadCleanupInterval) {
+      clearInterval(this.uploadCleanupInterval);
+      this.uploadCleanupInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

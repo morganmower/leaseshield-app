@@ -82,6 +82,215 @@ const STEPS = [
   { id: "review", label: "Review & Submit", icon: CheckCircle },
 ];
 
+interface UploadedFile {
+  id: string;
+  fileType: string;
+  originalName: string;
+  fileSize: number;
+  createdAt: string;
+}
+
+const UPLOAD_TYPES = [
+  { id: "government_id", label: "Government-issued ID", required: true },
+  { id: "paystubs", label: "Recent Paystubs", required: true },
+  { id: "bank_statements", label: "Bank Statements", required: false },
+  { id: "tax_returns", label: "Tax Returns", required: false },
+  { id: "other", label: "Other Documents", required: false },
+];
+
+function UploadDocumentsStep({ personToken, onBack, onNext }: { personToken: string; onBack: () => void; onNext: () => void }) {
+  const { toast } = useToast();
+  const [uploadingType, setUploadingType] = useState<string | null>(null);
+
+  const { data: files = [], refetch: refetchFiles, isLoading } = useQuery<UploadedFile[]>({
+    queryKey: ["/api/apply/person", personToken, "files"],
+    queryFn: async () => {
+      const res = await fetch(`/api/apply/person/${personToken}/files`);
+      if (!res.ok) throw new Error("Failed to load files");
+      return res.json();
+    },
+    enabled: !!personToken,
+  });
+
+  const uploadFile = async (file: globalThis.File, fileType: string) => {
+    setUploadingType(fileType);
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("fileType", fileType);
+
+    try {
+      const res = await fetch(`/api/apply/person/${personToken}/upload`, {
+        method: "POST",
+        body: formData,
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Upload failed");
+      }
+      toast({ title: "File Uploaded", description: `${file.name} uploaded successfully.` });
+      refetchFiles();
+    } catch (error: any) {
+      toast({ title: "Upload Error", description: error.message, variant: "destructive" });
+    } finally {
+      setUploadingType(null);
+    }
+  };
+
+  const deleteFile = async (fileId: string) => {
+    try {
+      const res = await fetch(`/api/apply/person/${personToken}/files/${fileId}`, {
+        method: "DELETE",
+      });
+      if (!res.ok) throw new Error("Delete failed");
+      toast({ title: "File Deleted" });
+      refetchFiles();
+    } catch (error) {
+      toast({ title: "Delete Error", description: "Failed to delete file.", variant: "destructive" });
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const getFilesForType = (fileType: string) => files.filter((f) => f.fileType === fileType);
+
+  return (
+    <>
+      <CardHeader>
+        <CardTitle>Upload Documents</CardTitle>
+        <CardDescription>
+          Upload required documents to support your application. Accepted formats: PDF, JPG, PNG (max 10MB each).
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-6">
+        <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5" />
+            <div className="text-sm text-amber-800 dark:text-amber-200">
+              <p className="font-medium">Document Review Notice</p>
+              <p className="mt-1">
+                Documents uploaded here are provided for landlord/property manager review only. 
+                LeaseShield does not verify authenticity or interpret financial documents.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <Skeleton key={i} className="h-24 w-full" />
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {UPLOAD_TYPES.map((type) => {
+              const typeFiles = getFilesForType(type.id);
+              const isUploading = uploadingType === type.id;
+
+              return (
+                <div
+                  key={type.id}
+                  className="border rounded-lg p-4 space-y-3"
+                  data-testid={`upload-section-${type.id}`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Upload className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">{type.label}</span>
+                      {type.required && (
+                        <Badge variant="secondary" className="text-xs">Required</Badge>
+                      )}
+                    </div>
+                    <label className="cursor-pointer">
+                      <input
+                        type="file"
+                        className="hidden"
+                        accept=".pdf,.jpg,.jpeg,.png"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) uploadFile(file, type.id);
+                          e.target.value = "";
+                        }}
+                        disabled={isUploading}
+                        data-testid={`input-file-${type.id}`}
+                      />
+                      <Button variant="outline" size="sm" disabled={isUploading} asChild>
+                        <span>
+                          {isUploading ? (
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                          ) : (
+                            <>
+                              <Upload className="h-4 w-4 mr-1" />
+                              Upload
+                            </>
+                          )}
+                        </span>
+                      </Button>
+                    </label>
+                  </div>
+
+                  {typeFiles.length > 0 && (
+                    <div className="space-y-2">
+                      {typeFiles.map((f) => (
+                        <div
+                          key={f.id}
+                          className="flex items-center justify-between bg-muted/50 p-2 rounded"
+                          data-testid={`file-item-${f.id}`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <File className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                            <span className="text-sm truncate">{f.originalName}</span>
+                            <span className="text-xs text-muted-foreground">({formatFileSize(f.fileSize)})</span>
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => deleteFile(f.id)}
+                            data-testid={`button-delete-file-${f.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {typeFiles.length === 0 && (
+                    <p className="text-sm text-muted-foreground">No files uploaded yet</p>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        <div className="text-xs text-muted-foreground">
+          <p>
+            <strong>Document Storage & Retention:</strong> Uploaded documents are stored to support the rental 
+            application process and recordkeeping. By default, documents for denied or withdrawn applications 
+            are retained for 2 years, and documents for approved tenants are retained for the duration of 
+            tenancy plus 7 years, unless the landlord/property manager configures different retention settings.
+          </p>
+        </div>
+      </CardContent>
+      <CardFooter className="flex justify-between border-t pt-6">
+        <Button variant="outline" onClick={onBack}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+        <Button onClick={onNext} data-testid="button-next-step-5">
+          Next
+          <ArrowRight className="h-4 w-4 ml-2" />
+        </Button>
+      </CardFooter>
+    </>
+  );
+}
+
 export default function Apply() {
   const [location] = useLocation();
   const { toast } = useToast();
@@ -756,8 +965,17 @@ export default function Apply() {
             </>
           )}
 
-          {/* Step 4: Review & Submit */}
+          {/* Step 4: Upload Documents */}
           {currentStep === 4 && (
+            <UploadDocumentsStep
+              personToken={personToken!}
+              onBack={() => setCurrentStep(3)}
+              onNext={() => setCurrentStep(5)}
+            />
+          )}
+
+          {/* Step 5: Review & Submit */}
+          {currentStep === 5 && (
             <>
               <CardHeader>
                 <CardTitle>Review & Submit</CardTitle>
@@ -839,7 +1057,7 @@ export default function Apply() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
-                <Button variant="outline" onClick={() => setCurrentStep(3)}>
+                <Button variant="outline" onClick={() => setCurrentStep(4)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>

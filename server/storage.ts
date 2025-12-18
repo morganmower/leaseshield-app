@@ -116,6 +116,9 @@ import {
   type InsertRentalDecisionLetter,
   type RentalApplicationEvent,
   type InsertRentalApplicationEvent,
+  retentionSettings,
+  type RetentionSettings,
+  type InsertRetentionSettings,
   defaultCoverPageTemplate,
   defaultFieldSchemaTemplate,
 } from "@shared/schema";
@@ -394,6 +397,11 @@ export interface IStorage {
   // Rental Application System - Event logging
   logRentalApplicationEvent(event: InsertRentalApplicationEvent): Promise<RentalApplicationEvent>;
   getRentalApplicationEvents(submissionId: string): Promise<RentalApplicationEvent[]>;
+
+  // Retention Settings operations
+  getRetentionSettings(propertyId: string): Promise<RetentionSettings | undefined>;
+  upsertRetentionSettings(settings: InsertRetentionSettings): Promise<RetentionSettings>;
+  getAllRetentionSettings(): Promise<RetentionSettings[]>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -1956,6 +1964,40 @@ export class DatabaseStorage implements IStorage {
     return handleDbOperation(async () => {
       return await db.select().from(rentalApplicationEvents).where(eq(rentalApplicationEvents.submissionId, submissionId)).orderBy(desc(rentalApplicationEvents.createdAt));
     }, 'getRentalApplicationEvents');
+  }
+
+  // Retention Settings operations
+  async getRetentionSettings(propertyId: string): Promise<RetentionSettings | undefined> {
+    return handleDbOperation(async () => {
+      const [settings] = await db.select().from(retentionSettings).where(eq(retentionSettings.propertyId, propertyId));
+      return settings;
+    }, 'getRetentionSettings');
+  }
+
+  async upsertRetentionSettings(settings: InsertRetentionSettings): Promise<RetentionSettings> {
+    return handleDbOperation(async () => {
+      const [result] = await db
+        .insert(retentionSettings)
+        .values(settings)
+        .onConflictDoUpdate({
+          target: retentionSettings.propertyId,
+          set: {
+            deniedUploadsDays: settings.deniedUploadsDays,
+            deniedBankStatementsDays: settings.deniedBankStatementsDays,
+            approvedUploadsDays: settings.approvedUploadsDays,
+            approvedBankStatementsDays: settings.approvedBankStatementsDays,
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+      return result;
+    }, 'upsertRetentionSettings');
+  }
+
+  async getAllRetentionSettings(): Promise<RetentionSettings[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(retentionSettings);
+    }, 'getAllRetentionSettings');
   }
 }
 
