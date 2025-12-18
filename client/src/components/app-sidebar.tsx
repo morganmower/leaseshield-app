@@ -15,7 +15,6 @@ import {
   MessageCircle,
   DollarSign,
   Mail,
-  Users,
   FileCheck2,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
@@ -69,16 +68,10 @@ const mainItems = [
     title: "Properties",
     url: "/properties",
     icon: Building2,
-    iconColor: "text-slate-600 dark:text-slate-400",
-  },
-  {
-    title: "Application Links",
-    url: "/rental-applications",
-    icon: Users,
     iconColor: "text-indigo-500 dark:text-indigo-400",
   },
   {
-    title: "Rental Applications",
+    title: "Applications",
     url: "/rental-submissions",
     icon: FileCheck2,
     iconColor: "text-emerald-500 dark:text-emerald-400",

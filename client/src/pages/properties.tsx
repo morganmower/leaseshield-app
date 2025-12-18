@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useLocation, Link } from "wouter";
+import { Link } from "wouter";
 import { queryClient, getAccessToken } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,24 +12,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload } from "lucide-react";
-import type { Property, InsertProperty, SavedDocument, UploadedDocument } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search } from "lucide-react";
+import type { RentalProperty, RentalUnit, RentalApplicationLink, SavedDocument, UploadedDocument } from "@shared/schema";
+import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 
 const US_STATES = [
-  { code: "UT", name: "Utah" },
-  { code: "TX", name: "Texas" },
-  { code: "ND", name: "North Dakota" },
-  { code: "SD", name: "South Dakota" },
-  { code: "NC", name: "North Carolina" },
-  { code: "OH", name: "Ohio" },
-  { code: "MI", name: "Michigan" },
-  { code: "ID", name: "Idaho" },
-  { code: "WY", name: "Wyoming" },
-  { code: "CA", name: "California" },
-  { code: "VA", name: "Virginia" },
-  { code: "NV", name: "Nevada" },
-  { code: "AZ", name: "Arizona" },
-  { code: "FL", name: "Florida" },
+  { value: "UT", label: "Utah" },
+  { value: "TX", label: "Texas" },
+  { value: "ND", label: "North Dakota" },
+  { value: "SD", label: "South Dakota" },
+  { value: "NC", label: "North Carolina" },
+  { value: "OH", label: "Ohio" },
+  { value: "MI", label: "Michigan" },
+  { value: "ID", label: "Idaho" },
+  { value: "WY", label: "Wyoming" },
+  { value: "CA", label: "California" },
+  { value: "VA", label: "Virginia" },
+  { value: "NV", label: "Nevada" },
+  { value: "AZ", label: "Arizona" },
+  { value: "FL", label: "Florida" },
 ];
 
 const PROPERTY_TYPES = [
@@ -42,62 +47,59 @@ const PROPERTY_TYPES = [
   "Other",
 ];
 
+interface PropertyFormData {
+  name: string;
+  address: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  propertyType: string;
+  notes: string;
+}
+
 export default function Properties() {
   const { toast } = useToast();
-  const [, setLocation] = useLocation();
+  const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [deletePropertyId, setDeletePropertyId] = useState<string | null>(null);
-  const [editingProperty, setEditingProperty] = useState<Property | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
-  const [uploadDocumentName, setUploadDocumentName] = useState("");
-  const [uploadPropertyId, setUploadPropertyId] = useState<string>("");
-  const [uploadDescription, setUploadDescription] = useState("");
+  const [editingProperty, setEditingProperty] = useState<RentalProperty | null>(null);
+  const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
+  const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
+  const [addUnitPropertyId, setAddUnitPropertyId] = useState<string | null>(null);
 
-  const [formData, setFormData] = useState<Partial<InsertProperty>>({
+  const [formData, setFormData] = useState<PropertyFormData>({
     name: "",
     address: "",
     city: "",
     state: "",
     zipCode: "",
     propertyType: "",
-    units: 1,
     notes: "",
   });
 
-  const { data: properties = [], isLoading, error: propertiesError } = useQuery<Property[]>({
-    queryKey: ["/api/properties"],
+  const [unitForm, setUnitForm] = useState({ unitLabel: "" });
+  const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
+  const [autoScreening, setAutoScreening] = useState(false);
+
+  const { data: properties = [], isLoading, error } = useQuery<RentalProperty[]>({
+    queryKey: ["/api/rental/properties"],
+    retry: (failureCount, error: any) => {
+      if (error?.status === 403) return false;
+      return failureCount < 3;
+    },
   });
 
-  const { data: savedDocuments = [] } = useQuery<SavedDocument[]>({
-    queryKey: ['/api/saved-documents'],
-  });
-
-  const { data: uploadedDocuments = [] } = useQuery<UploadedDocument[]>({
-    queryKey: ['/api/uploaded-documents'],
-  });
-
-  // If trial expired (API returns 403), show only subscription CTA
-  const isTrialExpired = propertiesError !== null;
-
-  // Calculate document counts per property (combining saved and uploaded documents)
-  const documentCounts = [...savedDocuments, ...uploadedDocuments].reduce((acc, doc) => {
-    if (doc.propertyId) {
-      acc[doc.propertyId] = (acc[doc.propertyId] || 0) + 1;
-    }
-    return acc;
-  }, {} as Record<string, number>);
+  const isTrialExpired = error !== null && (error as any)?.status === 403;
 
   const createMutation = useMutation({
-    mutationFn: async (data: Partial<InsertProperty>) => {
+    mutationFn: async (data: PropertyFormData) => {
       const token = getAccessToken();
-      const response = await fetch("/api/properties", {
+      const response = await fetch("/api/rental/properties", {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
         body: JSON.stringify(data),
@@ -106,131 +108,98 @@ export default function Properties() {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties"] });
       setIsAddDialogOpen(false);
       resetForm();
-      toast({
-        title: "Property Added",
-        description: "Your property has been added successfully.",
-      });
+      toast({ title: "Property Added", description: "Your property has been added successfully." });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to add property. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to add property. Please try again.", variant: "destructive" });
     },
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<InsertProperty> }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean }) => {
       const token = getAccessToken();
-      const response = await fetch(`/api/properties/${id}`, {
-        method: "PUT",
-        headers: { 
+      const response = await fetch(`/api/rental/properties/${id}`, {
+        method: "PATCH",
+        headers: {
           "Content-Type": "application/json",
-          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties"] });
       setIsEditDialogOpen(false);
       setEditingProperty(null);
       resetForm();
-      toast({
-        title: "Property Updated",
-        description: "Your property has been updated successfully.",
-      });
+      toast({ title: "Property Updated", description: "Your property has been updated successfully." });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to update property. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to update property. Please try again.", variant: "destructive" });
     },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
       const token = getAccessToken();
-      const response = await fetch(`/api/properties/${id}`, {
+      const response = await fetch(`/api/rental/properties/${id}`, {
         method: "DELETE",
         credentials: "include",
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!response.ok) throw new Error("Failed to delete property");
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/properties"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties"] });
       setDeletePropertyId(null);
-      toast({
-        title: "Property Deleted",
-        description: "Your property has been deleted successfully.",
-      });
+      toast({ title: "Property Deleted", description: "Your property has been deleted successfully." });
     },
     onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to delete property. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to delete property. Please try again.", variant: "destructive" });
     },
   });
 
-  const uploadMutation = useMutation({
-    mutationFn: async ({ file, documentName, propertyId, description }: {
-      file: File;
-      documentName: string;
-      propertyId?: string;
-      description?: string;
-    }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('fileName', documentName);
-      if (propertyId) {
-        formData.append('propertyId', propertyId);
-      }
-      if (description) {
-        formData.append('description', description);
-      }
-      
+  const createUnitMutation = useMutation({
+    mutationFn: async ({ propertyId, data, createLink }: { propertyId: string; data: typeof unitForm; createLink?: boolean }) => {
       const token = getAccessToken();
-      const response = await fetch('/api/uploaded-documents', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData,
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      const response = await fetch(`/api/rental/properties/${propertyId}/units`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ ...data, createLink }),
       });
-      if (!response.ok) throw new Error('Failed to upload document');
+      if (!response.ok) throw new Error("Failed to create unit");
       return response.json();
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/saved-documents'] });
-      setIsUploadDialogOpen(false);
-      setUploadFile(null);
-      setUploadDocumentName("");
-      setUploadPropertyId("");
-      setUploadDescription("");
-      toast({
-        title: "Document Uploaded",
-        description: "Your document has been uploaded successfully.",
-      });
+    onSuccess: (result, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", variables.propertyId, "units"] });
+      if (result.unit?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/rental/units", result.unit.id, "links"] });
+      }
+      setIsAddUnitOpen(false);
+      setAddUnitPropertyId(null);
+      setUnitForm({ unitLabel: "" });
+      if (variables.createLink && result.link) {
+        const url = `${window.location.origin}/apply/${result.link.publicToken}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Application Link Created", description: "Link has been copied to your clipboard!" });
+        setExpandedPropertyId(variables.propertyId);
+      } else {
+        toast({ title: "Unit Created", description: "The unit has been added to the property." });
+      }
     },
     onError: () => {
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload document. Please try again.",
-        variant: "destructive",
-      });
+      toast({ title: "Error", description: "Failed to create unit.", variant: "destructive" });
     },
   });
 
@@ -242,15 +211,13 @@ export default function Properties() {
       state: "",
       zipCode: "",
       propertyType: "",
-      units: 1,
       notes: "",
     });
+    setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
+    setAutoScreening(false);
   };
 
-  // Helper to safely get string value (convert null to empty string)
-  const safeStringValue = (value: string | null | undefined): string => value || "";
-
-  const handleEdit = (property: Property) => {
+  const handleEdit = (property: RentalProperty) => {
     setEditingProperty(property);
     setFormData({
       name: property.name || "",
@@ -258,64 +225,33 @@ export default function Properties() {
       city: property.city || "",
       state: property.state || "",
       zipCode: property.zipCode || "",
-      propertyType: property.propertyType || "",
-      units: property.units ?? 1,
-      notes: property.notes || "",
+      propertyType: (property as any).propertyType || "",
+      notes: (property as any).notes || "",
     });
+    setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
+    setAutoScreening((property as any).autoScreening ?? false);
     setIsEditDialogOpen(true);
   };
 
-  const handleUploadForProperty = (propertyId: string) => {
-    setUploadPropertyId(propertyId);
-    setUploadFile(null);
-    setUploadDocumentName("");
-    setUploadDescription("");
-    setIsUploadDialogOpen(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const maxSize = 20 * 1024 * 1024; // 20MB
-    if (file.size > maxSize) {
-      toast({
-        title: "File Too Large",
-        description: "Please select a file smaller than 20MB.",
-        variant: "destructive",
-      });
-      return;
+  const handleAddUnit = (propertyId: string, createLinkImmediately?: boolean) => {
+    setAddUnitPropertyId(propertyId);
+    setUnitForm({ unitLabel: "" });
+    
+    if (createLinkImmediately) {
+      createUnitMutation.mutate({ propertyId, data: { unitLabel: "" }, createLink: true });
+    } else {
+      setIsAddUnitOpen(true);
     }
-
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      toast({
-        title: "Invalid File Type",
-        description: "Please select a PDF, DOC, or DOCX file.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setUploadFile(file);
   };
 
   const handleSubmit = () => {
-    if (!formData.name || !formData.address) {
-      toast({
-        title: "Missing Fields",
-        description: "Please fill in property name and address.",
-        variant: "destructive",
-      });
+    if (!formData.name) {
+      toast({ title: "Missing Fields", description: "Please fill in property name.", variant: "destructive" });
       return;
     }
 
     if (editingProperty) {
-      updateMutation.mutate({ id: editingProperty.id, data: formData });
+      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening });
     } else {
       createMutation.mutate(formData);
     }
@@ -323,7 +259,7 @@ export default function Properties() {
 
   const filteredProperties = properties.filter(property =>
     property.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    property.address.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    property.address?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     property.city?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -342,7 +278,6 @@ export default function Properties() {
     );
   }
 
-  // If trial expired (API returns 403), show only subscription CTA
   if (isTrialExpired) {
     return (
       <div className="h-full overflow-auto flex items-center justify-center">
@@ -350,10 +285,10 @@ export default function Properties() {
           <div className="text-center">
             <Building2 className="h-16 w-16 text-primary mx-auto mb-6" />
             <h2 className="text-2xl font-display font-semibold text-foreground mb-3">
-              Subscribe to receive updates
+              Subscribe to Manage Properties
             </h2>
             <p className="text-muted-foreground mb-8">
-              Organize your properties, track documents, and access all management features
+              Organize your properties, manage units, collect applications, and track documents
             </p>
             <Link to="/subscribe">
               <Button size="lg" data-testid="button-subscribe-properties-cta">
@@ -371,106 +306,126 @@ export default function Properties() {
       <div className="max-w-7xl mx-auto p-8">
         <div className="mb-8">
           <h1 className="text-4xl font-display font-bold mb-2">Properties</h1>
-          <p className="text-muted-foreground">Manage your rental properties</p>
+          <p className="text-muted-foreground">Manage your rental properties, units, and application links</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
-          <Input
-            placeholder="Search properties..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="max-w-sm"
-            data-testid="input-search-properties"
-          />
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button data-testid="button-add-property">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search properties..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-9"
+              data-testid="input-search-properties"
+            />
+          </div>
+          <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-property">
+            <Plus className="h-4 w-4 mr-2" />
+            Add Property
+          </Button>
+        </div>
+
+        {filteredProperties.length === 0 ? (
+          <Card className="p-12">
+            <div className="text-center">
+              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+              <h3 className="text-lg font-medium mb-2">No properties yet</h3>
+              <p className="text-muted-foreground mb-4">
+                Add your first property to start managing units and collecting applications
+              </p>
+              <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Property
               </Button>
-            </DialogTrigger>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-              <DialogHeader>
-                <DialogTitle>Add New Property</DialogTitle>
-                <DialogDescription>
-                  Enter the details of your property below.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-4 py-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="name">Property Name *</Label>
+            </div>
+          </Card>
+        ) : (
+          <div className="space-y-4">
+            {filteredProperties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                property={property}
+                isExpanded={expandedPropertyId === property.id}
+                onToggleExpand={() => setExpandedPropertyId(expandedPropertyId === property.id ? null : property.id)}
+                onEdit={() => handleEdit(property)}
+                onDelete={() => setDeletePropertyId(property.id)}
+                onAddUnit={(createLink) => handleAddUnit(property.id, createLink)}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Add Property Dialog */}
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+          <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Add Property</DialogTitle>
+              <DialogDescription>Enter the details of your rental property</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Property Name *</Label>
+                <Input
+                  id="name"
+                  placeholder="e.g., Sunset Apartments"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  data-testid="input-property-name"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="address">Street Address</Label>
+                <Input
+                  id="address"
+                  placeholder="123 Main Street"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  data-testid="input-property-address"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City</Label>
                   <Input
-                    id="name"
-                    placeholder="e.g., Main Street Duplex"
-                    value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    data-testid="input-property-name"
+                    id="city"
+                    placeholder="Salt Lake City"
+                    value={formData.city}
+                    onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+                    data-testid="input-property-city"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="address">Address *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="state">State</Label>
+                  <Select
+                    value={formData.state}
+                    onValueChange={(value) => setFormData({ ...formData, state: value })}
+                  >
+                    <SelectTrigger data-testid="select-property-state">
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {US_STATES.map((state) => (
+                        <SelectItem key={state.value} value={state.value}>
+                          {state.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="zipCode">ZIP Code</Label>
                   <Input
-                    id="address"
-                    placeholder="Street address"
-                    value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    data-testid="input-property-address"
+                    id="zipCode"
+                    placeholder="84101"
+                    value={formData.zipCode}
+                    onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
+                    data-testid="input-property-zip"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="city">City</Label>
-                    <Input
-                      id="city"
-                      placeholder="City"
-                      value={formData.city}
-                      onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-                      data-testid="input-property-city"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="state">State</Label>
-                    <Select
-                      value={formData.state}
-                      onValueChange={(value) => setFormData({ ...formData, state: value })}
-                    >
-                      <SelectTrigger data-testid="select-property-state">
-                        <SelectValue placeholder="Select state" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {US_STATES.map((state) => (
-                          <SelectItem key={state.code} value={state.code}>
-                            {state.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="grid gap-2">
-                    <Label htmlFor="zipCode">Zip Code</Label>
-                    <Input
-                      id="zipCode"
-                      placeholder="12345"
-                      value={formData.zipCode}
-                      onChange={(e) => setFormData({ ...formData, zipCode: e.target.value })}
-                      data-testid="input-property-zip"
-                    />
-                  </div>
-                  <div className="grid gap-2">
-                    <Label htmlFor="units">Number of Units</Label>
-                    <Input
-                      id="units"
-                      type="number"
-                      min="1"
-                      value={formData.units}
-                      onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 1 })}
-                      data-testid="input-property-units"
-                    />
-                  </div>
-                </div>
-                <div className="grid gap-2">
+                <div className="space-y-2">
                   <Label htmlFor="propertyType">Property Type</Label>
                   <Select
                     value={formData.propertyType}
@@ -488,161 +443,41 @@ export default function Properties() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="notes">Notes</Label>
-                  <Textarea
-                    id="notes"
-                    placeholder="Additional notes about this property..."
-                    value={formData.notes}
-                    onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    rows={3}
-                    data-testid="input-property-notes"
-                  />
-                </div>
               </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button onClick={handleSubmit} disabled={createMutation.isPending} data-testid="button-submit-property">
-                  {createMutation.isPending ? "Adding..." : "Add Property"}
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-        </div>
-
-        {filteredProperties.length === 0 ? (
-          <Card className="border-dashed">
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Properties Yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Get started by adding your first property.
-              </p>
-              <Button onClick={() => setIsAddDialogOpen(true)} data-testid="button-add-first-property">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Property
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="Additional notes about this property..."
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  className="min-h-[80px]"
+                  data-testid="input-property-notes"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!formData.name || createMutation.isPending}
+                data-testid="button-submit-property"
+              >
+                {createMutation.isPending ? "Creating..." : "Add Property"}
               </Button>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredProperties.map((property) => (
-              <Card key={property.id} className="hover-elevate cursor-pointer" data-testid={`card-property-${property.id}`}>
-                <CardHeader 
-                  className="cursor-pointer" 
-                  onClick={() => setLocation(`/properties/${property.id}`)}
-                >
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex-1">
-                      <CardTitle className="text-lg">{property.name}</CardTitle>
-                      <CardDescription className="flex items-start gap-1 mt-1">
-                        <MapPin className="h-4 w-4 mt-0.5 shrink-0" />
-                        <span>{property.address}</span>
-                      </CardDescription>
-                    </div>
-                    <Building2 className="h-6 w-6 text-muted-foreground" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2 text-sm">
-                    {property.city && property.state && (
-                      <div>
-                        <span className="text-muted-foreground">Location: </span>
-                        <span>{property.city}, {property.state} {property.zipCode}</span>
-                      </div>
-                    )}
-                    {property.propertyType && (
-                      <div>
-                        <span className="text-muted-foreground">Type: </span>
-                        <span>{property.propertyType}</span>
-                      </div>
-                    )}
-                    {property.units && property.units > 1 && (
-                      <div>
-                        <span className="text-muted-foreground">Units: </span>
-                        <span>{property.units}</span>
-                      </div>
-                    )}
-                    {property.notes && (
-                      <div className="pt-2 border-t">
-                        <p className="text-muted-foreground text-xs line-clamp-2">{property.notes}</p>
-                      </div>
-                    )}
-                    <div className="pt-2 border-t">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm text-muted-foreground">
-                            {documentCounts[property.id] || 0} {documentCounts[property.id] === 1 ? 'document' : 'documents'}
-                          </span>
-                        </div>
-                        {documentCounts[property.id] > 0 && (
-                          <Button
-                            variant="link"
-                            size="sm"
-                            className="h-auto p-0"
-                            onClick={() => {
-                              setLocation('/my-documents');
-                              setTimeout(() => {
-                                const select = document.querySelector('[data-testid="select-property-filter"]');
-                                if (select) {
-                                  (select as HTMLElement).click();
-                                }
-                              }, 100);
-                            }}
-                            data-testid={`link-view-documents-${property.id}`}
-                          >
-                            View
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-4">
-                    <Button
-                      size="sm"
-                      onClick={() => setLocation(`/properties/${property.id}`)}
-                      className="flex-1"
-                      data-testid={`button-view-property-${property.id}`}
-                    >
-                      View Details
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); handleEdit(property); }}
-                      data-testid={`button-edit-property-${property.id}`}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={(e) => { e.stopPropagation(); setDeletePropertyId(property.id); }}
-                      className="text-destructive hover:text-destructive"
-                      data-testid={`button-delete-property-${property.id}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
+        {/* Edit Property Dialog */}
         <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Property</DialogTitle>
-              <DialogDescription>
-                Update the details of your property below.
-              </DialogDescription>
+              <DialogDescription>Update property details and settings</DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
                 <Label htmlFor="edit-name">Property Name *</Label>
                 <Input
                   id="edit-name"
@@ -651,8 +486,8 @@ export default function Properties() {
                   data-testid="input-edit-property-name"
                 />
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-address">Address *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="edit-address">Street Address</Label>
                 <Input
                   id="edit-address"
                   value={formData.address}
@@ -661,7 +496,7 @@ export default function Properties() {
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
+                <div className="space-y-2">
                   <Label htmlFor="edit-city">City</Label>
                   <Input
                     id="edit-city"
@@ -670,19 +505,19 @@ export default function Properties() {
                     data-testid="input-edit-property-city"
                   />
                 </div>
-                <div className="grid gap-2">
+                <div className="space-y-2">
                   <Label htmlFor="edit-state">State</Label>
                   <Select
                     value={formData.state}
                     onValueChange={(value) => setFormData({ ...formData, state: value })}
                   >
                     <SelectTrigger data-testid="select-edit-property-state">
-                      <SelectValue />
+                      <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
                       {US_STATES.map((state) => (
-                        <SelectItem key={state.code} value={state.code}>
-                          {state.name}
+                        <SelectItem key={state.value} value={state.value}>
+                          {state.label}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -690,8 +525,8 @@ export default function Properties() {
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-zipCode">Zip Code</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="edit-zipCode">ZIP Code</Label>
                   <Input
                     id="edit-zipCode"
                     value={formData.zipCode}
@@ -699,166 +534,392 @@ export default function Properties() {
                     data-testid="input-edit-property-zip"
                   />
                 </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="edit-units">Number of Units</Label>
-                  <Input
-                    id="edit-units"
-                    type="number"
-                    min="1"
-                    value={formData.units}
-                    onChange={(e) => setFormData({ ...formData, units: parseInt(e.target.value) || 1 })}
-                    data-testid="input-edit-property-units"
-                  />
+                <div className="space-y-2">
+                  <Label htmlFor="edit-propertyType">Property Type</Label>
+                  <Select
+                    value={formData.propertyType}
+                    onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
+                  >
+                    <SelectTrigger data-testid="select-edit-property-type">
+                      <SelectValue placeholder="Select type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PROPERTY_TYPES.map((type) => (
+                        <SelectItem key={type} value={type}>
+                          {type}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="grid gap-2">
-                <Label htmlFor="edit-propertyType">Property Type</Label>
-                <Select
-                  value={formData.propertyType}
-                  onValueChange={(value) => setFormData({ ...formData, propertyType: value })}
-                >
-                  <SelectTrigger data-testid="select-edit-property-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PROPERTY_TYPES.map((type) => (
-                      <SelectItem key={type} value={type}>
-                        {type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid gap-2">
+              <div className="space-y-2">
                 <Label htmlFor="edit-notes">Notes</Label>
                 <Textarea
                   id="edit-notes"
                   value={formData.notes}
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                  rows={3}
+                  className="min-h-[80px]"
                   data-testid="input-edit-property-notes"
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Required Documents for Applications</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select which documents applicants must upload when applying
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-id" className="text-sm">ID / Driver's License</Label>
+                      <p className="text-xs text-muted-foreground">Always required</p>
+                    </div>
+                    <Switch id="req-id" checked={true} disabled data-testid="switch-doc-id" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-income" className="text-sm">Proof of Income</Label>
+                      <p className="text-xs text-muted-foreground">Paystubs, employment letter, etc.</p>
+                    </div>
+                    <Switch 
+                      id="req-income" 
+                      checked={docRequirements.income} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, income: checked })}
+                      data-testid="switch-doc-income"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-bank" className="text-sm">Bank Statements</Label>
+                      <p className="text-xs text-muted-foreground">Recent bank statements</p>
+                    </div>
+                    <Switch 
+                      id="req-bank" 
+                      checked={docRequirements.bank} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, bank: checked })}
+                      data-testid="switch-doc-bank"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-reference" className="text-sm">Reference Letters</Label>
+                      <p className="text-xs text-muted-foreground">From previous landlords or employers</p>
+                    </div>
+                    <Switch 
+                      id="req-reference" 
+                      checked={docRequirements.reference} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, reference: checked })}
+                      data-testid="switch-doc-reference"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div>
+                  <Label htmlFor="auto-screening" className="text-sm">Auto-Screening</Label>
+                  <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
+                </div>
+                <Switch 
+                  id="auto-screening" 
+                  checked={autoScreening} 
+                  onCheckedChange={setAutoScreening}
+                  data-testid="switch-auto-screening"
                 />
               </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancel
-              </Button>
-              <Button onClick={handleSubmit} disabled={updateMutation.isPending} data-testid="button-update-property">
-                {updateMutation.isPending ? "Updating..." : "Update Property"}
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+              <Button
+                onClick={handleSubmit}
+                disabled={!formData.name || updateMutation.isPending}
+                data-testid="button-update-property"
+              >
+                {updateMutation.isPending ? "Saving..." : "Save Changes"}
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
 
+        {/* Delete Confirmation */}
         <AlertDialog open={!!deletePropertyId} onOpenChange={() => setDeletePropertyId(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
               <AlertDialogTitle>Delete Property?</AlertDialogTitle>
               <AlertDialogDescription>
-                This will permanently delete this property. Documents associated with this property will not be deleted.
+                This will permanently delete this property, all its units, and all application links. This action cannot be undone.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Cancel</AlertDialogCancel>
               <AlertDialogAction
                 onClick={() => deletePropertyId && deleteMutation.mutate(deletePropertyId)}
                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 data-testid="button-confirm-delete"
               >
-                Delete
+                Delete Property
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
 
-        <Dialog 
-          open={isUploadDialogOpen} 
-          onOpenChange={(open) => {
-            setIsUploadDialogOpen(open);
-            if (!open) {
-              setUploadFile(null);
-              setUploadDocumentName("");
-              setUploadDescription("");
-              setUploadPropertyId("");
-            }
-          }}
-        >
-          <DialogContent className="max-w-2xl" data-testid="dialog-upload-document-property">
+        {/* Add Unit Dialog */}
+        <Dialog open={isAddUnitOpen} onOpenChange={setIsAddUnitOpen}>
+          <DialogContent className="sm:max-w-[400px]">
             <DialogHeader>
-              <DialogTitle>Upload Document</DialogTitle>
+              <DialogTitle>Add Unit</DialogTitle>
               <DialogDescription>
-                Upload a document for {properties.find(p => p.id === uploadPropertyId)?.name || "this property"}
+                Add a unit to this property. Leave blank for single-unit properties.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
-              <div className="grid gap-2">
-                <Label htmlFor="file-upload">File (PDF, DOC, DOCX - Max 20MB) *</Label>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="unitLabel">Unit Label</Label>
                 <Input
-                  id="file-upload"
-                  type="file"
-                  accept=".pdf,.doc,.docx"
-                  onChange={handleFileChange}
-                  data-testid="input-file-upload-property"
-                />
-                {uploadFile && (
-                  <p className="text-sm text-muted-foreground">
-                    Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
-                  </p>
-                )}
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="document-name-property">Document Name *</Label>
-                <Input
-                  id="document-name-property"
-                  placeholder="My Lease Agreement"
-                  value={uploadDocumentName}
-                  onChange={(e) => setUploadDocumentName(e.target.value)}
-                  data-testid="input-document-name-property"
-                  required
-                />
-                <p className="text-sm text-muted-foreground">Give this document a custom name</p>
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="upload-description-property">Description (Optional)</Label>
-                <Textarea
-                  id="upload-description-property"
-                  placeholder="Add any notes about this document..."
-                  value={uploadDescription}
-                  onChange={(e) => setUploadDescription(e.target.value)}
-                  rows={3}
-                  data-testid="input-description-property"
+                  id="unitLabel"
+                  placeholder="e.g., Unit A, 101, Main House"
+                  value={unitForm.unitLabel}
+                  onChange={(e) => setUnitForm({ unitLabel: e.target.value })}
+                  data-testid="input-unit-label"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button 
-                variant="outline" 
-                onClick={() => setIsUploadDialogOpen(false)}
+            <DialogFooter className="flex-col sm:flex-row gap-2">
+              <Button variant="outline" onClick={() => setIsAddUnitOpen(false)}>Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: false })}
+                disabled={createUnitMutation.isPending}
+                data-testid="button-create-unit-only"
               >
-                Cancel
+                Create Unit Only
               </Button>
-              <Button 
-                onClick={() => {
-                  if (uploadFile && uploadDocumentName.trim()) {
-                    uploadMutation.mutate({
-                      file: uploadFile,
-                      documentName: uploadDocumentName.trim(),
-                      propertyId: uploadPropertyId,
-                      description: uploadDescription || undefined,
-                    });
-                  }
-                }} 
-                disabled={!uploadFile || !uploadDocumentName.trim() || uploadMutation.isPending}
-                data-testid="button-confirm-upload-property"
+              <Button
+                onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: true })}
+                disabled={createUnitMutation.isPending}
+                data-testid="button-create-unit-with-link"
               >
-                {uploadMutation.isPending ? "Uploading..." : "Upload"}
+                Create with Link
               </Button>
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      </div>
+    </div>
+  );
+}
+
+function PropertyCard({
+  property,
+  isExpanded,
+  onToggleExpand,
+  onEdit,
+  onDelete,
+  onAddUnit,
+}: {
+  property: RentalProperty;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+  onEdit: () => void;
+  onDelete: () => void;
+  onAddUnit: (createLink?: boolean) => void;
+}) {
+  const { toast } = useToast();
+  
+  const { data: units = [] } = useQuery<RentalUnit[]>({
+    queryKey: ["/api/rental/properties", property.id, "units"],
+    enabled: isExpanded,
+  });
+
+  const getPropertyTypeColor = (type: string | null | undefined) => {
+    const colors: Record<string, string> = {
+      "Single Family": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
+      "Multi-Family": "bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200",
+      "Apartment": "bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200",
+      "Condo": "bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200",
+      "Townhouse": "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200",
+      "Commercial": "bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200",
+    };
+    return colors[type || ""] || "bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200";
+  };
+
+  return (
+    <Card data-testid={`card-property-${property.id}`}>
+      <CardHeader className="pb-2">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1">
+              <Building2 className="h-5 w-5 text-primary flex-shrink-0" />
+              <CardTitle className="text-lg truncate">{property.name}</CardTitle>
+              {(property as any).propertyType && (
+                <Badge className={`text-xs ${getPropertyTypeColor((property as any).propertyType)}`}>
+                  {(property as any).propertyType}
+                </Badge>
+              )}
+            </div>
+            {property.address && (
+              <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <MapPin className="h-3 w-3" />
+                <span className="truncate">
+                  {property.address}
+                  {property.city && `, ${property.city}`}
+                  {property.state && `, ${property.state}`}
+                  {property.zipCode && ` ${property.zipCode}`}
+                </span>
+              </div>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <Button size="icon" variant="ghost" onClick={onEdit} data-testid={`button-edit-property-${property.id}`}>
+              <Edit className="h-4 w-4" />
+            </Button>
+            <Button size="icon" variant="ghost" onClick={onDelete} data-testid={`button-delete-property-${property.id}`}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {(property as any).notes && (
+          <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{(property as any).notes}</p>
+        )}
+        
+        <div className="flex flex-wrap items-center gap-2 mb-3">
+          <Button size="sm" variant="outline" onClick={() => onAddUnit(true)} data-testid={`button-create-link-${property.id}`}>
+            <LinkIcon className="h-4 w-4 mr-1" />
+            Create Application Link
+          </Button>
+          <Button size="sm" variant="ghost" onClick={() => onAddUnit(false)} data-testid={`button-add-unit-${property.id}`}>
+            <Plus className="h-4 w-4 mr-1" />
+            Add Unit
+          </Button>
+        </div>
+
+        <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
+          <CollapsibleTrigger asChild>
+            <Button variant="ghost" size="sm" className="w-full justify-between" data-testid={`button-expand-${property.id}`}>
+              <span className="flex items-center gap-2">
+                <Home className="h-4 w-4" />
+                {units.length} Unit{units.length !== 1 ? "s" : ""}
+              </span>
+              {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+            </Button>
+          </CollapsibleTrigger>
+          <CollapsibleContent className="pt-2">
+            {units.length === 0 ? (
+              <p className="text-sm text-muted-foreground text-center py-4">
+                No units yet. Create an application link to add your first unit.
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {units.map((unit) => (
+                  <UnitCard key={unit.id} unit={unit} propertyId={property.id} />
+                ))}
+              </div>
+            )}
+          </CollapsibleContent>
+        </Collapsible>
+      </CardContent>
+    </Card>
+  );
+}
+
+function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }) {
+  const { toast } = useToast();
+  
+  const { data: links = [] } = useQuery<RentalApplicationLink[]>({
+    queryKey: ["/api/rental/units", unit.id, "links"],
+  });
+
+  const createLinkMutation = useMutation({
+    mutationFn: async () => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/rental/units/${unit.id}/links`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to create link");
+      return response.json();
+    },
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/units", unit.id, "links"] });
+      if (result.publicToken) {
+        const url = `${window.location.origin}/apply/${result.publicToken}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Link Created", description: "Application link copied to clipboard!" });
+      }
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create application link.", variant: "destructive" });
+    },
+  });
+
+  const copyLink = (token: string) => {
+    const url = `${window.location.origin}/apply/${token}`;
+    navigator.clipboard.writeText(url);
+    toast({ title: "Copied!", description: "Application link copied to clipboard." });
+  };
+
+  const activeLinks = links.filter(l => l.isActive);
+
+  return (
+    <div className="bg-muted/50 rounded-lg p-3" data-testid={`card-unit-${unit.id}`}>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <Home className="h-4 w-4 text-muted-foreground" />
+          <span className="font-medium text-sm">{unit.unitLabel || "Main Unit"}</span>
+        </div>
+        <div className="flex items-center gap-2">
+          {activeLinks.length > 0 ? (
+            activeLinks.map((link) => (
+              <div key={link.id} className="flex items-center gap-1">
+                <Badge variant="secondary" className="text-xs">
+                  Active Link
+                </Badge>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => copyLink(link.publicToken)}
+                  data-testid={`button-copy-link-${link.id}`}
+                >
+                  <Copy className="h-3 w-3" />
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-7 w-7"
+                  onClick={() => window.open(`/apply/${link.publicToken}`, "_blank")}
+                  data-testid={`button-open-link-${link.id}`}
+                >
+                  <ExternalLink className="h-3 w-3" />
+                </Button>
+              </div>
+            ))
+          ) : (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => createLinkMutation.mutate()}
+              disabled={createLinkMutation.isPending}
+              data-testid={`button-create-unit-link-${unit.id}`}
+            >
+              <LinkIcon className="h-3 w-3 mr-1" />
+              Create Link
+            </Button>
+          )}
+        </div>
       </div>
     </div>
   );

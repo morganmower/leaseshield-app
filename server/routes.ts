@@ -3488,7 +3488,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.post('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson } = req.body;
       
       if (!name) {
         return res.status(400).json({ message: "Property name is required" });
@@ -3501,6 +3501,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         city: city || null,
         state: state || null,
         zipCode: zipCode || null,
+        propertyType: propertyType || null,
+        notes: notes || null,
         defaultCoverPageJson: defaultCoverPageJson || defaultCoverPageTemplate,
         defaultFieldSchemaJson: defaultFieldSchemaJson || defaultFieldSchemaTemplate,
       });
@@ -3515,7 +3517,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.patch('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes } = req.body;
       
       const property = await storage.updateRentalProperty(req.params.id, userId, {
         name,
@@ -3523,6 +3525,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         city,
         state,
         zipCode,
+        propertyType,
+        notes,
         defaultCoverPageJson,
         defaultFieldSchemaJson,
         requiredDocumentTypes,

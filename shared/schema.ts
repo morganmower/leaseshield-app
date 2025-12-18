@@ -1011,6 +1011,8 @@ export const rentalProperties = pgTable("rental_properties", {
   city: text("city"),
   state: varchar("state", { length: 2 }),
   zipCode: varchar("zip_code", { length: 10 }),
+  propertyType: varchar("property_type", { length: 50 }), // Single Family, Multi-Family, Apartment, etc.
+  notes: text("notes"), // Landlord notes about the property
   defaultCoverPageJson: jsonb("default_cover_page_json").notNull(), // Cover page content (title, intro, sections)
   defaultFieldSchemaJson: jsonb("default_field_schema_json").notNull(), // Field visibility toggles
   requiredDocumentTypes: jsonb("required_document_types").$type<DocumentRequirementsConfig>(), // Which documents are required
