@@ -968,8 +968,25 @@ export default function RentalSubmissions() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => {
-                                    window.open(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
+                                  onClick={async () => {
+                                    try {
+                                      const token = getAccessToken();
+                                      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, {
+                                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                      });
+                                      if (!res.ok) throw new Error("Download failed");
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = file.originalName;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
+                                      URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      toast({ title: "Error", description: "Failed to download file", variant: "destructive" });
+                                    }
                                   }}
                                   data-testid={`button-download-${file.id}`}
                                 >
