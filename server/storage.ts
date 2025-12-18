@@ -343,6 +343,7 @@ export interface IStorage {
   // Rental Application System - Property operations
   getRentalPropertiesByUserId(userId: string): Promise<RentalProperty[]>;
   getRentalProperty(id: string, userId: string): Promise<RentalProperty | undefined>;
+  getRentalPropertyById(id: string): Promise<RentalProperty | undefined>; // Internal use only - no ownership check
   createRentalProperty(property: InsertRentalProperty): Promise<RentalProperty>;
   updateRentalProperty(id: string, userId: string, property: Partial<InsertRentalProperty>): Promise<RentalProperty | null>;
   deleteRentalProperty(id: string, userId: string): Promise<boolean>;
@@ -1705,6 +1706,13 @@ export class DatabaseStorage implements IStorage {
       const [property] = await db.select().from(rentalProperties).where(and(eq(rentalProperties.id, id), eq(rentalProperties.userId, userId)));
       return property;
     }, 'getRentalProperty');
+  }
+
+  async getRentalPropertyById(id: string): Promise<RentalProperty | undefined> {
+    return handleDbOperation(async () => {
+      const [property] = await db.select().from(rentalProperties).where(eq(rentalProperties.id, id));
+      return property;
+    }, 'getRentalPropertyById');
   }
 
   async createRentalProperty(property: InsertRentalProperty): Promise<RentalProperty> {

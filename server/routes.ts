@@ -4513,6 +4513,80 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         metadataJson: { personId: person.id },
       });
 
+      // Auto-screening: If all completed and property has autoScreening enabled, trigger screening
+      if (allCompleted) {
+        try {
+          const submission = await storage.getRentalSubmission(person.submissionId);
+          if (submission) {
+            const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+            if (link) {
+              const unit = await storage.getRentalUnit(link.unitId);
+              if (unit) {
+                const property = await storage.getRentalPropertyById(unit.propertyId);
+                if (property && (property as any).autoScreening) {
+                  // Auto-request screening for primary applicant (mirror manual screening flow)
+                  // Note: AppScreen sends an invitation email - applicant enters SSN directly on Western Verify portal
+                  const primaryApplicant = allPeople.find(p => p.role === 'applicant') || person;
+                  const formData = (primaryApplicant.formJson as Record<string, any>) || {};
+                  
+                  // Check if screening already exists
+                  const existingOrder = await storage.getRentalScreeningOrder(person.submissionId);
+                  
+                  // Only need name and email for AppScreen invitation flow
+                  const hasRequiredData = primaryApplicant.firstName && 
+                                         primaryApplicant.lastName && 
+                                         primaryApplicant.email;
+                  
+                  if (!existingOrder && hasRequiredData) {
+                    // Import DigitalDelve service and trigger screening
+                    const { processScreeningRequest } = await import('./digitalDelveService');
+                    
+                    // Construct base URL for webhook callbacks
+                    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+                    const host = req.headers['x-forwarded-host'] || req.headers.host;
+                    const baseUrl = `${protocol}://${host}`;
+                    
+                    // Build applicant data - SSN/DOB collected by Western Verify portal directly
+                    const result = await processScreeningRequest(
+                      person.submissionId,
+                      {
+                        firstName: primaryApplicant.firstName || "",
+                        lastName: primaryApplicant.lastName || "",
+                        email: primaryApplicant.email || "",
+                        phone: (primaryApplicant as any).phone || formData.phone,
+                      },
+                      baseUrl
+                    );
+                    
+                    if (result.success) {
+                      await storage.updateRentalSubmission(person.submissionId, { status: 'screening_requested' });
+                      await storage.logRentalApplicationEvent({
+                        submissionId: person.submissionId,
+                        eventType: 'screening_requested',
+                        metadataJson: { autoScreening: true, personId: primaryApplicant.id },
+                      });
+                    } else {
+                      console.error(`Auto-screening failed for submission ${person.submissionId}:`, result.error);
+                    }
+                  } else if (!existingOrder && !hasRequiredData) {
+                    // Log that auto-screening was skipped due to missing required data
+                    console.log(`Auto-screening skipped for submission ${person.submissionId}: missing name or email`);
+                    await storage.logRentalApplicationEvent({
+                      submissionId: person.submissionId,
+                      eventType: 'auto_screening_skipped',
+                      metadataJson: { reason: 'Missing applicant name or email' },
+                    });
+                  }
+                }
+              }
+            }
+          }
+        } catch (screeningError) {
+          // Log but don't fail the submission if auto-screening fails
+          console.error("Auto-screening error (non-fatal):", screeningError);
+        }
+      }
+
       res.json({ success: true, status: allCompleted ? "submitted" : "in_progress" });
     } catch (error) {
       console.error("Error submitting application:", error);
