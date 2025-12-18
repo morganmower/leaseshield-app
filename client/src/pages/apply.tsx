@@ -48,6 +48,13 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
 
+interface DocumentRequirementsConfig {
+  id: boolean;
+  income: boolean;
+  bank: boolean;
+  reference: boolean;
+}
+
 interface ApplicationLinkData {
   id: string;
   propertyName: string;
@@ -64,6 +71,7 @@ interface ApplicationLinkData {
     historyRules: { minAddressYears: number; minEmploymentYears: number };
     uploads: Record<string, { required: boolean; label: string }>;
   };
+  documentRequirements?: DocumentRequirementsConfig;
 }
 
 interface PersonData {
@@ -95,15 +103,21 @@ interface UploadedFile {
   createdAt: string;
 }
 
-const UPLOAD_TYPES = [
-  { id: "government_id", label: "Government-issued ID", required: true },
-  { id: "paystubs", label: "Recent Paystubs", required: true },
-  { id: "bank_statements", label: "Bank Statements", required: false },
-  { id: "tax_returns", label: "Tax Returns", required: false },
+const getUploadTypes = (requirements?: DocumentRequirementsConfig) => [
+  { id: "id", label: "Government-issued ID", required: true }, // Always required
+  { id: "income", label: "Proof of Income (paystubs, employment letter)", required: requirements?.income ?? false },
+  { id: "bank", label: "Bank Statements", required: requirements?.bank ?? false },
+  { id: "reference", label: "Reference Letters", required: requirements?.reference ?? false },
   { id: "other", label: "Other Documents", required: false },
 ];
 
-function UploadDocumentsStep({ personToken, onBack, onNext }: { personToken: string; onBack: () => void; onNext: () => void }) {
+function UploadDocumentsStep({ personToken, onBack, onNext, documentRequirements }: { 
+  personToken: string; 
+  onBack: () => void; 
+  onNext: () => void;
+  documentRequirements?: DocumentRequirementsConfig;
+}) {
+  const UPLOAD_TYPES = getUploadTypes(documentRequirements);
   const { toast } = useToast();
   const [uploadingType, setUploadingType] = useState<string | null>(null);
 
@@ -281,13 +295,37 @@ function UploadDocumentsStep({ personToken, onBack, onNext }: { personToken: str
             tenancy plus 7 years, unless the landlord/property manager configures different retention settings.
           </p>
         </div>
+
+        {/* Required documents validation */}
+        {(() => {
+          const missingRequired = UPLOAD_TYPES.filter(
+            (type) => type.required && files.filter(f => f.fileType === type.id).length === 0
+          );
+          if (missingRequired.length > 0) {
+            return (
+              <div className="bg-destructive/10 border border-destructive/30 rounded-lg p-3 text-sm text-destructive">
+                <strong>Missing required documents:</strong>
+                <ul className="mt-1 list-disc list-inside">
+                  {missingRequired.map(type => (
+                    <li key={type.id}>{type.label}</li>
+                  ))}
+                </ul>
+              </div>
+            );
+          }
+          return null;
+        })()}
       </CardContent>
       <CardFooter className="flex justify-between border-t pt-6">
         <Button variant="outline" onClick={onBack}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <Button onClick={onNext} data-testid="button-next-step-6">
+        <Button 
+          onClick={onNext} 
+          data-testid="button-next-step-6"
+          disabled={UPLOAD_TYPES.some(type => type.required && files.filter(f => f.fileType === type.id).length === 0)}
+        >
           Next
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
@@ -1498,6 +1536,7 @@ export default function Apply() {
               personToken={personToken!}
               onBack={() => setCurrentStep(5)}
               onNext={() => setCurrentStep(7)}
+              documentRequirements={linkData?.documentRequirements}
             />
           )}
 

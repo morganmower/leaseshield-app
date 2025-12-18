@@ -9,6 +9,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { Separator } from "@/components/ui/separator";
+import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -92,6 +95,8 @@ export default function RentalApplications() {
     unitLabel: "",
   });
 
+  const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
+
   const { data: properties = [], isLoading, error, refetch } = useQuery<RentalProperty[]>({
     queryKey: ["/api/rental/properties"],
     retry: (failureCount, error: any) => {
@@ -130,7 +135,7 @@ export default function RentalApplications() {
   });
 
   const updatePropertyMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: typeof propertyForm }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -139,7 +144,7 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, requiredDocumentTypes }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -149,6 +154,7 @@ export default function RentalApplications() {
       setIsEditPropertyOpen(false);
       setEditingProperty(null);
       setPropertyForm({ name: "", address: "", city: "", state: "", zipCode: "" });
+      setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
       toast({ title: "Property Updated", description: "Your rental property has been updated." });
     },
     onError: () => {
@@ -224,6 +230,7 @@ export default function RentalApplications() {
       state: property.state || "",
       zipCode: property.zipCode || "",
     });
+    setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setIsEditPropertyOpen(true);
   };
 
@@ -515,6 +522,69 @@ export default function RentalApplications() {
                   data-testid="input-edit-rental-property-zip"
                 />
               </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Required Documents</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select which documents applicants must upload when applying
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-id" className="text-sm">ID / Driver's License</Label>
+                      <p className="text-xs text-muted-foreground">Always required</p>
+                    </div>
+                    <Switch 
+                      id="req-id" 
+                      checked={true} 
+                      disabled 
+                      data-testid="switch-doc-id"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-income" className="text-sm">Proof of Income</Label>
+                      <p className="text-xs text-muted-foreground">Paystubs, employment letter, etc.</p>
+                    </div>
+                    <Switch 
+                      id="req-income" 
+                      checked={docRequirements.income} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, income: checked })}
+                      data-testid="switch-doc-income"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-bank" className="text-sm">Bank Statements</Label>
+                      <p className="text-xs text-muted-foreground">Recent bank statements</p>
+                    </div>
+                    <Switch 
+                      id="req-bank" 
+                      checked={docRequirements.bank} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, bank: checked })}
+                      data-testid="switch-doc-bank"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="req-reference" className="text-sm">Reference Letters</Label>
+                      <p className="text-xs text-muted-foreground">From previous landlords or employers</p>
+                    </div>
+                    <Switch 
+                      id="req-reference" 
+                      checked={docRequirements.reference} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, reference: checked })}
+                      data-testid="switch-doc-reference"
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditPropertyOpen(false)}>
@@ -523,7 +593,7 @@ export default function RentalApplications() {
               <Button
                 onClick={() =>
                   editingProperty &&
-                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm })
+                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements })
                 }
                 disabled={!propertyForm.name || updatePropertyMutation.isPending}
                 data-testid="button-update-rental-property"
