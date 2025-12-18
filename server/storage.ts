@@ -124,6 +124,9 @@ import {
   type InsertRetentionSettings,
   defaultCoverPageTemplate,
   defaultFieldSchemaTemplate,
+  applicationComplianceRules,
+  type ApplicationComplianceRule,
+  type InsertApplicationComplianceRule,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -414,6 +417,14 @@ export interface IStorage {
   getRetentionSettings(propertyId: string): Promise<RetentionSettings | undefined>;
   upsertRetentionSettings(settings: InsertRetentionSettings): Promise<RetentionSettings>;
   getAllRetentionSettings(): Promise<RetentionSettings[]>;
+
+  // Application Compliance Rules operations
+  getApplicationComplianceRules(stateId: string): Promise<ApplicationComplianceRule[]>;
+  getActiveComplianceRulesForState(stateId: string): Promise<ApplicationComplianceRule[]>;
+  getAllApplicationComplianceRules(): Promise<ApplicationComplianceRule[]>;
+  createApplicationComplianceRule(rule: InsertApplicationComplianceRule): Promise<ApplicationComplianceRule>;
+  updateApplicationComplianceRule(id: string, rule: Partial<InsertApplicationComplianceRule>): Promise<ApplicationComplianceRule | null>;
+  deactivateComplianceRule(id: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2072,6 +2083,62 @@ export class DatabaseStorage implements IStorage {
     return handleDbOperation(async () => {
       return await db.select().from(retentionSettings);
     }, 'getAllRetentionSettings');
+  }
+
+  // Application Compliance Rules operations
+  async getApplicationComplianceRules(stateId: string): Promise<ApplicationComplianceRule[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(applicationComplianceRules)
+        .where(eq(applicationComplianceRules.stateId, stateId))
+        .orderBy(applicationComplianceRules.sortOrder);
+    }, 'getApplicationComplianceRules');
+  }
+
+  async getActiveComplianceRulesForState(stateId: string): Promise<ApplicationComplianceRule[]> {
+    return handleDbOperation(async () => {
+      const now = new Date();
+      return await db.select().from(applicationComplianceRules)
+        .where(and(
+          eq(applicationComplianceRules.isActive, true),
+          sql`(${applicationComplianceRules.stateId} = ${stateId} OR ${applicationComplianceRules.stateId} = 'ALL')`,
+          sql`(${applicationComplianceRules.effectiveDate} IS NULL OR ${applicationComplianceRules.effectiveDate} <= ${now})`,
+          sql`(${applicationComplianceRules.expiresAt} IS NULL OR ${applicationComplianceRules.expiresAt} > ${now})`
+        ))
+        .orderBy(applicationComplianceRules.sortOrder);
+    }, 'getActiveComplianceRulesForState');
+  }
+
+  async getAllApplicationComplianceRules(): Promise<ApplicationComplianceRule[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(applicationComplianceRules).orderBy(applicationComplianceRules.stateId, applicationComplianceRules.sortOrder);
+    }, 'getAllApplicationComplianceRules');
+  }
+
+  async createApplicationComplianceRule(rule: InsertApplicationComplianceRule): Promise<ApplicationComplianceRule> {
+    return handleDbOperation(async () => {
+      const [newRule] = await db.insert(applicationComplianceRules).values(rule).returning();
+      return newRule;
+    }, 'createApplicationComplianceRule');
+  }
+
+  async updateApplicationComplianceRule(id: string, rule: Partial<InsertApplicationComplianceRule>): Promise<ApplicationComplianceRule | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(applicationComplianceRules)
+        .set({ ...rule, updatedAt: new Date() })
+        .where(eq(applicationComplianceRules.id, id))
+        .returning();
+      return updated || null;
+    }, 'updateApplicationComplianceRule');
+  }
+
+  async deactivateComplianceRule(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(applicationComplianceRules)
+        .set({ isActive: false, updatedAt: new Date() })
+        .where(eq(applicationComplianceRules.id, id))
+        .returning();
+      return !!updated;
+    }, 'deactivateComplianceRule');
   }
 }
 

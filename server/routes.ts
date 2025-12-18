@@ -4368,6 +4368,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         }
       }
 
+      // Get active compliance rules for this state
+      const complianceRules = propertyState 
+        ? await storage.getActiveComplianceRulesForState(propertyState)
+        : await storage.getActiveComplianceRulesForState('ALL');
+
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
@@ -4377,6 +4382,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
         documentRequirements,
         propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
+        complianceRules, // Dynamic compliance rules from database
       });
     } catch (error) {
       console.error("Error getting application link:", error);
@@ -4505,12 +4511,39 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       // Extract compliance acknowledgment data from form
       const formData = req.body.formData || person.formJson || {};
-      const txSelectionAcknowledged = formData.txSelectionAcknowledged === true;
-      const fcraAuthorized = formData.fcraAuthorized === true;
+      
+      // Handle dynamic compliance rules - extract all compliance_* fields
+      // Also support legacy field names for backwards compatibility
+      const txSelectionAcknowledged = formData.compliance_tx_tenant_selection === true || formData.txSelectionAcknowledged === true;
+      const fcraAuthorized = formData.compliance_fcra_authorization === true || formData.fcraAuthorized === true;
+      
+      // Collect all compliance acknowledgments for audit trail
+      const complianceAcknowledgments: Record<string, { acknowledged: boolean; timestamp: string; ip: string }> = {};
+      for (const [key, value] of Object.entries(formData)) {
+        if (key.startsWith('compliance_') && value === true) {
+          const ruleKey = key.replace('compliance_', '');
+          complianceAcknowledgments[ruleKey] = {
+            acknowledged: true,
+            timestamp: new Date().toISOString(),
+            ip: ipAddress,
+          };
+        }
+      }
+      
+      // Store compliance acknowledgments in formData for audit trail
+      const enrichedFormData = {
+        ...formData,
+        _complianceAuditTrail: complianceAcknowledgments,
+        _submissionMetadata: {
+          ipAddress,
+          userAgent,
+          timestamp: new Date().toISOString(),
+        },
+      };
 
       // Update person as completed with screening disclosure and compliance metadata
       await storage.updateRentalSubmissionPerson(person.id, {
-        formJson: formData,
+        formJson: enrichedFormData,
         isCompleted: true,
         completedAt: new Date(),
         screeningDisclosureAcknowledgedAt: new Date(),

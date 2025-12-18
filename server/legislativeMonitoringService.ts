@@ -5,7 +5,7 @@ import { legiscanService } from './legiscanService';
 import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
-import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue } from '@shared/schema';
+import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
   /**
@@ -225,6 +225,58 @@ export class LegislativeMonitoringService {
                     templatesQueued++;
                   }
                 }
+              }
+            }
+
+            // Phase 1b: Check if this bill affects rental application compliance requirements
+            const applicationImpact = await billAnalysisService.analyzeApplicationImpact(
+              bill.title,
+              bill.description,
+              billText,
+              state.id
+            );
+
+            if (applicationImpact.affectsApplications && applicationImpact.complianceRuleType) {
+              console.log(`  📋 Bill ${bill.bill_number} affects rental applications - creating draft compliance rule...`);
+              
+              const ruleKey = applicationImpact.suggestedRuleKey || 
+                `${state.id.toLowerCase()}_${bill.bill_number.replace(/\s+/g, '_').toLowerCase()}_${Date.now()}`;
+              
+              // Check if bill is enacted - only auto-activate if bill status indicates it's law
+              const billStatus = legiscanService.mapBillStatus(bill.status);
+              const isEnacted = billStatus === 'enacted';
+              
+              try {
+                const complianceRule: InsertApplicationComplianceRule = {
+                  stateId: state.id,
+                  ruleType: applicationImpact.complianceRuleType,
+                  ruleKey: ruleKey,
+                  title: applicationImpact.suggestedTitle || `${state.id} - ${bill.bill_number}`,
+                  description: `${applicationImpact.explanation}${!isEnacted ? ' [PENDING: Awaiting enactment]' : ''}`,
+                  checkboxLabel: applicationImpact.suggestedCheckboxLabel || undefined,
+                  disclosureText: applicationImpact.suggestedDisclosureText || undefined,
+                  statuteReference: applicationImpact.statuteReference || undefined,
+                  sortOrder: 100, // Default sort order for auto-generated rules
+                  // Only activate if bill is already enacted - otherwise create as draft for admin review
+                  isActive: isEnacted,
+                  effectiveDate: isEnacted ? new Date() : null, // Set effective date only when enacted
+                  expiresAt: null,
+                  version: 1,
+                  sourceBillId: bill.bill_id.toString(),
+                  sourceLegalUpdateId: null,
+                };
+
+                await storage.createApplicationComplianceRule(complianceRule);
+                console.log(`  ✅ Created ${isEnacted ? 'active' : 'draft'} compliance rule: ${ruleKey}`);
+                
+                // Only notify landlords if the rule is active (bill is enacted)
+                if (isEnacted) {
+                  await this.notifyLandlordsOfComplianceChange(state.id, complianceRule, bill.bill_number);
+                } else {
+                  console.log(`  📝 Rule created as draft - will notify landlords when bill ${bill.bill_number} is enacted`);
+                }
+              } catch (ruleError) {
+                console.error(`  ❌ Failed to create compliance rule:`, ruleError);
               }
             }
           }
@@ -495,6 +547,97 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     console.log(`Found ${searchResults.searchresult.summary.count} bills`);
     
     // You can call runMonthlyMonitoring() to do full processing
+  }
+
+  /**
+   * Notify landlords in affected state about new application compliance requirements
+   * Creates in-app notifications and sends email via Resend
+   */
+  async notifyLandlordsOfComplianceChange(
+    stateId: string, 
+    complianceRule: InsertApplicationComplianceRule, 
+    billNumber: string
+  ): Promise<void> {
+    try {
+      console.log(`  📧 Notifying landlords in ${stateId} about new compliance requirement...`);
+      
+      // Get all users who have properties in this state or have it as their preferred state
+      const usersInState = await storage.getUsersByState(stateId);
+      const allUsers = await storage.getAllActiveUsers();
+      
+      // Filter to users who want legal update notifications
+      const usersToNotify = allUsers.filter(user => 
+        user.notifyLegalUpdates && 
+        (user.preferredState === stateId || usersInState.some(u => u.id === user.id))
+      );
+      
+      console.log(`  📬 Found ${usersToNotify.length} users to notify in ${stateId}`);
+      
+      const notificationMessage = `New Rental Application Requirement: ${complianceRule.title}. ${billNumber} has introduced new compliance requirements for rental applications in ${stateId}. Your application form will automatically include this new requirement.`;
+      
+      // Create in-app notifications for each user
+      for (const user of usersToNotify) {
+        try {
+          await storage.createUserNotification({
+            userId: user.id,
+            legalUpdateId: null,
+            templateId: null,
+            message: notificationMessage,
+            isRead: false,
+            readAt: null,
+          });
+        } catch (notifError) {
+          console.error(`  ⚠️  Failed to create notification for user ${user.id}:`, notifError);
+        }
+      }
+      
+      // Send email notifications via Resend
+      if (process.env.RESEND_API_KEY && usersToNotify.length > 0) {
+        try {
+          const { Resend } = await import('resend');
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          
+          // Send to each user who has an email
+          for (const user of usersToNotify.filter(u => u.email)) {
+            try {
+              await resend.emails.send({
+                from: 'LeaseShield <notifications@leaseshield.app>',
+                to: user.email,
+                subject: `New Application Requirement for ${stateId} Properties - ${billNumber}`,
+                html: `
+                  <h2>New Rental Application Compliance Requirement</h2>
+                  <p><strong>State:</strong> ${stateId}</p>
+                  <p><strong>Bill:</strong> ${billNumber}</p>
+                  <p><strong>Requirement:</strong> ${complianceRule.title}</p>
+                  ${complianceRule.statuteReference ? `<p><strong>Legal Citation:</strong> ${complianceRule.statuteReference}</p>` : ''}
+                  <p>${complianceRule.description || ''}</p>
+                  <hr>
+                  <p><strong>What this means for you:</strong></p>
+                  <p>Your rental application form will automatically be updated to include this new requirement. 
+                  Applicants applying to properties in ${stateId} will now see additional compliance 
+                  disclosures and acknowledgments as required by this legislation.</p>
+                  <p><em>No action is required on your part - LeaseShield has already updated your application flow.</em></p>
+                  <hr>
+                  <p style="font-size: 12px; color: #666;">
+                    You received this email because you have properties in ${stateId} or have it set as your preferred state.
+                    <br>Manage your notification preferences in your LeaseShield account settings.
+                  </p>
+                `,
+              });
+              console.log(`  ✉️  Sent email to ${user.email}`);
+            } catch (emailError) {
+              console.error(`  ⚠️  Failed to send email to ${user.email}:`, emailError);
+            }
+          }
+        } catch (resendError) {
+          console.error('  ⚠️  Failed to initialize Resend for compliance notifications:', resendError);
+        }
+      }
+      
+      console.log(`  ✅ Notified ${usersToNotify.length} landlords about new compliance requirement`);
+    } catch (error) {
+      console.error('  ❌ Error notifying landlords of compliance change:', error);
+    }
   }
 }
 

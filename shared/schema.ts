@@ -216,6 +216,61 @@ export const insertLegalUpdateSchema = createInsertSchema(legalUpdates).omit({
 export type InsertLegalUpdate = z.infer<typeof insertLegalUpdateSchema>;
 export type LegalUpdate = typeof legalUpdates.$inferSelect;
 
+// Application Compliance Rules - state-specific requirements for rental applications
+export const complianceRuleTypeEnum = pgEnum('compliance_rule_type', [
+  'acknowledgment',     // Checkbox acknowledgment required
+  'disclosure',         // Text disclosure that must be shown
+  'authorization',      // Authorization checkbox (like FCRA)
+  'document_required',  // Required document upload
+  'link_required',      // Link to external page that must be visited
+]);
+
+export const applicationComplianceRules = pgTable("application_compliance_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 10 }).notNull(), // 'ALL' for all states, or specific state code
+  ruleType: complianceRuleTypeEnum("rule_type").notNull(),
+  ruleKey: varchar("rule_key", { length: 100 }).notNull(), // Unique key like 'tx_tenant_selection', 'fcra_authorization'
+  title: text("title").notNull(),
+  description: text("description"), // Short description for landlords/admins
+  checkboxLabel: text("checkbox_label"), // Label for checkbox if acknowledgment/authorization type
+  disclosureText: text("disclosure_text"), // Full disclosure text to show
+  linkUrl: text("link_url"), // URL to link to (e.g., /tx/tenant-selection-criteria)
+  linkText: text("link_text"), // Text for the link
+  statuteReference: text("statute_reference"), // Legal citation (e.g., "Texas Property Code § 92.3515")
+  sortOrder: integer("sort_order").default(0), // Order in which to display
+  isActive: boolean("is_active").default(true),
+  effectiveDate: timestamp("effective_date"), // When this rule becomes effective
+  expiresAt: timestamp("expires_at"), // When this rule expires (if superseded)
+  version: integer("version").default(1),
+  sourceBillId: varchar("source_bill_id"), // Reference to legislativeMonitoring if from a bill
+  sourceLegalUpdateId: varchar("source_legal_update_id"), // Reference to legalUpdates
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const applicationComplianceRulesRelations = relations(applicationComplianceRules, ({ one }) => ({
+  state: one(states, {
+    fields: [applicationComplianceRules.stateId],
+    references: [states.id],
+  }),
+  sourceBill: one(legislativeMonitoring, {
+    fields: [applicationComplianceRules.sourceBillId],
+    references: [legislativeMonitoring.billId],
+  }),
+  sourceLegalUpdate: one(legalUpdates, {
+    fields: [applicationComplianceRules.sourceLegalUpdateId],
+    references: [legalUpdates.id],
+  }),
+}));
+
+export const insertApplicationComplianceRuleSchema = createInsertSchema(applicationComplianceRules).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertApplicationComplianceRule = z.infer<typeof insertApplicationComplianceRuleSchema>;
+export type ApplicationComplianceRule = typeof applicationComplianceRules.$inferSelect;
+
 // User notifications for legal updates and template updates
 export const userNotifications = pgTable("user_notifications", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

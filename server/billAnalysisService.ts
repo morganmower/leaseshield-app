@@ -321,6 +321,128 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
       return this.fallbackAnalysis(caseName, caseNameFull);
     }
   }
+
+  /**
+   * Analyze a bill to determine if it affects rental application compliance requirements
+   * This is used to auto-generate new compliance rules when relevant legislation is detected
+   */
+  async analyzeApplicationImpact(
+    billTitle: string,
+    billDescription: string,
+    billText: string | null,
+    stateId: string
+  ): Promise<{
+    affectsApplications: boolean;
+    complianceRuleType: 'acknowledgment' | 'disclosure' | 'authorization' | 'document_required' | 'link_required' | null;
+    suggestedRuleKey: string | null;
+    suggestedTitle: string | null;
+    suggestedCheckboxLabel: string | null;
+    suggestedDisclosureText: string | null;
+    statuteReference: string | null;
+    explanation: string;
+  }> {
+    try {
+      const prompt = `You are a legal analyst specializing in landlord-tenant law. Analyze this proposed legislation to determine if it affects RENTAL APPLICATION REQUIREMENTS.
+
+BILL INFORMATION:
+State: ${stateId}
+Title: ${billTitle}
+Description: ${billDescription}
+${billText ? `\n\nFull Bill Text:\n${billText.substring(0, 10000)}` : ''}
+
+Specifically look for changes that would require landlords to:
+1. Disclose new information to prospective tenants BEFORE accepting applications
+2. Obtain new acknowledgments or authorizations from applicants
+3. Require new documents during the application process
+4. Provide links to new required information pages
+
+Examples of application-impacting legislation:
+- Tenant selection criteria disclosure requirements (like Texas Property Code § 92.3515)
+- Background check authorization requirements
+- Application fee disclosure rules
+- Fair housing notice requirements
+- Criminal history disclosure rules
+
+Please respond in JSON format:
+{
+  "affectsApplications": true/false,
+  "complianceRuleType": "acknowledgment" | "disclosure" | "authorization" | "document_required" | "link_required" | null,
+  "suggestedRuleKey": "snake_case_unique_key_for_this_rule",
+  "suggestedTitle": "Human-readable title for this requirement",
+  "suggestedCheckboxLabel": "The exact text an applicant would need to acknowledge (if acknowledgment/authorization type)",
+  "suggestedDisclosureText": "Disclosure text to show applicants explaining the requirement",
+  "statuteReference": "Legal citation (e.g., 'State Code § X.XXX')",
+  "explanation": "Brief explanation of why this affects applications or why it doesn't"
+}
+
+Be conservative - only set affectsApplications: true if the bill CLEARLY creates a new application-related requirement.`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a legal analyst specializing in landlord-tenant law and rental application compliance requirements.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.3,
+      });
+
+      const response = completion.choices[0].message.content;
+      if (!response) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const parsed = JSON.parse(response);
+
+      return {
+        affectsApplications: parsed.affectsApplications === true,
+        complianceRuleType: parsed.complianceRuleType || null,
+        suggestedRuleKey: parsed.suggestedRuleKey || null,
+        suggestedTitle: parsed.suggestedTitle || null,
+        suggestedCheckboxLabel: parsed.suggestedCheckboxLabel || null,
+        suggestedDisclosureText: parsed.suggestedDisclosureText || null,
+        statuteReference: parsed.statuteReference || null,
+        explanation: parsed.explanation || '',
+      };
+    } catch (error) {
+      console.error('Error analyzing bill application impact with AI:', error);
+      
+      // Fallback - check for application-related keywords
+      const text = `${billTitle} ${billDescription}`.toLowerCase();
+      const applicationKeywords = [
+        'application',
+        'screening',
+        'tenant selection',
+        'background check',
+        'credit check',
+        'criminal history',
+        'prospective tenant',
+        'applicant',
+        'application fee',
+      ];
+      
+      const hasApplicationKeyword = applicationKeywords.some(k => text.includes(k));
+      
+      return {
+        affectsApplications: hasApplicationKeyword,
+        complianceRuleType: hasApplicationKeyword ? 'disclosure' : null,
+        suggestedRuleKey: null,
+        suggestedTitle: null,
+        suggestedCheckboxLabel: null,
+        suggestedDisclosureText: null,
+        statuteReference: null,
+        explanation: hasApplicationKeyword 
+          ? 'This bill contains application-related keywords. Manual review required to determine specific compliance requirements.'
+          : 'This bill does not appear to affect rental application requirements.',
+      };
+    }
+  }
 }
 
 export const billAnalysisService = new BillAnalysisService();

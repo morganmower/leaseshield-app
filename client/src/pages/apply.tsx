@@ -55,6 +55,24 @@ interface DocumentRequirementsConfig {
   reference: boolean;
 }
 
+interface ComplianceRule {
+  id: string;
+  stateId: string;
+  ruleType: 'acknowledgment' | 'disclosure' | 'authorization' | 'document_required' | 'link_required';
+  ruleKey: string;
+  title: string;
+  description?: string;
+  checkboxLabel?: string;
+  disclosureText?: string;
+  linkUrl?: string;
+  linkText?: string;
+  statuteReference?: string;
+  sortOrder: number;
+  isActive: boolean;
+  effectiveDate?: string;
+  version: number;
+}
+
 interface ApplicationLinkData {
   id: string;
   propertyName: string;
@@ -73,6 +91,7 @@ interface ApplicationLinkData {
     uploads: Record<string, { required: boolean; label: string }>;
   };
   documentRequirements?: DocumentRequirementsConfig;
+  complianceRules?: ComplianceRule[]; // Dynamic compliance rules from database
 }
 
 interface PersonData {
@@ -1741,84 +1760,75 @@ export default function Apply() {
                   </div>
                 </div>
 
-                {/* Texas-Specific Tenant Selection Criteria (TX only) */}
-                {linkData?.propertyState === "TX" && (
-                  <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg space-y-4">
-                    <div className="space-y-1">
-                      <h3 className="font-semibold text-blue-900 dark:text-blue-100">Texas Tenant Selection Criteria Notice</h3>
-                      <p className="text-xs text-blue-700 dark:text-blue-300 font-medium uppercase tracking-wide">Required Under Texas Law</p>
-                    </div>
-                    
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      Before submitting your application, you must review the landlord's tenant selection criteria. 
-                      This document describes factors that may be considered when reviewing your rental application.
-                    </p>
-                    
-                    <a 
-                      href="/tx/tenant-selection-criteria" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center gap-2 text-sm font-medium text-blue-700 dark:text-blue-300 hover:underline"
-                    >
-                      <FileText className="h-4 w-4" />
-                      View Tenant Selection Criteria & Grounds for Denial
-                    </a>
-                    
-                    <div className="border-t border-blue-200 dark:border-blue-700 pt-3">
-                      <div className="flex items-start gap-3 bg-blue-100/50 dark:bg-blue-900/30 p-3 rounded-md">
-                        <Checkbox
-                          id="txSelectionAck"
-                          checked={formData.txSelectionAcknowledged || false}
-                          onCheckedChange={(checked) => updateField("txSelectionAcknowledged", !!checked)}
-                          data-testid="checkbox-tx-selection"
-                        />
-                        <Label htmlFor="txSelectionAck" className="text-sm cursor-pointer text-blue-900 dark:text-blue-100">
-                          <strong>Texas Notice / Acknowledgment:</strong> Signing this acknowledgment indicates that you have had the opportunity to review the landlord's tenant selection criteria. The tenant selection criteria may include factors such as criminal history, credit history, current income, and rental history. I understand I may request a copy of the tenant selection criteria.
-                        </Label>
+                {/* Dynamic Compliance Rules from Database */}
+                {linkData?.complianceRules?.map((rule) => {
+                  const isStateSpecific = rule.stateId !== 'ALL';
+                  const bgColor = isStateSpecific 
+                    ? 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800' 
+                    : 'bg-slate-50 dark:bg-slate-950/30 border-slate-200 dark:border-slate-700';
+                  const textColor = isStateSpecific
+                    ? 'text-blue-900 dark:text-blue-100'
+                    : 'text-slate-900 dark:text-slate-100';
+                  const secondaryTextColor = isStateSpecific
+                    ? 'text-blue-800 dark:text-blue-200'
+                    : 'text-slate-700 dark:text-slate-300';
+                  const labelColor = isStateSpecific
+                    ? 'text-blue-700 dark:text-blue-300'
+                    : 'text-slate-600 dark:text-slate-400';
+                  const checkboxBg = isStateSpecific
+                    ? 'bg-blue-100/50 dark:bg-blue-900/30'
+                    : 'bg-slate-100/50 dark:bg-slate-800/30';
+                  const borderColor = isStateSpecific
+                    ? 'border-blue-200 dark:border-blue-700'
+                    : 'border-slate-200 dark:border-slate-600';
+                  
+                  return (
+                    <div key={rule.id} className={`${bgColor} border p-4 rounded-lg space-y-4`}>
+                      <div className="space-y-1">
+                        <h3 className={`font-semibold ${textColor}`}>{rule.title}</h3>
+                        {rule.statuteReference && (
+                          <p className={`text-xs ${labelColor} font-medium uppercase tracking-wide`}>
+                            {isStateSpecific ? 'Required Under State Law' : 'Federal Requirement'} • {rule.statuteReference}
+                          </p>
+                        )}
                       </div>
+                      
+                      {rule.disclosureText && (
+                        <p className={`text-sm ${secondaryTextColor}`}>
+                          {rule.disclosureText}
+                        </p>
+                      )}
+                      
+                      {rule.linkUrl && rule.linkText && (
+                        <a 
+                          href={rule.linkUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className={`inline-flex items-center gap-2 text-sm font-medium ${labelColor} hover:underline`}
+                        >
+                          <FileText className="h-4 w-4" />
+                          {rule.linkText}
+                        </a>
+                      )}
+                      
+                      {(rule.ruleType === 'acknowledgment' || rule.ruleType === 'authorization') && rule.checkboxLabel && (
+                        <div className={`border-t ${borderColor} pt-3`}>
+                          <div className={`flex items-start gap-3 ${checkboxBg} p-3 rounded-md`}>
+                            <Checkbox
+                              id={`compliance-${rule.ruleKey}`}
+                              checked={formData[`compliance_${rule.ruleKey}`] || false}
+                              onCheckedChange={(checked) => updateField(`compliance_${rule.ruleKey}`, !!checked)}
+                              data-testid={`checkbox-${rule.ruleKey}`}
+                            />
+                            <Label htmlFor={`compliance-${rule.ruleKey}`} className={`text-sm cursor-pointer ${textColor}`}>
+                              {rule.checkboxLabel}
+                            </Label>
+                          </div>
+                        </div>
+                      )}
                     </div>
-                  </div>
-                )}
-
-                {/* FCRA Authorization (All States) */}
-                <div className="bg-slate-50 dark:bg-slate-950/30 border border-slate-200 dark:border-slate-700 p-4 rounded-lg space-y-4">
-                  <div className="space-y-1">
-                    <h3 className="font-semibold text-slate-900 dark:text-slate-100">Disclosure & Authorization to Obtain Consumer Reports</h3>
-                    <p className="text-xs text-slate-600 dark:text-slate-400 font-medium uppercase tracking-wide">Fair Credit Reporting Act Notice</p>
-                  </div>
-                  
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    The landlord and/or its screening provider may obtain consumer reports and/or investigative consumer reports about you for tenant screening purposes, which may include credit history, criminal history, eviction history, and verification of information you provide.
-                  </p>
-                  
-                  <p className="text-sm text-slate-700 dark:text-slate-300">
-                    By checking the box below, you authorize the landlord and its screening provider to obtain such reports and to use the information in evaluating your rental application.
-                  </p>
-                  
-                  <a 
-                    href="https://www.consumerfinance.gov/f/201504_cfpb_summary_your-rights-under-fcra.pdf" 
-                    target="_blank" 
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
-                  >
-                    <FileText className="h-4 w-4" />
-                    A Summary of Your Rights Under the FCRA (PDF)
-                  </a>
-                  
-                  <div className="border-t border-slate-200 dark:border-slate-600 pt-3">
-                    <div className="flex items-start gap-3 bg-slate-100/50 dark:bg-slate-800/30 p-3 rounded-md">
-                      <Checkbox
-                        id="fcraAuth"
-                        checked={formData.fcraAuthorized || false}
-                        onCheckedChange={(checked) => updateField("fcraAuthorized", !!checked)}
-                        data-testid="checkbox-fcra-auth"
-                      />
-                      <Label htmlFor="fcraAuth" className="text-sm cursor-pointer text-slate-900 dark:text-slate-100">
-                        I authorize the landlord and its screening provider to obtain consumer reports and/or investigative consumer reports about me for tenant screening.
-                      </Label>
-                    </div>
-                  </div>
-                </div>
+                  );
+                })}
 
                 {/* Certification */}
                 <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
@@ -1846,8 +1856,12 @@ export default function Apply() {
                   disabled={
                     !formData.certifyAccurate || 
                     !formData.acknowledgeScreeningDisclosure || 
-                    !formData.fcraAuthorized ||
-                    (linkData?.propertyState === "TX" && !formData.txSelectionAcknowledged) ||
+                    // Check all dynamic compliance rules that require acknowledgment/authorization
+                    (linkData?.complianceRules?.some(rule => 
+                      (rule.ruleType === 'acknowledgment' || rule.ruleType === 'authorization') && 
+                      rule.checkboxLabel && 
+                      !formData[`compliance_${rule.ruleKey}`]
+                    )) ||
                     submitMutation.isPending
                   }
                   data-testid="button-submit-application"
