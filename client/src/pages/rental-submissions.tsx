@@ -780,10 +780,16 @@ export default function RentalSubmissions() {
                                     <span>{person.formJson.hasPets ? "Yes" : "No"}</span>
                                   </div>
                                 )}
-                                {person.formJson.pets && (
-                                  <div data-testid={`field-pets-${person.id}`}>
-                                    <span className="text-muted-foreground block text-xs">Pet Details</span>
-                                    <span>{person.formJson.pets}</span>
+                                {person.formJson.pets && Array.isArray(person.formJson.pets) && person.formJson.pets.length > 0 && (
+                                  <div data-testid={`field-pets-${person.id}`} className="col-span-2">
+                                    <span className="text-muted-foreground block text-xs mb-1">Pets</span>
+                                    <div className="space-y-1">
+                                      {person.formJson.pets.map((p: any, idx: number) => (
+                                        <div key={idx} className="text-sm">
+                                          {p.type} {p.breed && `(${p.breed})`} {p.age && `- ${p.age} years old`} {p.weight && `- ${p.weight} lbs`} {p.isServiceAnimal && "- Service Animal"}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                                 {person.formJson.vehicles && Array.isArray(person.formJson.vehicles) && person.formJson.vehicles.length > 0 && (
