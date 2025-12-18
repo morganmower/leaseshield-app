@@ -1,8 +1,8 @@
 import { storage } from "./storage";
 import { XMLParser } from "fast-xml-parser";
 
-const DIGITAL_DELVE_DEMO_URL = "https://demo.digitaldelve.com/listeners/sso.cfm";
-const DIGITAL_DELVE_PROD_URL = "https://services.digitaldelve.com/listeners/sso.cfm";
+// Western Verify / DigitalDelve API URL
+const WESTERN_VERIFY_API_URL = "https://secure.westernverify.com/webservice/default.cfm";
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -12,9 +12,7 @@ const xmlParser = new XMLParser({
 });
 
 function getBaseUrl(): string {
-  return process.env.DIGITAL_DELVE_PRODUCTION === "true" 
-    ? DIGITAL_DELVE_PROD_URL 
-    : DIGITAL_DELVE_DEMO_URL;
+  return WESTERN_VERIFY_API_URL;
 }
 
 function getCredentials() {
@@ -72,7 +70,11 @@ interface DigitalDelveResponse {
 }
 
 async function sendXmlRequest(xml: string): Promise<{ body: string; statusCode: number }> {
-  const response = await fetch(getBaseUrl(), {
+  const url = getBaseUrl();
+  console.log("[DigitalDelve] Sending request to:", url);
+  console.log("[DigitalDelve] Request XML:", xml.substring(0, 500));
+  
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/xml",
@@ -81,6 +83,8 @@ async function sendXmlRequest(xml: string): Promise<{ body: string; statusCode: 
   });
 
   const body = await response.text();
+  console.log("[DigitalDelve] Response status:", response.status);
+  console.log("[DigitalDelve] Response body:", body.substring(0, 500));
   return { body, statusCode: response.status };
 }
 
