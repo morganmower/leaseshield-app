@@ -41,7 +41,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
 
 interface SubmissionSummary {
   id: string;
@@ -136,7 +136,10 @@ export default function RentalSubmissions() {
   const { data: submissionDetail, isLoading: isLoadingDetail } = useQuery<SubmissionDetail>({
     queryKey: ["/api/rental/submissions", selectedSubmission],
     queryFn: async () => {
-      const res = await fetch(`/api/rental/submissions/${selectedSubmission}`);
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental/submissions/${selectedSubmission}`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) throw new Error("Failed to load submission details");
       return res.json();
     },
@@ -146,7 +149,10 @@ export default function RentalSubmissions() {
   const { data: existingDecision } = useQuery<Decision | null>({
     queryKey: ["/api/rental/submissions", selectedSubmission, "decision"],
     queryFn: async () => {
-      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/decision`);
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/decision`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
       if (!res.ok) return null;
       return res.json();
     },
