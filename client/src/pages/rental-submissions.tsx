@@ -895,6 +895,131 @@ export default function RentalSubmissions() {
             </CardContent>
           </Card>
 
+          <Card data-testid="card-documents">
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Paperclip className="h-5 w-5" />
+                Uploaded Documents
+              </CardTitle>
+              <Button
+                size="sm"
+                onClick={() => {
+                  if (submissionDetail.people.length > 0) {
+                    setUploadPersonId(submissionDetail.people[0].id);
+                  }
+                  setIsUploadDialogOpen(true);
+                }}
+                data-testid="button-upload-document"
+              >
+                <Upload className="h-4 w-4 mr-1" />
+                Add Document
+              </Button>
+            </CardHeader>
+            <CardContent>
+              {isLoadingFiles ? (
+                <div className="space-y-3" data-testid="loading-documents">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                submissionDetail.people.map((person) => {
+                  const personFiles = submissionFiles?.[person.id] || [];
+                  return (
+                    <div key={`docs-${person.id}`} className="mb-4 last:mb-0" data-testid={`docs-person-${person.id}`}>
+                      <div className="text-sm font-medium mb-2 flex items-center justify-between flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span>{person.firstName} {person.lastName}</span>
+                          <Badge variant="outline" className="text-xs">
+                            {roleLabels[person.role] || person.role}
+                          </Badge>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => {
+                            setUploadPersonId(person.id);
+                            setIsUploadDialogOpen(true);
+                          }}
+                          data-testid={`button-upload-for-${person.id}`}
+                        >
+                          <Upload className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      {personFiles.length === 0 ? (
+                        <p className="text-sm text-muted-foreground" data-testid={`text-no-docs-${person.id}`}>No documents uploaded.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {personFiles.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/50 rounded-md"
+                              data-testid={`row-file-${file.id}`}
+                            >
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm font-medium" data-testid={`text-filename-${file.id}`}>{file.originalName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {fileTypeLabels[file.fileType] || file.fileType} · {formatFileSize(file.fileSize)}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      const token = getAccessToken();
+                                      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, {
+                                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                      });
+                                      if (!res.ok) throw new Error("Download failed");
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement('a');
+                                      a.href = url;
+                                      a.download = file.originalName;
+                                      document.body.appendChild(a);
+                                      a.click();
+                                      document.body.removeChild(a);
+                                      URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      toast({ title: "Error", description: "Failed to download file", variant: "destructive" });
+                                    }
+                                  }}
+                                  data-testid={`button-download-${file.id}`}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => {
+                                    if (confirm("Are you sure you want to delete this document?")) {
+                                      deleteFileMutation.mutate({ 
+                                        submissionId: selectedSubmission!, 
+                                        fileId: file.id 
+                                      });
+                                    }
+                                  }}
+                                  data-testid={`button-delete-${file.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-destructive" />
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+
           <Card>
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
