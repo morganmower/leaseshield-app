@@ -360,6 +360,7 @@ export interface IStorage {
   getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined>;
   createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
   deactivateRentalApplicationLink(id: string): Promise<boolean>;
+  getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig>;
 
   // Rental Application System - Submission operations
   getRentalSubmissionsByUserId(userId: string): Promise<RentalSubmission[]>;
@@ -1795,6 +1796,25 @@ export class DatabaseStorage implements IStorage {
       await db.update(rentalApplicationLinks).set({ isActive: false }).where(eq(rentalApplicationLinks.id, id));
       return true;
     }, 'deactivateRentalApplicationLink');
+  }
+
+  async getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig> {
+    return handleDbOperation(async () => {
+      const { DEFAULT_DOCUMENT_REQUIREMENTS } = await import("@shared/schema");
+      
+      // Get link -> unit -> property chain
+      const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.id, linkId));
+      if (!link) return DEFAULT_DOCUMENT_REQUIREMENTS;
+      
+      const [unit] = await db.select().from(rentalUnits).where(eq(rentalUnits.id, link.unitId));
+      if (!unit) return DEFAULT_DOCUMENT_REQUIREMENTS;
+      
+      const [property] = await db.select().from(rentalProperties).where(eq(rentalProperties.id, unit.propertyId));
+      if (!property) return DEFAULT_DOCUMENT_REQUIREMENTS;
+      
+      // Return property's requirements, or defaults if not set
+      return (property.requiredDocumentTypes as import("@shared/schema").DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS;
+    }, 'getEffectiveDocumentRequirements');
   }
 
   // Rental Submission operations

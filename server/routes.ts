@@ -3515,7 +3515,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.patch('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson } = req.body;
+      const { name, address, city, state, zipCode, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes } = req.body;
       
       const property = await storage.updateRentalProperty(req.params.id, userId, {
         name,
@@ -3525,6 +3525,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         zipCode,
         defaultCoverPageJson,
         defaultFieldSchemaJson,
+        requiredDocumentTypes,
       });
 
       if (!property) {
@@ -4345,6 +4346,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(410).json({ message: "This application link has expired" });
       }
 
+      // Get document requirements for this link
+      const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
+
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
@@ -4352,6 +4356,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        documentRequirements,
       });
     } catch (error) {
       console.error("Error getting application link:", error);

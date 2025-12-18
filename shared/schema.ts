@@ -977,6 +977,31 @@ export type BroadcastReply = typeof broadcastReplies.$inferSelect;
 // RENTAL APPLICATION SYSTEM - MVP Tables
 // ============================================================
 
+// Document type enum for required documents configuration
+export const documentTypeEnum = pgEnum('document_type', [
+  'id',        // ID / Driver's License - always required
+  'income',    // Proof of Income (paystubs, employment letter)
+  'bank',      // Bank Statements
+  'reference', // Reference Letters
+  'other',     // Other documents
+]);
+
+// Helper type for document requirements configuration
+export type DocumentRequirementsConfig = {
+  id: boolean;        // Always true by default
+  income: boolean;
+  bank: boolean;
+  reference: boolean;
+};
+
+// Default document requirements - only ID is required by default
+export const DEFAULT_DOCUMENT_REQUIREMENTS: DocumentRequirementsConfig = {
+  id: true,
+  income: false,
+  bank: false,
+  reference: false,
+};
+
 // Rental Properties - properties with cover page + field schema defaults
 export const rentalProperties = pgTable("rental_properties", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -988,6 +1013,7 @@ export const rentalProperties = pgTable("rental_properties", {
   zipCode: varchar("zip_code", { length: 10 }),
   defaultCoverPageJson: jsonb("default_cover_page_json").notNull(), // Cover page content (title, intro, sections)
   defaultFieldSchemaJson: jsonb("default_field_schema_json").notNull(), // Field visibility toggles
+  requiredDocumentTypes: jsonb("required_document_types").$type<DocumentRequirementsConfig>(), // Which documents are required
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
