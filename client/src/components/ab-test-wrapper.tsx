@@ -95,6 +95,7 @@ function PaywallVariant({ testId }: { testId: string }) {
           <ul className="space-y-2 text-sm text-muted-foreground">
             {[
               'State-specific leases & legal notices',
+              'Rental applications direct to screening',
               'Move-in / move-out checklists',
               'Screening steps checklist',
               'Adverse action letter templates',
