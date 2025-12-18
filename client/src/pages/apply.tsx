@@ -38,6 +38,9 @@ import {
   Home,
   FileText,
   Clock,
+  Upload,
+  Trash2,
+  File,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -75,6 +78,7 @@ const STEPS = [
   { id: "info", label: "Basic Info", icon: Users },
   { id: "address", label: "Address History", icon: Home },
   { id: "employment", label: "Employment", icon: Building2 },
+  { id: "uploads", label: "Documents", icon: Upload },
   { id: "review", label: "Review & Submit", icon: CheckCircle },
 ];
 
