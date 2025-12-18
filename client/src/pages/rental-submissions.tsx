@@ -1,10 +1,13 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -41,6 +44,7 @@ import {
   Loader2,
   Paperclip,
   Download,
+  Printer,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -97,13 +101,31 @@ interface SubmissionDetail extends SubmissionSummary {
   events: SubmissionEvent[];
 }
 
+interface DenialReason {
+  id: string;
+  decisionId: string;
+  category: string;
+  detail: string | null;
+  createdAt: string;
+}
+
 interface Decision {
   id: string;
   submissionId: string;
   decision: "approved" | "denied";
   decidedAt: string;
   notes: string | null;
+  denialReasons?: DenialReason[];
 }
+
+const denialReasonCategories = [
+  { value: "credit", label: "Credit History", description: "Low credit score, derogatory marks, or credit report issues" },
+  { value: "criminal", label: "Criminal Background", description: "Criminal record found in background check" },
+  { value: "rental_history", label: "Rental History", description: "Negative rental history, prior evictions, or landlord references" },
+  { value: "income", label: "Income Insufficient", description: "Income does not meet minimum requirements" },
+  { value: "incomplete", label: "Incomplete Application", description: "Missing required information or documents" },
+  { value: "other", label: "Other", description: "Other reason not listed above" },
+] as const;
 
 const statusColors: Record<string, string> = {
   started: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100",
@@ -152,6 +174,9 @@ export default function RentalSubmissions() {
   const [isDecisionDialogOpen, setIsDecisionDialogOpen] = useState(false);
   const [decisionNotes, setDecisionNotes] = useState("");
   const [pendingDecision, setPendingDecision] = useState<string | null>(null);
+  const [selectedDenialReasons, setSelectedDenialReasons] = useState<string[]>([]);
+  const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
+  const [filterTab, setFilterTab] = useState<"all" | "approved" | "denied" | "pending">("all");
 
   const { data: submissions, isLoading: isLoadingSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions"],
@@ -184,10 +209,10 @@ export default function RentalSubmissions() {
   });
 
   const { data: submissionFiles, isLoading: isLoadingFiles } = useQuery<Record<string, SubmissionFile[]>>({
-    queryKey: ["/api/rental-submissions", selectedSubmission, "files"],
+    queryKey: ["/api/rental/submissions", selectedSubmission, "files"],
     queryFn: async () => {
       const token = getAccessToken();
-      const res = await fetch(`/api/rental-submissions/${selectedSubmission}/files`, {
+      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/files`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) return {};
@@ -211,8 +236,13 @@ export default function RentalSubmissions() {
   });
 
   const decisionMutation = useMutation({
-    mutationFn: async ({ id, decision, notes }: { id: string; decision: string; notes?: string }) => {
-      return apiRequest("POST", `/api/rental/submissions/${id}/decision`, { decision, notes });
+    mutationFn: async ({ id, decision, notes, denialReasons }: { 
+      id: string; 
+      decision: string; 
+      notes?: string;
+      denialReasons?: { category: string; detail?: string }[];
+    }) => {
+      return apiRequest("POST", `/api/rental/submissions/${id}/decision`, { decision, notes, denialReasons });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
@@ -222,6 +252,8 @@ export default function RentalSubmissions() {
       setIsDecisionDialogOpen(false);
       setDecisionNotes("");
       setPendingDecision(null);
+      setSelectedDenialReasons([]);
+      setDenialReasonDetails({});
     },
     onError: (error: any) => {
       toast({ 
@@ -240,17 +272,32 @@ export default function RentalSubmissions() {
 
   const handleDecision = (decision: string) => {
     setPendingDecision(decision);
+    setSelectedDenialReasons([]);
+    setDenialReasonDetails({});
+    setDecisionNotes("");
     setIsDecisionDialogOpen(true);
   };
 
   const confirmDecision = () => {
     if (selectedSubmission && pendingDecision) {
+      const denialReasons = pendingDecision === "denied" && selectedDenialReasons.length > 0
+        ? selectedDenialReasons.map(cat => ({
+            category: cat,
+            detail: denialReasonDetails[cat] || undefined,
+          }))
+        : undefined;
+      
       decisionMutation.mutate({
         id: selectedSubmission,
         decision: pendingDecision,
         notes: decisionNotes || undefined,
+        denialReasons,
       });
     }
+  };
+
+  const handlePrint = () => {
+    window.print();
   };
 
   const formatDate = (dateStr: string) => {
@@ -263,18 +310,52 @@ export default function RentalSubmissions() {
     });
   };
 
+  const filteredSubmissions = useMemo(() => {
+    if (!submissions) return [];
+    switch (filterTab) {
+      case "pending":
+        return submissions.filter(s => s.status !== "complete");
+      case "approved":
+      case "denied":
+        return submissions.filter(s => s.status === "complete");
+      default:
+        return submissions;
+    }
+  }, [submissions, filterTab]);
+
+  const countByTab = useMemo(() => {
+    if (!submissions) return { all: 0, pending: 0, approved: 0, denied: 0 };
+    const pending = submissions.filter(s => s.status !== "complete").length;
+    const complete = submissions.filter(s => s.status === "complete").length;
+    return {
+      all: submissions.length,
+      pending,
+      approved: complete,
+      denied: complete,
+    };
+  }, [submissions]);
+
   if (selectedSubmission && submissionDetail) {
     return (
-      <div className="container max-w-6xl mx-auto py-6 px-4">
-        <Button
-          variant="ghost"
-          onClick={() => setSelectedSubmission(null)}
-          className="mb-4"
-          data-testid="button-back-to-list"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Applications
-        </Button>
+      <div className="container max-w-6xl mx-auto py-6 px-4 print:max-w-full print:p-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4 print:hidden">
+          <Button
+            variant="ghost"
+            onClick={() => setSelectedSubmission(null)}
+            data-testid="button-back-to-list"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Applications
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handlePrint}
+            data-testid="button-print-application"
+          >
+            <Printer className="mr-2 h-4 w-4" />
+            Print Application
+          </Button>
+        </div>
 
         <div className="space-y-6">
           <Card>
@@ -316,18 +397,36 @@ export default function RentalSubmissions() {
               </div>
               
               {existingDecision ? (
-                <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t">
-                  <span className="text-sm font-medium">Final Decision:</span>
-                  <Badge className={decisionColors[existingDecision.decision]} data-testid="badge-decision">
-                    {existingDecision.decision === "approved" ? "Approved" : "Denied"}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">
-                    on {formatDate(existingDecision.decidedAt)}
-                  </span>
+                <div className="mt-4 pt-4 border-t">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-medium">Final Decision:</span>
+                    <Badge className={decisionColors[existingDecision.decision]} data-testid="badge-decision">
+                      {existingDecision.decision === "approved" ? "Approved" : "Denied"}
+                    </Badge>
+                    <span className="text-xs text-muted-foreground">
+                      on {formatDate(existingDecision.decidedAt)}
+                    </span>
+                  </div>
                   {existingDecision.notes && (
-                    <p className="w-full text-sm text-muted-foreground mt-2">
+                    <p className="text-sm text-muted-foreground mt-2">
                       Note: {existingDecision.notes}
                     </p>
+                  )}
+                  {existingDecision.denialReasons && existingDecision.denialReasons.length > 0 && (
+                    <div className="mt-3 p-3 bg-red-50 dark:bg-red-950 rounded-md">
+                      <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">Denial Reasons:</p>
+                      <ul className="space-y-1">
+                        {existingDecision.denialReasons.map((reason) => {
+                          const cat = denialReasonCategories.find(c => c.value === reason.category);
+                          return (
+                            <li key={reason.id} className="text-sm text-red-700 dark:text-red-300">
+                              <span className="font-medium">{cat?.label || reason.category}</span>
+                              {reason.detail && <span className="text-red-600 dark:text-red-400"> - {reason.detail}</span>}
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
                   )}
                 </div>
               ) : submissionDetail.status === "complete" && (
@@ -397,40 +496,204 @@ export default function RentalSubmissions() {
                       </div>
 
                       {person.formJson && Object.keys(person.formJson).length > 0 && (
-                        <div className="mt-4 pt-4 border-t">
-                          <p className="text-sm font-medium mb-2">Application Details</p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
-                            {person.formJson.phone && (
-                              <div>
-                                <span className="text-muted-foreground">Phone:</span>{" "}
-                                {person.formJson.phone}
-                              </div>
-                            )}
-                            {person.formJson.dateOfBirth && (
-                              <div>
-                                <span className="text-muted-foreground">DOB:</span>{" "}
-                                {person.formJson.dateOfBirth}
-                              </div>
-                            )}
-                            {person.formJson.currentAddress && (
-                              <div className="md:col-span-2">
-                                <span className="text-muted-foreground">Current Address:</span>{" "}
-                                {person.formJson.currentAddress}
-                              </div>
-                            )}
-                            {person.formJson.currentEmployer && (
-                              <div>
-                                <span className="text-muted-foreground">Employer:</span>{" "}
-                                {person.formJson.currentEmployer}
-                              </div>
-                            )}
-                            {person.formJson.monthlyIncome && (
-                              <div>
-                                <span className="text-muted-foreground">Monthly Income:</span> $
-                                {person.formJson.monthlyIncome}
-                              </div>
-                            )}
+                        <div className="mt-4 pt-4 border-t space-y-4">
+                          <div>
+                            <p className="text-sm font-medium mb-3">Personal Information</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+                              {person.formJson.phone && (
+                                <div data-testid={`field-phone-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Phone</span>
+                                  <span>{person.formJson.phone}</span>
+                                </div>
+                              )}
+                              {person.formJson.dateOfBirth && (
+                                <div data-testid={`field-dob-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Date of Birth</span>
+                                  <span>{person.formJson.dateOfBirth}</span>
+                                </div>
+                              )}
+                              {person.formJson.ssn && (
+                                <div data-testid={`field-ssn-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">SSN (last 4)</span>
+                                  <span>***-**-{person.formJson.ssn.slice(-4)}</span>
+                                </div>
+                              )}
+                              {person.formJson.driversLicense && (
+                                <div data-testid={`field-license-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Driver's License</span>
+                                  <span>{person.formJson.driversLicense}</span>
+                                </div>
+                              )}
+                            </div>
                           </div>
+
+                          <div>
+                            <p className="text-sm font-medium mb-3">Current Residence</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              {person.formJson.currentAddress && (
+                                <div className="md:col-span-2" data-testid={`field-address-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Address</span>
+                                  <span>{person.formJson.currentAddress}</span>
+                                </div>
+                              )}
+                              {(person.formJson.currentCity || person.formJson.currentState || person.formJson.currentZip) && (
+                                <div className="md:col-span-2" data-testid={`field-citystatezip-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">City, State, ZIP</span>
+                                  <span>
+                                    {[person.formJson.currentCity, person.formJson.currentState, person.formJson.currentZip].filter(Boolean).join(", ")}
+                                  </span>
+                                </div>
+                              )}
+                              {person.formJson.currentLandlordName && (
+                                <div data-testid={`field-landlord-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Landlord Name</span>
+                                  <span>{person.formJson.currentLandlordName}</span>
+                                </div>
+                              )}
+                              {person.formJson.currentLandlordPhone && (
+                                <div data-testid={`field-landlordphone-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Landlord Phone</span>
+                                  <span>{person.formJson.currentLandlordPhone}</span>
+                                </div>
+                              )}
+                              {person.formJson.currentRent && (
+                                <div data-testid={`field-rent-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Current Rent</span>
+                                  <span>${person.formJson.currentRent}/mo</span>
+                                </div>
+                              )}
+                              {person.formJson.moveInDate && (
+                                <div data-testid={`field-movein-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Move-In Date</span>
+                                  <span>{person.formJson.moveInDate}</span>
+                                </div>
+                              )}
+                              {person.formJson.reasonForMoving && (
+                                <div className="md:col-span-2" data-testid={`field-reason-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Reason for Moving</span>
+                                  <span>{person.formJson.reasonForMoving}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          <div>
+                            <p className="text-sm font-medium mb-3">Employment & Income</p>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                              {person.formJson.currentEmployer && (
+                                <div data-testid={`field-employer-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Employer</span>
+                                  <span>{person.formJson.currentEmployer}</span>
+                                </div>
+                              )}
+                              {person.formJson.employerPhone && (
+                                <div data-testid={`field-employerphone-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Employer Phone</span>
+                                  <span>{person.formJson.employerPhone}</span>
+                                </div>
+                              )}
+                              {person.formJson.jobTitle && (
+                                <div data-testid={`field-jobtitle-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Job Title</span>
+                                  <span>{person.formJson.jobTitle}</span>
+                                </div>
+                              )}
+                              {person.formJson.monthlyIncome && (
+                                <div data-testid={`field-income-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Monthly Income</span>
+                                  <span>${person.formJson.monthlyIncome}</span>
+                                </div>
+                              )}
+                              {person.formJson.employmentLength && (
+                                <div data-testid={`field-emptime-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Time at Job</span>
+                                  <span>{person.formJson.employmentLength}</span>
+                                </div>
+                              )}
+                              {person.formJson.additionalIncome && (
+                                <div data-testid={`field-additionalincome-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Additional Income</span>
+                                  <span>${person.formJson.additionalIncome}</span>
+                                </div>
+                              )}
+                              {person.formJson.additionalIncomeSource && (
+                                <div data-testid={`field-additionalsource-${person.id}`}>
+                                  <span className="text-muted-foreground block text-xs">Additional Income Source</span>
+                                  <span>{person.formJson.additionalIncomeSource}</span>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {(person.formJson.emergencyContactName || person.formJson.emergencyContactPhone) && (
+                            <div>
+                              <p className="text-sm font-medium mb-3">Emergency Contact</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                {person.formJson.emergencyContactName && (
+                                  <div data-testid={`field-emname-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Name</span>
+                                    <span>{person.formJson.emergencyContactName}</span>
+                                  </div>
+                                )}
+                                {person.formJson.emergencyContactPhone && (
+                                  <div data-testid={`field-emphone-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Phone</span>
+                                    <span>{person.formJson.emergencyContactPhone}</span>
+                                  </div>
+                                )}
+                                {person.formJson.emergencyContactRelationship && (
+                                  <div data-testid={`field-emrelation-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Relationship</span>
+                                    <span>{person.formJson.emergencyContactRelationship}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {(person.formJson.hasPets !== undefined || person.formJson.pets || person.formJson.vehicles) && (
+                            <div>
+                              <p className="text-sm font-medium mb-3">Additional Information</p>
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+                                {person.formJson.hasPets !== undefined && (
+                                  <div data-testid={`field-haspets-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Has Pets</span>
+                                    <span>{person.formJson.hasPets ? "Yes" : "No"}</span>
+                                  </div>
+                                )}
+                                {person.formJson.pets && (
+                                  <div data-testid={`field-pets-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Pet Details</span>
+                                    <span>{person.formJson.pets}</span>
+                                  </div>
+                                )}
+                                {person.formJson.vehicles && (
+                                  <div data-testid={`field-vehicles-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Vehicles</span>
+                                    <span>{person.formJson.vehicles}</span>
+                                  </div>
+                                )}
+                                {person.formJson.smoker !== undefined && (
+                                  <div data-testid={`field-smoker-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Smoker</span>
+                                    <span>{person.formJson.smoker ? "Yes" : "No"}</span>
+                                  </div>
+                                )}
+                                {person.formJson.hasBeenEvicted !== undefined && (
+                                  <div data-testid={`field-evicted-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Prior Eviction</span>
+                                    <span>{person.formJson.hasBeenEvicted ? "Yes" : "No"}</span>
+                                  </div>
+                                )}
+                                {person.formJson.hasFelony !== undefined && (
+                                  <div data-testid={`field-felony-${person.id}`}>
+                                    <span className="text-muted-foreground block text-xs">Felony Conviction</span>
+                                    <span>{person.formJson.hasFelony ? "Yes" : "No"}</span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                     </CardContent>
@@ -458,12 +721,12 @@ export default function RentalSubmissions() {
                   const personFiles = submissionFiles?.[person.id] || [];
                   return (
                     <div key={`docs-${person.id}`} className="mb-4 last:mb-0" data-testid={`docs-person-${person.id}`}>
-                      <p className="text-sm font-medium mb-2">
-                        {person.firstName} {person.lastName}
-                        <Badge variant="outline" className="ml-2 text-xs">
+                      <div className="text-sm font-medium mb-2 flex items-center gap-2">
+                        <span>{person.firstName} {person.lastName}</span>
+                        <Badge variant="outline" className="text-xs">
                           {roleLabels[person.role] || person.role}
                         </Badge>
-                      </p>
+                      </div>
                       {personFiles.length === 0 ? (
                         <p className="text-sm text-muted-foreground" data-testid={`text-no-docs-${person.id}`}>No documents uploaded.</p>
                       ) : (
@@ -487,7 +750,7 @@ export default function RentalSubmissions() {
                                 size="sm"
                                 variant="outline"
                                 onClick={() => {
-                                  window.open(`/api/rental-submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
+                                  window.open(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
                                 }}
                                 data-testid={`button-download-${file.id}`}
                               >
@@ -544,9 +807,64 @@ export default function RentalSubmissions() {
                   : "This will notify the applicant that their application has been denied."}
               </DialogDescription>
             </DialogHeader>
-            <div className="space-y-4">
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              {pendingDecision === "denied" && (
+                <div>
+                  <Label className="text-sm font-medium">Denial Reasons (select all that apply)</Label>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Required for adverse action letter compliance
+                  </p>
+                  <div className="space-y-3">
+                    {denialReasonCategories.map((reason) => (
+                      <div key={reason.value} className="space-y-2">
+                        <div className="flex items-start gap-3">
+                          <Checkbox
+                            id={`reason-${reason.value}`}
+                            checked={selectedDenialReasons.includes(reason.value)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setSelectedDenialReasons([...selectedDenialReasons, reason.value]);
+                              } else {
+                                setSelectedDenialReasons(selectedDenialReasons.filter(r => r !== reason.value));
+                                setDenialReasonDetails(prev => {
+                                  const next = { ...prev };
+                                  delete next[reason.value];
+                                  return next;
+                                });
+                              }
+                            }}
+                            data-testid={`checkbox-reason-${reason.value}`}
+                          />
+                          <div className="flex-1">
+                            <Label 
+                              htmlFor={`reason-${reason.value}`}
+                              className="text-sm font-medium cursor-pointer"
+                            >
+                              {reason.label}
+                            </Label>
+                            <p className="text-xs text-muted-foreground">{reason.description}</p>
+                          </div>
+                        </div>
+                        {selectedDenialReasons.includes(reason.value) && (
+                          <Textarea
+                            placeholder={`Additional details about ${reason.label.toLowerCase()}...`}
+                            value={denialReasonDetails[reason.value] || ""}
+                            onChange={(e) => setDenialReasonDetails(prev => ({
+                              ...prev,
+                              [reason.value]: e.target.value,
+                            }))}
+                            className="ml-6 text-sm"
+                            rows={2}
+                            data-testid={`input-reason-detail-${reason.value}`}
+                          />
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <div>
-                <label className="text-sm font-medium">Notes (optional)</label>
+                <Label className="text-sm font-medium">Notes (optional)</Label>
                 <Textarea
                   placeholder="Add any notes about this decision..."
                   value={decisionNotes}
@@ -562,7 +880,7 @@ export default function RentalSubmissions() {
               <Button
                 variant={pendingDecision === "approved" ? "default" : "destructive"}
                 onClick={confirmDecision}
-                disabled={decisionMutation.isPending}
+                disabled={decisionMutation.isPending || (pendingDecision === "denied" && selectedDenialReasons.length === 0)}
                 data-testid="button-confirm-decision"
               >
                 {decisionMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
@@ -588,13 +906,28 @@ export default function RentalSubmissions() {
         </div>
       </div>
 
+      <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)} className="mb-4">
+        <TabsList data-testid="tabs-filter">
+          <TabsTrigger value="all" data-testid="tab-all">
+            All ({countByTab.all})
+          </TabsTrigger>
+          <TabsTrigger value="pending" data-testid="tab-pending">
+            Pending ({countByTab.pending})
+          </TabsTrigger>
+          <TabsTrigger value="approved" data-testid="tab-approved">
+            <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
+            Decided
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
       {isLoadingSubmissions ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <Skeleton key={i} className="h-24 w-full" />
           ))}
         </div>
-      ) : !submissions || submissions.length === 0 ? (
+      ) : filteredSubmissions.length === 0 ? (
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <FileText className="h-12 w-12 text-muted-foreground mb-4" />
@@ -617,7 +950,7 @@ export default function RentalSubmissions() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {submissions.map((sub) => (
+              {filteredSubmissions.map((sub) => (
                 <TableRow key={sub.id} data-testid={`row-submission-${sub.id}`}>
                   <TableCell>
                     <div className="flex items-center gap-2">
