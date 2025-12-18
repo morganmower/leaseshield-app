@@ -786,10 +786,16 @@ export default function RentalSubmissions() {
                                     <span>{person.formJson.pets}</span>
                                   </div>
                                 )}
-                                {person.formJson.vehicles && (
-                                  <div data-testid={`field-vehicles-${person.id}`}>
-                                    <span className="text-muted-foreground block text-xs">Vehicles</span>
-                                    <span>{person.formJson.vehicles}</span>
+                                {person.formJson.vehicles && Array.isArray(person.formJson.vehicles) && person.formJson.vehicles.length > 0 && (
+                                  <div data-testid={`field-vehicles-${person.id}`} className="col-span-2">
+                                    <span className="text-muted-foreground block text-xs mb-1">Vehicles</span>
+                                    <div className="space-y-1">
+                                      {person.formJson.vehicles.map((v: any, idx: number) => (
+                                        <div key={idx} className="text-sm">
+                                          {v.year} {v.make} {v.model} {v.color && `(${v.color})`} {v.licensePlate && `- ${v.licensePlate}`} {v.plateState && `(${v.plateState})`}
+                                        </div>
+                                      ))}
+                                    </div>
                                   </div>
                                 )}
                                 {person.formJson.smoker !== undefined && (
