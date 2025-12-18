@@ -4675,7 +4675,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Verify landlord owns the property via application link
-      const link = await storage.getApplicationLink(submission.applicationLinkId);
+      const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
       if (!link) {
         return res.status(404).json({ message: "Link not found" });
       }
@@ -4722,7 +4722,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Verify landlord owns the property
-      const link = await storage.getApplicationLink(submission.applicationLinkId);
+      const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
       if (!link) {
         return res.status(404).json({ message: "Link not found" });
       }

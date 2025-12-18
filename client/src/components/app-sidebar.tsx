@@ -51,61 +51,73 @@ const mainItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+    iconColor: "text-primary",
   },
   {
     title: "Templates",
     url: "/templates",
     icon: FileText,
+    iconColor: "text-blue-500 dark:text-blue-400",
   },
   {
     title: "My Documents",
     url: "/my-documents",
     icon: FolderOpen,
+    iconColor: "text-amber-500 dark:text-amber-400",
   },
   {
     title: "Properties",
     url: "/properties",
     icon: Building2,
+    iconColor: "text-slate-600 dark:text-slate-400",
   },
   {
     title: "Applications",
     url: "/rental-applications",
     icon: Users,
+    iconColor: "text-indigo-500 dark:text-indigo-400",
   },
   {
     title: "Submissions",
     url: "/rental-submissions",
     icon: FileCheck2,
+    iconColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
     title: "Compliance",
     url: "/compliance",
     icon: Shield,
+    iconColor: "text-primary",
   },
   {
     title: "Screening",
     url: "/screening",
     icon: Search,
+    iconColor: "text-violet-500 dark:text-violet-400",
   },
   {
     title: "Tenant Issues",
     url: "/tenant-issues",
     icon: AlertCircle,
+    iconColor: "text-orange-500 dark:text-orange-400",
   },
   {
     title: "Legal Updates",
     url: "/legal-updates",
     icon: BookOpen,
+    iconColor: "text-cyan-500 dark:text-cyan-400",
   },
   {
     title: "Communications",
     url: "/communications",
     icon: MessageCircle,
+    iconColor: "text-pink-500 dark:text-pink-400",
   },
   {
     title: "Rent Ledger",
     url: "/rent-ledger",
     icon: DollarSign,
+    iconColor: "text-green-600 dark:text-green-400",
   },
 ];
 
@@ -114,6 +126,7 @@ const resourceItems = [
     title: "Help Center",
     url: "/help",
     icon: BookOpen,
+    iconColor: "text-sky-500 dark:text-sky-400",
   },
 ];
 
@@ -122,16 +135,19 @@ const accountItems = [
     title: "Admin",
     url: "/admin",
     icon: ShieldCheck,
+    iconColor: "text-red-500 dark:text-red-400",
   },
   {
     title: "Billing",
     url: "/billing",
     icon: CreditCard,
+    iconColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
     title: "Settings",
     url: "/settings",
     icon: Settings,
+    iconColor: "text-slate-500 dark:text-slate-400",
   },
 ];
 
@@ -181,7 +197,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className={`h-5 w-5 ${item.iconColor}`} />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -203,7 +219,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className={`h-5 w-5 ${item.iconColor}`} />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -224,7 +240,7 @@ export function AppSidebar() {
               <SidebarMenuItem>
                 <SidebarMenuButton asChild isActive={location === "/messages"} className="h-10">
                   <Link href="/messages" onClick={handleNavClick} data-testid="link-messages">
-                    <Mail className="h-5 w-5" />
+                    <Mail className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     <span className="font-medium flex-1">Messages</span>
                     {unreadCount > 0 && (
                       <Badge 
@@ -244,7 +260,7 @@ export function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase()}`}>
-                      <item.icon className="h-5 w-5" />
+                      <item.icon className={`h-5 w-5 ${item.iconColor || ''}`} />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
