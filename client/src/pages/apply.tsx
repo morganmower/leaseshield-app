@@ -241,6 +241,16 @@ export default function Apply() {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const formatMonthYear = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 2) return digits;
+    return `${digits.slice(0, 2)}/${digits.slice(2, 6)}`;
+  };
+
+  const updateMonthYearField = (field: string, value: string) => {
+    updateField(field, formatMonthYear(value));
+  };
+
   const getFieldVisibility = (field: string): "required" | "optional" | "hidden" => {
     return linkData?.fieldSchema?.fields?.[field]?.visibility || "optional";
   };
@@ -552,8 +562,9 @@ export default function Apply() {
                     <Input
                       type="text"
                       placeholder="MM/YYYY"
-                      value={formData.currentMoveIn || ""}
-                      onChange={(e) => updateField("currentMoveIn", e.target.value)}
+                      value={formatMonthYear(formData.currentMoveIn || "")}
+                      onChange={(e) => updateMonthYearField("currentMoveIn", e.target.value)}
+                      maxLength={7}
                       data-testid="input-address-movein"
                     />
                   </div>
@@ -657,8 +668,9 @@ export default function Apply() {
                     <Input
                       type="text"
                       placeholder="MM/YYYY"
-                      value={formData.employmentStart || ""}
-                      onChange={(e) => updateField("employmentStart", e.target.value)}
+                      value={formatMonthYear(formData.employmentStart || "")}
+                      onChange={(e) => updateMonthYearField("employmentStart", e.target.value)}
+                      maxLength={7}
                       data-testid="input-employment-start"
                     />
                   </div>
