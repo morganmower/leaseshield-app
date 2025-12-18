@@ -39,6 +39,8 @@ import {
   ArrowLeft,
   AlertCircle,
   Loader2,
+  Paperclip,
+  Download,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -82,6 +84,14 @@ interface SubmissionEvent {
   createdAt: string;
 }
 
+interface SubmissionFile {
+  id: string;
+  fileType: string;
+  originalName: string;
+  fileSize: number;
+  createdAt: string;
+}
+
 interface SubmissionDetail extends SubmissionSummary {
   people: SubmissionPerson[];
   events: SubmissionEvent[];
@@ -122,6 +132,20 @@ const roleLabels: Record<string, string> = {
   guarantor: "Guarantor",
 };
 
+const fileTypeLabels: Record<string, string> = {
+  id: "ID / Driver's License",
+  income: "Proof of Income",
+  bank: "Bank Statement",
+  reference: "Reference Letter",
+  other: "Other Document",
+};
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export default function RentalSubmissions() {
   const { toast } = useToast();
   const [selectedSubmission, setSelectedSubmission] = useState<string | null>(null);
@@ -154,6 +178,19 @@ export default function RentalSubmissions() {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
       if (!res.ok) return null;
+      return res.json();
+    },
+    enabled: !!selectedSubmission,
+  });
+
+  const { data: submissionFiles } = useQuery<Record<string, SubmissionFile[]>>({
+    queryKey: ["/api/rental-submissions", selectedSubmission, "files"],
+    queryFn: async () => {
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental-submissions/${selectedSubmission}/files`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return {};
       return res.json();
     },
     enabled: !!selectedSubmission,
@@ -400,6 +437,64 @@ export default function RentalSubmissions() {
                   </Card>
                 ))}
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Paperclip className="h-5 w-5" />
+                Uploaded Documents
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {submissionDetail.people.map((person) => {
+                const personFiles = submissionFiles?.[person.id] || [];
+                return (
+                  <div key={`docs-${person.id}`} className="mb-4 last:mb-0">
+                    <p className="text-sm font-medium mb-2">
+                      {person.firstName} {person.lastName}
+                      <Badge variant="outline" className="ml-2 text-xs">
+                        {roleLabels[person.role] || person.role}
+                      </Badge>
+                    </p>
+                    {personFiles.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">No documents uploaded.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        {personFiles.map((file) => (
+                          <div
+                            key={file.id}
+                            className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/50 rounded-md"
+                            data-testid={`file-${file.id}`}
+                          >
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <div>
+                                <p className="text-sm font-medium">{file.originalName}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {fileTypeLabels[file.fileType] || file.fileType} · {formatFileSize(file.fileSize)}
+                                </p>
+                              </div>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                window.open(`/api/rental-submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
+                              }}
+                              data-testid={`button-download-${file.id}`}
+                            >
+                              <Download className="h-4 w-4 mr-1" />
+                              Download
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
 

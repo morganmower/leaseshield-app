@@ -4273,6 +4273,96 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Landlord: Get all files for a submission
+  app.get('/api/rental-submissions/:submissionId/files', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const submission = await storage.getRentalSubmission(req.params.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns the property via application link
+      const link = await storage.getApplicationLink(submission.applicationLinkId);
+      if (!link) {
+        return res.status(404).json({ message: "Link not found" });
+      }
+      
+      const property = await storage.getProperty(link.propertyId);
+      if (!property || property.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      // Get all people in the submission
+      const people = await storage.getRentalSubmissionPeopleBySubmission(req.params.submissionId);
+      
+      // Get files for each person
+      const filesByPerson: Record<string, any[]> = {};
+      for (const person of people) {
+        const files = await storage.getRentalSubmissionFiles(person.id);
+        filesByPerson[person.id] = files.map(f => ({
+          id: f.id,
+          fileType: f.fileType,
+          originalName: f.originalName,
+          fileSize: f.fileSize,
+          createdAt: f.createdAt,
+        }));
+      }
+
+      res.json(filesByPerson);
+    } catch (error) {
+      console.error("Error getting submission files:", error);
+      res.status(500).json({ message: "Failed to load files" });
+    }
+  });
+
+  // Landlord: Download a file
+  app.get('/api/rental-submissions/:submissionId/files/:fileId/download', isAuthenticated, async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      if (!userId) {
+        return res.status(401).json({ message: "Not authenticated" });
+      }
+
+      const submission = await storage.getRentalSubmission(req.params.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns the property
+      const link = await storage.getApplicationLink(submission.applicationLinkId);
+      if (!link) {
+        return res.status(404).json({ message: "Link not found" });
+      }
+      
+      const property = await storage.getProperty(link.propertyId);
+      if (!property || property.userId !== userId) {
+        return res.status(403).json({ message: "Forbidden" });
+      }
+
+      const file = await storage.getRentalSubmissionFile(req.params.fileId);
+      if (!file) {
+        return res.status(404).json({ message: "File not found" });
+      }
+
+      // Verify the file belongs to this submission
+      const people = await storage.getRentalSubmissionPeopleBySubmission(req.params.submissionId);
+      const personIds = people.map(p => p.id);
+      if (!personIds.includes(file.personId)) {
+        return res.status(403).json({ message: "File not part of this submission" });
+      }
+
+      res.download(file.storedPath, file.originalName);
+    } catch (error) {
+      console.error("Error downloading file:", error);
+      res.status(500).json({ message: "Failed to download file" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
