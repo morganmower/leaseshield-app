@@ -547,17 +547,17 @@ export default function Dashboard() {
               </Card>
             </Link>
 
-            {/* Screening Toolkit - Teal/Cyan */}
+            {/* Screening Helpers - Teal/Cyan */}
             <Link to="/screening">
-              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-toolkit">
+              <Card className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all relative overflow-hidden" data-testid="card-screening-helpers">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
                   <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-14 h-14 flex items-center justify-center mb-4 shadow-sm">
                     <Search className="h-7 w-7 text-cyan-600 dark:text-cyan-500" />
                   </div>
-                  <h3 className="font-display text-lg font-semibold mb-2">Screening Toolkit</h3>
+                  <h3 className="font-display text-lg font-semibold mb-2">Screening Helpers</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Learn to read credit reports and avoid screening mistakes
+                    AI tools to understand credit reports and screening guidance
                   </p>
                   <div className="text-sm font-medium text-cyan-600 dark:text-cyan-500 hover:text-cyan-700 dark:hover:text-cyan-400 flex items-center">
                     Get Started

@@ -72,13 +72,13 @@ const mainItems = [
     iconColor: "text-slate-600 dark:text-slate-400",
   },
   {
-    title: "Applications",
+    title: "Application Links",
     url: "/rental-applications",
     icon: Users,
     iconColor: "text-indigo-500 dark:text-indigo-400",
   },
   {
-    title: "Submissions",
+    title: "Rental Applications",
     url: "/rental-submissions",
     icon: FileCheck2,
     iconColor: "text-emerald-500 dark:text-emerald-400",
@@ -90,7 +90,7 @@ const mainItems = [
     iconColor: "text-primary",
   },
   {
-    title: "Screening",
+    title: "Screening Helpers",
     url: "/screening",
     icon: Search,
     iconColor: "text-violet-500 dark:text-violet-400",

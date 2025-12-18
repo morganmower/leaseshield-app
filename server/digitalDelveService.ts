@@ -1,8 +1,11 @@
 import { storage } from "./storage";
 import { XMLParser } from "fast-xml-parser";
 
-// Western Verify / DigitalDelve API URL
-const WESTERN_VERIFY_API_URL = "https://secure.westernverify.com/webservice/default.cfm";
+// DigitalDelve SSO API URL (Western Verify's screening platform)
+const DIGITAL_DELVE_SSO_URL = "https://demo.digitaldelve.com/listeners/sso.cfm";
+
+// Default InvitationId for full integration AppScreen requests
+const DEFAULT_INVITATION_ID = "C6BC580D-5E1A-4F51-A93B-927F5CFD5F9E";
 
 const xmlParser = new XMLParser({
   ignoreAttributes: false,
@@ -12,7 +15,7 @@ const xmlParser = new XMLParser({
 });
 
 function getBaseUrl(): string {
-  return WESTERN_VERIFY_API_URL;
+  return DIGITAL_DELVE_SSO_URL;
 }
 
 function getCredentials() {
@@ -91,27 +94,40 @@ async function sendXmlRequest(xml: string): Promise<{ body: string; statusCode: 
 function parseXmlResponse(xml: string): DigitalDelveResponse {
   try {
     const parsed = xmlParser.parse(xml);
-    // Western Verify uses OrderXML for responses
-    const root = parsed.OrderXML || parsed.ResponseXML || parsed.Response || parsed;
+    // DigitalDelve SSO API uses <SSO> wrapper for responses
+    const root = parsed.SSO || parsed.OrderXML || parsed.ResponseXML || parsed.Response || parsed;
     
     const status = getXmlValue(root, 'Status', 'status');
+    const statusMessage = getXmlValue(root, 'StatusMessage', 'statusMessage');
     const message = getXmlValue(root, 'Message', 'message');
-    const errorMessage = getXmlValue(root, 'ErrorMessage', 'errorMessage', 'Error', 'error');
-    const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
+    const reportId = getXmlValue(root, 'ReportId', 'ReportID', 'reportId');
+    const reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl');
+    
+    // Handle Errors element which can contain multiple Error elements
+    let errorMessage: string | undefined;
+    if (root.Errors) {
+      const errors = root.Errors.Error;
+      if (Array.isArray(errors)) {
+        errorMessage = errors.join('; ');
+      } else if (errors) {
+        errorMessage = String(errors);
+      }
+    }
+    errorMessage = errorMessage || getXmlValue(root, 'ErrorMessage', 'errorMessage', 'Error', 'error');
 
-    console.log("[DigitalDelve] Parsed response - Status:", status, "Message:", message);
+    console.log("[DigitalDelve] Parsed response - Status:", status, "StatusMessage:", statusMessage, "Message:", message);
 
     if (status?.toLowerCase() === 'success') {
       return {
         success: true,
-        message: message || "Success",
+        message: statusMessage || message || "Success",
         reportId,
         rawXml: xml,
       };
     }
 
     // Include the actual error message from the API
-    const errorMsg = errorMessage || message || "Unknown error from screening service";
+    const errorMsg = errorMessage || statusMessage || message || "Unknown error from screening service";
     return {
       success: false,
       error: errorMsg,
@@ -131,14 +147,15 @@ function parseXmlResponse(xml: string): DigitalDelveResponse {
 export async function verifyCredentials(): Promise<DigitalDelveResponse> {
   const { username, password } = getCredentials();
 
+  // SSO format per API documentation - AuthOnly function
   const xml = `<?xml version="1.0"?>
-<RequestXML>
+<SSO>
   <Authentication>
-    <Username>${escapeXml(username)}</Username>
+    <UserName>${escapeXml(username)}</UserName>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
   <Function>AuthOnly</Function>
-</RequestXML>`;
+</SSO>`;
 
   try {
     const { body } = await sendXmlRequest(xml);
@@ -154,14 +171,15 @@ export async function verifyCredentials(): Promise<DigitalDelveResponse> {
 export async function retrieveInvitations(): Promise<{ success: boolean; invitations?: any[]; error?: string }> {
   const { username, password } = getCredentials();
 
+  // Use SSO format per DigitalDelve API documentation
   const xml = `<?xml version="1.0"?>
-<RequestXML>
+<SSO>
   <Authentication>
-    <Username>${escapeXml(username)}</Username>
+    <UserName>${escapeXml(username)}</UserName>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
   <Function>RetrieveInvitations</Function>
-</RequestXML>`;
+</SSO>`;
 
   try {
     const { body } = await sendXmlRequest(xml);
@@ -177,14 +195,15 @@ export async function retrieveInvitations(): Promise<{ success: boolean; invitat
     
     while ((invMatch = invitationRegex.exec(body)) !== null) {
       const invXml = invMatch[1];
-      const idMatch = invXml.match(/<ID>([^<]*)<\/ID>/i);
-      const nameMatch = invXml.match(/<Name>([^<]*)<\/Name>/i);
-      const descMatch = invXml.match(/<Description>([^<]*)<\/Description>/i);
+      // Match element names per API docs: InvitationId, InvitationName, IncludedPackage
+      const idMatch = invXml.match(/<InvitationId>([^<]*)<\/InvitationId>/i) || invXml.match(/<ID>([^<]*)<\/ID>/i);
+      const nameMatch = invXml.match(/<InvitationName>([^<]*)<\/InvitationName>/i) || invXml.match(/<Name>([^<]*)<\/Name>/i);
+      const packageMatch = invXml.match(/<IncludedPackage>([^<]*)<\/IncludedPackage>/i) || invXml.match(/<Description>([^<]*)<\/Description>/i);
       
       invitations.push({
         id: idMatch?.[1] || "",
         name: nameMatch?.[1] || "",
-        description: descMatch?.[1] || "",
+        description: packageMatch?.[1] || "",
       });
     }
 
@@ -200,27 +219,28 @@ export async function retrieveInvitations(): Promise<{ success: boolean; invitat
 export async function sendAppScreenRequest(data: AppScreenRequest): Promise<DigitalDelveResponse> {
   const { username, password } = getCredentials();
 
-  // AppScreen sends an invitation email to the applicant
-  // They fill out their own information via Western Verify's portal
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<OrderXML>
-  <Method>APPSCREEN</Method>
+  // Use the provided invitationId or fall back to the default
+  const invitationId = data.invitationId || DEFAULT_INVITATION_ID;
+
+  // Full Integration AppScreen request per SSO API documentation
+  // Sends an invitation email to the applicant who completes their info on Western Verify's portal
+  const xml = `<?xml version="1.0"?>
+<SSO>
   <Authentication>
-    <Username>${escapeXml(username)}</Username>
+    <UserName>${escapeXml(username)}</UserName>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
-  <AppScreen>
-    <BillingReferenceCode>${escapeXml(data.referenceNumber)}</BillingReferenceCode>
-    <StatusPostUrl>${escapeXml(data.statusPostUrl)}</StatusPostUrl>
-    <ResultPostUrl>${escapeXml(data.resultPostUrl)}</ResultPostUrl>
-    <Applicant>
-      <FirstName>${escapeXml(data.firstName)}</FirstName>
-      <LastName>${escapeXml(data.lastName)}</LastName>
-      <Email>${escapeXml(data.email)}</Email>
-      ${data.phone ? `<Phone>${escapeXml(data.phone)}</Phone>` : ''}
-    </Applicant>
-  </AppScreen>
-</OrderXML>`;
+  <Function>AppScreen</Function>
+  <ResultPostURL>${escapeXml(data.resultPostUrl)}</ResultPostURL>
+  <StatusPostURL>${escapeXml(data.statusPostUrl)}</StatusPostURL>
+  <InvitationId>${escapeXml(invitationId)}</InvitationId>
+  <Applicant>
+    <ReferenceNumber>${escapeXml(data.referenceNumber)}</ReferenceNumber>
+    <FirstName>${escapeXml(data.firstName)}</FirstName>
+    <LastName>${escapeXml(data.lastName)}</LastName>
+    <EmailAddress>${escapeXml(data.email)}</EmailAddress>
+  </Applicant>
+</SSO>`;
 
   console.log("[DigitalDelve] Full request XML:", xml);
 
@@ -238,15 +258,16 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
 export async function getViewReportSsoUrl(reportId: string): Promise<{ success: boolean; url?: string; error?: string }> {
   const { username, password } = getCredentials();
 
+  // SSO format per API documentation
   const xml = `<?xml version="1.0"?>
-<RequestXML>
+<SSO>
   <Authentication>
-    <Username>${escapeXml(username)}</Username>
+    <UserName>${escapeXml(username)}</UserName>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
   <Function>ViewReport</Function>
-  <ReportID>${escapeXml(reportId)}</ReportID>
-</RequestXML>`;
+  <ReportId>${escapeXml(reportId)}</ReportId>
+</SSO>`;
 
   try {
     const { body, statusCode } = await sendXmlRequest(xml);
@@ -270,15 +291,16 @@ export async function getViewReportSsoUrl(reportId: string): Promise<{ success: 
 export async function getViewReportByRefSsoUrl(referenceNumber: string): Promise<{ success: boolean; url?: string; error?: string }> {
   const { username, password } = getCredentials();
 
+  // SSO format per API documentation - use ReportId element for reference number lookup
   const xml = `<?xml version="1.0"?>
-<RequestXML>
+<SSO>
   <Authentication>
-    <Username>${escapeXml(username)}</Username>
+    <UserName>${escapeXml(username)}</UserName>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
   <Function>ViewReportByClientRef</Function>
-  <ReportID>${escapeXml(referenceNumber)}</ReportID>
-</RequestXML>`;
+  <ReportId>${escapeXml(referenceNumber)}</ReportId>
+</SSO>`;
 
   try {
     const { body, statusCode } = await sendXmlRequest(xml);
@@ -317,21 +339,25 @@ function findInParsedXml(obj: any, ...possibleRoots: string[]): any {
 export function parseStatusWebhook(xml: string): WebhookStatusData | null {
   try {
     const parsed = xmlParser.parse(xml);
-    // Western Verify uses OrderXML with Method field to indicate webhook type
-    const root = findInParsedXml(parsed, 'OrderXML', 'StatusUpdate', 'Response', 'Webhook', 'ResponseXML');
+    // SSO API uses <SSO> wrapper for status updates per documentation
+    const root = findInParsedXml(parsed, 'SSO', 'OrderXML', 'StatusUpdate', 'Response', 'Webhook', 'ResponseXML');
     
     console.log("[DigitalDelve] Status webhook parsed root keys:", root ? Object.keys(root) : 'null');
     
-    // Get reference from Order.BillingReferenceCode or direct ClientRef
-    let referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    // Per SSO docs, reference is in Applicant.ReferenceNumber
+    let referenceNumber = getXmlValue(root, 'ReferenceNumber', 'referenceNumber', 'ClientRef', 'clientRef');
+    if (!referenceNumber && root?.Applicant) {
+      referenceNumber = getXmlValue(root.Applicant, 'ReferenceNumber', 'referenceNumber');
+    }
     if (!referenceNumber && root?.Order) {
       referenceNumber = getXmlValue(root.Order, 'BillingReferenceCode', 'ClientRef');
     }
     
+    // Status is directly in root per SSO docs (e.g., "In Progress")
     const status = getXmlValue(root, 'Status', 'status');
-    const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
+    const reportId = getXmlValue(root, 'ReportId', 'ReportID', 'reportId');
     
-    // Get report URL from Order.ReportLink or direct field
+    // Get report URL from ReportURL element
     let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
     if (!reportUrl && root?.Order) {
       reportUrl = getXmlValue(root.Order, 'ReportLink');
@@ -345,7 +371,7 @@ export function parseStatusWebhook(xml: string): WebhookStatusData | null {
 
     return {
       referenceNumber,
-      status: status.toLowerCase(),
+      status: status.toLowerCase().replace(/\s+/g, '_'), // "In Progress" -> "in_progress"
       reportId,
       reportUrl,
       rawXml: xml,
@@ -360,23 +386,25 @@ export function parseStatusWebhook(xml: string): WebhookStatusData | null {
 export function parseResultWebhook(xml: string): WebhookStatusData | null {
   try {
     const parsed = xmlParser.parse(xml);
-    // Western Verify uses OrderXML with Method "PUSH RESULTS" for results
-    const root = findInParsedXml(parsed, 'OrderXML', 'ResultUpdate', 'Response', 'Webhook', 'ResponseXML');
+    // SSO API uses <SSO> wrapper for result updates per documentation
+    const root = findInParsedXml(parsed, 'SSO', 'OrderXML', 'ResultUpdate', 'Response', 'Webhook', 'ResponseXML');
     
     console.log("[DigitalDelve] Result webhook parsed root keys:", root ? Object.keys(root) : 'null');
-    const method = getXmlValue(root, 'Method');
-    console.log("[DigitalDelve] Webhook method:", method);
     
-    // Get reference from Order.BillingReferenceCode or direct ClientRef
-    let referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    // Per SSO docs, reference is in Applicant.ReferenceNumber
+    let referenceNumber = getXmlValue(root, 'ReferenceNumber', 'referenceNumber', 'ClientRef', 'clientRef');
+    if (!referenceNumber && root?.Applicant) {
+      referenceNumber = getXmlValue(root.Applicant, 'ReferenceNumber', 'referenceNumber');
+    }
     if (!referenceNumber && root?.Order) {
       referenceNumber = getXmlValue(root.Order, 'BillingReferenceCode', 'ClientRef');
     }
     
+    // Status is "Complete" per SSO docs, also get Recommendation if available
     const status = getXmlValue(root, 'Status', 'status') || 'complete';
-    const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
+    const reportId = getXmlValue(root, 'ReportId', 'ReportID', 'reportId');
     
-    // Get report URL from Order.ReportLink or direct field
+    // Per SSO docs, ReportURL contains the full report URL
     let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
     if (!reportUrl && root?.Order) {
       reportUrl = getXmlValue(root.Order, 'ReportLink');
