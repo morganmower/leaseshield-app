@@ -320,12 +320,25 @@ function findInParsedXml(obj: any, ...possibleRoots: string[]): any {
 export function parseStatusWebhook(xml: string): WebhookStatusData | null {
   try {
     const parsed = xmlParser.parse(xml);
-    const root = findInParsedXml(parsed, 'StatusUpdate', 'Response', 'Webhook', 'ResponseXML');
+    // Western Verify uses OrderXML with Method field to indicate webhook type
+    const root = findInParsedXml(parsed, 'OrderXML', 'StatusUpdate', 'Response', 'Webhook', 'ResponseXML');
     
-    const referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    console.log("[DigitalDelve] Status webhook parsed root keys:", root ? Object.keys(root) : 'null');
+    
+    // Get reference from Order.BillingReferenceCode or direct ClientRef
+    let referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    if (!referenceNumber && root?.Order) {
+      referenceNumber = getXmlValue(root.Order, 'BillingReferenceCode', 'ClientRef');
+    }
+    
     const status = getXmlValue(root, 'Status', 'status');
     const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
-    const reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl');
+    
+    // Get report URL from Order.ReportLink or direct field
+    let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
+    if (!reportUrl && root?.Order) {
+      reportUrl = getXmlValue(root.Order, 'ReportLink');
+    }
 
     if (!referenceNumber || !status) {
       console.error("Missing required fields in status webhook. Reference:", referenceNumber, "Status:", status);
@@ -350,12 +363,27 @@ export function parseStatusWebhook(xml: string): WebhookStatusData | null {
 export function parseResultWebhook(xml: string): WebhookStatusData | null {
   try {
     const parsed = xmlParser.parse(xml);
-    const root = findInParsedXml(parsed, 'ResultUpdate', 'Response', 'Webhook', 'ResponseXML');
+    // Western Verify uses OrderXML with Method "PUSH RESULTS" for results
+    const root = findInParsedXml(parsed, 'OrderXML', 'ResultUpdate', 'Response', 'Webhook', 'ResponseXML');
     
-    const referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    console.log("[DigitalDelve] Result webhook parsed root keys:", root ? Object.keys(root) : 'null');
+    const method = getXmlValue(root, 'Method');
+    console.log("[DigitalDelve] Webhook method:", method);
+    
+    // Get reference from Order.BillingReferenceCode or direct ClientRef
+    let referenceNumber = getXmlValue(root, 'ClientRef', 'clientRef', 'ReferenceNumber', 'referenceNumber');
+    if (!referenceNumber && root?.Order) {
+      referenceNumber = getXmlValue(root.Order, 'BillingReferenceCode', 'ClientRef');
+    }
+    
     const status = getXmlValue(root, 'Status', 'status') || 'complete';
     const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
-    const reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl');
+    
+    // Get report URL from Order.ReportLink or direct field
+    let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
+    if (!reportUrl && root?.Order) {
+      reportUrl = getXmlValue(root.Order, 'ReportLink');
+    }
 
     if (!referenceNumber) {
       console.error("Missing reference number in result webhook");
