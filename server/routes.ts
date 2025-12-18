@@ -4547,13 +4547,20 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                     const baseUrl = `${protocol}://${host}`;
                     
                     // Build applicant data - SSN/DOB collected by Western Verify portal directly
+                    // Pass all available fields for consistency with manual flow
                     const result = await processScreeningRequest(
                       person.submissionId,
                       {
                         firstName: primaryApplicant.firstName || "",
                         lastName: primaryApplicant.lastName || "",
                         email: primaryApplicant.email || "",
-                        phone: (primaryApplicant as any).phone || formData.phone,
+                        phone: primaryApplicant.phone || formData.phone,
+                        ssn: formData.ssn,
+                        dob: formData.dob,
+                        address: formData.currentAddress,
+                        city: formData.currentCity,
+                        state: formData.currentState,
+                        zip: formData.currentZip,
                       },
                       baseUrl
                     );
