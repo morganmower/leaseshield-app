@@ -41,6 +41,8 @@ import {
   Upload,
   Trash2,
   File,
+  PawPrint,
+  Plus,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -78,6 +80,7 @@ const STEPS = [
   { id: "info", label: "Basic Info", icon: Users },
   { id: "address", label: "Address History", icon: Home },
   { id: "employment", label: "Employment", icon: Building2 },
+  { id: "pets", label: "Pets", icon: PawPrint },
   { id: "uploads", label: "Documents", icon: Upload },
   { id: "review", label: "Review & Submit", icon: CheckCircle },
 ];
@@ -282,7 +285,7 @@ function UploadDocumentsStep({ personToken, onBack, onNext }: { personToken: str
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
-        <Button onClick={onNext} data-testid="button-next-step-5">
+        <Button onClick={onNext} data-testid="button-next-step-6">
           Next
           <ArrowRight className="h-4 w-4 ml-2" />
         </Button>
@@ -965,17 +968,199 @@ export default function Apply() {
             </>
           )}
 
-          {/* Step 4: Upload Documents */}
+          {/* Step 4: Pets */}
           {currentStep === 4 && (
+            <>
+              <CardHeader>
+                <CardTitle>Pets</CardTitle>
+                <CardDescription>Tell us about any pets that will reside in the unit</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Do you have any pets that will reside in the unit?</Label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasPetsYes"
+                        checked={formData.hasPets === true}
+                        onCheckedChange={() => updateField("hasPets", true)}
+                        data-testid="checkbox-has-pets-yes"
+                      />
+                      <Label htmlFor="hasPetsYes" className="cursor-pointer">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasPetsNo"
+                        checked={formData.hasPets === false}
+                        onCheckedChange={() => {
+                          setFormData(prev => ({ ...prev, hasPets: false, pets: [] }));
+                        }}
+                        data-testid="checkbox-has-pets-no"
+                      />
+                      <Label htmlFor="hasPetsNo" className="cursor-pointer">No</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {formData.hasPets === true && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-medium">Pet Details</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentPets = formData.pets || [];
+                          updateField("pets", [
+                            ...currentPets,
+                            { id: Date.now().toString(), type: "", breed: "", weight: "", age: "", isServiceAnimal: "" }
+                          ]);
+                        }}
+                        data-testid="button-add-pet"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Pet
+                      </Button>
+                    </div>
+
+                    {(formData.pets || []).length === 0 && (
+                      <p className="text-sm text-muted-foreground">Click "Add Pet" to add your pets.</p>
+                    )}
+
+                    {(formData.pets || []).map((pet: any, index: number) => (
+                      <div key={pet.id} className="border rounded-lg p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Pet {index + 1}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const updatedPets = formData.pets.filter((_: any, i: number) => i !== index);
+                              updateField("pets", updatedPets);
+                            }}
+                            data-testid={`button-remove-pet-${index}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Type (dog, cat, etc.) *</Label>
+                            <Input
+                              value={pet.type || ""}
+                              onChange={(e) => {
+                                const updatedPets = [...formData.pets];
+                                updatedPets[index] = { ...pet, type: e.target.value };
+                                updateField("pets", updatedPets);
+                              }}
+                              placeholder="e.g., Dog, Cat, Bird"
+                              data-testid={`input-pet-type-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Breed (if applicable)</Label>
+                            <Input
+                              value={pet.breed || ""}
+                              onChange={(e) => {
+                                const updatedPets = [...formData.pets];
+                                updatedPets[index] = { ...pet, breed: e.target.value };
+                                updateField("pets", updatedPets);
+                              }}
+                              placeholder="e.g., Golden Retriever"
+                              data-testid={`input-pet-breed-${index}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Weight</Label>
+                            <Input
+                              value={pet.weight || ""}
+                              onChange={(e) => {
+                                const updatedPets = [...formData.pets];
+                                updatedPets[index] = { ...pet, weight: e.target.value };
+                                updateField("pets", updatedPets);
+                              }}
+                              placeholder="e.g., 25 lbs"
+                              data-testid={`input-pet-weight-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Age</Label>
+                            <Input
+                              value={pet.age || ""}
+                              onChange={(e) => {
+                                const updatedPets = [...formData.pets];
+                                updatedPets[index] = { ...pet, age: e.target.value };
+                                updateField("pets", updatedPets);
+                              }}
+                              placeholder="e.g., 3 years"
+                              data-testid={`input-pet-age-${index}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="space-y-2">
+                          <Label>Is this a service or assistance animal?</Label>
+                          <Select
+                            value={pet.isServiceAnimal || ""}
+                            onValueChange={(value) => {
+                              const updatedPets = [...formData.pets];
+                              updatedPets[index] = { ...pet, isServiceAnimal: value };
+                              updateField("pets", updatedPets);
+                            }}
+                          >
+                            <SelectTrigger data-testid={`select-pet-service-${index}`}>
+                              <SelectValue placeholder="Select an option (optional)" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="yes">Yes</SelectItem>
+                              <SelectItem value="no">No</SelectItem>
+                              <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      </div>
+                    ))}
+
+                    <div className="bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800 p-4 rounded-lg">
+                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                        <strong>Fair Housing Notice:</strong> Under the Fair Housing Act, landlords cannot require documentation 
+                        for service or assistance animals at the application stage and cannot charge pet fees or deposits for 
+                        service/assistance animals. This question is optional and for informational purposes only.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-between border-t pt-6">
+                <Button variant="outline" onClick={() => setCurrentStep(3)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button onClick={() => setCurrentStep(5)} data-testid="button-next-step-5">
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardFooter>
+            </>
+          )}
+
+          {/* Step 5: Upload Documents */}
+          {currentStep === 5 && (
             <UploadDocumentsStep
               personToken={personToken!}
-              onBack={() => setCurrentStep(3)}
-              onNext={() => setCurrentStep(5)}
+              onBack={() => setCurrentStep(4)}
+              onNext={() => setCurrentStep(6)}
             />
           )}
 
-          {/* Step 5: Review & Submit */}
-          {currentStep === 5 && (
+          {/* Step 6: Review & Submit */}
+          {currentStep === 6 && (
             <>
               <CardHeader>
                 <CardTitle>Review & Submit</CardTitle>
@@ -1022,6 +1207,35 @@ export default function Apply() {
                     <span className="text-muted-foreground">Monthly Income:</span>
                     <span>{formData.monthlyIncome ? `$${formData.monthlyIncome}` : "Not provided"}</span>
                   </div>
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <PawPrint className="h-4 w-4" />
+                    Pets
+                  </h3>
+                  {formData.hasPets === false && (
+                    <p className="text-sm">No pets</p>
+                  )}
+                  {formData.hasPets === true && (formData.pets || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {formData.pets.map((pet: any, index: number) => (
+                        <div key={pet.id || index} className="text-sm border-l-2 border-primary/30 pl-3 py-1">
+                          <span className="font-medium">{pet.type || "Pet"}</span>
+                          {pet.breed && <span className="text-muted-foreground"> - {pet.breed}</span>}
+                          <div className="text-muted-foreground">
+                            {pet.weight && <span>Weight: {pet.weight}</span>}
+                            {pet.weight && pet.age && <span> | </span>}
+                            {pet.age && <span>Age: {pet.age}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : formData.hasPets === true ? (
+                    <p className="text-sm text-muted-foreground">Has pets (no details provided)</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Not specified</p>
+                  )}
                 </div>
 
                 {/* Add co-applicant option */}
@@ -1087,7 +1301,7 @@ export default function Apply() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
-                <Button variant="outline" onClick={() => setCurrentStep(4)}>
+                <Button variant="outline" onClick={() => setCurrentStep(5)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
