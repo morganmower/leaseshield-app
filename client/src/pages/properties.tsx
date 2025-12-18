@@ -529,8 +529,11 @@ export default function Properties() {
         ) : (
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
             {filteredProperties.map((property) => (
-              <Card key={property.id} className="hover-elevate" data-testid={`card-property-${property.id}`}>
-                <CardHeader>
+              <Card key={property.id} className="hover-elevate cursor-pointer" data-testid={`card-property-${property.id}`}>
+                <CardHeader 
+                  className="cursor-pointer" 
+                  onClick={() => setLocation(`/properties/${property.id}`)}
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex-1">
                       <CardTitle className="text-lg">{property.name}</CardTitle>
@@ -599,29 +602,25 @@ export default function Properties() {
                   </div>
                   <div className="flex flex-wrap gap-2 mt-4">
                     <Button
-                      variant="outline"
                       size="sm"
-                      onClick={() => handleUploadForProperty(property.id)}
+                      onClick={() => setLocation(`/properties/${property.id}`)}
                       className="flex-1"
-                      data-testid={`button-upload-property-${property.id}`}
+                      data-testid={`button-view-property-${property.id}`}
                     >
-                      <Upload className="h-4 w-4 mr-2" />
-                      Upload
+                      View Details
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEdit(property)}
-                      className="flex-1"
+                      onClick={(e) => { e.stopPropagation(); handleEdit(property); }}
                       data-testid={`button-edit-property-${property.id}`}
                     >
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => setDeletePropertyId(property.id)}
+                      onClick={(e) => { e.stopPropagation(); setDeletePropertyId(property.id); }}
                       className="text-destructive hover:text-destructive"
                       data-testid={`button-delete-property-${property.id}`}
                     >

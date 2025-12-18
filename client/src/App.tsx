@@ -57,6 +57,7 @@ import LogoColors from "@/pages/logo-colors";
 import RentalApplications from "@/pages/rental-applications";
 import RentalSubmissions from "@/pages/rental-submissions";
 import Apply from "@/pages/apply";
+import PropertyDetail from "@/pages/property-detail";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -108,6 +109,7 @@ function Router() {
         <Route path="/billing">{() => <Redirect to="/login" />}</Route>
         <Route path="/subscription">{() => <Redirect to="/login" />}</Route>
         <Route path="/properties">{() => <Redirect to="/login" />}</Route>
+        <Route path="/properties/:id">{() => <Redirect to="/login" />}</Route>
         <Route path="/rental-applications">{() => <Redirect to="/login" />}</Route>
         <Route path="/rental-submissions">{() => <Redirect to="/login" />}</Route>
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
@@ -143,6 +145,7 @@ function Router() {
       <Route path="/templates/:id/fill" component={DocumentWizard} />
       <Route path="/my-documents" component={MyDocuments} />
       <Route path="/properties" component={Properties} />
+      <Route path="/properties/:id" component={PropertyDetail} />
       <Route path="/rental-applications" component={RentalApplications} />
       <Route path="/rental-submissions" component={RentalSubmissions} />
       {/* Public application form (also accessible when logged in) */}
