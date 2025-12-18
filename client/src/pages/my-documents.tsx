@@ -19,7 +19,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File } from "lucide-react";
 import { queryClient, getAccessToken } from "@/lib/queryClient";
-import type { SavedDocument, Property, UploadedDocument } from "@shared/schema";
+import type { SavedDocument, RentalProperty, UploadedDocument } from "@shared/schema";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -50,17 +50,8 @@ export default function MyDocuments() {
     queryKey: ['/api/uploaded-documents'],
   });
 
-  const { data: properties = [] } = useQuery<Property[]>({
-    queryKey: ['/api/properties'],
-    queryFn: async () => {
-      const token = getAccessToken();
-      const response = await fetch('/api/properties', { 
-        credentials: 'include',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      return response.json();
-    },
+  const { data: properties = [] } = useQuery<RentalProperty[]>({
+    queryKey: ['/api/rental/properties'],
   });
 
   const downloadMutation = useMutation({
