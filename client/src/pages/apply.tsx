@@ -506,7 +506,15 @@ export default function Apply() {
     );
   }
 
-  // Already submitted
+  // Already submitted - allow starting a new application for a different person
+  const handleStartNewApplication = () => {
+    localStorage.removeItem(`apply_${token}_personToken`);
+    setPersonToken(null);
+    setFormData({});
+    setCurrentStep(0);
+    setHasAcknowledged(false);
+  };
+
   if (personData?.submissionStatus === "submitted") {
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
@@ -518,10 +526,18 @@ export default function Apply() {
             {linkData.unitLabel && ` - ${linkData.unitLabel}`}. 
             The landlord will review your application and contact you.
           </p>
-          <Badge variant="secondary" className="text-base px-4 py-2">
+          <Badge variant="secondary" className="text-base px-4 py-2 mb-6">
             <Clock className="h-4 w-4 mr-2" />
             Under Review
           </Badge>
+          <div className="border-t pt-4 mt-4">
+            <p className="text-sm text-muted-foreground mb-3">
+              Not {personData.firstName}? Start a new application.
+            </p>
+            <Button variant="outline" onClick={handleStartNewApplication} data-testid="button-start-new-application">
+              Start New Application
+            </Button>
+          </div>
         </Card>
       </div>
     );
