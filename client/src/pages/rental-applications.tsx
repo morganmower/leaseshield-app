@@ -78,6 +78,7 @@ export default function RentalApplications() {
   const [expandedPropertyId, setExpandedPropertyId] = useState<string | null>(null);
   const [isAddUnitOpen, setIsAddUnitOpen] = useState(false);
   const [addUnitPropertyId, setAddUnitPropertyId] = useState<string | null>(null);
+  const [createLinkAfterUnit, setCreateLinkAfterUnit] = useState(false);
 
   const [propertyForm, setPropertyForm] = useState({
     name: "",
@@ -177,7 +178,7 @@ export default function RentalApplications() {
   });
 
   const createUnitMutation = useMutation({
-    mutationFn: async ({ propertyId, data }: { propertyId: string; data: typeof unitForm }) => {
+    mutationFn: async ({ propertyId, data, createLink }: { propertyId: string; data: typeof unitForm; createLink?: boolean }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${propertyId}/units`, {
         method: "POST",
@@ -186,17 +187,28 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, createLink }),
       });
       if (!response.ok) throw new Error("Failed to create unit");
       return response.json();
     },
-    onSuccess: (_, variables) => {
+    onSuccess: (result, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", variables.propertyId, "units"] });
+      if (result.unit?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/rental/units", result.unit.id, "links"] });
+      }
       setIsAddUnitOpen(false);
       setAddUnitPropertyId(null);
       setUnitForm({ unitLabel: "" });
-      toast({ title: "Unit Created", description: "The unit has been added to the property." });
+      setCreateLinkAfterUnit(false);
+      if (variables.createLink && result.link) {
+        const url = `${window.location.origin}/apply/${result.link.publicToken}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Property Link Created", description: "Application link has been copied to your clipboard!" });
+        setExpandedPropertyId(variables.propertyId);
+      } else {
+        toast({ title: "Unit Created", description: "The unit has been added to the property." });
+      }
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to create unit.", variant: "destructive" });
@@ -215,10 +227,17 @@ export default function RentalApplications() {
     setIsEditPropertyOpen(true);
   };
 
-  const handleAddUnit = (propertyId: string) => {
+  const handleAddUnit = (propertyId: string, createLinkImmediately?: boolean) => {
     setAddUnitPropertyId(propertyId);
     setUnitForm({ unitLabel: "" });
-    setIsAddUnitOpen(true);
+    setCreateLinkAfterUnit(!!createLinkImmediately);
+    
+    if (createLinkImmediately) {
+      // Create a default unit and link immediately without showing dialog
+      createUnitMutation.mutate({ propertyId, data: { unitLabel: "" }, createLink: true });
+    } else {
+      setIsAddUnitOpen(true);
+    }
   };
 
   const filteredProperties = properties.filter(
@@ -340,7 +359,7 @@ export default function RentalApplications() {
                 }
                 onEdit={() => handleEditProperty(property)}
                 onDelete={() => setDeletePropertyId(property.id)}
-                onAddUnit={() => handleAddUnit(property.id)}
+                onAddUnit={(createLinkImmediately) => handleAddUnit(property.id, createLinkImmediately)}
               />
             ))}
           </div>
@@ -595,7 +614,7 @@ function PropertyCard({
   onToggleExpand: () => void;
   onEdit: () => void;
   onDelete: () => void;
-  onAddUnit: () => void;
+  onAddUnit: (createLinkImmediately?: boolean) => void;
 }) {
   const { data: units = [] } = useQuery<RentalUnit[]>({
     queryKey: ["/api/rental/properties", property.id, "units"],
@@ -644,16 +663,41 @@ function PropertyCard({
                 <Home className="h-4 w-4" />
                 Units ({units.length})
               </h4>
-              <Button size="sm" variant="outline" onClick={onAddUnit} data-testid={`button-add-unit-${property.id}`}>
+              <Button size="sm" variant="outline" onClick={() => onAddUnit()} data-testid={`button-add-unit-${property.id}`}>
                 <Plus className="h-4 w-4 mr-1" />
                 Add Unit
               </Button>
             </div>
 
             {units.length === 0 ? (
-              <p className="text-sm text-muted-foreground py-4 text-center">
-                No units yet. Add a unit to create application links.
-              </p>
+              <div className="py-4 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  No units configured for this property.
+                </p>
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={() => onAddUnit(true)}
+                    data-testid={`button-create-property-link-${property.id}`}
+                  >
+                    <LinkIcon className="h-4 w-4 mr-1" />
+                    Create Property Link
+                  </Button>
+                  <span className="text-xs text-muted-foreground">or</span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => onAddUnit(false)}
+                    data-testid={`button-add-unit-multi-${property.id}`}
+                  >
+                    <Plus className="h-4 w-4 mr-1" />
+                    Add Individual Units
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Use "Create Property Link" for single-unit properties. Use "Add Individual Units" if this property has multiple apartments/units.
+                </p>
+              </div>
             ) : (
               <div className="space-y-2">
                 {units.map((unit) => (

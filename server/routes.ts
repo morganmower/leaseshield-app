@@ -3575,7 +3575,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Property not found" });
       }
 
-      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson, createLink } = req.body;
 
       const unit = await storage.createRentalUnit({
         propertyId: req.params.propertyId,
@@ -3586,7 +3586,20 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         fieldSchemaOverrideJson: fieldSchemaOverrideJson || null,
       });
 
-      res.status(201).json(unit);
+      // If createLink is true, also create an application link for this unit
+      let link = null;
+      if (createLink) {
+        const publicToken = randomUUID().replace(/-/g, '');
+        link = await storage.createRentalApplicationLink({
+          unitId: unit.id,
+          publicToken,
+          isActive: true,
+          coverPage: null,
+          fieldSchema: null,
+        });
+      }
+
+      res.status(201).json({ unit, link });
     } catch (error) {
       console.error("Error creating rental unit:", error);
       res.status(500).json({ message: "Failed to create unit" });
