@@ -200,40 +200,29 @@ export async function retrieveInvitations(): Promise<{ success: boolean; invitat
 export async function sendAppScreenRequest(data: AppScreenRequest): Promise<DigitalDelveResponse> {
   const { username, password } = getCredentials();
 
-  // Western Verify uses OrderXML format with specific structure
-  // Default to TENANTVALUENOALIAS package for tenant screening
-  const serviceCode = data.invitationId || "TENANTVALUENOALIAS";
-  
+  // AppScreen sends an invitation email to the applicant
+  // They fill out their own information via Western Verify's portal
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <OrderXML>
-  <Method>NEW ORDER</Method>
+  <Method>APPSCREEN</Method>
   <Authentication>
     <Username>${escapeXml(username)}</Username>
     <Password>${escapeXml(password)}</Password>
   </Authentication>
-  <Order>
+  <AppScreen>
     <BillingReferenceCode>${escapeXml(data.referenceNumber)}</BillingReferenceCode>
     <StatusPostUrl>${escapeXml(data.statusPostUrl)}</StatusPostUrl>
     <ResultPostUrl>${escapeXml(data.resultPostUrl)}</ResultPostUrl>
-    <Subject>
+    <Applicant>
       <FirstName>${escapeXml(data.firstName)}</FirstName>
       <LastName>${escapeXml(data.lastName)}</LastName>
       <Email>${escapeXml(data.email)}</Email>
       ${data.phone ? `<Phone>${escapeXml(data.phone)}</Phone>` : ''}
-      ${data.ssn ? `<SSN>${escapeXml(data.ssn)}</SSN>` : ''}
-      ${data.dob ? `<DOB>${escapeXml(data.dob)}</DOB>` : ''}
-      ${data.address ? `<Address>${escapeXml(data.address)}</Address>` : ''}
-      ${data.city ? `<City>${escapeXml(data.city)}</City>` : ''}
-      ${data.state ? `<State>${escapeXml(data.state)}</State>` : ''}
-      ${data.zip ? `<Zip>${escapeXml(data.zip)}</Zip>` : ''}
-    </Subject>
-    <Services>
-      <Service>
-        <ServiceCode>${escapeXml(serviceCode)}</ServiceCode>
-      </Service>
-    </Services>
-  </Order>
+    </Applicant>
+  </AppScreen>
 </OrderXML>`;
+
+  console.log("[DigitalDelve] Full request XML:", xml);
 
   try {
     const { body } = await sendXmlRequest(xml);
