@@ -3612,6 +3612,241 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // ============================================================
+  // PUBLIC RENTAL APPLICATION ROUTES (No Auth Required)
+  // ============================================================
+
+  // Get application link data by public token (for applicants)
+  app.get('/api/apply/:token', async (req, res) => {
+    try {
+      const link = await storage.getRentalApplicationLinkByToken(req.params.token);
+      
+      if (!link) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      
+      if (!link.isActive) {
+        return res.status(410).json({ message: "This application link is no longer active" });
+      }
+      
+      if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "This application link has expired" });
+      }
+
+      // Return only the merged schema (cover page + fields) - no sensitive data
+      res.json({
+        id: link.id,
+        propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
+        unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
+        coverPage: (link.mergedSchemaJson as any)?.coverPage,
+        fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+      });
+    } catch (error) {
+      console.error("Error getting application link:", error);
+      res.status(500).json({ message: "Failed to load application" });
+    }
+  });
+
+  // Start a new rental submission
+  app.post('/api/apply/:token/start', async (req, res) => {
+    try {
+      const link = await storage.getRentalApplicationLinkByToken(req.params.token);
+      
+      if (!link || !link.isActive) {
+        return res.status(404).json({ message: "Application link not found or inactive" });
+      }
+      
+      if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "This application link has expired" });
+      }
+
+      const { email, firstName, lastName, personType } = req.body;
+      
+      if (!email || !firstName || !lastName) {
+        return res.status(400).json({ message: "Email, first name, and last name are required" });
+      }
+
+      // Create submission
+      const submission = await storage.createRentalSubmission({
+        applicationLinkId: link.id,
+        status: "started",
+      });
+
+      // Create primary applicant person
+      const person = await storage.createRentalSubmissionPerson({
+        submissionId: submission.id,
+        role: "applicant",
+        email,
+        firstName,
+        lastName,
+        formJson: {},
+        inviteToken: randomUUID().replace(/-/g, ''),
+      });
+
+      // Log event
+      await storage.logRentalApplicationEvent({
+        submissionId: submission.id,
+        eventType: "submission_started",
+        metadataJson: { personId: person.id, email, firstName, lastName },
+      });
+
+      res.status(201).json({
+        submissionId: submission.id,
+        personId: person.id,
+        personToken: person.inviteToken,
+      });
+    } catch (error) {
+      console.error("Error starting application:", error);
+      res.status(500).json({ message: "Failed to start application" });
+    }
+  });
+
+  // Save form progress (autosave)
+  app.patch('/api/apply/person/:personToken', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const { formData } = req.body;
+
+      await storage.updateRentalSubmissionPerson(person.id, {
+        formJson: formData,
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error saving form progress:", error);
+      res.status(500).json({ message: "Failed to save progress" });
+    }
+  });
+
+  // Get person's form data (for resuming)
+  app.get('/api/apply/person/:personToken', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      // Get submission to check status
+      const submission = await storage.getRentalSubmission(person.submissionId);
+
+      res.json({
+        personId: person.id,
+        personType: person.role,
+        email: person.email,
+        firstName: person.firstName,
+        lastName: person.lastName,
+        formData: person.formJson,
+        submissionStatus: submission?.status || "started",
+      });
+    } catch (error) {
+      console.error("Error getting person data:", error);
+      res.status(500).json({ message: "Failed to load application data" });
+    }
+  });
+
+  // Submit completed application
+  app.post('/api/apply/person/:personToken/submit', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      // Update person as completed
+      await storage.updateRentalSubmissionPerson(person.id, {
+        formJson: req.body.formData || person.formJson,
+        isCompleted: true,
+        completedAt: new Date(),
+      });
+
+      // Check if all people have completed
+      const allPeople = await storage.getRentalSubmissionPeople(person.submissionId);
+      const allCompleted = allPeople.every(p => 
+        p.id === person.id || p.isCompleted
+      );
+
+      // Update submission status
+      await storage.updateRentalSubmission(person.submissionId, {
+        status: allCompleted ? "submitted" : "started",
+        submittedAt: allCompleted ? new Date() : null,
+      });
+
+      // Log event
+      await storage.logRentalApplicationEvent({
+        submissionId: person.submissionId,
+        eventType: "application_submitted",
+        metadataJson: { personId: person.id },
+      });
+
+      res.json({ success: true, status: allCompleted ? "submitted" : "in_progress" });
+    } catch (error) {
+      console.error("Error submitting application:", error);
+      res.status(500).json({ message: "Failed to submit application" });
+    }
+  });
+
+  // Invite co-applicant or guarantor
+  app.post('/api/apply/:personToken/invite', async (req, res) => {
+    try {
+      const inviter = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+      
+      if (!inviter) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const { email, firstName, lastName, personType } = req.body;
+      
+      if (!email || !firstName || !lastName || !personType) {
+        return res.status(400).json({ message: "Email, name, and person type are required" });
+      }
+
+      // Map frontend personType to schema role enum values
+      const roleMap: Record<string, 'applicant' | 'coapplicant' | 'guarantor'> = {
+        'co_applicant': 'coapplicant',
+        'guarantor': 'guarantor',
+      };
+
+      if (!roleMap[personType]) {
+        return res.status(400).json({ message: "Person type must be co_applicant or guarantor" });
+      }
+
+      const inviteToken = randomUUID().replace(/-/g, '');
+
+      const person = await storage.createRentalSubmissionPerson({
+        submissionId: inviter.submissionId,
+        role: roleMap[personType],
+        email,
+        firstName,
+        lastName,
+        formJson: {},
+        inviteToken,
+      });
+
+      // Log event
+      await storage.logRentalApplicationEvent({
+        submissionId: inviter.submissionId,
+        eventType: "person_invited",
+        metadataJson: { invitedPersonId: person.id, role: roleMap[personType], email },
+      });
+
+      res.status(201).json({
+        personId: person.id,
+        inviteToken,
+        inviteUrl: `/apply/join/${inviteToken}`,
+      });
+    } catch (error) {
+      console.error("Error inviting person:", error);
+      res.status(500).json({ message: "Failed to send invite" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

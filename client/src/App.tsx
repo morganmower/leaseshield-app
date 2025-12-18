@@ -55,6 +55,7 @@ import Messages from "@/pages/messages";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 import RentalApplications from "@/pages/rental-applications";
+import Apply from "@/pages/apply";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -97,6 +98,9 @@ function Router() {
         <Route path="/subscribe" component={Subscribe} />
         <Route path="/logos" component={LogoPicker} />
         <Route path="/logo-colors" component={LogoColors} />
+        {/* Public application form */}
+        <Route path="/apply/:token" component={Apply} />
+        <Route path="/apply/join/:token" component={Apply} />
         {/* Redirect protected routes to login */}
         <Route path="/dashboard">{() => <Redirect to="/login" />}</Route>
         <Route path="/templates">{() => <Redirect to="/login" />}</Route>
@@ -138,6 +142,9 @@ function Router() {
       <Route path="/my-documents" component={MyDocuments} />
       <Route path="/properties" component={Properties} />
       <Route path="/rental-applications" component={RentalApplications} />
+      {/* Public application form (also accessible when logged in) */}
+      <Route path="/apply/:token" component={Apply} />
+      <Route path="/apply/join/:token" component={Apply} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening" component={Screening} />
       <Route path="/tenant-issues" component={TenantIssues} />
