@@ -463,7 +463,7 @@ export default function RentalApplications() {
 
         {/* Edit Property Dialog */}
         <Dialog open={isEditPropertyOpen} onOpenChange={setIsEditPropertyOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Rental Property</DialogTitle>
               <DialogDescription>Update property details</DialogDescription>
@@ -589,24 +589,17 @@ export default function RentalApplications() {
                 </div>
               </div>
               
-              <div className="space-y-2 pt-4 border-t">
-                <Label className="text-sm font-medium">Screening Settings</Label>
-                <p className="text-xs text-muted-foreground">
-                  Configure how tenant screening is handled for this property
-                </p>
-                
-                <div className="flex items-center justify-between pt-2">
-                  <div>
-                    <Label htmlFor="auto-screening" className="text-sm">Auto-Screening</Label>
-                    <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
-                  </div>
-                  <Switch 
-                    id="auto-screening" 
-                    checked={autoScreening} 
-                    onCheckedChange={setAutoScreening}
-                    data-testid="switch-auto-screening"
-                  />
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div>
+                  <Label htmlFor="auto-screening" className="text-sm">Auto-Screening</Label>
+                  <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
                 </div>
+                <Switch 
+                  id="auto-screening" 
+                  checked={autoScreening} 
+                  onCheckedChange={setAutoScreening}
+                  data-testid="switch-auto-screening"
+                />
               </div>
             </div>
             <DialogFooter>
