@@ -3595,12 +3595,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       let link = null;
       if (createLink) {
         const publicToken = randomUUID().replace(/-/g, '');
+        
+        // Compute merged schema from property defaults (unit has no overrides yet)
+        const coverPage = property.defaultCoverPageJson;
+        const fieldSchema = property.defaultFieldSchemaJson;
+        
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
           publicToken,
+          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "" },
           isActive: true,
-          coverPage: null,
-          fieldSchema: null,
+          expiresAt: null,
         });
       }
 
