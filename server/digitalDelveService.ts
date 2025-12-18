@@ -110,14 +110,12 @@ function parseXmlResponse(xml: string): DigitalDelveResponse {
     };
   } catch (parseError) {
     console.error("Failed to parse XML response:", parseError);
-    const successMatch = xml.match(/<Status>Success<\/Status>/i);
-    const errorMsgMatch = xml.match(/<ErrorMessage>([^<]*)<\/ErrorMessage>/i);
-    const messageMatch = xml.match(/<Message>([^<]*)<\/Message>/i);
-    
-    if (successMatch) {
-      return { success: true, message: messageMatch?.[1] || "Success", rawXml: xml };
-    }
-    return { success: false, error: errorMsgMatch?.[1] || messageMatch?.[1] || "Parse error", rawXml: xml };
+    console.error("Raw XML snippet:", xml.substring(0, 500));
+    return { 
+      success: false, 
+      error: "Failed to parse response from screening service", 
+      rawXml: xml 
+    };
   }
 }
 
