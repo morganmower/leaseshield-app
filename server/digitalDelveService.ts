@@ -2,7 +2,7 @@ import { storage } from "./storage";
 import { XMLParser } from "fast-xml-parser";
 
 // DigitalDelve SSO API URL (Western Verify's screening platform)
-const DIGITAL_DELVE_SSO_URL = "https://demo.digitaldelve.com/listeners/sso.cfm";
+const DIGITAL_DELVE_SSO_URL = "https://secure.westernverify.com/listeners/sso.cfm";
 
 // Default InvitationId for full integration AppScreen requests
 const DEFAULT_INVITATION_ID = "C6BC580D-5E1A-4F51-A93B-927F5CFD5F9E";
