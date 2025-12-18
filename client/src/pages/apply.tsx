@@ -550,7 +550,8 @@ export default function Apply() {
                   <div className="space-y-2">
                     <Label>Move-in Date</Label>
                     <Input
-                      type="month"
+                      type="text"
+                      placeholder="MM/YYYY"
                       value={formData.currentMoveIn || ""}
                       onChange={(e) => updateField("currentMoveIn", e.target.value)}
                       data-testid="input-address-movein"
@@ -654,7 +655,8 @@ export default function Apply() {
                   <div className="space-y-2">
                     <Label>Start Date</Label>
                     <Input
-                      type="month"
+                      type="text"
+                      placeholder="MM/YYYY"
                       value={formData.employmentStart || ""}
                       onChange={(e) => updateField("employmentStart", e.target.value)}
                       data-testid="input-employment-start"
