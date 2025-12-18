@@ -1,0 +1,122 @@
+1) Add one required field to drive all rules
+
+Field: property_state (the state where the unit is located)
+
+If you already have the property saved in your DB, just pull it.
+
+If not, add a dropdown on step 1.
+
+2) Texas-only module you MUST show + require acknowledgment
+
+Texas requires landlords to make Tenant Selection Criteria available to applicants and obtain an acknowledgment. 
+Texas Statutes
++2
+Houstonius
++2
+
+✅ What to add (TX only)
+
+A) A “Tenant Selection Criteria & Grounds for Denial” document link
+
+Show it before the applicant can submit.
+
+It can be a page/modal or a PDF download link.
+
+B) A required checkbox acknowledgment with statutory-style language
+Use this exact checkbox label text (copy/paste):
+
+Texas Notice / Acknowledgment: Signing this acknowledgment indicates that you have had the opportunity to review the landlord’s tenant selection criteria. The tenant selection criteria may include factors such as criminal history, credit history, current income, and rental history. I understand I may request a copy of the tenant selection criteria.
+
+(That’s substantively equivalent to the common statutory acknowledgment language people use. 
+Houstonius
++1
+)
+
+C) Capture proof
+Store these with the application:
+
+tx_selection_acknowledged: true/false
+
+tx_selection_ack_timestamp
+
+tx_selection_ack_ip (optional but recommended)
+
+✅ Front-end logic (React example)
+const isTX = form.property_state === "TX";
+
+// block submit if TX and not acknowledged
+const canSubmit = !isTX || form.tx_selection_acknowledged === true;
+
+3) The TX “Tenant Selection Criteria” content to host inside LeaseShield
+
+Create a route like: /tx/tenant-selection-criteria and show the criteria below. Keep it general (don’t hardcode credit score cutoffs unless the landlord wants that).
+
+Paste this as your page content:
+
+LANDLORD’S TENANT SELECTION CRITERIA & GROUNDS FOR DENIAL (TEXAS)
+This notice describes factors that may be considered when reviewing a rental application. The landlord may deny an application based on one or more of the factors below, subject to applicable law and consistent screening practices.
+
+Selection criteria may include:
+
+Identity verification and Social Security Number trace results
+
+Rental history (including past due balances, lease violations, or evictions)
+
+Employment and/or income verification and ability to pay rent
+
+Credit history (tradelines, delinquencies, collections, judgments, bankruptcies)
+
+Criminal history as permitted by applicable law
+
+Prior property-related misconduct (e.g., damage beyond normal wear, unauthorized occupants)
+
+Failure to provide complete, accurate, or verifiable information
+
+Failure to meet occupancy limits for the unit
+
+Grounds for possible denial may include:
+
+Material misrepresentation or omission on the application
+
+Inability to verify identity, income, or rental history
+
+Screening results that do not meet the landlord’s criteria
+
+Any other lawful, nondiscriminatory reason consistent with written criteria
+
+How to request a copy:
+You may request a copy of these tenant selection criteria at any time.
+
+(You’re satisfying “make available” + giving them something to acknowledge. 
+Texas Statutes
++1
+)
+
+4) National module you should show in every state (simple + clean)
+
+Even without fees, you still need a clear authorization/disclosure because a consumer report may be obtained for tenant screening. The FTC landlord guidance supports this flow. 
+Federal Trade Commission
++1
+
+✅ Add this “Authorization” section (all states)
+
+Add a section near the end, right before submit:
+
+DISCLOSURE & AUTHORIZATION TO OBTAIN CONSUMER REPORTS
+The landlord and/or its screening provider may obtain consumer reports and/or investigative consumer reports about you for tenant screening purposes, which may include credit history, criminal history, eviction history, and verification of information you provide.
+By checking the box below, you authorize the landlord and its screening provider to obtain such reports and to use the information in evaluating your rental application.
+
+Required checkbox text (copy/paste):
+
+☐ I authorize the landlord and its screening provider to obtain consumer reports and/or investigative consumer reports about me for tenant screening.
+
+Then provide a link (always available) to:
+
+“A Summary of Your Rights Under the FCRA” (PDF) 
+Consumer Financial Protection Bureau
+
+And store:
+
+fcra_authorized: true/false
+
+fcra_authorized_timestamp

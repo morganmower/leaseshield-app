@@ -4358,6 +4358,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
+      // Get the property state via unit -> property chain
+      let propertyState: string | null = null;
+      if (link.unitId) {
+        const unit = await storage.getRentalUnit(link.unitId);
+        if (unit?.propertyId) {
+          const property = await storage.getRentalPropertyById(unit.propertyId);
+          propertyState = property?.state || null;
+        }
+      }
+
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
@@ -4366,6 +4376,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
         documentRequirements,
+        propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
       });
     } catch (error) {
       console.error("Error getting application link:", error);
@@ -4492,15 +4503,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const userAgent = req.body.userAgent || req.headers['user-agent'] || 'unknown';
       const disclosureVersion = 'v1.0-2024-12-18'; // Immutable version identifier for this disclosure text
 
-      // Update person as completed with screening disclosure metadata
+      // Extract compliance acknowledgment data from form
+      const formData = req.body.formData || person.formJson || {};
+      const txSelectionAcknowledged = formData.txSelectionAcknowledged === true;
+      const fcraAuthorized = formData.fcraAuthorized === true;
+
+      // Update person as completed with screening disclosure and compliance metadata
       await storage.updateRentalSubmissionPerson(person.id, {
-        formJson: req.body.formData || person.formJson,
+        formJson: formData,
         isCompleted: true,
         completedAt: new Date(),
         screeningDisclosureAcknowledgedAt: new Date(),
         screeningDisclosureIpAddress: ipAddress,
         screeningDisclosureUserAgent: userAgent,
         screeningDisclosureVersion: disclosureVersion,
+        // TX-specific tenant selection criteria acknowledgment
+        txSelectionAcknowledged: txSelectionAcknowledged,
+        txSelectionAckTimestamp: txSelectionAcknowledged ? new Date() : null,
+        txSelectionAckIp: txSelectionAcknowledged ? ipAddress : null,
+        // FCRA authorization (all states)
+        fcraAuthorized: fcraAuthorized,
+        fcraAuthorizedTimestamp: fcraAuthorized ? new Date() : null,
       });
 
       // Check if all people have completed

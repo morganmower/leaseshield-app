@@ -58,6 +58,7 @@ import RentalApplications from "@/pages/rental-applications";
 import RentalSubmissions from "@/pages/rental-submissions";
 import Apply from "@/pages/apply";
 import PropertyDetail from "@/pages/property-detail";
+import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -95,6 +96,7 @@ function Router() {
         <Route path="/disclaimers" component={Disclaimers} />
         <Route path="/contact" component={Contact} />
         <Route path="/help" component={HelpCenter} />
+        <Route path="/tx/tenant-selection-criteria" component={TxTenantSelectionCriteria} />
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/subscribe" component={Subscribe} />
@@ -138,6 +140,7 @@ function Router() {
       <Route path="/disclaimers" component={Disclaimers} />
       <Route path="/contact" component={Contact} />
       <Route path="/help" component={HelpCenter} />
+      <Route path="/tx/tenant-selection-criteria" component={TxTenantSelectionCriteria} />
       <Route path="/blog" component={Blog} />
       <Route path="/blog/:slug" component={BlogPost} />
       <Route path="/templates" component={Templates} />

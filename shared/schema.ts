@@ -1155,6 +1155,13 @@ export const rentalSubmissionPeople = pgTable("rental_submission_people", {
   screeningDisclosureIpAddress: text("screening_disclosure_ip_address"),
   screeningDisclosureUserAgent: text("screening_disclosure_user_agent"),
   screeningDisclosureVersion: text("screening_disclosure_version"),
+  // Texas-specific tenant selection criteria acknowledgment
+  txSelectionAcknowledged: boolean("tx_selection_acknowledged").default(false),
+  txSelectionAckTimestamp: timestamp("tx_selection_ack_timestamp"),
+  txSelectionAckIp: text("tx_selection_ack_ip"),
+  // FCRA authorization (all states)
+  fcraAuthorized: boolean("fcra_authorized").default(false),
+  fcraAuthorizedTimestamp: timestamp("fcra_authorized_timestamp"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
