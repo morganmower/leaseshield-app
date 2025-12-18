@@ -9,7 +9,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Download, Plus, Trash2, DollarSign, Edit2, Building2 } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { RentLedgerEntry, Property } from "@shared/schema";
+import type { RentLedgerEntry, RentalProperty } from "@shared/schema";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -47,8 +47,8 @@ export default function RentLedger() {
     queryKey: ["/api/rent-ledger"],
   });
 
-  const { data: properties = [] } = useQuery<Property[]>({
-    queryKey: ["/api/properties"],
+  const { data: properties = [] } = useQuery<RentalProperty[]>({
+    queryKey: ["/api/rental/properties"],
   });
 
   const createMutation = useMutation({

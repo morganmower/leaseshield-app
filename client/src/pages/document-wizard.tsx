@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, FileText, Download, Loader2, Save, Building2 } from "lucide-react";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
-import type { Template, Property } from "@shared/schema";
+import type { Template, RentalProperty } from "@shared/schema";
 import { useState, useEffect } from "react";
 
 interface FieldDefinition {
@@ -70,17 +70,8 @@ export default function DocumentWizard() {
   });
 
   // Fetch properties
-  const { data: properties = [] } = useQuery<Property[]>({
-    queryKey: ['/api/properties'],
-    queryFn: async () => {
-      const token = getAccessToken();
-      const response = await fetch('/api/properties', { 
-        credentials: 'include',
-        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
-      });
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      return response.json();
-    },
+  const { data: properties = [] } = useQuery<RentalProperty[]>({
+    queryKey: ['/api/rental/properties'],
   });
 
   const fillableData = template?.fillableFormData as FillableFormData | null;
