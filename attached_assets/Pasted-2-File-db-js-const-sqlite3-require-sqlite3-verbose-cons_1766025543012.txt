@@ -1,0 +1,1282 @@
+2) File: db.js
+const sqlite3 = require("sqlite3").verbose();
+
+const db = new sqlite3.Database("./data.sqlite");
+
+function run(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.run(sql, params, function (err) {
+      if (err) return reject(err);
+      resolve({ changes: this.changes, lastID: this.lastID });
+    });
+  });
+}
+
+function get(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.get(sql, params, (err, row) => {
+      if (err) return reject(err);
+      resolve(row);
+    });
+  });
+}
+
+function all(sql, params = []) {
+  return new Promise((resolve, reject) => {
+    db.all(sql, params, (err, rows) => {
+      if (err) return reject(err);
+      resolve(rows);
+    });
+  });
+}
+
+module.exports = { db, run, get, all };
+
+3) File: migrate.js
+const { run } = require("./db");
+
+async function migrate() {
+  // Users (placeholder for now)
+  await run(`
+    CREATE TABLE IF NOT EXISTS users (
+      id TEXT PRIMARY KEY,
+      email TEXT,
+      name TEXT,
+      created_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Properties
+  await run(`
+    CREATE TABLE IF NOT EXISTS properties (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      owner_user_id TEXT NOT NULL,
+      name TEXT NOT NULL,
+      default_cover_page_json TEXT NOT NULL,
+      default_cover_page_version INTEGER NOT NULL DEFAULT 1,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now'))
+    )
+  `);
+
+  // Units
+  await run(`
+    CREATE TABLE IF NOT EXISTS units (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      property_id INTEGER NOT NULL,
+      unit_label TEXT,
+      cover_page_override_enabled INTEGER NOT NULL DEFAULT 0,
+      cover_page_override_json TEXT,
+      cover_page_override_version INTEGER,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(property_id) REFERENCES properties(id)
+    )
+  `);
+
+  // Application links (public)
+  await run(`
+    CREATE TABLE IF NOT EXISTS application_links (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      unit_id INTEGER NOT NULL,
+      public_token TEXT NOT NULL UNIQUE,
+      schema_json TEXT NOT NULL,            -- field toggles + uploads requirements
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(unit_id) REFERENCES units(id)
+    )
+  `);
+
+  // Submissions (one per applicant flow)
+  await run(`
+    CREATE TABLE IF NOT EXISTS submissions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      application_link_id INTEGER NOT NULL,
+      status TEXT NOT NULL DEFAULT 'started',  -- started/submitted/screening_requested/...
+      created_at TEXT DEFAULT (datetime('now')),
+      submitted_at TEXT,
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(application_link_id) REFERENCES application_links(id)
+    )
+  `);
+
+  // People on a submission (primary + co-app + guarantor)
+  await run(`
+    CREATE TABLE IF NOT EXISTS submission_people (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      role TEXT NOT NULL,                      -- applicant/coapplicant/guarantor
+      invite_token TEXT NOT NULL UNIQUE,       -- per-person magic link token
+      first_name TEXT,
+      last_name TEXT,
+      email TEXT,
+      form_json TEXT NOT NULL DEFAULT '{}',    -- autosave answers
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      completed_at TEXT,
+      FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    )
+  `);
+
+  // Files uploaded
+  await run(`
+    CREATE TABLE IF NOT EXISTS submission_files (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_person_id INTEGER NOT NULL,
+      file_type TEXT NOT NULL,                 -- gov_id/paystubs/tax_docs/other_income/etc
+      original_name TEXT,
+      stored_path TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(submission_person_id) REFERENCES submission_people(id)
+    )
+  `);
+
+  // Acknowledgements (cover page now; disclosures later)
+  await run(`
+    CREATE TABLE IF NOT EXISTS submission_acknowledgements (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      type TEXT NOT NULL,                      -- cover_page, disclosures, etc.
+      ack_name TEXT,
+      ack_checked INTEGER NOT NULL DEFAULT 0,
+      ack_at TEXT,
+      ack_ip TEXT,
+      ack_user_agent TEXT,
+      content_snapshot_json TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    )
+  `);
+
+  // Screening orders (DigitalDelve)
+  await run(`
+    CREATE TABLE IF NOT EXISTS screening_orders (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL UNIQUE,
+      invitation_id TEXT NOT NULL,
+      reference_number TEXT NOT NULL UNIQUE,   -- "LS-SUB-{id}" or UUID
+      status TEXT NOT NULL DEFAULT 'not_sent', -- sent/in_progress/complete/error
+      report_id TEXT,
+      report_url TEXT,
+      raw_status_xml TEXT,
+      raw_result_xml TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      updated_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    )
+  `);
+
+  // Decisions + Letters
+  await run(`
+    CREATE TABLE IF NOT EXISTS decisions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL UNIQUE,
+      decision TEXT NOT NULL,                  -- approved/denied
+      decided_at TEXT NOT NULL,
+      decided_by_user_id TEXT NOT NULL,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    )
+  `);
+
+  await run(`
+    CREATE TABLE IF NOT EXISTS decision_letters (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      submission_id INTEGER NOT NULL,
+      letter_type TEXT NOT NULL,               -- approval/adverse_action
+      template_body TEXT NOT NULL,
+      final_body TEXT NOT NULL,
+      sent_to_email TEXT,
+      sent_at TEXT,
+      created_at TEXT DEFAULT (datetime('now')),
+      FOREIGN KEY(submission_id) REFERENCES submissions(id)
+    )
+  `);
+
+  console.log("✅ Migration complete");
+}
+
+migrate().catch((e) => {
+  console.error("Migration failed:", e);
+  process.exit(1);
+});
+
+4) File: templates.js (default cover page + default application schema + letter templates)
+function defaultCoverPage() {
+  return {
+    title: "Rental Application Requirements",
+    intro:
+      "Please read the following requirements carefully before submitting your application. Applications are reviewed in the order received.",
+    sections: [
+      { id: "processing_time", heading: "Processing Time", body: "Most applications are processed within 1–3 business days." },
+      { id: "required_uploads", heading: "Required Documents", body: "Government ID + proof of income are required. Additional documents may be requested." },
+      { id: "move_in_funds", heading: "Move-In Funds", body: "Move-in funds are due upon approval (deposit + first month’s rent). Exact amounts may vary by unit." },
+      { id: "pet_policy", heading: "Pet Policy", body: "Pets may require approval and additional deposits/fees. Unauthorized pets may be grounds for denial or lease violation." },
+      { id: "renters_insurance", heading: "Renters Insurance", body: "Renters insurance may be required prior to move-in and throughout the lease term." },
+      { id: "fees", heading: "Fees", body: "Late fees and other administrative fees may apply per lease terms and property policy." },
+      { id: "no_verbal", heading: "No Verbal Agreements", body: "All agreements must be in writing. Verbal statements do not modify the lease." }
+    ],
+    footerNote: "By continuing, you confirm you understand these requirements."
+  };
+}
+
+// Field toggles: hidden/optional/required
+function defaultApplicationSchema() {
+  return {
+    state_scope: "all_leaseshield_states",
+    fields: {
+      phone: { visibility: "required" },
+      dl_number: { visibility: "optional" },
+      dl_state: { visibility: "optional" },
+
+      // SSN/DOB MUST remain hidden because DigitalDelve collects it
+      ssn: { visibility: "hidden" },
+      dob: { visibility: "hidden" },
+
+      current_address: { visibility: "required" },
+      previous_addresses: { visibility: "required" },
+      employment_history: { visibility: "required" },
+      rental_history: { visibility: "optional" },
+
+      vehicles: { visibility: "optional" },
+      pets: { visibility: "optional" },
+      emergency_contact: { visibility: "optional" }
+    },
+    history_rules: {
+      min_address_years: 2,
+      min_employment_years: 2
+    },
+    uploads: {
+      gov_id: { required: true, label: "Government ID" },
+      paystubs_30_days: { required: true, label: "Paystubs (last 30 days)" },
+      tax_docs_self_employed: { required: false, label: "Self-employed tax documents (Schedule C, etc.)" },
+      other_income: { required: false, label: "Other income documentation" }
+    }
+  };
+}
+
+function defaultLetterTemplates() {
+  return {
+    approval: `
+Subject: Application Approved – {PropertyName}
+
+Hello {ApplicantName},
+
+Good news — your rental application for {UnitLabel} at {PropertyName} has been approved.
+
+Next steps:
+• Please review and sign the lease by {LeaseSignDueDate}
+• Pay move-in funds as outlined by management
+• Provide any remaining documents requested (if applicable)
+
+If you have questions, reply to this email.
+
+Thank you,
+{LandlordName}
+    `.trim(),
+
+    adverse_action: `
+Subject: Adverse Action Notice – Rental Application
+
+Date: {Date}
+
+Applicant: {ApplicantName}
+Property/Unit: {PropertyName} – {UnitLabel}
+
+This notice is to inform you that an adverse action has been taken regarding your rental application.
+
+Reason(s) (optional – if provided by landlord policy):
+{DenialReasons}
+
+Consumer Reporting Agency (CRA) that provided the report:
+Western Verify (via DigitalDelve)
+{CRAAddress}
+{CRAPhone}
+
+The CRA did not make this decision and cannot explain why the decision was made.
+
+You have the right to obtain a free copy of your consumer report from the CRA if you request it within 60 days, and you have the right to dispute the accuracy or completeness of any information in the report.
+
+Sincerely,
+{LandlordName}
+    `.trim()
+  };
+}
+
+module.exports = {
+  defaultCoverPage,
+  defaultApplicationSchema,
+  defaultLetterTemplates
+};
+
+5) File: digitaldelve.js (send AppScreen + basic XML helpers)
+const axios = require("axios");
+
+function escapeXml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+// Minimal AppScreen XML.
+// NOTE: If your SSO PDF requires different node names, adjust here once you paste sample XML.
+function buildAppScreenXml({
+  customerId,
+  authCode,
+  invitationId,
+  referenceNumber,
+  applicantFirst,
+  applicantLast,
+  applicantEmail,
+  statusPostUrl,
+  resultPostUrl
+}) {
+  return `<?xml version="1.0" encoding="utf-8"?>
+<Request>
+  <AuthenticationCode>${escapeXml(authCode)}</AuthenticationCode>
+  <CustomerID>${escapeXml(customerId)}</CustomerID>
+  <Function>AppScreen</Function>
+  <InvitationId>${escapeXml(invitationId)}</InvitationId>
+  <ReferenceNumber>${escapeXml(referenceNumber)}</ReferenceNumber>
+  <StatusPostURL>${escapeXml(statusPostUrl)}</StatusPostURL>
+  <ResultPostURL>${escapeXml(resultPostUrl)}</ResultPostURL>
+  <Applicant>
+    <FirstName>${escapeXml(applicantFirst)}</FirstName>
+    <LastName>${escapeXml(applicantLast)}</LastName>
+    <Email>${escapeXml(applicantEmail)}</Email>
+  </Applicant>
+</Request>`;
+}
+
+async function postSSORequest({ endpoint, xml }) {
+  const form = new URLSearchParams();
+  form.append("REQUEST", xml);
+
+  const resp = await axios.post(endpoint, form.toString(), {
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    timeout: 30000
+  });
+
+  return resp.data;
+}
+
+module.exports = { buildAppScreenXml, postSSORequest };
+
+6) File: server.js (everything wired together)
+require("dotenv").config();
+
+const express = require("express");
+const multer = require("multer");
+const path = require("path");
+const fs = require("fs");
+const { v4: uuidv4 } = require("uuid");
+const { parseStringPromise } = require("xml2js");
+
+const { run, get, all } = require("./db");
+const { defaultCoverPage, defaultApplicationSchema, defaultLetterTemplates } = require("./templates");
+const { buildAppScreenXml, postSSORequest } = require("./digitaldelve");
+
+const app = express();
+app.use(express.json({ limit: "2mb" }));
+app.use(express.urlencoded({ extended: true }));
+
+const PORT = process.env.PORT || 3000;
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+/* -----------------------------
+   Upload setup (MVP local disk)
+------------------------------*/
+const uploadDir = path.join(__dirname, "uploads");
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
+
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir);
+  },
+  filename: function (req, file, cb) {
+    const safe = file.originalname.replace(/[^a-zA-Z0-9._-]/g, "_");
+    cb(null, `${Date.now()}_${uuidv4()}_${safe}`);
+  }
+});
+const upload = multer({ storage });
+
+app.use("/uploads", express.static(uploadDir));
+
+/* -----------------------------
+   Webhook auth
+------------------------------*/
+function verifyWebhookToken(req, res) {
+  const required = process.env.WEBHOOK_SHARED_SECRET;
+  if (!required) return true;
+  const token = req.query.token || req.headers["x-webhook-token"];
+  if (token !== required) {
+    res.status(401).send("Unauthorized");
+    return false;
+  }
+  return true;
+}
+
+/* -----------------------------
+   Helpers
+------------------------------*/
+async function resolveCoverPageByToken(token) {
+  const row = await get(
+    `
+    SELECT
+      al.id as application_link_id,
+      u.id as unit_id,
+      u.unit_label,
+      u.cover_page_override_enabled,
+      u.cover_page_override_json,
+      p.id as property_id,
+      p.name as property_name,
+      p.default_cover_page_json,
+      al.schema_json
+    FROM application_links al
+    JOIN units u ON u.id = al.unit_id
+    JOIN properties p ON p.id = u.property_id
+    WHERE al.public_token = ?
+  `,
+    [token]
+  );
+  if (!row) return null;
+
+  const overrideEnabled = Number(row.cover_page_override_enabled) === 1;
+  const coverJson =
+    overrideEnabled && row.cover_page_override_json ? row.cover_page_override_json : row.default_cover_page_json;
+
+  return {
+    applicationLinkId: row.application_link_id,
+    unitId: row.unit_id,
+    unitLabel: row.unit_label,
+    propertyId: row.property_id,
+    propertyName: row.property_name,
+    schema: JSON.parse(row.schema_json || "{}"),
+    coverPage: JSON.parse(coverJson)
+  };
+}
+
+function escapeHtml(str) {
+  return String(str ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+/* =========================================================
+   HEALTH
+========================================================= */
+app.get("/", (req, res) => {
+  res.json({
+    ok: true,
+    service: "LeaseShield MVP (Cover Page + Application + Screening + Decisions)",
+    admin: "/demo/admin"
+  });
+});
+
+/* =========================================================
+   LANDLORD ADMIN (MVP demo pages + APIs)
+   NOTE: Replace with real auth later.
+========================================================= */
+
+// Demo admin home
+app.get("/demo/admin", async (req, res) => {
+  const props = await all(`SELECT id, name FROM properties ORDER BY id DESC`);
+  const units = await all(`SELECT id, property_id, unit_label, cover_page_override_enabled FROM units ORDER BY id DESC`);
+  const links = await all(`SELECT id, unit_id, public_token FROM application_links ORDER BY id DESC`);
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>LeaseShield MVP Admin (Demo)</h2>
+    <p><b>Seed first:</b> run <code>node migrate.js</code>, then <code>node seed.js</code>.</p>
+    <h3>Properties</h3>
+    <ul>
+      ${props.map(p => `<li>#${p.id} ${escapeHtml(p.name)} — <a href="/demo/admin/property/${p.id}">edit cover page</a></li>`).join("")}
+    </ul>
+    <h3>Units</h3>
+    <ul>
+      ${units.map(u => `<li>#${u.id} (property ${u.property_id}) ${escapeHtml(u.unit_label||"")} — override:${u.cover_page_override_enabled ? "yes" : "no"} — <a href="/demo/admin/unit/${u.id}">edit unit override</a></li>`).join("")}
+    </ul>
+    <h3>Application Links</h3>
+    <ul>
+      ${links.map(l => `<li>#${l.id} unit ${l.unit_id} — token: <code>${l.public_token}</code> — <a href="/demo/apply/${l.public_token}">open applicant demo</a></li>`).join("")}
+    </ul>
+  `);
+});
+
+/* -----------------------------
+   Cover Page: property editor
+------------------------------*/
+app.get("/demo/admin/property/:id", async (req, res) => {
+  const prop = await get(`SELECT * FROM properties WHERE id = ?`, [req.params.id]);
+  if (!prop) return res.status(404).send("Property not found");
+
+  const cover = JSON.parse(prop.default_cover_page_json);
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Edit Property Cover Page (Property #${prop.id})</h2>
+    <p><a href="/demo/admin">← back</a></p>
+
+    <form method="post" action="/demo/admin/property/${prop.id}/save">
+      <label>Title</label><br/>
+      <input name="title" style="width:700px" value="${escapeHtml(cover.title || "")}"/><br/><br/>
+
+      <label>Intro</label><br/>
+      <textarea name="intro" rows="3" style="width:700px">${escapeHtml(cover.intro || "")}</textarea><br/><br/>
+
+      <h3>Sections (structured)</h3>
+      ${cover.sections.map((s, idx) => `
+        <div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+          <b>${escapeHtml(s.id)}</b><br/>
+          <label>Heading</label><br/>
+          <input name="sec_heading_${idx}" style="width:700px" value="${escapeHtml(s.heading || "")}"/><br/>
+          <label>Body</label><br/>
+          <textarea name="sec_body_${idx}" rows="4" style="width:700px">${escapeHtml(s.body || "")}</textarea>
+          <input type="hidden" name="sec_id_${idx}" value="${escapeHtml(s.id)}"/>
+        </div>
+      `).join("")}
+
+      <label>Footer Note</label><br/>
+      <textarea name="footerNote" rows="2" style="width:700px">${escapeHtml(cover.footerNote || "")}</textarea><br/><br/>
+
+      <button type="submit">Save Property Default</button>
+    </form>
+  `);
+});
+
+app.post("/demo/admin/property/:id/save", express.urlencoded({ extended: true }), async (req, res) => {
+  const prop = await get(`SELECT * FROM properties WHERE id = ?`, [req.params.id]);
+  if (!prop) return res.status(404).send("Property not found");
+
+  const existing = JSON.parse(prop.default_cover_page_json);
+
+  const updated = {
+    title: req.body.title || "",
+    intro: req.body.intro || "",
+    sections: existing.sections.map((_, idx) => ({
+      id: req.body[`sec_id_${idx}`],
+      heading: req.body[`sec_heading_${idx}`] || "",
+      body: req.body[`sec_body_${idx}`] || ""
+    })),
+    footerNote: req.body.footerNote || ""
+  };
+
+  await run(
+    `UPDATE properties
+     SET default_cover_page_json = ?, default_cover_page_version = default_cover_page_version + 1, updated_at = ?
+     WHERE id = ?`,
+    [JSON.stringify(updated), nowIso(), req.params.id]
+  );
+
+  res.redirect(`/demo/admin/property/${req.params.id}`);
+});
+
+/* -----------------------------
+   Cover Page: unit override editor + reset
+------------------------------*/
+app.get("/demo/admin/unit/:id", async (req, res) => {
+  const unit = await get(`SELECT * FROM units WHERE id = ?`, [req.params.id]);
+  if (!unit) return res.status(404).send("Unit not found");
+
+  const prop = await get(`SELECT * FROM properties WHERE id = ?`, [unit.property_id]);
+  if (!prop) return res.status(404).send("Property not found");
+
+  const propertyDefault = JSON.parse(prop.default_cover_page_json);
+  const unitOverride = unit.cover_page_override_json ? JSON.parse(unit.cover_page_override_json) : null;
+
+  const active = Number(unit.cover_page_override_enabled) === 1;
+  const cover = active && unitOverride ? unitOverride : propertyDefault;
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Edit Unit Cover Page (Unit #${unit.id})</h2>
+    <p><a href="/demo/admin">← back</a></p>
+
+    <form method="post" action="/demo/admin/unit/${unit.id}/toggle">
+      <label>
+        <input type="checkbox" name="overrideEnabled" ${active ? "checked" : ""}/>
+        Enable unit override
+      </label>
+      <button type="submit">Update</button>
+    </form>
+
+    <form method="post" action="/demo/admin/unit/${unit.id}/reset" style="margin-top:10px;">
+      <button type="submit">Reset to Property Default</button>
+    </form>
+
+    <hr/>
+
+    <h3>Editing ${active ? "UNIT OVERRIDE" : "PROPERTY DEFAULT (preview)"} </h3>
+
+    <form method="post" action="/demo/admin/unit/${unit.id}/save">
+      <label>Title</label><br/>
+      <input name="title" style="width:700px" value="${escapeHtml(cover.title || "")}" ${active ? "" : "disabled"}/><br/><br/>
+
+      <label>Intro</label><br/>
+      <textarea name="intro" rows="3" style="width:700px" ${active ? "" : "disabled"}>${escapeHtml(cover.intro || "")}</textarea><br/><br/>
+
+      <h3>Sections</h3>
+      ${cover.sections.map((s, idx) => `
+        <div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+          <b>${escapeHtml(s.id)}</b><br/>
+          <label>Heading</label><br/>
+          <input name="sec_heading_${idx}" style="width:700px" value="${escapeHtml(s.heading || "")}" ${active ? "" : "disabled"}/><br/>
+          <label>Body</label><br/>
+          <textarea name="sec_body_${idx}" rows="4" style="width:700px" ${active ? "" : "disabled"}>${escapeHtml(s.body || "")}</textarea>
+          <input type="hidden" name="sec_id_${idx}" value="${escapeHtml(s.id)}"/>
+        </div>
+      `).join("")}
+
+      <label>Footer Note</label><br/>
+      <textarea name="footerNote" rows="2" style="width:700px" ${active ? "" : "disabled"}>${escapeHtml(cover.footerNote || "")}</textarea><br/><br/>
+
+      <button type="submit" ${active ? "" : "disabled"}>Save Unit Override</button>
+    </form>
+  `);
+});
+
+app.post("/demo/admin/unit/:id/toggle", express.urlencoded({ extended: true }), async (req, res) => {
+  const enabled = req.body.overrideEnabled === "on";
+  await run(`UPDATE units SET cover_page_override_enabled = ?, updated_at = ? WHERE id = ?`, [
+    enabled ? 1 : 0,
+    nowIso(),
+    req.params.id
+  ]);
+  res.redirect(`/demo/admin/unit/${req.params.id}`);
+});
+
+app.post("/demo/admin/unit/:id/reset", async (req, res) => {
+  await run(
+    `UPDATE units
+     SET cover_page_override_enabled = 0,
+         cover_page_override_json = NULL,
+         cover_page_override_version = NULL,
+         updated_at = ?
+     WHERE id = ?`,
+    [nowIso(), req.params.id]
+  );
+  res.redirect(`/demo/admin/unit/${req.params.id}`);
+});
+
+app.post("/demo/admin/unit/:id/save", express.urlencoded({ extended: true }), async (req, res) => {
+  const unit = await get(`SELECT * FROM units WHERE id = ?`, [req.params.id]);
+  if (!unit) return res.status(404).send("Unit not found");
+
+  if (Number(unit.cover_page_override_enabled) !== 1) {
+    return res.status(400).send("Override not enabled for this unit.");
+  }
+
+  // Keep section IDs consistent with property default
+  const prop = await get(`SELECT * FROM properties WHERE id = ?`, [unit.property_id]);
+  const base = JSON.parse(prop.default_cover_page_json);
+
+  const updated = {
+    title: req.body.title || "",
+    intro: req.body.intro || "",
+    sections: base.sections.map((_, idx) => ({
+      id: req.body[`sec_id_${idx}`],
+      heading: req.body[`sec_heading_${idx}`] || "",
+      body: req.body[`sec_body_${idx}`] || ""
+    })),
+    footerNote: req.body.footerNote || ""
+  };
+
+  await run(
+    `UPDATE units
+     SET cover_page_override_json = ?,
+         cover_page_override_version = COALESCE(cover_page_override_version, 0) + 1,
+         updated_at = ?
+     WHERE id = ?`,
+    [JSON.stringify(updated), nowIso(), req.params.id]
+  );
+
+  res.redirect(`/demo/admin/unit/${req.params.id}`);
+});
+
+/* =========================================================
+   APPLICANT DEMO PAGE (simple flow)
+========================================================= */
+app.get("/demo/apply/:token", async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).send("Invalid token");
+
+  // Start submission + primary applicant person
+  const submission = await run(
+    `INSERT INTO submissions (application_link_id, status, created_at, updated_at) VALUES (?, ?, ?, ?)`,
+    [resolved.applicationLinkId, "started", nowIso(), nowIso()]
+  );
+
+  const personToken = uuidv4();
+  await run(
+    `INSERT INTO submission_people (submission_id, role, invite_token, email, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [submission.lastID, "applicant", personToken, "", nowIso(), nowIso()]
+  );
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Applicant Demo</h2>
+    <p><b>Property:</b> ${escapeHtml(resolved.propertyName)} | <b>Unit:</b> ${escapeHtml(resolved.unitLabel || "")}</p>
+
+    <ol>
+      <li><a href="/apply/${req.params.token}/cover-page?submissionId=${submission.lastID}">Step 1: Cover Page</a></li>
+      <li><a href="/apply/${req.params.token}/person/${personToken}/schema">Step 2: Application Form</a></li>
+      <li><a href="/apply/${req.params.token}/person/${personToken}/uploads">Step 3: Uploads</a></li>
+      <li><a href="/apply/${req.params.token}/submit?submissionId=${submission.lastID}">Submit</a></li>
+    </ol>
+
+    <p><b>Submission ID:</b> ${submission.lastID}</p>
+    <p><b>Primary applicant token:</b> ${personToken}</p>
+  `);
+});
+
+/* =========================================================
+   APPLICANT APIs (wizard)
+========================================================= */
+
+// Step 1: Cover Page view
+app.get("/apply/:token/cover-page", async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).send("Invalid token");
+
+  const submissionId = Number(req.query.submissionId);
+  if (!submissionId) return res.status(400).send("submissionId required in query");
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>${escapeHtml(resolved.coverPage.title)}</h2>
+    <p>${escapeHtml(resolved.coverPage.intro)}</p>
+    ${resolved.coverPage.sections.map(s => `
+      <h3>${escapeHtml(s.heading)}</h3>
+      <p>${escapeHtml(s.body)}</p>
+    `).join("")}
+    <p><i>${escapeHtml(resolved.coverPage.footerNote)}</i></p>
+
+    <form method="post" action="/apply/${req.params.token}/cover-page/ack">
+      <input type="hidden" name="submissionId" value="${submissionId}"/>
+      <label><input type="checkbox" name="ackChecked" /> I acknowledge and understand the above requirements</label><br/><br/>
+      <label>Type your name</label><br/>
+      <input name="ackName" style="width:400px"/><br/><br/>
+      <button type="submit">Acknowledge</button>
+    </form>
+  `);
+});
+
+// Step 1: Cover Page acknowledge
+app.post("/apply/:token/cover-page/ack", express.urlencoded({ extended: true }), async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).send("Invalid token");
+
+  const submissionId = Number(req.body.submissionId);
+  const ackChecked = req.body.ackChecked === "on";
+  const ackName = (req.body.ackName || "").trim();
+
+  if (!submissionId) return res.status(400).send("submissionId required");
+  if (!ackChecked) return res.status(400).send("Must check acknowledgement");
+  if (ackName.length < 2) return res.status(400).send("Name required");
+
+  const ip = req.headers["x-forwarded-for"]?.split(",")[0]?.trim() || req.socket.remoteAddress || "";
+  const ua = req.headers["user-agent"] || "";
+
+  await run(
+    `INSERT INTO submission_acknowledgements
+     (submission_id, type, ack_name, ack_checked, ack_at, ack_ip, ack_user_agent, content_snapshot_json)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+    [submissionId, "cover_page", ackName, 1, nowIso(), ip, ua, JSON.stringify(resolved.coverPage)]
+  );
+
+  res.send(`<p>✅ Acknowledged. You may continue.</p><p><a href="/demo/apply/${req.params.token}">Back</a></p>`);
+});
+
+// Step 2: Schema JSON for a person token (API)
+app.get("/apply/:token/person/:personToken/schema.json", async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).json({ error: "Invalid token" });
+
+  // Force SSN/DOB hidden regardless of schema
+  const schema = resolved.schema || {};
+  schema.fields = schema.fields || {};
+  schema.fields.ssn = { visibility: "hidden" };
+  schema.fields.dob = { visibility: "hidden" };
+
+  res.json({ schema });
+});
+
+// Step 2: Simple HTML form demo using schema toggles
+app.get("/apply/:token/person/:personToken/schema", async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).send("Invalid token");
+
+  const person = await get(`SELECT * FROM submission_people WHERE invite_token = ?`, [req.params.personToken]);
+  if (!person) return res.status(404).send("Invalid person token");
+
+  // Force SSN/DOB hidden
+  const schema = resolved.schema;
+  schema.fields = schema.fields || {};
+  schema.fields.ssn = { visibility: "hidden" };
+  schema.fields.dob = { visibility: "hidden" };
+
+  const form = JSON.parse(person.form_json || "{}");
+
+  function inputRow(key, label) {
+    const vis = schema.fields[key]?.visibility || "optional";
+    if (vis === "hidden") return "";
+    const reqMark = vis === "required" ? "*" : "";
+    return `
+      <div style="margin:10px 0;">
+        <label>${escapeHtml(label)} ${reqMark}</label><br/>
+        <input name="${escapeHtml(key)}" style="width:500px" value="${escapeHtml(form[key] || "")}"/>
+      </div>
+    `;
+  }
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Application Form (${escapeHtml(person.role)})</h2>
+    <p><a href="/demo/apply/${req.params.token}">← back</a></p>
+
+    <form method="post" action="/apply/${req.params.token}/person/${req.params.personToken}/save">
+      ${inputRow("phone", "Phone")}
+      ${inputRow("dl_number", "Driver License #")}
+      ${inputRow("dl_state", "DL State")}
+      ${inputRow("current_address", "Current Address")}
+      ${inputRow("rental_history", "Rental History Notes")}
+      ${inputRow("employment_history", "Employment History Notes")}
+      ${inputRow("pets", "Pets")}
+      ${inputRow("vehicles", "Vehicles")}
+      ${inputRow("emergency_contact", "Emergency Contact")}
+      <button type="submit">Save</button>
+    </form>
+
+    <hr/>
+    <h3>Invite Co-Applicant / Guarantor</h3>
+    <form method="post" action="/apply/${req.params.token}/submission/${person.submission_id}/invite">
+      <label>Email</label><br/>
+      <input name="email" style="width:400px"/><br/>
+      <label>Role</label><br/>
+      <select name="role">
+        <option value="coapplicant">Co-Applicant</option>
+        <option value="guarantor">Guarantor</option>
+      </select><br/><br/>
+      <button type="submit">Create Invite Link</button>
+    </form>
+  `);
+});
+
+// Step 2: Save person form (autosave style)
+app.post("/apply/:token/person/:personToken/save", express.urlencoded({ extended: true }), async (req, res) => {
+  const person = await get(`SELECT * FROM submission_people WHERE invite_token = ?`, [req.params.personToken]);
+  if (!person) return res.status(404).send("Invalid person token");
+
+  const current = JSON.parse(person.form_json || "{}");
+  const updated = { ...current, ...req.body };
+
+  await run(
+    `UPDATE submission_people SET form_json = ?, updated_at = ? WHERE id = ?`,
+    [JSON.stringify(updated), nowIso(), person.id]
+  );
+
+  res.redirect(`/apply/${req.params.token}/person/${req.params.personToken}/schema`);
+});
+
+// Invite co-applicant / guarantor (creates new person token)
+app.post("/apply/:token/submission/:submissionId/invite", express.urlencoded({ extended: true }), async (req, res) => {
+  const submissionId = Number(req.params.submissionId);
+  const email = (req.body.email || "").trim();
+  const role = req.body.role;
+
+  if (!submissionId) return res.status(400).send("submissionId required");
+  if (!email) return res.status(400).send("email required");
+  if (!["coapplicant", "guarantor"].includes(role)) return res.status(400).send("invalid role");
+
+  const token = uuidv4();
+  await run(
+    `INSERT INTO submission_people (submission_id, role, invite_token, email, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [submissionId, role, token, email, nowIso(), nowIso()]
+  );
+
+  const link = `${process.env.PUBLIC_BASE_URL}/apply/${req.params.token}/person/${token}/schema`;
+  res.send(`<p>✅ Invite created for ${escapeHtml(role)}: <a href="${link}">${link}</a></p>`);
+});
+
+// Step 3: Upload page
+app.get("/apply/:token/person/:personToken/uploads", async (req, res) => {
+  const resolved = await resolveCoverPageByToken(req.params.token);
+  if (!resolved) return res.status(404).send("Invalid token");
+
+  const person = await get(`SELECT * FROM submission_people WHERE invite_token = ?`, [req.params.personToken]);
+  if (!person) return res.status(404).send("Invalid person token");
+
+  const schema = resolved.schema;
+  const uploadList = Object.entries(schema.uploads || {});
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Uploads (${escapeHtml(person.role)})</h2>
+    <p><a href="/demo/apply/${req.params.token}">← back</a></p>
+
+    ${uploadList.map(([key, cfg]) => `
+      <div style="border:1px solid #ddd; padding:10px; margin:10px 0;">
+        <b>${escapeHtml(cfg.label || key)}</b> ${cfg.required ? "(required)" : "(optional)"}
+        <form method="post" action="/apply/${req.params.token}/person/${req.params.personToken}/upload" enctype="multipart/form-data">
+          <input type="hidden" name="file_type" value="${escapeHtml(key)}"/>
+          <input type="file" name="file" />
+          <button type="submit">Upload</button>
+        </form>
+      </div>
+    `).join("")}
+  `);
+});
+
+// Upload handler
+app.post("/apply/:token/person/:personToken/upload", upload.single("file"), async (req, res) => {
+  const person = await get(`SELECT * FROM submission_people WHERE invite_token = ?`, [req.params.personToken]);
+  if (!person) return res.status(404).send("Invalid person token");
+  if (!req.file) return res.status(400).send("No file uploaded");
+
+  const fileType = req.body.file_type || "unknown";
+
+  await run(
+    `INSERT INTO submission_files (submission_person_id, file_type, original_name, stored_path)
+     VALUES (?, ?, ?, ?)`,
+    [person.id, fileType, req.file.originalname, `/uploads/${path.basename(req.file.path)}`]
+  );
+
+  res.send(`<p>✅ Uploaded. <a href="/apply/${req.params.token}/person/${req.params.personToken}/uploads">Back</a></p>`);
+});
+
+// Submit (simple)
+app.get("/apply/:token/submit", async (req, res) => {
+  const submissionId = Number(req.query.submissionId);
+  if (!submissionId) return res.status(400).send("submissionId required");
+
+  await run(
+    `UPDATE submissions SET status = 'submitted', submitted_at = ?, updated_at = ? WHERE id = ?`,
+    [nowIso(), nowIso(), submissionId]
+  );
+
+  res.send(`<p>✅ Submitted! Landlord can now send screening.</p>`);
+});
+
+/* =========================================================
+   SCREENING (Landlord triggers DigitalDelve AppScreen)
+   NOTE: Demo endpoint assumes landlord knows submission_id.
+========================================================= */
+
+app.post("/api/submissions/:id/request-screening", async (req, res) => {
+  try {
+    const submissionId = Number(req.params.id);
+    const { invitationId } = req.body;
+
+    if (!submissionId) return res.status(400).json({ error: "Invalid submission id" });
+    if (!invitationId) return res.status(400).json({ error: "invitationId required" });
+
+    const submission = await get(`SELECT * FROM submissions WHERE id = ?`, [submissionId]);
+    if (!submission) return res.status(404).json({ error: "Submission not found" });
+
+    // Find primary applicant person (role = applicant)
+    const applicant = await get(
+      `SELECT * FROM submission_people WHERE submission_id = ? AND role = 'applicant' ORDER BY id ASC LIMIT 1`,
+      [submissionId]
+    );
+    if (!applicant) return res.status(400).json({ error: "No primary applicant person found" });
+
+    const form = JSON.parse(applicant.form_json || "{}");
+    const applicantFirst = form.first_name || applicant.first_name || "Applicant";
+    const applicantLast = form.last_name || applicant.last_name || "";
+    const applicantEmail = applicant.email || form.email || "";
+
+    if (!applicantEmail) {
+      return res.status(400).json({ error: "Primary applicant email is required to send DD invitation" });
+    }
+
+    const referenceNumber = `LS-SUB-${submissionId}`;
+
+    // Upsert screening order
+    await run(
+      `INSERT OR REPLACE INTO screening_orders
+       (submission_id, invitation_id, reference_number, status, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+      [submissionId, invitationId, referenceNumber, "sent", nowIso()]
+    );
+
+    await run(
+      `UPDATE submissions SET status = 'screening_requested', updated_at = ? WHERE id = ?`,
+      [nowIso(), submissionId]
+    );
+
+    const base = process.env.PUBLIC_BASE_URL;
+    const token = process.env.WEBHOOK_SHARED_SECRET || "";
+    const statusPostUrl = `${base}/webhooks/dd/status${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+    const resultPostUrl = `${base}/webhooks/dd/result${token ? `?token=${encodeURIComponent(token)}` : ""}`;
+
+    const xml = buildAppScreenXml({
+      customerId: process.env.DD_CUSTOMER_ID,
+      authCode: process.env.DD_AUTH_CODE,
+      invitationId,
+      referenceNumber,
+      applicantFirst,
+      applicantLast,
+      applicantEmail,
+      statusPostUrl,
+      resultPostUrl
+    });
+
+    const ddResp = await postSSORequest({
+      endpoint: process.env.DD_SSO_ENDPOINT,
+      xml
+    });
+
+    await run(
+      `UPDATE screening_orders SET raw_status_xml = ?, updated_at = ? WHERE submission_id = ?`,
+      [String(ddResp).slice(0, 50000), nowIso(), submissionId]
+    );
+
+    res.json({ ok: true, submissionId, referenceNumber, ddResponsePreview: String(ddResp).slice(0, 600) });
+  } catch (e) {
+    res.status(500).json({ error: "Failed to request screening", details: String(e.message || e) });
+  }
+});
+
+/* -----------------------------
+   DigitalDelve webhooks
+------------------------------*/
+app.post("/webhooks/dd/status", express.text({ type: "*/*" }), async (req, res) => {
+  if (!verifyWebhookToken(req, res)) return;
+
+  try {
+    const xml = req.body || "";
+    if (!xml) return res.status(400).send("Missing XML");
+
+    const parsed = await parseStringPromise(xml, { explicitArray: false, trim: true }).catch(() => null);
+    const referenceNumber = parsed?.Request?.ReferenceNumber || parsed?.Response?.ReferenceNumber || parsed?.ReferenceNumber;
+    const status = parsed?.Request?.Status || parsed?.Response?.Status || parsed?.Status || "in_progress";
+
+    if (referenceNumber) {
+      await run(
+        `UPDATE screening_orders
+         SET status = ?, raw_status_xml = ?, updated_at = ?
+         WHERE reference_number = ?`,
+        [String(status).toLowerCase(), xml.slice(0, 50000), nowIso(), referenceNumber]
+      );
+    }
+
+    res.status(200).send("OK");
+  } catch {
+    res.status(200).send("OK");
+  }
+});
+
+app.post("/webhooks/dd/result", express.text({ type: "*/*" }), async (req, res) => {
+  if (!verifyWebhookToken(req, res)) return;
+
+  try {
+    const xml = req.body || "";
+    if (!xml) return res.status(400).send("Missing XML");
+
+    const parsed = await parseStringPromise(xml, { explicitArray: false, trim: true }).catch(() => null);
+    const referenceNumber = parsed?.Request?.ReferenceNumber || parsed?.Response?.ReferenceNumber || parsed?.ReferenceNumber;
+
+    const status = parsed?.Request?.Status || parsed?.Response?.Status || parsed?.Status || "complete";
+    const reportUrl = parsed?.Request?.ReportURL || parsed?.Response?.ReportURL || parsed?.ReportURL || "";
+    const reportId = parsed?.Request?.ReportId || parsed?.Response?.ReportId || parsed?.ReportId || "";
+
+    if (referenceNumber) {
+      await run(
+        `UPDATE screening_orders
+         SET status = ?, report_url = ?, report_id = ?, raw_result_xml = ?, updated_at = ?
+         WHERE reference_number = ?`,
+        [String(status).toLowerCase(), reportUrl, reportId, xml.slice(0, 50000), nowIso(), referenceNumber]
+      );
+    }
+
+    res.status(200).send("OK");
+  } catch {
+    res.status(200).send("OK");
+  }
+});
+
+/* =========================================================
+   DECISIONS + EDITABLE LETTERS
+========================================================= */
+
+app.post("/api/submissions/:id/decision", async (req, res) => {
+  const submissionId = Number(req.params.id);
+  const { decision, decidedByUserId, denialReasons } = req.body;
+
+  if (!submissionId) return res.status(400).json({ error: "Invalid submission id" });
+  if (!["approved", "denied"].includes(decision)) return res.status(400).json({ error: "decision must be approved or denied" });
+  if (!decidedByUserId) return res.status(400).json({ error: "decidedByUserId required (placeholder for auth)" });
+
+  const submission = await get(`SELECT * FROM submissions WHERE id = ?`, [submissionId]);
+  if (!submission) return res.status(404).json({ error: "Submission not found" });
+
+  await run(
+    `INSERT OR REPLACE INTO decisions (submission_id, decision, decided_at, decided_by_user_id)
+     VALUES (?, ?, ?, ?)`,
+    [submissionId, decision, nowIso(), decidedByUserId]
+  );
+
+  await run(`UPDATE submissions SET status = ?, updated_at = ? WHERE id = ?`, [decision, nowIso(), submissionId]);
+
+  // Create default letter draft
+  const letterTemplates = defaultLetterTemplates();
+  const letterType = decision === "approved" ? "approval" : "adverse_action";
+  const templateBody = letterTemplates[letterType];
+
+  // Fill minimal variables (you will expand this later)
+  const filled = templateBody
+    .replaceAll("{Date}", new Date().toLocaleDateString("en-US"))
+    .replaceAll("{DenialReasons}", denialReasons || "(Not provided)")
+    .replaceAll("{LandlordName}", "Landlord/Manager")
+    .replaceAll("{CRAAddress}", "Address on file")
+    .replaceAll("{CRAPhone}", "Phone on file")
+    .replaceAll("{PropertyName}", "Property")
+    .replaceAll("{UnitLabel}", "Unit")
+    .replaceAll("{ApplicantName}", "Applicant");
+
+  await run(
+    `INSERT INTO decision_letters (submission_id, letter_type, template_body, final_body)
+     VALUES (?, ?, ?, ?)`,
+    [submissionId, letterType, templateBody, filled]
+  );
+
+  res.json({ ok: true, submissionId, decision, letterType });
+});
+
+app.post("/api/submissions/:id/letters/:letterId/edit", async (req, res) => {
+  const submissionId = Number(req.params.id);
+  const letterId = Number(req.params.letterId);
+  const { finalBody } = req.body;
+
+  if (!submissionId || !letterId) return res.status(400).json({ error: "Invalid ids" });
+  if (!finalBody) return res.status(400).json({ error: "finalBody required" });
+
+  await run(
+    `UPDATE decision_letters SET final_body = ? WHERE id = ? AND submission_id = ?`,
+    [finalBody, letterId, submissionId]
+  );
+
+  res.json({ ok: true });
+});
+
+app.post("/api/submissions/:id/letters/:letterId/send", async (req, res) => {
+  const submissionId = Number(req.params.id);
+  const letterId = Number(req.params.letterId);
+  const { toEmail } = req.body;
+
+  if (!toEmail) return res.status(400).json({ error: "toEmail required" });
+
+  // MVP: just mark as sent (real email integration later)
+  await run(
+    `UPDATE decision_letters SET sent_to_email = ?, sent_at = ? WHERE id = ? AND submission_id = ?`,
+    [toEmail, nowIso(), letterId, submissionId]
+  );
+
+  res.json({ ok: true, message: "Marked as sent (email integration comes later)." });
+});
+
+/* =========================================================
+   Start server
+========================================================= */
+app.listen(PORT, () => {
+  console.log(`✅ Server running on port ${PORT}`);
+  console.log(`Admin demo: ${process.env.PUBLIC_BASE_URL || ""}/demo/admin`);
+});
+
+7) File: seed.js (creates a demo property/unit/link using your defaults)
+const crypto = require("crypto");
+const { run } = require("./db");
+const { defaultCoverPage, defaultApplicationSchema } = require("./templates");
+
+async function seed() {
+  const ownerUserId = "demo-owner";
+
+  await run(`INSERT OR IGNORE INTO users (id, email, name) VALUES (?, ?, ?)`, [
+    ownerUserId,
+    "demo@leaseshieldapp.com",
+    "Demo Owner"
+  ]);
+
+  const prop = await run(
+    `INSERT INTO properties (owner_user_id, name, default_cover_page_json, default_cover_page_version)
+     VALUES (?, ?, ?, 1)`,
+    [ownerUserId, "Demo Property", JSON.stringify(defaultCoverPage())]
+  );
+
+  const unit = await run(
+    `INSERT INTO units (property_id, unit_label) VALUES (?, ?)`,
+    [prop.lastID, "Unit A"]
+  );
+
+  const token = crypto.randomBytes(16).toString("hex");
+  await run(
+    `INSERT INTO application_links (unit_id, public_token, schema_json)
+     VALUES (?, ?, ?)`,
+    [unit.lastID, token, JSON.stringify(defaultApplicationSchema())]
+  );
+
+  console.log("✅ Seed complete");
+  console.log("Property ID:", prop.lastID);
+  console.log("Unit ID:", unit.lastID);
+  console.log("Apply token:", token);
+  console.log("Applicant demo:", `https://YOUR-REPLIT-APP-URL.repl.co/demo/apply/${token}`);
+}
+
+seed().catch((e) => {
+  console.error("Seed failed:", e);
+  process.exit(1);
+});
+
+8) How to run (exact steps)
+
+In Replit Shell:
+
+npm install
+node migrate.js
+node seed.js
+npm start
+
+
+Then open:
+
+/demo/admin (edit cover page + unit override + reset)
+
+/demo/apply/<token> (start an applicant submission)
+
+9) How screening is triggered (API)
+
+Once applicant “submits” (in demo it just updates status), your landlord app calls:
+
+POST /api/submissions/:id/request-screening
+Body:
+
+{ "invitationId": "YOUR_DD_INVITATION_ID" }
+
+
+DigitalDelve will:
+
+invite applicant to provide SSN/DOB
+
+post back to your webhook endpoints
+
+you’ll store reportUrl + reportId in screening_orders
+
+10) What you’ll likely want me to tighten next (so it’s production-safe)
+
+Replace demo “send letter” with real email (SendGrid/Mailgun/etc.)
+
+Add landlord auth + tenant magic link emails
+
+Switch uploads from Replit disk → S3/R2
+
+Make the DigitalDelve XML fields exact to your SSO PDF (if you paste one real sample request + callback, I’ll harden it)

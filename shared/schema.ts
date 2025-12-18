@@ -945,3 +945,453 @@ export const insertBroadcastReplySchema = createInsertSchema(broadcastReplies).o
 });
 export type InsertBroadcastReply = z.infer<typeof insertBroadcastReplySchema>;
 export type BroadcastReply = typeof broadcastReplies.$inferSelect;
+
+// ============================================================
+// RENTAL APPLICATION SYSTEM - MVP Tables
+// ============================================================
+
+// Rental Properties - properties with cover page + field schema defaults
+export const rentalProperties = pgTable("rental_properties", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  name: text("name").notNull(),
+  address: text("address"),
+  city: text("city"),
+  state: varchar("state", { length: 2 }),
+  zipCode: varchar("zip_code", { length: 10 }),
+  defaultCoverPageJson: jsonb("default_cover_page_json").notNull(), // Cover page content (title, intro, sections)
+  defaultFieldSchemaJson: jsonb("default_field_schema_json").notNull(), // Field visibility toggles
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentalPropertiesRelations = relations(rentalProperties, ({ one, many }) => ({
+  user: one(users, {
+    fields: [rentalProperties.userId],
+    references: [users.id],
+  }),
+  units: many(rentalUnits),
+}));
+
+export const insertRentalPropertySchema = createInsertSchema(rentalProperties).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentalProperty = z.infer<typeof insertRentalPropertySchema>;
+export type RentalProperty = typeof rentalProperties.$inferSelect;
+
+// Rental Units - units with cover page/field schema override capability
+export const rentalUnits = pgTable("rental_units", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  propertyId: varchar("property_id").notNull().references(() => rentalProperties.id, { onDelete: 'cascade' }),
+  unitLabel: text("unit_label").notNull(), // e.g., "Unit A", "101", "Main House"
+  coverPageOverrideEnabled: boolean("cover_page_override_enabled").default(false).notNull(),
+  coverPageOverrideJson: jsonb("cover_page_override_json"), // Override cover page if enabled
+  fieldSchemaOverrideEnabled: boolean("field_schema_override_enabled").default(false).notNull(),
+  fieldSchemaOverrideJson: jsonb("field_schema_override_json"), // Override field schema if enabled
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentalUnitsRelations = relations(rentalUnits, ({ one, many }) => ({
+  property: one(rentalProperties, {
+    fields: [rentalUnits.propertyId],
+    references: [rentalProperties.id],
+  }),
+  applicationLinks: many(rentalApplicationLinks),
+}));
+
+export const insertRentalUnitSchema = createInsertSchema(rentalUnits).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentalUnit = z.infer<typeof insertRentalUnitSchema>;
+export type RentalUnit = typeof rentalUnits.$inferSelect;
+
+// Rental Application Links - public links for applicants
+export const rentalApplicationLinks = pgTable("rental_application_links", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  unitId: varchar("unit_id").notNull().references(() => rentalUnits.id, { onDelete: 'cascade' }),
+  publicToken: varchar("public_token", { length: 64 }).notNull().unique(), // Public URL token
+  mergedSchemaJson: jsonb("merged_schema_json").notNull(), // Final merged cover page + fields
+  isActive: boolean("is_active").default(true).notNull(),
+  expiresAt: timestamp("expires_at"), // Optional expiration
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalApplicationLinksRelations = relations(rentalApplicationLinks, ({ one, many }) => ({
+  unit: one(rentalUnits, {
+    fields: [rentalApplicationLinks.unitId],
+    references: [rentalUnits.id],
+  }),
+  submissions: many(rentalSubmissions),
+}));
+
+export const insertRentalApplicationLinkSchema = createInsertSchema(rentalApplicationLinks).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalApplicationLink = z.infer<typeof insertRentalApplicationLinkSchema>;
+export type RentalApplicationLink = typeof rentalApplicationLinks.$inferSelect;
+
+// Rental Submission Status Enum
+export const rentalSubmissionStatusEnum = pgEnum('rental_submission_status', [
+  'started',            // Applicant started but not submitted
+  'submitted',          // All required people submitted
+  'screening_requested', // Screening sent to DigitalDelve
+  'in_progress',        // Screening in progress
+  'complete',           // Screening complete, report available
+]);
+
+// Rental Submissions - one per application flow
+export const rentalSubmissions = pgTable("rental_submissions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  applicationLinkId: varchar("application_link_id").notNull().references(() => rentalApplicationLinks.id, { onDelete: 'cascade' }),
+  status: rentalSubmissionStatusEnum("status").default('started').notNull(),
+  submittedAt: timestamp("submitted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentalSubmissionsRelations = relations(rentalSubmissions, ({ one, many }) => ({
+  applicationLink: one(rentalApplicationLinks, {
+    fields: [rentalSubmissions.applicationLinkId],
+    references: [rentalApplicationLinks.id],
+  }),
+  people: many(rentalSubmissionPeople),
+  acknowledgements: many(rentalSubmissionAcknowledgements),
+  screeningOrder: one(rentalScreeningOrders),
+  decision: one(rentalDecisions),
+  events: many(rentalApplicationEvents),
+}));
+
+export const insertRentalSubmissionSchema = createInsertSchema(rentalSubmissions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentalSubmission = z.infer<typeof insertRentalSubmissionSchema>;
+export type RentalSubmission = typeof rentalSubmissions.$inferSelect;
+
+// Rental Submission Person Role Enum
+export const rentalPersonRoleEnum = pgEnum('rental_person_role', [
+  'applicant',
+  'coapplicant',
+  'guarantor',
+]);
+
+// Rental Submission People - people on a submission (primary + co-app + guarantor)
+export const rentalSubmissionPeople = pgTable("rental_submission_people", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  role: rentalPersonRoleEnum("role").notNull(),
+  inviteToken: varchar("invite_token", { length: 64 }).notNull().unique(), // Per-person magic link token
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  email: text("email"),
+  phone: text("phone"),
+  formJson: jsonb("form_json").default({}).notNull(), // Autosave answers
+  isCompleted: boolean("is_completed").default(false).notNull(),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentalSubmissionPeopleRelations = relations(rentalSubmissionPeople, ({ one, many }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalSubmissionPeople.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+  files: many(rentalSubmissionFiles),
+}));
+
+export const insertRentalSubmissionPersonSchema = createInsertSchema(rentalSubmissionPeople).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentalSubmissionPerson = z.infer<typeof insertRentalSubmissionPersonSchema>;
+export type RentalSubmissionPerson = typeof rentalSubmissionPeople.$inferSelect;
+
+// Rental Submission Files - uploaded documents
+export const rentalSubmissionFiles = pgTable("rental_submission_files", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  personId: varchar("person_id").notNull().references(() => rentalSubmissionPeople.id, { onDelete: 'cascade' }),
+  fileType: varchar("file_type", { length: 50 }).notNull(), // gov_id, paystubs, tax_docs, other
+  originalName: text("original_name").notNull(),
+  storedPath: text("stored_path").notNull(),
+  fileSize: integer("file_size"),
+  mimeType: varchar("mime_type", { length: 100 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalSubmissionFilesRelations = relations(rentalSubmissionFiles, ({ one }) => ({
+  person: one(rentalSubmissionPeople, {
+    fields: [rentalSubmissionFiles.personId],
+    references: [rentalSubmissionPeople.id],
+  }),
+}));
+
+export const insertRentalSubmissionFileSchema = createInsertSchema(rentalSubmissionFiles).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalSubmissionFile = z.infer<typeof insertRentalSubmissionFileSchema>;
+export type RentalSubmissionFile = typeof rentalSubmissionFiles.$inferSelect;
+
+// Rental Submission Acknowledgements - cover page and other acks
+export const rentalSubmissionAcknowledgements = pgTable("rental_submission_acknowledgements", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  personId: varchar("person_id").references(() => rentalSubmissionPeople.id, { onDelete: 'cascade' }),
+  type: varchar("type", { length: 50 }).notNull(), // cover_page, disclosures, etc.
+  ackName: text("ack_name"), // Typed name for signature
+  ackChecked: boolean("ack_checked").default(false).notNull(),
+  ackAt: timestamp("ack_at"),
+  ackIp: varchar("ack_ip", { length: 50 }),
+  ackUserAgent: text("ack_user_agent"),
+  contentSnapshotJson: jsonb("content_snapshot_json"), // Snapshot of what they acknowledged
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalSubmissionAcknowledgementsRelations = relations(rentalSubmissionAcknowledgements, ({ one }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalSubmissionAcknowledgements.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+  person: one(rentalSubmissionPeople, {
+    fields: [rentalSubmissionAcknowledgements.personId],
+    references: [rentalSubmissionPeople.id],
+  }),
+}));
+
+export const insertRentalSubmissionAcknowledgementSchema = createInsertSchema(rentalSubmissionAcknowledgements).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalSubmissionAcknowledgement = z.infer<typeof insertRentalSubmissionAcknowledgementSchema>;
+export type RentalSubmissionAcknowledgement = typeof rentalSubmissionAcknowledgements.$inferSelect;
+
+// Rental Screening Order Status Enum
+export const rentalScreeningStatusEnum = pgEnum('rental_screening_status', [
+  'not_sent',
+  'sent',
+  'in_progress',
+  'complete',
+  'error',
+]);
+
+// Rental Screening Orders - DigitalDelve integration
+export const rentalScreeningOrders = pgTable("rental_screening_orders", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().unique().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  invitationId: text("invitation_id"), // DigitalDelve invitation ID
+  referenceNumber: varchar("reference_number", { length: 100 }).notNull().unique(), // Our reference number
+  status: rentalScreeningStatusEnum("status").default('not_sent').notNull(),
+  reportId: text("report_id"), // DigitalDelve report ID
+  reportUrl: text("report_url"), // URL to view report
+  rawStatusXml: text("raw_status_xml"), // Raw status webhook data
+  rawResultXml: text("raw_result_xml"), // Raw result webhook data
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const rentalScreeningOrdersRelations = relations(rentalScreeningOrders, ({ one }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalScreeningOrders.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+}));
+
+export const insertRentalScreeningOrderSchema = createInsertSchema(rentalScreeningOrders).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentalScreeningOrder = z.infer<typeof insertRentalScreeningOrderSchema>;
+export type RentalScreeningOrder = typeof rentalScreeningOrders.$inferSelect;
+
+// Rental Decision Enum
+export const rentalDecisionTypeEnum = pgEnum('rental_decision_type', [
+  'approved',
+  'denied',
+]);
+
+// Rental Decisions - approve/deny decisions
+export const rentalDecisions = pgTable("rental_decisions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().unique().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  decision: rentalDecisionTypeEnum("decision").notNull(),
+  decidedAt: timestamp("decided_at").notNull(),
+  decidedByUserId: varchar("decided_by_user_id").notNull().references(() => users.id),
+  notes: text("notes"), // Internal notes
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalDecisionsRelations = relations(rentalDecisions, ({ one, many }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalDecisions.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+  decidedBy: one(users, {
+    fields: [rentalDecisions.decidedByUserId],
+    references: [users.id],
+  }),
+  letters: many(rentalDecisionLetters),
+}));
+
+export const insertRentalDecisionSchema = createInsertSchema(rentalDecisions).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalDecision = z.infer<typeof insertRentalDecisionSchema>;
+export type RentalDecision = typeof rentalDecisions.$inferSelect;
+
+// Rental Decision Letter Type Enum
+export const rentalLetterTypeEnum = pgEnum('rental_letter_type', [
+  'approval',
+  'adverse_action',
+]);
+
+// Rental Decision Letters - letter templates and sent letters
+export const rentalDecisionLetters = pgTable("rental_decision_letters", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").notNull().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  decisionId: varchar("decision_id").references(() => rentalDecisions.id, { onDelete: 'cascade' }),
+  letterType: rentalLetterTypeEnum("letter_type").notNull(),
+  templateBody: text("template_body").notNull(), // Original template
+  finalBody: text("final_body").notNull(), // Edited final version
+  sentToEmail: text("sent_to_email"),
+  sentAt: timestamp("sent_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalDecisionLettersRelations = relations(rentalDecisionLetters, ({ one }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalDecisionLetters.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+  decision: one(rentalDecisions, {
+    fields: [rentalDecisionLetters.decisionId],
+    references: [rentalDecisions.id],
+  }),
+}));
+
+export const insertRentalDecisionLetterSchema = createInsertSchema(rentalDecisionLetters).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalDecisionLetter = z.infer<typeof insertRentalDecisionLetterSchema>;
+export type RentalDecisionLetter = typeof rentalDecisionLetters.$inferSelect;
+
+// Rental Application Events - event logging
+export const rentalApplicationEvents = pgTable("rental_application_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  submissionId: varchar("submission_id").references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  eventType: varchar("event_type", { length: 50 }).notNull(), // submission_created, cover_page_acknowledged, etc.
+  metadataJson: jsonb("metadata_json"), // Additional context
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rentalApplicationEventsRelations = relations(rentalApplicationEvents, ({ one }) => ({
+  submission: one(rentalSubmissions, {
+    fields: [rentalApplicationEvents.submissionId],
+    references: [rentalSubmissions.id],
+  }),
+}));
+
+export const insertRentalApplicationEventSchema = createInsertSchema(rentalApplicationEvents).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertRentalApplicationEvent = z.infer<typeof insertRentalApplicationEventSchema>;
+export type RentalApplicationEvent = typeof rentalApplicationEvents.$inferSelect;
+
+// Default cover page template
+export const defaultCoverPageTemplate = {
+  title: "Rental Application Requirements",
+  intro: "Please read the following requirements carefully before submitting your application. Applications are reviewed in the order received.",
+  sections: [
+    { id: "processing_time", heading: "Processing Time", body: "Most applications are processed within 1–3 business days." },
+    { id: "required_uploads", heading: "Required Documents", body: "Government ID + proof of income are required. Additional documents may be requested." },
+    { id: "move_in_funds", heading: "Move-In Funds", body: "Move-in funds are due upon approval (deposit + first month's rent). Exact amounts may vary by unit." },
+    { id: "pet_policy", heading: "Pet Policy", body: "Pets may require approval and additional deposits/fees. Unauthorized pets may be grounds for denial or lease violation." },
+    { id: "renters_insurance", heading: "Renters Insurance", body: "Renters insurance may be required prior to move-in and throughout the lease term." },
+    { id: "fees", heading: "Fees", body: "Late fees and other administrative fees may apply per lease terms and property policy." },
+    { id: "no_verbal", heading: "No Verbal Agreements", body: "All agreements must be in writing. Verbal statements do not modify the lease." }
+  ],
+  footerNote: "By continuing, you confirm you understand these requirements."
+};
+
+// Default field schema template (visibility toggles)
+export const defaultFieldSchemaTemplate = {
+  stateScope: "all_leaseshield_states",
+  fields: {
+    phone: { visibility: "required" },
+    dlNumber: { visibility: "optional" },
+    dlState: { visibility: "optional" },
+    ssn: { visibility: "hidden" }, // SSN/DOB collected by DigitalDelve
+    dob: { visibility: "hidden" },
+    currentAddress: { visibility: "required" },
+    previousAddresses: { visibility: "required" },
+    employmentHistory: { visibility: "required" },
+    rentalHistory: { visibility: "optional" },
+    vehicles: { visibility: "optional" },
+    pets: { visibility: "optional" },
+    emergencyContact: { visibility: "optional" }
+  },
+  historyRules: {
+    minAddressYears: 2,
+    minEmploymentYears: 2
+  },
+  uploads: {
+    govId: { required: true, label: "Government ID" },
+    paystubs30Days: { required: true, label: "Paystubs (last 30 days)" },
+    taxDocsSelfEmployed: { required: false, label: "Self-employed tax documents (Schedule C, etc.)" },
+    otherIncome: { required: false, label: "Other income documentation" }
+  }
+};
+
+// Default letter templates
+export const defaultApprovalLetterTemplate = `Subject: Application Approved – {{propertyName}}
+
+Hello {{applicantName}},
+
+Good news — your rental application for {{unitLabel}} at {{propertyName}} has been approved.
+
+Next steps:
+• Please review and sign the lease by {{leaseSignDueDate}}
+• Pay move-in funds as outlined by management
+• Provide any remaining documents requested (if applicable)
+
+If you have questions, reply to this email.
+
+Thank you,
+{{landlordName}}`;
+
+export const defaultAdverseActionLetterTemplate = `Subject: Adverse Action Notice – Rental Application
+
+Date: {{date}}
+
+Applicant: {{applicantName}}
+Property/Unit: {{propertyName}} – {{unitLabel}}
+
+This notice is to inform you that an adverse action has been taken regarding your rental application.
+
+Reason(s) (optional – if provided by landlord policy):
+{{denialReasons}}
+
+Consumer Reporting Agency (CRA) that provided the report:
+Western Verify (via DigitalDelve)
+{{craAddress}}
+{{craPhone}}
+
+The CRA did not make this decision and cannot explain why the decision was made.
+
+You have the right to obtain a free copy of your consumer report from the CRA if you request it within 60 days, and you have the right to dispute the accuracy or completeness of any information in the report.
+
+Sincerely,
+{{landlordName}}`;
