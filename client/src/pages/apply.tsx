@@ -418,7 +418,10 @@ export default function Apply() {
       const res = await fetch(`/api/apply/person/${personToken}/submit`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ formData }),
+        body: JSON.stringify({ 
+          formData,
+          userAgent: navigator.userAgent, // Capture for screening disclosure audit
+        }),
       });
       if (!res.ok) throw new Error("Failed to submit");
       return res.json();
@@ -1487,33 +1490,61 @@ export default function Apply() {
                   </div>
                 </div>
 
-                {/* Screening Disclosure */}
-                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg space-y-3">
-                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">Screening Disclosure</h3>
+                {/* Background Screening Disclosure & Acknowledgment */}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg space-y-4">
+                  <div className="space-y-1">
+                    <h3 className="font-semibold text-amber-900 dark:text-amber-100">Background Screening Disclosure & Acknowledgment</h3>
+                    <p className="text-xs text-amber-700 dark:text-amber-300 font-medium uppercase tracking-wide">Please Read Carefully</p>
+                  </div>
+                  
                   <p className="text-sm text-amber-800 dark:text-amber-200">
-                    As part of this rental application process, the landlord or property manager may request a background screening report.
+                    As part of the rental application process, the landlord or property manager may request a background screening report about you for housing purposes.
                   </p>
+                  
                   <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
                     <p className="font-medium">If screening is requested:</p>
                     <ul className="list-disc list-inside space-y-1 ml-2">
-                      <li>You will receive a separate invitation directly from Western Verify, through its screening platform DigitalDelve</li>
+                      <li>You will receive a separate invitation directly from Western Verify, the consumer reporting agency, delivered through its screening platform DigitalDelve</li>
                       <li>That invitation will include a standalone disclosure and authorization, which you must review and complete before any consumer report is obtained</li>
-                      <li>LeaseShield does not collect your Social Security number, date of birth, or screening authorization</li>
+                      <li>LeaseShield does not collect or store your Social Security number, date of birth, or screening authorization</li>
                     </ul>
                   </div>
+                  
                   <p className="text-sm text-amber-800 dark:text-amber-200">
-                    If adverse action is taken based in whole or in part on information contained in a consumer report, you will receive an adverse action notice that includes your rights under the Fair Credit Reporting Act.
+                    The background screening report, if obtained, may include information permitted by law, such as credit history, rental history, employment-related information, criminal records, and eviction records.
                   </p>
-                  <div className="flex items-start gap-3 pt-2 border-t border-amber-200 dark:border-amber-700">
-                    <Checkbox
-                      id="screeningDisclosure"
-                      checked={formData.acknowledgeScreeningDisclosure || false}
-                      onCheckedChange={(checked) => updateField("acknowledgeScreeningDisclosure", !!checked)}
-                      data-testid="checkbox-screening-disclosure"
-                    />
-                    <Label htmlFor="screeningDisclosure" className="text-sm cursor-pointer font-medium text-amber-900 dark:text-amber-100">
-                      I understand and acknowledge the above
-                    </Label>
+                  
+                  <div className="border-t border-amber-200 dark:border-amber-700 pt-3 space-y-2">
+                    <p className="font-medium text-sm text-amber-900 dark:text-amber-100">Adverse Action Notice</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">
+                      If adverse action is taken based in whole or in part on information contained in a consumer report, you will be provided an adverse action notice that includes:
+                    </p>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-sm text-amber-800 dark:text-amber-200">
+                      <li>The name, address, and phone number of the consumer reporting agency (Western Verify) that provided the report</li>
+                      <li>A statement that the consumer reporting agency did not make the decision and cannot explain why the decision was made</li>
+                      <li>Notice of your rights under the Fair Credit Reporting Act (FCRA), including your right to obtain a free copy of your consumer report and to dispute inaccurate or incomplete information</li>
+                    </ul>
+                  </div>
+                  
+                  <div className="border-t border-amber-200 dark:border-amber-700 pt-3 space-y-3">
+                    <p className="font-medium text-sm text-amber-900 dark:text-amber-100">Acknowledgment</p>
+                    <p className="text-sm text-amber-800 dark:text-amber-200">By checking the box below, you acknowledge that:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2 text-sm text-amber-800 dark:text-amber-200">
+                      <li>You understand that a background screening may be requested in connection with your rental application</li>
+                      <li>You understand that any screening authorization will be collected directly by Western Verify, through its screening platform DigitalDelve, and not by LeaseShield</li>
+                      <li>You understand that LeaseShield does not make rental decisions</li>
+                    </ul>
+                    <div className="flex items-start gap-3 pt-2 bg-amber-100/50 dark:bg-amber-900/30 p-3 rounded-md">
+                      <Checkbox
+                        id="screeningDisclosure"
+                        checked={formData.acknowledgeScreeningDisclosure || false}
+                        onCheckedChange={(checked) => updateField("acknowledgeScreeningDisclosure", !!checked)}
+                        data-testid="checkbox-screening-disclosure"
+                      />
+                      <Label htmlFor="screeningDisclosure" className="text-sm cursor-pointer font-medium text-amber-900 dark:text-amber-100">
+                        I understand and acknowledge the above
+                      </Label>
+                    </div>
                   </div>
                 </div>
 

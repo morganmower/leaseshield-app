@@ -4110,11 +4110,22 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "Application not found" });
       }
 
-      // Update person as completed
+      // Capture screening disclosure acknowledgment audit data
+      const ipAddress = (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || 
+                        req.socket.remoteAddress || 
+                        'unknown';
+      const userAgent = req.body.userAgent || req.headers['user-agent'] || 'unknown';
+      const disclosureVersion = 'v1.0-2024-12-18'; // Immutable version identifier for this disclosure text
+
+      // Update person as completed with screening disclosure metadata
       await storage.updateRentalSubmissionPerson(person.id, {
         formJson: req.body.formData || person.formJson,
         isCompleted: true,
         completedAt: new Date(),
+        screeningDisclosureAcknowledgedAt: new Date(),
+        screeningDisclosureIpAddress: ipAddress,
+        screeningDisclosureUserAgent: userAgent,
+        screeningDisclosureVersion: disclosureVersion,
       });
 
       // Check if all people have completed

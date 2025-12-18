@@ -1122,6 +1122,10 @@ export const rentalSubmissionPeople = pgTable("rental_submission_people", {
   formJson: jsonb("form_json").default({}).notNull(), // Autosave answers
   isCompleted: boolean("is_completed").default(false).notNull(),
   completedAt: timestamp("completed_at"),
+  screeningDisclosureAcknowledgedAt: timestamp("screening_disclosure_acknowledged_at"),
+  screeningDisclosureIpAddress: text("screening_disclosure_ip_address"),
+  screeningDisclosureUserAgent: text("screening_disclosure_user_agent"),
+  screeningDisclosureVersion: text("screening_disclosure_version"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
