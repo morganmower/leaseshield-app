@@ -183,7 +183,7 @@ export default function RentalSubmissions() {
     enabled: !!selectedSubmission,
   });
 
-  const { data: submissionFiles } = useQuery<Record<string, SubmissionFile[]>>({
+  const { data: submissionFiles, isLoading: isLoadingFiles } = useQuery<Record<string, SubmissionFile[]>>({
     queryKey: ["/api/rental-submissions", selectedSubmission, "files"],
     queryFn: async () => {
       const token = getAccessToken();
@@ -440,7 +440,7 @@ export default function RentalSubmissions() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card data-testid="card-documents">
             <CardHeader>
               <CardTitle className="text-lg flex items-center gap-2">
                 <Paperclip className="h-5 w-5" />
@@ -448,53 +448,60 @@ export default function RentalSubmissions() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {submissionDetail.people.map((person) => {
-                const personFiles = submissionFiles?.[person.id] || [];
-                return (
-                  <div key={`docs-${person.id}`} className="mb-4 last:mb-0">
-                    <p className="text-sm font-medium mb-2">
-                      {person.firstName} {person.lastName}
-                      <Badge variant="outline" className="ml-2 text-xs">
-                        {roleLabels[person.role] || person.role}
-                      </Badge>
-                    </p>
-                    {personFiles.length === 0 ? (
-                      <p className="text-sm text-muted-foreground">No documents uploaded.</p>
-                    ) : (
-                      <div className="space-y-2">
-                        {personFiles.map((file) => (
-                          <div
-                            key={file.id}
-                            className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/50 rounded-md"
-                            data-testid={`file-${file.id}`}
-                          >
-                            <div className="flex items-center gap-2">
-                              <FileText className="h-4 w-4 text-muted-foreground" />
-                              <div>
-                                <p className="text-sm font-medium">{file.originalName}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  {fileTypeLabels[file.fileType] || file.fileType} · {formatFileSize(file.fileSize)}
-                                </p>
-                              </div>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => {
-                                window.open(`/api/rental-submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
-                              }}
-                              data-testid={`button-download-${file.id}`}
+              {isLoadingFiles ? (
+                <div className="space-y-3" data-testid="loading-documents">
+                  <Skeleton className="h-12 w-full" />
+                  <Skeleton className="h-12 w-full" />
+                </div>
+              ) : (
+                submissionDetail.people.map((person) => {
+                  const personFiles = submissionFiles?.[person.id] || [];
+                  return (
+                    <div key={`docs-${person.id}`} className="mb-4 last:mb-0" data-testid={`docs-person-${person.id}`}>
+                      <p className="text-sm font-medium mb-2">
+                        {person.firstName} {person.lastName}
+                        <Badge variant="outline" className="ml-2 text-xs">
+                          {roleLabels[person.role] || person.role}
+                        </Badge>
+                      </p>
+                      {personFiles.length === 0 ? (
+                        <p className="text-sm text-muted-foreground" data-testid={`text-no-docs-${person.id}`}>No documents uploaded.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {personFiles.map((file) => (
+                            <div
+                              key={file.id}
+                              className="flex flex-wrap items-center justify-between gap-2 p-2 bg-muted/50 rounded-md"
+                              data-testid={`row-file-${file.id}`}
                             >
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
+                              <div className="flex items-center gap-2">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <div>
+                                  <p className="text-sm font-medium" data-testid={`text-filename-${file.id}`}>{file.originalName}</p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {fileTypeLabels[file.fileType] || file.fileType} · {formatFileSize(file.fileSize)}
+                                  </p>
+                                </div>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  window.open(`/api/rental-submissions/${selectedSubmission}/files/${file.id}/download`, '_blank');
+                                }}
+                                data-testid={`button-download-${file.id}`}
+                              >
+                                <Download className="h-4 w-4 mr-1" />
+                                Download
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
             </CardContent>
           </Card>
 

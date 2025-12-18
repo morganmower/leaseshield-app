@@ -105,13 +105,21 @@ export async function runUploadCleanup(): Promise<CleanupResult> {
 
       if (fileCreatedAt && fileCreatedAt < cutoffDate) {
         const storedPath = row.stored_path as string;
+        let diskDeleted = false;
+        
         if (storedPath) {
           const diskPath = path.resolve(storedPath);
-          safeUnlink(diskPath);
+          diskDeleted = safeUnlink(diskPath);
+        } else {
+          diskDeleted = true;
         }
 
-        await db.delete(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, row.file_id as string));
-        deletedCount++;
+        if (diskDeleted) {
+          await db.delete(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, row.file_id as string));
+          deletedCount++;
+        } else {
+          console.warn(`[CLEANUP] Skipped DB delete for file ${row.file_id} due to disk deletion failure`);
+        }
       }
     }
   } catch (error) {
