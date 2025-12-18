@@ -43,6 +43,7 @@ import {
   File,
   PawPrint,
   Plus,
+  Car,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -81,6 +82,7 @@ const STEPS = [
   { id: "address", label: "Address History", icon: Home },
   { id: "employment", label: "Employment", icon: Building2 },
   { id: "pets", label: "Pets", icon: PawPrint },
+  { id: "vehicles", label: "Vehicles", icon: Car },
   { id: "uploads", label: "Documents", icon: Upload },
   { id: "review", label: "Review & Submit", icon: CheckCircle },
 ];
@@ -1150,17 +1152,203 @@ export default function Apply() {
             </>
           )}
 
-          {/* Step 5: Upload Documents */}
+          {/* Step 5: Vehicles */}
           {currentStep === 5 && (
+            <>
+              <CardHeader>
+                <CardTitle>Vehicles</CardTitle>
+                <CardDescription>Tell us about any vehicles that will be parked at the property</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="space-y-4">
+                  <Label className="text-base font-medium">Do you have any vehicles that will be parked at the property?</Label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasVehiclesYes"
+                        checked={formData.hasVehicles === true}
+                        onCheckedChange={() => updateField("hasVehicles", true)}
+                        data-testid="checkbox-has-vehicles-yes"
+                      />
+                      <Label htmlFor="hasVehiclesYes" className="cursor-pointer">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="hasVehiclesNo"
+                        checked={formData.hasVehicles === false}
+                        onCheckedChange={() => {
+                          setFormData(prev => ({ ...prev, hasVehicles: false, vehicles: [] }));
+                        }}
+                        data-testid="checkbox-has-vehicles-no"
+                      />
+                      <Label htmlFor="hasVehiclesNo" className="cursor-pointer">No</Label>
+                    </div>
+                  </div>
+                </div>
+
+                {formData.hasVehicles === true && (
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-base font-medium">Vehicle Details</Label>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          const currentVehicles = formData.vehicles || [];
+                          updateField("vehicles", [
+                            ...currentVehicles,
+                            { id: Date.now().toString(), year: "", make: "", model: "", color: "", licensePlate: "", plateState: "" }
+                          ]);
+                        }}
+                        data-testid="button-add-vehicle"
+                      >
+                        <Plus className="h-4 w-4 mr-1" />
+                        Add Vehicle
+                      </Button>
+                    </div>
+
+                    {(formData.vehicles || []).length === 0 && (
+                      <p className="text-sm text-muted-foreground">Click "Add Vehicle" to add your vehicles.</p>
+                    )}
+
+                    {(formData.vehicles || []).map((vehicle: any, index: number) => (
+                      <div key={vehicle.id} className="border rounded-lg p-4 space-y-4">
+                        <div className="flex items-center justify-between">
+                          <span className="font-medium">Vehicle {index + 1}</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              const updatedVehicles = formData.vehicles.filter((_: any, i: number) => i !== index);
+                              updateField("vehicles", updatedVehicles);
+                            }}
+                            data-testid={`button-remove-vehicle-${index}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-destructive" />
+                          </Button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Year *</Label>
+                            <Input
+                              value={vehicle.year || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, year: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., 2020"
+                              data-testid={`input-vehicle-year-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Make *</Label>
+                            <Input
+                              value={vehicle.make || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, make: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., Toyota"
+                              data-testid={`input-vehicle-make-${index}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Model *</Label>
+                            <Input
+                              value={vehicle.model || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, model: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., Camry"
+                              data-testid={`input-vehicle-model-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Color</Label>
+                            <Input
+                              value={vehicle.color || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, color: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., Silver"
+                              data-testid={`input-vehicle-color-${index}`}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>License Plate *</Label>
+                            <Input
+                              value={vehicle.licensePlate || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, licensePlate: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., ABC1234"
+                              data-testid={`input-vehicle-plate-${index}`}
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>State of Registration *</Label>
+                            <Input
+                              value={vehicle.plateState || ""}
+                              onChange={(e) => {
+                                const updatedVehicles = [...formData.vehicles];
+                                updatedVehicles[index] = { ...vehicle, plateState: e.target.value };
+                                updateField("vehicles", updatedVehicles);
+                              }}
+                              placeholder="e.g., UT"
+                              data-testid={`input-vehicle-state-${index}`}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+
+                    <p className="text-xs text-muted-foreground">
+                      Vehicle information is collected for parking and property management purposes only.
+                    </p>
+                  </div>
+                )}
+              </CardContent>
+              <CardFooter className="flex justify-between border-t pt-6">
+                <Button variant="outline" onClick={() => setCurrentStep(4)}>
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back
+                </Button>
+                <Button onClick={() => setCurrentStep(6)} data-testid="button-next-step-6">
+                  Next
+                  <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </CardFooter>
+            </>
+          )}
+
+          {/* Step 6: Upload Documents */}
+          {currentStep === 6 && (
             <UploadDocumentsStep
               personToken={personToken!}
-              onBack={() => setCurrentStep(4)}
-              onNext={() => setCurrentStep(6)}
+              onBack={() => setCurrentStep(5)}
+              onNext={() => setCurrentStep(7)}
             />
           )}
 
-          {/* Step 6: Review & Submit */}
-          {currentStep === 6 && (
+          {/* Step 7: Review & Submit */}
+          {currentStep === 7 && (
             <>
               <CardHeader>
                 <CardTitle>Review & Submit</CardTitle>
@@ -1238,6 +1426,35 @@ export default function Apply() {
                   )}
                 </div>
 
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Car className="h-4 w-4" />
+                    Vehicles
+                  </h3>
+                  {formData.hasVehicles === false && (
+                    <p className="text-sm">No vehicles</p>
+                  )}
+                  {formData.hasVehicles === true && (formData.vehicles || []).length > 0 ? (
+                    <div className="space-y-2">
+                      {formData.vehicles.map((vehicle: any, index: number) => (
+                        <div key={vehicle.id || index} className="text-sm border-l-2 border-primary/30 pl-3 py-1">
+                          <span className="font-medium">{vehicle.year} {vehicle.make} {vehicle.model}</span>
+                          {vehicle.color && <span className="text-muted-foreground"> ({vehicle.color})</span>}
+                          <div className="text-muted-foreground">
+                            {vehicle.licensePlate && <span>Plate: {vehicle.licensePlate}</span>}
+                            {vehicle.licensePlate && vehicle.plateState && <span> | </span>}
+                            {vehicle.plateState && <span>State: {vehicle.plateState}</span>}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  ) : formData.hasVehicles === true ? (
+                    <p className="text-sm text-muted-foreground">Has vehicles (no details provided)</p>
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Not specified</p>
+                  )}
+                </div>
+
                 {/* Add co-applicant option */}
                 <div className="border rounded-lg p-4">
                   <div className="flex items-center justify-between">
@@ -1301,7 +1518,7 @@ export default function Apply() {
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
-                <Button variant="outline" onClick={() => setCurrentStep(5)}>
+                <Button variant="outline" onClick={() => setCurrentStep(6)}>
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back
                 </Button>
