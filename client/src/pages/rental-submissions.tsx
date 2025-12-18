@@ -571,25 +571,30 @@ export default function RentalSubmissions() {
                     <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Background Screening</span>
                   </div>
-                  {!screeningOrder ? (
-                    <Button
-                      size="sm"
-                      onClick={() => selectedSubmission && screeningMutation.mutate(selectedSubmission)}
-                      disabled={screeningMutation.isPending || submissionDetail.status === 'started'}
-                      data-testid="button-request-screening"
-                    >
-                      {screeningMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                          Requesting...
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck className="h-4 w-4 mr-1" />
-                          Request Screening
-                        </>
+                  {!screeningOrder || screeningOrder.status === 'error' ? (
+                    <div className="flex items-center gap-2">
+                      {screeningOrder?.status === 'error' && (
+                        <Badge variant="destructive" data-testid="badge-screening-status">Error</Badge>
                       )}
-                    </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => selectedSubmission && screeningMutation.mutate(selectedSubmission)}
+                        disabled={screeningMutation.isPending || submissionDetail.status === 'started'}
+                        data-testid="button-request-screening"
+                      >
+                        {screeningMutation.isPending ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            Requesting...
+                          </>
+                        ) : (
+                          <>
+                            <ShieldCheck className="h-4 w-4 mr-1" />
+                            {screeningOrder?.status === 'error' ? 'Retry Screening' : 'Request Screening'}
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   ) : (
                     <div className="flex items-center gap-2">
                       <Badge 
@@ -599,7 +604,6 @@ export default function RentalSubmissions() {
                         {screeningOrder.status === 'sent' && 'Invitation Sent'}
                         {screeningOrder.status === 'in_progress' && 'In Progress'}
                         {screeningOrder.status === 'complete' && 'Complete'}
-                        {screeningOrder.status === 'error' && 'Error'}
                         {screeningOrder.status === 'not_sent' && 'Not Sent'}
                       </Badge>
                       {screeningOrder.status === 'complete' && (
