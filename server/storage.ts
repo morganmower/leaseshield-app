@@ -390,6 +390,7 @@ export interface IStorage {
   getRentalScreeningOrderByReference(referenceNumber: string): Promise<RentalScreeningOrder | undefined>;
   createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder>;
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
+  deleteRentalScreeningOrder(id: string): Promise<boolean>;
 
   // Rental Application System - Decision operations
   getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
@@ -1958,6 +1959,13 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db.update(rentalScreeningOrders).set({ ...order, updatedAt: new Date() }).where(eq(rentalScreeningOrders.id, id)).returning();
       return updated || null;
     }, 'updateRentalScreeningOrder');
+  }
+
+  async deleteRentalScreeningOrder(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const result = await db.delete(rentalScreeningOrders).where(eq(rentalScreeningOrders.id, id));
+      return result.rowCount ? result.rowCount > 0 : false;
+    }, 'deleteRentalScreeningOrder');
   }
 
   // Rental Decision operations
