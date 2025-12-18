@@ -1040,6 +1040,37 @@ export default function Apply() {
                   </div>
                 </div>
 
+                {/* Screening Disclosure */}
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 p-4 rounded-lg space-y-3">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">Screening Disclosure</h3>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    As part of this rental application process, the landlord or property manager may request a background screening report.
+                  </p>
+                  <div className="text-sm text-amber-800 dark:text-amber-200 space-y-2">
+                    <p className="font-medium">If screening is requested:</p>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>You will receive a separate invitation directly from Western Verify, through its screening platform DigitalDelve</li>
+                      <li>That invitation will include a standalone disclosure and authorization, which you must review and complete before any consumer report is obtained</li>
+                      <li>LeaseShield does not collect your Social Security number, date of birth, or screening authorization</li>
+                    </ul>
+                  </div>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    If adverse action is taken based in whole or in part on information contained in a consumer report, you will receive an adverse action notice that includes your rights under the Fair Credit Reporting Act.
+                  </p>
+                  <div className="flex items-start gap-3 pt-2 border-t border-amber-200 dark:border-amber-700">
+                    <Checkbox
+                      id="screeningDisclosure"
+                      checked={formData.acknowledgeScreeningDisclosure || false}
+                      onCheckedChange={(checked) => updateField("acknowledgeScreeningDisclosure", !!checked)}
+                      data-testid="checkbox-screening-disclosure"
+                    />
+                    <Label htmlFor="screeningDisclosure" className="text-sm cursor-pointer font-medium text-amber-900 dark:text-amber-100">
+                      I understand and acknowledge the above
+                    </Label>
+                  </div>
+                </div>
+
+                {/* Certification */}
                 <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
                   <div className="flex items-start gap-3">
                     <Checkbox
@@ -1050,8 +1081,7 @@ export default function Apply() {
                     />
                     <Label htmlFor="certify" className="text-sm cursor-pointer">
                       I certify that all information provided in this application is true and accurate. 
-                      I authorize the landlord to verify the information provided and to obtain a 
-                      consumer credit report and background check.
+                      I authorize the landlord to verify the information provided.
                     </Label>
                   </div>
                 </div>
@@ -1063,7 +1093,7 @@ export default function Apply() {
                 </Button>
                 <Button
                   onClick={() => submitMutation.mutate()}
-                  disabled={!formData.certifyAccurate || submitMutation.isPending}
+                  disabled={!formData.certifyAccurate || !formData.acknowledgeScreeningDisclosure || submitMutation.isPending}
                   data-testid="button-submit-application"
                 >
                   {submitMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
