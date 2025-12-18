@@ -745,6 +745,26 @@ function UnitRow({ unit, propertyId }: { unit: RentalUnit; propertyId: string })
     },
   });
 
+  const deleteUnitMutation = useMutation({
+    mutationFn: async () => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/rental/units/${unit.id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!response.ok) throw new Error("Failed to delete unit");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", propertyId, "units"] });
+      toast({ title: "Unit Deleted", description: "The unit has been removed." });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete unit.", variant: "destructive" });
+    },
+  });
+
   const activeLinks = links.filter((l) => l.isActive);
 
   const copyLink = (token: string) => {
@@ -788,6 +808,15 @@ function UnitRow({ unit, propertyId }: { unit: RentalUnit; propertyId: string })
               {createLinkMutation.isPending ? "Creating..." : "Create Link"}
             </Button>
           )}
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={() => deleteUnitMutation.mutate()}
+            disabled={deleteUnitMutation.isPending}
+            data-testid={`button-delete-unit-${unit.id}`}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
       {activeLinks.length > 0 && (
