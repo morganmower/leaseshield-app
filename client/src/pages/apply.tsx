@@ -79,36 +79,29 @@ const STEPS = [
 ];
 
 export default function Apply() {
-  const { token } = useParams<{ token: string }>();
-  const [, setLocation] = useLocation();
+  const [location] = useLocation();
   const { toast } = useToast();
+  
+  // Detect if this is an invite flow (/apply/join/:token) vs regular (/apply/:token)
+  const isInviteFlow = location.startsWith('/apply/join/');
+  const token = location.split('/').pop() || '';
   
   const [currentStep, setCurrentStep] = useState(0);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const [personToken, setPersonToken] = useState<string | null>(() => {
+    // For invite flows, the URL token IS the person token
+    if (isInviteFlow) return token;
     return localStorage.getItem(`apply_${token}_personToken`);
   });
+  const [applicationLinkId, setApplicationLinkId] = useState<string | null>(null);
   const [formData, setFormData] = useState<Record<string, any>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [saveAbortController, setSaveAbortController] = useState<AbortController | null>(null);
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
-  const [inviteForm, setInviteForm] = useState({ email: "", firstName: "", lastName: "", personType: "co_applicant" });
+  const [inviteForm, setInviteForm] = useState({ email: "", firstName: "", lastName: "", personType: "coapplicant" });
 
-  // Fetch application link data
-  const { data: linkData, isLoading: isLoadingLink, error: linkError } = useQuery<ApplicationLinkData>({
-    queryKey: ["/api/apply", token],
-    queryFn: async () => {
-      const res = await fetch(`/api/apply/${token}`);
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.message || "Failed to load application");
-      }
-      return res.json();
-    },
-    enabled: !!token,
-  });
-
-  // Fetch person data if we have a token
-  const { data: personData, refetch: refetchPerson } = useQuery<PersonData>({
+  // For invite flow, we need to get submission info from person endpoint
+  const { data: personData, refetch: refetchPerson, isLoading: isLoadingPerson } = useQuery<PersonData & { applicationLinkId?: string }>({
     queryKey: ["/api/apply/person", personToken],
     queryFn: async () => {
       const res = await fetch(`/api/apply/person/${personToken}`);
@@ -116,6 +109,21 @@ export default function Apply() {
       return res.json();
     },
     enabled: !!personToken,
+  });
+
+  // Fetch application link data (skip for invite flow until we get link ID from person data)
+  const linkToken = isInviteFlow ? null : token;
+  const { data: linkData, isLoading: isLoadingLink, error: linkError } = useQuery<ApplicationLinkData>({
+    queryKey: ["/api/apply", linkToken],
+    queryFn: async () => {
+      const res = await fetch(`/api/apply/${linkToken}`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to load application");
+      }
+      return res.json();
+    },
+    enabled: !!linkToken && !isInviteFlow,
   });
 
   // Initialize form data from saved data
