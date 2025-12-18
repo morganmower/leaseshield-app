@@ -91,12 +91,15 @@ async function sendXmlRequest(xml: string): Promise<{ body: string; statusCode: 
 function parseXmlResponse(xml: string): DigitalDelveResponse {
   try {
     const parsed = xmlParser.parse(xml);
-    const root = parsed.ResponseXML || parsed.Response || parsed;
+    // Western Verify uses OrderXML for responses
+    const root = parsed.OrderXML || parsed.ResponseXML || parsed.Response || parsed;
     
     const status = getXmlValue(root, 'Status', 'status');
     const message = getXmlValue(root, 'Message', 'message');
     const errorMessage = getXmlValue(root, 'ErrorMessage', 'errorMessage', 'Error', 'error');
     const reportId = getXmlValue(root, 'ReportID', 'reportId', 'ReportId');
+
+    console.log("[DigitalDelve] Parsed response - Status:", status, "Message:", message);
 
     if (status?.toLowerCase() === 'success') {
       return {
@@ -107,9 +110,11 @@ function parseXmlResponse(xml: string): DigitalDelveResponse {
       };
     }
 
+    // Include the actual error message from the API
+    const errorMsg = errorMessage || message || "Unknown error from screening service";
     return {
       success: false,
-      error: errorMessage || message || "Unknown error",
+      error: errorMsg,
       rawXml: xml,
     };
   } catch (parseError) {
