@@ -462,3 +462,73 @@
     inset: -1px;
   }
 }
+
+/* Print Styles - Ensure proper multi-page printing */
+@media print {
+  /* Remove height restrictions and overflow scrolling */
+  html, body {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Main layout containers */
+  .h-screen,
+  .max-h-screen,
+  [class*="max-h-["],
+  [class*="overflow-y-auto"],
+  [class*="overflow-y-scroll"],
+  [class*="overflow-auto"],
+  [class*="overflow-scroll"],
+  [class*="overflow-hidden"] {
+    height: auto !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  /* Allow page breaks inside content */
+  * {
+    page-break-inside: auto;
+  }
+
+  /* Prevent breaking inside cards */
+  .card, [data-slot="card"] {
+    page-break-inside: avoid;
+  }
+
+  /* Force content to flow to multiple pages */
+  main, .main-content, [role="main"] {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+  /* Hide elements that shouldn't print */
+  .print\\:hidden,
+  nav,
+  aside,
+  [data-sidebar],
+  .sidebar,
+  button:not([data-print]),
+  .no-print {
+    display: none !important;
+  }
+
+  /* Reset container widths for printing */
+  .container {
+    max-width: 100% !important;
+    width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure backgrounds print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Reset flex containers */
+  .flex-1 {
+    flex: none !important;
+    height: auto !important;
+  }
+}
