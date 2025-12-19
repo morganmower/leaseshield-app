@@ -194,6 +194,207 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // To make a user admin in development, update the database directly:
   // UPDATE users SET "isAdmin" = true WHERE id = '<user-id>';
 
+  // ============================================
+  // Landlord Screening Credentials API
+  // ============================================
+  
+  // Import crypto helper for credentials
+  const { encryptCredentials, decryptCredentials } = await import("./crypto");
+  const { verifyCredentialsWithParams, retrieveInvitations } = await import("./digitalDelveService");
+  
+  // Schema for credential input
+  const screeningCredentialsSchema = z.object({
+    username: z.string().min(1).max(100),
+    password: z.string().min(1).max(100),
+    defaultInvitationId: z.string().uuid().optional(),
+  });
+  
+  // Test credentials with Western Verify (no save)
+  app.post('/api/screening-credentials/test', isAuthenticated, async (req: any, res) => {
+    try {
+      const validatedData = screeningCredentialsSchema.parse(req.body);
+      
+      // Test authentication with Western Verify
+      const result = await verifyCredentialsWithParams(validatedData.username, validatedData.password);
+      
+      if (result.success) {
+        // Also fetch invitations to return them
+        const invitationsResult = await retrieveInvitations({ 
+          username: validatedData.username, 
+          password: validatedData.password 
+        });
+        
+        res.json({
+          success: true,
+          message: "Credentials verified successfully",
+          invitations: invitationsResult.success ? invitationsResult.invitations : [],
+        });
+      } else {
+        res.json({
+          success: false,
+          message: result.error || "Invalid credentials",
+        });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, message: "Invalid input data" });
+      }
+      console.error("Error testing screening credentials:", error);
+      res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+    }
+  });
+  
+  // Save credentials (encrypted)
+  app.post('/api/screening-credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const validatedData = screeningCredentialsSchema.parse(req.body);
+      
+      // Test credentials first
+      const testResult = await verifyCredentialsWithParams(validatedData.username, validatedData.password);
+      
+      if (!testResult.success) {
+        return res.status(400).json({
+          success: false,
+          message: testResult.error || "Invalid credentials - please verify your Western Verify login details",
+        });
+      }
+      
+      // Encrypt credentials
+      const encrypted = encryptCredentials(validatedData.username, validatedData.password);
+      
+      // Check if credentials already exist for this user
+      const existing = await storage.getLandlordScreeningCredentials(userId);
+      
+      if (existing) {
+        // Update existing credentials
+        const updated = await storage.updateLandlordScreeningCredentials(userId, {
+          encryptedUsername: encrypted.encryptedUsername,
+          encryptedPassword: encrypted.encryptedPassword,
+          encryptionIv: encrypted.encryptionIv,
+          defaultInvitationId: validatedData.defaultInvitationId || null,
+          status: 'verified',
+          lastVerifiedAt: new Date(),
+          lastErrorMessage: null,
+        });
+        
+        res.json({
+          success: true,
+          message: "Screening credentials updated successfully",
+          status: updated?.status,
+        });
+      } else {
+        // Create new credentials
+        await storage.createLandlordScreeningCredentials({
+          userId,
+          encryptedUsername: encrypted.encryptedUsername,
+          encryptedPassword: encrypted.encryptedPassword,
+          encryptionIv: encrypted.encryptionIv,
+          defaultInvitationId: validatedData.defaultInvitationId || null,
+          status: 'verified',
+          lastVerifiedAt: new Date(),
+        });
+        
+        res.json({
+          success: true,
+          message: "Screening credentials saved successfully",
+          status: 'verified',
+        });
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ success: false, message: "Invalid input data" });
+      }
+      console.error("Error saving screening credentials:", error);
+      res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+    }
+  });
+  
+  // Get credential status (never returns actual credentials)
+  app.get('/api/screening-credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const credentials = await storage.getLandlordScreeningCredentials(userId);
+      
+      if (!credentials) {
+        return res.json({
+          configured: false,
+          status: 'not_configured',
+        });
+      }
+      
+      res.json({
+        configured: true,
+        status: credentials.status,
+        lastVerifiedAt: credentials.lastVerifiedAt,
+        lastErrorMessage: credentials.lastErrorMessage,
+        hasDefaultInvitation: !!credentials.defaultInvitationId,
+      });
+    } catch (error) {
+      console.error("Error getting screening credentials:", error);
+      res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+    }
+  });
+  
+  // Delete credentials
+  app.delete('/api/screening-credentials', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const deleted = await storage.deleteLandlordScreeningCredentials(userId);
+      
+      res.json({
+        success: deleted,
+        message: deleted ? "Screening credentials removed" : "No credentials found",
+      });
+    } catch (error) {
+      console.error("Error deleting screening credentials:", error);
+      res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+    }
+  });
+  
+  // Get invitations for current credentials
+  app.get('/api/screening-credentials/invitations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const credentials = await storage.getLandlordScreeningCredentials(userId);
+      
+      if (!credentials) {
+        return res.status(400).json({
+          success: false,
+          message: "No screening credentials configured",
+        });
+      }
+      
+      // Decrypt credentials
+      const decrypted = decryptCredentials({
+        encryptedUsername: credentials.encryptedUsername,
+        encryptedPassword: credentials.encryptedPassword,
+        encryptionIv: credentials.encryptionIv,
+      });
+      
+      const result = await retrieveInvitations({ 
+        username: decrypted.username, 
+        password: decrypted.password 
+      });
+      
+      if (result.success) {
+        res.json({
+          success: true,
+          invitations: result.invitations,
+          defaultInvitationId: credentials.defaultInvitationId,
+        });
+      } else {
+        res.json({
+          success: false,
+          message: result.error || "Failed to retrieve invitations",
+        });
+      }
+    } catch (error) {
+      console.error("Error getting screening invitations:", error);
+      res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+    }
+  });
+
   // AI Training Interest - track users who want to be notified about workshops
   app.post('/api/training-interest', isAuthenticated, async (req: any, res) => {
     try {
@@ -4067,8 +4268,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       const formData = primaryApplicant.formJson as Record<string, any>;
       
-      // Import DigitalDelve service
+      // Import DigitalDelve service and crypto
       const { processScreeningRequest } = await import('./digitalDelveService');
+      const { decryptCredentials } = await import('./crypto');
       
       // Determine base URL for webhooks
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
@@ -4076,6 +4278,26 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const baseUrl = `${protocol}://${host}`;
       
       const { invitationId } = req.body;
+      
+      // Resolve landlord's screening credentials if configured
+      let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
+      const landlordCreds = await storage.getLandlordScreeningCredentials(userId);
+      if (landlordCreds && landlordCreds.status === 'verified') {
+        try {
+          const decrypted = decryptCredentials({
+            encryptedUsername: landlordCreds.encryptedUsername,
+            encryptedPassword: landlordCreds.encryptedPassword,
+            encryptionIv: landlordCreds.encryptionIv,
+          });
+          screeningCredentials = {
+            username: decrypted.username,
+            password: decrypted.password,
+            invitationId: landlordCreds.defaultInvitationId || undefined,
+          };
+        } catch (e) {
+          console.error("Failed to decrypt landlord credentials, falling back to system credentials");
+        }
+      }
       
       const result = await processScreeningRequest(
         submission.id,
@@ -4092,7 +4314,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           zip: formData.currentZip,
         },
         baseUrl,
-        invitationId
+        invitationId,
+        screeningCredentials
       );
 
       if (result.success) {
@@ -4608,13 +4831,34 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                                          primaryApplicant.email;
                   
                   if (!existingOrder && hasRequiredData) {
-                    // Import DigitalDelve service and trigger screening
+                    // Import DigitalDelve service and crypto
                     const { processScreeningRequest } = await import('./digitalDelveService');
+                    const { decryptCredentials } = await import('./crypto');
                     
                     // Construct base URL for webhook callbacks
                     const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
                     const host = req.headers['x-forwarded-host'] || req.headers.host;
                     const baseUrl = `${protocol}://${host}`;
+                    
+                    // Resolve landlord's screening credentials if configured
+                    let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
+                    const landlordCreds = await storage.getLandlordScreeningCredentials(property.userId);
+                    if (landlordCreds && landlordCreds.status === 'verified') {
+                      try {
+                        const decrypted = decryptCredentials({
+                          encryptedUsername: landlordCreds.encryptedUsername,
+                          encryptedPassword: landlordCreds.encryptedPassword,
+                          encryptionIv: landlordCreds.encryptionIv,
+                        });
+                        screeningCredentials = {
+                          username: decrypted.username,
+                          password: decrypted.password,
+                          invitationId: landlordCreds.defaultInvitationId || undefined,
+                        };
+                      } catch (e) {
+                        console.error("Failed to decrypt landlord credentials, falling back to system credentials");
+                      }
+                    }
                     
                     // Build applicant data - SSN/DOB collected by Western Verify portal directly
                     // Pass all available fields for consistency with manual flow
@@ -4632,7 +4876,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                         state: formData.currentState,
                         zip: formData.currentZip,
                       },
-                      baseUrl
+                      baseUrl,
+                      undefined,
+                      screeningCredentials
                     );
                     
                     if (result.success) {

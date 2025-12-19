@@ -47,6 +47,12 @@ function getXmlValue(obj: any, ...keys: string[]): string | undefined {
   return undefined;
 }
 
+export interface ScreeningCredentials {
+  username: string;
+  password: string;
+  invitationId?: string;
+}
+
 interface AppScreenRequest {
   firstName: string;
   lastName: string;
@@ -62,6 +68,7 @@ interface AppScreenRequest {
   invitationId?: string;
   statusPostUrl: string;
   resultPostUrl: string;
+  credentials?: ScreeningCredentials;
 }
 
 interface DigitalDelveResponse {
@@ -146,7 +153,10 @@ function parseXmlResponse(xml: string): DigitalDelveResponse {
 
 export async function verifyCredentials(): Promise<DigitalDelveResponse> {
   const { username, password } = getCredentials();
+  return verifyCredentialsWithParams(username, password);
+}
 
+export async function verifyCredentialsWithParams(username: string, password: string): Promise<DigitalDelveResponse> {
   // SSO format per API documentation - AuthOnly function
   const xml = `<?xml version="1.0"?>
 <SSO>
@@ -168,8 +178,18 @@ export async function verifyCredentials(): Promise<DigitalDelveResponse> {
   }
 }
 
-export async function retrieveInvitations(): Promise<{ success: boolean; invitations?: any[]; error?: string }> {
-  const { username, password } = getCredentials();
+export async function retrieveInvitations(credentials?: { username: string; password: string }): Promise<{ success: boolean; invitations?: any[]; error?: string }> {
+  let username: string;
+  let password: string;
+  
+  if (credentials) {
+    username = credentials.username;
+    password = credentials.password;
+  } else {
+    const systemCreds = getCredentials();
+    username = systemCreds.username;
+    password = systemCreds.password;
+  }
 
   // Use SSO format per DigitalDelve API documentation
   const xml = `<?xml version="1.0"?>
@@ -217,10 +237,21 @@ export async function retrieveInvitations(): Promise<{ success: boolean; invitat
 }
 
 export async function sendAppScreenRequest(data: AppScreenRequest): Promise<DigitalDelveResponse> {
-  const { username, password } = getCredentials();
+  // Use per-landlord credentials if provided, otherwise fall back to system credentials
+  let username: string;
+  let password: string;
+  
+  if (data.credentials) {
+    username = data.credentials.username;
+    password = data.credentials.password;
+  } else {
+    const systemCreds = getCredentials();
+    username = systemCreds.username;
+    password = systemCreds.password;
+  }
 
-  // Use the provided invitationId or fall back to the default
-  const invitationId = data.invitationId || DEFAULT_INVITATION_ID;
+  // Use the provided invitationId, per-landlord default, or system default
+  const invitationId = data.invitationId || data.credentials?.invitationId || DEFAULT_INVITATION_ID;
 
   // Full Integration AppScreen request per SSO API documentation
   // Sends an invitation email to the applicant who completes their info on Western Verify's portal
@@ -242,7 +273,7 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
   </Applicant>
 </SSO>`;
 
-  console.log("[DigitalDelve] Full request XML:", xml);
+  console.log("[DigitalDelve] Full request XML (credentials masked)");
 
   try {
     const { body } = await sendXmlRequest(xml);
@@ -445,7 +476,8 @@ export async function processScreeningRequest(
     zip?: string;
   },
   baseUrl: string,
-  invitationId?: string
+  invitationId?: string,
+  credentials?: ScreeningCredentials
 ): Promise<{ success: boolean; order?: any; error?: string }> {
   const referenceNumber = `LS-${submissionId.slice(0, 8)}-${Date.now()}`;
   
@@ -458,7 +490,7 @@ export async function processScreeningRequest(
   const order = await storage.createRentalScreeningOrder({
     submissionId,
     referenceNumber,
-    invitationId: invitationId || null,
+    invitationId: invitationId || credentials?.invitationId || null,
     status: "not_sent",
     reportId: null,
     reportUrl: null,
@@ -470,9 +502,10 @@ export async function processScreeningRequest(
   const result = await sendAppScreenRequest({
     ...applicantData,
     referenceNumber,
-    invitationId,
+    invitationId: invitationId || credentials?.invitationId,
     statusPostUrl,
     resultPostUrl,
+    credentials,
   });
 
   if (result.success) {
