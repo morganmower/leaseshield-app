@@ -1,19 +1,8 @@
-import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -27,7 +16,6 @@ import {
   ShieldCheck,
   ShieldX,
   ShieldAlert,
-  Settings,
   TestTube,
   Trash2,
   Loader2,
@@ -61,41 +49,9 @@ const statusConfig: Record<string, { label: string; color: string; icon: typeof 
 
 export default function AdminScreeningCredentials() {
   const { toast } = useToast();
-  const [selectedLandlord, setSelectedLandlord] = useState<LandlordWithCredentials | null>(null);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [invitationId, setInvitationId] = useState("");
 
   const { data: landlords, isLoading } = useQuery<LandlordWithCredentials[]>({
     queryKey: ["/api/admin/screening-credentials"],
-  });
-
-  const saveMutation = useMutation({
-    mutationFn: async ({ userId, username, password, invitationId }: { 
-      userId: string; 
-      username: string; 
-      password: string; 
-      invitationId: string;
-    }) => {
-      return apiRequest("POST", `/api/admin/screening-credentials/${userId}`, {
-        username,
-        password,
-        invitationId: invitationId || undefined,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/admin/screening-credentials"] });
-      toast({ title: "Success", description: "Credentials saved successfully." });
-      closeDialog();
-    },
-    onError: (error: any) => {
-      toast({ 
-        title: "Error", 
-        description: error?.message || "Failed to save credentials.", 
-        variant: "destructive" 
-      });
-    },
   });
 
   const testMutation = useMutation({
@@ -140,32 +96,6 @@ export default function AdminScreeningCredentials() {
     },
   });
 
-  const openDialog = (landlord: LandlordWithCredentials) => {
-    setSelectedLandlord(landlord);
-    setUsername("");
-    setPassword("");
-    setInvitationId("");
-    setIsDialogOpen(true);
-  };
-
-  const closeDialog = () => {
-    setSelectedLandlord(null);
-    setUsername("");
-    setPassword("");
-    setInvitationId("");
-    setIsDialogOpen(false);
-  };
-
-  const handleSave = () => {
-    if (!selectedLandlord || !username || !password) return;
-    saveMutation.mutate({
-      userId: selectedLandlord.userId,
-      username,
-      password,
-      invitationId,
-    });
-  };
-
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return "—";
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -198,10 +128,10 @@ export default function AdminScreeningCredentials() {
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Landlord Screening Credentials
+            Screening Credentials Status
           </h1>
           <p className="text-muted-foreground">
-            Configure Western Verify credentials for each landlord
+            View and manage landlord screening credential status
           </p>
         </div>
       </div>
@@ -213,7 +143,7 @@ export default function AdminScreeningCredentials() {
             All Landlords
           </CardTitle>
           <CardDescription>
-            Set up screening credentials (username, password, invitation ID) for each landlord
+            Landlords enter their own credentials. You can verify or reset credentials here.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -273,29 +203,21 @@ export default function AdminScreeningCredentials() {
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex items-center justify-end gap-1">
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => openDialog(landlord)}
-                            data-testid={`button-configure-${landlord.userId}`}
-                          >
-                            <Settings className="h-4 w-4 mr-1" />
-                            Configure
-                          </Button>
-                          {landlord.hasCredentials && (
+                          {landlord.hasCredentials ? (
                             <>
                               <Button
-                                size="icon"
-                                variant="ghost"
+                                size="sm"
+                                variant="outline"
                                 onClick={() => testMutation.mutate(landlord.userId)}
                                 disabled={testMutation.isPending}
                                 data-testid={`button-test-${landlord.userId}`}
                               >
                                 {testMutation.isPending ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
                                 ) : (
-                                  <TestTube className="h-4 w-4" />
+                                  <TestTube className="h-4 w-4 mr-1" />
                                 )}
+                                Verify
                               </Button>
                               <Button
                                 size="icon"
@@ -307,6 +229,8 @@ export default function AdminScreeningCredentials() {
                                 <Trash2 className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             </>
+                          ) : (
+                            <span className="text-sm text-muted-foreground">No credentials</span>
                           )}
                         </div>
                       </TableCell>
@@ -318,71 +242,6 @@ export default function AdminScreeningCredentials() {
           )}
         </CardContent>
       </Card>
-
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Configure Screening Credentials</DialogTitle>
-            <DialogDescription>
-              {selectedLandlord && (
-                <>
-                  Set Western Verify credentials for{" "}
-                  <strong>{getLandlordName(selectedLandlord)}</strong>
-                </>
-              )}
-            </DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="username">Username</Label>
-              <Input
-                id="username"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="Western Verify username"
-                data-testid="input-username"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="Western Verify password"
-                data-testid="input-password"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="invitationId">Invitation ID</Label>
-              <Input
-                id="invitationId"
-                value={invitationId}
-                onChange={(e) => setInvitationId(e.target.value)}
-                placeholder="e.g., C6BC580D-5E1A-4F51-A93B-927F5CFD5F9E"
-                data-testid="input-invitation-id"
-              />
-              <p className="text-xs text-muted-foreground">
-                The unique invitation ID from Western Verify for this landlord
-              </p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={closeDialog} data-testid="button-cancel">
-              Cancel
-            </Button>
-            <Button 
-              onClick={handleSave} 
-              disabled={!username || !password || saveMutation.isPending}
-              data-testid="button-save"
-            >
-              {saveMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              Save Credentials
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
