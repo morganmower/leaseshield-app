@@ -202,11 +202,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const { encryptCredentials, decryptCredentials } = await import("./crypto");
   const { verifyCredentialsWithParams, retrieveInvitations } = await import("./digitalDelveService");
   
-  // Schema for credential input
+  // Schema for credential input (landlord only sets username/password, admin sets invitation ID)
   const screeningCredentialsSchema = z.object({
     username: z.string().min(1).max(100),
     password: z.string().min(1).max(100),
-    defaultInvitationId: z.string().uuid().optional(),
   });
   
   // Test credentials with Western Verify (no save)
@@ -267,12 +266,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const existing = await storage.getLandlordScreeningCredentials(userId);
       
       if (existing) {
-        // Update existing credentials
+        // Update existing credentials (preserve admin-set invitation ID)
         const updated = await storage.updateLandlordScreeningCredentials(userId, {
           encryptedUsername: encrypted.encryptedUsername,
           encryptedPassword: encrypted.encryptedPassword,
           encryptionIv: encrypted.encryptionIv,
-          defaultInvitationId: validatedData.defaultInvitationId || null,
           status: 'verified',
           lastVerifiedAt: new Date(),
           lastErrorMessage: null,
@@ -284,13 +282,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
           status: updated?.status,
         });
       } else {
-        // Create new credentials
+        // Create new credentials (admin will set invitation ID separately)
         await storage.createLandlordScreeningCredentials({
           userId,
           encryptedUsername: encrypted.encryptedUsername,
           encryptedPassword: encrypted.encryptedPassword,
           encryptionIv: encrypted.encryptionIv,
-          defaultInvitationId: validatedData.defaultInvitationId || null,
           status: 'verified',
           lastVerifiedAt: new Date(),
         });
@@ -3599,6 +3596,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         configuredBy: credentials?.configuredBy,
         configuredAt: credentials?.configuredAt,
         hasInvitationId: !!credentials?.defaultInvitationId,
+        invitationId: credentials?.defaultInvitationId || null,
       }));
       
       res.json(result);
@@ -3707,6 +3705,36 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error) {
       console.error("Error deleting screening credentials:", error);
       res.status(500).json({ message: "Failed to delete credentials" });
+    }
+  });
+
+  // Set or clear invitation ID for a landlord (admin only) - separate from credentials
+  app.patch('/api/admin/screening-credentials/:userId/invitation', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { userId } = req.params;
+      const { invitationId } = req.body;
+      const adminId = getUserId(req);
+
+      // Check if credentials exist for this landlord
+      const credentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!credentials) {
+        return res.status(404).json({ message: "Landlord has not set up credentials yet" });
+      }
+
+      // Allow setting or clearing the invitation ID
+      const trimmedId = typeof invitationId === 'string' ? invitationId.trim() : null;
+      
+      // Update the invitation ID (null to clear)
+      await storage.updateLandlordScreeningCredentials(userId, {
+        defaultInvitationId: trimmedId || null,
+        configuredBy: adminId,
+        configuredAt: new Date(),
+      });
+
+      res.json({ success: true, cleared: !trimmedId });
+    } catch (error) {
+      console.error("Error setting invitation ID:", error);
+      res.status(500).json({ message: "Failed to set invitation ID" });
     }
   });
 

@@ -55,8 +55,6 @@ export default function Settings() {
   const [screeningUsername, setScreeningUsername] = useState("");
   const [screeningPassword, setScreeningPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [selectedInvitation, setSelectedInvitation] = useState<string>("");
-  const [testInvitations, setTestInvitations] = useState<Array<{id: string; name: string; description: string}>>([]);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -171,7 +169,6 @@ export default function Settings() {
     },
     onSuccess: (data) => {
       if (data.success) {
-        setTestInvitations(data.invitations || []);
         toast({
           title: "Credentials Verified",
           description: "Your Western Verify credentials are valid. You can now save them.",
@@ -195,7 +192,7 @@ export default function Settings() {
 
   // Save credentials mutation
   const saveCredentialsMutation = useMutation({
-    mutationFn: async (data: { username: string; password: string; defaultInvitationId?: string }) => {
+    mutationFn: async (data: { username: string; password: string }) => {
       const res = await apiRequest("POST", "/api/screening-credentials", data);
       return res.json();
     },
@@ -204,8 +201,6 @@ export default function Settings() {
         queryClient.invalidateQueries({ queryKey: ["/api/screening-credentials"] });
         setScreeningUsername("");
         setScreeningPassword("");
-        setSelectedInvitation("");
-        setTestInvitations([]);
         toast({
           title: "Credentials Saved",
           description: "Your Western Verify credentials have been securely saved.",
@@ -273,7 +268,6 @@ export default function Settings() {
     saveCredentialsMutation.mutate({
       username: screeningUsername,
       password: screeningPassword,
-      defaultInvitationId: selectedInvitation || undefined,
     });
   };
 
@@ -690,40 +684,6 @@ export default function Settings() {
                       </div>
                     </div>
                     
-                    <div>
-                      <Label htmlFor="screening-invitation">Invitation ID (Optional)</Label>
-                      {testInvitations.length > 0 ? (
-                        <>
-                          <Select value={selectedInvitation} onValueChange={setSelectedInvitation}>
-                            <SelectTrigger id="screening-invitation" data-testid="select-screening-invitation">
-                              <SelectValue placeholder="Select a screening package" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {testInvitations.map((inv) => (
-                                <SelectItem key={inv.id} value={inv.id}>
-                                  {inv.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Or enter manually below if your package isn't listed
-                          </p>
-                        </>
-                      ) : null}
-                      <Input
-                        id="screening-invitation-manual"
-                        type="text"
-                        placeholder="e.g., BC7CD693-6E88-4DB5-810B-B25B53D28245"
-                        value={selectedInvitation}
-                        onChange={(e) => setSelectedInvitation(e.target.value)}
-                        className="mt-2"
-                        data-testid="input-screening-invitation"
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Your Western Verify invitation/configuration ID
-                      </p>
-                    </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 justify-end">
