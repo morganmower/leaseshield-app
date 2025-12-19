@@ -508,7 +508,10 @@ export default function Apply() {
     onSuccess: (data) => {
       const inviteUrl = `${window.location.origin}/apply/join/${data.inviteToken}`;
       navigator.clipboard.writeText(inviteUrl);
-      toast({ title: "Invite Created", description: "Invite link copied to clipboard!" });
+      toast({ 
+        title: "Invite Sent!", 
+        description: `An email has been sent to ${inviteForm.email} with their application link. The link was also copied to your clipboard.` 
+      });
       setIsInviteDialogOpen(false);
       setInviteForm({ email: "", firstName: "", lastName: "", personType: "co_applicant" });
     },

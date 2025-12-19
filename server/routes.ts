@@ -5269,10 +5269,46 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         metadataJson: { invitedPersonId: person.id, role: roleMap[personType], email },
       });
 
+      const inviteUrl = `/apply/join/${inviteToken}`;
+
+      // Get property name for the email
+      let propertyName = "the property";
+      try {
+        const submission = await storage.getRentalSubmission(inviter.submissionId);
+        if (submission) {
+          const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+          if (link?.unitId) {
+            const unit = await storage.getRentalUnit(link.unitId);
+            if (unit?.propertyId) {
+              const property = await storage.getRentalPropertyById(unit.propertyId);
+              if (property) {
+                propertyName = property.name + (unit.unitLabel ? ` - ${unit.unitLabel}` : '');
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Error getting property name for invite email:", err);
+      }
+
+      // Send invite email to co-applicant
+      try {
+        await emailService.sendCoApplicantInviteEmail(
+          { email, firstName, lastName },
+          { firstName: inviter.firstName || 'Applicant', lastName: inviter.lastName || '' },
+          propertyName,
+          inviteUrl,
+          roleMap[personType] as 'coapplicant' | 'guarantor'
+        );
+        console.log(`✅ Co-applicant invite email sent to ${email}`);
+      } catch (emailError) {
+        console.error("Error sending invite email (non-fatal):", emailError);
+      }
+
       res.status(201).json({
         personId: person.id,
         inviteToken,
-        inviteUrl: `/apply/join/${inviteToken}`,
+        inviteUrl,
       });
     } catch (error) {
       console.error("Error inviting person:", error);

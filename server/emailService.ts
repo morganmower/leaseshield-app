@@ -1148,6 +1148,100 @@ The LeaseShield App Team
 
     return await this.sendEmail({ email: landlord.email, firstName: landlord.firstName || undefined }, template);
   }
+
+  async sendCoApplicantInviteEmail(
+    invitee: { email: string; firstName: string; lastName: string },
+    inviter: { firstName: string; lastName: string },
+    propertyName: string,
+    inviteUrl: string,
+    role: 'coapplicant' | 'guarantor'
+  ): Promise<boolean> {
+    const roleLabel = role === 'guarantor' ? 'Guarantor' : 'Co-Applicant';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+    const fullInviteUrl = `${baseUrl}${inviteUrl}`;
+
+    const template: EmailTemplate = {
+      subject: `You've been invited to join a rental application for ${propertyName}`,
+      textBody: `Hi ${invitee.firstName},
+
+${inviter.firstName} ${inviter.lastName} has invited you to join their rental application for ${propertyName} as a ${roleLabel}.
+
+To complete your portion of the application, please click the link below:
+
+${fullInviteUrl}
+
+What you'll need to provide:
+- Personal information (name, contact details)
+- Address history
+- Employment information
+- Consent for background/credit screening
+
+This link is unique to you. Please do not share it with anyone else.
+
+If you have any questions, please contact ${inviter.firstName} directly.
+
+Thank you,
+LeaseShield App
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .invite-box { background: #f0fdfa; border: 2px solid #14b8a6; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; font-size: 16px; }
+    .checklist { background: #f8fafc; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; }
+    .checklist ul { margin: 0; padding-left: 20px; }
+    .checklist li { margin: 8px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+    .warning { font-size: 13px; color: #64748b; margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>You're Invited!</h1>
+      <p style="margin: 0; opacity: 0.9;">${roleLabel} Application Request</p>
+    </div>
+    <div class="content">
+      <p>Hi ${invitee.firstName},</p>
+      <div class="invite-box">
+        <p style="margin: 0 0 10px 0; font-size: 16px;"><strong>${inviter.firstName} ${inviter.lastName}</strong> has invited you to join their rental application for:</p>
+        <p style="margin: 0; font-size: 20px; color: #0d9488; font-weight: 600;">${propertyName}</p>
+      </div>
+      <p>To complete your portion of the application as a <strong>${roleLabel}</strong>, please click the button below:</p>
+      <div style="text-align: center;">
+        <a href="${fullInviteUrl}" class="cta-button">Complete Your Application</a>
+      </div>
+      <div class="checklist">
+        <h3 style="margin-top: 0;">What you'll need to provide:</h3>
+        <ul>
+          <li>Personal information (name, contact details, ID)</li>
+          <li>Address history (last 2+ years)</li>
+          <li>Employment information</li>
+          <li>Consent for background/credit screening</li>
+        </ul>
+      </div>
+      <p class="warning">This link is unique to you. Please do not share it with anyone else.</p>
+      <div class="footer">
+        <p>LeaseShield App - Protecting Your Rental Business</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: invitee.email, firstName: invitee.firstName }, template);
+  }
 }
 
 export const emailService = new EmailService();
