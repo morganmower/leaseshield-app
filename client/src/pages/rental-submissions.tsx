@@ -662,7 +662,7 @@ export default function RentalSubmissions() {
                     }).length;
                     const pendingCount = completedPeople.filter(p => {
                       const order = getScreeningOrderForPerson(p.id);
-                      return order?.status === 'pending' || order?.status === 'invited';
+                      return order?.status === 'pending' || order?.status === 'invited' || order?.status === 'sent' || order?.status === 'in_progress';
                     }).length;
                     const needsInviteCount = completedPeople.filter(p => {
                       const order = getScreeningOrderForPerson(p.id);
@@ -717,7 +717,7 @@ export default function RentalSubmissions() {
                   const personOrder = getScreeningOrderForPerson(person.id);
                   const needsScreeningInvite = person.isCompleted && (!personOrder || personOrder.status === 'error' || personOrder.status === 'not_sent');
                   const screeningComplete = personOrder?.status === 'complete';
-                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited';
+                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited' || personOrder?.status === 'sent' || personOrder?.status === 'in_progress';
                   
                   return (
                   <Card 
