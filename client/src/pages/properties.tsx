@@ -865,6 +865,7 @@ function PropertyCard({
 
 function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }) {
   const { toast } = useToast();
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   
   const { data: links = [] } = useQuery<RentalApplicationLink[]>({
     queryKey: ["/api/rental/units", unit.id, "links"],
@@ -889,7 +890,7 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
       if (result.publicToken) {
         const url = `${window.location.origin}/apply/${result.publicToken}`;
         navigator.clipboard.writeText(url);
-        toast({ title: "Link Created", description: "Application link copied to clipboard!" });
+        toast({ title: "Link Created!", description: "The application link is now copied. You can paste it to send to tenants." });
       }
     },
     onError: () => {
@@ -897,10 +898,33 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
     },
   });
 
+  const deleteUnitMutation = useMutation({
+    mutationFn: async () => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/rental/units/${unit.id}`, {
+        method: "DELETE",
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete unit");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", propertyId, "units"] });
+      toast({ title: "Unit Deleted", description: "The unit has been removed." });
+      setShowDeleteConfirm(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete unit.", variant: "destructive" });
+    },
+  });
+
   const copyLink = (token: string) => {
     const url = `${window.location.origin}/apply/${token}`;
     navigator.clipboard.writeText(url);
-    toast({ title: "Copied!", description: "Application link copied to clipboard." });
+    toast({ title: "Link Copied!", description: "You can now paste and send this link to tenants." });
   };
 
   const activeLinks = links.filter(l => l.isActive);
@@ -912,30 +936,30 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
           <Home className="h-4 w-4 text-muted-foreground" />
           <span className="font-medium text-sm">{unit.unitLabel || "Main Unit"}</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {activeLinks.length > 0 ? (
             activeLinks.map((link) => (
-              <div key={link.id} className="flex items-center gap-1">
+              <div key={link.id} className="flex flex-wrap items-center gap-2">
                 <Badge variant="secondary" className="text-xs">
-                  Active Link
+                  Link Ready
                 </Badge>
                 <Button
-                  size="icon"
-                  variant="ghost"
-                  className="h-7 w-7"
+                  size="sm"
+                  variant="outline"
                   onClick={() => copyLink(link.publicToken)}
                   data-testid={`button-copy-link-${link.id}`}
                 >
-                  <Copy className="h-3 w-3" />
+                  <Copy className="h-3 w-3 mr-1" />
+                  Copy Link
                 </Button>
                 <Button
-                  size="icon"
+                  size="sm"
                   variant="ghost"
-                  className="h-7 w-7"
                   onClick={() => window.open(`/apply/${link.publicToken}`, "_blank")}
                   data-testid={`button-open-link-${link.id}`}
                 >
-                  <ExternalLink className="h-3 w-3" />
+                  <ExternalLink className="h-3 w-3 mr-1" />
+                  Preview
                 </Button>
               </div>
             ))
@@ -948,7 +972,39 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
               data-testid={`button-create-unit-link-${unit.id}`}
             >
               <LinkIcon className="h-3 w-3 mr-1" />
-              Create Link
+              Create Application Link
+            </Button>
+          )}
+          
+          {/* Delete Unit Button */}
+          {showDeleteConfirm ? (
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => deleteUnitMutation.mutate()}
+                disabled={deleteUnitMutation.isPending}
+                data-testid={`button-confirm-delete-unit-${unit.id}`}
+              >
+                {deleteUnitMutation.isPending ? "Deleting..." : "Yes, Delete"}
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setShowDeleteConfirm(false)}
+                data-testid={`button-cancel-delete-unit-${unit.id}`}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <Button
+              size="icon"
+              variant="ghost"
+              onClick={() => setShowDeleteConfirm(true)}
+              data-testid={`button-delete-unit-${unit.id}`}
+            >
+              <Trash2 className="h-4 w-4 text-muted-foreground" />
             </Button>
           )}
         </div>
