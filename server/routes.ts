@@ -4847,29 +4847,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get landlord credentials and decrypt them
-      const { decryptCredentials } = await import('./crypto');
-      const landlordCreds = await storage.getScreeningCredentials(userId);
-      let credentials: { username: string; password: string } | undefined;
-      
-      if (landlordCreds?.encryptedUsername && landlordCreds?.encryptedPassword) {
-        try {
-          const decrypted = decryptCredentials(landlordCreds.encryptedUsername, landlordCreds.encryptedPassword);
-          credentials = decrypted;
-        } catch (decryptError) {
-          console.error("Failed to decrypt landlord credentials:", decryptError);
-        }
-      }
-
-      // Get the SSO URL
-      const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
-      const result = await getViewReportByRefSsoUrl(order.referenceNumber, credentials);
-      
-      if (result.success && result.url) {
-        res.json({ url: result.url });
-      } else {
-        res.status(500).json({ message: result.error || "Failed to get report URL" });
-      }
+      // Direct to Western Verify login page for compliance
+      res.json({ url: 'https://secure.westernverify.com/login.cfm' });
     } catch (error) {
       console.error("Error getting report URL:", error);
       res.status(500).json({ message: "Failed to get report URL" });
@@ -4906,29 +4885,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get landlord credentials and decrypt them
-      const { decryptCredentials } = await import('./crypto');
-      const landlordCreds = await storage.getScreeningCredentials(userId);
-      let credentials: { username: string; password: string } | undefined;
-      
-      if (landlordCreds?.encryptedUsername && landlordCreds?.encryptedPassword) {
-        try {
-          const decrypted = decryptCredentials(landlordCreds.encryptedUsername, landlordCreds.encryptedPassword);
-          credentials = decrypted;
-        } catch (decryptError) {
-          console.error("Failed to decrypt landlord credentials:", decryptError);
-        }
-      }
-
-      // Get the SSO URL
-      const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
-      const result = await getViewReportByRefSsoUrl(order.referenceNumber, credentials);
-      
-      if (result.success && result.url) {
-        res.json({ url: result.url });
-      } else {
-        res.status(500).json({ message: result.error || "Failed to get report URL" });
-      }
+      // Direct to Western Verify login page for compliance
+      res.json({ url: 'https://secure.westernverify.com/login.cfm' });
     } catch (error) {
       console.error("Error getting report URL:", error);
       res.status(500).json({ message: "Failed to get report URL" });
