@@ -866,21 +866,12 @@ export default function RentalSubmissions() {
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
-                                      const token = getAccessToken();
-                                      fetch(`/api/rental/screening/${personOrder.id}/report-url`, {
-                                        headers: token ? { Authorization: `Bearer ${token}` } : {},
-                                      })
-                                        .then(res => res.json())
-                                        .then(data => {
-                                          if (data.url) {
-                                            window.open(data.url, '_blank');
-                                          }
-                                        });
+                                      window.open('https://secure.westernverify.com/login.cfm', '_blank');
                                     }}
                                     data-testid={`button-view-report-${person.id}`}
                                   >
                                     <ExternalLink className="h-4 w-4 mr-1" />
-                                    View Report
+                                    View Report on Western Verify
                                   </Button>
                                 )}
                               </div>
