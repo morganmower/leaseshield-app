@@ -94,6 +94,7 @@ interface SubmissionPerson {
   lastName: string;
   formJson: Record<string, any>;
   status: string;
+  isCompleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -139,6 +140,7 @@ interface Decision {
 interface ScreeningOrder {
   id: string;
   submissionId: string;
+  personId: string | null;
   referenceNumber: string;
   status: "not_sent" | "sent" | "in_progress" | "complete" | "error";
   invitationId: string | null;
@@ -267,28 +269,32 @@ export default function RentalSubmissions() {
     enabled: !!selectedSubmission,
   });
 
-  const { data: screeningOrder, refetch: refetchScreening } = useQuery<ScreeningOrder | null>({
+  const { data: screeningOrders, refetch: refetchScreening } = useQuery<ScreeningOrder[]>({
     queryKey: ["/api/rental/submissions", selectedSubmission, "screening"],
     queryFn: async () => {
       const token = getAccessToken();
       const res = await fetch(`/api/rental/submissions/${selectedSubmission}/screening`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
-      if (!res.ok) return null;
+      if (!res.ok) return [];
       return res.json();
     },
     enabled: !!selectedSubmission,
   });
 
+  const getScreeningOrderForPerson = (personId: string) => {
+    return screeningOrders?.find(order => order.personId === personId);
+  };
+
   const screeningMutation = useMutation({
-    mutationFn: async (submissionId: string) => {
-      return apiRequest("POST", `/api/rental/submissions/${submissionId}/screening`, {});
+    mutationFn: async ({ submissionId, personId }: { submissionId: string; personId?: string }) => {
+      return apiRequest("POST", `/api/rental/submissions/${submissionId}/screening`, { personId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission] });
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "screening"] });
-      toast({ title: "Screening Requested", description: "The applicant will receive an email to complete screening." });
+      toast({ title: "Screening Requested", description: "The person will receive an email to complete screening." });
     },
     onError: (error: any) => {
       toast({ 
@@ -607,82 +613,13 @@ export default function RentalSubmissions() {
               )}
 
               <div className="mt-4 pt-4 border-t">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <div className="flex items-center gap-2">
-                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm font-medium">Background Screening</span>
-                  </div>
-                  {!screeningOrder || screeningOrder.status === 'error' || screeningOrder.status === 'not_sent' ? (
-                    <div className="flex items-center gap-2">
-                      {screeningOrder?.status === 'error' && (
-                        <Badge variant="destructive" data-testid="badge-screening-status">Error</Badge>
-                      )}
-                      {screeningOrder?.status === 'not_sent' && (
-                        <Badge variant="secondary" data-testid="badge-screening-status">Not Sent</Badge>
-                      )}
-                      <Button
-                        size="sm"
-                        onClick={() => selectedSubmission && screeningMutation.mutate(selectedSubmission)}
-                        disabled={screeningMutation.isPending || submissionDetail.status === 'started'}
-                        data-testid="button-request-screening"
-                      >
-                        {screeningMutation.isPending ? (
-                          <>
-                            <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                            Requesting...
-                          </>
-                        ) : (
-                          <>
-                            <ShieldCheck className="h-4 w-4 mr-1" />
-                            {screeningOrder?.status === 'error' || screeningOrder?.status === 'not_sent' ? 'Send Screening' : 'Request Screening'}
-                          </>
-                        )}
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="flex items-center gap-2">
-                      <Badge 
-                        variant={screeningOrder.status === 'complete' ? 'default' : 'secondary'}
-                        data-testid="badge-screening-status"
-                      >
-                        {screeningOrder.status === 'sent' && 'Invitation Sent'}
-                        {screeningOrder.status === 'in_progress' && 'In Progress'}
-                        {screeningOrder.status === 'complete' && 'Complete'}
-                        {screeningOrder.status === 'not_sent' && 'Not Sent'}
-                      </Badge>
-                      {screeningOrder.status === 'complete' && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            const token = getAccessToken();
-                            fetch(`/api/rental/submissions/${screeningOrder.submissionId}/screening/report-url`, {
-                              headers: token ? { Authorization: `Bearer ${token}` } : {},
-                            })
-                              .then(res => res.json())
-                              .then(data => {
-                                if (data.url) {
-                                  window.open(data.url, '_blank');
-                                }
-                              });
-                          }}
-                          data-testid="button-view-report"
-                        >
-                          <ExternalLink className="h-4 w-4 mr-1" />
-                          View Report
-                        </Button>
-                      )}
-                    </div>
-                  )}
+                <div className="flex items-center gap-2 mb-3">
+                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Background Screening (Per Person)</span>
                 </div>
-                {screeningOrder?.status === 'error' && screeningOrder.errorMessage && (
-                  <p className="text-sm text-red-500 mt-2">{screeningOrder.errorMessage}</p>
-                )}
-                {screeningOrder && (
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Reference: {screeningOrder.referenceNumber}
-                  </p>
-                )}
+                <p className="text-xs text-muted-foreground mb-3">
+                  Each person requires individual screening. Each will receive their own invitation email.
+                </p>
               </div>
 
               {submissionDetail.landlordNotes && (
@@ -718,10 +655,95 @@ export default function RentalSubmissions() {
                           </div>
                           <p className="text-sm text-muted-foreground">{person.email}</p>
                         </div>
-                        <Badge className={statusColors[person.status] || ""}>
-                          {statusLabels[person.status] || person.status}
-                        </Badge>
+                        <div className="flex items-center gap-2">
+                          <Badge className={statusColors[person.status] || ""}>
+                            {statusLabels[person.status] || person.status}
+                          </Badge>
+                        </div>
                       </div>
+                      
+                      {person.isCompleted && (
+                        <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm">Screening</span>
+                          </div>
+                          {(() => {
+                            const personOrder = getScreeningOrderForPerson(person.id);
+                            if (!personOrder || personOrder.status === 'error' || personOrder.status === 'not_sent') {
+                              return (
+                                <div className="flex items-center gap-2">
+                                  {personOrder?.status === 'error' && (
+                                    <Badge variant="destructive" data-testid={`badge-screening-status-${person.id}`}>Error</Badge>
+                                  )}
+                                  {personOrder?.status === 'not_sent' && (
+                                    <Badge variant="secondary" data-testid={`badge-screening-status-${person.id}`}>Not Sent</Badge>
+                                  )}
+                                  <Button
+                                    size="sm"
+                                    onClick={() => selectedSubmission && screeningMutation.mutate({ submissionId: selectedSubmission, personId: person.id })}
+                                    disabled={screeningMutation.isPending}
+                                    data-testid={`button-request-screening-${person.id}`}
+                                  >
+                                    {screeningMutation.isPending ? (
+                                      <>
+                                        <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                        Requesting...
+                                      </>
+                                    ) : (
+                                      <>
+                                        <ShieldCheck className="h-4 w-4 mr-1" />
+                                        {personOrder?.status === 'error' || personOrder?.status === 'not_sent' ? 'Retry' : 'Request'}
+                                      </>
+                                    )}
+                                  </Button>
+                                </div>
+                              );
+                            }
+                            return (
+                              <div className="flex items-center gap-2">
+                                <Badge 
+                                  variant={personOrder.status === 'complete' ? 'default' : 'secondary'}
+                                  data-testid={`badge-screening-status-${person.id}`}
+                                >
+                                  {personOrder.status === 'sent' && 'Invitation Sent'}
+                                  {personOrder.status === 'in_progress' && 'In Progress'}
+                                  {personOrder.status === 'complete' && 'Complete'}
+                                </Badge>
+                                {personOrder.status === 'complete' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      const token = getAccessToken();
+                                      fetch(`/api/rental/screening/${personOrder.id}/report-url`, {
+                                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                      })
+                                        .then(res => res.json())
+                                        .then(data => {
+                                          if (data.url) {
+                                            window.open(data.url, '_blank');
+                                          }
+                                        });
+                                    }}
+                                    data-testid={`button-view-report-${person.id}`}
+                                  >
+                                    <ExternalLink className="h-4 w-4 mr-1" />
+                                    View Report
+                                  </Button>
+                                )}
+                              </div>
+                            );
+                          })()}
+                          {(() => {
+                            const personOrder = getScreeningOrderForPerson(person.id);
+                            if (personOrder?.status === 'error' && personOrder.errorMessage) {
+                              return <p className="text-sm text-red-500 w-full mt-2">{personOrder.errorMessage}</p>;
+                            }
+                            return null;
+                          })()}
+                        </div>
+                      )}
 
                       {person.formJson && Object.keys(person.formJson).length > 0 && (
                         <div className="mt-4 pt-4 border-t space-y-4">

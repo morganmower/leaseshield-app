@@ -4498,7 +4498,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   // SCREENING ROUTES (DigitalDelve Integration)
   // ============================================================
 
-  // Get screening order for a submission
+  // Get all screening orders for a submission (per-person model)
   app.get('/api/rental/submissions/:id/screening', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -4522,15 +4522,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const screeningOrder = await storage.getRentalScreeningOrder(submission.id);
-      res.json(screeningOrder || null);
+      // Return all screening orders for this submission (per-person)
+      const screeningOrders = await storage.getRentalScreeningOrdersBySubmission(submission.id);
+      res.json(screeningOrders);
     } catch (error) {
-      console.error("Error getting screening order:", error);
-      res.status(500).json({ message: "Failed to get screening order" });
+      console.error("Error getting screening orders:", error);
+      res.status(500).json({ message: "Failed to get screening orders" });
     }
   });
 
-  // Request screening for a submission
+  // Request screening for a specific person in a submission (per-person model)
   app.post('/api/rental/submissions/:id/screening', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -4554,26 +4555,38 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Check if screening already exists - allow retry if previous request failed with error or was never sent
-      const existingOrder = await storage.getRentalScreeningOrder(submission.id);
+      const { personId, invitationId } = req.body;
+      
+      // Get all people for this submission
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      
+      // Find the target person - either by personId or default to primary applicant
+      let targetPerson;
+      if (personId) {
+        targetPerson = people.find(p => p.id === personId);
+        if (!targetPerson) {
+          return res.status(404).json({ message: "Person not found in this submission" });
+        }
+      } else {
+        // Legacy fallback: use primary applicant if no personId provided
+        targetPerson = people.find(p => p.role === 'applicant');
+        if (!targetPerson) {
+          return res.status(400).json({ message: "No primary applicant found" });
+        }
+      }
+
+      // Check if screening already exists for this person - allow retry if previous request failed
+      const existingOrder = await storage.getRentalScreeningOrderByPerson(targetPerson.id);
       if (existingOrder && existingOrder.status !== 'error' && existingOrder.status !== 'not_sent') {
-        return res.status(400).json({ message: "Screening already requested for this submission" });
+        return res.status(400).json({ message: `Screening already requested for ${targetPerson.firstName} ${targetPerson.lastName}` });
       }
       
-      // If there's a failed or stuck order, delete it so we can retry
+      // If there's a failed or stuck order for this person, delete it so we can retry
       if (existingOrder && (existingOrder.status === 'error' || existingOrder.status === 'not_sent')) {
         await storage.deleteRentalScreeningOrder(existingOrder.id);
       }
 
-      // Get primary applicant info
-      const people = await storage.getRentalSubmissionPeople(submission.id);
-      const primaryApplicant = people.find(p => p.role === 'applicant');
-      
-      if (!primaryApplicant) {
-        return res.status(400).json({ message: "No primary applicant found" });
-      }
-
-      const formData = primaryApplicant.formJson as Record<string, any>;
+      const formData = targetPerson.formJson as Record<string, any>;
       
       // Import DigitalDelve service and crypto
       const { processScreeningRequest } = await import('./digitalDelveService');
@@ -4583,8 +4596,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
       const host = req.headers['x-forwarded-host'] || req.headers.host;
       const baseUrl = `${protocol}://${host}`;
-      
-      const { invitationId } = req.body;
       
       // Resolve landlord's screening credentials if configured
       let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
@@ -4609,10 +4620,10 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const result = await processScreeningRequest(
         submission.id,
         {
-          firstName: primaryApplicant.firstName || "",
-          lastName: primaryApplicant.lastName || "",
-          email: primaryApplicant.email || "",
-          phone: primaryApplicant.phone || formData.phone,
+          firstName: targetPerson.firstName || "",
+          lastName: targetPerson.lastName || "",
+          email: targetPerson.email || "",
+          phone: targetPerson.phone || formData.phone,
           ssn: formData.ssn,
           dob: formData.dob,
           address: formData.currentAddress,
@@ -4622,18 +4633,22 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         },
         baseUrl,
         invitationId,
-        screeningCredentials
+        screeningCredentials,
+        targetPerson.id
       );
 
       if (result.success) {
-        // Update submission status
-        await storage.updateRentalSubmission(submission.id, { status: 'screening_requested' });
+        // Update submission status if this is the first screening request
+        const allOrders = await storage.getRentalScreeningOrdersBySubmission(submission.id);
+        if (allOrders.length === 1) {
+          await storage.updateRentalSubmission(submission.id, { status: 'screening_requested' });
+        }
         
-        // Log event
+        // Log event with personId
         await storage.logRentalApplicationEvent({
           submissionId: submission.id,
           eventType: 'screening_requested',
-          metadataJson: { orderId: result.order?.id },
+          metadataJson: { orderId: result.order?.id, personId: targetPerson.id, personName: `${targetPerson.firstName} ${targetPerson.lastName}` },
         });
         
         res.json({ success: true, order: result.order });
@@ -4723,13 +4738,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // Get SSO URL to view report (by orderId - legacy)
+  // Get SSO URL to view report (by orderId - for per-person screening)
   app.get('/api/rental/screening/:orderId/report-url', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
       
-      // Get the order
-      const order = await storage.getRentalScreeningOrder(req.params.orderId);
+      // Get the order by its ID
+      const order = await storage.getRentalScreeningOrderById(req.params.orderId);
       if (!order) {
         return res.status(404).json({ message: "Screening order not found" });
       }
@@ -5130,8 +5145,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                   const primaryApplicant = allPeople.find(p => p.role === 'applicant') || person;
                   const formData = (primaryApplicant.formJson as Record<string, any>) || {};
                   
-                  // Check if screening already exists
-                  const existingOrder = await storage.getRentalScreeningOrder(person.submissionId);
+                  // Check if screening already exists for this person (per-person model)
+                  const existingOrder = await storage.getRentalScreeningOrderByPerson(primaryApplicant.id);
                   
                   // Only need name and email for AppScreen invitation flow
                   const hasRequiredData = primaryApplicant.firstName && 
@@ -5186,7 +5201,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                       },
                       baseUrl,
                       undefined,
-                      screeningCredentials
+                      screeningCredentials,
+                      primaryApplicant.id
                     );
                     
                     if (result.success) {

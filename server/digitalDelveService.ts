@@ -475,7 +475,8 @@ export async function processScreeningRequest(
   },
   baseUrl: string,
   invitationId?: string,
-  credentials?: ScreeningCredentials
+  credentials?: ScreeningCredentials,
+  personId?: string
 ): Promise<{ success: boolean; order?: any; error?: string }> {
   const referenceNumber = `LS-${submissionId.slice(0, 8)}-${Date.now()}`;
   
@@ -487,6 +488,7 @@ export async function processScreeningRequest(
 
   const order = await storage.createRentalScreeningOrder({
     submissionId,
+    personId: personId || null,
     referenceNumber,
     invitationId: invitationId || credentials?.invitationId || null,
     status: "not_sent",
