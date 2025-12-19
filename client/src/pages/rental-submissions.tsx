@@ -755,7 +755,7 @@ export default function RentalSubmissions() {
                             )}
                             {screeningComplete && (
                               <Badge className="bg-green-500 text-white text-xs">
-                                Screened
+                                Screening Complete
                               </Badge>
                             )}
                             {screeningPending && (
