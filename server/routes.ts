@@ -4163,6 +4163,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Check if this unit already has an active link - reuse it instead of creating duplicates
+      const existingLinks = await storage.getRentalApplicationLinksByUnitId(req.params.unitId);
+      const activeLink = existingLinks.find(l => l.isActive);
+      if (activeLink) {
+        return res.status(200).json(activeLink);
+      }
+
       // Merge schemas: unit overrides or property defaults
       const coverPage = unit.coverPageOverrideEnabled && unit.coverPageOverrideJson 
         ? unit.coverPageOverrideJson 
