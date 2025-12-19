@@ -1319,6 +1319,11 @@ export const rentalScreeningOrders = pgTable("rental_screening_orders", {
   rawStatusXml: text("raw_status_xml"), // Raw status webhook data
   rawResultXml: text("raw_result_xml"), // Raw result webhook data
   errorMessage: text("error_message"),
+  // Polling metadata for automatic status checks
+  lastStatusCheckAt: timestamp("last_status_check_at"), // When we last checked status
+  nextStatusCheckAt: timestamp("next_status_check_at"), // When to check next
+  pollUntil: timestamp("poll_until"), // Stop polling after this time
+  consecutiveFailures: integer("consecutive_failures").default(0), // For exponential backoff
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
