@@ -1966,15 +1966,20 @@ export default function Apply() {
                 </div>
 
                 {/* Add co-applicant option */}
-                <div className="border rounded-lg p-4">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold">Add Co-Applicant or Guarantor</h3>
-                      <p className="text-sm text-muted-foreground">
-                        You can invite additional people to join this application
-                      </p>
+                <div className="bg-teal-50 dark:bg-teal-950/40 border-2 border-teal-200 dark:border-teal-700 rounded-lg p-4">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-teal-100 dark:bg-teal-800 rounded-full">
+                        <UserPlus className="h-5 w-5 text-teal-600 dark:text-teal-300" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-teal-900 dark:text-teal-100">Add Co-Applicant or Guarantor</h3>
+                        <p className="text-sm text-teal-700 dark:text-teal-300">
+                          You can invite additional people to join this application
+                        </p>
+                      </div>
                     </div>
-                    <Button variant="outline" onClick={() => setIsInviteDialogOpen(true)} data-testid="button-invite-person">
+                    <Button className="bg-teal-600 hover:bg-teal-700 text-white" onClick={() => setIsInviteDialogOpen(true)} data-testid="button-invite-person">
                       <UserPlus className="h-4 w-4 mr-2" />
                       Invite
                     </Button>
