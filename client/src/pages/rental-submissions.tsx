@@ -211,6 +211,7 @@ export default function RentalSubmissions() {
   const [pendingDecision, setPendingDecision] = useState<string | null>(null);
   const [selectedDenialReasons, setSelectedDenialReasons] = useState<string[]>([]);
   const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
+  const [sendNoticeMyself, setSendNoticeMyself] = useState(false);
   const [filterTab, setFilterTab] = useState<"all" | "decided" | "pending">("all");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadPersonId, setUploadPersonId] = useState<string | null>(null);
@@ -369,13 +370,14 @@ export default function RentalSubmissions() {
   });
 
   const decisionMutation = useMutation({
-    mutationFn: async ({ id, decision, notes, denialReasons }: { 
+    mutationFn: async ({ id, decision, notes, denialReasons, skipNotification }: { 
       id: string; 
       decision: string; 
       notes?: string;
       denialReasons?: { category: string; detail?: string }[];
+      skipNotification?: boolean;
     }) => {
-      return apiRequest("POST", `/api/rental/submissions/${id}/decision`, { decision, notes, denialReasons });
+      return apiRequest("POST", `/api/rental/submissions/${id}/decision`, { decision, notes, denialReasons, skipNotification });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
@@ -387,6 +389,7 @@ export default function RentalSubmissions() {
       setPendingDecision(null);
       setSelectedDenialReasons([]);
       setDenialReasonDetails({});
+      setSendNoticeMyself(false);
     },
     onError: (error: any) => {
       toast({ 
@@ -481,6 +484,7 @@ export default function RentalSubmissions() {
     setSelectedDenialReasons([]);
     setDenialReasonDetails({});
     setDecisionNotes("");
+    setSendNoticeMyself(false);
     setIsDecisionDialogOpen(true);
   };
 
@@ -498,6 +502,7 @@ export default function RentalSubmissions() {
         decision: pendingDecision,
         notes: decisionNotes || undefined,
         denialReasons,
+        skipNotification: pendingDecision === "denied" && sendNoticeMyself,
       });
     }
   };
@@ -1251,12 +1256,19 @@ export default function RentalSubmissions() {
               <DialogDescription>
                 {pendingDecision === "approved"
                   ? "This will notify the applicant that their application has been approved."
-                  : "This will notify the applicant that their application has been denied."}
+                  : "Record the denial and optionally send an adverse action notice."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
               {pendingDecision === "denied" && (
                 <div>
+                  <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md p-3 mb-4">
+                    <p className="text-xs text-amber-800 dark:text-amber-200">
+                      <strong>Disclaimer:</strong> This tool is provided for informational purposes only and does not constitute legal advice. 
+                      You should consult with your own attorney to ensure compliance with federal, state, and local fair housing laws. 
+                      LeaseShield is not responsible for any legal consequences arising from your use of this feature.
+                    </p>
+                  </div>
                   <Label className="text-sm font-medium">Denial Reasons (select all that apply)</Label>
                   <p className="text-xs text-muted-foreground mb-3">
                     Required for adverse action letter compliance
@@ -1307,6 +1319,26 @@ export default function RentalSubmissions() {
                         )}
                       </div>
                     ))}
+                  </div>
+                  
+                  <div className="flex items-start gap-3 mt-4 pt-4 border-t">
+                    <Checkbox
+                      id="send-notice-myself"
+                      checked={sendNoticeMyself}
+                      onCheckedChange={(checked) => setSendNoticeMyself(checked === true)}
+                      data-testid="checkbox-send-notice-myself"
+                    />
+                    <div className="flex-1">
+                      <Label 
+                        htmlFor="send-notice-myself"
+                        className="text-sm font-medium cursor-pointer"
+                      >
+                        I will send my own adverse action notice
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Check this if you prefer to send the denial letter yourself instead of using the automated notification.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

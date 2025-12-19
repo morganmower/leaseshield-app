@@ -4473,7 +4473,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "A decision has already been made for this application" });
       }
 
-      const { decision, notes, denialReasons } = req.body;
+      const { decision, notes, denialReasons, skipNotification } = req.body;
       if (!decision || !['approved', 'denied'].includes(decision)) {
         return res.status(400).json({ message: "Decision must be 'approved' or 'denied'" });
       }
@@ -4497,11 +4497,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         reasons = await storage.createRentalDenialReasons(reasonsToInsert);
       }
 
-      // Log the decision event
+      // Log the decision event (skipNotification indicates landlord will send their own adverse action notice)
       await storage.logRentalApplicationEvent({
         submissionId: submission.id,
         eventType: `decision_${decision}`,
-        metadataJson: { decisionId: newDecision.id, decidedBy: userId, notes, denialReasons: reasons.map(r => r.category) },
+        metadataJson: { 
+          decisionId: newDecision.id, 
+          decidedBy: userId, 
+          notes, 
+          denialReasons: reasons.map(r => r.category),
+          skipNotification: skipNotification || false,
+        },
       });
 
       res.status(201).json({ ...newDecision, denialReasons: reasons });
