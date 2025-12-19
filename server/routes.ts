@@ -4663,6 +4663,75 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Resend invitation email to incomplete co-applicant/guarantor
+  app.post('/api/rental/submissions/:submissionId/people/:personId/resend-invite', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { submissionId, personId } = req.params;
+
+      // Get and verify submission ownership
+      const submission = await storage.getRentalSubmission(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns this submission
+      const appLink = await storage.getRentalApplicationLink(submission.applicationLinkId);
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the person
+      const people = await storage.getRentalSubmissionPeople(submissionId);
+      const person = people.find(p => p.id === personId);
+      if (!person) {
+        return res.status(404).json({ message: "Person not found" });
+      }
+
+      // Check person is incomplete
+      if (person.isCompleted) {
+        return res.status(400).json({ message: "This person has already completed their application" });
+      }
+
+      // Build the invite URL
+      const inviteUrl = `/apply/person/${person.inviteToken}`;
+      const propertyName = property.name + (unit.unitLabel ? ` - ${unit.unitLabel}` : '');
+
+      // Find the primary applicant for the "invited by" info
+      const primaryApplicant = people.find(p => p.role === 'applicant' && p.isCompleted);
+
+      // Send the invite email
+      await emailService.sendCoApplicantInviteEmail(
+        { email: person.email || '', firstName: person.firstName || '', lastName: person.lastName || '' },
+        { firstName: primaryApplicant?.firstName || 'Applicant', lastName: primaryApplicant?.lastName || '' },
+        propertyName,
+        inviteUrl,
+        person.role as 'coapplicant' | 'guarantor'
+      );
+
+      // Log event
+      await storage.logRentalApplicationEvent({
+        submissionId,
+        eventType: 'invitation_resent',
+        metadataJson: { personId, email: person.email, role: person.role },
+      });
+
+      console.log(`✅ Resent invitation to ${person.email} for submission ${submissionId}`);
+      res.json({ success: true, message: "Invitation resent successfully" });
+    } catch (error: any) {
+      console.error("Error resending invitation:", error);
+      res.status(500).json({ message: error?.message || "Failed to resend invitation" });
+    }
+  });
+
   // Get available screening invitations (packages)
   app.get('/api/rental/screening/invitations', isAuthenticated, requireAccess, async (req: any, res) => {
     try {

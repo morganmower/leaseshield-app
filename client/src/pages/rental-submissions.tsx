@@ -60,6 +60,7 @@ import {
   Upload,
   Trash2,
   RefreshCw,
+  Mail,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -324,6 +325,22 @@ export default function RentalSubmissions() {
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to check status.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const resendInviteMutation = useMutation({
+    mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
+      return apiRequest("POST", `/api/rental/submissions/${submissionId}/people/${personId}/resend-invite`);
+    },
+    onSuccess: () => {
+      toast({ title: "Invitation Sent", description: "A new invitation email has been sent." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to resend invitation.", 
         variant: "destructive" 
       });
     },
@@ -748,6 +765,29 @@ export default function RentalSubmissions() {
                         </div>
                       </div>
                       
+                      {!person.isCompleted && person.role !== 'applicant' && (
+                        <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">Waiting for {person.firstName} to complete their application</span>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => selectedSubmission && resendInviteMutation.mutate({ submissionId: selectedSubmission, personId: person.id })}
+                            disabled={resendInviteMutation.isPending}
+                            data-testid={`button-resend-invite-${person.id}`}
+                          >
+                            {resendInviteMutation.isPending ? (
+                              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                            ) : (
+                              <Mail className="h-4 w-4 mr-1" />
+                            )}
+                            Resend Invitation
+                          </Button>
+                        </div>
+                      )}
+
                       {person.isCompleted && (
                         <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
