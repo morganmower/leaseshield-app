@@ -1394,9 +1394,9 @@ export default function Landing() {
             className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
           >
             {/* Monthly Card */}
-            <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg">
+            <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg flex flex-col">
               <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="flex items-center justify-center gap-2 mb-2 h-6">
                   <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
                   <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
                 </div>
@@ -1405,38 +1405,38 @@ export default function Landing() {
                   <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-primary font-medium mt-3">
+                <p className="text-xs sm:text-sm text-primary font-medium mt-3 h-5">
                   Introductory pricing • Lock in this rate today
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 invisible">Placeholder</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 h-5">Cancel anytime</p>
               </div>
 
-              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+              <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base"
+                className="w-full text-sm sm:text-base mt-auto"
                 onClick={() => {
                   localStorage.setItem('billingPeriod', 'monthly');
                   window.location.href = "/signup";
@@ -1449,12 +1449,12 @@ export default function Landing() {
             </Card>
 
             {/* Annual Card - Best Value */}
-            <Card className="p-6 sm:p-8 border-2 border-success/40 shadow-lg relative overflow-hidden">
+            <Card className="p-6 sm:p-8 border-2 border-success/40 shadow-lg relative overflow-hidden flex flex-col">
               <div className="absolute top-0 right-0 bg-success text-success-foreground px-4 py-1 text-xs font-semibold rounded-bl-lg">
                 SAVE $20
               </div>
               <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-2 mb-2">
+                <div className="flex items-center justify-center gap-2 mb-2 h-6">
                   <Award className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                   <Badge className="bg-success text-success-foreground text-xs">Best Value</Badge>
                 </div>
@@ -1463,40 +1463,40 @@ export default function Landing() {
                   <span className="text-4xl sm:text-5xl font-bold text-success">$100</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/year</span>
                 </div>
-                <p className="text-xs sm:text-sm text-success font-medium mt-3">
+                <p className="text-xs sm:text-sm text-success font-medium mt-3 h-5">
                   Introductory pricing • Save $20 today
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 h-5">
                   <span className="line-through">$120</span> • Just $8.33/month
                 </p>
               </div>
 
-              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+              <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
+                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
                   <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base"
+                className="w-full text-sm sm:text-base mt-auto"
                 onClick={() => {
                   localStorage.setItem('billingPeriod', 'yearly');
                   window.location.href = "/signup";
