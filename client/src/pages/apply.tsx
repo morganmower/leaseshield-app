@@ -978,6 +978,24 @@ export default function Apply() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="space-y-2">
+                  <Label>Current Housing Situation *</Label>
+                  <Select
+                    value={formData.housingSituation || ""}
+                    onValueChange={(value) => updateField("housingSituation", value)}
+                  >
+                    <SelectTrigger data-testid="select-housing-situation">
+                      <SelectValue placeholder="Select your current situation" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="renting">Renting</SelectItem>
+                      <SelectItem value="owning">Own my home</SelectItem>
+                      <SelectItem value="family">Living with family/friends</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
                   <Label>Current Address *</Label>
                   <Input
                     value={formData.currentAddress || ""}
@@ -1000,7 +1018,7 @@ export default function Apply() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Monthly Rent</Label>
+                    <Label>{formData.housingSituation === "owning" ? "Monthly Mortgage" : "Monthly Rent"}</Label>
                     <Input
                       type="number"
                       value={formData.currentRent || ""}
@@ -1011,36 +1029,169 @@ export default function Apply() {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Landlord Name</Label>
-                  <Input
-                    value={formData.currentLandlord || ""}
-                    onChange={(e) => updateField("currentLandlord", e.target.value)}
-                    data-testid="input-address-landlord"
-                  />
-                </div>
+                {formData.housingSituation === "renting" && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Landlord Name</Label>
+                      <Input
+                        value={formData.currentLandlord || ""}
+                        onChange={(e) => updateField("currentLandlord", e.target.value)}
+                        data-testid="input-address-landlord"
+                      />
+                    </div>
 
-                <div className="space-y-2">
-                  <Label>Landlord Phone</Label>
-                  <Input
-                    type="tel"
-                    value={formData.currentLandlordPhone || ""}
-                    onChange={(e) => updateField("currentLandlordPhone", e.target.value)}
-                    data-testid="input-address-landlordphone"
-                  />
-                </div>
-
-                {isFieldVisible("previousAddresses") && (
-                  <div className="pt-4 border-t">
-                    <Label className="mb-2 block">Previous Address (if less than 2 years at current)</Label>
-                    <Input
-                      value={formData.previousAddress || ""}
-                      onChange={(e) => updateField("previousAddress", e.target.value)}
-                      placeholder="456 Oak Ave, City, State ZIP"
-                      data-testid="input-address-previous"
-                    />
-                  </div>
+                    <div className="space-y-2">
+                      <Label>Landlord Phone</Label>
+                      <Input
+                        type="tel"
+                        value={formData.currentLandlordPhone || ""}
+                        onChange={(e) => updateField("currentLandlordPhone", e.target.value)}
+                        data-testid="input-address-landlordphone"
+                      />
+                    </div>
+                  </>
                 )}
+
+                {/* Previous Addresses Section */}
+                {(formData.previousAddresses || []).map((addr: any, index: number) => (
+                  <div key={index} className="pt-4 border-t space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-muted-foreground">Previous Address {index + 1}</h3>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const updated = [...(formData.previousAddresses || [])];
+                          updated.splice(index, 1);
+                          updateField("previousAddresses", updated);
+                        }}
+                        data-testid={`button-remove-address-${index}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Housing Situation</Label>
+                      <Select
+                        value={addr.housingSituation || ""}
+                        onValueChange={(value) => {
+                          const updated = [...(formData.previousAddresses || [])];
+                          updated[index] = { ...updated[index], housingSituation: value };
+                          updateField("previousAddresses", updated);
+                        }}
+                      >
+                        <SelectTrigger data-testid={`select-prev-housing-${index}`}>
+                          <SelectValue placeholder="Select situation" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="renting">Renting</SelectItem>
+                          <SelectItem value="owning">Owned</SelectItem>
+                          <SelectItem value="family">Lived with family/friends</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Address *</Label>
+                      <Input
+                        value={addr.address || ""}
+                        onChange={(e) => {
+                          const updated = [...(formData.previousAddresses || [])];
+                          updated[index] = { ...updated[index], address: e.target.value };
+                          updateField("previousAddresses", updated);
+                        }}
+                        placeholder="456 Oak Ave, City, State ZIP"
+                        data-testid={`input-prev-address-${index}`}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Move-in Date</Label>
+                        <Input
+                          type="text"
+                          placeholder="MM/YYYY"
+                          value={formatMonthYear(addr.moveIn || "")}
+                          onChange={(e) => {
+                            const updated = [...(formData.previousAddresses || [])];
+                            const raw = e.target.value.replace(/\D/g, "");
+                            let formatted = raw;
+                            if (raw.length >= 2) {
+                              formatted = raw.slice(0, 2) + "/" + raw.slice(2, 6);
+                            }
+                            updated[index] = { ...updated[index], moveIn: formatted };
+                            updateField("previousAddresses", updated);
+                          }}
+                          maxLength={7}
+                          data-testid={`input-prev-movein-${index}`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Move-out Date</Label>
+                        <Input
+                          type="text"
+                          placeholder="MM/YYYY"
+                          value={formatMonthYear(addr.moveOut || "")}
+                          onChange={(e) => {
+                            const updated = [...(formData.previousAddresses || [])];
+                            const raw = e.target.value.replace(/\D/g, "");
+                            let formatted = raw;
+                            if (raw.length >= 2) {
+                              formatted = raw.slice(0, 2) + "/" + raw.slice(2, 6);
+                            }
+                            updated[index] = { ...updated[index], moveOut: formatted };
+                            updateField("previousAddresses", updated);
+                          }}
+                          maxLength={7}
+                          data-testid={`input-prev-moveout-${index}`}
+                        />
+                      </div>
+                    </div>
+                    {addr.housingSituation === "renting" && (
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Landlord Name</Label>
+                          <Input
+                            value={addr.landlordName || ""}
+                            onChange={(e) => {
+                              const updated = [...(formData.previousAddresses || [])];
+                              updated[index] = { ...updated[index], landlordName: e.target.value };
+                              updateField("previousAddresses", updated);
+                            }}
+                            data-testid={`input-prev-landlord-${index}`}
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Landlord Phone</Label>
+                          <Input
+                            type="tel"
+                            value={addr.landlordPhone || ""}
+                            onChange={(e) => {
+                              const updated = [...(formData.previousAddresses || [])];
+                              updated[index] = { ...updated[index], landlordPhone: e.target.value };
+                              updateField("previousAddresses", updated);
+                            }}
+                            data-testid={`input-prev-landlordphone-${index}`}
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const current = formData.previousAddresses || [];
+                    updateField("previousAddresses", [...current, { housingSituation: "", address: "", moveIn: "", moveOut: "", landlordName: "", landlordPhone: "" }]);
+                  }}
+                  data-testid="button-add-address"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Previous Address
+                </Button>
 
                 <div className="space-y-2">
                   <Label>Reason for Moving</Label>
