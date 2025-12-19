@@ -4554,14 +4554,14 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Check if screening already exists - allow retry if previous request failed with error
+      // Check if screening already exists - allow retry if previous request failed with error or was never sent
       const existingOrder = await storage.getRentalScreeningOrder(submission.id);
-      if (existingOrder && existingOrder.status !== 'error') {
+      if (existingOrder && existingOrder.status !== 'error' && existingOrder.status !== 'not_sent') {
         return res.status(400).json({ message: "Screening already requested for this submission" });
       }
       
-      // If there's a failed order, delete it so we can retry
-      if (existingOrder && existingOrder.status === 'error') {
+      // If there's a failed or stuck order, delete it so we can retry
+      if (existingOrder && (existingOrder.status === 'error' || existingOrder.status === 'not_sent')) {
         await storage.deleteRentalScreeningOrder(existingOrder.id);
       }
 

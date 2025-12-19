@@ -612,10 +612,13 @@ export default function RentalSubmissions() {
                     <ShieldCheck className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm font-medium">Background Screening</span>
                   </div>
-                  {!screeningOrder || screeningOrder.status === 'error' ? (
+                  {!screeningOrder || screeningOrder.status === 'error' || screeningOrder.status === 'not_sent' ? (
                     <div className="flex items-center gap-2">
                       {screeningOrder?.status === 'error' && (
                         <Badge variant="destructive" data-testid="badge-screening-status">Error</Badge>
+                      )}
+                      {screeningOrder?.status === 'not_sent' && (
+                        <Badge variant="secondary" data-testid="badge-screening-status">Not Sent</Badge>
                       )}
                       <Button
                         size="sm"
@@ -631,7 +634,7 @@ export default function RentalSubmissions() {
                         ) : (
                           <>
                             <ShieldCheck className="h-4 w-4 mr-1" />
-                            {screeningOrder?.status === 'error' ? 'Retry Screening' : 'Request Screening'}
+                            {screeningOrder?.status === 'error' || screeningOrder?.status === 'not_sent' ? 'Send Screening' : 'Request Screening'}
                           </>
                         )}
                       </Button>
