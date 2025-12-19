@@ -16,7 +16,12 @@ function getEncryptionKey(): Buffer {
   
   // Validate it's valid hex
   if (!/^[0-9a-fA-F]{64}$/.test(key)) {
-    throw new Error(`SCREENING_CREDENTIALS_KEY must be 64 hex characters (32 bytes). Got ${key.length} chars.`);
+    // Find the invalid character for debugging
+    const invalidMatch = key.match(/[^0-9a-fA-F]/);
+    const invalidInfo = invalidMatch 
+      ? ` Invalid char '${invalidMatch[0]}' at position ${key.indexOf(invalidMatch[0])}.`
+      : '';
+    throw new Error(`SCREENING_CREDENTIALS_KEY must be 64 hex characters (32 bytes). Got ${key.length} chars.${invalidInfo}`);
   }
   
   const keyBuffer = Buffer.from(key, 'hex');
