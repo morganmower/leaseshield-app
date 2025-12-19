@@ -350,6 +350,99 @@ export async function getViewReportByRefSsoUrl(referenceNumber: string): Promise
   }
 }
 
+export interface OrderStatusResult {
+  success: boolean;
+  status?: 'complete' | 'in_progress' | 'invited' | 'not_found' | 'error';
+  reportId?: string;
+  reportUrl?: string;
+  rawXml?: string;
+  error?: string;
+}
+
+export async function checkOrderStatus(
+  referenceNumber: string, 
+  credentials?: ScreeningCredentials
+): Promise<OrderStatusResult> {
+  let username: string;
+  let password: string;
+  
+  if (credentials) {
+    username = credentials.username;
+    password = credentials.password;
+  } else {
+    const systemCreds = getCredentials();
+    username = systemCreds.username;
+    password = systemCreds.password;
+  }
+
+  const xml = `<?xml version="1.0"?>
+<SSO>
+  <Authentication>
+    <UserName>${escapeXml(username)}</UserName>
+    <Password>${escapeXml(password)}</Password>
+  </Authentication>
+  <Function>RetrieveOrderStatus</Function>
+  <Applicant>
+    <ReferenceNumber>${escapeXml(referenceNumber)}</ReferenceNumber>
+  </Applicant>
+</SSO>`;
+
+  try {
+    const { body } = await sendXmlRequest(xml);
+    console.log("[DigitalDelve] CheckOrderStatus response:", body.substring(0, 500));
+    
+    const parsed = xmlParser.parse(body);
+    const root = parsed?.SSO || parsed?.Response || parsed;
+    
+    const errorMatch = body.match(/<Error>([^<]*)<\/Error>/i);
+    if (errorMatch) {
+      const errorMsg = errorMatch[1].toLowerCase();
+      if (errorMsg.includes('not found') || errorMsg.includes('no order')) {
+        return { success: true, status: 'not_found', rawXml: body };
+      }
+      return { success: false, error: errorMatch[1], rawXml: body };
+    }
+    
+    let statusStr = getXmlValue(root, 'Status', 'status', 'OrderStatus');
+    if (!statusStr && root?.Applicant) {
+      statusStr = getXmlValue(root.Applicant, 'Status', 'status');
+    }
+    
+    const reportId = getXmlValue(root, 'ReportId', 'ReportID', 'reportId');
+    let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
+    
+    let normalizedStatus: OrderStatusResult['status'] = 'in_progress';
+    if (statusStr) {
+      const lower = statusStr.toLowerCase().replace(/\s+/g, '_');
+      if (lower.includes('complete') || lower.includes('finished') || lower.includes('ready')) {
+        normalizedStatus = 'complete';
+      } else if (lower.includes('in_progress') || lower.includes('pending') || lower.includes('processing')) {
+        normalizedStatus = 'in_progress';
+      } else if (lower.includes('invited') || lower.includes('sent')) {
+        normalizedStatus = 'invited';
+      }
+    }
+    
+    if (reportId || reportUrl) {
+      normalizedStatus = 'complete';
+    }
+    
+    return {
+      success: true,
+      status: normalizedStatus,
+      reportId,
+      reportUrl,
+      rawXml: body,
+    };
+  } catch (error: any) {
+    console.error("[DigitalDelve] CheckOrderStatus error:", error);
+    return {
+      success: false,
+      error: error.message || "Failed to check order status",
+    };
+  }
+}
+
 export interface WebhookStatusData {
   referenceNumber: string;
   status: string;

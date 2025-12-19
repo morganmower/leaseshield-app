@@ -4783,6 +4783,76 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Check/refresh screening status from Western Verify
+  app.post('/api/rental/screening/:orderId/check-status', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      // Get the order by its ID
+      const order = await storage.getRentalScreeningOrderById(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Screening order not found" });
+      }
+
+      // Verify ownership via submission
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get landlord credentials
+      const landlordCreds = await storage.getScreeningCredentials(userId);
+      const credentials = landlordCreds ? {
+        username: landlordCreds.username,
+        password: landlordCreds.password,
+        invitationId: landlordCreds.defaultInvitationId || undefined,
+      } : undefined;
+
+      // Check status from Western Verify
+      const { checkOrderStatus } = await import('./digitalDelveService');
+      const result = await checkOrderStatus(order.referenceNumber, credentials);
+      
+      console.log("[Check Status] Result for order", order.id, ":", result);
+      
+      if (result.success && result.status) {
+        // Update the order with the new status
+        const updatedOrder = await storage.updateRentalScreeningOrder(order.id, {
+          status: result.status as any,
+          reportId: result.reportId || order.reportId,
+          reportUrl: result.reportUrl || order.reportUrl,
+          rawStatusXml: result.rawXml || order.rawStatusXml,
+        });
+        
+        res.json({ 
+          success: true, 
+          status: result.status,
+          order: updatedOrder,
+        });
+      } else {
+        res.status(500).json({ 
+          success: false,
+          message: result.error || "Failed to check status" 
+        });
+      }
+    } catch (error) {
+      console.error("Error checking screening status:", error);
+      res.status(500).json({ message: "Failed to check screening status" });
+    }
+  });
+
   // ============================================================
   // WEBHOOK ROUTES (No Auth - called by DigitalDelve)
   // ============================================================

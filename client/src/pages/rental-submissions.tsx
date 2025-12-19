@@ -59,6 +59,7 @@ import {
   ShieldCheck,
   Upload,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -300,6 +301,29 @@ export default function RentalSubmissions() {
       toast({ 
         title: "Error", 
         description: error?.message || "Failed to request screening. Please check DigitalDelve credentials.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
+  const checkStatusMutation = useMutation({
+    mutationFn: async ({ orderId }: { orderId: string }) => {
+      return apiRequest("POST", `/api/rental/screening/${orderId}/check-status`);
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "screening"] });
+      if (data.status === 'complete') {
+        toast({ title: "Report Ready", description: "The screening report is now available." });
+      } else if (data.status === 'in_progress') {
+        toast({ title: "Still In Progress", description: "The applicant is still completing their screening." });
+      } else {
+        toast({ title: "Status Updated", description: `Current status: ${data.status}` });
+      }
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to check status.", 
         variant: "destructive" 
       });
     },
@@ -769,9 +793,26 @@ export default function RentalSubmissions() {
                                   data-testid={`badge-screening-status-${person.id}`}
                                 >
                                   {personOrder.status === 'sent' && 'Invitation Sent'}
+                                  {personOrder.status === 'invited' && 'Invited'}
                                   {personOrder.status === 'in_progress' && 'In Progress'}
                                   {personOrder.status === 'complete' && 'Complete'}
                                 </Badge>
+                                {(personOrder.status === 'sent' || personOrder.status === 'invited' || personOrder.status === 'in_progress') && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => checkStatusMutation.mutate({ orderId: personOrder.id })}
+                                    disabled={checkStatusMutation.isPending}
+                                    data-testid={`button-check-status-${person.id}`}
+                                  >
+                                    {checkStatusMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="h-4 w-4 mr-1" />
+                                    )}
+                                    Check Status
+                                  </Button>
+                                )}
                                 {personOrder.status === 'complete' && (
                                   <Button
                                     size="sm"
