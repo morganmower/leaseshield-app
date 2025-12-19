@@ -1162,6 +1162,7 @@ export const rentalSubmissions = pgTable("rental_submissions", {
   applicationLinkId: varchar("application_link_id").notNull().references(() => rentalApplicationLinks.id, { onDelete: 'cascade' }),
   status: rentalSubmissionStatusEnum("status").default('started').notNull(),
   submittedAt: timestamp("submitted_at"),
+  deletedAt: timestamp("deleted_at"), // Soft delete - null means active, timestamp means deleted
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
