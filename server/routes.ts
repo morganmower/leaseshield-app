@@ -4510,6 +4510,46 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         },
       });
 
+      // Send notification email to applicant if not skipped
+      if (!skipNotification) {
+        try {
+          // Get the primary applicant for the submission
+          const people = await storage.getRentalSubmissionPeople(submission.id);
+          const primaryApplicant = people.find(p => p.role === 'applicant');
+          
+          if (primaryApplicant && primaryApplicant.email) {
+            // Build property address
+            let propertyAddress = 'the rental property';
+            if (unit && property) {
+              propertyAddress = unit.unitLabel 
+                ? `${property.name} - Unit ${unit.unitLabel}`
+                : property.name;
+            }
+            
+            // Get landlord name
+            const landlord = await storage.getUser(userId);
+            const landlordName = landlord?.firstName && landlord?.lastName 
+              ? `${landlord.firstName} ${landlord.lastName}`
+              : undefined;
+            
+            await emailService.sendApplicationDecisionEmail(
+              { 
+                email: primaryApplicant.email, 
+                firstName: primaryApplicant.firstName || undefined, 
+                lastName: primaryApplicant.lastName || undefined 
+              },
+              decision as 'approved' | 'denied',
+              propertyAddress,
+              landlordName
+            );
+            console.log(`✅ Decision notification sent to ${primaryApplicant.email}`);
+          }
+        } catch (emailError) {
+          console.error("Error sending decision notification email:", emailError);
+          // Don't fail the request if email fails
+        }
+      }
+
       res.status(201).json({ ...newDecision, denialReasons: reasons });
     } catch (error) {
       console.error("Error creating decision:", error);

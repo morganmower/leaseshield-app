@@ -428,6 +428,112 @@ The LeaseShield App Team
     return this.sendEmail(user, template);
   }
 
+  async sendApplicationDecisionEmail(
+    applicant: EmailRecipient, 
+    decision: 'approved' | 'denied',
+    propertyAddress: string,
+    landlordName?: string
+  ): Promise<boolean> {
+    const firstName = applicant.firstName || 'Applicant';
+    const isApproved = decision === 'approved';
+    
+    const template: EmailTemplate = {
+      subject: isApproved 
+        ? `Great news! Your rental application has been approved`
+        : `Update on your rental application`,
+      textBody: isApproved 
+        ? `Hi ${firstName},
+
+Great news! Your rental application for ${propertyAddress} has been approved.
+
+${landlordName ? `${landlordName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including signing the lease and move-in details.
+
+Congratulations on your new home!
+
+Best regards,
+LeaseShield App
+`
+        : `Hi ${firstName},
+
+Thank you for your interest in ${propertyAddress}.
+
+After careful consideration, the landlord has decided not to move forward with your application at this time.
+
+If your application was denied based on information from a credit report or background check, you have the right to:
+- Request a free copy of the report used in making this decision
+- Dispute any inaccurate information with the reporting agency
+
+We wish you the best in your housing search.
+
+Best regards,
+LeaseShield App
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${isApproved ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)' : 'linear-gradient(135deg, #475569 0%, #1e293b 100%)'}; color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .info-box { background: ${isApproved ? '#ecfdf5' : '#f8fafc'}; border: 1px solid ${isApproved ? '#10b981' : '#cbd5e1'}; padding: 20px; border-radius: 6px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">${isApproved ? 'Application Approved!' : 'Application Update'}</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      ${isApproved ? `
+      <p>Great news! Your rental application for <strong>${propertyAddress}</strong> has been <strong style="color: #10b981;">approved</strong>.</p>
+      
+      <div class="info-box">
+        <p style="margin: 0;">${landlordName ? `${landlordName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including:</p>
+        <ul style="margin-bottom: 0;">
+          <li>Signing the lease agreement</li>
+          <li>Security deposit and first month's rent</li>
+          <li>Move-in date and key pickup</li>
+        </ul>
+      </div>
+      
+      <p>Congratulations on your new home!</p>
+      ` : `
+      <p>Thank you for your interest in <strong>${propertyAddress}</strong>.</p>
+      
+      <p>After careful consideration, the landlord has decided not to move forward with your application at this time.</p>
+      
+      <div class="info-box">
+        <p style="margin-top: 0;"><strong>Your Rights:</strong></p>
+        <p style="margin-bottom: 0;">If your application was denied based on information from a credit report or background check, you have the right to:</p>
+        <ul style="margin-bottom: 0;">
+          <li>Request a free copy of the report used in making this decision</li>
+          <li>Dispute any inaccurate information with the reporting agency</li>
+        </ul>
+      </div>
+      
+      <p>We wish you the best in your housing search.</p>
+      `}
+    </div>
+    
+    <div class="footer">
+      <p>This message was sent via LeaseShield App on behalf of the property owner.</p>
+      <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(applicant, template);
+  }
+
   async sendTrialExpiredEmail(user: EmailRecipient): Promise<boolean> {
     const firstName = user.firstName || 'there';
 
