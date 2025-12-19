@@ -203,6 +203,7 @@ export async function retrieveInvitations(credentials?: { username: string; pass
 
   try {
     const { body } = await sendXmlRequest(xml);
+    console.log("[DigitalDelve] RetrieveInvitations response:", body);
     const result = parseXmlResponse(body);
     
     if (!result.success) {
@@ -273,7 +274,7 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
   </Applicant>
 </SSO>`;
 
-  console.log("[DigitalDelve] Full request XML (credentials masked)");
+  console.log("[DigitalDelve] AppScreen request - InvitationId:", invitationId);
 
   try {
     const { body } = await sendXmlRequest(xml);
