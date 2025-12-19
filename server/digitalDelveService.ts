@@ -350,12 +350,13 @@ export async function getViewReportByRefSsoUrl(
     
     if (statusCode === 302 || statusCode === 200) {
       const locationMatch = body.match(/<RedirectURL>([^<]*)<\/RedirectURL>/i);
-      if (locationMatch) {
+      if (locationMatch && locationMatch[1]) {
         return { success: true, url: locationMatch[1] };
       }
     }
     
-    return { success: true, url: getBaseUrl() + "?action=ViewReportByClientRef&ref=" + referenceNumber };
+    // No redirect URL found - report is not ready yet
+    return { success: false, error: "Report not available yet" };
   } catch (error: any) {
     return {
       success: false,
