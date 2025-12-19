@@ -1408,7 +1408,7 @@ export default function Landing() {
                 <p className="text-xs sm:text-sm text-primary font-medium mt-3">
                   Introductory pricing • Lock in this rate today
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">Cancel anytime</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-1 invisible">Placeholder</p>
               </div>
 
               <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
