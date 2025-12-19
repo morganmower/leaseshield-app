@@ -679,7 +679,7 @@ export default function RentalSubmissions() {
                   })()}
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Each person requires individual screening. Click "Request" on each person's card below.
+                  Each person requires individual screening. Click "Request Screening" on each person's card below.
                 </p>
               </div>
 
@@ -779,7 +779,7 @@ export default function RentalSubmissions() {
                                     ) : (
                                       <>
                                         <ShieldCheck className="h-4 w-4 mr-1" />
-                                        {personOrder?.status === 'error' || personOrder?.status === 'not_sent' ? 'Retry' : 'Request'}
+                                        {personOrder?.status === 'error' || personOrder?.status === 'not_sent' ? 'Retry Screening' : 'Request Screening'}
                                       </>
                                     )}
                                   </Button>
