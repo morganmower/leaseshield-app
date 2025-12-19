@@ -736,7 +736,8 @@ export default function RentalSubmissions() {
                   const personOrder = getScreeningOrderForPerson(person.id);
                   const needsScreeningInvite = person.isCompleted && (!personOrder || personOrder.status === 'error' || personOrder.status === 'not_sent');
                   const screeningComplete = personOrder?.status === 'complete';
-                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited' || personOrder?.status === 'sent' || personOrder?.status === 'in_progress';
+                  const screeningInProgress = personOrder?.status === 'in_progress';
+                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited' || personOrder?.status === 'sent';
                   
                   return (
                   <Card 
@@ -762,6 +763,11 @@ export default function RentalSubmissions() {
                             {screeningComplete && (
                               <Badge className="bg-green-500 text-white text-xs">
                                 Screening Complete
+                              </Badge>
+                            )}
+                            {screeningInProgress && (
+                              <Badge className="bg-blue-500 text-white text-xs">
+                                In Progress
                               </Badge>
                             )}
                             {screeningPending && (
