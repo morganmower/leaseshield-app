@@ -318,8 +318,21 @@ export async function getViewReportSsoUrl(reportId: string): Promise<{ success: 
   }
 }
 
-export async function getViewReportByRefSsoUrl(referenceNumber: string): Promise<{ success: boolean; url?: string; error?: string }> {
-  const { username, password } = getCredentials();
+export async function getViewReportByRefSsoUrl(
+  referenceNumber: string,
+  credentials?: ScreeningCredentials
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  let username: string;
+  let password: string;
+  
+  if (credentials && credentials.username && credentials.password) {
+    username = credentials.username;
+    password = credentials.password;
+  } else {
+    const systemCreds = getCredentials();
+    username = systemCreds.username;
+    password = systemCreds.password;
+  }
 
   // SSO format per API documentation - use ReportId element for reference number lookup
   const xml = `<?xml version="1.0"?>

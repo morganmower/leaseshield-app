@@ -4847,9 +4847,23 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Get landlord credentials and decrypt them
+      const { decryptCredentials } = await import('./crypto');
+      const landlordCreds = await storage.getScreeningCredentials(userId);
+      let credentials: { username: string; password: string } | undefined;
+      
+      if (landlordCreds?.encryptedUsername && landlordCreds?.encryptedPassword) {
+        try {
+          const decrypted = decryptCredentials(landlordCreds.encryptedUsername, landlordCreds.encryptedPassword);
+          credentials = decrypted;
+        } catch (decryptError) {
+          console.error("Failed to decrypt landlord credentials:", decryptError);
+        }
+      }
+
       // Get the SSO URL
       const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
-      const result = await getViewReportByRefSsoUrl(order.referenceNumber);
+      const result = await getViewReportByRefSsoUrl(order.referenceNumber, credentials);
       
       if (result.success && result.url) {
         res.json({ url: result.url });
@@ -4892,9 +4906,23 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
+      // Get landlord credentials and decrypt them
+      const { decryptCredentials } = await import('./crypto');
+      const landlordCreds = await storage.getScreeningCredentials(userId);
+      let credentials: { username: string; password: string } | undefined;
+      
+      if (landlordCreds?.encryptedUsername && landlordCreds?.encryptedPassword) {
+        try {
+          const decrypted = decryptCredentials(landlordCreds.encryptedUsername, landlordCreds.encryptedPassword);
+          credentials = decrypted;
+        } catch (decryptError) {
+          console.error("Failed to decrypt landlord credentials:", decryptError);
+        }
+      }
+
       // Get the SSO URL
       const { getViewReportByRefSsoUrl } = await import('./digitalDelveService');
-      const result = await getViewReportByRefSsoUrl(order.referenceNumber);
+      const result = await getViewReportByRefSsoUrl(order.referenceNumber, credentials);
       
       if (result.success && result.url) {
         res.json({ url: result.url });
