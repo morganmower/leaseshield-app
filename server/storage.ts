@@ -127,6 +127,9 @@ import {
   applicationComplianceRules,
   type ApplicationComplianceRule,
   type InsertApplicationComplianceRule,
+  landlordScreeningCredentials,
+  type LandlordScreeningCredentials,
+  type InsertLandlordScreeningCredentials,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
@@ -425,6 +428,12 @@ export interface IStorage {
   createApplicationComplianceRule(rule: InsertApplicationComplianceRule): Promise<ApplicationComplianceRule>;
   updateApplicationComplianceRule(id: string, rule: Partial<InsertApplicationComplianceRule>): Promise<ApplicationComplianceRule | null>;
   deactivateComplianceRule(id: string): Promise<boolean>;
+
+  // Landlord screening credentials operations
+  getLandlordScreeningCredentials(userId: string): Promise<LandlordScreeningCredentials | undefined>;
+  createLandlordScreeningCredentials(credentials: InsertLandlordScreeningCredentials): Promise<LandlordScreeningCredentials>;
+  updateLandlordScreeningCredentials(userId: string, credentials: Partial<InsertLandlordScreeningCredentials>): Promise<LandlordScreeningCredentials | null>;
+  deleteLandlordScreeningCredentials(userId: string): Promise<boolean>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2139,6 +2148,43 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return !!updated;
     }, 'deactivateComplianceRule');
+  }
+
+  // Landlord screening credentials operations
+  async getLandlordScreeningCredentials(userId: string): Promise<LandlordScreeningCredentials | undefined> {
+    return handleDbOperation(async () => {
+      const [credentials] = await db.select().from(landlordScreeningCredentials)
+        .where(eq(landlordScreeningCredentials.userId, userId));
+      return credentials;
+    }, 'getLandlordScreeningCredentials');
+  }
+
+  async createLandlordScreeningCredentials(credentials: InsertLandlordScreeningCredentials): Promise<LandlordScreeningCredentials> {
+    return handleDbOperation(async () => {
+      const [newCredentials] = await db.insert(landlordScreeningCredentials)
+        .values(credentials)
+        .returning();
+      return newCredentials;
+    }, 'createLandlordScreeningCredentials');
+  }
+
+  async updateLandlordScreeningCredentials(userId: string, credentials: Partial<InsertLandlordScreeningCredentials>): Promise<LandlordScreeningCredentials | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(landlordScreeningCredentials)
+        .set({ ...credentials, updatedAt: new Date() })
+        .where(eq(landlordScreeningCredentials.userId, userId))
+        .returning();
+      return updated || null;
+    }, 'updateLandlordScreeningCredentials');
+  }
+
+  async deleteLandlordScreeningCredentials(userId: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const result = await db.delete(landlordScreeningCredentials)
+        .where(eq(landlordScreeningCredentials.userId, userId))
+        .returning();
+      return result.length > 0;
+    }, 'deleteLandlordScreeningCredentials');
   }
 }
 
