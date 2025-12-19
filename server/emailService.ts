@@ -1006,6 +1006,148 @@ Sent from LeaseShield App Contact Form
       return false;
     }
   }
+  async sendScreeningCredentialsSetupNotification(landlord: User, adminEmails: string[]): Promise<boolean> {
+    if (!adminEmails.length) {
+      console.log('📧 No admin emails to notify about screening credentials setup');
+      return false;
+    }
+
+    const landlordName = landlord.firstName && landlord.lastName 
+      ? `${landlord.firstName} ${landlord.lastName}` 
+      : landlord.email;
+    const baseUrl = process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com';
+
+    const template: EmailTemplate = {
+      subject: `Action Required: Set Invitation ID for ${landlordName}`,
+      textBody: `Hi Admin,
+
+A landlord has set up their Western Verify screening credentials and is waiting for you to configure their invitation ID.
+
+Landlord: ${landlordName}
+Email: ${landlord.email}
+
+Please log in to the admin dashboard to set their invitation ID so they can start using tenant screening:
+${baseUrl}/admin/screening-credentials
+
+Best regards,
+LeaseShield App
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .info-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Screening Credentials Setup</h1>
+    </div>
+    <div class="content">
+      <div class="info-box">
+        <strong>Action Required:</strong> A landlord needs their invitation ID configured.
+      </div>
+      <p><strong>Landlord:</strong> ${landlordName}</p>
+      <p><strong>Email:</strong> ${landlord.email}</p>
+      <p>They have successfully set up their Western Verify credentials and are waiting for you to assign their invitation ID.</p>
+      <a href="${baseUrl}/admin/screening-credentials" class="cta-button">Set Invitation ID</a>
+      <div class="footer">
+        <p>LeaseShield App - Protecting Your Rental Business</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    let success = false;
+    for (const adminEmail of adminEmails) {
+      const sent = await this.sendEmail({ email: adminEmail }, template);
+      if (sent) success = true;
+    }
+    return success;
+  }
+
+  async sendScreeningReadyNotification(landlord: User): Promise<boolean> {
+    if (!landlord.email) return false;
+
+    const firstName = landlord.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com';
+
+    const template: EmailTemplate = {
+      subject: 'Your Tenant Screening Integration is Ready!',
+      textBody: `Hi ${firstName},
+
+Great news! Your Western Verify tenant screening integration is now fully configured and ready to use.
+
+You can now submit tenant screening requests directly through your LeaseShield dashboard. When a rental applicant submits their application, you'll have the option to request a background check through Western Verify.
+
+Get started:
+${baseUrl}/rental-submissions
+
+If you have any questions about using the screening feature, our AI assistant is available 24/7 to help.
+
+Best regards,
+The LeaseShield App Team
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .success-box { background: #dcfce7; border: 1px solid #22c55e; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .feature-list { background: #f0fdfa; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Screening Integration Ready!</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      <div class="success-box">
+        <strong>Great news!</strong> Your Western Verify tenant screening integration is now fully configured and ready to use.
+      </div>
+      <div class="feature-list">
+        <h3>What you can do now:</h3>
+        <ul>
+          <li>Request background checks on rental applicants</li>
+          <li>View screening results directly in your dashboard</li>
+          <li>Make informed decisions with comprehensive tenant data</li>
+        </ul>
+      </div>
+      <a href="${baseUrl}/rental-submissions" class="cta-button">View Rental Applications</a>
+      <p>If you have any questions, our AI assistant is available 24/7 to help.</p>
+      <div class="footer">
+        <p>LeaseShield App - Protecting Your Rental Business</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: landlord.email, firstName: landlord.firstName || undefined }, template);
+  }
 }
 
 export const emailService = new EmailService();

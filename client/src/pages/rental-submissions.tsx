@@ -218,6 +218,16 @@ export default function RentalSubmissions() {
     queryKey: ["/api/rental/submissions"],
   });
 
+  // Check screening integration status
+  const { data: screeningCredentials } = useQuery<{
+    configured: boolean;
+    status: string;
+    integrationReady?: boolean;
+    pendingAdminSetup?: boolean;
+  }>({
+    queryKey: ["/api/screening-credentials"],
+  });
+
   const { data: submissionDetail, isLoading: isLoadingDetail } = useQuery<SubmissionDetail>({
     queryKey: ["/api/rental/submissions", selectedSubmission],
     queryFn: async () => {
@@ -1307,6 +1317,40 @@ export default function RentalSubmissions() {
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      {/* Screening integration opt-in banner */}
+      {screeningCredentials && !screeningCredentials.configured && (
+        <Card className="mb-4 border-primary/30 bg-primary/5">
+          <CardContent className="flex flex-wrap items-center justify-between gap-4 py-4">
+            <div className="flex items-center gap-3">
+              <ShieldCheck className="h-8 w-8 text-primary" />
+              <div>
+                <p className="font-medium">Enable Tenant Screening Integration</p>
+                <p className="text-sm text-muted-foreground">
+                  Connect your Western Verify account to request background checks directly from this page.
+                </p>
+              </div>
+            </div>
+            <Button asChild data-testid="button-setup-screening">
+              <a href="/settings">Set Up Screening</a>
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {screeningCredentials?.pendingAdminSetup && (
+        <Card className="mb-4 border-yellow-300 dark:border-yellow-700 bg-yellow-50 dark:bg-yellow-900/20">
+          <CardContent className="flex items-center gap-3 py-4">
+            <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400" />
+            <div>
+              <p className="font-medium text-yellow-800 dark:text-yellow-200">Screening Setup In Progress</p>
+              <p className="text-sm text-yellow-700 dark:text-yellow-300">
+                Your credentials are saved. You'll receive an email when your screening integration is ready.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <AlertDialog open={!!deleteSubmissionId} onOpenChange={(open) => !open && setDeleteSubmissionId(null)}>
         <AlertDialogContent>

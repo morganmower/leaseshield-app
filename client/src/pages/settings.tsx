@@ -156,6 +156,8 @@ export default function Settings() {
     lastVerifiedAt?: string;
     lastErrorMessage?: string;
     hasDefaultInvitation?: boolean;
+    integrationReady?: boolean;
+    pendingAdminSetup?: boolean;
   }>({
     queryKey: ["/api/screening-credentials"],
     enabled: isAuthenticated,
@@ -596,44 +598,59 @@ export default function Settings() {
               ) : (
                 <div className="space-y-4">
                   {credentialsStatus?.configured && (
-                    <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-3 h-3 rounded-full ${
-                          credentialsStatus.status === 'verified' ? 'bg-green-500' :
-                          credentialsStatus.status === 'failed' ? 'bg-red-500' :
-                          'bg-yellow-500'
-                        }`} />
-                        <div>
-                          <p className="font-medium">Western Verify Connected</p>
-                          <p className="text-sm text-muted-foreground">
-                            {credentialsStatus.status === 'verified' ? (
-                              <>Last verified: {credentialsStatus.lastVerifiedAt 
-                                ? new Date(credentialsStatus.lastVerifiedAt).toLocaleDateString()
-                                : 'Unknown'}</>
-                            ) : credentialsStatus.status === 'failed' ? (
-                              <>Error: {credentialsStatus.lastErrorMessage || 'Verification failed'}</>
-                            ) : (
-                              'Pending verification'
-                            )}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-3 h-3 rounded-full ${
+                            credentialsStatus.integrationReady ? 'bg-green-500' :
+                            credentialsStatus.pendingAdminSetup ? 'bg-yellow-500' :
+                            credentialsStatus.status === 'failed' ? 'bg-red-500' :
+                            'bg-yellow-500'
+                          }`} />
+                          <div>
+                            <p className="font-medium">
+                              {credentialsStatus.integrationReady ? 'Screening Integration Ready' :
+                               credentialsStatus.pendingAdminSetup ? 'Pending Setup Completion' :
+                               'Western Verify Connected'}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {credentialsStatus.integrationReady ? (
+                                <>Ready to use for tenant screening</>
+                              ) : credentialsStatus.pendingAdminSetup ? (
+                                <>Your credentials are saved. An administrator will complete setup shortly.</>
+                              ) : credentialsStatus.status === 'failed' ? (
+                                <>Error: {credentialsStatus.lastErrorMessage || 'Verification failed'}</>
+                              ) : (
+                                'Pending verification'
+                              )}
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => deleteCredentialsMutation.mutate()}
+                          disabled={deleteCredentialsMutation.isPending}
+                          data-testid="button-remove-credentials"
+                        >
+                          {deleteCredentialsMutation.isPending ? (
+                            <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                          ) : (
+                            <>
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Remove
+                            </>
+                          )}
+                        </Button>
+                      </div>
+                      
+                      {credentialsStatus.pendingAdminSetup && (
+                        <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                          <p className="text-sm text-yellow-800 dark:text-yellow-200">
+                            We've received your credentials and notified our team. You'll receive an email when your screening integration is ready to use.
                           </p>
                         </div>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => deleteCredentialsMutation.mutate()}
-                        disabled={deleteCredentialsMutation.isPending}
-                        data-testid="button-remove-credentials"
-                      >
-                        {deleteCredentialsMutation.isPending ? (
-                          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                        ) : (
-                          <>
-                            <Trash2 className="h-4 w-4 mr-1" />
-                            Remove
-                          </>
-                        )}
-                      </Button>
+                      )}
                     </div>
                   )}
                   

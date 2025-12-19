@@ -292,10 +292,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
           lastVerifiedAt: new Date(),
         });
         
+        // Notify admin that a landlord is waiting for invitation ID setup
+        try {
+          const landlord = await storage.getUser(userId);
+          const allUsers = await storage.getAllUsers();
+          const adminEmails = allUsers.filter(u => u.isAdmin && u.email).map(u => u.email!);
+          
+          if (landlord && adminEmails.length > 0) {
+            await emailService.sendScreeningCredentialsSetupNotification(landlord, adminEmails);
+            console.log(`📧 Admin notification sent for landlord ${landlord.email} credentials setup`);
+          }
+        } catch (notifyError) {
+          console.error('Failed to send admin notification:', notifyError);
+          // Don't fail the credential save if notification fails
+        }
+        
         res.json({
           success: true,
-          message: "Screening credentials saved successfully",
+          message: "Screening credentials saved successfully. An administrator will complete your setup shortly.",
           status: 'verified',
+          pendingAdminSetup: true,
         });
       }
     } catch (error) {
@@ -317,8 +333,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.json({
           configured: false,
           status: 'not_configured',
+          integrationReady: false,
         });
       }
+      
+      // Integration is ready when credentials are verified AND invitation ID is set
+      const integrationReady = credentials.status === 'verified' && !!credentials.defaultInvitationId;
+      const pendingAdminSetup = credentials.status === 'verified' && !credentials.defaultInvitationId;
       
       res.json({
         configured: true,
@@ -326,6 +347,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastVerifiedAt: credentials.lastVerifiedAt,
         lastErrorMessage: credentials.lastErrorMessage,
         hasDefaultInvitation: !!credentials.defaultInvitationId,
+        integrationReady,
+        pendingAdminSetup,
       });
     } catch (error) {
       console.error("Error getting screening credentials:", error);
@@ -3723,6 +3746,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       // Allow setting or clearing the invitation ID
       const trimmedId = typeof invitationId === 'string' ? invitationId.trim() : null;
+      const wasAlreadySet = !!credentials.defaultInvitationId;
       
       // Update the invitation ID (null to clear)
       await storage.updateLandlordScreeningCredentials(userId, {
@@ -3730,6 +3754,19 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         configuredBy: adminId,
         configuredAt: new Date(),
       });
+
+      // Notify landlord when invitation ID is set (not cleared) and wasn't previously set
+      if (trimmedId && !wasAlreadySet) {
+        try {
+          const landlord = await storage.getUser(userId);
+          if (landlord) {
+            await emailService.sendScreeningReadyNotification(landlord);
+            console.log(`📧 Screening ready notification sent to landlord ${landlord.email}`);
+          }
+        } catch (notifyError) {
+          console.error('Failed to send landlord notification:', notifyError);
+        }
+      }
 
       res.json({ success: true, cleared: !trimmedId });
     } catch (error) {
