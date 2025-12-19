@@ -5021,6 +5021,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         lastName: person.lastName,
         formData: person.formJson,
         submissionStatus: submission?.status || "started",
+        isCompleted: person.isCompleted, // Person's individual completion status
       });
     } catch (error) {
       console.error("Error getting person data:", error);

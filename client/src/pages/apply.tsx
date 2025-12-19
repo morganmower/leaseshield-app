@@ -103,6 +103,7 @@ interface PersonData {
   lastName: string;
   formData: Record<string, any>;
   submissionStatus: string;
+  isCompleted?: boolean;
 }
 
 const STEPS = [
@@ -407,9 +408,8 @@ export default function Apply() {
   useEffect(() => {
     if (personData?.formData && Object.keys(personData.formData).length > 0) {
       setFormData(personData.formData);
-      if (personData.submissionStatus === "submitted") {
-        setCurrentStep(STEPS.length - 1);
-      } else {
+      // Don't reset step if person has already completed - confirmation page will show
+      if (!personData.isCompleted) {
         setCurrentStep(1); // Skip cover page if resuming
       }
     }
@@ -577,20 +577,26 @@ export default function Apply() {
     setHasAcknowledged(false);
   };
 
-  if (personData?.submissionStatus === "submitted") {
+  if (personData?.isCompleted) {
+    const allSubmitted = personData.submissionStatus === "submitted";
     return (
       <div className="min-h-screen bg-muted/30 flex items-center justify-center p-4">
         <Card className="w-full max-w-md text-center p-8">
           <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-2">Application Submitted</h2>
+          <h2 className="text-2xl font-bold mb-2">
+            {allSubmitted ? "Application Submitted" : "Your Application is Complete"}
+          </h2>
           <p className="text-muted-foreground mb-4">
             Thank you for applying to {linkData.propertyName}
             {linkData.unitLabel && ` - ${linkData.unitLabel}`}. 
-            The landlord will review your application and contact you.
+            {allSubmitted 
+              ? "The landlord will review your application and contact you."
+              : "We're waiting for other applicants to complete their portions. Once everyone submits, your application will be sent to the landlord for review."
+            }
           </p>
           <Badge variant="secondary" className="text-base px-4 py-2 mb-6">
             <Clock className="h-4 w-4 mr-2" />
-            Under Review
+            {allSubmitted ? "Under Review" : "Waiting for Co-Applicants"}
           </Badge>
           <div className="border-t pt-4 mt-4">
             <p className="text-sm text-muted-foreground mb-3">
