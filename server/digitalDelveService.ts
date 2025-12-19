@@ -625,11 +625,11 @@ export async function processScreeningRequest(
   }
 }
 
-export async function handleStatusWebhook(xml: string): Promise<boolean> {
+export async function handleStatusWebhook(xml: string): Promise<{ success: boolean; submissionId?: string }> {
   const data = parseStatusWebhook(xml);
   if (!data) {
     console.error("Failed to parse status webhook:", xml);
-    return false;
+    return { success: false };
   }
 
   try {
@@ -637,7 +637,7 @@ export async function handleStatusWebhook(xml: string): Promise<boolean> {
 
     if (!order) {
       console.error("Screening order not found for reference:", data.referenceNumber);
-      return false;
+      return { success: false };
     }
     
     await storage.updateRentalScreeningOrder(order.id, {
@@ -647,18 +647,18 @@ export async function handleStatusWebhook(xml: string): Promise<boolean> {
       rawStatusXml: data.rawXml,
     });
 
-    return true;
+    return { success: true, submissionId: order.submissionId };
   } catch (error) {
     console.error("Error processing status webhook:", error);
-    return false;
+    return { success: false };
   }
 }
 
-export async function handleResultWebhook(xml: string): Promise<boolean> {
+export async function handleResultWebhook(xml: string): Promise<{ success: boolean; submissionId?: string }> {
   const data = parseResultWebhook(xml);
   if (!data) {
     console.error("Failed to parse result webhook:", xml);
-    return false;
+    return { success: false };
   }
 
   try {
@@ -666,7 +666,7 @@ export async function handleResultWebhook(xml: string): Promise<boolean> {
 
     if (!order) {
       console.error("Screening order not found for reference:", data.referenceNumber);
-      return false;
+      return { success: false };
     }
     
     await storage.updateRentalScreeningOrder(order.id, {
@@ -676,9 +676,9 @@ export async function handleResultWebhook(xml: string): Promise<boolean> {
       rawResultXml: data.rawXml,
     });
 
-    return true;
+    return { success: true, submissionId: order.submissionId };
   } catch (error) {
     console.error("Error processing result webhook:", error);
-    return false;
+    return { success: false };
   }
 }

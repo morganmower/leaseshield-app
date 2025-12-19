@@ -143,6 +143,64 @@ function getClientIp(req: any): string {
   return req.ip || req.connection.remoteAddress || 'unknown';
 }
 
+// Helper to auto-update submission status based on screening progress
+async function updateSubmissionStatusFromScreening(submissionId: string): Promise<void> {
+  try {
+    const submission = await storage.getRentalSubmission(submissionId);
+    if (!submission) return;
+    
+    // Don't modify status if there's already a final decision
+    const decision = await storage.getRentalDecision(submissionId);
+    if (decision) return;
+    
+    const screeningOrders = await storage.getRentalScreeningOrdersBySubmission(submissionId);
+    
+    if (screeningOrders.length === 0) {
+      // No screening orders yet - don't change status
+      return;
+    }
+    
+    // Normalize order statuses (handle vendor variants like "completed" vs "complete")
+    const normalizeStatus = (status: string): string => {
+      const s = status.toLowerCase().trim();
+      if (s === 'completed' || s === 'complete') return 'complete';
+      if (s === 'in_progress' || s === 'in progress' || s === 'inprogress' || s === 'processing') return 'in_progress';
+      if (s === 'sent' || s === 'pending') return 'sent';
+      return s;
+    };
+    
+    // Count normalized order statuses
+    const normalizedStatuses = screeningOrders.map(o => normalizeStatus(o.status));
+    const completeCount = normalizedStatuses.filter(s => s === 'complete').length;
+    const inProgressCount = normalizedStatuses.filter(s => s === 'in_progress').length;
+    const errorCount = normalizedStatuses.filter(s => s === 'error').length;
+    
+    let newStatus: string | null = null;
+    
+    // All screening orders are complete (based solely on orders, not people)
+    if (completeCount > 0 && completeCount === screeningOrders.length) {
+      newStatus = 'complete';
+    }
+    // Any screening is in progress
+    else if (inProgressCount > 0) {
+      newStatus = 'in_progress';
+    }
+    // At least one screening exists and not all are errors
+    else if (screeningOrders.length > errorCount) {
+      newStatus = 'screening_requested';
+    }
+    
+    // Update status if changed and not going backwards
+    const statusOrder = ['started', 'submitted', 'screening_requested', 'in_progress', 'complete'];
+    if (newStatus && statusOrder.indexOf(newStatus) > statusOrder.indexOf(submission.status)) {
+      await storage.updateRentalSubmission(submissionId, { status: newStatus });
+      console.log(`[Auto-Status] Updated submission ${submissionId} status to ${newStatus}`);
+    }
+  } catch (error) {
+    console.error("Error updating submission status from screening:", error);
+  }
+}
+
 export async function registerRoutes(app: Express): Promise<Server> {
   // Trust proxy - required for secure cookies behind Replit's HTTPS proxy
   app.set('trust proxy', 1);
@@ -4638,11 +4696,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       );
 
       if (result.success) {
-        // Update submission status if this is the first screening request
-        const allOrders = await storage.getRentalScreeningOrdersBySubmission(submission.id);
-        if (allOrders.length === 1) {
-          await storage.updateRentalSubmission(submission.id, { status: 'screening_requested' });
-        }
+        // Auto-update submission status based on screening progress
+        await updateSubmissionStatusFromScreening(submission.id);
         
         // Log event with personId
         await storage.logRentalApplicationEvent({
@@ -4919,6 +4974,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           rawStatusXml: result.rawXml || order.rawStatusXml,
         });
         
+        // Auto-update submission status based on screening progress
+        await updateSubmissionStatusFromScreening(order.submissionId);
+        
         res.json({ 
           success: true, 
           status: result.status,
@@ -4935,6 +4993,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             status: 'complete',
             reportUrl: reportResult.url,
           });
+          
+          // Auto-update submission status based on screening progress
+          await updateSubmissionStatusFromScreening(order.submissionId);
           
           res.json({ 
             success: true, 
@@ -5005,9 +5066,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       console.log("[Webhook] Parsed XML (first 500 chars):", xml.substring(0, 500));
 
       const { handleStatusWebhook } = await import('./digitalDelveService');
-      const success = await handleStatusWebhook(xml);
+      const result = await handleStatusWebhook(xml);
       
-      if (success) {
+      if (result.success) {
+        // Auto-update submission status based on screening progress
+        if (result.submissionId) {
+          await updateSubmissionStatusFromScreening(result.submissionId);
+        }
         res.status(200).send("OK");
       } else {
         res.status(400).send("Failed to process webhook");
@@ -5042,9 +5107,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       console.log("[Webhook] Parsed XML (first 500 chars):", xml.substring(0, 500));
 
       const { handleResultWebhook } = await import('./digitalDelveService');
-      const success = await handleResultWebhook(xml);
+      const result = await handleResultWebhook(xml);
       
-      if (success) {
+      if (result.success) {
+        // Auto-update submission status based on screening progress
+        if (result.submissionId) {
+          await updateSubmissionStatusFromScreening(result.submissionId);
+        }
         res.status(200).send("OK");
       } else {
         res.status(400).send("Failed to process webhook");
