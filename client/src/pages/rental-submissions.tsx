@@ -613,12 +613,49 @@ export default function RentalSubmissions() {
               )}
 
               <div className="mt-4 pt-4 border-t">
-                <div className="flex items-center gap-2 mb-3">
-                  <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Background Screening (Per Person)</span>
+                <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Background Screening</span>
+                  </div>
+                  {(() => {
+                    const completedPeople = submissionDetail.people.filter(p => p.isCompleted);
+                    const screenedCount = completedPeople.filter(p => {
+                      const order = getScreeningOrderForPerson(p.id);
+                      return order?.status === 'complete';
+                    }).length;
+                    const pendingCount = completedPeople.filter(p => {
+                      const order = getScreeningOrderForPerson(p.id);
+                      return order?.status === 'pending' || order?.status === 'invited';
+                    }).length;
+                    const needsInviteCount = completedPeople.filter(p => {
+                      const order = getScreeningOrderForPerson(p.id);
+                      return !order || order.status === 'error' || order.status === 'not_sent';
+                    }).length;
+                    
+                    if (completedPeople.length === 0) return null;
+                    
+                    return (
+                      <div className="flex items-center gap-2">
+                        <Badge variant={screenedCount === completedPeople.length ? "default" : "secondary"} data-testid="badge-screening-progress">
+                          {screenedCount} of {completedPeople.length} screened
+                        </Badge>
+                        {pendingCount > 0 && (
+                          <Badge variant="outline" className="text-amber-600 border-amber-500">
+                            {pendingCount} pending
+                          </Badge>
+                        )}
+                        {needsInviteCount > 0 && (
+                          <Badge variant="outline" className="text-blue-600 border-blue-500">
+                            {needsInviteCount} need invite
+                          </Badge>
+                        )}
+                      </div>
+                    );
+                  })()}
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Each person requires individual screening. Each will receive their own invitation email.
+                  Each person requires individual screening. Click "Request" on each person's card below.
                 </p>
               </div>
 
@@ -640,8 +677,18 @@ export default function RentalSubmissions() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {submissionDetail.people.map((person) => (
-                  <Card key={person.id} className="bg-muted/50" data-testid={`card-person-${person.id}`}>
+                {submissionDetail.people.map((person) => {
+                  const personOrder = getScreeningOrderForPerson(person.id);
+                  const needsScreeningInvite = person.isCompleted && (!personOrder || personOrder.status === 'error' || personOrder.status === 'not_sent');
+                  const screeningComplete = personOrder?.status === 'complete';
+                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited';
+                  
+                  return (
+                  <Card 
+                    key={person.id} 
+                    className={`bg-muted/50 ${needsScreeningInvite ? 'ring-2 ring-blue-500 ring-offset-2' : ''} ${screeningComplete ? 'ring-2 ring-green-500 ring-offset-2' : ''}`}
+                    data-testid={`card-person-${person.id}`}
+                  >
                     <CardContent className="pt-4">
                       <div className="flex flex-wrap items-start justify-between gap-4">
                         <div>
@@ -652,6 +699,21 @@ export default function RentalSubmissions() {
                             <Badge variant="outline" className="text-xs">
                               {roleLabels[person.role] || person.role}
                             </Badge>
+                            {needsScreeningInvite && (
+                              <Badge className="bg-blue-500 text-white text-xs">
+                                Action needed
+                              </Badge>
+                            )}
+                            {screeningComplete && (
+                              <Badge className="bg-green-500 text-white text-xs">
+                                Screened
+                              </Badge>
+                            )}
+                            {screeningPending && (
+                              <Badge variant="outline" className="text-amber-600 border-amber-500 text-xs">
+                                Pending
+                              </Badge>
+                            )}
                           </div>
                           <p className="text-sm text-muted-foreground">{person.email}</p>
                         </div>
@@ -960,7 +1022,8 @@ export default function RentalSubmissions() {
                       )}
                     </CardContent>
                   </Card>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
