@@ -727,7 +727,7 @@ export default function Properties() {
                 />
               </div>
             </div>
-            <DialogFooter className="flex-col gap-2">
+            <div className="flex flex-col gap-2 pt-4">
               <Button
                 className="w-full"
                 onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: true })}
@@ -749,7 +749,7 @@ export default function Properties() {
               <Button variant="ghost" className="w-full" onClick={() => setIsAddUnitOpen(false)}>
                 Cancel
               </Button>
-            </DialogFooter>
+            </div>
           </DialogContent>
         </Dialog>
       </div>
