@@ -6,9 +6,17 @@ const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.SCREENING_CREDENTIALS_KEY;
-  if (!key) {
+  const rawKey = process.env.SCREENING_CREDENTIALS_KEY;
+  if (!rawKey) {
     throw new Error('SCREENING_CREDENTIALS_KEY environment variable is not set');
+  }
+  
+  // Trim whitespace and take only first 64 hex characters
+  const key = rawKey.trim().slice(0, 64);
+  
+  // Validate it's valid hex
+  if (!/^[0-9a-fA-F]{64}$/.test(key)) {
+    throw new Error(`SCREENING_CREDENTIALS_KEY must be 64 hex characters (32 bytes). Got ${key.length} chars.`);
   }
   
   const keyBuffer = Buffer.from(key, 'hex');
