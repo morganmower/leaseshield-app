@@ -17,6 +17,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Select,
   SelectContent,
   SelectItem,
@@ -69,6 +79,10 @@ interface SubmissionSummary {
     email: string;
   } | null;
   peopleCount: number;
+  decision: {
+    decision: "approved" | "denied";
+    decidedAt: string;
+  } | null;
 }
 
 interface SubmissionPerson {
@@ -193,11 +207,12 @@ export default function RentalSubmissions() {
   const [pendingDecision, setPendingDecision] = useState<string | null>(null);
   const [selectedDenialReasons, setSelectedDenialReasons] = useState<string[]>([]);
   const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
-  const [filterTab, setFilterTab] = useState<"all" | "approved" | "denied" | "pending">("all");
+  const [filterTab, setFilterTab] = useState<"all" | "decided" | "pending">("all");
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadPersonId, setUploadPersonId] = useState<string | null>(null);
   const [uploadFileType, setUploadFileType] = useState<string>("other");
   const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [deleteSubmissionId, setDeleteSubmissionId] = useState<string | null>(null);
 
   const { data: submissions, isLoading: isLoadingSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions"],
@@ -372,6 +387,24 @@ export default function RentalSubmissions() {
     },
   });
 
+  const deleteSubmissionMutation = useMutation({
+    mutationFn: async (submissionId: string) => {
+      return apiRequest("DELETE", `/api/rental/submissions/${submissionId}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      toast({ title: "Success", description: "Application deleted." });
+      setDeleteSubmissionId(null);
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to delete application.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const handleStatusChange = (status: string) => {
     if (selectedSubmission) {
       updateMutation.mutate({ id: selectedSubmission, status });
@@ -422,24 +455,22 @@ export default function RentalSubmissions() {
     if (!submissions) return [];
     switch (filterTab) {
       case "pending":
-        return submissions.filter(s => s.status !== "complete");
-      case "approved":
-      case "denied":
-        return submissions.filter(s => s.status === "complete");
+        return submissions.filter(s => !s.decision);
+      case "decided":
+        return submissions.filter(s => !!s.decision);
       default:
         return submissions;
     }
   }, [submissions, filterTab]);
 
   const countByTab = useMemo(() => {
-    if (!submissions) return { all: 0, pending: 0, approved: 0, denied: 0 };
-    const pending = submissions.filter(s => s.status !== "complete").length;
-    const complete = submissions.filter(s => s.status === "complete").length;
+    if (!submissions) return { all: 0, pending: 0, decided: 0 };
+    const pending = submissions.filter(s => !s.decision).length;
+    const decided = submissions.filter(s => !!s.decision).length;
     return {
       all: submissions.length,
       pending,
-      approved: complete,
-      denied: complete,
+      decided,
     };
   }, [submissions]);
 
@@ -1270,12 +1301,33 @@ export default function RentalSubmissions() {
           <TabsTrigger value="pending" data-testid="tab-pending">
             Pending ({countByTab.pending})
           </TabsTrigger>
-          <TabsTrigger value="approved" data-testid="tab-approved">
+          <TabsTrigger value="decided" data-testid="tab-decided">
             <CheckCircle className="h-4 w-4 mr-1 text-green-600" />
-            Decided
+            Decided ({countByTab.decided})
           </TabsTrigger>
         </TabsList>
       </Tabs>
+
+      <AlertDialog open={!!deleteSubmissionId} onOpenChange={(open) => !open && setDeleteSubmissionId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete Application?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will remove the application from your list. The data is preserved for record-keeping but will no longer appear in your active applications.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel data-testid="button-cancel-delete">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteSubmissionId && deleteSubmissionMutation.mutate(deleteSubmissionId)}
+              disabled={deleteSubmissionMutation.isPending}
+              data-testid="button-confirm-delete"
+            >
+              {deleteSubmissionMutation.isPending ? "Deleting..." : "Delete"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {isLoadingSubmissions ? (
         <div className="space-y-4">
@@ -1337,23 +1389,40 @@ export default function RentalSubmissions() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <Badge className={statusColors[sub.status] || ""}>
-                      {statusLabels[sub.status] || sub.status}
-                    </Badge>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge className={statusColors[sub.status] || ""}>
+                        {statusLabels[sub.status] || sub.status}
+                      </Badge>
+                      {sub.decision && (
+                        <Badge className={decisionColors[sub.decision.decision]}>
+                          {sub.decision.decision === "approved" ? "Approved" : "Denied"}
+                        </Badge>
+                      )}
+                    </div>
                   </TableCell>
                   <TableCell>
                     <p className="text-sm">{formatDate(sub.createdAt)}</p>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => setSelectedSubmission(sub.id)}
-                      data-testid={`button-view-${sub.id}`}
-                    >
-                      <Eye className="h-4 w-4 mr-1" />
-                      View
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setSelectedSubmission(sub.id)}
+                        data-testid={`button-view-${sub.id}`}
+                      >
+                        <Eye className="h-4 w-4 mr-1" />
+                        View
+                      </Button>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        onClick={() => setDeleteSubmissionId(sub.id)}
+                        data-testid={`button-delete-${sub.id}`}
+                      >
+                        <Trash2 className="h-4 w-4 text-muted-foreground" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}

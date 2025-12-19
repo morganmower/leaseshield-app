@@ -3970,6 +3970,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           }
         }
         const primaryApplicant = people.find(p => p.role === 'applicant');
+        const decision = await storage.getRentalDecision(sub.id);
         return {
           ...sub,
           propertyName,
@@ -3980,6 +3981,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             email: primaryApplicant.email,
           } : null,
           peopleCount: people.length,
+          decision: decision ? { decision: decision.decision, decidedAt: decision.decidedAt } : null,
         };
       }));
       
