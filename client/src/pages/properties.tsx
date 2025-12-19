@@ -704,41 +704,46 @@ export default function Properties() {
 
         {/* Add Unit Dialog */}
         <Dialog open={isAddUnitOpen} onOpenChange={setIsAddUnitOpen}>
-          <DialogContent className="sm:max-w-[400px]">
+          <DialogContent className="sm:max-w-[450px]">
             <DialogHeader>
               <DialogTitle>Add Unit</DialogTitle>
               <DialogDescription>
-                Add a unit to this property. Leave blank for single-unit properties.
+                Give this unit a name (like "Apt A" or "Unit 101") so you can tell them apart.
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
               <div className="space-y-2">
-                <Label htmlFor="unitLabel">Unit Label</Label>
+                <Label htmlFor="unitLabel">Unit Name</Label>
                 <Input
                   id="unitLabel"
-                  placeholder="e.g., Unit A, 101, Main House"
+                  placeholder="e.g., Apt A, Unit 101, Basement"
                   value={unitForm.unitLabel}
                   onChange={(e) => setUnitForm({ unitLabel: e.target.value })}
                   data-testid="input-unit-label"
                 />
               </div>
             </div>
-            <DialogFooter className="flex-col sm:flex-row gap-2">
-              <Button variant="outline" onClick={() => setIsAddUnitOpen(false)}>Cancel</Button>
+            <DialogFooter className="flex-col gap-2">
+              <Button
+                className="w-full"
+                onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: true })}
+                disabled={createUnitMutation.isPending}
+                data-testid="button-create-unit-with-link"
+              >
+                <LinkIcon className="h-4 w-4 mr-2" />
+                Create Unit + Application Link
+              </Button>
               <Button
                 variant="outline"
+                className="w-full"
                 onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: false })}
                 disabled={createUnitMutation.isPending}
                 data-testid="button-create-unit-only"
               >
                 Create Unit Only
               </Button>
-              <Button
-                onClick={() => addUnitPropertyId && createUnitMutation.mutate({ propertyId: addUnitPropertyId, data: unitForm, createLink: true })}
-                disabled={createUnitMutation.isPending}
-                data-testid="button-create-unit-with-link"
-              >
-                Create with Link
+              <Button variant="ghost" className="w-full" onClick={() => setIsAddUnitOpen(false)}>
+                Cancel
               </Button>
             </DialogFooter>
           </DialogContent>
