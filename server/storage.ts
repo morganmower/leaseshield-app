@@ -392,8 +392,10 @@ export interface IStorage {
   createRentalSubmissionAcknowledgement(ack: InsertRentalSubmissionAcknowledgement): Promise<RentalSubmissionAcknowledgement>;
   getRentalSubmissionAcknowledgements(submissionId: string): Promise<RentalSubmissionAcknowledgement[]>;
 
-  // Rental Application System - Screening order operations
-  getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined>;
+  // Rental Application System - Screening order operations (per-person)
+  getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined>; // Legacy - gets first order
+  getRentalScreeningOrderByPerson(personId: string): Promise<RentalScreeningOrder | undefined>;
+  getRentalScreeningOrdersBySubmission(submissionId: string): Promise<RentalScreeningOrder[]>;
   getRentalScreeningOrderByReference(referenceNumber: string): Promise<RentalScreeningOrder | undefined>;
   createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder>;
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
@@ -1967,12 +1969,25 @@ export class DatabaseStorage implements IStorage {
     }, 'getRentalSubmissionAcknowledgements');
   }
 
-  // Rental Screening Order operations
+  // Rental Screening Order operations (per-person)
   async getRentalScreeningOrder(submissionId: string): Promise<RentalScreeningOrder | undefined> {
     return handleDbOperation(async () => {
       const [order] = await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.submissionId, submissionId));
       return order;
     }, 'getRentalScreeningOrder');
+  }
+
+  async getRentalScreeningOrderByPerson(personId: string): Promise<RentalScreeningOrder | undefined> {
+    return handleDbOperation(async () => {
+      const [order] = await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.personId, personId));
+      return order;
+    }, 'getRentalScreeningOrderByPerson');
+  }
+
+  async getRentalScreeningOrdersBySubmission(submissionId: string): Promise<RentalScreeningOrder[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalScreeningOrders).where(eq(rentalScreeningOrders.submissionId, submissionId));
+    }, 'getRentalScreeningOrdersBySubmission');
   }
 
   async getRentalScreeningOrderByReference(referenceNumber: string): Promise<RentalScreeningOrder | undefined> {

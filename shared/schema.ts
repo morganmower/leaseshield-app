@@ -1306,10 +1306,11 @@ export const rentalScreeningStatusEnum = pgEnum('rental_screening_status', [
   'error',
 ]);
 
-// Rental Screening Orders - DigitalDelve integration
+// Rental Screening Orders - DigitalDelve integration (per-person screening)
 export const rentalScreeningOrders = pgTable("rental_screening_orders", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  submissionId: varchar("submission_id").notNull().unique().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  submissionId: varchar("submission_id").notNull().references(() => rentalSubmissions.id, { onDelete: 'cascade' }),
+  personId: varchar("person_id").references(() => rentalSubmissionPeople.id, { onDelete: 'cascade' }), // Person being screened
   invitationId: text("invitation_id"), // DigitalDelve invitation ID
   referenceNumber: varchar("reference_number", { length: 100 }).notNull().unique(), // Our reference number
   status: rentalScreeningStatusEnum("status").default('not_sent').notNull(),
@@ -1326,6 +1327,10 @@ export const rentalScreeningOrdersRelations = relations(rentalScreeningOrders, (
   submission: one(rentalSubmissions, {
     fields: [rentalScreeningOrders.submissionId],
     references: [rentalSubmissions.id],
+  }),
+  person: one(rentalSubmissionPeople, {
+    fields: [rentalScreeningOrders.personId],
+    references: [rentalSubmissionPeople.id],
   }),
 }));
 
