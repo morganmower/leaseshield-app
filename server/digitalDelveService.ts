@@ -29,7 +29,8 @@ function getCredentials() {
   return { username, password };
 }
 
-function escapeXml(str: string): string {
+function escapeXml(str: string | undefined | null): string {
+  if (!str) return '';
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -366,13 +367,20 @@ export async function checkOrderStatus(
   let username: string;
   let password: string;
   
-  if (credentials) {
+  if (credentials && credentials.username && credentials.password) {
     username = credentials.username;
     password = credentials.password;
   } else {
     const systemCreds = getCredentials();
     username = systemCreds.username;
     password = systemCreds.password;
+  }
+  
+  if (!username || !password) {
+    return {
+      success: false,
+      error: "Screening credentials not configured",
+    };
   }
 
   const xml = `<?xml version="1.0"?>
