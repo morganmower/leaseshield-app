@@ -1308,6 +1308,22 @@ export default function RentalSubmissions() {
                 
                 return (
                   <div className={`grid gap-4 ${otherPeople.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">
+                          {primaryApplicant ? `${primaryApplicant.firstName} ${primaryApplicant.lastName}` : 'Primary Applicant'}
+                        </span>
+                        <Badge variant="outline" className="text-xs">Applicant</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {primaryEvents.map(renderEvent)}
+                      </div>
+                      {primaryEvents.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No activity yet</p>
+                      )}
+                    </div>
+                    
                     {otherPeople.length > 0 && (
                       <div className="space-y-3">
                         <div className="flex items-center gap-2 pb-2 border-b">
@@ -1341,22 +1357,6 @@ export default function RentalSubmissions() {
                         )}
                       </div>
                     )}
-                    
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 pb-2 border-b">
-                        <User className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-sm">
-                          {primaryApplicant ? `${primaryApplicant.firstName} ${primaryApplicant.lastName}` : 'Primary Applicant'}
-                        </span>
-                        <Badge variant="outline" className="text-xs">Applicant</Badge>
-                      </div>
-                      <div className="space-y-2">
-                        {primaryEvents.map(renderEvent)}
-                      </div>
-                      {primaryEvents.length === 0 && (
-                        <p className="text-sm text-muted-foreground">No activity yet</p>
-                      )}
-                    </div>
                   </div>
                 );
               })()}
