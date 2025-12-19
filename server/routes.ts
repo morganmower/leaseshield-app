@@ -4814,7 +4814,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Get landlord credentials
-      const landlordCreds = await storage.getScreeningCredentials(userId);
+      const landlordCreds = await storage.getLandlordScreeningCredentials(userId);
       const credentials = landlordCreds ? {
         username: landlordCreds.username,
         password: landlordCreds.password,
