@@ -132,7 +132,7 @@ import {
   type InsertLandlordScreeningCredentials,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql, isNull } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNull, lte, gt } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
 
 /**
@@ -401,6 +401,7 @@ export interface IStorage {
   createRentalScreeningOrder(order: InsertRentalScreeningOrder): Promise<RentalScreeningOrder>;
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
   deleteRentalScreeningOrder(id: string): Promise<boolean>;
+  getScreeningOrdersNeedingPoll(): Promise<RentalScreeningOrder[]>;
 
   // Rental Application System - Decision operations
   getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
@@ -2024,6 +2025,27 @@ export class DatabaseStorage implements IStorage {
       const result = await db.delete(rentalScreeningOrders).where(eq(rentalScreeningOrders.id, id));
       return result.rowCount ? result.rowCount > 0 : false;
     }, 'deleteRentalScreeningOrder');
+  }
+
+  async getScreeningOrdersNeedingPoll(): Promise<RentalScreeningOrder[]> {
+    return handleDbOperation(async () => {
+      const now = new Date();
+      return await db.select().from(rentalScreeningOrders)
+        .where(
+          and(
+            // Non-final statuses only
+            or(
+              eq(rentalScreeningOrders.status, 'sent'),
+              eq(rentalScreeningOrders.status, 'in_progress')
+            ),
+            // Time to poll (nextStatusCheckAt <= now)
+            lte(rentalScreeningOrders.nextStatusCheckAt, now),
+            // Still within polling window (pollUntil > now)
+            gt(rentalScreeningOrders.pollUntil, now)
+          )
+        )
+        .limit(10); // Batch size to avoid overloading
+    }, 'getScreeningOrdersNeedingPoll');
   }
 
   // Rental Decision operations
