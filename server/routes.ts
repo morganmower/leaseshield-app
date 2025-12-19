@@ -4905,7 +4905,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Check status from Western Verify
-      const { checkOrderStatus } = await import('./digitalDelveService');
+      const { checkOrderStatus, getViewReportByRefSsoUrl } = await import('./digitalDelveService');
       const result = await checkOrderStatus(order.referenceNumber, credentials);
       
       console.log("[Check Status] Result for order", order.id, ":", result);
@@ -4925,10 +4925,28 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           order: updatedOrder,
         });
       } else {
-        res.status(500).json({ 
-          success: false,
-          message: result.error || "Failed to check status" 
-        });
+        // Fallback: Try to get the report URL - if successful, the screening is complete
+        console.log("[Check Status] Status API failed, trying report URL fallback...");
+        const reportResult = await getViewReportByRefSsoUrl(order.referenceNumber);
+        
+        if (reportResult.success && reportResult.url) {
+          console.log("[Check Status] Report URL retrieved successfully - marking as complete");
+          const updatedOrder = await storage.updateRentalScreeningOrder(order.id, {
+            status: 'complete',
+            reportUrl: reportResult.url,
+          });
+          
+          res.json({ 
+            success: true, 
+            status: 'complete',
+            order: updatedOrder,
+          });
+        } else {
+          res.status(500).json({ 
+            success: false,
+            message: result.error || "Failed to check status" 
+          });
+        }
       }
     } catch (error) {
       console.error("Error checking screening status:", error);
