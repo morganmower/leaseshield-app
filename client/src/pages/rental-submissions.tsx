@@ -574,32 +574,14 @@ export default function RentalSubmissions() {
                     Application submitted {formatDate(submissionDetail.createdAt)}
                   </CardDescription>
                 </div>
-                <Badge className={statusColors[submissionDetail.status] || ""} data-testid="badge-submission-status">
-                  {statusLabels[submissionDetail.status] || submissionDetail.status}
-                </Badge>
+                {existingDecision && (
+                  <Badge className={decisionColors[existingDecision.decision]} data-testid="badge-decision-header">
+                    {existingDecision.decision === "approved" ? "Approved" : "Denied"}
+                  </Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-wrap gap-2 mb-4">
-                <span className="text-sm text-muted-foreground">Change Status:</span>
-                <Select
-                  value={submissionDetail.status}
-                  onValueChange={handleStatusChange}
-                  disabled={updateMutation.isPending}
-                >
-                  <SelectTrigger className="w-48" data-testid="select-status">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="submitted">Submitted</SelectItem>
-                    <SelectItem value="screening_requested">Screening Requested</SelectItem>
-                    <SelectItem value="in_progress">Screening In Progress</SelectItem>
-                    <SelectItem value="complete">Complete</SelectItem>
-                  </SelectContent>
-                </Select>
-                {updateMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              </div>
-              
               {existingDecision ? (
                 <div className="mt-4 pt-4 border-t">
                   <div className="flex flex-wrap items-center gap-2">
@@ -633,8 +615,8 @@ export default function RentalSubmissions() {
                     </div>
                   )}
                 </div>
-              ) : submissionDetail.status === "complete" && (
-                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t">
+              ) : (
+                <div className="flex flex-wrap gap-2 mb-4">
                   <span className="text-sm font-medium">Final Decision:</span>
                   <Button
                     size="sm"
@@ -1564,7 +1546,7 @@ export default function RentalSubmissions() {
               <TableRow>
                 <TableHead>Property</TableHead>
                 <TableHead>Applicant</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Decision</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -1602,12 +1584,13 @@ export default function RentalSubmissions() {
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-wrap gap-1">
-                      <Badge className={statusColors[sub.status] || ""}>
-                        {statusLabels[sub.status] || sub.status}
-                      </Badge>
-                      {sub.decision && (
+                      {sub.decision ? (
                         <Badge className={decisionColors[sub.decision.decision]}>
                           {sub.decision.decision === "approved" ? "Approved" : "Denied"}
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">
+                          Pending Review
                         </Badge>
                       )}
                     </div>
