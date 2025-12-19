@@ -355,6 +355,24 @@ export default function RentalSubmissions() {
     },
   });
 
+  const deletePersonMutation = useMutation({
+    mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
+      return apiRequest("DELETE", `/api/rental/submissions/${submissionId}/people/${personId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission] });
+      toast({ title: "Removed", description: "Person has been removed from the application." });
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to remove person.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const updateMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
       return apiRequest("PATCH", `/api/rental/submissions/${id}`, { status });
@@ -757,6 +775,21 @@ export default function RentalSubmissions() {
                           <Badge className={statusColors[person.status] || ""}>
                             {statusLabels[person.status] || person.status}
                           </Badge>
+                          {person.role !== 'applicant' && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              onClick={() => {
+                                if (confirm(`Are you sure you want to remove ${person.firstName} ${person.lastName} from this application?`)) {
+                                  selectedSubmission && deletePersonMutation.mutate({ submissionId: selectedSubmission, personId: person.id });
+                                }
+                              }}
+                              disabled={deletePersonMutation.isPending}
+                              data-testid={`button-delete-person-${person.id}`}
+                            >
+                              <Trash2 className="h-4 w-4 text-muted-foreground" />
+                            </Button>
+                          )}
                         </div>
                       </div>
                       

@@ -1929,6 +1929,13 @@ export class DatabaseStorage implements IStorage {
     }, 'updateRentalSubmissionPerson');
   }
 
+  async deleteRentalSubmissionPerson(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      await db.delete(rentalSubmissionPeople).where(eq(rentalSubmissionPeople.id, id));
+      return true;
+    }, 'deleteRentalSubmissionPerson');
+  }
+
   // Rental Submission File operations
   async getRentalSubmissionFiles(personId: string): Promise<RentalSubmissionFile[]> {
     return handleDbOperation(async () => {

@@ -4793,6 +4793,67 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Delete a co-applicant or guarantor from submission
+  app.delete('/api/rental/submissions/:submissionId/people/:personId', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { submissionId, personId } = req.params;
+
+      // Get and verify submission ownership
+      const submission = await storage.getRentalSubmission(submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify landlord owns this submission
+      const appLink = await storage.getRentalApplicationLink(submission.applicationLinkId);
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the person
+      const people = await storage.getRentalSubmissionPeople(submissionId);
+      const person = people.find(p => p.id === personId);
+      if (!person) {
+        return res.status(404).json({ message: "Person not found" });
+      }
+
+      // Cannot delete the primary applicant
+      if (person.role === 'applicant') {
+        return res.status(400).json({ message: "Cannot delete the primary applicant. Delete the entire submission instead." });
+      }
+
+      // Delete the person
+      await storage.deleteRentalSubmissionPerson(personId);
+
+      // Log event
+      await storage.logRentalApplicationEvent({
+        submissionId,
+        eventType: 'person_removed',
+        metadataJson: { 
+          personId, 
+          personName: `${person.firstName} ${person.lastName}`,
+          role: person.role,
+          removedBy: userId 
+        },
+      });
+
+      console.log(`✅ Deleted person ${personId} from submission ${submissionId}`);
+      res.json({ success: true, message: "Person removed successfully" });
+    } catch (error: any) {
+      console.error("Error deleting person:", error);
+      res.status(500).json({ message: error?.message || "Failed to delete person" });
+    }
+  });
+
   // Get available screening invitations (packages)
   app.get('/api/rental/screening/invitations', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
