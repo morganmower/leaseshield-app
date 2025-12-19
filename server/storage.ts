@@ -2201,6 +2201,26 @@ export class DatabaseStorage implements IStorage {
       return result.length > 0;
     }, 'deleteLandlordScreeningCredentials');
   }
+
+  async getAllLandlordsWithScreeningStatus(): Promise<Array<{
+    user: typeof users.$inferSelect;
+    credentials: LandlordScreeningCredentials | null;
+  }>> {
+    return handleDbOperation(async () => {
+      const allUsers = await db.select().from(users);
+      const allCredentials = await db.select().from(landlordScreeningCredentials);
+      
+      const credentialsMap = new Map<string, LandlordScreeningCredentials>();
+      for (const cred of allCredentials) {
+        credentialsMap.set(cred.userId, cred);
+      }
+      
+      return allUsers.map(user => ({
+        user,
+        credentials: credentialsMap.get(user.id) || null,
+      }));
+    }, 'getAllLandlordsWithScreeningStatus');
+  }
 }
 
 export const storage = new DatabaseStorage();

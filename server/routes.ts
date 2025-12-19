@@ -3579,6 +3579,137 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // ===== ADMIN SCREENING CREDENTIALS MANAGEMENT =====
+
+  // Get all landlords with their screening credential status
+  app.get('/api/admin/screening-credentials', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const landlordsWithStatus = await storage.getAllLandlordsWithScreeningStatus();
+      
+      // Map to return safe data (no encrypted passwords)
+      const result = landlordsWithStatus.map(({ user, credentials }) => ({
+        userId: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        hasCredentials: !!credentials,
+        status: credentials?.status || 'not_configured',
+        lastVerifiedAt: credentials?.lastVerifiedAt,
+        lastErrorMessage: credentials?.lastErrorMessage,
+        configuredBy: credentials?.configuredBy,
+        configuredAt: credentials?.configuredAt,
+        hasInvitationId: !!credentials?.defaultInvitationId,
+      }));
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error getting landlords with screening status:", error);
+      res.status(500).json({ message: "Failed to get landlords" });
+    }
+  });
+
+  // Set or update screening credentials for a landlord (admin only)
+  app.post('/api/admin/screening-credentials/:userId', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const adminId = getUserId(req);
+      const { username, password, invitationId } = req.body;
+
+      if (!username || !password) {
+        return res.status(400).json({ message: "Username and password are required" });
+      }
+
+      // Encrypt credentials using existing crypto functions
+      const { encryptCredentials } = await import('./crypto');
+      const { encryptedUsername, encryptedPassword, encryptionIv } = encryptCredentials(username, password);
+
+      // Check if credentials already exist
+      const existing = await storage.getLandlordScreeningCredentials(userId);
+
+      if (existing) {
+        // Update existing
+        await storage.updateLandlordScreeningCredentials(userId, {
+          encryptedUsername,
+          encryptedPassword,
+          encryptionIv,
+          defaultInvitationId: invitationId || null,
+          status: 'pending_verification',
+          configuredBy: adminId,
+          configuredAt: new Date(),
+        });
+        res.json({ success: true, status: 'updated' });
+      } else {
+        // Create new
+        await storage.createLandlordScreeningCredentials({
+          userId,
+          encryptedUsername,
+          encryptedPassword,
+          encryptionIv,
+          defaultInvitationId: invitationId || undefined,
+          status: 'pending_verification',
+          configuredBy: adminId,
+          configuredAt: new Date(),
+        });
+        res.json({ success: true, status: 'created' });
+      }
+    } catch (error) {
+      console.error("Error setting screening credentials:", error);
+      res.status(500).json({ message: "Failed to set credentials" });
+    }
+  });
+
+  // Test screening credentials for a landlord (admin only)
+  app.post('/api/admin/screening-credentials/:userId/test', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      
+      const credentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!credentials) {
+        return res.status(404).json({ message: "Credentials not found for this landlord" });
+      }
+
+      // Decrypt credentials
+      const { decryptCredentials } = await import('./crypto');
+      const { username, password } = decryptCredentials({
+        encryptedUsername: credentials.encryptedUsername,
+        encryptedPassword: credentials.encryptedPassword,
+        encryptionIv: credentials.encryptionIv,
+      });
+
+      // Test with Digital Delve
+      const { verifyCredentialsWithParams } = await import('./digitalDelveService');
+      const verifyResult = await verifyCredentialsWithParams(username, password);
+      const testResult = {
+        success: verifyResult.success,
+        error: verifyResult.error || verifyResult.message,
+      };
+
+      // Update status based on test result
+      await storage.updateLandlordScreeningCredentials(userId, {
+        status: testResult.success ? 'verified' : 'failed',
+        lastVerifiedAt: testResult.success ? new Date() : undefined,
+        lastErrorMessage: testResult.success ? null : testResult.error,
+      });
+
+      res.json(testResult);
+    } catch (error) {
+      console.error("Error testing screening credentials:", error);
+      res.status(500).json({ message: "Failed to test credentials" });
+    }
+  });
+
+  // Delete screening credentials for a landlord (admin only)
+  app.delete('/api/admin/screening-credentials/:userId', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { userId } = req.params;
+      const deleted = await storage.deleteLandlordScreeningCredentials(userId);
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("Error deleting screening credentials:", error);
+      res.status(500).json({ message: "Failed to delete credentials" });
+    }
+  });
+
   // Get user's messages (broadcasts they received)
   app.get('/api/messages', isAuthenticated, async (req: any, res) => {
     try {

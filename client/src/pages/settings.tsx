@@ -591,7 +591,7 @@ export default function Settings() {
                 <CardTitle>Tenant Screening</CardTitle>
               </div>
               <CardDescription>
-                Connect your Western Verify account for tenant screening
+                Western Verify integration for tenant screening
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -623,22 +623,6 @@ export default function Settings() {
                         </p>
                       </div>
                     </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => deleteCredentialsMutation.mutate()}
-                      disabled={deleteCredentialsMutation.isPending}
-                      data-testid="button-remove-credentials"
-                    >
-                      {deleteCredentialsMutation.isPending ? (
-                        <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
-                      ) : (
-                        <>
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Remove
-                        </>
-                      )}
-                    </Button>
                   </div>
                   {credentialsStatus.hasDefaultInvitation && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -646,107 +630,26 @@ export default function Settings() {
                       <span>Default screening package configured</span>
                     </div>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    Your screening credentials are managed by LeaseShield. Contact support if you need changes.
+                  </p>
                 </div>
               ) : (
                 <div className="space-y-4">
-                  <p className="text-sm text-muted-foreground">
-                    Enter your Western Verify credentials to enable tenant screening. Your credentials are encrypted and stored securely.
-                  </p>
-                  
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="screening-username">Username</Label>
-                      <Input
-                        id="screening-username"
-                        placeholder="Your Western Verify username"
-                        value={screeningUsername}
-                        onChange={(e) => setScreeningUsername(e.target.value)}
-                        data-testid="input-screening-username"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="screening-password">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="screening-password"
-                          type={showPassword ? "text" : "password"}
-                          placeholder="Your Western Verify password"
-                          value={screeningPassword}
-                          onChange={(e) => setScreeningPassword(e.target.value)}
-                          data-testid="input-screening-password"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="absolute right-0 top-0 h-full px-3"
-                          onClick={() => setShowPassword(!showPassword)}
-                          data-testid="button-toggle-password"
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </Button>
+                  <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                      <div className="w-3 h-3 rounded-full bg-gray-400" />
+                      <div>
+                        <p className="font-medium">Screening Not Yet Configured</p>
+                        <p className="text-sm text-muted-foreground">
+                          Contact LeaseShield support to set up your screening credentials
+                        </p>
                       </div>
                     </div>
                   </div>
-
-                  {testInvitations.length > 0 && (
-                    <div className="space-y-2">
-                      <Label htmlFor="screening-invitation">Default Screening Package</Label>
-                      <Select value={selectedInvitation} onValueChange={setSelectedInvitation}>
-                        <SelectTrigger id="screening-invitation" data-testid="select-screening-invitation">
-                          <SelectValue placeholder="Select a package (optional)" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {testInvitations.map((inv) => (
-                            <SelectItem key={inv.id} value={inv.id}>
-                              {inv.name || inv.description || inv.id}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs text-muted-foreground">
-                        Choose a default screening package for new applications
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-2 justify-end">
-                    <Button
-                      variant="outline"
-                      onClick={handleTestCredentials}
-                      disabled={testCredentialsMutation.isPending || !screeningUsername || !screeningPassword}
-                      data-testid="button-test-credentials"
-                    >
-                      {testCredentialsMutation.isPending ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                          Testing...
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="mr-2 h-4 w-4" />
-                          Test Credentials
-                        </>
-                      )}
-                    </Button>
-                    <Button
-                      onClick={handleSaveCredentials}
-                      disabled={saveCredentialsMutation.isPending || !screeningUsername || !screeningPassword}
-                      data-testid="button-save-credentials"
-                    >
-                      {saveCredentialsMutation.isPending ? (
-                        <>
-                          <div className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full mr-2" />
-                          Saving...
-                        </>
-                      ) : (
-                        <>
-                          <Save className="mr-2 h-4 w-4" />
-                          Save Credentials
-                        </>
-                      )}
-                    </Button>
-                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Western Verify credentials are configured by LeaseShield to ensure proper setup and security.
+                  </p>
                 </div>
               )}
               

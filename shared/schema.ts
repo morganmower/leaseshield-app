@@ -1487,6 +1487,8 @@ export const landlordScreeningCredentials = pgTable("landlord_screening_credenti
   status: screeningCredentialStatusEnum("status").default("pending_verification").notNull(),
   lastVerifiedAt: timestamp("last_verified_at"),
   lastErrorMessage: text("last_error_message"),
+  configuredBy: varchar("configured_by").references(() => users.id),
+  configuredAt: timestamp("configured_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
