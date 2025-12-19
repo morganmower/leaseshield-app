@@ -43,6 +43,7 @@ import {
 } from "@/components/ui/table";
 import {
   Users,
+  User,
   FileText,
   Building2,
   Clock,
@@ -775,21 +776,26 @@ export default function RentalSubmissions() {
                           <Badge className={statusColors[person.status] || ""}>
                             {statusLabels[person.status] || person.status}
                           </Badge>
-                          {person.role !== 'applicant' && (
-                            <Button
-                              size="icon"
-                              variant="ghost"
-                              onClick={() => {
-                                if (confirm(`Are you sure you want to remove ${person.firstName} ${person.lastName} from this application?`)) {
+                          <Button
+                            size="icon"
+                            variant="ghost"
+                            onClick={() => {
+                              const message = person.role === 'applicant' 
+                                ? `Are you sure you want to remove ${person.firstName} ${person.lastName}? This will delete the entire application.`
+                                : `Are you sure you want to remove ${person.firstName} ${person.lastName} from this application?`;
+                              if (confirm(message)) {
+                                if (person.role === 'applicant') {
+                                  setDeleteSubmissionId(selectedSubmission);
+                                } else {
                                   selectedSubmission && deletePersonMutation.mutate({ submissionId: selectedSubmission, personId: person.id });
                                 }
-                              }}
-                              disabled={deletePersonMutation.isPending}
-                              data-testid={`button-delete-person-${person.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-                          )}
+                              }
+                            }}
+                            disabled={deletePersonMutation.isPending}
+                            data-testid={`button-delete-person-${person.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-muted-foreground" />
+                          </Button>
                         </div>
                       </div>
                       
@@ -1263,34 +1269,97 @@ export default function RentalSubmissions() {
             <CardContent>
               {submissionDetail.events.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
-              ) : (
-                <div className="space-y-3">
-                  {submissionDetail.events.map((event) => {
-                    const metadata = event.metadataJson as any;
-                    const personId = metadata?.personId || metadata?.invitedPersonId;
-                    const person = personId ? submissionDetail.people.find(p => p.id === personId) : null;
-                    const personName = metadata?.personName || (person ? `${person.firstName} ${person.lastName}` : null);
-                    const personRole = person?.role ? roleLabels[person.role] : null;
-                    
-                    return (
-                      <div key={event.id} className="flex items-start gap-3 text-sm">
-                        <div className="w-2 h-2 mt-1.5 rounded-full bg-primary shrink-0" />
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <p className="font-medium capitalize">{event.eventType.replace(/_/g, " ")}</p>
-                            {personName && (
-                              <Badge variant="outline" className="text-xs">
-                                {personName}{personRole ? ` (${personRole})` : ''}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-muted-foreground text-xs">{formatDate(event.createdAt)}</p>
-                        </div>
+              ) : (() => {
+                const primaryApplicant = submissionDetail.people.find(p => p.role === 'applicant');
+                const otherPeople = submissionDetail.people.filter(p => p.role !== 'applicant');
+                
+                const getEventPerson = (event: any) => {
+                  const metadata = event.metadataJson as any;
+                  const personId = metadata?.personId || metadata?.invitedPersonId;
+                  return personId ? submissionDetail.people.find(p => p.id === personId) : null;
+                };
+                
+                const primaryEvents = submissionDetail.events.filter(e => {
+                  const person = getEventPerson(e);
+                  return !person || person.role === 'applicant';
+                });
+                
+                const otherEvents = submissionDetail.events.filter(e => {
+                  const person = getEventPerson(e);
+                  return person && person.role !== 'applicant';
+                });
+                
+                const renderEvent = (event: any) => {
+                  const metadata = event.metadataJson as any;
+                  const personId = metadata?.personId || metadata?.invitedPersonId;
+                  const person = personId ? submissionDetail.people.find(p => p.id === personId) : null;
+                  const personName = metadata?.personName || (person ? `${person.firstName} ${person.lastName}` : null);
+                  
+                  return (
+                    <div key={event.id} className="flex items-start gap-2 text-sm">
+                      <div className="w-1.5 h-1.5 mt-1.5 rounded-full bg-primary shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium capitalize text-xs">{event.eventType.replace(/_/g, " ")}</p>
+                        <p className="text-muted-foreground text-xs truncate">{formatDate(event.createdAt)}</p>
                       </div>
-                    );
-                  })}
-                </div>
-              )}
+                    </div>
+                  );
+                };
+                
+                return (
+                  <div className={`grid gap-4 ${otherPeople.length > 0 ? 'grid-cols-1 md:grid-cols-2' : 'grid-cols-1'}`}>
+                    {otherPeople.length > 0 && (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 pb-2 border-b">
+                          <Users className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-sm">Co-Applicants & Guarantors</span>
+                        </div>
+                        {otherPeople.map(person => {
+                          const personEvents = submissionDetail.events.filter(e => {
+                            const eventPerson = getEventPerson(e);
+                            return eventPerson?.id === person.id;
+                          });
+                          
+                          if (personEvents.length === 0) return null;
+                          
+                          return (
+                            <div key={person.id} className="bg-muted/30 rounded-md p-3">
+                              <div className="flex items-center gap-2 mb-2">
+                                <span className="text-sm font-medium">{person.firstName} {person.lastName}</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {roleLabels[person.role] || person.role}
+                                </Badge>
+                              </div>
+                              <div className="space-y-2">
+                                {personEvents.map(renderEvent)}
+                              </div>
+                            </div>
+                          );
+                        })}
+                        {otherEvents.length === 0 && (
+                          <p className="text-sm text-muted-foreground">No activity yet</p>
+                        )}
+                      </div>
+                    )}
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 pb-2 border-b">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-sm">
+                          {primaryApplicant ? `${primaryApplicant.firstName} ${primaryApplicant.lastName}` : 'Primary Applicant'}
+                        </span>
+                        <Badge variant="outline" className="text-xs">Applicant</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {primaryEvents.map(renderEvent)}
+                      </div>
+                      {primaryEvents.length === 0 && (
+                        <p className="text-sm text-muted-foreground">No activity yet</p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
             </CardContent>
           </Card>
         </div>
