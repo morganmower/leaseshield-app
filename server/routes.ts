@@ -4813,13 +4813,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Get landlord credentials
+      // Get landlord credentials and decrypt them
       const landlordCreds = await storage.getLandlordScreeningCredentials(userId);
-      const credentials = landlordCreds ? {
-        username: landlordCreds.username,
-        password: landlordCreds.password,
-        invitationId: landlordCreds.defaultInvitationId || undefined,
-      } : undefined;
+      let credentials: { username: string; password: string; invitationId?: string } | undefined;
+      
+      if (landlordCreds) {
+        try {
+          const { decryptCredentials } = await import('./crypto');
+          const decrypted = decryptCredentials({
+            encryptedUsername: landlordCreds.encryptedUsername,
+            encryptedPassword: landlordCreds.encryptedPassword,
+            encryptionIv: landlordCreds.encryptionIv,
+          });
+          credentials = {
+            username: decrypted.username,
+            password: decrypted.password,
+            invitationId: landlordCreds.defaultInvitationId || undefined,
+          };
+        } catch (e) {
+          console.error("Failed to decrypt landlord credentials:", e);
+        }
+      }
 
       // Check status from Western Verify
       const { checkOrderStatus } = await import('./digitalDelveService');
