@@ -4598,6 +4598,75 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Send custom notification email for a decision
+  app.post('/api/rental/submissions/:id/send-notification', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { subject, body } = req.body;
+      
+      if (!subject || !body) {
+        return res.status(400).json({ message: "Subject and body are required" });
+      }
+      
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the primary applicant
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      const primaryApplicant = people.find(p => p.role === 'applicant');
+      
+      if (!primaryApplicant?.email) {
+        return res.status(400).json({ message: "Primary applicant email not found" });
+      }
+
+      // Send custom email using the email service
+      await emailService.sendCustomDecisionEmail(
+        primaryApplicant.email,
+        subject,
+        body
+      );
+      
+      // Record the sent letter in decision letters table
+      const decision = await storage.getRentalDecision(submission.id);
+      if (decision) {
+        const letterType = decision.decision === 'approved' ? 'approval' : 'adverse_action';
+        await storage.createRentalDecisionLetter({
+          submissionId: submission.id,
+          decisionId: decision.id,
+          letterType: letterType as 'approval' | 'adverse_action',
+          templateBody: body, // Original template body
+          finalBody: body, // Final sent body (same in this case)
+          sentToEmail: primaryApplicant.email,
+          sentAt: new Date(),
+        });
+      }
+      
+      console.log(`✅ Custom decision notification sent to ${primaryApplicant.email}`);
+      
+      res.json({ success: true, message: "Notification sent successfully" });
+    } catch (error) {
+      console.error("Error sending notification:", error);
+      res.status(500).json({ message: "Failed to send notification" });
+    }
+  });
+
   // ============================================================
   // SCREENING ROUTES (DigitalDelve Integration)
   // ============================================================

@@ -214,6 +214,10 @@ export default function RentalSubmissions() {
   const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
   const [sendNoticeMyself, setSendNoticeMyself] = useState(false);
   const [filterTab, setFilterTab] = useState<"all" | "decided" | "pending">("all");
+  const [isLetterPreviewOpen, setIsLetterPreviewOpen] = useState(false);
+  const [draftLetterSubject, setDraftLetterSubject] = useState("");
+  const [draftLetterBody, setDraftLetterBody] = useState("");
+  const [savedDecisionId, setSavedDecisionId] = useState<string | null>(null);
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadPersonId, setUploadPersonId] = useState<string | null>(null);
   const [uploadFileType, setUploadFileType] = useState<string>("other");
@@ -398,12 +402,82 @@ export default function RentalSubmissions() {
     }) => {
       return apiRequest("POST", `/api/rental/submissions/${id}/decision`, { decision, notes, denialReasons, skipNotification });
     },
-    onSuccess: () => {
+    onSuccess: (data: any, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission] });
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "decision"] });
-      toast({ title: "Decision Recorded", description: `Application has been ${pendingDecision}.` });
+      
       setIsDecisionDialogOpen(false);
+      
+      // If user wants to send themselves, just show success toast
+      if (sendNoticeMyself) {
+        toast({ title: "Decision Recorded", description: `Application has been ${pendingDecision}. You'll send the notification yourself.` });
+        setDecisionNotes("");
+        setPendingDecision(null);
+        setSelectedDenialReasons([]);
+        setDenialReasonDetails({});
+        setSendNoticeMyself(false);
+      } else {
+        // Show letter preview for editing before sending
+        const isApproved = variables.decision === "approved";
+        const applicantName = submissionDetail?.people.find(p => p.role === "applicant")?.firstName || "Applicant";
+        const propertyName = submissionDetail?.propertyName || "the rental property";
+        
+        // Generate default letter content
+        const defaultSubject = isApproved 
+          ? "Great news! Your rental application has been approved"
+          : "Update on your rental application";
+        
+        const defaultBody = isApproved
+          ? `Dear ${applicantName},
+
+Great news! Your rental application for ${propertyName} has been approved.
+
+We will be in touch with you soon regarding next steps, including signing the lease and move-in details.
+
+Congratulations on your new home!
+
+Best regards`
+          : `Dear ${applicantName},
+
+Thank you for your interest in ${propertyName}.
+
+After careful consideration, we have decided not to move forward with your application at this time.
+
+If your application was denied based on information from a credit report or background check, you have the right to:
+- Request a free copy of the report used in making this decision
+- Dispute any inaccurate information with the reporting agency
+
+We wish you the best in your housing search.
+
+Best regards`;
+        
+        setDraftLetterSubject(defaultSubject);
+        setDraftLetterBody(defaultBody);
+        setSavedDecisionId(data?.id || null);
+        setIsLetterPreviewOpen(true);
+        toast({ title: "Decision Recorded", description: "Now you can review and edit the notification before sending." });
+      }
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to record decision.", 
+        variant: "destructive" 
+      });
+    },
+  });
+  
+  const sendNotificationMutation = useMutation({
+    mutationFn: async ({ submissionId, subject, body }: { submissionId: string; subject: string; body: string }) => {
+      return apiRequest("POST", `/api/rental/submissions/${submissionId}/send-notification`, { subject, body });
+    },
+    onSuccess: () => {
+      toast({ title: "Notification Sent", description: "The applicant has been notified." });
+      setIsLetterPreviewOpen(false);
+      setDraftLetterSubject("");
+      setDraftLetterBody("");
+      setSavedDecisionId(null);
       setDecisionNotes("");
       setPendingDecision(null);
       setSelectedDenialReasons([]);
@@ -413,7 +487,7 @@ export default function RentalSubmissions() {
     onError: (error: any) => {
       toast({ 
         title: "Error", 
-        description: error?.message || "Failed to record decision.", 
+        description: error?.message || "Failed to send notification.", 
         variant: "destructive" 
       });
     },
@@ -516,14 +590,39 @@ export default function RentalSubmissions() {
           }))
         : undefined;
       
+      // If landlord wants to send themselves, skip notification entirely (no preview)
+      // Otherwise, skip initially so we can show preview, then send after
       decisionMutation.mutate({
         id: selectedSubmission,
         decision: pendingDecision,
         notes: decisionNotes || undefined,
         denialReasons,
-        skipNotification: sendNoticeMyself,
+        skipNotification: true, // Always skip initially, we handle sending separately
       });
     }
+  };
+  
+  const handleSendNotification = () => {
+    if (selectedSubmission && draftLetterSubject && draftLetterBody) {
+      sendNotificationMutation.mutate({
+        submissionId: selectedSubmission,
+        subject: draftLetterSubject,
+        body: draftLetterBody,
+      });
+    }
+  };
+  
+  const handleSkipNotification = () => {
+    setIsLetterPreviewOpen(false);
+    setDraftLetterSubject("");
+    setDraftLetterBody("");
+    setSavedDecisionId(null);
+    setDecisionNotes("");
+    setPendingDecision(null);
+    setSelectedDenialReasons([]);
+    setDenialReasonDetails({});
+    setSendNoticeMyself(false);
+    toast({ title: "Notification Skipped", description: "The decision was recorded but no notification was sent." });
   };
 
   const handlePrint = () => {
@@ -1608,6 +1707,64 @@ export default function RentalSubmissions() {
               >
                 {uploadFileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Upload
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isLetterPreviewOpen} onOpenChange={setIsLetterPreviewOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>
+                Review & Send Notification
+              </DialogTitle>
+              <DialogDescription>
+                Edit the email below before sending it to the applicant. You can modify the subject and body as needed.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              <div>
+                <Label className="text-sm font-medium">Email Subject</Label>
+                <input
+                  type="text"
+                  value={draftLetterSubject}
+                  onChange={(e) => setDraftLetterSubject(e.target.value)}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  data-testid="input-letter-subject"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium">Email Body</Label>
+                <Textarea
+                  value={draftLetterBody}
+                  onChange={(e) => setDraftLetterBody(e.target.value)}
+                  rows={12}
+                  className="mt-1 font-mono text-sm"
+                  data-testid="input-letter-body"
+                />
+              </div>
+              <div className="bg-muted/50 rounded-md p-3">
+                <p className="text-xs text-muted-foreground">
+                  This email will be sent to the primary applicant: <strong>{submissionDetail?.people.find(p => p.role === "applicant")?.email}</strong>
+                </p>
+              </div>
+            </div>
+            <DialogFooter className="gap-2">
+              <Button 
+                variant="outline" 
+                onClick={handleSkipNotification}
+                data-testid="button-skip-notification"
+              >
+                Skip Notification
+              </Button>
+              <Button
+                onClick={handleSendNotification}
+                disabled={sendNotificationMutation.isPending || !draftLetterSubject || !draftLetterBody}
+                data-testid="button-send-notification"
+              >
+                {sendNotificationMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Mail className="h-4 w-4 mr-1" />
+                Send Email
               </Button>
             </DialogFooter>
           </DialogContent>

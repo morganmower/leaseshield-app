@@ -534,6 +534,46 @@ LeaseShield App
     return this.sendEmail(applicant, template);
   }
 
+  async sendCustomDecisionEmail(
+    recipientEmail: string, 
+    subject: string,
+    body: string
+  ): Promise<boolean> {
+    const htmlBody = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 8px; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="content">
+      ${body.split('\n').map(line => `<p style="margin: 0 0 12px 0;">${line || '&nbsp;'}</p>`).join('')}
+    </div>
+    
+    <div class="footer">
+      <p>This message was sent via LeaseShield App on behalf of the property owner.</p>
+    </div>
+  </div>
+</body>
+</html>
+    `;
+
+    const template: EmailTemplate = {
+      subject,
+      textBody: body,
+      htmlBody,
+    };
+
+    return this.sendEmail({ email: recipientEmail }, template);
+  }
+
   async sendTrialExpiredEmail(user: EmailRecipient): Promise<boolean> {
     const firstName = user.firstName || 'there';
 
