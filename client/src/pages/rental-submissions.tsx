@@ -1232,15 +1232,30 @@ export default function RentalSubmissions() {
                 <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
               ) : (
                 <div className="space-y-3">
-                  {submissionDetail.events.map((event) => (
-                    <div key={event.id} className="flex items-start gap-3 text-sm">
-                      <div className="w-2 h-2 mt-1.5 rounded-full bg-primary shrink-0" />
-                      <div>
-                        <p className="font-medium">{event.eventType.replace(/_/g, " ")}</p>
-                        <p className="text-muted-foreground text-xs">{formatDate(event.createdAt)}</p>
+                  {submissionDetail.events.map((event) => {
+                    const metadata = event.metadataJson as any;
+                    const personId = metadata?.personId || metadata?.invitedPersonId;
+                    const person = personId ? submissionDetail.people.find(p => p.id === personId) : null;
+                    const personName = metadata?.personName || (person ? `${person.firstName} ${person.lastName}` : null);
+                    const personRole = person?.role ? roleLabels[person.role] : null;
+                    
+                    return (
+                      <div key={event.id} className="flex items-start gap-3 text-sm">
+                        <div className="w-2 h-2 mt-1.5 rounded-full bg-primary shrink-0" />
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <p className="font-medium capitalize">{event.eventType.replace(/_/g, " ")}</p>
+                            {personName && (
+                              <Badge variant="outline" className="text-xs">
+                                {personName}{personRole ? ` (${personRole})` : ''}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-muted-foreground text-xs">{formatDate(event.createdAt)}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
