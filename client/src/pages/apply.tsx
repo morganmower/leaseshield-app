@@ -611,7 +611,7 @@ export default function Apply() {
       <div className="max-w-3xl mx-auto p-4 sm:p-8">
         {/* Header */}
         <div className="text-center mb-8">
-          <Logo variant="stacked" size="xl" className="mx-auto mb-4" />
+          <Logo variant="stacked" className="h-64 w-auto mx-auto mb-4" />
           <h1 className="text-2xl font-bold text-foreground">
             {linkData.propertyName}
             {linkData.unitLabel && <span className="text-muted-foreground font-normal"> - {linkData.unitLabel}</span>}
