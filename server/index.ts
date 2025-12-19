@@ -2,6 +2,7 @@ import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import { scheduledJobs } from "./scheduledJobs";
+import { startScreeningPoller, stopScreeningPoller } from "./screeningPoller";
 import { closePool } from "./db";
 import { validateEnv } from "./utils/env";
 import { RateLimiter } from "./utils/validation";
@@ -301,6 +302,7 @@ app.use((req, res, next) => {
     // This ensures the server is fully ready before heavy operations begin
     setTimeout(() => {
       scheduledJobs.start();
+      startScreeningPoller();
     }, 15000); // 15 second delay for reliable health check passing
   });
 
@@ -311,6 +313,7 @@ app.use((req, res, next) => {
     try {
       // Stop scheduled jobs first
       scheduledJobs.stop();
+      stopScreeningPoller();
 
       // Close HTTP server
       await new Promise<void>((resolve, reject) => {

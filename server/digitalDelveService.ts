@@ -587,6 +587,11 @@ export async function processScreeningRequest(
   const statusPostUrl = `${baseUrl}/api/webhooks/digitaldelve/status${tokenParam}`;
   const resultPostUrl = `${baseUrl}/api/webhooks/digitaldelve/result${tokenParam}`;
 
+  // Initialize polling fields - poll for 48 hours, first check in 2 minutes
+  const now = new Date();
+  const nextStatusCheckAt = new Date(now.getTime() + 2 * 60 * 1000); // 2 minutes
+  const pollUntil = new Date(now.getTime() + 48 * 60 * 60 * 1000); // 48 hours
+  
   const order = await storage.createRentalScreeningOrder({
     submissionId,
     personId: personId || null,
@@ -598,6 +603,10 @@ export async function processScreeningRequest(
     rawStatusXml: null,
     rawResultXml: null,
     errorMessage: null,
+    lastStatusCheckAt: null,
+    nextStatusCheckAt,
+    pollUntil,
+    consecutiveFailures: 0,
   });
 
   const result = await sendAppScreenRequest({
@@ -610,11 +619,11 @@ export async function processScreeningRequest(
   });
 
   if (result.success) {
-    await storage.updateRentalScreeningOrder(order.id, {
+    const updatedOrder = await storage.updateRentalScreeningOrder(order.id, {
       status: "sent",
     });
     
-    return { success: true, order };
+    return { success: true, order: updatedOrder || order };
   } else {
     await storage.updateRentalScreeningOrder(order.id, {
       status: "error",

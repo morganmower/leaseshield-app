@@ -46,7 +46,7 @@ async function updateSubmissionStatusFromScreening(submissionId: string): Promis
     
     const statusOrder = ['started', 'submitted', 'screening_requested', 'in_progress', 'complete'];
     if (newStatus && statusOrder.indexOf(newStatus) > statusOrder.indexOf(submission.status)) {
-      await storage.updateRentalSubmission(submissionId, { status: newStatus });
+      await storage.updateRentalSubmission(submissionId, { status: newStatus as any });
       console.log(`[Poller] Updated submission ${submissionId} status to ${newStatus}`);
     }
   } catch (error) {
