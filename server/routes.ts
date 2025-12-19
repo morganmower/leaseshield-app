@@ -5208,6 +5208,58 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Get application link data by ID (for invite flows)
+  app.get('/api/apply/link/:linkId', async (req, res) => {
+    try {
+      const link = await storage.getRentalApplicationLink(req.params.linkId);
+      
+      if (!link) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      
+      if (!link.isActive) {
+        return res.status(410).json({ message: "This application link is no longer active" });
+      }
+      
+      if (link.expiresAt && new Date(link.expiresAt) < new Date()) {
+        return res.status(410).json({ message: "This application link has expired" });
+      }
+
+      // Get document requirements for this link
+      const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
+
+      // Get the property state via unit -> property chain
+      let propertyState: string | null = null;
+      if (link.unitId) {
+        const unit = await storage.getRentalUnit(link.unitId);
+        if (unit?.propertyId) {
+          const property = await storage.getRentalPropertyById(unit.propertyId);
+          propertyState = property?.state || null;
+        }
+      }
+
+      // Get active compliance rules for this state
+      const complianceRules = propertyState 
+        ? await storage.getActiveComplianceRulesForState(propertyState)
+        : await storage.getActiveComplianceRulesForState('ALL');
+
+      // Return only the merged schema (cover page + fields) - no sensitive data
+      res.json({
+        id: link.id,
+        propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
+        unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
+        coverPage: (link.mergedSchemaJson as any)?.coverPage,
+        fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        documentRequirements,
+        propertyState,
+        complianceRules,
+      });
+    } catch (error) {
+      console.error("Error getting application link by ID:", error);
+      res.status(500).json({ message: "Failed to load application" });
+    }
+  });
+
   // Start a new rental submission
   app.post('/api/apply/:token/start', async (req, res) => {
     try {
@@ -5305,6 +5357,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         formData: person.formJson,
         submissionStatus: submission?.status || "started",
         isCompleted: person.isCompleted, // Person's individual completion status
+        applicationLinkId: submission?.applicationLinkId || null, // For invite flows to fetch link data
       });
     } catch (error) {
       console.error("Error getting person data:", error);

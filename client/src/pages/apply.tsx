@@ -389,9 +389,9 @@ export default function Apply() {
     enabled: !!personToken,
   });
 
-  // Fetch application link data (skip for invite flow until we get link ID from person data)
+  // Fetch application link data for direct link flow
   const linkToken = isInviteFlow ? null : token;
-  const { data: linkData, isLoading: isLoadingLink, error: linkError } = useQuery<ApplicationLinkData>({
+  const { data: directLinkData, isLoading: isLoadingDirectLink, error: directLinkError } = useQuery<ApplicationLinkData>({
     queryKey: ["/api/apply", linkToken],
     queryFn: async () => {
       const res = await fetch(`/api/apply/${linkToken}`);
@@ -403,6 +403,26 @@ export default function Apply() {
     },
     enabled: !!linkToken && !isInviteFlow,
   });
+
+  // Fetch application link data for invite flow (using applicationLinkId from person data)
+  const inviteAppLinkId = personData?.applicationLinkId;
+  const { data: inviteLinkData, isLoading: isLoadingInviteLink, error: inviteLinkError } = useQuery<ApplicationLinkData>({
+    queryKey: ["/api/apply/link", inviteAppLinkId],
+    queryFn: async () => {
+      const res = await fetch(`/api/apply/link/${inviteAppLinkId}`);
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.message || "Failed to load application");
+      }
+      return res.json();
+    },
+    enabled: isInviteFlow && !!inviteAppLinkId,
+  });
+
+  // Use the appropriate link data based on flow type
+  const linkData = isInviteFlow ? inviteLinkData : directLinkData;
+  const isLoadingLink = isInviteFlow ? (isLoadingPerson || isLoadingInviteLink) : isLoadingDirectLink;
+  const linkError = isInviteFlow ? inviteLinkError : directLinkError;
 
   // Initialize form data from saved data
   useEffect(() => {
