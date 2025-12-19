@@ -360,8 +360,8 @@ export default function Apply() {
   const [location] = useLocation();
   const { toast } = useToast();
   
-  // Detect if this is an invite flow (/apply/join/:token) vs regular (/apply/:token)
-  const isInviteFlow = location.startsWith('/apply/join/');
+  // Detect if this is an invite flow (/apply/join/:token or /apply/person/:token) vs regular (/apply/:token)
+  const isInviteFlow = location.startsWith('/apply/join/') || location.startsWith('/apply/person/');
   const token = location.split('/').pop() || '';
   
   const [currentStep, setCurrentStep] = useState(0);

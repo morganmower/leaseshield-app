@@ -106,6 +106,7 @@ function Router() {
         {/* Public application form */}
         <Route path="/apply/:token" component={Apply} />
         <Route path="/apply/join/:token" component={Apply} />
+        <Route path="/apply/person/:token" component={Apply} />
         {/* Redirect protected routes to login */}
         <Route path="/dashboard">{() => <Redirect to="/login" />}</Route>
         <Route path="/templates">{() => <Redirect to="/login" />}</Route>
@@ -155,6 +156,7 @@ function Router() {
       {/* Public application form (also accessible when logged in) */}
       <Route path="/apply/:token" component={Apply} />
       <Route path="/apply/join/:token" component={Apply} />
+      <Route path="/apply/person/:token" component={Apply} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening" component={Screening} />
       <Route path="/tenant-issues" component={TenantIssues} />
