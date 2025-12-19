@@ -233,13 +233,45 @@ export default function Properties() {
     setIsEditDialogOpen(true);
   };
 
+  // Quick link mutation - uses existing unit or creates one automatically
+  const quickLinkMutation = useMutation({
+    mutationFn: async (propertyId: string) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/rental/properties/${propertyId}/quick-link`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to create link");
+      return response.json();
+    },
+    onSuccess: (result, propertyId) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", propertyId, "units"] });
+      if (result.unit?.id) {
+        queryClient.invalidateQueries({ queryKey: ["/api/rental/units", result.unit.id, "links"] });
+      }
+      if (result.link?.publicToken) {
+        const url = `${window.location.origin}/apply/${result.link.publicToken}`;
+        navigator.clipboard.writeText(url);
+        toast({ title: "Application Link Created", description: "Link has been copied to your clipboard!" });
+        setExpandedPropertyId(propertyId);
+      }
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create application link.", variant: "destructive" });
+    },
+  });
+
   const handleAddUnit = (propertyId: string, createLinkImmediately?: boolean) => {
-    setAddUnitPropertyId(propertyId);
-    setUnitForm({ unitLabel: "" });
-    
     if (createLinkImmediately) {
-      createUnitMutation.mutate({ propertyId, data: { unitLabel: "" }, createLink: true });
+      // Use quick-link endpoint that reuses existing unit
+      quickLinkMutation.mutate(propertyId);
     } else {
+      setAddUnitPropertyId(propertyId);
+      setUnitForm({ unitLabel: "" });
       setIsAddUnitOpen(true);
     }
   };

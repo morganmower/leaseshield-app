@@ -3968,6 +3968,57 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Create application link at property level - reuses existing unit or creates one
+  app.post('/api/rental/properties/:propertyId/quick-link', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const property = await storage.getRentalProperty(req.params.propertyId, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Check for existing units
+      const existingUnits = await storage.getRentalUnitsByPropertyId(req.params.propertyId);
+      
+      let unit;
+      let unitCreated = false;
+      
+      if (existingUnits.length > 0) {
+        // Use the first existing unit
+        unit = existingUnits[0];
+      } else {
+        // Create a default "Main Unit" 
+        unit = await storage.createRentalUnit({
+          propertyId: req.params.propertyId,
+          unitLabel: "Main Unit",
+          coverPageOverrideEnabled: false,
+          coverPageOverrideJson: null,
+          fieldSchemaOverrideEnabled: false,
+          fieldSchemaOverrideJson: null,
+        });
+        unitCreated = true;
+      }
+
+      // Create the application link
+      const publicToken = randomUUID().replace(/-/g, '');
+      const coverPage = property.defaultCoverPageJson;
+      const fieldSchema = property.defaultFieldSchemaJson;
+      
+      const link = await storage.createRentalApplicationLink({
+        unitId: unit.id,
+        publicToken,
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "" },
+        isActive: true,
+        expiresAt: null,
+      });
+
+      res.status(201).json({ unit, link, unitCreated });
+    } catch (error) {
+      console.error("Error creating quick link:", error);
+      res.status(500).json({ message: "Failed to create application link" });
+    }
+  });
+
   app.post('/api/rental/properties/:propertyId/units', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
