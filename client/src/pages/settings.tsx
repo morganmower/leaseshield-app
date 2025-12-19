@@ -690,26 +690,40 @@ export default function Settings() {
                       </div>
                     </div>
                     
-                    {testInvitations.length > 0 && (
-                      <div>
-                        <Label htmlFor="screening-invitation">Screening Package (Optional)</Label>
-                        <Select value={selectedInvitation} onValueChange={setSelectedInvitation}>
-                          <SelectTrigger id="screening-invitation" data-testid="select-screening-invitation">
-                            <SelectValue placeholder="Select a screening package" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {testInvitations.map((inv) => (
-                              <SelectItem key={inv.id} value={inv.id}>
-                                {inv.name}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Choose which screening package to use by default
-                        </p>
-                      </div>
-                    )}
+                    <div>
+                      <Label htmlFor="screening-invitation">Invitation ID (Optional)</Label>
+                      {testInvitations.length > 0 ? (
+                        <>
+                          <Select value={selectedInvitation} onValueChange={setSelectedInvitation}>
+                            <SelectTrigger id="screening-invitation" data-testid="select-screening-invitation">
+                              <SelectValue placeholder="Select a screening package" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {testInvitations.map((inv) => (
+                                <SelectItem key={inv.id} value={inv.id}>
+                                  {inv.name}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Or enter manually below if your package isn't listed
+                          </p>
+                        </>
+                      ) : null}
+                      <Input
+                        id="screening-invitation-manual"
+                        type="text"
+                        placeholder="e.g., BC7CD693-6E88-4DB5-810B-B25B53D28245"
+                        value={selectedInvitation}
+                        onChange={(e) => setSelectedInvitation(e.target.value)}
+                        className="mt-2"
+                        data-testid="input-screening-invitation"
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Your Western Verify invitation/configuration ID
+                      </p>
+                    </div>
                   </div>
                   
                   <div className="flex flex-wrap gap-2 justify-end">
