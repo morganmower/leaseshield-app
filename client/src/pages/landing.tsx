@@ -1418,11 +1418,11 @@ export default function Landing() {
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
+                  <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Screening steps checklist</span>
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
@@ -1478,11 +1478,11 @@ export default function Landing() {
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
+                  <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Screening steps checklist</span>
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-start gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
