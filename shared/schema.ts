@@ -1468,6 +1468,36 @@ export const insertRentalApplicationEventSchema = createInsertSchema(rentalAppli
 export type InsertRentalApplicationEvent = z.infer<typeof insertRentalApplicationEventSchema>;
 export type RentalApplicationEvent = typeof rentalApplicationEvents.$inferSelect;
 
+// Landlord screening credentials (Western Verify / Digital Delve)
+export const screeningCredentialStatusEnum = pgEnum('screening_credential_status', [
+  'not_configured',
+  'pending_verification',
+  'verified',
+  'failed',
+]);
+
+export const landlordScreeningCredentials = pgTable("landlord_screening_credentials", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }).unique(),
+  encryptedUsername: text("encrypted_username").notNull(),
+  encryptedPassword: text("encrypted_password").notNull(),
+  encryptionIv: text("encryption_iv").notNull(),
+  defaultInvitationId: varchar("default_invitation_id"),
+  status: screeningCredentialStatusEnum("status").default("pending_verification").notNull(),
+  lastVerifiedAt: timestamp("last_verified_at"),
+  lastErrorMessage: text("last_error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertLandlordScreeningCredentialsSchema = createInsertSchema(landlordScreeningCredentials).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertLandlordScreeningCredentials = z.infer<typeof insertLandlordScreeningCredentialsSchema>;
+export type LandlordScreeningCredentials = typeof landlordScreeningCredentials.$inferSelect;
+
 // Default cover page template
 export const defaultCoverPageTemplate = {
   title: "Rental Application Requirements",
