@@ -502,7 +502,7 @@ export default function RentalSubmissions() {
         decision: pendingDecision,
         notes: decisionNotes || undefined,
         denialReasons,
-        skipNotification: pendingDecision === "denied" && sendNoticeMyself,
+        skipNotification: sendNoticeMyself,
       });
     }
   };
@@ -1255,11 +1255,32 @@ export default function RentalSubmissions() {
               </DialogTitle>
               <DialogDescription>
                 {pendingDecision === "approved"
-                  ? "This will notify the applicant that their application has been approved."
+                  ? "Record the approval and optionally notify the applicant."
                   : "Record the denial and optionally send an adverse action notice."}
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+              {pendingDecision === "approved" && (
+                <div className="flex items-start gap-3">
+                  <Checkbox
+                    id="send-approval-myself"
+                    checked={sendNoticeMyself}
+                    onCheckedChange={(checked) => setSendNoticeMyself(checked === true)}
+                    data-testid="checkbox-send-approval-myself"
+                  />
+                  <div className="flex-1">
+                    <Label 
+                      htmlFor="send-approval-myself"
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      I will notify the applicant myself
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Check this if you prefer to send the approval notification yourself instead of using the automated email.
+                    </p>
+                  </div>
+                </div>
+              )}
               {pendingDecision === "denied" && (
                 <div>
                   <div className="bg-amber-50 dark:bg-amber-950 border border-amber-200 dark:border-amber-800 rounded-md p-3 mb-4">
