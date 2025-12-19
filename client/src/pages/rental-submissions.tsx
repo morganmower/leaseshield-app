@@ -322,11 +322,19 @@ export default function RentalSubmissions() {
       }
     },
     onError: (error: any) => {
-      toast({ 
-        title: "Error", 
-        description: error?.message || "Failed to check status.", 
-        variant: "destructive" 
-      });
+      const errorMessage = error?.message || "Failed to check status.";
+      if (errorMessage.includes("Application Error")) {
+        toast({ 
+          title: "Status Check Unavailable", 
+          description: "Western Verify's API is temporarily unable to return status. The screening is still processing - status updates will arrive automatically via webhook.", 
+        });
+      } else {
+        toast({ 
+          title: "Error", 
+          description: errorMessage, 
+          variant: "destructive" 
+        });
+      }
     },
   });
 
