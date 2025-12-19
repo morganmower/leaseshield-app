@@ -256,7 +256,11 @@ export default function Properties() {
       if (result.link?.publicToken) {
         const url = `${window.location.origin}/apply/${result.link.publicToken}`;
         navigator.clipboard.writeText(url);
-        toast({ title: "Application Link Created", description: "Link has been copied to your clipboard!" });
+        if (result.reused) {
+          toast({ title: "Link Copied!", description: "Your existing application link has been copied to clipboard." });
+        } else {
+          toast({ title: "Link Created!", description: "New application link copied to your clipboard!" });
+        }
         setExpandedPropertyId(propertyId);
       }
     },

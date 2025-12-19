@@ -3968,7 +3968,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // Create application link at property level - reuses existing unit or creates one
+  // Create application link at property level - reuses existing unit and link if available
   app.post('/api/rental/properties/:propertyId/quick-link', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3986,6 +3986,15 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       if (existingUnits.length > 0) {
         // Use the first existing unit
         unit = existingUnits[0];
+        
+        // Check if this unit already has an active link
+        const existingLinks = await storage.getRentalApplicationLinksByUnitId(unit.id);
+        const activeLink = existingLinks.find(l => l.isActive);
+        
+        if (activeLink) {
+          // Return the existing link instead of creating a duplicate
+          return res.status(200).json({ unit, link: activeLink, unitCreated: false, reused: true });
+        }
       } else {
         // Create a default "Main Unit" 
         unit = await storage.createRentalUnit({
