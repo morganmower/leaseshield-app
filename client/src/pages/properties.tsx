@@ -866,9 +866,36 @@ function PropertyCard({
 function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }) {
   const { toast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editLabel, setEditLabel] = useState(unit.unitLabel || "");
   
   const { data: links = [] } = useQuery<RentalApplicationLink[]>({
     queryKey: ["/api/rental/units", unit.id, "links"],
+  });
+
+  const updateUnitMutation = useMutation({
+    mutationFn: async (newLabel: string) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/rental/units/${unit.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: "include",
+        body: JSON.stringify({ unitLabel: newLabel }),
+      });
+      if (!response.ok) throw new Error("Failed to update unit");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", propertyId, "units"] });
+      toast({ title: "Unit Renamed", description: "The unit name has been updated." });
+      setIsEditing(false);
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to rename unit.", variant: "destructive" });
+    },
   });
 
   const createLinkMutation = useMutation({
@@ -934,7 +961,58 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
           <Home className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium text-sm">{unit.unitLabel || "Main Unit"}</span>
+          {isEditing ? (
+            <div className="flex items-center gap-1">
+              <Input
+                value={editLabel}
+                onChange={(e) => setEditLabel(e.target.value)}
+                placeholder="e.g., Apt A, Unit 101"
+                className="h-7 w-32 text-sm"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    updateUnitMutation.mutate(editLabel);
+                  } else if (e.key === "Escape") {
+                    setIsEditing(false);
+                    setEditLabel(unit.unitLabel || "");
+                  }
+                }}
+                data-testid={`input-edit-unit-${unit.id}`}
+              />
+              <Button
+                size="sm"
+                onClick={() => updateUnitMutation.mutate(editLabel)}
+                disabled={updateUnitMutation.isPending}
+                data-testid={`button-save-unit-${unit.id}`}
+              >
+                Save
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setIsEditing(false);
+                  setEditLabel(unit.unitLabel || "");
+                }}
+                data-testid={`button-cancel-edit-unit-${unit.id}`}
+              >
+                Cancel
+              </Button>
+            </div>
+          ) : (
+            <div className="flex items-center gap-1">
+              <span className="font-medium text-sm">{unit.unitLabel || "Main Unit"}</span>
+              <Button
+                size="icon"
+                variant="ghost"
+                className="h-6 w-6"
+                onClick={() => setIsEditing(true)}
+                data-testid={`button-edit-unit-${unit.id}`}
+              >
+                <Edit className="h-3 w-3" />
+              </Button>
+            </div>
+          )}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {activeLinks.length > 0 ? (
