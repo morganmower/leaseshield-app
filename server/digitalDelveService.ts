@@ -445,9 +445,9 @@ export async function checkOrderStatus(
       }
     }
     
-    if (reportId || reportUrl) {
-      normalizedStatus = 'complete';
-    }
+    // NOTE: Do NOT mark as complete just because reportId/reportUrl exists
+    // The status must be explicitly "complete" from the API response
+    // reportId/reportUrl can be present before the actual report is ready
     
     return {
       success: true,

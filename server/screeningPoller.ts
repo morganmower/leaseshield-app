@@ -1,5 +1,5 @@
 import { storage } from "./storage";
-import { checkOrderStatus, getViewReportByRefSsoUrl } from "./digitalDelveService";
+import { checkOrderStatus } from "./digitalDelveService";
 import { decryptCredentials } from "./crypto";
 
 const POLL_INTERVAL_MS = 60 * 1000; // Check every minute
@@ -114,46 +114,30 @@ async function pollSingleOrder(order: any): Promise<void> {
       
       await updateSubmissionStatusFromScreening(order.submissionId);
     } else {
-      // Try fallback to get report URL
-      console.log(`[Poller] Status check failed for ${orderId}, trying report URL fallback...`);
-      const reportResult = await getViewReportByRefSsoUrl(order.referenceNumber);
+      // Status check failed - increment failures and apply exponential backoff
+      // Do NOT use getViewReportByRefSsoUrl as fallback - it incorrectly marked pending as complete
+      const failures = (order.consecutiveFailures || 0) + 1;
+      const backoffMs = Math.min(
+        INITIAL_RETRY_DELAY_MS * Math.pow(2, failures - 1),
+        MAX_RETRY_DELAY_MS
+      );
       
-      if (reportResult.success && reportResult.url) {
-        console.log(`[Poller] Report URL found for ${orderId} - marking complete`);
+      if (failures >= MAX_CONSECUTIVE_FAILURES) {
+        console.error(`[Poller] Order ${orderId} exceeded max failures, marking as error`);
         await storage.updateRentalScreeningOrder(orderId, {
-          status: 'complete',
-          reportUrl: reportResult.url,
+          status: 'error',
+          errorMessage: 'Status check failed after multiple attempts',
           lastStatusCheckAt: now,
-          consecutiveFailures: 0,
+          consecutiveFailures: failures,
           nextStatusCheckAt: null, // Stop polling
         });
-        
-        await updateSubmissionStatusFromScreening(order.submissionId);
       } else {
-        // Failed - increment failures and apply exponential backoff
-        const failures = (order.consecutiveFailures || 0) + 1;
-        const backoffMs = Math.min(
-          INITIAL_RETRY_DELAY_MS * Math.pow(2, failures - 1),
-          MAX_RETRY_DELAY_MS
-        );
-        
-        if (failures >= MAX_CONSECUTIVE_FAILURES) {
-          console.error(`[Poller] Order ${orderId} exceeded max failures, marking as error`);
-          await storage.updateRentalScreeningOrder(orderId, {
-            status: 'error',
-            errorMessage: 'Status check failed after multiple attempts',
-            lastStatusCheckAt: now,
-            consecutiveFailures: failures,
-            nextStatusCheckAt: null, // Stop polling
-          });
-        } else {
-          console.log(`[Poller] Order ${orderId} failed (attempt ${failures}), next check in ${backoffMs / 1000}s`);
-          await storage.updateRentalScreeningOrder(orderId, {
-            lastStatusCheckAt: now,
-            consecutiveFailures: failures,
-            nextStatusCheckAt: new Date(now.getTime() + backoffMs),
-          });
-        }
+        console.log(`[Poller] Order ${orderId} status check failed (attempt ${failures}), next check in ${backoffMs / 1000}s`);
+        await storage.updateRentalScreeningOrder(orderId, {
+          lastStatusCheckAt: now,
+          consecutiveFailures: failures,
+          nextStatusCheckAt: new Date(now.getTime() + backoffMs),
+        });
       }
     }
   } catch (error) {

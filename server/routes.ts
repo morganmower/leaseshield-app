@@ -5036,31 +5036,14 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           order: updatedOrder,
         });
       } else {
-        // Fallback: Try to get the report URL - if successful, the screening is complete
-        console.log("[Check Status] Status API failed, trying report URL fallback...");
-        const reportResult = await getViewReportByRefSsoUrl(order.referenceNumber);
-        
-        if (reportResult.success && reportResult.url) {
-          console.log("[Check Status] Report URL retrieved successfully - marking as complete");
-          const updatedOrder = await storage.updateRentalScreeningOrder(order.id, {
-            status: 'complete',
-            reportUrl: reportResult.url,
-          });
-          
-          // Auto-update submission status based on screening progress
-          await updateSubmissionStatusFromScreening(order.submissionId);
-          
-          res.json({ 
-            success: true, 
-            status: 'complete',
-            order: updatedOrder,
-          });
-        } else {
-          res.status(500).json({ 
-            success: false,
-            message: result.error || "Failed to check status" 
-          });
-        }
+        // Status check failed - return error without changing status
+        // Do NOT use getViewReportByRefSsoUrl as fallback to mark complete
+        // That approach was incorrectly marking pending screenings as complete
+        console.log("[Check Status] Status API failed for order", order.id);
+        res.status(500).json({ 
+          success: false,
+          message: result.error || "Failed to check status - please try again later" 
+        });
       }
     } catch (error) {
       console.error("Error checking screening status:", error);
