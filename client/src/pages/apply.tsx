@@ -44,6 +44,7 @@ import {
   PawPrint,
   Plus,
   Car,
+  X,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -1074,66 +1075,184 @@ export default function Apply() {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="space-y-2">
-                  <Label>Current Employer *</Label>
-                  <Input
-                    value={formData.employer || ""}
-                    onChange={(e) => updateField("employer", e.target.value)}
-                    data-testid="input-employment-employer"
+                <div className="flex items-center gap-2 p-3 bg-muted/50 rounded-lg">
+                  <Checkbox
+                    id="notCurrentlyEmployed"
+                    checked={formData.notCurrentlyEmployed === true}
+                    onCheckedChange={(checked) => updateField("notCurrentlyEmployed", checked)}
+                    data-testid="checkbox-not-employed"
                   />
+                  <Label htmlFor="notCurrentlyEmployed" className="cursor-pointer text-sm">
+                    I am not currently employed
+                  </Label>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Job Title *</Label>
-                  <Input
-                    value={formData.jobTitle || ""}
-                    onChange={(e) => updateField("jobTitle", e.target.value)}
-                    data-testid="input-employment-title"
-                  />
-                </div>
+                {!formData.notCurrentlyEmployed && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Current Employer *</Label>
+                      <Input
+                        value={formData.employer || ""}
+                        onChange={(e) => updateField("employer", e.target.value)}
+                        data-testid="input-employment-employer"
+                      />
+                    </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Start Date</Label>
-                    <Input
-                      type="text"
-                      placeholder="MM/YYYY"
-                      value={formatMonthYear(formData.employmentStart || "")}
-                      onChange={(e) => updateMonthYearField("employmentStart", e.target.value)}
-                      maxLength={7}
-                      data-testid="input-employment-start"
-                    />
+                    <div className="space-y-2">
+                      <Label>Job Title *</Label>
+                      <Input
+                        value={formData.jobTitle || ""}
+                        onChange={(e) => updateField("jobTitle", e.target.value)}
+                        data-testid="input-employment-title"
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="text"
+                          placeholder="MM/YYYY"
+                          value={formatMonthYear(formData.employmentStart || "")}
+                          onChange={(e) => updateMonthYearField("employmentStart", e.target.value)}
+                          maxLength={7}
+                          data-testid="input-employment-start"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Monthly Income *</Label>
+                        <Input
+                          type="number"
+                          value={formData.monthlyIncome || ""}
+                          onChange={(e) => updateField("monthlyIncome", e.target.value)}
+                          placeholder="5000"
+                          data-testid="input-employment-income"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Supervisor Name</Label>
+                      <Input
+                        value={formData.supervisorName || ""}
+                        onChange={(e) => updateField("supervisorName", e.target.value)}
+                        data-testid="input-employment-supervisor"
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Supervisor Phone</Label>
+                      <Input
+                        type="tel"
+                        value={formData.supervisorPhone || ""}
+                        onChange={(e) => updateField("supervisorPhone", e.target.value)}
+                        data-testid="input-employment-supervisorphone"
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* Previous Employers Section */}
+                {(formData.previousEmployers || []).map((emp: any, index: number) => (
+                  <div key={index} className="pt-4 border-t space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-sm text-muted-foreground">Previous Employer {index + 1}</h3>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          const updated = [...(formData.previousEmployers || [])];
+                          updated.splice(index, 1);
+                          updateField("previousEmployers", updated);
+                        }}
+                        data-testid={`button-remove-employer-${index}`}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Employer Name *</Label>
+                      <Input
+                        value={emp.employer || ""}
+                        onChange={(e) => {
+                          const updated = [...(formData.previousEmployers || [])];
+                          updated[index] = { ...updated[index], employer: e.target.value };
+                          updateField("previousEmployers", updated);
+                        }}
+                        data-testid={`input-prev-employer-${index}`}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Job Title</Label>
+                      <Input
+                        value={emp.jobTitle || ""}
+                        onChange={(e) => {
+                          const updated = [...(formData.previousEmployers || [])];
+                          updated[index] = { ...updated[index], jobTitle: e.target.value };
+                          updateField("previousEmployers", updated);
+                        }}
+                        data-testid={`input-prev-title-${index}`}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Start Date</Label>
+                        <Input
+                          type="text"
+                          placeholder="MM/YYYY"
+                          value={formatMonthYear(emp.startDate || "")}
+                          onChange={(e) => {
+                            const updated = [...(formData.previousEmployers || [])];
+                            const raw = e.target.value.replace(/\D/g, "");
+                            let formatted = raw;
+                            if (raw.length >= 2) {
+                              formatted = raw.slice(0, 2) + "/" + raw.slice(2, 6);
+                            }
+                            updated[index] = { ...updated[index], startDate: formatted };
+                            updateField("previousEmployers", updated);
+                          }}
+                          maxLength={7}
+                          data-testid={`input-prev-start-${index}`}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>End Date</Label>
+                        <Input
+                          type="text"
+                          placeholder="MM/YYYY"
+                          value={formatMonthYear(emp.endDate || "")}
+                          onChange={(e) => {
+                            const updated = [...(formData.previousEmployers || [])];
+                            const raw = e.target.value.replace(/\D/g, "");
+                            let formatted = raw;
+                            if (raw.length >= 2) {
+                              formatted = raw.slice(0, 2) + "/" + raw.slice(2, 6);
+                            }
+                            updated[index] = { ...updated[index], endDate: formatted };
+                            updateField("previousEmployers", updated);
+                          }}
+                          maxLength={7}
+                          data-testid={`input-prev-end-${index}`}
+                        />
+                      </div>
+                    </div>
                   </div>
-                  <div className="space-y-2">
-                    <Label>Monthly Income *</Label>
-                    <Input
-                      type="number"
-                      value={formData.monthlyIncome || ""}
-                      onChange={(e) => updateField("monthlyIncome", e.target.value)}
-                      placeholder="5000"
-                      data-testid="input-employment-income"
-                    />
-                  </div>
-                </div>
+                ))}
 
-                <div className="space-y-2">
-                  <Label>Supervisor Name</Label>
-                  <Input
-                    value={formData.supervisorName || ""}
-                    onChange={(e) => updateField("supervisorName", e.target.value)}
-                    data-testid="input-employment-supervisor"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Supervisor Phone</Label>
-                  <Input
-                    type="tel"
-                    value={formData.supervisorPhone || ""}
-                    onChange={(e) => updateField("supervisorPhone", e.target.value)}
-                    data-testid="input-employment-supervisorphone"
-                  />
-                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => {
+                    const current = formData.previousEmployers || [];
+                    updateField("previousEmployers", [...current, { employer: "", jobTitle: "", startDate: "", endDate: "" }]);
+                  }}
+                  data-testid="button-add-employer"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Previous Employer
+                </Button>
 
                 {isFieldVisible("emergencyContact") && (
                   <div className="pt-4 border-t space-y-4">
