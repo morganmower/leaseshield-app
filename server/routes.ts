@@ -4078,6 +4078,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Soft delete a submission
+  app.delete('/api/rental/submissions/:id', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      const deleted = await storage.softDeleteRentalSubmission(req.params.id);
+      
+      if (deleted) {
+        // Log the deletion event
+        await storage.logRentalApplicationEvent({
+          submissionId: submission.id,
+          eventType: 'submission_deleted',
+          metadataJson: { deletedBy: userId, deletedAt: new Date().toISOString() },
+        });
+      }
+
+      res.json({ success: deleted });
+    } catch (error) {
+      console.error("Error deleting submission:", error);
+      res.status(500).json({ message: "Failed to delete submission" });
+    }
+  });
+
   // Create a decision (approve/deny) for a submission
   app.post('/api/rental/submissions/:id/decision', isAuthenticated, requireAccess, async (req: any, res) => {
     try {

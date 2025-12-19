@@ -132,7 +132,7 @@ import {
   type InsertLandlordScreeningCredentials,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, desc, sql } from "drizzle-orm";
+import { eq, and, desc, sql, isNull } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
 
 /**
@@ -370,10 +370,11 @@ export interface IStorage {
   getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig>;
 
   // Rental Application System - Submission operations
-  getRentalSubmissionsByUserId(userId: string): Promise<RentalSubmission[]>;
+  getRentalSubmissionsByUserId(userId: string, includeDeleted?: boolean): Promise<RentalSubmission[]>;
   getRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
   createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission>;
   updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null>;
+  softDeleteRentalSubmission(id: string): Promise<boolean>;
 
   // Rental Application System - Submission people operations
   getRentalSubmissionPeople(submissionId: string): Promise<RentalSubmissionPerson[]>;
@@ -1847,7 +1848,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Rental Submission operations
-  async getRentalSubmissionsByUserId(userId: string): Promise<RentalSubmission[]> {
+  async getRentalSubmissionsByUserId(userId: string, includeDeleted: boolean = false): Promise<RentalSubmission[]> {
     return handleDbOperation(async () => {
       const results = await db
         .select({ submission: rentalSubmissions })
@@ -1855,7 +1856,11 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
         .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
         .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
-        .where(eq(rentalProperties.userId, userId))
+        .where(
+          includeDeleted 
+            ? eq(rentalProperties.userId, userId)
+            : and(eq(rentalProperties.userId, userId), isNull(rentalSubmissions.deletedAt))
+        )
         .orderBy(desc(rentalSubmissions.createdAt));
       return results.map(r => r.submission);
     }, 'getRentalSubmissionsByUserId');
@@ -1880,6 +1885,16 @@ export class DatabaseStorage implements IStorage {
       const [updated] = await db.update(rentalSubmissions).set({ ...submission, updatedAt: new Date() }).where(eq(rentalSubmissions.id, id)).returning();
       return updated || null;
     }, 'updateRentalSubmission');
+  }
+
+  async softDeleteRentalSubmission(id: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const [deleted] = await db.update(rentalSubmissions)
+        .set({ deletedAt: new Date(), updatedAt: new Date() })
+        .where(eq(rentalSubmissions.id, id))
+        .returning();
+      return !!deleted;
+    }, 'softDeleteRentalSubmission');
   }
 
   // Rental Submission People operations
