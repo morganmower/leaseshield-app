@@ -885,7 +885,7 @@ export default function Apply() {
                       {(formData.occupants || []).map((occupant: { name: string; relationship: string; age: string }, idx: number) => (
                         <div key={idx} className="border rounded-lg p-3 space-y-3">
                           <div className="flex justify-between items-center">
-                            <span className="text-sm font-medium">Occupant {idx + 1}</span>
+                            <span className="text-sm font-medium">Co-Occupant {idx + 1}</span>
                             {idx > 0 && (
                               <Button
                                 type="button"
