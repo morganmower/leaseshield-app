@@ -522,7 +522,10 @@ export default function Apply() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      if (!res.ok) throw new Error("Failed to send invite");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Failed to send invite");
+      }
       return res.json();
     },
     onSuccess: (data) => {
@@ -535,10 +538,17 @@ export default function Apply() {
       setIsInviteDialogOpen(false);
       setInviteForm({ email: "", firstName: "", lastName: "", personType: "co_applicant" });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create invite.", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({ title: "Error", description: error.message || "Failed to create invite.", variant: "destructive" });
     },
   });
+  
+  // Check if invite email is the same as primary applicant's email
+  const isInviteEmailDuplicate = () => {
+    if (!inviteForm.email) return false;
+    const currentEmail = (formData.email || personData?.email || "").toLowerCase().trim();
+    return inviteForm.email.toLowerCase().trim() === currentEmail;
+  };
 
   const updateField = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -2213,8 +2223,14 @@ export default function Apply() {
                   type="email"
                   value={inviteForm.email}
                   onChange={(e) => setInviteForm({ ...inviteForm, email: e.target.value })}
+                  className={isInviteEmailDuplicate() ? "border-destructive" : ""}
                   data-testid="input-invite-email"
                 />
+                {isInviteEmailDuplicate() && (
+                  <p className="text-sm text-destructive">
+                    Each person must have a unique email address for screening to work properly.
+                  </p>
+                )}
               </div>
               <div className="space-y-2">
                 <Label>Role *</Label>
@@ -2238,7 +2254,7 @@ export default function Apply() {
               </Button>
               <Button
                 onClick={() => inviteMutation.mutate(inviteForm)}
-                disabled={!inviteForm.email || !inviteForm.firstName || !inviteForm.lastName || inviteMutation.isPending}
+                disabled={!inviteForm.email || !inviteForm.firstName || !inviteForm.lastName || inviteMutation.isPending || isInviteEmailDuplicate()}
                 data-testid="button-send-invite"
               >
                 {inviteMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}

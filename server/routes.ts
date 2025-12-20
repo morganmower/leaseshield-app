@@ -5704,6 +5704,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "Person type must be co_applicant or guarantor" });
       }
 
+      // Check for duplicate email - screening requires unique emails
+      const existingPeople = await storage.getRentalSubmissionPeople(inviter.submissionId);
+      const emailLower = email.toLowerCase().trim();
+      const duplicateEmail = existingPeople.find(p => p.email?.toLowerCase().trim() === emailLower);
+      
+      if (duplicateEmail) {
+        return res.status(400).json({ 
+          message: "This email address is already used by another person on this application. Each person must have a unique email for screening to work properly." 
+        });
+      }
+
       const inviteToken = randomUUID().replace(/-/g, '');
 
       const person = await storage.createRentalSubmissionPerson({
