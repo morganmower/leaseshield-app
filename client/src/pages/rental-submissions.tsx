@@ -313,37 +313,6 @@ export default function RentalSubmissions() {
     },
   });
 
-  const checkStatusMutation = useMutation({
-    mutationFn: async ({ orderId }: { orderId: string }) => {
-      return apiRequest("POST", `/api/rental/screening/${orderId}/check-status`);
-    },
-    onSuccess: (data: any) => {
-      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "screening"] });
-      if (data.status === 'complete') {
-        toast({ title: "Report Ready", description: "The screening report is now available." });
-      } else if (data.status === 'in_progress') {
-        toast({ title: "Still In Progress", description: "The applicant is still completing their screening." });
-      } else {
-        toast({ title: "Status Updated", description: `Current status: ${data.status}` });
-      }
-    },
-    onError: (error: any) => {
-      const errorMessage = error?.message || "Failed to check status.";
-      if (errorMessage.includes("Application Error")) {
-        toast({ 
-          title: "Status Check Unavailable", 
-          description: "Western Verify's API is temporarily unable to return status. The screening is still processing - status updates will arrive automatically via webhook.", 
-        });
-      } else {
-        toast({ 
-          title: "Error", 
-          description: errorMessage, 
-          variant: "destructive" 
-        });
-      }
-    },
-  });
-
   const resendInviteMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
       return apiRequest("POST", `/api/rental/submissions/${submissionId}/people/${personId}/resend-invite`);
@@ -780,7 +749,7 @@ Best regards`;
                     }).length;
                     const pendingCount = completedPeople.filter(p => {
                       const order = getScreeningOrderForPerson(p.id);
-                      return order?.status === 'pending' || order?.status === 'invited' || order?.status === 'sent' || order?.status === 'in_progress';
+                      return order?.status === 'sent' || order?.status === 'in_progress';
                     }).length;
                     const needsInviteCount = completedPeople.filter(p => {
                       const order = getScreeningOrderForPerson(p.id);
@@ -836,7 +805,7 @@ Best regards`;
                   const needsScreeningInvite = person.isCompleted && (!personOrder || personOrder.status === 'error' || personOrder.status === 'not_sent');
                   const screeningComplete = personOrder?.status === 'complete';
                   const screeningInProgress = personOrder?.status === 'in_progress';
-                  const screeningPending = personOrder?.status === 'pending' || personOrder?.status === 'invited' || personOrder?.status === 'sent';
+                  const screeningPending = personOrder?.status === 'sent';
                   
                   return (
                   <Card 
@@ -972,37 +941,20 @@ Best regards`;
                                   data-testid={`badge-screening-status-${person.id}`}
                                 >
                                   {personOrder.status === 'sent' && 'Invitation Sent'}
-                                  {personOrder.status === 'invited' && 'Invited'}
                                   {personOrder.status === 'in_progress' && 'In Progress'}
                                   {personOrder.status === 'complete' && 'Complete'}
                                 </Badge>
-                                {(personOrder.status === 'sent' || personOrder.status === 'invited' || personOrder.status === 'in_progress') && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => checkStatusMutation.mutate({ orderId: personOrder.id })}
-                                    disabled={checkStatusMutation.isPending}
-                                    data-testid={`button-check-status-${person.id}`}
-                                  >
-                                    {checkStatusMutation.isPending ? (
-                                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
-                                    ) : (
-                                      <RefreshCw className="h-4 w-4 mr-1" />
-                                    )}
-                                    Check Status
-                                  </Button>
-                                )}
                                 {personOrder.status === 'complete' && (
                                   <Button
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
-                                      window.open('https://secure.westernverify.com/login.cfm', '_blank');
+                                      window.open('https://secure.westernverify.com/report_lookup.cfm', '_blank');
                                     }}
                                     data-testid={`button-view-report-${person.id}`}
                                   >
                                     <ExternalLink className="h-4 w-4 mr-1" />
-                                    View Report on Western Verify
+                                    View on Western Verify
                                   </Button>
                                 )}
                               </div>

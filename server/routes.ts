@@ -4833,6 +4833,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Redirect to Western Verify report lookup page
+  // NOTE: Full SSO auto-login is not possible without exposing credentials to the browser.
+  // Western Verify's SSO requires browser-based form submission to set session cookies.
+  // For security, we redirect landlords to the report lookup page where they can log in.
+  app.get('/api/rental/screening/:orderId/view-report', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const { orderId } = req.params;
+
+      // Get the screening order to verify it exists
+      const order = await storage.getRentalScreeningOrderById(orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Screening order not found" });
+      }
+
+      // Verify ownership via submission
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Redirect to Western Verify report lookup page
+      res.redirect('https://secure.westernverify.com/report_lookup.cfm');
+    } catch (error: any) {
+      console.error("Error redirecting to report:", error);
+      res.status(500).json({ message: error?.message || "Failed to redirect to report" });
+    }
+  });
+
   // Resend invitation email to incomplete co-applicant/guarantor
   app.post('/api/rental/submissions/:submissionId/people/:personId/resend-invite', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
@@ -5069,96 +5111,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // Check/refresh screening status from Western Verify
-  app.post('/api/rental/screening/:orderId/check-status', isAuthenticated, requireAccess, async (req: any, res) => {
-    try {
-      const userId = getUserId(req);
-      
-      // Get the order by its ID
-      const order = await storage.getRentalScreeningOrderById(req.params.orderId);
-      if (!order) {
-        return res.status(404).json({ message: "Screening order not found" });
-      }
-
-      // Verify ownership via submission
-      const submission = await storage.getRentalSubmission(order.submissionId);
-      if (!submission) {
-        return res.status(404).json({ message: "Submission not found" });
-      }
-
-      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
-      if (!appLink) {
-        return res.status(404).json({ message: "Application link not found" });
-      }
-      const unit = await storage.getRentalUnit(appLink.unitId);
-      if (!unit) {
-        return res.status(404).json({ message: "Unit not found" });
-      }
-      const property = await storage.getRentalProperty(unit.propertyId, userId);
-      if (!property) {
-        return res.status(403).json({ message: "Access denied" });
-      }
-
-      // Get landlord credentials and decrypt them
-      const landlordCreds = await storage.getLandlordScreeningCredentials(userId);
-      let credentials: { username: string; password: string; invitationId?: string } | undefined;
-      
-      if (landlordCreds) {
-        try {
-          const { decryptCredentials } = await import('./crypto');
-          const decrypted = decryptCredentials({
-            encryptedUsername: landlordCreds.encryptedUsername,
-            encryptedPassword: landlordCreds.encryptedPassword,
-            encryptionIv: landlordCreds.encryptionIv,
-          });
-          credentials = {
-            username: decrypted.username,
-            password: decrypted.password,
-            invitationId: landlordCreds.defaultInvitationId || undefined,
-          };
-        } catch (e) {
-          console.error("Failed to decrypt landlord credentials:", e);
-        }
-      }
-
-      // Check status from Western Verify
-      const { checkOrderStatus, getViewReportByRefSsoUrl } = await import('./digitalDelveService');
-      const result = await checkOrderStatus(order.referenceNumber, credentials);
-      
-      console.log("[Check Status] Result for order", order.id, ":", result);
-      
-      if (result.success && result.status) {
-        // Update the order with the new status
-        const updatedOrder = await storage.updateRentalScreeningOrder(order.id, {
-          status: result.status as any,
-          reportId: result.reportId || order.reportId,
-          reportUrl: result.reportUrl || order.reportUrl,
-          rawStatusXml: result.rawXml || order.rawStatusXml,
-        });
-        
-        // Auto-update submission status based on screening progress
-        await updateSubmissionStatusFromScreening(order.submissionId);
-        
-        res.json({ 
-          success: true, 
-          status: result.status,
-          order: updatedOrder,
-        });
-      } else {
-        // Status check failed - return error without changing status
-        // Do NOT use getViewReportByRefSsoUrl as fallback to mark complete
-        // That approach was incorrectly marking pending screenings as complete
-        console.log("[Check Status] Status API failed for order", order.id);
-        res.status(500).json({ 
-          success: false,
-          message: result.error || "Failed to check status - please try again later" 
-        });
-      }
-    } catch (error) {
-      console.error("Error checking screening status:", error);
-      res.status(500).json({ message: "Failed to check screening status" });
-    }
-  });
+  // NOTE: The check-status endpoint was removed because Western Verify
+  // does NOT have a RetrieveOrderStatus API function. Status updates 
+  // are received via webhooks to /api/webhooks/digitaldelve/status and /result
 
   // ============================================================
   // WEBHOOK ROUTES (No Auth - called by DigitalDelve)

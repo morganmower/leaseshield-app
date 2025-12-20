@@ -365,102 +365,101 @@ export async function getViewReportByRefSsoUrl(
   }
 }
 
-export interface OrderStatusResult {
-  success: boolean;
-  status?: 'complete' | 'in_progress' | 'invited' | 'not_found' | 'error';
-  reportId?: string;
-  reportUrl?: string;
-  rawXml?: string;
-  error?: string;
-}
+// NOTE: There is NO RetrieveOrderStatus function in Western Verify's API.
+// Status updates are received via webhooks to StatusPostURL and ResultPostURL.
+// See parseStatusWebhook and parseResultWebhook below.
 
-export async function checkOrderStatus(
-  referenceNumber: string, 
-  credentials?: ScreeningCredentials
-): Promise<OrderStatusResult> {
-  let username: string;
-  let password: string;
-  
-  if (credentials && credentials.username && credentials.password) {
-    username = credentials.username;
-    password = credentials.password;
-  } else {
-    const systemCreds = getCredentials();
-    username = systemCreds.username;
-    password = systemCreds.password;
-  }
-  
-  if (!username || !password) {
-    return {
-      success: false,
-      error: "Screening credentials not configured",
-    };
-  }
-
+/**
+ * Performs server-side SSO request to Western Verify and returns redirect info.
+ * This keeps credentials on the server and never exposes them to the client.
+ */
+export async function performSsoViewReport(
+  referenceNumber: string,
+  credentials: ScreeningCredentials
+): Promise<{ success: boolean; redirectUrl?: string; error?: string }> {
   const xml = `<?xml version="1.0"?>
 <SSO>
   <Authentication>
-    <UserName>${escapeXml(username)}</UserName>
-    <Password>${escapeXml(password)}</Password>
+    <UserName>${escapeXml(credentials.username)}</UserName>
+    <Password>${escapeXml(credentials.password)}</Password>
   </Authentication>
-  <Function>RetrieveOrderStatus</Function>
-  <Applicant>
-    <ReferenceNumber>${escapeXml(referenceNumber)}</ReferenceNumber>
-  </Applicant>
+  <Function>ViewReportByClientRef</Function>
+  <ReportId>${escapeXml(referenceNumber)}</ReportId>
 </SSO>`;
 
   try {
-    const { body } = await sendXmlRequest(xml);
-    console.log("[DigitalDelve] CheckOrderStatus response:", body.substring(0, 500));
+    console.log("[DigitalDelve] Performing SSO view report request for ref:", referenceNumber);
     
-    const parsed = xmlParser.parse(body);
-    const root = parsed?.SSO || parsed?.Response || parsed;
+    // Make server-side request to Western Verify SSO endpoint
+    const response = await fetch(DIGITAL_DELVE_SSO_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/xml",
+      },
+      body: xml,
+      redirect: 'manual', // Don't auto-follow redirects so we can capture the URL
+    });
     
-    const errorMatch = body.match(/<Error>([^<]*)<\/Error>/i);
-    if (errorMatch) {
-      const errorMsg = errorMatch[1].toLowerCase();
-      if (errorMsg.includes('not found') || errorMsg.includes('no order')) {
-        return { success: true, status: 'not_found', rawXml: body };
-      }
-      return { success: false, error: errorMatch[1], rawXml: body };
-    }
+    const body = await response.text();
+    console.log("[DigitalDelve] SSO response status:", response.status);
+    console.log("[DigitalDelve] SSO response body (first 500):", body.substring(0, 500));
     
-    let statusStr = getXmlValue(root, 'Status', 'status', 'OrderStatus');
-    if (!statusStr && root?.Applicant) {
-      statusStr = getXmlValue(root.Applicant, 'Status', 'status');
-    }
-    
-    const reportId = getXmlValue(root, 'ReportId', 'ReportID', 'reportId');
-    let reportUrl = getXmlValue(root, 'ReportURL', 'reportUrl', 'ReportUrl', 'ReportLink');
-    
-    let normalizedStatus: OrderStatusResult['status'] = 'in_progress';
-    if (statusStr) {
-      const lower = statusStr.toLowerCase().replace(/\s+/g, '_');
-      if (lower.includes('complete') || lower.includes('finished') || lower.includes('ready')) {
-        normalizedStatus = 'complete';
-      } else if (lower.includes('in_progress') || lower.includes('pending') || lower.includes('processing')) {
-        normalizedStatus = 'in_progress';
-      } else if (lower.includes('invited') || lower.includes('sent')) {
-        normalizedStatus = 'invited';
+    // Check for redirect (302/303)
+    if (response.status === 302 || response.status === 303 || response.status === 301) {
+      const location = response.headers.get('location');
+      if (location) {
+        return { success: true, redirectUrl: location };
       }
     }
     
-    // NOTE: Do NOT mark as complete just because reportId/reportUrl exists
-    // The status must be explicitly "complete" from the API response
-    // reportId/reportUrl can be present before the actual report is ready
+    // Check for Success status in XML response
+    if (body.includes('<Status>Success</Status>') || body.includes('<Status>success</Status>')) {
+      // Extract redirect URL if present in body
+      const urlMatch = body.match(/<RedirectURL>([^<]+)<\/RedirectURL>/i) ||
+                       body.match(/<URL>([^<]+)<\/URL>/i);
+      if (urlMatch && urlMatch[1]) {
+        return { success: true, redirectUrl: urlMatch[1] };
+      }
+      
+      // If no redirect URL but success, return the WV completed reports page
+      return { 
+        success: true, 
+        redirectUrl: 'https://secure.westernverify.com/report_lookup.cfm' 
+      };
+    }
     
-    return {
-      success: true,
-      status: normalizedStatus,
-      reportId,
-      reportUrl,
-      rawXml: body,
+    // Check for error
+    if (body.includes('<Status>Error</Status>')) {
+      const errorMatch = body.match(/<Error>([^<]+)<\/Error>/i);
+      return { 
+        success: false, 
+        error: errorMatch ? errorMatch[1] : 'SSO authentication failed' 
+      };
+    }
+    
+    // If response contains HTML with a form, extract any action URL
+    if (body.includes('<form') || body.includes('<FORM')) {
+      const actionMatch = body.match(/action=["']([^"']+)["']/i);
+      if (actionMatch && actionMatch[1]) {
+        // Return the WV portal - the SSO likely set session cookies
+        return { 
+          success: true, 
+          redirectUrl: 'https://secure.westernverify.com/report_lookup.cfm'
+        };
+      }
+    }
+    
+    // Fallback - couldn't parse response, direct to login
+    console.warn("[DigitalDelve] Couldn't parse SSO response, directing to login");
+    return { 
+      success: false, 
+      error: 'Unable to authenticate with Western Verify. Please log in manually.' 
     };
   } catch (error: any) {
-    console.error("[DigitalDelve] CheckOrderStatus error:", error);
+    console.error("[DigitalDelve] SSO request error:", error);
     return {
       success: false,
-      error: error.message || "Failed to check order status",
+      error: error.message || 'Failed to connect to Western Verify',
     };
   }
 }
