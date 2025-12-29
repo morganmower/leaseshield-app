@@ -5195,7 +5195,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         const decrypted = decryptCredentials({
           encryptedUsername: storedCredentials.encryptedUsername,
           encryptedPassword: storedCredentials.encryptedPassword,
-          iv: storedCredentials.encryptionIv || '',
+          encryptionIv: storedCredentials.encryptionIv,
         });
         credentials = {
           username: decrypted.username,
