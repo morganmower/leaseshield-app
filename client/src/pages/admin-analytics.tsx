@@ -103,6 +103,8 @@ export default function AdminAnalyticsPage() {
       return res.json();
     },
     enabled: engagementDialogOpen,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   // Fetch detailed events for selected month/year
@@ -124,6 +126,8 @@ export default function AdminAnalyticsPage() {
       return res.json();
     },
     enabled: engagementDialogOpen,
+    staleTime: 0,
+    refetchOnMount: "always",
   });
 
   if (isLoading) {

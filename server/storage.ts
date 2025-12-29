@@ -132,7 +132,7 @@ import {
   type InsertLandlordScreeningCredentials,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, isNull, lte, gt } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNull, lte, gt, inArray } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
 
 /**
@@ -996,7 +996,7 @@ export class DatabaseStorage implements IStorage {
     if (filters?.eventType) {
       conditions.push(eq(analyticsEvents.eventType, filters.eventType));
     } else {
-      conditions.push(sql`${analyticsEvents.eventType} = ANY(${engagementTypes})`);
+      conditions.push(inArray(analyticsEvents.eventType, engagementTypes));
     }
     
     // Add month/year filter if provided
@@ -1069,7 +1069,7 @@ export class DatabaseStorage implements IStorage {
       })
       .from(analyticsEvents)
       .where(and(
-        sql`${analyticsEvents.eventType} = ANY(${engagementTypes})`,
+        inArray(analyticsEvents.eventType, engagementTypes),
         sql`${analyticsEvents.createdAt} >= ${startDate}`,
         sql`${analyticsEvents.createdAt} <= ${endDate}`
       ));
