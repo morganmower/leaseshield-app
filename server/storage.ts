@@ -2098,7 +2098,8 @@ export class DatabaseStorage implements IStorage {
         .select({ id: rentalSubmissions.id })
         .from(rentalSubmissions)
         .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
-        .innerJoin(rentalProperties, eq(rentalApplicationLinks.propertyId, rentalProperties.id))
+        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
+        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
         .where(and(
           eq(rentalProperties.userId, userId),
           eq(rentalSubmissions.status, 'submitted'),
