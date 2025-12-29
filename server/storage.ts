@@ -216,7 +216,7 @@ export interface IStorage {
   getUserTrialReminderEvent(userId: string): Promise<AnalyticsEvent | undefined>;
   getUserTrialExpiredEvent(userId: string): Promise<AnalyticsEvent | undefined>;
   getAnalyticsSummary(): Promise<any>;
-  getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number }): Promise<Array<{
+  getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number; month?: number; year?: number }): Promise<Array<{
     id: string;
     eventType: string;
     eventData: any;
@@ -224,6 +224,16 @@ export interface IStorage {
     userId: string | null;
     userEmail: string | null;
     userName: string | null;
+  }>>;
+  
+  getEngagementSummaryByMonth(year: number): Promise<Array<{
+    month: number;
+    year: number;
+    templateDownloads: number;
+    westernVerifyClicks: number;
+    creditHelperUses: number;
+    criminalHelperUses: number;
+    totalEvents: number;
   }>>;
 
   // Screening content operations
@@ -959,7 +969,7 @@ export class DatabaseStorage implements IStorage {
     };
   }
 
-  async getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number }): Promise<Array<{
+  async getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number; month?: number; year?: number }): Promise<Array<{
     id: string;
     eventType: string;
     eventData: any;
@@ -987,6 +997,19 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(analyticsEvents.eventType, filters.eventType));
     } else {
       conditions.push(sql`${analyticsEvents.eventType} = ANY(${engagementTypes})`);
+    }
+    
+    // Add month/year filter if provided
+    if (filters?.month && filters?.year) {
+      const startDate = new Date(filters.year, filters.month - 1, 1);
+      const endDate = new Date(filters.year, filters.month, 0, 23, 59, 59, 999);
+      conditions.push(sql`${analyticsEvents.createdAt} >= ${startDate}`);
+      conditions.push(sql`${analyticsEvents.createdAt} <= ${endDate}`);
+    } else if (filters?.year) {
+      const startDate = new Date(filters.year, 0, 1);
+      const endDate = new Date(filters.year, 11, 31, 23, 59, 59, 999);
+      conditions.push(sql`${analyticsEvents.createdAt} >= ${startDate}`);
+      conditions.push(sql`${analyticsEvents.createdAt} <= ${endDate}`);
     }
 
     // Query events with user info via left join
@@ -1017,6 +1040,84 @@ export class DatabaseStorage implements IStorage {
       userName: e.userFirstName && e.userLastName 
         ? `${e.userFirstName} ${e.userLastName}`
         : e.userFirstName || e.userLastName || null,
+    }));
+  }
+  
+  async getEngagementSummaryByMonth(year: number): Promise<Array<{
+    month: number;
+    year: number;
+    templateDownloads: number;
+    westernVerifyClicks: number;
+    creditHelperUses: number;
+    criminalHelperUses: number;
+    totalEvents: number;
+  }>> {
+    const startDate = new Date(year, 0, 1);
+    const endDate = new Date(year, 11, 31, 23, 59, 59, 999);
+    
+    const engagementTypes = [
+      'template_download',
+      'western_verify_click',
+      'credit_helper_use',
+      'criminal_helper_use',
+    ];
+    
+    const events = await db
+      .select({
+        eventType: analyticsEvents.eventType,
+        createdAt: analyticsEvents.createdAt,
+      })
+      .from(analyticsEvents)
+      .where(and(
+        sql`${analyticsEvents.eventType} = ANY(${engagementTypes})`,
+        sql`${analyticsEvents.createdAt} >= ${startDate}`,
+        sql`${analyticsEvents.createdAt} <= ${endDate}`
+      ));
+    
+    // Group by month
+    const monthlyData: Map<number, {
+      templateDownloads: number;
+      westernVerifyClicks: number;
+      creditHelperUses: number;
+      criminalHelperUses: number;
+    }> = new Map();
+    
+    // Initialize all months
+    for (let m = 1; m <= 12; m++) {
+      monthlyData.set(m, {
+        templateDownloads: 0,
+        westernVerifyClicks: 0,
+        creditHelperUses: 0,
+        criminalHelperUses: 0,
+      });
+    }
+    
+    for (const event of events) {
+      if (!event.createdAt) continue;
+      const month = event.createdAt.getMonth() + 1;
+      const data = monthlyData.get(month)!;
+      
+      switch (event.eventType) {
+        case 'template_download':
+          data.templateDownloads++;
+          break;
+        case 'western_verify_click':
+          data.westernVerifyClicks++;
+          break;
+        case 'credit_helper_use':
+          data.creditHelperUses++;
+          break;
+        case 'criminal_helper_use':
+          data.criminalHelperUses++;
+          break;
+      }
+    }
+    
+    return Array.from(monthlyData.entries()).map(([month, data]) => ({
+      month,
+      year,
+      ...data,
+      totalEvents: data.templateDownloads + data.westernVerifyClicks + data.creditHelperUses + data.criminalHelperUses,
     }));
   }
 

@@ -1,13 +1,15 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText, ChevronRight } from "lucide-react";
+import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText, ChevronRight, Calendar } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { apiRequest } from "@/lib/queryClient";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface AnalyticsSummary {
   subscriptions: {
@@ -64,9 +66,26 @@ const eventTypeLabels: Record<string, string> = {
   screening_request: 'Screening Request',
 };
 
+const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+interface MonthlySummary {
+  month: number;
+  year: number;
+  templateDownloads: number;
+  westernVerifyClicks: number;
+  creditHelperUses: number;
+  criminalHelperUses: number;
+  totalEvents: number;
+}
+
 export default function AdminAnalyticsPage() {
   const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+  const currentYear = new Date().getFullYear();
+  const currentMonth = new Date().getMonth() + 1;
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear);
+  const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
+  const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
 
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
@@ -76,18 +95,32 @@ export default function AdminAnalyticsPage() {
     queryKey: ["/api/admin/users"],
   });
 
+  // Fetch monthly summary for selected year
+  const { data: monthlySummary, isLoading: monthlySummaryLoading } = useQuery<MonthlySummary[]>({
+    queryKey: ["/api/admin/analytics/engagement/monthly", selectedYear],
+    queryFn: async () => {
+      const res = await apiRequest("GET", `/api/admin/analytics/engagement/monthly?year=${selectedYear}`);
+      return res.json();
+    },
+    enabled: engagementDialogOpen,
+  });
+
+  // Fetch detailed events for selected month/year
   const { data: engagementEvents, isLoading: engagementLoading } = useQuery<EngagementEvent[]>({
-    queryKey: ["/api/admin/analytics/engagement", eventTypeFilter],
+    queryKey: ["/api/admin/analytics/engagement", eventTypeFilter, selectedMonth, selectedYear, viewMode],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (eventTypeFilter && eventTypeFilter !== "all") {
         params.set("eventType", eventTypeFilter);
       }
       params.set("limit", "200");
-      const res = await fetch(`/api/admin/analytics/engagement?${params.toString()}`, {
-        credentials: "include",
-      });
-      if (!res.ok) throw new Error("Failed to fetch engagement events");
+      if (viewMode === "monthly") {
+        params.set("month", selectedMonth.toString());
+        params.set("year", selectedYear.toString());
+      } else {
+        params.set("year", selectedYear.toString());
+      }
+      const res = await apiRequest("GET", `/api/admin/analytics/engagement?${params.toString()}`);
       return res.json();
     },
     enabled: engagementDialogOpen,
@@ -343,87 +376,189 @@ export default function AdminAnalyticsPage() {
 
         {/* User Engagement Drill-Down Dialog */}
         <Dialog open={engagementDialogOpen} onOpenChange={setEngagementDialogOpen}>
-          <DialogContent className="max-w-4xl max-h-[80vh]">
+          <DialogContent className="max-w-5xl max-h-[85vh]">
             <DialogHeader>
               <DialogTitle>User Engagement Details</DialogTitle>
               <DialogDescription>
-                See who is using each feature and when
+                Track engagement by month or view yearly aggregates
               </DialogDescription>
             </DialogHeader>
             
-            <div className="flex items-center gap-4 mb-4">
-              <span className="text-sm font-medium">Filter by type:</span>
-              <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
-                <SelectTrigger className="w-[200px]" data-testid="select-event-type">
-                  <SelectValue placeholder="All events" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Events</SelectItem>
-                  <SelectItem value="template_download">Template Downloads</SelectItem>
-                  <SelectItem value="western_verify_click">Western Verify Clicks</SelectItem>
-                  <SelectItem value="credit_helper_use">Credit Helper Uses</SelectItem>
-                  <SelectItem value="criminal_helper_use">Criminal Helper Uses</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as "monthly" | "yearly")}>
+              <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
+                <TabsList>
+                  <TabsTrigger value="monthly" data-testid="tab-monthly">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Monthly View
+                  </TabsTrigger>
+                  <TabsTrigger value="yearly" data-testid="tab-yearly">
+                    <TrendingUp className="h-4 w-4 mr-2" />
+                    Yearly Overview
+                  </TabsTrigger>
+                </TabsList>
+                
+                <div className="flex items-center gap-2">
+                  <Select value={selectedYear.toString()} onValueChange={(v) => setSelectedYear(parseInt(v))}>
+                    <SelectTrigger className="w-[100px]" data-testid="select-year">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {[currentYear, currentYear - 1, currentYear - 2].map((y) => (
+                        <SelectItem key={y} value={y.toString()}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  
+                  {viewMode === "monthly" && (
+                    <Select value={selectedMonth.toString()} onValueChange={(v) => setSelectedMonth(parseInt(v))}>
+                      <SelectTrigger className="w-[120px]" data-testid="select-month">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monthNames.map((name, idx) => (
+                          <SelectItem key={idx + 1} value={(idx + 1).toString()}>{name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+              </div>
+              
+              <TabsContent value="yearly" className="mt-0">
+                {monthlySummaryLoading ? (
+                  <p className="text-center py-8 text-muted-foreground">Loading yearly summary...</p>
+                ) : monthlySummary && monthlySummary.length > 0 ? (
+                  <div className="space-y-4">
+                    <div className="h-[250px]">
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={monthlySummary.map(m => ({
+                          ...m,
+                          name: monthNames[m.month - 1],
+                        }))}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Legend />
+                          <Bar dataKey="templateDownloads" name="Downloads" fill="#3b82f6" stackId="a" />
+                          <Bar dataKey="westernVerifyClicks" name="WV Clicks" fill="#8b5cf6" stackId="a" />
+                          <Bar dataKey="creditHelperUses" name="Credit Helper" fill="#22c55e" stackId="a" />
+                          <Bar dataKey="criminalHelperUses" name="Criminal Helper" fill="#f97316" stackId="a" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </div>
+                    
+                    <div className="grid grid-cols-4 gap-4 text-center">
+                      <div className="p-3 rounded-md bg-blue-500/10">
+                        <div className="text-2xl font-bold text-blue-600">
+                          {monthlySummary.reduce((sum, m) => sum + m.templateDownloads, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Downloads</div>
+                      </div>
+                      <div className="p-3 rounded-md bg-purple-500/10">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {monthlySummary.reduce((sum, m) => sum + m.westernVerifyClicks, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">WV Clicks</div>
+                      </div>
+                      <div className="p-3 rounded-md bg-green-500/10">
+                        <div className="text-2xl font-bold text-green-600">
+                          {monthlySummary.reduce((sum, m) => sum + m.creditHelperUses, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Credit Helper</div>
+                      </div>
+                      <div className="p-3 rounded-md bg-orange-500/10">
+                        <div className="text-2xl font-bold text-orange-600">
+                          {monthlySummary.reduce((sum, m) => sum + m.criminalHelperUses, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Criminal Helper</div>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p className="text-center py-8 text-muted-foreground">No data for {selectedYear}</p>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="monthly" className="mt-0">
+                <div className="flex items-center gap-4 mb-4">
+                  <span className="text-sm font-medium">Filter by type:</span>
+                  <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                    <SelectTrigger className="w-[200px]" data-testid="select-event-type">
+                      <SelectValue placeholder="All events" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Events</SelectItem>
+                      <SelectItem value="template_download">Template Downloads</SelectItem>
+                      <SelectItem value="western_verify_click">Western Verify Clicks</SelectItem>
+                      <SelectItem value="credit_helper_use">Credit Helper Uses</SelectItem>
+                      <SelectItem value="criminal_helper_use">Criminal Helper Uses</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <span className="text-sm text-muted-foreground ml-auto">
+                    Showing {monthNames[selectedMonth - 1]} {selectedYear}
+                  </span>
+                </div>
 
-            <ScrollArea className="h-[400px]">
-              {engagementLoading ? (
-                <p className="text-center py-8 text-muted-foreground">Loading events...</p>
-              ) : engagementEvents && engagementEvents.length > 0 ? (
-                <table className="w-full text-sm" data-testid="table-engagement-events">
-                  <thead className="sticky top-0 bg-background">
-                    <tr className="border-b">
-                      <th className="text-left py-3 px-2 font-medium">User</th>
-                      <th className="text-left py-3 px-2 font-medium">Email</th>
-                      <th className="text-left py-3 px-2 font-medium">Action</th>
-                      <th className="text-left py-3 px-2 font-medium">Details</th>
-                      <th className="text-left py-3 px-2 font-medium">Date/Time</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {engagementEvents.map((event) => (
-                      <tr
-                        key={event.id}
-                        className="border-b hover-elevate"
-                        data-testid={`row-event-${event.id}`}
-                      >
-                        <td className="py-3 px-2">
-                          {event.userName || "Anonymous"}
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground">
-                          {event.userEmail || "—"}
-                        </td>
-                        <td className="py-3 px-2">
-                          <Badge variant="secondary">
-                            {eventTypeLabels[event.eventType] || event.eventType}
-                          </Badge>
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">
-                          {event.eventData ? (
-                            typeof event.eventData === 'object' ? (
-                              event.eventData.templateName || 
-                              event.eventData.templateTitle ||
-                              event.eventData.cardTitle ||
-                              JSON.stringify(event.eventData).slice(0, 50)
-                            ) : String(event.eventData).slice(0, 50)
-                          ) : "—"}
-                        </td>
-                        <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
-                          {event.createdAt
-                            ? format(new Date(event.createdAt), "MMM d, yyyy h:mm a")
-                            : "—"}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              ) : (
-                <p className="text-center py-8 text-muted-foreground">
-                  No engagement events found
-                </p>
-              )}
-            </ScrollArea>
+                <ScrollArea className="h-[350px]">
+                  {engagementLoading ? (
+                    <p className="text-center py-8 text-muted-foreground">Loading events...</p>
+                  ) : engagementEvents && engagementEvents.length > 0 ? (
+                    <table className="w-full text-sm" data-testid="table-engagement-events">
+                      <thead className="sticky top-0 bg-background">
+                        <tr className="border-b">
+                          <th className="text-left py-3 px-2 font-medium">User</th>
+                          <th className="text-left py-3 px-2 font-medium">Email</th>
+                          <th className="text-left py-3 px-2 font-medium">Action</th>
+                          <th className="text-left py-3 px-2 font-medium">Details</th>
+                          <th className="text-left py-3 px-2 font-medium">Date/Time</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {engagementEvents.map((event) => (
+                          <tr
+                            key={event.id}
+                            className="border-b hover-elevate"
+                            data-testid={`row-event-${event.id}`}
+                          >
+                            <td className="py-3 px-2">
+                              {event.userName || "Anonymous"}
+                            </td>
+                            <td className="py-3 px-2 text-muted-foreground">
+                              {event.userEmail || "—"}
+                            </td>
+                            <td className="py-3 px-2">
+                              <Badge variant="secondary">
+                                {eventTypeLabels[event.eventType] || event.eventType}
+                              </Badge>
+                            </td>
+                            <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">
+                              {event.eventData ? (
+                                typeof event.eventData === 'object' ? (
+                                  event.eventData.templateName || 
+                                  event.eventData.templateTitle ||
+                                  event.eventData.cardTitle ||
+                                  JSON.stringify(event.eventData).slice(0, 50)
+                                ) : String(event.eventData).slice(0, 50)
+                              ) : "—"}
+                            </td>
+                            <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
+                              {event.createdAt
+                                ? format(new Date(event.createdAt), "MMM d, yyyy h:mm a")
+                                : "—"}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <p className="text-center py-8 text-muted-foreground">
+                      No engagement events for {monthNames[selectedMonth - 1]} {selectedYear}
+                    </p>
+                  )}
+                </ScrollArea>
+              </TabsContent>
+            </Tabs>
           </DialogContent>
         </Dialog>
 

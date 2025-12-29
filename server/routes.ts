@@ -2349,15 +2349,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Detailed engagement events with user info for drill-down
   app.get('/api/admin/analytics/engagement', isAuthenticated, requireAdmin, async (req, res) => {
     try {
-      const { eventType, limit } = req.query;
+      const { eventType, limit, month, year } = req.query;
       const events = await storage.getDetailedEngagementEvents({
         eventType: eventType as string | undefined,
         limit: limit ? parseInt(limit as string) : 100,
+        month: month ? parseInt(month as string) : undefined,
+        year: year ? parseInt(year as string) : undefined,
       });
       res.json(events);
     } catch (error) {
       console.error("Error fetching engagement details:", error);
       res.status(500).json({ message: "Failed to fetch engagement details" });
+    }
+  });
+  
+  // Monthly engagement summary for yearly aggregation
+  app.get('/api/admin/analytics/engagement/monthly', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { year } = req.query;
+      const targetYear = year ? parseInt(year as string) : new Date().getFullYear();
+      const summary = await storage.getEngagementSummaryByMonth(targetYear);
+      res.json(summary);
+    } catch (error) {
+      console.error("Error fetching monthly engagement summary:", error);
+      res.status(500).json({ message: "Failed to fetch monthly engagement summary" });
     }
   });
 
