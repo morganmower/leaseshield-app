@@ -155,6 +155,12 @@ export function AppSidebar() {
   });
   const unreadCount = unreadData?.count || 0;
 
+  const { data: pendingAppsData } = useQuery<{ count: number }>({
+    queryKey: ["/api/rental/submissions/pending-count"],
+    refetchInterval: 30000,
+  });
+  const pendingAppsCount = pendingAppsData?.count || 0;
+
   const handleNavClick = () => {
     setOpenMobile(false);
   };
@@ -191,7 +197,16 @@ export function AppSidebar() {
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
                     <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
                       <item.icon className={`h-5 w-5 ${item.iconColor}`} />
-                      <span className="font-medium">{item.title}</span>
+                      <span className="font-medium flex-1">{item.title}</span>
+                      {item.title === "Applications" && pendingAppsCount > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="ml-auto h-5 min-w-5 px-1.5 text-xs"
+                          data-testid="badge-pending-applications"
+                        >
+                          {pendingAppsCount > 9 ? "9+" : pendingAppsCount}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>

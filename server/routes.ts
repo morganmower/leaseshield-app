@@ -4298,6 +4298,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   // LANDLORD SUBMISSION MANAGEMENT ROUTES (Authenticated)
   // ============================================================
 
+  // Get count of pending (submitted) applications for landlord
+  app.get('/api/rental/submissions/pending-count', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const count = await storage.getPendingSubmissionsCount(userId);
+      res.json({ count });
+    } catch (error) {
+      console.error("Error fetching pending count:", error);
+      res.status(500).json({ message: "Failed to fetch pending count" });
+    }
+  });
+
   // List all submissions for landlord's properties
   app.get('/api/rental/submissions', isAuthenticated, requireAccess, async (req: any, res) => {
     try {

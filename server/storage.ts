@@ -394,6 +394,7 @@ export interface IStorage {
   createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission>;
   updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null>;
   softDeleteRentalSubmission(id: string): Promise<boolean>;
+  getPendingSubmissionsCount(userId: string): Promise<number>;
 
   // Rental Application System - Submission people operations
   getRentalSubmissionPeople(submissionId: string): Promise<RentalSubmissionPerson[]>;
@@ -2089,6 +2090,22 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return !!deleted;
     }, 'softDeleteRentalSubmission');
+  }
+
+  async getPendingSubmissionsCount(userId: string): Promise<number> {
+    return handleDbOperation(async () => {
+      const results = await db
+        .select({ id: rentalSubmissions.id })
+        .from(rentalSubmissions)
+        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
+        .innerJoin(rentalProperties, eq(rentalApplicationLinks.propertyId, rentalProperties.id))
+        .where(and(
+          eq(rentalProperties.userId, userId),
+          eq(rentalSubmissions.status, 'submitted'),
+          isNull(rentalSubmissions.deletedAt)
+        ));
+      return results.length;
+    }, 'getPendingSubmissionsCount');
   }
 
   // Rental Submission People operations
