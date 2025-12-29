@@ -5183,9 +5183,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Get credentials for sync
-      const credentials = await storage.getLandlordScreeningCredentials(userId);
-      if (!credentials) {
+      const storedCredentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!storedCredentials || !storedCredentials.encryptedUsername || !storedCredentials.encryptedPassword) {
         return res.status(400).json({ message: "Screening credentials not configured" });
+      }
+
+      // Decrypt credentials before using
+      const { decryptCredentials } = await import('./crypto');
+      let credentials;
+      try {
+        const decrypted = decryptCredentials({
+          encryptedUsername: storedCredentials.encryptedUsername,
+          encryptedPassword: storedCredentials.encryptedPassword,
+          iv: storedCredentials.encryptionIv || '',
+        });
+        credentials = {
+          username: decrypted.username,
+          password: decrypted.password,
+        };
+      } catch (e) {
+        console.error("Failed to decrypt credentials:", e);
+        return res.status(400).json({ message: "Failed to decrypt credentials" });
       }
 
       const { syncScreeningStatus } = await import('./digitalDelveService');
