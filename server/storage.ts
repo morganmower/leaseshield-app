@@ -2100,10 +2100,11 @@ export class DatabaseStorage implements IStorage {
         .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
         .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
         .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
+        .leftJoin(rentalDecisions, eq(rentalSubmissions.id, rentalDecisions.submissionId))
         .where(and(
           eq(rentalProperties.userId, userId),
-          eq(rentalSubmissions.status, 'submitted'),
-          isNull(rentalSubmissions.deletedAt)
+          isNull(rentalSubmissions.deletedAt),
+          isNull(rentalDecisions.id)
         ));
       return results.length;
     }, 'getPendingSubmissionsCount');
