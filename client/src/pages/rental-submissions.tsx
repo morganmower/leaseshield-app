@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -324,18 +324,27 @@ export default function RentalSubmissions() {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions/pending-count"] });
       if (data.status === 'complete') {
         toast({ title: "Status Updated", description: "Screening is now marked as complete." });
-      } else {
-        toast({ title: "Status Checked", description: "Screening is still in progress." });
       }
     },
-    onError: (error: any) => {
-      toast({ 
-        title: "Error", 
-        description: error?.message || "Failed to sync status.", 
-        variant: "destructive" 
-      });
-    },
+    onError: () => {},
   });
+
+  // Auto-sync in_progress screenings when viewing a submission
+  const autoSyncedRef = useRef<Set<string>>(new Set());
+  useEffect(() => {
+    if (!screeningOrders || screeningOrders.length === 0) return;
+    
+    const inProgressOrders = screeningOrders.filter(
+      order => order.status === 'in_progress' && !autoSyncedRef.current.has(order.id)
+    );
+    
+    if (inProgressOrders.length > 0) {
+      inProgressOrders.forEach(order => {
+        autoSyncedRef.current.add(order.id);
+        syncScreeningMutation.mutate(order.id);
+      });
+    }
+  }, [screeningOrders]);
 
   const resendInviteMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
