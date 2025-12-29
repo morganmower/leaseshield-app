@@ -855,9 +855,28 @@ export class DatabaseStorage implements IStorage {
       .from(users)
       .where(eq(users.subscriptionStatus, 'canceled'));
 
-    // Calculate MRR (assuming $10/month)
+    // Calculate MRR based on actual subscription intervals
+    // Monthly: $10/month, Yearly: $100/year = $8.33/month
+    // Handle variations: 'month'/'monthly' and 'year'/'yearly'
+    const yearlySubscriptions = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(users)
+      .where(
+        and(
+          eq(users.subscriptionStatus, 'active'),
+          or(
+            eq(users.billingInterval, 'year'),
+            eq(users.billingInterval, 'yearly')
+          )
+        )
+      );
+    
+    const yearlyCount = Number(yearlySubscriptions[0]?.count || 0);
     const activeCount = Number(activeSubscriptions[0]?.count || 0);
-    const mrr = activeCount * 12;
+    // Monthly count = total active minus yearly (everything not yearly is monthly)
+    const monthlyCount = activeCount - yearlyCount;
+    // MRR = (monthly subs × $10) + (yearly subs × $100/12)
+    const mrr = (monthlyCount * 10) + (yearlyCount * (100 / 12));
 
     // Trial conversion metrics
     const totalTrialsEver = await db
