@@ -1388,6 +1388,81 @@ LeaseShield App
 
     return await this.sendEmail({ email: invitee.email, firstName: invitee.firstName }, template);
   }
+  async sendScreeningCompleteNotification(
+    owner: { email: string; firstName?: string },
+    personName: string,
+    propertyName: string,
+    unitName: string,
+    submissionUrl: string
+  ): Promise<boolean> {
+    if (!owner.email) return false;
+
+    const firstName = owner.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+    const fullUrl = `${baseUrl}${submissionUrl}`;
+
+    const template: EmailTemplate = {
+      subject: `Screening Complete: ${personName} - ${propertyName}`,
+      textBody: `Hi ${firstName},
+
+Great news! The tenant screening for ${personName} at ${propertyName} (${unitName}) is now complete.
+
+You can now view the screening results in your LeaseShield dashboard:
+
+${fullUrl}
+
+The report includes background check information to help you make an informed decision on this rental application.
+
+Best regards,
+The LeaseShield App Team
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .success-box { background: #dcfce7; border: 1px solid #22c55e; padding: 15px; border-radius: 8px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .detail-box { background: #f0fdfa; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Screening Complete</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      <div class="success-box">
+        <strong>Good news!</strong> The tenant screening results are now available.
+      </div>
+      <div class="detail-box">
+        <p><strong>Applicant:</strong> ${personName}</p>
+        <p><strong>Property:</strong> ${propertyName}</p>
+        <p><strong>Unit:</strong> ${unitName}</p>
+      </div>
+      <p>View the full screening report to make an informed decision on this rental application:</p>
+      <a href="${fullUrl}" class="cta-button">View Screening Results</a>
+      <div class="footer">
+        <p>LeaseShield App - Protecting Your Rental Business</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: owner.email, firstName: owner.firstName }, template);
+  }
 }
 
 export const emailService = new EmailService();

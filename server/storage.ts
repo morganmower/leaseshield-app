@@ -2301,7 +2301,14 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(rentalSubmissionPeople, eq(rentalScreeningOrders.personId, rentalSubmissionPeople.id))
         .where(
           and(
-            eq(rentalScreeningOrders.status, 'in_progress'),
+            // Include in-progress orders OR complete orders needing notification retry
+            or(
+              eq(rentalScreeningOrders.status, 'in_progress'),
+              and(
+                eq(rentalScreeningOrders.status, 'complete'),
+                isNull(rentalScreeningOrders.completionNotifiedAt)
+              )
+            ),
             isNull(rentalScreeningOrders.completionNotifiedAt)
           )
         );
