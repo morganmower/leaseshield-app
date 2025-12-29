@@ -1603,7 +1603,7 @@ Best regards`;
               <Button
                 variant={pendingDecision === "approved" ? "default" : "destructive"}
                 onClick={confirmDecision}
-                disabled={decisionMutation.isPending || (pendingDecision === "denied" && selectedDenialReasons.length === 0)}
+                disabled={decisionMutation.isPending || (pendingDecision === "denied" && selectedDenialReasons.length === 0 && !sendNoticeMyself)}
                 data-testid="button-confirm-decision"
               >
                 {decisionMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
