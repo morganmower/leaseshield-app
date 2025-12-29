@@ -1324,6 +1324,7 @@ export const rentalScreeningOrders = pgTable("rental_screening_orders", {
   nextStatusCheckAt: timestamp("next_status_check_at"), // When to check next
   pollUntil: timestamp("poll_until"), // Stop polling after this time
   consecutiveFailures: integer("consecutive_failures").default(0), // For exponential backoff
+  completionNotifiedAt: timestamp("completion_notified_at"), // When owner was notified of completion
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
