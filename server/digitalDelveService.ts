@@ -704,3 +704,45 @@ export async function handleResultWebhook(xml: string): Promise<{ success: boole
     return { success: false };
   }
 }
+
+/**
+ * Check if a screening report is available and sync status to complete if so.
+ * This is useful when webhooks are missed or delayed.
+ */
+export async function syncScreeningStatus(
+  orderId: string,
+  credentials: ScreeningCredentials
+): Promise<{ success: boolean; status: string; error?: string }> {
+  try {
+    const order = await storage.getRentalScreeningOrderById(orderId);
+    if (!order) {
+      return { success: false, status: 'error', error: 'Order not found' };
+    }
+
+    if (!order.referenceNumber) {
+      return { success: false, status: order.status, error: 'No reference number' };
+    }
+
+    if (order.status === 'complete') {
+      return { success: true, status: 'complete' };
+    }
+
+    console.log(`[DigitalDelve] Syncing status for order ${orderId}, ref: ${order.referenceNumber}`);
+    
+    const ssoResult = await performSsoViewReport(order.referenceNumber, credentials);
+    
+    if (ssoResult.success && ssoResult.redirectUrl) {
+      console.log(`[DigitalDelve] Report available - marking order ${orderId} as complete`);
+      await storage.updateRentalScreeningOrder(orderId, {
+        status: 'complete',
+        reportUrl: ssoResult.redirectUrl,
+      });
+      return { success: true, status: 'complete' };
+    }
+
+    return { success: true, status: order.status };
+  } catch (error: any) {
+    console.error('[DigitalDelve] Error syncing screening status:', error);
+    return { success: false, status: 'error', error: error.message };
+  }
+}

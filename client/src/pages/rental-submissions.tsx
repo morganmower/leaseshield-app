@@ -313,6 +313,30 @@ export default function RentalSubmissions() {
     },
   });
 
+  const syncScreeningMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      return apiRequest("POST", `/api/rental/screening/${orderId}/sync`);
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "screening"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions/pending-count"] });
+      if (data.status === 'complete') {
+        toast({ title: "Status Updated", description: "Screening is now marked as complete." });
+      } else {
+        toast({ title: "Status Checked", description: "Screening is still in progress." });
+      }
+    },
+    onError: (error: any) => {
+      toast({ 
+        title: "Error", 
+        description: error?.message || "Failed to sync status.", 
+        variant: "destructive" 
+      });
+    },
+  });
+
   const resendInviteMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
       return apiRequest("POST", `/api/rental/submissions/${submissionId}/people/${personId}/resend-invite`);
@@ -944,6 +968,22 @@ Best regards`;
                                   {personOrder.status === 'in_progress' && 'In Progress'}
                                   {personOrder.status === 'complete' && 'Complete'}
                                 </Badge>
+                                {personOrder.status === 'in_progress' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => syncScreeningMutation.mutate(personOrder.id)}
+                                    disabled={syncScreeningMutation.isPending}
+                                    data-testid={`button-sync-screening-${person.id}`}
+                                  >
+                                    {syncScreeningMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <RefreshCw className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Sync Status</span>
+                                  </Button>
+                                )}
                                 {personOrder.status === 'complete' && (
                                   <Button
                                     size="sm"

@@ -5153,6 +5153,60 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Sync screening status by checking if report is available
+  // This is useful when webhooks are missed or delayed
+  app.post('/api/rental/screening/:orderId/sync', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      const order = await storage.getRentalScreeningOrderById(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: "Screening order not found" });
+      }
+
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get credentials for sync
+      const credentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!credentials) {
+        return res.status(400).json({ message: "Screening credentials not configured" });
+      }
+
+      const { syncScreeningStatus } = await import('./digitalDelveService');
+      const result = await syncScreeningStatus(req.params.orderId, credentials);
+      
+      if (result.success && result.status === 'complete') {
+        // Update submission status if all screenings are complete
+        const allOrders = await storage.getRentalScreeningOrdersBySubmission(order.submissionId);
+        const allComplete = allOrders.every(o => o.status === 'complete' || o.id === order.id);
+        if (allComplete) {
+          await storage.updateRentalSubmission(order.submissionId, { status: 'complete' });
+        }
+      }
+
+      res.json(result);
+    } catch (error) {
+      console.error("Error syncing screening status:", error);
+      res.status(500).json({ message: "Failed to sync status" });
+    }
+  });
+
   // NOTE: The check-status endpoint was removed because Western Verify
   // does NOT have a RetrieveOrderStatus API function. Status updates 
   // are received via webhooks to /api/webhooks/digitaldelve/status and /result
