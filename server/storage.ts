@@ -422,6 +422,14 @@ export interface IStorage {
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
   deleteRentalScreeningOrder(id: string): Promise<boolean>;
   getScreeningOrdersNeedingPoll(): Promise<RentalScreeningOrder[]>;
+  getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
+    order: RentalScreeningOrder;
+    ownerEmail: string;
+    ownerFirstName: string | null;
+    personName: string;
+    propertyName: string;
+    unitName: string;
+  }>>;
 
   // Rental Application System - Decision operations
   getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
@@ -2262,6 +2270,53 @@ export class DatabaseStorage implements IStorage {
         )
         .limit(10); // Batch size to avoid overloading
     }, 'getScreeningOrdersNeedingPoll');
+  }
+
+  async getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
+    order: RentalScreeningOrder;
+    ownerEmail: string;
+    ownerFirstName: string | null;
+    personName: string;
+    propertyName: string;
+    unitName: string;
+  }>> {
+    return handleDbOperation(async () => {
+      // Get in-progress orders that haven't been notified yet
+      const results = await db
+        .select({
+          order: rentalScreeningOrders,
+          ownerEmail: users.email,
+          ownerFirstName: users.firstName,
+          personFirstName: rentalSubmissionPeople.firstName,
+          personLastName: rentalSubmissionPeople.lastName,
+          propertyName: rentalProperties.name,
+          unitLabel: rentalUnits.unitLabel,
+        })
+        .from(rentalScreeningOrders)
+        .innerJoin(rentalSubmissions, eq(rentalScreeningOrders.submissionId, rentalSubmissions.id))
+        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
+        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
+        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
+        .innerJoin(users, eq(rentalProperties.userId, users.id))
+        .leftJoin(rentalSubmissionPeople, eq(rentalScreeningOrders.personId, rentalSubmissionPeople.id))
+        .where(
+          and(
+            eq(rentalScreeningOrders.status, 'in_progress'),
+            isNull(rentalScreeningOrders.completionNotifiedAt)
+          )
+        );
+
+      return results.map(r => ({
+        order: r.order,
+        ownerEmail: r.ownerEmail || '',
+        ownerFirstName: r.ownerFirstName,
+        personName: r.personFirstName && r.personLastName 
+          ? `${r.personFirstName} ${r.personLastName}` 
+          : 'Applicant',
+        propertyName: r.propertyName,
+        unitName: r.unitLabel,
+      }));
+    }, 'getInProgressScreeningOrdersWithOwnerInfo');
   }
 
   // Rental Decision operations
