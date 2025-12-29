@@ -216,6 +216,15 @@ export interface IStorage {
   getUserTrialReminderEvent(userId: string): Promise<AnalyticsEvent | undefined>;
   getUserTrialExpiredEvent(userId: string): Promise<AnalyticsEvent | undefined>;
   getAnalyticsSummary(): Promise<any>;
+  getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number }): Promise<Array<{
+    id: string;
+    eventType: string;
+    eventData: any;
+    createdAt: Date | null;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+  }>>;
 
   // Screening content operations
   getAllScreeningContent(): Promise<ScreeningContent[]>;
@@ -948,6 +957,67 @@ export class DatabaseStorage implements IStorage {
         avgDownloadsPerUser,
       },
     };
+  }
+
+  async getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number }): Promise<Array<{
+    id: string;
+    eventType: string;
+    eventData: any;
+    createdAt: Date | null;
+    userId: string | null;
+    userEmail: string | null;
+    userName: string | null;
+  }>> {
+    // Get engagement event types (exclude internal events like trial reminders)
+    const engagementTypes = [
+      'template_download',
+      'western_verify_click',
+      'credit_helper_use',
+      'criminal_helper_use',
+      'compliance_card_view',
+      'legal_update_view',
+      'screening_request',
+    ];
+
+    const limit = filters?.limit || 100;
+    
+    // Build conditions
+    const conditions = [];
+    if (filters?.eventType) {
+      conditions.push(eq(analyticsEvents.eventType, filters.eventType));
+    } else {
+      conditions.push(sql`${analyticsEvents.eventType} = ANY(${engagementTypes})`);
+    }
+
+    // Query events with user info via left join
+    const events = await db
+      .select({
+        id: analyticsEvents.id,
+        eventType: analyticsEvents.eventType,
+        eventData: analyticsEvents.eventData,
+        createdAt: analyticsEvents.createdAt,
+        userId: analyticsEvents.userId,
+        userEmail: users.email,
+        userFirstName: users.firstName,
+        userLastName: users.lastName,
+      })
+      .from(analyticsEvents)
+      .leftJoin(users, eq(analyticsEvents.userId, users.id))
+      .where(and(...conditions))
+      .orderBy(desc(analyticsEvents.createdAt))
+      .limit(limit);
+
+    return events.map(e => ({
+      id: e.id,
+      eventType: e.eventType,
+      eventData: e.eventData,
+      createdAt: e.createdAt,
+      userId: e.userId,
+      userEmail: e.userEmail,
+      userName: e.userFirstName && e.userLastName 
+        ? `${e.userFirstName} ${e.userLastName}`
+        : e.userFirstName || e.userLastName || null,
+    }));
   }
 
   // Screening content operations

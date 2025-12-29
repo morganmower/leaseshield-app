@@ -2346,6 +2346,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Detailed engagement events with user info for drill-down
+  app.get('/api/admin/analytics/engagement', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { eventType, limit } = req.query;
+      const events = await storage.getDetailedEngagementEvents({
+        eventType: eventType as string | undefined,
+        limit: limit ? parseInt(limit as string) : 100,
+      });
+      res.json(events);
+    } catch (error) {
+      console.error("Error fetching engagement details:", error);
+      res.status(500).json({ message: "Failed to fetch engagement details" });
+    }
+  });
+
   app.get('/api/admin/users', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);

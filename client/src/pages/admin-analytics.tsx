@@ -1,9 +1,13 @@
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText } from "lucide-react";
+import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText, ChevronRight } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface AnalyticsSummary {
   subscriptions: {
@@ -40,13 +44,53 @@ interface User {
   isAdmin: boolean | null;
 }
 
+interface EngagementEvent {
+  id: string;
+  eventType: string;
+  eventData: any;
+  createdAt: string | null;
+  userId: string | null;
+  userEmail: string | null;
+  userName: string | null;
+}
+
+const eventTypeLabels: Record<string, string> = {
+  template_download: 'Template Download',
+  western_verify_click: 'Western Verify Click',
+  credit_helper_use: 'Credit Helper Use',
+  criminal_helper_use: 'Criminal Helper Use',
+  compliance_card_view: 'Compliance Card View',
+  legal_update_view: 'Legal Update View',
+  screening_request: 'Screening Request',
+};
+
 export default function AdminAnalyticsPage() {
+  const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
+  const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
+
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
   });
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+  });
+
+  const { data: engagementEvents, isLoading: engagementLoading } = useQuery<EngagementEvent[]>({
+    queryKey: ["/api/admin/analytics/engagement", eventTypeFilter],
+    queryFn: async () => {
+      const params = new URLSearchParams();
+      if (eventTypeFilter && eventTypeFilter !== "all") {
+        params.set("eventType", eventTypeFilter);
+      }
+      params.set("limit", "200");
+      const res = await fetch(`/api/admin/analytics/engagement?${params.toString()}`, {
+        credentials: "include",
+      });
+      if (!res.ok) throw new Error("Failed to fetch engagement events");
+      return res.json();
+    },
+    enabled: engagementDialogOpen,
   });
 
   if (isLoading) {
@@ -219,10 +263,17 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>User Engagement</CardTitle>
-              <CardDescription>Platform usage metrics</CardDescription>
+          <Card 
+            className="cursor-pointer hover-elevate transition-all"
+            onClick={() => setEngagementDialogOpen(true)}
+            data-testid="card-user-engagement"
+          >
+            <CardHeader className="flex flex-row items-center justify-between gap-2">
+              <div>
+                <CardTitle>User Engagement</CardTitle>
+                <CardDescription>Platform usage metrics - Click to see details</CardDescription>
+              </div>
+              <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
@@ -289,6 +340,92 @@ export default function AdminAnalyticsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* User Engagement Drill-Down Dialog */}
+        <Dialog open={engagementDialogOpen} onOpenChange={setEngagementDialogOpen}>
+          <DialogContent className="max-w-4xl max-h-[80vh]">
+            <DialogHeader>
+              <DialogTitle>User Engagement Details</DialogTitle>
+              <DialogDescription>
+                See who is using each feature and when
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="flex items-center gap-4 mb-4">
+              <span className="text-sm font-medium">Filter by type:</span>
+              <Select value={eventTypeFilter} onValueChange={setEventTypeFilter}>
+                <SelectTrigger className="w-[200px]" data-testid="select-event-type">
+                  <SelectValue placeholder="All events" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Events</SelectItem>
+                  <SelectItem value="template_download">Template Downloads</SelectItem>
+                  <SelectItem value="western_verify_click">Western Verify Clicks</SelectItem>
+                  <SelectItem value="credit_helper_use">Credit Helper Uses</SelectItem>
+                  <SelectItem value="criminal_helper_use">Criminal Helper Uses</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <ScrollArea className="h-[400px]">
+              {engagementLoading ? (
+                <p className="text-center py-8 text-muted-foreground">Loading events...</p>
+              ) : engagementEvents && engagementEvents.length > 0 ? (
+                <table className="w-full text-sm" data-testid="table-engagement-events">
+                  <thead className="sticky top-0 bg-background">
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium">User</th>
+                      <th className="text-left py-3 px-2 font-medium">Email</th>
+                      <th className="text-left py-3 px-2 font-medium">Action</th>
+                      <th className="text-left py-3 px-2 font-medium">Details</th>
+                      <th className="text-left py-3 px-2 font-medium">Date/Time</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {engagementEvents.map((event) => (
+                      <tr
+                        key={event.id}
+                        className="border-b hover-elevate"
+                        data-testid={`row-event-${event.id}`}
+                      >
+                        <td className="py-3 px-2">
+                          {event.userName || "Anonymous"}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground">
+                          {event.userEmail || "—"}
+                        </td>
+                        <td className="py-3 px-2">
+                          <Badge variant="secondary">
+                            {eventTypeLabels[event.eventType] || event.eventType}
+                          </Badge>
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground max-w-[200px] truncate">
+                          {event.eventData ? (
+                            typeof event.eventData === 'object' ? (
+                              event.eventData.templateName || 
+                              event.eventData.templateTitle ||
+                              event.eventData.cardTitle ||
+                              JSON.stringify(event.eventData).slice(0, 50)
+                            ) : String(event.eventData).slice(0, 50)
+                          ) : "—"}
+                        </td>
+                        <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
+                          {event.createdAt
+                            ? format(new Date(event.createdAt), "MMM d, yyyy h:mm a")
+                            : "—"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : (
+                <p className="text-center py-8 text-muted-foreground">
+                  No engagement events found
+                </p>
+              )}
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
 
         <Card>
           <CardHeader>
