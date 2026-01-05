@@ -257,9 +257,9 @@ class PluralPolicyService {
       'residential',
     ];
 
-    const titleLower = bill.title.toLowerCase();
-    const abstractText = bill.abstracts.map(a => a.abstract.toLowerCase()).join(' ');
-    const subjects = bill.subject.map(s => s.toLowerCase());
+    const titleLower = (bill.title || '').toLowerCase();
+    const abstractText = (bill.abstracts || []).map(a => a.abstract?.toLowerCase() || '').join(' ');
+    const subjects = (bill.subject || []).map(s => s.toLowerCase());
     const combinedText = `${titleLower} ${abstractText} ${subjects.join(' ')}`;
 
     return relevantSubjects.some(term => combinedText.includes(term));
@@ -279,7 +279,8 @@ class PluralPolicyService {
 
   getBillUrl(bill: PluralBill): string {
     if (bill.openstates_url) return bill.openstates_url;
-    if (bill.sources && bill.sources.length > 0) return bill.sources[0].url;
+    const sources = bill.sources || [];
+    if (sources.length > 0 && sources[0].url) return sources[0].url;
     return `https://open.pluralpolicy.com/`;
   }
 
@@ -307,13 +308,14 @@ class PluralPolicyService {
     source: 'plural_policy';
   } {
     const lastAction = this.getLastAction(bill);
+    const abstracts = bill.abstracts || [];
     
     return {
       billId: `pp_${bill.id}`,
       stateId: stateId,
-      billNumber: bill.identifier,
-      title: bill.title,
-      description: bill.abstracts[0]?.abstract || bill.title,
+      billNumber: bill.identifier || '',
+      title: bill.title || '',
+      description: abstracts[0]?.abstract || bill.title || '',
       status: lastAction?.description || 'Unknown',
       lastActionDate: lastAction?.date || null,
       lastAction: lastAction?.description || null,
