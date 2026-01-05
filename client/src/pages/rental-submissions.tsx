@@ -998,6 +998,10 @@ Best regards`;
                                     size="sm"
                                     variant="outline"
                                     onClick={() => {
+                                      apiRequest('POST', '/api/analytics/track', {
+                                        eventType: 'western_verify_click',
+                                        eventData: { source: 'rental_submissions', action: 'view_report' },
+                                      }).catch(() => {});
                                       window.open('https://secure.westernverify.com/report_lookup.cfm', '_blank');
                                     }}
                                     data-testid={`button-view-report-${person.id}`}

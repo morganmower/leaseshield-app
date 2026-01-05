@@ -4,7 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { getAccessToken } from "@/lib/queryClient";
+import { getAccessToken, apiRequest } from "@/lib/queryClient";
 import {
   Accordion,
   AccordionContent,
@@ -1071,7 +1071,13 @@ export default function Screening() {
                 <div className="flex flex-col sm:flex-row gap-3">
                   <Button 
                     data-testid="button-western-verify"
-                    onClick={() => window.open('https://www.westernverify.com', '_blank')}
+                    onClick={() => {
+                      apiRequest('POST', '/api/analytics/track', {
+                        eventType: 'western_verify_click',
+                        eventData: { source: 'screening_page' },
+                      }).catch(() => {});
+                      window.open('https://www.westernverify.com', '_blank');
+                    }}
                     size="lg"
                   >
                     <Search className="mr-2 h-5 w-5" />

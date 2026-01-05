@@ -4863,6 +4863,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           metadataJson: { orderId: result.order?.id, personId: targetPerson.id, personName: `${targetPerson.firstName} ${targetPerson.lastName}` },
         });
         
+        // Track analytics event for dashboard
+        await storage.trackEvent({
+          userId,
+          eventType: 'screening_request',
+          eventData: { submissionId: submission.id, personId: targetPerson.id, personName: `${targetPerson.firstName} ${targetPerson.lastName}` },
+        });
+        
         res.json({ success: true, order: result.order });
       } else {
         console.error("Screening request failed:", result.error);

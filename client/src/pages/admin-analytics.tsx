@@ -497,6 +497,7 @@ export default function AdminAnalyticsPage() {
                       <SelectItem value="western_verify_click">Western Verify Clicks</SelectItem>
                       <SelectItem value="credit_helper_use">Credit Helper Uses</SelectItem>
                       <SelectItem value="criminal_helper_use">Criminal Helper Uses</SelectItem>
+                      <SelectItem value="screening_request">Screening Requests</SelectItem>
                     </SelectContent>
                   </Select>
                   <span className="text-sm text-muted-foreground ml-auto">
