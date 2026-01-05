@@ -494,7 +494,7 @@ export class LegislativeMonitoringService {
             doc.title || '',
             doc.abstract || doc.title || '',
             null,
-            'FED', // Federal designation
+            'US', // Federal designation (2-char code)
             allTemplates
           );
 
@@ -519,7 +519,7 @@ export class LegislativeMonitoringService {
           // Save to legislative monitoring table
           const monitoringData: InsertLegislativeMonitoring = {
             billId: docIdForStorage,
-            stateId: 'FED', // Federal designation
+            stateId: 'US', // Federal designation (2-char code)
             billNumber: doc.document_number,
             title: doc.title || '',
             description: doc.abstract || doc.title || '',

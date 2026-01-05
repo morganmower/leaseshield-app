@@ -299,7 +299,7 @@ class FederalRegisterService {
   } {
     return {
       billId: `fr_${doc.document_number}`,
-      stateId: 'FED', // Federal designation
+      stateId: 'US', // Federal designation (2-char code)
       billNumber: doc.document_number,
       title: doc.title || '',
       description: doc.abstract || doc.title || '',
