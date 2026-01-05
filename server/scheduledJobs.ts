@@ -162,18 +162,19 @@ export class ScheduledJobs {
       console.log(`  Found ${recentUpdates.length} recent legal updates`);
 
       for (const update of recentUpdates) {
-        // Find all users with this preferred state
+        // Find all users with this preferred state who have opted in to legal update notifications
         const affectedUsers = await db
           .select()
           .from(users)
           .where(
             and(
               eq(users.preferredState, update.stateId),
-              eq(users.subscriptionStatus, 'active')
+              eq(users.subscriptionStatus, 'active'),
+              eq(users.notifyLegalUpdates, true) // Respect user's notification preference
             )
           );
 
-        console.log(`  Notifying ${affectedUsers.length} users about ${update.title}`);
+        console.log(`  Notifying ${affectedUsers.length} opted-in users about ${update.title}`);
 
         for (const user of affectedUsers) {
           if (user.email) {

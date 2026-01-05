@@ -222,8 +222,13 @@ export default function LegalUpdatesPage() {
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
-                              <div className="flex items-start gap-2 mb-1">
+                              <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground">{update.title}</h3>
+                                {(update as any).isNewest && (
+                                  <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white" data-testid={`badge-new-${update.id}`}>
+                                    New
+                                  </Badge>
+                                )}
                                 {getImpactBadge(update.impactLevel)}
                               </div>
                               <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>

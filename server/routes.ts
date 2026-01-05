@@ -2088,7 +2088,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         legislativeUpdates = allBills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
       }
       
-      // Combine and sort by date (most recent first)
+      // Combine and sort by effective date (most recent first), fallback to createdAt
       const combined = [
         ...updates.map(u => ({ ...u, type: 'legal_update' })),
         ...legislativeUpdates.map(b => ({ 
@@ -2103,9 +2103,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           afterText: `${b.billNumber}: ${b.title}`,
           effectiveDate: b.lastActionDate || b.createdAt
         }))
-      ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      ].sort((a, b) => {
+        // Sort by effectiveDate first, then by createdAt as fallback
+        const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
+        const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
+        return dateB - dateA; // Most recent first
+      });
       
-      res.json(combined);
+      // Mark the first (most recent) item as "isNewest" for UI highlighting
+      const result = combined.map((item, index) => ({
+        ...item,
+        isNewest: index === 0
+      }));
+      
+      res.json(result);
     } catch (error) {
       console.error("Error fetching legal updates:", error);
       res.status(500).json({ message: "Failed to fetch legal updates" });
@@ -2551,16 +2562,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Get all users who have this state as their preferred state or all users for high impact
-      const users = update.impactLevel === 'high' 
+      // Filter to only users who have opted in to legal update notifications
+      const allUsers = update.impactLevel === 'high' 
         ? await storage.getAllActiveUsers() 
         : await storage.getUsersByState(update.stateId);
+      
+      // Only notify users who have opted in to legal update notifications
+      const users = allUsers.filter(u => u.notifyLegalUpdates !== false);
       
       const { client, fromEmail } = await getUncachableResendClient();
       
       let successCount = 0;
       let errorCount = 0;
       
-      // Send emails to all users
+      // Send emails to opted-in users only
       for (const user of users) {
         if (!user.email) continue;
         
