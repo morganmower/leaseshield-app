@@ -2612,7 +2612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Admin - Get template review queue
+  // Admin - Get template review queue (with enriched template data)
   app.get("/api/admin/template-review-queue", isAuthenticated, requireAdmin, async (req, res) => {
     try {
       const reviews = await storage.getAllTemplateReviewQueue({
@@ -2622,11 +2622,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const enrichedReviews = await Promise.all(
         reviews.map(async (review) => {
           const template = await storage.getTemplate(review.templateId);
-          return { ...review, template };
+          // Also get the related bill info
+          let bill = null;
+          if (review.billId) {
+            bill = await storage.getLegislativeMonitoringById(review.billId);
+          }
+          return { ...review, template, bill };
         })
       );
 
-      res.json({ reviews: enrichedReviews, total: enrichedReviews.length });
+      // Return array directly, not wrapped in object
+      res.json(enrichedReviews);
     } catch (error: any) {
       console.error("Error fetching template review queue:", error);
       res.status(500).json({ message: "Something went wrong. Please try again." });
@@ -2912,28 +2918,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error fetching case law:', error);
       res.status(500).json({ message: 'Failed to fetch case law' });
-    }
-  });
-
-  // Get template review queue (admin only)
-  app.get('/api/admin/template-review-queue', isAuthenticated, requireAdmin, async (req: any, res) => {
-    try {
-      const userId = getUserId(req);
-      const user = await storage.getUser(userId);
-
-      if (!user?.isAdmin) {
-        return res.status(403).json({ message: 'Admin access required' });
-      }
-
-      const filters: any = {};
-      if (req.query.status) filters.status = req.query.status as string;
-      if (req.query.templateId) filters.templateId = req.query.templateId as string;
-
-      const reviews = await storage.getAllTemplateReviewQueue(filters);
-      res.json(reviews);
-    } catch (error) {
-      console.error('Error fetching review queue:', error);
-      res.status(500).json({ message: 'Failed to fetch review queue' });
     }
   });
 
