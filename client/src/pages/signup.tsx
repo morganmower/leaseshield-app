@@ -376,9 +376,18 @@ export default function Signup() {
             </Link>
           </div>
           {!isPayNow && (
-            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-              <Shield className="h-3 w-3" />
-              <span>No credit card required for trial</span>
+            <div className="flex flex-col items-center gap-2">
+              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+                <Shield className="h-3 w-3" />
+                <span>No credit card required for trial</span>
+              </div>
+              <Link 
+                href="/signup?payNow=true" 
+                className="text-sm text-primary font-medium hover:underline"
+                data-testid="link-skip-trial"
+              >
+                Skip trial — Pay now
+              </Link>
             </div>
           )}
           {isPayNow && (
