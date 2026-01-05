@@ -2074,13 +2074,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       
       // Also fetch recent legislative monitoring records (high/medium relevance) for this state(s)
+      // Federal Register documents (stateId='US') should appear for ALL states
       let legislativeUpdates: any[] = [];
       if (stateId === 'NATIONAL') {
         const allBills = await storage.getAllLegislativeMonitoring({});
         legislativeUpdates = allBills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
       } else {
-        const bills = await storage.getAllLegislativeMonitoring({ stateId: stateId as string });
-        legislativeUpdates = bills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
+        // Get state-specific bills
+        const stateBills = await storage.getAllLegislativeMonitoring({ stateId: stateId as string });
+        // Also get federal documents (US) - they apply to all states
+        const federalBills = await storage.getAllLegislativeMonitoring({ stateId: 'US' });
+        const allBills = [...stateBills, ...federalBills];
+        legislativeUpdates = allBills.filter(b => b.relevanceLevel === 'high' || b.relevanceLevel === 'medium');
       }
       
       // Combine and sort by date (most recent first)
