@@ -102,16 +102,16 @@ export default function AdminLegislativeMonitoring() {
   const { toast } = useToast();
 
   const { data: pendingBills = [] } = useQuery<LegislativeBill[]>({
-    queryKey: ['/api/admin/legislative-bills', { isReviewed: false }],
+    queryKey: ['/api/admin/legislative-bills?isReviewed=false'],
   });
 
   const { data: reviewedBills = [] } = useQuery<LegislativeBill[]>({
-    queryKey: ['/api/admin/legislative-bills', { isReviewed: true }],
+    queryKey: ['/api/admin/legislative-bills?isReviewed=true'],
   });
 
   // Auto-published updates (no longer pending, all auto-approved)
   const { data: publishedUpdates = [] } = useQuery<TemplateReview[]>({
-    queryKey: ['/api/admin/template-review-queue', { status: 'approved' }],
+    queryKey: ['/api/admin/template-review-queue?status=approved'],
   });
 
   const { data: caseLaws = [] } = useQuery<CaseLaw[]>({
