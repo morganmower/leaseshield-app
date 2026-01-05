@@ -417,9 +417,10 @@ export const relevanceEnum = pgEnum('relevance_level', [
 ]);
 
 export const dataSourceEnum = pgEnum('data_source', [
-  'legiscan',       // LegiScan API
-  'plural_policy',  // Plural Policy (Open States) API
-  'manual',         // Manually added by admin
+  'legiscan',          // LegiScan API
+  'plural_policy',     // Plural Policy (Open States) API
+  'federal_register',  // Federal Register API (HUD regulations)
+  'manual',            // Manually added by admin
 ]);
 
 export const legislativeMonitoring = pgTable("legislative_monitoring", {

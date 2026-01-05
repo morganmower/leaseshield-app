@@ -19,7 +19,7 @@ interface LegislativeBill {
   statusDate: string;
   url: string;
   stateId: string;
-  dataSource?: 'legiscan' | 'plural_policy' | 'manual';
+  dataSource?: 'legiscan' | 'plural_policy' | 'federal_register' | 'manual';
   relevanceLevel: 'high' | 'medium' | 'low' | 'dismissed';
   aiAnalysis: string;
   affectedTemplateIds: string[];
@@ -333,10 +333,16 @@ export default function AdminLegislativeMonitoring() {
                           {bill.dataSource && (
                             <Badge 
                               variant="secondary" 
-                              className={bill.dataSource === 'plural_policy' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}
+                              className={
+                                bill.dataSource === 'plural_policy' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 
+                                bill.dataSource === 'federal_register' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                                'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                              }
                               data-testid={`badge-source-${bill.id}`}
                             >
-                              {bill.dataSource === 'plural_policy' ? 'Plural Policy' : bill.dataSource === 'legiscan' ? 'LegiScan' : 'Manual'}
+                              {bill.dataSource === 'plural_policy' ? 'Plural Policy' : 
+                               bill.dataSource === 'federal_register' ? 'Federal Register' :
+                               bill.dataSource === 'legiscan' ? 'LegiScan' : 'Manual'}
                             </Badge>
                           )}
                         </div>
@@ -533,9 +539,15 @@ export default function AdminLegislativeMonitoring() {
                                 {bill.dataSource && (
                                   <Badge 
                                     variant="secondary" 
-                                    className={bill.dataSource === 'plural_policy' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'}
+                                    className={
+                                      bill.dataSource === 'plural_policy' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' : 
+                                      bill.dataSource === 'federal_register' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                                      'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                                    }
                                   >
-                                    {bill.dataSource === 'plural_policy' ? 'Plural Policy' : bill.dataSource === 'legiscan' ? 'LegiScan' : 'Manual'}
+                                    {bill.dataSource === 'plural_policy' ? 'Plural Policy' : 
+                                     bill.dataSource === 'federal_register' ? 'Federal Register' :
+                                     bill.dataSource === 'legiscan' ? 'LegiScan' : 'Manual'}
                                   </Badge>
                                 )}
                               </div>

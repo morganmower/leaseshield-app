@@ -3,6 +3,7 @@
 
 import { legiscanService } from './legiscanService';
 import { pluralPolicyService } from './pluralPolicyService';
+import { federalRegisterService } from './federalRegisterService';
 import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
@@ -459,6 +460,149 @@ export class LegislativeMonitoringService {
         } catch (error) {
           console.error(`Error processing Plural Policy for state ${state.id}:`, error);
         }
+      }
+
+      // Phase 1c: Check Federal Register for HUD regulations (federal level)
+      console.log('\n\n📜 Phase 1c: Checking Federal Register for HUD regulations...');
+      try {
+        const federalDocs = await federalRegisterService.getRecentHUDDocuments(30); // Last 30 days
+
+        console.log(`  📊 Found ${federalDocs.length} federal housing documents`);
+
+        for (const doc of federalDocs) {
+          // Use fr_ prefix to distinguish Federal Register documents
+          const docIdForStorage = `fr_${doc.document_number}`;
+
+          // Check if we've already processed this document
+          const existing = await storage.getLegislativeMonitoringByBillId(docIdForStorage);
+
+          if (existing) {
+            console.log(`  ⏭️  Document ${doc.document_number} already tracked`);
+            continue;
+          }
+
+          // Check if document is relevant to landlord-tenant law
+          if (!federalRegisterService.isLandlordTenantRelevant(doc)) {
+            console.log(`  ⏭️  ${doc.document_number} not relevant to landlord-tenant law`);
+            continue;
+          }
+
+          console.log(`  🔍 Analyzing ${doc.document_number}: ${(doc.title || '').substring(0, 60)}...`);
+
+          // AI analysis to determine relevance and affected templates
+          const analysis = await billAnalysisService.analyzeBill(
+            doc.title || '',
+            doc.abstract || doc.title || '',
+            null,
+            'FED', // Federal designation
+            allTemplates
+          );
+
+          // Skip if deemed not relevant
+          if (analysis.relevanceLevel === 'dismissed' || analysis.relevanceLevel === 'low') {
+            console.log(`  ⏭️  ${doc.document_number} dismissed as low relevance`);
+            continue;
+          }
+
+          relevantBills++;
+
+          // Map document type to bill status
+          let docStatus: 'introduced' | 'in_committee' | 'passed_chamber' | 'passed_both' | 'signed' | 'vetoed' | 'dead' = 'introduced';
+          if (doc.type === 'Rule') {
+            docStatus = 'signed'; // Final rules are enacted
+          } else if (doc.type === 'Proposed Rule') {
+            docStatus = 'in_committee'; // Proposed rules are under review
+          } else if (doc.type === 'Notice') {
+            docStatus = 'introduced';
+          }
+
+          // Save to legislative monitoring table
+          const monitoringData: InsertLegislativeMonitoring = {
+            billId: docIdForStorage,
+            stateId: 'FED', // Federal designation
+            billNumber: doc.document_number,
+            title: doc.title || '',
+            description: doc.abstract || doc.title || '',
+            status: docStatus,
+            url: doc.html_url || '',
+            dataSource: 'federal_register',
+            lastAction: doc.action || `Published: ${doc.publication_date}`,
+            lastActionDate: doc.publication_date ? new Date(doc.publication_date) : null,
+            relevanceLevel: analysis.relevanceLevel,
+            aiAnalysis: analysis.aiAnalysis,
+            affectedTemplateIds: analysis.affectedTemplateIds,
+            isMonitored: true,
+            isReviewed: false,
+            reviewedBy: null,
+            reviewedAt: null,
+            reviewNotes: null,
+          };
+
+          const savedMonitoring = await storage.createLegislativeMonitoring(monitoringData);
+          console.log(`  ✅ Saved ${doc.document_number} (Federal Register) with ${analysis.relevanceLevel} relevance`);
+
+          // If high or medium relevance and templates are affected, queue for review
+          if ((analysis.relevanceLevel === 'high' || analysis.relevanceLevel === 'medium') && 
+              analysis.affectedTemplateIds.length > 0) {
+            
+            for (const templateId of analysis.affectedTemplateIds) {
+              const template = allTemplates.find(t => t.id === templateId);
+              
+              if (!template) continue;
+
+              // Create review queue entry
+              const reviewData: InsertTemplateReviewQueue = {
+                templateId: templateId,
+                billId: savedMonitoring.id,
+                status: 'pending',
+                priority: analysis.relevanceLevel === 'high' ? 10 : 5,
+                reason: `Federal Register ${doc.document_number}: ${doc.title}`,
+                recommendedChanges: analysis.recommendedChanges,
+                currentVersion: template.version || 1,
+                assignedTo: null,
+                reviewStartedAt: new Date(),
+                reviewCompletedAt: null,
+                attorneyNotes: null,
+                approvedChanges: null,
+                approvalNotes: null,
+                approvedAt: null,
+                rejectedAt: null,
+                updatedTemplateSnapshot: null,
+                publishedAt: null,
+                publishedBy: null,
+              };
+
+              const createdReview = await storage.createTemplateReviewQueue(reviewData);
+              
+              // Auto-publish the template update
+              try {
+                await storage.publishTemplateUpdate({
+                  templateId: templateId,
+                  reviewId: createdReview.id,
+                  versionNotes: analysis.recommendedChanges || 'Federal regulatory update',
+                  lastUpdateReason: `Federal Register ${doc.document_number}: ${doc.title}`,
+                  publishedBy: 'system',
+                });
+
+                await storage.updateTemplateReviewQueue(createdReview.id, {
+                  status: 'approved',
+                  reviewCompletedAt: new Date(),
+                  approvedChanges: analysis.recommendedChanges,
+                  approvalNotes: 'Auto-approved by AI legislative monitoring system',
+                  approvedAt: new Date(),
+                  publishedAt: new Date(),
+                  publishedBy: 'system',
+                });
+                templatesQueued++;
+                console.log(`  📄 Template update published for ${template.title}`);
+              } catch (publishError) {
+                console.error(`  ❌ Failed to publish template update:`, publishError);
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Error processing Federal Register:', error);
       }
 
       // Phase 2: Check each state for new case law
