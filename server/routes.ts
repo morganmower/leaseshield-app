@@ -3715,6 +3715,78 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Resend broadcast emails to active subscribers
+  app.post('/api/admin/broadcasts/:broadcastId/resend', isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { broadcastId } = req.params;
+      
+      // Get the broadcast
+      const broadcast = await storage.getBroadcastById(broadcastId);
+      if (!broadcast) {
+        return res.status(404).json({ message: "Broadcast not found" });
+      }
+
+      // Get active subscribers only
+      const activeUsers = await storage.getAllActiveUsers();
+      
+      if (activeUsers.length === 0) {
+        return res.json({ success: true, emailsSent: 0, message: "No active subscribers to send to" });
+      }
+
+      // Send emails
+      const { client, fromEmail } = await getUncachableResendClient();
+      const domain = req.get('host') || 'leaseshield.app';
+      const baseUrl = req.secure || req.headers['x-forwarded-proto'] === 'https' 
+        ? `https://${domain}` 
+        : `http://${domain}`;
+
+      let emailSuccessCount = 0;
+      for (const user of activeUsers) {
+        if (user.email) {
+          try {
+            await client.emails.send({
+              from: fromEmail,
+              to: user.email,
+              subject: `LeaseShield Update: ${broadcast.subject}`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #14b8a6;">${broadcast.subject}</h2>
+                  <p>Hi${user.firstName ? ` ${user.firstName}` : ''},</p>
+                  <div style="white-space: pre-wrap; margin: 16px 0; line-height: 1.6;">
+${broadcast.content}
+                  </div>
+                  <p style="margin: 24px 0;">
+                    <a href="${baseUrl}/messages" style="background-color: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                      View in LeaseShield
+                    </a>
+                  </p>
+                  <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
+                  <p style="color: #999; font-size: 12px;">
+                    LeaseShield - Protecting landlords with legal templates and compliance guidance.
+                  </p>
+                </div>
+              `,
+              text: `Hi${user.firstName ? ` ${user.firstName}` : ''},\n\n${broadcast.subject}\n\n${broadcast.content}\n\nView it here: ${baseUrl}/messages\n\nLeaseShield - Protecting landlords with legal templates and compliance guidance.`,
+            });
+            emailSuccessCount++;
+          } catch (emailError) {
+            console.error(`Failed to resend broadcast email to ${user.email}:`, emailError);
+          }
+        }
+      }
+
+      console.log(`Resent broadcast "${broadcast.subject}" to ${emailSuccessCount} active subscribers`);
+      res.json({ 
+        success: true, 
+        emailsSent: emailSuccessCount,
+        totalActiveSubscribers: activeUsers.length 
+      });
+    } catch (error) {
+      console.error("Error resending broadcast:", error);
+      res.status(500).json({ message: "Failed to resend broadcast" });
+    }
+  });
+
   // ===== ADMIN SCREENING CREDENTIALS MANAGEMENT =====
 
   // Get all landlords with their screening credential status

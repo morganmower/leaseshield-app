@@ -77,6 +77,26 @@ export default function AdminBroadcasts() {
     },
   });
 
+  const resendBroadcastMutation = useMutation({
+    mutationFn: async (broadcastId: string) => {
+      const res = await apiRequest("POST", `/api/admin/broadcasts/${broadcastId}/resend`);
+      return await res.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Emails Sent",
+        description: `Email notification sent to ${data.emailsSent} active subscriber${data.emailsSent === 1 ? '' : 's'}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to resend emails.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSendBroadcast = () => {
     if (!subject.trim() || !content.trim()) {
       toast({
@@ -276,18 +296,36 @@ export default function AdminBroadcasts() {
                               </span>
                             </div>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setExpandedBroadcast(expandedBroadcast === broadcast.id ? null : broadcast.id)}
-                            data-testid={`button-expand-${broadcast.id}`}
-                          >
-                            {expandedBroadcast === broadcast.id ? (
-                              <ChevronUp className="h-4 w-4" />
-                            ) : (
-                              <ChevronDown className="h-4 w-4" />
-                            )}
-                          </Button>
+                          <div className="flex items-center gap-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => resendBroadcastMutation.mutate(broadcast.id)}
+                              disabled={resendBroadcastMutation.isPending}
+                              data-testid={`button-resend-${broadcast.id}`}
+                            >
+                              {resendBroadcastMutation.isPending ? (
+                                "Sending..."
+                              ) : (
+                                <>
+                                  <Mail className="h-3 w-3 mr-1" />
+                                  Resend Email
+                                </>
+                              )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => setExpandedBroadcast(expandedBroadcast === broadcast.id ? null : broadcast.id)}
+                              data-testid={`button-expand-${broadcast.id}`}
+                            >
+                              {expandedBroadcast === broadcast.id ? (
+                                <ChevronUp className="h-4 w-4" />
+                              ) : (
+                                <ChevronDown className="h-4 w-4" />
+                              )}
+                            </Button>
+                          </div>
                         </div>
                       </CardHeader>
                       {expandedBroadcast === broadcast.id && (
