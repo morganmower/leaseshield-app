@@ -307,8 +307,8 @@ export default function AdminAnalyticsPage() {
           >
             <CardHeader className="flex flex-row items-center justify-between gap-2">
               <div>
-                <CardTitle>User Engagement</CardTitle>
-                <CardDescription>Platform usage metrics - Click to see details</CardDescription>
+                <CardTitle>User Engagement - {monthNames[new Date().getMonth()]} {new Date().getFullYear()}</CardTitle>
+                <CardDescription>Monthly usage metrics (resets each month) - Click to see details</CardDescription>
               </div>
               <ChevronRight className="h-5 w-5 text-muted-foreground" />
             </CardHeader>

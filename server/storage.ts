@@ -132,7 +132,7 @@ import {
   type InsertLandlordScreeningCredentials,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, isNull, lte, gt, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
 
 /**
@@ -926,26 +926,46 @@ export class DatabaseStorage implements IStorage {
     const convertedCount = Number(convertedTrials[0]?.count || 0);
     const trialConversionRate = totalTrialsCount > 0 ? convertedCount / totalTrialsCount : 0;
 
-    // Usage metrics
+    // Usage metrics - filter by current month only
+    const now = new Date();
+    const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    
     const templateDownloads = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.eventType, 'template_download'));
+      .where(and(
+        eq(analyticsEvents.eventType, 'template_download'),
+        gte(analyticsEvents.createdAt, monthStart),
+        lte(analyticsEvents.createdAt, monthEnd)
+      ));
     
     const westernVerifyClicks = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.eventType, 'western_verify_click'));
+      .where(and(
+        eq(analyticsEvents.eventType, 'western_verify_click'),
+        gte(analyticsEvents.createdAt, monthStart),
+        lte(analyticsEvents.createdAt, monthEnd)
+      ));
 
     const creditHelperUses = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.eventType, 'credit_helper_use'));
+      .where(and(
+        eq(analyticsEvents.eventType, 'credit_helper_use'),
+        gte(analyticsEvents.createdAt, monthStart),
+        lte(analyticsEvents.createdAt, monthEnd)
+      ));
 
     const criminalHelperUses = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
-      .where(eq(analyticsEvents.eventType, 'criminal_helper_use'));
+      .where(and(
+        eq(analyticsEvents.eventType, 'criminal_helper_use'),
+        gte(analyticsEvents.createdAt, monthStart),
+        lte(analyticsEvents.createdAt, monthEnd)
+      ));
 
     const totalDownloads = Number(templateDownloads[0]?.count || 0);
     const totalWesternClicks = Number(westernVerifyClicks[0]?.count || 0);
