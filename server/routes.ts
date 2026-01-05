@@ -2625,7 +2625,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           // Also get the related bill info
           let bill = null;
           if (review.billId) {
-            bill = await storage.getLegislativeMonitoringById(review.billId);
+            bill = await storage.getLegislativeMonitoringByBillId(review.billId);
           }
           return { ...review, template, bill };
         })
