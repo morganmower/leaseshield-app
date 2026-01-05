@@ -4108,6 +4108,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         isFromAdmin: true,
       });
       
+      // Send email notification to user
+      emailService.sendDirectMessageNotification(
+        { email: targetUser.email, firstName: targetUser.firstName || undefined, lastName: targetUser.lastName || undefined },
+        subject.trim(),
+        initialMessage.trim()
+      ).catch(err => console.error("Failed to send direct message email:", err));
+      
       res.json(conversation);
     } catch (error) {
       console.error("Error creating direct conversation:", error);
@@ -4147,6 +4154,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         content: content.trim(),
         isFromAdmin: user?.isAdmin || false,
       });
+      
+      // If admin is replying, send email notification to user
+      if (user?.isAdmin) {
+        const targetUser = await storage.getUser(conversation.userId);
+        if (targetUser) {
+          emailService.sendDirectMessageNotification(
+            { email: targetUser.email, firstName: targetUser.firstName || undefined, lastName: targetUser.lastName || undefined },
+            conversation.subject,
+            content.trim()
+          ).catch(err => console.error("Failed to send direct message reply email:", err));
+        }
+      }
       
       res.json(message);
     } catch (error) {

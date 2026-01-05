@@ -1463,6 +1463,87 @@ The LeaseShield App Team
 
     return await this.sendEmail({ email: owner.email, firstName: owner.firstName }, template);
   }
+
+  async sendDirectMessageNotification(
+    user: EmailRecipient,
+    subject: string,
+    messagePreview: string
+  ): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+    const messagesUrl = `${baseUrl}/messages`;
+
+    const template: EmailTemplate = {
+      subject: `New Message from LeaseShield: ${subject}`,
+      textBody: `Hi ${firstName},
+
+You have a new message from the LeaseShield team!
+
+Subject: ${subject}
+
+Message Preview:
+${messagePreview.substring(0, 200)}${messagePreview.length > 200 ? '...' : ''}
+
+Log in to your LeaseShield account to read and reply to this message:
+${messagesUrl}
+
+Best regards,
+The LeaseShield App Team
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .message-box { background: #f0fdfa; border-left: 4px solid #14b8a6; padding: 20px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; font-size: 16px; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">You Have a New Message</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <p>You have a new message from the <strong>LeaseShield</strong> team!</p>
+
+      <div class="message-box">
+        <p style="margin-top: 0;"><strong>Subject:</strong> ${subject}</p>
+        <p style="margin-bottom: 0; color: #64748b;">${messagePreview.substring(0, 200)}${messagePreview.length > 200 ? '...' : ''}</p>
+      </div>
+
+      <p style="text-align: center;">
+        <a href="${messagesUrl}" class="cta-button">
+          Read & Reply Now
+        </a>
+      </p>
+
+      <p style="text-align: center; color: #64748b; font-size: 14px;">
+        Click the button above to view the full message and respond.
+      </p>
+
+      <div class="footer">
+        <p>LeaseShield App - Protecting Your Rental Business</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: user.email, firstName: user.firstName }, template);
+  }
 }
 
 export const emailService = new EmailService();

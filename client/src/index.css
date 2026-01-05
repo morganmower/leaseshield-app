@@ -302,6 +302,20 @@
   }
 }
 
+/* Attention-grabbing blink animation for unread messages */
+@keyframes attention-blink {
+  0%, 100% {
+    background-color: transparent;
+  }
+  50% {
+    background-color: hsl(var(--primary) / 0.15);
+  }
+}
+
+.animate-attention-blink {
+  animation: attention-blink 1.5s ease-in-out infinite;
+}
+
 /* Mobile Responsive Shepherd Tour Styles */
 @media (max-width: 640px) {
   .shepherd-element {

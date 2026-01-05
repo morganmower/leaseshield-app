@@ -222,18 +222,26 @@ export default function Messages() {
 
       <Tabs defaultValue="direct" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
-          <TabsTrigger value="direct" className="flex items-center gap-2" data-testid="tab-direct">
+          <TabsTrigger 
+            value="direct" 
+            className={`flex items-center gap-2 ${totalDirectUnread > 0 ? 'animate-attention-blink' : ''}`} 
+            data-testid="tab-direct"
+          >
             <MessageSquare className="h-4 w-4" />
             Direct Messages
             {totalDirectUnread > 0 && (
-              <Badge variant="default" className="ml-1">{totalDirectUnread}</Badge>
+              <Badge variant="destructive" className="ml-1 animate-pulse">{totalDirectUnread}</Badge>
             )}
           </TabsTrigger>
-          <TabsTrigger value="broadcasts" className="flex items-center gap-2" data-testid="tab-broadcasts">
+          <TabsTrigger 
+            value="broadcasts" 
+            className={`flex items-center gap-2 ${messages.filter(m => !m.isRead).length > 0 ? 'animate-attention-blink' : ''}`} 
+            data-testid="tab-broadcasts"
+          >
             <Mail className="h-4 w-4" />
             Announcements
             {messages.filter(m => !m.isRead).length > 0 && (
-              <Badge variant="default" className="ml-1">{messages.filter(m => !m.isRead).length}</Badge>
+              <Badge variant="destructive" className="ml-1 animate-pulse">{messages.filter(m => !m.isRead).length}</Badge>
             )}
           </TabsTrigger>
         </TabsList>
