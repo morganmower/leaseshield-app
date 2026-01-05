@@ -343,18 +343,27 @@ export default function Landing() {
                         {spotsRemaining} spots remaining • 7-day free trial
                       </p>
                     </div>
-                    <Button
-                      size="lg"
-                      onClick={() => {
-                        trackTrialStart();
-                        window.location.href = "/signup";
-                      }}
-                      className="w-full sm:w-auto whitespace-nowrap"
-                      data-testid="button-pricing-cta"
-                    >
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
+                    <div className="flex flex-col items-center gap-2 w-full sm:w-auto">
+                      <Button
+                        size="lg"
+                        onClick={() => {
+                          trackTrialStart();
+                          window.location.href = "/signup";
+                        }}
+                        className="w-full sm:w-auto whitespace-nowrap"
+                        data-testid="button-pricing-cta"
+                      >
+                        Start Free Trial
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </Button>
+                      <button
+                        onClick={() => window.location.href = "/signup?payNow=true"}
+                        className="text-xs text-primary hover:underline"
+                        data-testid="link-pay-now-hero"
+                      >
+                        Skip trial — Pay now
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               </ABTestWrapper>
@@ -1446,6 +1455,16 @@ export default function Landing() {
                 Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', 'monthly');
+                  window.location.href = "/signup?payNow=true";
+                }}
+                className="text-xs text-primary hover:underline mt-2"
+                data-testid="link-pay-now-monthly"
+              >
+                Skip trial — Pay now
+              </button>
             </Card>
 
             {/* Annual Card - Best Value */}
@@ -1506,6 +1525,16 @@ export default function Landing() {
                 Save $20 – Start Free Trial
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', 'yearly');
+                  window.location.href = "/signup?payNow=true";
+                }}
+                className="text-xs text-primary hover:underline mt-2"
+                data-testid="link-pay-now-annual"
+              >
+                Skip trial — Pay now
+              </button>
             </Card>
           </motion.div>
 

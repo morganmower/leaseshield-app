@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Link, useLocation } from "wouter";
+import { Link, useLocation, useSearch } from "wouter";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { Button } from "@/components/ui/button";
@@ -56,8 +56,12 @@ type SignupFormData = z.infer<typeof signupSchema>;
 export default function Signup() {
   const { toast } = useToast();
   const [, setLocation] = useLocation();
+  const searchString = useSearch();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
+  // Check if user wants to skip trial and pay immediately
+  const isPayNow = new URLSearchParams(searchString).get('payNow') === 'true';
 
   const form = useForm<SignupFormData>({
     resolver: zodResolver(signupSchema),
@@ -97,11 +101,20 @@ export default function Signup() {
         localStorage.setItem("accessToken", data.accessToken);
       }
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      toast({
-        title: "Welcome to LeaseShield!",
-        description: "Your 7-day free trial has started. Explore your landlord protection tools.",
-      });
-      setLocation("/dashboard");
+      
+      if (isPayNow) {
+        toast({
+          title: "Account Created!",
+          description: "Now let's set up your payment to get started immediately.",
+        });
+        setLocation("/subscribe");
+      } else {
+        toast({
+          title: "Welcome to LeaseShield!",
+          description: "Your 7-day free trial has started. Explore your landlord protection tools.",
+        });
+        setLocation("/dashboard");
+      }
     },
     onError: (error: Error) => {
       toast({
@@ -132,10 +145,12 @@ export default function Signup() {
           </div>
           <div>
             <CardTitle className="text-2xl font-semibold" data-testid="text-signup-title">
-              Start Your Free Trial
+              {isPayNow ? "Create Your Account" : "Start Your Free Trial"}
             </CardTitle>
             <CardDescription data-testid="text-signup-description">
-              Get 7 days of full access to all landlord protection tools
+              {isPayNow 
+                ? "Create your account, then complete payment to get started immediately"
+                : "Get 7 days of full access to all landlord protection tools"}
             </CardDescription>
           </div>
         </CardHeader>
@@ -340,6 +355,8 @@ export default function Signup() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...
                   </>
+                ) : isPayNow ? (
+                  "Continue to Payment"
                 ) : (
                   "Start Free Trial"
                 )}
@@ -358,10 +375,24 @@ export default function Signup() {
               Sign in
             </Link>
           </div>
-          <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-            <Shield className="h-3 w-3" />
-            <span>No credit card required for trial</span>
-          </div>
+          {!isPayNow && (
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <Shield className="h-3 w-3" />
+              <span>No credit card required for trial</span>
+            </div>
+          )}
+          {isPayNow && (
+            <div className="text-center text-xs text-muted-foreground">
+              Want to try before you pay?{" "}
+              <Link 
+                href="/signup" 
+                className="text-primary hover:underline"
+                data-testid="link-try-trial"
+              >
+                Start free trial instead
+              </Link>
+            </div>
+          )}
         </CardFooter>
       </Card>
     </div>
