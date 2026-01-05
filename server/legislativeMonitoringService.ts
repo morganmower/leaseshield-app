@@ -1,7 +1,8 @@
 // Legislative Monitoring Orchestration Service
-// Coordinates LegiScan API, CourtListener API, AI analysis, and database operations
+// Coordinates LegiScan API, Plural Policy API, CourtListener API, AI analysis, and database operations
 
 import { legiscanService } from './legiscanService';
+import { pluralPolicyService } from './pluralPolicyService';
 import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
@@ -125,6 +126,7 @@ export class LegislativeMonitoringService {
               description: bill.description,
               status: legiscanService.mapBillStatus(bill.status),
               url: bill.url || null,
+              dataSource: 'legiscan',
               lastAction: lastAction.action,
               lastActionDate: new Date(lastAction.date),
               relevanceLevel: analysis.relevanceLevel,
@@ -282,6 +284,180 @@ export class LegislativeMonitoringService {
           }
         } catch (error) {
           console.error(`Error processing state ${state.id}:`, error);
+        }
+      }
+
+      // Phase 1b: Check Plural Policy (Open States) for additional bills
+      console.log('\n\n🏛️  Phase 1b: Checking Plural Policy (Open States) for bills...');
+      for (const state of activeStates) {
+        try {
+          console.log(`\n📋 Checking Plural Policy for ${state.name} (${state.id})...`);
+
+          const ppResults = await pluralPolicyService.searchBills(state.id, currentYear);
+
+          if (!ppResults || ppResults.results.length === 0) {
+            console.log(`  ⚠️  No results from Plural Policy for ${state.id}`);
+            continue;
+          }
+
+          console.log(`  📊 Found ${ppResults.results.length} bills from Plural Policy for ${state.id}`);
+          totalBills += ppResults.results.length;
+
+          for (const ppBill of ppResults.results.slice(0, 10)) {
+            // Use pp_ prefix to distinguish Plural Policy bills
+            const billIdForStorage = `pp_${ppBill.id}`;
+            
+            // Check if we've already processed this bill
+            const existing = await storage.getLegislativeMonitoringByBillId(billIdForStorage);
+
+            if (existing) {
+              console.log(`  ⏭️  Bill ${ppBill.identifier} already tracked`);
+              continue;
+            }
+
+            // Also check by bill number to avoid duplicates from LegiScan
+            const existingByNumber = await storage.getLegislativeMonitoringByBillNumber(ppBill.identifier, state.id);
+            if (existingByNumber) {
+              console.log(`  ⏭️  Bill ${ppBill.identifier} already tracked from LegiScan`);
+              continue;
+            }
+
+            // Check if bill is relevant to landlord-tenant law
+            if (!pluralPolicyService.isRelevantBill(ppBill)) {
+              console.log(`  ⏭️  ${ppBill.identifier} not relevant to landlord-tenant law`);
+              continue;
+            }
+
+            console.log(`  🔍 Analyzing ${ppBill.identifier}: ${ppBill.title.substring(0, 60)}...`);
+
+            const abstractText = ppBill.abstracts[0]?.abstract || ppBill.title;
+            const billTextUrl = pluralPolicyService.getBillText(ppBill);
+
+            // AI analysis to determine relevance and affected templates
+            const analysis = await billAnalysisService.analyzeBill(
+              ppBill.title,
+              abstractText,
+              null, // Bill text URL, not content
+              state.id,
+              allTemplates
+            );
+
+            // Skip if deemed not relevant
+            if (analysis.relevanceLevel === 'dismissed' || analysis.relevanceLevel === 'low') {
+              console.log(`  ⏭️  ${ppBill.identifier} dismissed as low relevance`);
+              continue;
+            }
+
+            relevantBills++;
+
+            const lastAction = pluralPolicyService.getLastAction(ppBill);
+
+            // Map bill status from Plural Policy actions
+            let billStatus: 'introduced' | 'in_committee' | 'passed_chamber' | 'passed_both' | 'signed' | 'vetoed' | 'dead' = 'introduced';
+            if (lastAction) {
+              const actionLower = lastAction.description.toLowerCase();
+              if (actionLower.includes('signed') || actionLower.includes('enacted')) {
+                billStatus = 'signed';
+              } else if (actionLower.includes('passed') && actionLower.includes('both')) {
+                billStatus = 'passed_both';
+              } else if (actionLower.includes('passed')) {
+                billStatus = 'passed_chamber';
+              } else if (actionLower.includes('committee')) {
+                billStatus = 'in_committee';
+              } else if (actionLower.includes('vetoed')) {
+                billStatus = 'vetoed';
+              } else if (actionLower.includes('dead') || actionLower.includes('failed')) {
+                billStatus = 'dead';
+              }
+            }
+
+            // Save to legislative monitoring table
+            const monitoringData: InsertLegislativeMonitoring = {
+              billId: billIdForStorage,
+              stateId: state.id,
+              billNumber: ppBill.identifier,
+              title: ppBill.title,
+              description: abstractText,
+              status: billStatus,
+              url: pluralPolicyService.getBillUrl(ppBill),
+              dataSource: 'plural_policy',
+              lastAction: lastAction?.description || null,
+              lastActionDate: lastAction ? new Date(lastAction.date) : null,
+              relevanceLevel: analysis.relevanceLevel,
+              aiAnalysis: analysis.aiAnalysis,
+              affectedTemplateIds: analysis.affectedTemplateIds,
+              isMonitored: true,
+              isReviewed: false,
+              reviewedBy: null,
+              reviewedAt: null,
+              reviewNotes: null,
+            };
+
+            const savedMonitoring = await storage.createLegislativeMonitoring(monitoringData);
+            console.log(`  ✅ Saved ${ppBill.identifier} (Plural Policy) with ${analysis.relevanceLevel} relevance`);
+
+            // If high or medium relevance and templates are affected, queue for review
+            if ((analysis.relevanceLevel === 'high' || analysis.relevanceLevel === 'medium') && 
+                analysis.affectedTemplateIds.length > 0) {
+              
+              for (const templateId of analysis.affectedTemplateIds) {
+                const template = allTemplates.find(t => t.id === templateId);
+                
+                if (!template) continue;
+
+                // Create review queue entry
+                const reviewData: InsertTemplateReviewQueue = {
+                  templateId: templateId,
+                  billId: savedMonitoring.id,
+                  status: 'pending',
+                  priority: analysis.relevanceLevel === 'high' ? 10 : 5,
+                  reason: `Bill ${ppBill.identifier}: ${ppBill.title}`,
+                  recommendedChanges: analysis.recommendedChanges,
+                  currentVersion: template.version || 1,
+                  assignedTo: null,
+                  reviewStartedAt: new Date(),
+                  reviewCompletedAt: null,
+                  attorneyNotes: null,
+                  approvedChanges: null,
+                  approvalNotes: null,
+                  approvedAt: null,
+                  rejectedAt: null,
+                  updatedTemplateSnapshot: null,
+                  publishedAt: null,
+                  publishedBy: null,
+                };
+
+                const createdReview = await storage.createTemplateReviewQueue(reviewData);
+                
+                // Auto-publish the template update
+                try {
+                  await storage.publishTemplateUpdate({
+                    templateId: templateId,
+                    reviewId: createdReview.id,
+                    versionNotes: analysis.recommendedChanges || 'Legislative update',
+                    lastUpdateReason: `Bill ${ppBill.identifier}: ${ppBill.title}`,
+                    publishedBy: 'system',
+                  });
+
+                  await storage.updateTemplateReviewQueue(createdReview.id, {
+                    status: 'approved',
+                    reviewCompletedAt: new Date(),
+                    approvedChanges: analysis.recommendedChanges,
+                    approvalNotes: 'Auto-approved by AI legislative monitoring system',
+                    approvedAt: new Date(),
+                    publishedAt: new Date(),
+                    publishedBy: 'system',
+                  });
+                  templatesQueued++;
+                  console.log(`  📄 Template update published for ${template.title}`);
+                } catch (publishError) {
+                  console.error(`  ❌ Failed to publish template update:`, publishError);
+                }
+              }
+            }
+          }
+        } catch (error) {
+          console.error(`Error processing Plural Policy for state ${state.id}:`, error);
         }
       }
 

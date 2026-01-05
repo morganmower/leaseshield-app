@@ -257,6 +257,7 @@ export interface IStorage {
 
   // Legislative monitoring operations
   getLegislativeMonitoringByBillId(billId: string): Promise<LegislativeMonitoring | undefined>;
+  getLegislativeMonitoringByBillNumber(billNumber: string, stateId: string): Promise<LegislativeMonitoring | undefined>;
   getAllLegislativeMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<LegislativeMonitoring[]>;
   createLegislativeMonitoring(monitoring: InsertLegislativeMonitoring): Promise<LegislativeMonitoring>;
   updateLegislativeMonitoring(id: string, monitoring: Partial<InsertLegislativeMonitoring>): Promise<LegislativeMonitoring>;
@@ -1257,6 +1258,16 @@ export class DatabaseStorage implements IStorage {
   // Legislative monitoring operations
   async getLegislativeMonitoringByBillId(billId: string): Promise<LegislativeMonitoring | undefined> {
     const [monitoring] = await db.select().from(legislativeMonitoring).where(eq(legislativeMonitoring.billId, billId));
+    return monitoring;
+  }
+
+  async getLegislativeMonitoringByBillNumber(billNumber: string, stateId: string): Promise<LegislativeMonitoring | undefined> {
+    const [monitoring] = await db.select().from(legislativeMonitoring).where(
+      and(
+        eq(legislativeMonitoring.billNumber, billNumber),
+        eq(legislativeMonitoring.stateId, stateId)
+      )
+    );
     return monitoring;
   }
 

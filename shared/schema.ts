@@ -416,15 +416,22 @@ export const relevanceEnum = pgEnum('relevance_level', [
   'dismissed', // Reviewed and determined not relevant
 ]);
 
+export const dataSourceEnum = pgEnum('data_source', [
+  'legiscan',       // LegiScan API
+  'plural_policy',  // Plural Policy (Open States) API
+  'manual',         // Manually added by admin
+]);
+
 export const legislativeMonitoring = pgTable("legislative_monitoring", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  billId: text("bill_id").notNull().unique(), // LegiScan bill_id
+  billId: text("bill_id").notNull().unique(), // LegiScan or Plural Policy bill_id
   stateId: varchar("state_id", { length: 2 }).notNull(),
   billNumber: text("bill_number").notNull(), // e.g., "SB 142"
   title: text("title").notNull(),
   description: text("description"),
   status: billStatusEnum("status").notNull(),
   url: text("url"), // Link to LegiScan or state legislature
+  dataSource: dataSourceEnum("data_source").default('legiscan'), // Which API found this bill
   lastAction: text("last_action"),
   lastActionDate: timestamp("last_action_date"),
   // AI Analysis
