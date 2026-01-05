@@ -275,6 +275,8 @@ export interface IStorage {
   // Monitoring run operations
   createMonitoringRun(run: InsertMonitoringRun): Promise<MonitoringRun>;
   getRecentMonitoringRuns(limit?: number): Promise<MonitoringRun[]>;
+  getLastSuccessfulMonitoringRun(): Promise<MonitoringRun | undefined>;
+  hasMonitoringRunThisMonth(): Promise<boolean>;
 
   // Template version operations
   publishTemplateUpdate(data: {
@@ -1381,6 +1383,34 @@ export class DatabaseStorage implements IStorage {
       .from(monitoringRuns)
       .orderBy(desc(monitoringRuns.createdAt))
       .limit(limit);
+  }
+
+  async getLastSuccessfulMonitoringRun(): Promise<MonitoringRun | undefined> {
+    const [run] = await db
+      .select()
+      .from(monitoringRuns)
+      .where(eq(monitoringRuns.status, 'success'))
+      .orderBy(desc(monitoringRuns.createdAt))
+      .limit(1);
+    return run;
+  }
+
+  async hasMonitoringRunThisMonth(): Promise<boolean> {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    
+    const [run] = await db
+      .select()
+      .from(monitoringRuns)
+      .where(
+        and(
+          gte(monitoringRuns.createdAt, startOfMonth),
+          eq(monitoringRuns.status, 'success')
+        )
+      )
+      .limit(1);
+    
+    return !!run;
   }
 
   // Template version operations

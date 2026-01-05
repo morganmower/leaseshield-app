@@ -3050,6 +3050,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Get last successful monitoring run (admin only)
+  app.get('/api/admin/monitoring-status', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const lastRun = await storage.getLastSuccessfulMonitoringRun();
+      const hasRunThisMonth = await storage.hasMonitoringRunThisMonth();
+      
+      res.json({
+        lastRun: lastRun || null,
+        hasRunThisMonth,
+        nextScheduledDay: 1, // Runs on the 1st of each month
+      });
+    } catch (error) {
+      console.error('Error fetching monitoring status:', error);
+      res.status(500).json({ message: 'Failed to fetch status' });
+    }
+  });
+
   // Manually trigger legislative monitoring run (admin only)
   app.post('/api/admin/legislative-monitoring/run', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {

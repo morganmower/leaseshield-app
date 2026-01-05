@@ -5,8 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { AlertCircle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle } from 'lucide-react';
-import { format } from 'date-fns';
+import { AlertCircle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle, Calendar, RefreshCw } from 'lucide-react';
+import { format, formatDistanceToNow } from 'date-fns';
 
 interface LegislativeBill {
   id: string;
@@ -72,6 +72,20 @@ interface TemplateReview {
   };
 }
 
+interface MonitoringStatus {
+  lastRun: {
+    id: string;
+    runDate: string;
+    billsFound: number;
+    relevantBills: number;
+    templatesQueued: number;
+    status: string;
+    createdAt: string;
+  } | null;
+  hasRunThisMonth: boolean;
+  nextScheduledDay: number;
+}
+
 const safeFormatDate = (dateString: string | null | undefined, formatStr: string): string => {
   if (!dateString) return '';
   try {
@@ -103,6 +117,10 @@ export default function AdminLegislativeMonitoring() {
     queryKey: ['/api/admin/case-law'],
   });
 
+  const { data: monitoringStatus } = useQuery<MonitoringStatus>({
+    queryKey: ['/api/admin/monitoring-status'],
+  });
+
   const runMonitoringMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest('POST', '/api/admin/legislative-monitoring/run', {});
@@ -110,6 +128,7 @@ export default function AdminLegislativeMonitoring() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/monitoring-status'] });
       toast({
         title: 'Monitoring Run Started',
         description: 'Checking for new legislative bills and analyzing them...',
@@ -156,6 +175,45 @@ export default function AdminLegislativeMonitoring() {
             {runMonitoringMutation.isPending ? 'Running...' : 'Run Monitoring Now'}
           </Button>
         </div>
+
+        {/* Monitoring Status Card */}
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-muted-foreground" />
+                  <span className="text-sm font-medium">Last Monitored:</span>
+                  <span className="text-sm text-muted-foreground" data-testid="text-last-monitored">
+                    {monitoringStatus?.lastRun 
+                      ? `${safeFormatDate(monitoringStatus.lastRun.createdAt, 'MMM d, yyyy h:mm a')} (${formatDistanceToNow(new Date(monitoringStatus.lastRun.createdAt), { addSuffix: true })})`
+                      : 'Never'}
+                  </span>
+                </div>
+                {monitoringStatus?.lastRun && (
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    <span>Bills found: <strong className="text-foreground">{monitoringStatus.lastRun.billsFound}</strong></span>
+                    <span>Relevant: <strong className="text-foreground">{monitoringStatus.lastRun.relevantBills}</strong></span>
+                    <span>Templates updated: <strong className="text-foreground">{monitoringStatus.lastRun.templatesQueued}</strong></span>
+                  </div>
+                )}
+              </div>
+              <div className="flex items-center gap-2">
+                {monitoringStatus?.hasRunThisMonth ? (
+                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30">
+                    <CheckCircle className="h-3 w-3 mr-1" />
+                    Ran this month
+                  </Badge>
+                ) : (
+                  <Badge variant="outline" className="bg-yellow-500/10 text-yellow-600 border-yellow-500/30">
+                    <RefreshCw className="h-3 w-3 mr-1" />
+                    Scheduled for 1st
+                  </Badge>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         <Tabs defaultValue="published-updates" className="space-y-4">
           <TabsList data-testid="tabs-monitoring">

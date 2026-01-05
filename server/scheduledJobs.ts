@@ -18,8 +18,6 @@ export class ScheduledJobs {
   private emailSequenceInterval: NodeJS.Timeout | null = null;
   private renewalReminderInterval: NodeJS.Timeout | null = null;
   private uploadCleanupInterval: NodeJS.Timeout | null = null;
-  private legislativeMonitoringLastRun: Date | null = null;
-
   // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
@@ -404,20 +402,15 @@ export class ScheduledJobs {
         return;
       }
 
-      // Check if we've already run this month
-      if (this.legislativeMonitoringLastRun) {
-        const lastRunMonth = this.legislativeMonitoringLastRun.getMonth();
-        const currentMonth = now.getMonth();
-        
-        if (lastRunMonth === currentMonth) {
-          console.log('  Legislative monitoring already ran this month');
-          return;
-        }
+      // Check database if we've already run this month (persisted across restarts)
+      const hasRunThisMonth = await storage.hasMonitoringRunThisMonth();
+      if (hasRunThisMonth) {
+        console.log('  Legislative monitoring already ran this month (from database)');
+        return;
       }
 
       console.log('🔍 Running monthly legislative monitoring...');
       await runMonthlyLegislativeMonitoring();
-      this.legislativeMonitoringLastRun = now;
       
     } catch (error) {
       console.error('❌ Error in legislative monitoring check:', error);
