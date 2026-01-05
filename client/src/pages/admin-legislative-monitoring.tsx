@@ -396,7 +396,7 @@ export default function AdminLegislativeMonitoring() {
                     <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
                       <Clock className="h-4 w-4" />
                       <span data-testid={`text-bill-date-${bill.id}`}>
-                        Status updated: {format(new Date(bill.statusDate), 'MMM d, yyyy')}
+                        Status updated: {bill.statusDate ? safeFormatDate(bill.statusDate, 'MMM d, yyyy') : 'Unknown'}
                       </span>
                     </div>
                   </CardContent>
