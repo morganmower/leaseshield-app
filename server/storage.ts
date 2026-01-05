@@ -954,11 +954,15 @@ export class DatabaseStorage implements IStorage {
     const totalUsersCount = Number(totalUsers[0]?.count || 0);
     const avgDownloadsPerUser = totalUsersCount > 0 ? totalDownloads / totalUsersCount : 0;
 
+    // Total subscribers = active + trialing (people who have actually subscribed or are in trial)
+    const trialingCount = Number(trialing[0]?.count || 0);
+    const totalSubscribers = activeCount + trialingCount;
+    
     return {
       subscriptions: {
-        total: totalUsersCount,
+        total: totalSubscribers,
         active: activeCount,
-        trialing: Number(trialing[0]?.count || 0),
+        trialing: trialingCount,
         expiredTrials: Number(expiredTrials[0]?.count || 0),
         canceled: Number(canceled[0]?.count || 0),
         mrr,
