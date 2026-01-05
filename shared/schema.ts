@@ -1605,3 +1605,88 @@ You have the right to obtain a free copy of your consumer report from the CRA if
 
 Sincerely,
 {{landlordName}}`;
+
+// Direct Messaging System - Two-way conversations between admin and users
+export const directConversations = pgTable("direct_conversations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  subject: text("subject").notNull(),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  createdByAdminId: varchar("created_by_admin_id").notNull().references(() => users.id),
+  lastMessageAt: timestamp("last_message_at").defaultNow(),
+  isArchived: boolean("is_archived").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_direct_conversations_user").on(table.userId),
+  index("IDX_direct_conversations_admin").on(table.createdByAdminId),
+]);
+
+export const directConversationsRelations = relations(directConversations, ({ one, many }) => ({
+  user: one(users, {
+    fields: [directConversations.userId],
+    references: [users.id],
+  }),
+  admin: one(users, {
+    fields: [directConversations.createdByAdminId],
+    references: [users.id],
+  }),
+  messages: many(directMessages),
+}));
+
+export const insertDirectConversationSchema = createInsertSchema(directConversations).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertDirectConversation = z.infer<typeof insertDirectConversationSchema>;
+export type DirectConversation = typeof directConversations.$inferSelect;
+
+// Direct Messages within conversations
+export const directMessages = pgTable("direct_messages", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => directConversations.id, { onDelete: 'cascade' }),
+  senderId: varchar("sender_id").notNull().references(() => users.id),
+  content: text("content").notNull(), // 5000 char limit enforced via validation
+  isFromAdmin: boolean("is_from_admin").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_direct_messages_conversation").on(table.conversationId),
+  index("IDX_direct_messages_sender").on(table.senderId),
+]);
+
+export const directMessagesRelations = relations(directMessages, ({ one }) => ({
+  conversation: one(directConversations, {
+    fields: [directMessages.conversationId],
+    references: [directConversations.id],
+  }),
+  sender: one(users, {
+    fields: [directMessages.senderId],
+    references: [users.id],
+  }),
+}));
+
+export const insertDirectMessageSchema = createInsertSchema(directMessages).omit({
+  id: true,
+  createdAt: true,
+}).extend({
+  content: z.string().min(1).max(5000),
+});
+export type InsertDirectMessage = z.infer<typeof insertDirectMessageSchema>;
+export type DirectMessage = typeof directMessages.$inferSelect;
+
+// Track read status for conversations
+export const directConversationReadStatus = pgTable("direct_conversation_read_status", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  conversationId: varchar("conversation_id").notNull().references(() => directConversations.id, { onDelete: 'cascade' }),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  lastReadAt: timestamp("last_read_at").defaultNow(),
+}, (table) => [
+  index("IDX_read_status_conversation").on(table.conversationId),
+  index("IDX_read_status_user").on(table.userId),
+]);
+
+export const insertDirectConversationReadStatusSchema = createInsertSchema(directConversationReadStatus).omit({
+  id: true,
+});
+export type InsertDirectConversationReadStatus = z.infer<typeof insertDirectConversationReadStatusSchema>;
+export type DirectConversationReadStatus = typeof directConversationReadStatus.$inferSelect;

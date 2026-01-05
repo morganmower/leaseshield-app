@@ -130,6 +130,15 @@ import {
   landlordScreeningCredentials,
   type LandlordScreeningCredentials,
   type InsertLandlordScreeningCredentials,
+  directConversations,
+  directMessages,
+  directConversationReadStatus,
+  type DirectConversation,
+  type InsertDirectConversation,
+  type DirectMessage,
+  type InsertDirectMessage,
+  type DirectConversationReadStatus,
+  type InsertDirectConversationReadStatus,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray } from "drizzle-orm";
@@ -470,6 +479,19 @@ export interface IStorage {
   createLandlordScreeningCredentials(credentials: InsertLandlordScreeningCredentials): Promise<LandlordScreeningCredentials>;
   updateLandlordScreeningCredentials(userId: string, credentials: Partial<InsertLandlordScreeningCredentials>): Promise<LandlordScreeningCredentials | null>;
   deleteLandlordScreeningCredentials(userId: string): Promise<boolean>;
+
+  // Direct messaging operations
+  getDirectConversationsForUser(userId: string): Promise<DirectConversation[]>;
+  getDirectConversationsForAdmin(): Promise<DirectConversation[]>;
+  getDirectConversation(id: string): Promise<DirectConversation | undefined>;
+  createDirectConversation(conversation: InsertDirectConversation): Promise<DirectConversation>;
+  getDirectMessages(conversationId: string): Promise<DirectMessage[]>;
+  createDirectMessage(message: InsertDirectMessage): Promise<DirectMessage>;
+  updateConversationLastMessageAt(conversationId: string): Promise<void>;
+  getDirectConversationReadStatus(conversationId: string, userId: string): Promise<DirectConversationReadStatus | undefined>;
+  upsertDirectConversationReadStatus(conversationId: string, userId: string): Promise<DirectConversationReadStatus>;
+  getUnreadDirectMessageCount(userId: string, isAdmin: boolean): Promise<number>;
+  archiveDirectConversation(id: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2608,6 +2630,137 @@ export class DatabaseStorage implements IStorage {
         credentials: credentialsMap.get(user.id) || null,
       }));
     }, 'getAllLandlordsWithScreeningStatus');
+  }
+
+  // Direct messaging operations
+  async getDirectConversationsForUser(userId: string): Promise<DirectConversation[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(directConversations)
+        .where(and(
+          eq(directConversations.userId, userId),
+          eq(directConversations.isArchived, false)
+        ))
+        .orderBy(desc(directConversations.lastMessageAt));
+    }, 'getDirectConversationsForUser');
+  }
+
+  async getDirectConversationsForAdmin(): Promise<DirectConversation[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(directConversations)
+        .where(eq(directConversations.isArchived, false))
+        .orderBy(desc(directConversations.lastMessageAt));
+    }, 'getDirectConversationsForAdmin');
+  }
+
+  async getDirectConversation(id: string): Promise<DirectConversation | undefined> {
+    return handleDbOperation(async () => {
+      const [conversation] = await db.select().from(directConversations)
+        .where(eq(directConversations.id, id));
+      return conversation;
+    }, 'getDirectConversation');
+  }
+
+  async createDirectConversation(conversation: InsertDirectConversation): Promise<DirectConversation> {
+    return handleDbOperation(async () => {
+      const [newConversation] = await db.insert(directConversations)
+        .values(conversation)
+        .returning();
+      return newConversation;
+    }, 'createDirectConversation');
+  }
+
+  async getDirectMessages(conversationId: string): Promise<DirectMessage[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(directMessages)
+        .where(eq(directMessages.conversationId, conversationId))
+        .orderBy(directMessages.createdAt);
+    }, 'getDirectMessages');
+  }
+
+  async createDirectMessage(message: InsertDirectMessage): Promise<DirectMessage> {
+    return handleDbOperation(async () => {
+      const [newMessage] = await db.insert(directMessages)
+        .values(message)
+        .returning();
+      // Update conversation's lastMessageAt
+      await db.update(directConversations)
+        .set({ lastMessageAt: new Date(), updatedAt: new Date() })
+        .where(eq(directConversations.id, message.conversationId));
+      return newMessage;
+    }, 'createDirectMessage');
+  }
+
+  async updateConversationLastMessageAt(conversationId: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(directConversations)
+        .set({ lastMessageAt: new Date(), updatedAt: new Date() })
+        .where(eq(directConversations.id, conversationId));
+    }, 'updateConversationLastMessageAt');
+  }
+
+  async getDirectConversationReadStatus(conversationId: string, userId: string): Promise<DirectConversationReadStatus | undefined> {
+    return handleDbOperation(async () => {
+      const [status] = await db.select().from(directConversationReadStatus)
+        .where(and(
+          eq(directConversationReadStatus.conversationId, conversationId),
+          eq(directConversationReadStatus.userId, userId)
+        ));
+      return status;
+    }, 'getDirectConversationReadStatus');
+  }
+
+  async upsertDirectConversationReadStatus(conversationId: string, userId: string): Promise<DirectConversationReadStatus> {
+    return handleDbOperation(async () => {
+      // Check if exists
+      const existing = await this.getDirectConversationReadStatus(conversationId, userId);
+      if (existing) {
+        const [updated] = await db.update(directConversationReadStatus)
+          .set({ lastReadAt: new Date() })
+          .where(eq(directConversationReadStatus.id, existing.id))
+          .returning();
+        return updated;
+      } else {
+        const [newStatus] = await db.insert(directConversationReadStatus)
+          .values({ conversationId, userId, lastReadAt: new Date() })
+          .returning();
+        return newStatus;
+      }
+    }, 'upsertDirectConversationReadStatus');
+  }
+
+  async getUnreadDirectMessageCount(userId: string, isAdmin: boolean): Promise<number> {
+    return handleDbOperation(async () => {
+      // Get conversations for this user
+      const conversations = isAdmin 
+        ? await this.getDirectConversationsForAdmin()
+        : await this.getDirectConversationsForUser(userId);
+      
+      let unreadCount = 0;
+      for (const conv of conversations) {
+        const readStatus = await this.getDirectConversationReadStatus(conv.id, userId);
+        const lastReadAt = readStatus?.lastReadAt || new Date(0);
+        
+        // Count messages after lastReadAt that are not from this user
+        const unreadMessages = await db.select().from(directMessages)
+          .where(and(
+            eq(directMessages.conversationId, conv.id),
+            gt(directMessages.createdAt, lastReadAt),
+            isAdmin 
+              ? eq(directMessages.isFromAdmin, false) // Admin sees unread user messages
+              : eq(directMessages.isFromAdmin, true)   // User sees unread admin messages
+          ));
+        unreadCount += unreadMessages.length;
+      }
+      return unreadCount;
+    }, 'getUnreadDirectMessageCount');
+  }
+
+  async archiveDirectConversation(id: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(directConversations)
+        .set({ isArchived: true, updatedAt: new Date() })
+        .where(eq(directConversations.id, id));
+    }, 'archiveDirectConversation');
   }
 }
 

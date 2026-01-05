@@ -153,7 +153,15 @@ export function AppSidebar() {
     queryKey: ["/api/messages/unread-count"],
     refetchInterval: 30000,
   });
-  const unreadCount = unreadData?.count || 0;
+  const broadcastUnreadCount = unreadData?.count || 0;
+
+  const { data: directUnreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/messages/direct/unread-count"],
+    refetchInterval: 30000,
+  });
+  const directUnreadCount = directUnreadData?.count || 0;
+
+  const totalUnreadMessages = broadcastUnreadCount + directUnreadCount;
 
   const { data: pendingAppsData } = useQuery<{ count: number }>({
     queryKey: ["/api/rental/submissions/pending-count"],
@@ -250,13 +258,13 @@ export function AppSidebar() {
                   <Link href="/messages" onClick={handleNavClick} data-testid="link-messages">
                     <Mail className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     <span className="font-medium flex-1">Messages</span>
-                    {unreadCount > 0 && (
+                    {totalUnreadMessages > 0 && (
                       <Badge 
                         variant="destructive" 
                         className="ml-auto h-5 min-w-5 px-1.5 text-xs animate-pulse"
                         data-testid="badge-unread-messages"
                       >
-                        {unreadCount > 9 ? "9+" : unreadCount}
+                        {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
                       </Badge>
                     )}
                   </Link>
