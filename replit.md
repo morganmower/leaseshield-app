@@ -37,7 +37,7 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Authentication**: Replit Auth with session handling.
 - **Payments**: Stripe Subscriptions with webhooks.
 - **Document Assembly Wizard**: Interactive multi-step forms, server-side PDF generation (Puppeteer) with professional styling, and robust HTML escaping.
-- **Legislative Monitoring**: Automated system using three data sources (LegiScan API, Plural Policy/Open States API, CourtListener API) tracks state bills and court cases, uses GPT-4 for relevance analysis, and auto-publishes template updates with versioning and user notifications. Bills display color-coded source badges in admin UI.
+- **Legislative Monitoring**: Automated system using four data sources (LegiScan API, Plural Policy/Open States API, Federal Register API, CourtListener API) tracks state bills, federal HUD regulations, and court cases, uses GPT-4 for relevance analysis, and auto-publishes template updates with versioning and user notifications. Bills display color-coded source badges in admin UI (green=LegiScan, blue=Plural Policy, purple=Federal Register).
 - **Template Review & Publishing**: Atomic auto-publishing system with transactional updates, versioning, history tracking, automatic approval, legislative bill flagging, and user notifications via Resend.
 - **Email Notifications**: Integrated with Resend for legal and template update notifications.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
@@ -67,6 +67,7 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Replit Auth**: User authentication.
 - **LegiScan API**: Legislative tracking.
 - **Plural Policy API (Open States v3)**: Additional legislative bill coverage with rate limiting (1 req/sec, 500 daily requests).
+- **Federal Register API**: Federal HUD housing regulations and rulemaking tracking via Data.gov.
 - **CourtListener API**: Court case and legal precedent tracking.
 - **GPT-4 (OpenAI API via Replit AI Integration)**: AI analysis.
 - **Puppeteer**: Server-side PDF generation.
