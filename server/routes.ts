@@ -3741,6 +3741,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         : `http://${domain}`;
 
       let emailSuccessCount = 0;
+      // Helper to escape HTML special characters
+      const escapeHtml = (text: string) => text
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+      
+      // Create a brief preview (first 200 characters) for the teaser email
+      const rawPreview = broadcast.content.length > 200 
+        ? broadcast.content.substring(0, 200).trim() + '...' 
+        : broadcast.content;
+      const contentPreview = escapeHtml(rawPreview);
+      const subjectEscaped = escapeHtml(broadcast.subject);
+
       for (const user of activeUsers) {
         if (user.email) {
           try {
@@ -3750,14 +3765,15 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               subject: `LeaseShield Update: ${broadcast.subject}`,
               html: `
                 <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                  <h2 style="color: #14b8a6;">${broadcast.subject}</h2>
+                  <h2 style="color: #14b8a6;">${subjectEscaped}</h2>
                   <p>Hi${user.firstName ? ` ${user.firstName}` : ''},</p>
-                  <div style="white-space: pre-wrap; margin: 16px 0; line-height: 1.6;">
-${broadcast.content}
+                  <p>You have a new announcement from LeaseShield:</p>
+                  <div style="background-color: #f8f9fa; border-left: 4px solid #14b8a6; padding: 16px; margin: 16px 0; border-radius: 4px;">
+                    <p style="margin: 0; color: #374151; line-height: 1.6;">${contentPreview}</p>
                   </div>
                   <p style="margin: 24px 0;">
-                    <a href="${baseUrl}/messages" style="background-color: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                      View in LeaseShield
+                    <a href="${baseUrl}/messages" style="background-color: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">
+                      View Full Message in LeaseShield
                     </a>
                   </p>
                   <hr style="border: none; border-top: 1px solid #eee; margin: 24px 0;" />
@@ -3766,7 +3782,7 @@ ${broadcast.content}
                   </p>
                 </div>
               `,
-              text: `Hi${user.firstName ? ` ${user.firstName}` : ''},\n\n${broadcast.subject}\n\n${broadcast.content}\n\nView it here: ${baseUrl}/messages\n\nLeaseShield - Protecting landlords with legal templates and compliance guidance.`,
+              text: `Hi${user.firstName ? ` ${user.firstName}` : ''},\n\nYou have a new announcement from LeaseShield:\n\n${broadcast.subject}\n\n${rawPreview}\n\nView the full message here: ${baseUrl}/messages\n\nLeaseShield - Protecting landlords with legal templates and compliance guidance.`,
             });
             emailSuccessCount++;
           } catch (emailError) {
