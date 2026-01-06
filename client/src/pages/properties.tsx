@@ -93,7 +93,7 @@ export default function Properties() {
   const isTrialExpired = error !== null && (error as any)?.status === 403;
 
   const createMutation = useMutation({
-    mutationFn: async (data: PropertyFormData) => {
+    mutationFn: async ({ data, requiredDocumentTypes, autoScreening }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -102,7 +102,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -289,7 +289,7 @@ export default function Properties() {
     if (editingProperty) {
       updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening });
     } else {
-      createMutation.mutate(formData);
+      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening });
     }
   };
 
@@ -492,6 +492,77 @@ export default function Properties() {
                   onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                   className="min-h-[80px]"
                   data-testid="input-property-notes"
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Required Documents for Applications</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select which documents applicants must upload when applying
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-id" className="text-sm">ID / Driver's License</Label>
+                      <p className="text-xs text-muted-foreground">Always required</p>
+                    </div>
+                    <Switch id="add-req-id" checked={true} disabled data-testid="switch-add-doc-id" />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-income" className="text-sm">Proof of Income</Label>
+                      <p className="text-xs text-muted-foreground">Paystubs, employment letter, etc.</p>
+                    </div>
+                    <Switch 
+                      id="add-req-income" 
+                      checked={docRequirements.income} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, income: checked })}
+                      data-testid="switch-add-doc-income"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-bank" className="text-sm">Bank Statements</Label>
+                      <p className="text-xs text-muted-foreground">Recent bank statements</p>
+                    </div>
+                    <Switch 
+                      id="add-req-bank" 
+                      checked={docRequirements.bank} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, bank: checked })}
+                      data-testid="switch-add-doc-bank"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-reference" className="text-sm">Reference Letters</Label>
+                      <p className="text-xs text-muted-foreground">From previous landlords or employers</p>
+                    </div>
+                    <Switch 
+                      id="add-req-reference" 
+                      checked={docRequirements.reference} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, reference: checked })}
+                      data-testid="switch-add-doc-reference"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div>
+                  <Label htmlFor="add-auto-screening" className="text-sm">Auto-Screening</Label>
+                  <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
+                </div>
+                <Switch 
+                  id="add-auto-screening" 
+                  checked={autoScreening} 
+                  onCheckedChange={setAutoScreening}
+                  data-testid="switch-add-auto-screening"
                 />
               </div>
             </div>
