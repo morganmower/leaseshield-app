@@ -322,7 +322,7 @@ export default function MyDocuments() {
           </p>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
