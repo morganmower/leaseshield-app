@@ -414,15 +414,39 @@ export default function Landing() {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
+              className="relative hidden lg:block"
             >
-              <div className="rounded-lg overflow-hidden shadow-xl border border-border">
-                <img 
-                  src={heroImage} 
-                  alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
-                  className="w-full h-auto object-cover"
-                  data-testid="img-hero"
-                />
+              {/* Decorative background elements */}
+              <div className="absolute -top-8 -right-8 w-64 h-64 bg-gradient-to-br from-primary/20 to-amber-400/20 rounded-full blur-3xl" />
+              <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-gradient-to-tr from-amber-400/20 to-primary/20 rounded-full blur-2xl" />
+              
+              {/* Main image with enhanced styling */}
+              <div className="relative z-10">
+                <div className="rounded-2xl overflow-hidden shadow-2xl border-2 border-primary/20 bg-gradient-to-br from-white to-primary/5 dark:from-gray-900 dark:to-primary/10 p-2">
+                  <div className="rounded-xl overflow-hidden">
+                    <img 
+                      src={heroImage} 
+                      alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
+                      className="w-full h-auto object-cover"
+                      data-testid="img-hero"
+                    />
+                  </div>
+                </div>
+                
+                {/* Floating feature badges */}
+                <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-border flex items-center gap-2">
+                  <div className="rounded-full bg-green-500/20 p-1.5">
+                    <CheckCircle2 className="h-4 w-4 text-green-600" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">14 States</span>
+                </div>
+                
+                <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-border flex items-center gap-2">
+                  <div className="rounded-full bg-amber-500/20 p-1.5">
+                    <Shield className="h-4 w-4 text-amber-600" />
+                  </div>
+                  <span className="text-sm font-medium text-foreground">Protected</span>
+                </div>
               </div>
             </motion.div>
           </div>
