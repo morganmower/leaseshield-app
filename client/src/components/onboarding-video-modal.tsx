@@ -31,33 +31,33 @@ interface OnboardingVideoModalProps {
 const slides = [
   {
     id: 1,
-    title: "How LeaseShield Works",
-    subtitle: "3 steps to protect your rentals",
-    icon: Sparkles,
+    title: "Your Dashboard",
+    subtitle: "Everything starts here — your command center for rental protection.",
+    icon: LayoutDashboard,
     color: "from-primary/20 to-primary/10",
     iconColor: "text-primary",
     points: [
-      "Collect an application",
-      "Understand the screening report",
-      "Use the right document when you act"
+      "Start Here section shows the 3-step workflow",
+      "Applications, Decoder, and Documents — all in one place",
+      "Recent updates keep you informed when laws change"
     ]
   },
   {
     id: 2,
-    title: "Step 1: Applications",
+    title: "Properties & Applications",
     subtitle: "LeaseShield manages the workflow. Western Verify performs the screening.",
-    icon: ClipboardList,
+    icon: Building2,
     color: "from-emerald-500/20 to-emerald-500/10",
     iconColor: "text-emerald-500",
     points: [
-      "Send one link to the applicant",
-      "Authorization is captured automatically",
-      "Screening runs through Western Verify"
+      "Add a property to organize your applications",
+      "Create one link — send it to the applicant",
+      "Authorization is captured, screening runs automatically"
     ]
   },
   {
     id: 3,
-    title: "Step 2: Screening Decoder",
+    title: "Screening Decoder",
     subtitle: "This prevents misinterpretation — the most common screening mistake.",
     icon: Search,
     color: "from-cyan-500/20 to-cyan-500/10",
@@ -70,7 +70,7 @@ const slides = [
   },
   {
     id: 4,
-    title: "Step 3: Leases & Notices",
+    title: "Leases & Notices",
     subtitle: "Updated as legislation changes — older versions may create risk.",
     icon: FileText,
     color: "from-amber-500/20 to-amber-500/10",
@@ -78,7 +78,7 @@ const slides = [
     points: [
       "State-specific leases and notices",
       "Updated when laws change",
-      "Download or fill online"
+      "Fill online or download as PDF"
     ]
   }
 ];
@@ -140,14 +140,14 @@ export function OnboardingVideoModal({ isOpen, onClose }: OnboardingVideoModalPr
     <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-xl p-0 overflow-hidden" data-testid="modal-onboarding-video">
         <VisuallyHidden>
-          <DialogTitle>Quick Setup Guide</DialogTitle>
+          <DialogTitle>How LeaseShield Works (90 seconds)</DialogTitle>
         </VisuallyHidden>
         <div className="relative">
           <div className="p-6 sm:p-8">
             <div className="flex items-center justify-between mb-6">
               <Badge variant="outline" className="text-xs">
-                <Sparkles className="h-3 w-3 mr-1" />
-                Quick Guide
+                <Play className="h-3 w-3 mr-1" />
+                90 seconds
               </Badge>
               <div className="flex items-center gap-1">
                 {slides.map((_, idx) => (

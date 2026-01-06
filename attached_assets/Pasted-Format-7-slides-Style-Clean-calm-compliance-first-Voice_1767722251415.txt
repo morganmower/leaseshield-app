@@ -1,0 +1,164 @@
+Format: 7 slides
+Style: Clean, calm, compliance-first
+Voice: AI or silent + captions (both supported)
+
+SLIDE 1 — Title / Context (0:00–0:08)
+On-screen headline
+
+How LeaseShield Works
+
+Subtext (smaller)
+
+A simple workflow for applications, screening, and compliant documents
+
+Visual
+
+Screenshot or mockup of your Dashboard
+
+Highlight “Start Here” area (subtle outline)
+
+Caption / Voiceover
+
+LeaseShield is the control center for your rental workflow.
+
+SLIDE 2 — What LeaseShield Is (0:08–0:20)
+On-screen headline
+
+One Workflow. Clear Roles.
+
+Body text
+
+LeaseShield manages the workflow
+
+Western Verify performs the screening
+
+(Show as two stacked bullets or side-by-side)
+
+Visual
+
+Simple diagram:
+
+LeaseShield → workflow
+
+Western Verify → screening
+
+Caption / Voiceover
+
+LeaseShield manages the workflow. Western Verify performs the screening.
+
+SLIDE 3 — Properties (0:20–0:35)
+On-screen headline
+
+Everything Starts With a Property
+
+Body text
+
+Properties organize:
+
+Applications
+
+Screening
+
+Documents
+
+by location.
+
+Visual
+
+Properties page screenshot
+
+“Add Property” button visible
+
+Caption / Voiceover
+
+Properties organize applications, screening, and documents by location.
+
+SLIDE 4 — Applications & Screening (0:35–0:55)
+On-screen headline
+
+Send One Application Link
+
+Body text
+
+Applicant completes application
+
+Authorization captured
+
+Screening runs through Western Verify
+
+Status tracked in LeaseShield
+
+Visual
+
+Applications page screenshot
+
+“Create Application Link” button visible
+
+Caption / Voiceover
+
+Send one link to the applicant. Screening runs through Western Verify, and LeaseShield tracks the status.
+
+SLIDE 5 — Screening Decoder (0:55–1:10)
+On-screen headline
+
+Understand Screening Results
+
+Body text
+
+Explains what matters
+
+Flags common risk areas
+
+Helps prevent misinterpretation
+
+Visual
+
+Decoder page screenshot
+
+Empty state or example text area
+
+Caption / Voiceover
+
+The Screening Decoder explains what matters and helps prevent misinterpretation.
+
+SLIDE 6 — Leases & Notices (1:10–1:25)
+On-screen headline
+
+Use the Right Document When You Act
+
+Body text
+
+State-specific leases
+
+Notices and checklists
+
+Updated as legislation changes
+
+Visual
+
+Leases & Notices page screenshot
+
+State selector visible if possible
+
+Caption / Voiceover
+
+LeaseShield provides state-specific leases and notices updated as laws change.
+
+SLIDE 7 — Close / Call to Action (1:25–1:30)
+On-screen headline
+
+Start Where You’re Comfortable
+
+Body text
+
+Add a property or create your first application to begin.
+
+Visual
+
+Back to Dashboard
+
+Primary action button visible
+
+Caption / Voiceover
+
+If you’re not sure where to begin, start by adding a property or creating your first application.
