@@ -3946,6 +3946,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Test weekly tip email (admin only)
+  app.post('/api/admin/test-weekly-tip', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { scheduledJobs } = await import('./scheduledJobs');
+      await scheduledJobs.sendWeeklyTips();
+      res.json({ success: true, message: 'Weekly tips sent' });
+    } catch (error) {
+      console.error("Error sending test tip:", error);
+      res.status(500).json({ message: "Failed to send test tip" });
+    }
+  });
+
   // Delete screening credentials for a landlord (admin only)
   app.delete('/api/admin/screening-credentials/:userId', isAuthenticated, requireAdmin, async (req, res) => {
     try {
