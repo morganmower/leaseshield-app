@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, Zap, UserPlus, MapPin, FileCheck } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrialValueMessage } from "@/components/trial-conversion-nudge";
-import { trackTrialStart, ABTestWrapper } from "@/components/ab-test-wrapper";
+import { trackTrialStart } from "@/components/ab-test-wrapper";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -60,7 +60,6 @@ export default function Landing() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [spotsRemaining, setSpotsRemaining] = useState(43);
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
@@ -79,15 +78,6 @@ export default function Landing() {
     scrollToBottom();
   }, [chatMessages]);
 
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setSpotsRemaining(prev => {
-        if (prev <= 0) return 0;
-        return prev - 1;
-      });
-    }, 3600000); // Decrease by 1 every hour
-    return () => clearInterval(interval);
-  }, []);
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -348,48 +338,19 @@ export default function Landing() {
               </p>
             </motion.div>
 
-            {/* Pricing Display - A/B Test Wrapped */}
-            <ABTestWrapper testId="hero-pricing">
-              <motion.div 
-                variants={fadeInUp}
-                className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-8 max-w-xl mx-auto"
-              >
-                <div className="flex flex-col items-center gap-4">
-                  <div className="text-center">
-                    <div className="flex items-baseline gap-2 mb-1 justify-center">
-                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
-                      <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
-                    </div>
-                    <p className="text-sm text-muted-foreground">
-                      {spotsRemaining} spots remaining • 7-day free trial
-                    </p>
-                  </div>
-                  <div className="flex flex-col items-center gap-2">
-                    <Button
-                      size="lg"
-                      onClick={() => {
-                        trackTrialStart();
-                        window.location.href = "/signup";
-                      }}
-                      className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] whitespace-nowrap"
-                      data-testid="button-pricing-cta"
-                    >
-                      Start Free Trial
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                    <button
-                      onClick={() => window.location.href = "/signup?payNow=true"}
-                      className="text-xs text-primary hover:underline"
-                      data-testid="link-pay-now-hero"
-                    >
-                      Skip trial — Pay now
-                    </button>
-                  </div>
-                </div>
-              </motion.div>
-            </ABTestWrapper>
-            
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 justify-center">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
+                data-testid="button-hero-cta"
+              >
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Button
                 size="lg"
                 variant="outline"
@@ -426,73 +387,46 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How It Works Section - 3 Simple Steps */}
-      <section id="how-it-works" className="py-16 sm:py-20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 border-y">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Micro How It Works - Simple 3-line format */}
+      <section id="how-it-works" className="py-10 sm:py-12 bg-muted/30 border-y">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mb-12"
+            className="text-center"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              How LeaseShield Works in 3 Simple Steps
+            <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-6">
+              How It Works:
             </h2>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-3 gap-8 sm:gap-12"
-          >
-            <motion.div variants={fadeInUp} className="text-center">
-              <div className="relative mb-6">
-                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">1</div>
-                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
-                  <UserPlus className="h-10 w-10 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Collect & Screen</h3>
-              <p className="text-base sm:text-lg text-muted-foreground">
-                Send applicants a link. Screening runs seamlessly through Western Verify—our trusted integration partner.
-              </p>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="text-center">
-              <div className="relative mb-6">
-                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">2</div>
-                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
-                  <Search className="h-10 w-10 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Understand Results Fast</h3>
-              <p className="text-base sm:text-lg text-muted-foreground">
-                AI-powered decoder explains reports clearly, flags risks, and guides fair housing compliance.
-              </p>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="text-center">
-              <div className="relative mb-6">
-                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">3</div>
-                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
-                  <FileCheck className="h-10 w-10 text-primary" />
-                </div>
-              </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Protect with Compliant Documents</h3>
-              <p className="text-base sm:text-lg text-muted-foreground">
-                Access attorney-reviewed, state-specific leases, notices, and checklists—updated monthly.
-              </p>
-            </motion.div>
+            <ol className="space-y-3 text-left max-w-xl mx-auto">
+              <li className="flex items-start gap-3">
+                <span className="font-bold text-primary flex-shrink-0">1.</span>
+                <span className="text-base sm:text-lg text-muted-foreground">
+                  Collect applications & run screening (via trusted partner Western Verify)
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-bold text-primary flex-shrink-0">2.</span>
+                <span className="text-base sm:text-lg text-muted-foreground">
+                  Decode results with AI guidance & compliance checks
+                </span>
+              </li>
+              <li className="flex items-start gap-3">
+                <span className="font-bold text-primary flex-shrink-0">3.</span>
+                <span className="text-base sm:text-lg text-muted-foreground">
+                  Build and use state-specific leases & notices
+                </span>
+              </li>
+            </ol>
           </motion.div>
         </div>
       </section>
 
-      {/* Why Independent Landlords Choose LeaseShield */}
-      <section className="py-12 sm:py-16 bg-background">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Dashboard Preview / Sneak Peek */}
+      <section className="py-12 md:py-16 bg-background" data-testid="section-preview">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -500,65 +434,8 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-8"
           >
-            <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold text-foreground">
-              Why Independent Landlords Choose LeaseShield
-            </h2>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="space-y-4"
-          >
-            <motion.div variants={fadeInUp} className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-              <p className="text-base sm:text-lg text-muted-foreground">
-                <strong className="text-foreground">Everything in one place</strong>—no juggling PDFs, emails, or multiple sites
-              </p>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-              <p className="text-base sm:text-lg text-muted-foreground">
-                <strong className="text-foreground">Built-in guidance</strong> to avoid costly screening and decoding mistakes
-              </p>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-              <p className="text-base sm:text-lg text-muted-foreground">
-                <strong className="text-foreground">Always-updated templates</strong>—no chasing law changes
-              </p>
-            </motion.div>
-            <motion.div variants={fadeInUp} className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
-              <p className="text-base sm:text-lg text-muted-foreground">
-                <strong className="text-foreground">Flat, affordable pricing</strong> for small portfolios (not enterprise bloat)
-              </p>
-            </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Dashboard Preview / Sneak Peek */}
-      <section className="py-16 md:py-20 bg-muted/30" data-testid="section-preview">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-10"
-          >
-            <Badge variant="outline" className="mb-4">
-              <Building2 className="h-3 w-3 mr-1" />
-              Sneak Peek
-            </Badge>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Your Protection Dashboard
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need in one organized workspace. No clutter, just tools that work.
+            <p className="text-sm text-muted-foreground italic">
+              Actual LeaseShield dashboard
             </p>
           </motion.div>
 
@@ -639,29 +516,6 @@ export default function Landing() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-10"
-          >
-            <Button
-              size="lg"
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
-              data-testid="button-preview-cta"
-              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-            >
-              Get Access Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <p className="text-sm text-muted-foreground mt-3">
-              7-day free trial. No credit card required.
-            </p>
-          </motion.div>
         </div>
       </section>
 
@@ -736,65 +590,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Mid-Page Conversion CTA */}
-      <section className="py-16 sm:py-20 bg-gradient-to-br from-background via-background to-primary/5">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-8 sm:mb-12"
-          >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Stop Paying for Legal Answers. Start Using Attorney-Vetted Templates.
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Join hundreds of landlords who've replaced confusing DIY solutions with templates that actually protect them—and their wallets.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="flex justify-center"
-          >
-            <ABTestWrapper testId="mid-page-cta">
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link to="/signup">
-                  <Button 
-                    size="lg"
-                    onClick={() => {
-                      trackTrialStart();
-                    }}
-                    className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] whitespace-nowrap"
-                    data-testid="button-mid-trial-cta"
-                  >
-                    <Zap className="mr-2 h-5 w-5" />
-                    Start Your Free Trial
-                  </Button>
-                </Link>
-              </div>
-            </ABTestWrapper>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="flex justify-center mt-6"
-          >
-            <p className="text-sm text-muted-foreground text-center">
-              <CheckCircle2 className="inline h-4 w-4 mr-2 text-success" />
-              Money-back guarantee • Cancel anytime • All templates included
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Stats Bar */}
       <section className="py-8 sm:py-12 border-y bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -841,55 +636,6 @@ export default function Landing() {
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Access Anytime</div>
             </motion.div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* NEW FEATURE: Rental Applications Banner */}
-      <section className="py-12 sm:py-16 bg-gradient-to-r from-emerald-500/10 via-primary/5 to-emerald-500/10 border-y-2 border-primary/20">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center"
-          >
-            <div className="flex items-center justify-center gap-2 mb-3">
-              <Badge className="bg-primary text-primary-foreground px-3 py-1">NEW FEATURE</Badge>
-            </div>
-            <h3 className="font-display text-2xl sm:text-3xl font-semibold text-foreground mb-3">
-              Rental Applications Direct to Screening
-            </h3>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
-              Create shareable application links for your properties. Applicants complete state-compliant forms that feed directly into tenant screening - one seamless flow from application to approval.
-            </p>
-            <ul className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground mb-8">
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>State-specific disclosures</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>Auto-updates with new laws</span>
-              </li>
-              <li className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success" />
-                <span>FCRA compliant</span>
-              </li>
-            </ul>
-            <Button
-              size="lg"
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
-              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-              data-testid="button-applications-cta"
-            >
-              <Sparkles className="mr-2 h-5 w-5" />
-              Try It Free
-            </Button>
           </motion.div>
         </div>
       </section>
@@ -1219,22 +965,6 @@ export default function Landing() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-12"
-          >
-            <div className="inline-block bg-success/10 border border-success/20 rounded-lg px-6 py-4">
-              <p className="text-lg font-semibold text-foreground mb-1">
-                LeaseShield App: Just $10/month
-              </p>
-              <p className="text-sm text-muted-foreground">
-                One mistake costs more than 2 years of LeaseShield
-              </p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -1373,131 +1103,6 @@ export default function Landing() {
             </Card>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-8"
-          >
-            <Button
-              size="lg"
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
-              data-testid="button-comparison-trial"
-              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto"
-            >
-              Start Free Trial - No Credit Card
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ROI Calculator */}
-      <section className="py-20 md:py-28">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-12"
-          >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Calculate Your Savings
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              See how much LeaseShield saves you in Year 1
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-          >
-            <Card className="p-4 sm:p-6 md:p-8 bg-gradient-to-br from-primary/5 to-amber-500/5">
-              <div className="space-y-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="rounded-full bg-primary/10 p-2 sm:p-3 flex-shrink-0">
-                    <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Without LeaseShield:</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Attorney (3 hrs):</span>
-                        <span className="font-semibold">$900</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Lease drafting:</span>
-                        <span className="font-semibold">$1,200</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Eviction docs:</span>
-                        <span className="font-semibold">$800</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Compliance mistake:</span>
-                        <span className="font-semibold text-destructive">$5,000</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 sm:py-3 bg-destructive/10 rounded-lg px-3 sm:px-4">
-                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
-                        <span className="font-bold text-xl sm:text-2xl text-destructive">$7,900</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="rounded-full bg-success/10 p-2 sm:p-3 flex-shrink-0">
-                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">With LeaseShield:</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">12 months:</span>
-                        <span className="font-semibold">$144</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 sm:py-3 bg-success/10 rounded-lg px-3 sm:px-4">
-                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
-                        <span className="font-bold text-xl sm:text-2xl text-success">$144</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 sm:pt-6 border-t-2 border-primary/20">
-                  <div className="text-center">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">Your First-Year Savings:</p>
-                    <p className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent mb-3 sm:mb-4">
-                      $7,756
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
-                      That's a <strong className="text-foreground">5,386% ROI</strong> in Year 1
-                    </p>
-                    <Button
-                      size="lg"
-                      onClick={() => {
-                        trackTrialStart();
-                        window.location.href = "/signup";
-                      }}
-                      data-testid="button-roi-trial"
-                      className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto"
-                    >
-                      Start Saving Today - Free Trial
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
         </div>
       </section>
 
