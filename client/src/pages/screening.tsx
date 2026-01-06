@@ -329,6 +329,9 @@ export default function Screening() {
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
             Screening Decoder
           </h1>
+          <p className="text-muted-foreground mb-2">
+            <span className="font-semibold text-foreground">Most landlords misinterpret at least one item on every screening report. This prevents that.</span>
+          </p>
           <p className="text-muted-foreground">
             Paste any screening report below. LeaseShield explains what matters, what doesn't, and what to ask next.
           </p>
