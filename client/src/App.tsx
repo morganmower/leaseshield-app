@@ -52,6 +52,7 @@ import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
 import AdminBroadcasts from "@/pages/admin-broadcasts";
 import AdminDirectMessages from "@/pages/admin-direct-messages";
 import AdminScreeningCredentials from "@/pages/admin-screening-credentials";
+import AdminTips from "@/pages/admin-tips";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
 import LogoPicker from "@/pages/logo-picker";
@@ -179,6 +180,7 @@ function Router() {
       <Route path="/admin/broadcasts">{() => <AdminRoute component={AdminBroadcasts} />}</Route>
       <Route path="/admin/direct-messages">{() => <AdminRoute component={AdminDirectMessages} />}</Route>
       <Route path="/admin/screening-credentials">{() => <AdminRoute component={AdminScreeningCredentials} />}</Route>
+      <Route path="/admin/tips">{() => <AdminRoute component={AdminTips} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

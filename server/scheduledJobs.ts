@@ -10,8 +10,8 @@ import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
 
-// Landlord tips pool - rotates weekly
-const LANDLORD_TIPS = [
+// Landlord tips pool - rotates biweekly (every 2 weeks)
+export const LANDLORD_TIPS = [
   {
     title: "Fair Housing Refresher",
     summary: "Consistency is your best protection against discrimination claims.",
@@ -59,6 +59,54 @@ const LANDLORD_TIPS = [
     summary: "Ensure your coverage matches your property's current value.",
     content: "Review your landlord insurance annually. Confirm coverage amounts, liability limits, and any gaps in protection. Require renters insurance from tenants to protect their belongings.",
     actionItem: "Contact your insurance agent to review your policy before renewal.",
+  },
+  {
+    title: "Rent Increase Timing",
+    summary: "Strategic timing and proper notice make rent increases smoother.",
+    content: "Check your state's notice requirements for rent increases - they vary widely. Time increases with lease renewals when possible. Consider market conditions and the value of retaining good tenants.",
+    actionItem: "Research your state's required notice period for rent increases.",
+  },
+  {
+    title: "Emergency Preparedness",
+    summary: "Being prepared for emergencies protects tenants and your investment.",
+    content: "Ensure tenants know how to shut off water, gas, and electricity. Provide emergency contact information. Have a plan for natural disasters common to your area. Keep spare keys accessible.",
+    actionItem: "Create an emergency procedures document for each rental property.",
+  },
+  {
+    title: "Lease Violation Response",
+    summary: "Address violations promptly but fairly to maintain a good landlord-tenant relationship.",
+    content: "Document every violation with dates and photos. Start with a friendly reminder for first offenses. Follow your lease terms exactly when escalating. Keep copies of all notices sent.",
+    actionItem: "Review your lease to understand the specific violation procedures it outlines.",
+  },
+  {
+    title: "Tenant Retention Strategies",
+    summary: "Keeping good tenants is more cost-effective than finding new ones.",
+    content: "Respond quickly to maintenance requests. Consider small upgrades between leases. Be reasonable on minor issues. A vacancy costs more than most rent concessions - calculate the true cost before losing a good tenant.",
+    actionItem: "List three things you could improve to make your rental more desirable to current tenants.",
+  },
+  {
+    title: "Move-Out Procedure Clarity",
+    summary: "Clear expectations prevent disputes and ensure smooth transitions.",
+    content: "Provide a written move-out checklist 30 days before lease end. Explain cleaning expectations and how to avoid deductions. Schedule the walkthrough in advance and invite the tenant to attend.",
+    actionItem: "Create a move-out instruction sheet if you don't already have one.",
+  },
+  {
+    title: "Screening Red Flags",
+    summary: "Know what to look for without crossing Fair Housing boundaries.",
+    content: "Focus on verifiable facts: income verification, rental history, credit patterns. Contact previous landlords directly. Verify employment. Be wary of anyone who wants to skip steps or pay extra to bypass screening.",
+    actionItem: "Document your standard screening criteria and apply it consistently.",
+  },
+  {
+    title: "Record Keeping Basics",
+    summary: "Good records protect you legally and simplify tax time.",
+    content: "Keep all leases, correspondence, and financial records for at least 7 years. Organize by property and year. Use LeaseShield's document storage to keep everything in one secure place.",
+    actionItem: "Set up a filing system (digital or physical) for each rental property.",
+  },
+  {
+    title: "Pet Policy Considerations",
+    summary: "A clear pet policy protects your property while expanding your tenant pool.",
+    content: "Decide on pet policies before listing. Consider pet deposits or monthly pet rent. Be specific about size, breed, and number limits. Remember: service animals and emotional support animals have different legal requirements.",
+    actionItem: "Review and update your pet policy, including understanding service animal laws.",
   },
 ];
 
@@ -268,19 +316,20 @@ export class ScheduledJobs {
     }
   }
 
-  // Send weekly tips to users who have opted in
-  async sendWeeklyTips(): Promise<void> {
+  // Send biweekly tips to users who have opted in (every 2 weeks)
+  async sendBiweeklyTips(): Promise<void> {
     try {
-      console.log('💡 Sending weekly landlord tips...');
+      console.log('💡 Sending biweekly landlord tips...');
 
-      // Get week number of the year to determine which tip to send
+      // Get biweek number of the year to determine which tip to send
       const now = new Date();
       const startOfYear = new Date(now.getFullYear(), 0, 1);
       const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      const tipIndex = weekNumber % LANDLORD_TIPS.length;
+      const biweekNumber = Math.floor(weekNumber / 2); // Every 2 weeks
+      const tipIndex = biweekNumber % LANDLORD_TIPS.length;
       const tip = LANDLORD_TIPS[tipIndex];
 
-      console.log(`  Selected tip ${tipIndex + 1}/${LANDLORD_TIPS.length}: "${tip.title}"`);
+      console.log(`  Selected tip ${tipIndex + 1}/${LANDLORD_TIPS.length}: "${tip.title}" (biweek ${biweekNumber})`);
 
       // Get all active users who have opted in to tips
       const usersWantingTips = await db
@@ -300,21 +349,21 @@ export class ScheduledJobs {
         return;
       }
 
-      // Check if we already sent this week's tip (track by tip index + year)
-      const tipKey = `${now.getFullYear()}-week${weekNumber}`;
+      // Check if we already sent this biweek's tip (track by biweek + year)
+      const tipKey = `${now.getFullYear()}-biweek${biweekNumber}`;
       
       let sentCount = 0;
       for (const user of usersWantingTips) {
         if (!user.email) continue;
 
-        // Check if user already received this week's tip
+        // Check if user already received this biweek's tip
         const [existingTipEvent] = await db
           .select()
           .from(analyticsEvents)
           .where(
             and(
               eq(analyticsEvents.userId, user.id),
-              eq(analyticsEvents.eventType, 'weekly_tip_sent'),
+              eq(analyticsEvents.eventType, 'biweekly_tip_sent'),
               sql`${analyticsEvents.eventData}->>'tipKey' = ${tipKey}`
             )
           )
@@ -330,16 +379,16 @@ export class ScheduledJobs {
         // Track that we sent this tip
         await storage.trackEvent({
           userId: user.id,
-          eventType: 'weekly_tip_sent',
+          eventType: 'biweekly_tip_sent',
           eventData: { tipKey, tipTitle: tip.title },
         });
 
         sentCount++;
       }
 
-      console.log(`✅ Weekly tips sent to ${sentCount} users`);
+      console.log(`✅ Biweekly tips sent to ${sentCount} users`);
     } catch (error) {
-      console.error('❌ Error sending weekly tips:', error);
+      console.error('❌ Error sending biweekly tips:', error);
     }
   }
 
@@ -708,12 +757,12 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => runUploadCleanup().catch(e => console.error('[CLEANUP] startup error:', e)), 5 * 60 * 1000);
 
-    // Send weekly tips every 7 days (check daily, but only send once per week)
+    // Send biweekly tips every 14 days (check daily, but only send once per 2 weeks)
     this.weeklyTipsInterval = setInterval(
-      () => this.sendWeeklyTips(),
+      () => this.sendBiweeklyTips(),
       24 * 60 * 60 * 1000 // Check daily
     );
-    setTimeout(() => this.sendWeeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
+    setTimeout(() => this.sendBiweeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
 
     console.log('✅ Scheduled jobs started');
   }

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb } from "lucide-react";
 import { Link } from "wouter";
 
 export default function AdminPage() {
@@ -172,6 +172,25 @@ export default function AdminPage() {
                   >
                     <Users className="h-4 w-4 mr-2" />
                     Manage Landlords
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Tips & Best Practices</CardTitle>
+                <Lightbulb className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/tips" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-admin-tips"
+                  >
+                    <Lightbulb className="h-4 w-4 mr-2" />
+                    Manage Tips
                   </Button>
                 </Link>
               </CardContent>
