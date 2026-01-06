@@ -1,0 +1,186 @@
+Below is exact, copy-paste-ready empty-state text for each page, followed by clear rules for when each empty state should disappear (so you don’t annoy returning users).
+
+1️⃣ Properties Page – Empty State (HIGHEST PRIORITY)
+When this shows
+
+User has 0 properties
+
+Copy (use verbatim)
+
+Headline:
+Get Started
+
+Body:
+Add your first property to send applications, route screening through Western Verify, and access state-specific leases and notices.
+
+Primary Button:
+Add Your First Property
+
+Secondary (optional link):
+Why do I need a property?
+
+Secondary link explanation (tooltip or small text):
+Properties organize applications, screening, and documents by location.
+
+When this empty state should disappear
+
+Immediately after the first property is added
+
+Never show again for this user
+
+This one is purely onboarding.
+
+2️⃣ Applications Page – Empty State
+When this shows
+
+User has 0 applications
+
+Copy
+
+Headline:
+Start Your First Application
+
+Body:
+Send one link to the applicant. LeaseShield tracks the process while screening runs through Western Verify.
+
+Primary Button:
+Create Application Link
+
+Secondary (optional):
+See how it works (2 min)
+
+When this empty state should disappear
+
+After first application is created
+
+Replace with normal list view even if list later becomes empty again
+
+Why: Once they’ve done it once, they don’t need onboarding again.
+
+3️⃣ Documents (Leases & Notices) Page – Empty State
+When this shows
+
+No saved/favorited documents
+(or if documents are state-filtered and none match)
+
+Copy
+
+Headline:
+Need a Lease or Notice?
+
+Body:
+Browse state-specific leases and notices updated when legislation changes.
+
+Primary Button:
+Browse Leases & Notices
+
+Optional trust line (small text):
+Documents are reviewed and updated as laws change.
+
+When this empty state should disappear
+
+Never fully disappears
+
+Converts into:
+
+Filter suggestions
+
+“No documents match this state” messaging
+
+This is not onboarding — it’s guidance.
+
+4️⃣ Screening Decoder Page – Empty State
+When this shows
+
+No pasted/uploaded report yet
+
+Copy
+
+Headline:
+Understand Screening Results Instantly
+
+Body:
+Paste or upload a screening report. LeaseShield explains what matters, what doesn’t, and what to ask next.
+
+Primary Button:
+Paste or Upload Report
+
+Supporting line (small text):
+Most landlords misinterpret at least one item on every screening report. This prevents that.
+
+When this empty state should disappear
+
+After first successful decode
+
+After that, show:
+
+Recent decodes
+
+“Paste another report” inline
+
+5️⃣ Dashboard – No Activity Yet (Optional but Powerful)
+When this shows
+
+User has:
+
+Properties = 0
+
+Applications = 0
+
+No decoder usage
+
+Copy
+
+Headline:
+Welcome to LeaseShield
+
+Body:
+LeaseShield helps you collect applications, route screening through Western Verify, understand risk, and use the right documents when laws change.
+
+Primary Button:
+Add Your First Property
+
+Secondary Button:
+Quick Tour (2 min)
+
+When this empty state should disappear
+
+As soon as any one of these happens:
+
+Property added
+
+Application created
+
+Decoder used
+
+After that, never show again.
+
+Empty State Disappearance Rules (Simple Logic)
+Page	Disappears After
+Properties	First property added
+Applications	First application created
+Decoder	First decode completed
+Dashboard intro	Any meaningful action
+Documents	Never (contextual only)
+
+This prevents:
+
+Repetition
+
+Annoyance
+
+“I’ve seen this already” fatigue
+
+Key Principle (Important)
+
+Empty states should feel like:
+
+“Helpful direction”
+
+Not:
+
+“You’re missing something”
+“You did something wrong”
+“You need to learn our app”
+
+Your copy already aligns with this — don’t let it drift.

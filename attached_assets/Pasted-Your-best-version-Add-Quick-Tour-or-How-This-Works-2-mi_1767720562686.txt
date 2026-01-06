@@ -1,0 +1,136 @@
+Your best version
+
+✔ Add “Quick Tour” or “How This Works (2 min)”
+✔ Place it top-right, secondary style, not primary
+✔ Optional, dismissible, never forced
+
+Exact wording recommendation:
+
+Quick Tour (2 min)
+
+That feels respectful, not patronizing.
+
+2️⃣ “Make the Add Property button even bigger/brighter (green)”
+
+Verdict: ⚠️ Caution — color choice matters
+
+Why this is tricky
+
+Green = “go / success” in consumer apps
+But in legal/compliance software, green can:
+
+Feel casual
+
+Reduce seriousness
+
+Conflict with your calm, trust-first tone
+
+What I recommend instead
+
+✔ Keep your primary action dominant, but:
+
+Use your brand accent color, not green
+
+Increase size and weight, not brightness
+
+Add microcopy under it
+
+Example microcopy under button:
+
+Required to run applications and documents
+
+That increases clicks without changing color psychology.
+
+3️⃣ “On empty states, add a big friendly Get Started card”
+
+Verdict: ✅ 100% yes — this is the strongest suggestion
+
+This is high-impact and very low risk.
+
+Empty states are where users get stuck.
+
+What to add
+
+When there are:
+
+No properties
+
+No applications
+
+No documents saved
+
+Show a card that says:
+
+Get Started
+Add your first property to send applications, run screening through Western Verify, and access state-specific documents.
+
+Button:
+
+Add Your First Property
+
+This dramatically improves activation.
+
+4️⃣ “Add simple tooltips for each main card”
+
+Verdict: ⚠️ Yes — but limit to ONE sentence
+
+Tooltips are good if they:
+
+Explain why, not how
+
+Are optional
+
+Don’t clutter
+
+Example tooltip text (perfect length)
+
+Applications:
+
+Send one link. Screening runs through Western Verify.
+
+Decoder:
+
+Prevents misinterpretation of screening reports.
+
+Documents:
+
+Updated when legislation changes.
+
+No more than that.
+
+5️⃣ “Slight animation on button clicks”
+
+Verdict: ✅ Yes, subtle is good
+
+This is pure UX feedback and won’t harm trust.
+
+Guidelines
+
+✔ Micro-interactions only
+✔ No bounce, no flashy motion
+✔ Just a press / fade / ripple
+
+This improves perceived quality without “SaaS-ifying” the app.
+
+Final Recommendation: What to Actually Implement
+✅ Implement Now (High ROI, Low Risk)
+
+Empty-state “Get Started” cards
+
+One-sentence tooltips on main cards
+
+Subtle button press feedback
+
+⚠️ Implement Carefully
+
+“Quick Tour (2 min)” — secondary, optional
+
+Make primary actions more dominant without turning them green
+
+❌ Skip
+
+Forced walkthroughs
+
+Overly bright colors
+
+Multi-step tours that interrupt flow
