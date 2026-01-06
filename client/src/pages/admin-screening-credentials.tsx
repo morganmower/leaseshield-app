@@ -71,7 +71,8 @@ export default function AdminScreeningCredentials() {
 
   const testMutation = useMutation({
     mutationFn: async (userId: string) => {
-      return apiRequest("POST", `/api/admin/screening-credentials/${userId}/test`, {});
+      const res = await apiRequest("POST", `/api/admin/screening-credentials/${userId}/test`, {});
+      return res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/screening-credentials"] });
