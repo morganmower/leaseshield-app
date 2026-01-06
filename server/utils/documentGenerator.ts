@@ -5,6 +5,14 @@ interface FieldValue {
   [key: string]: string | number;
 }
 
+interface LandlordInfo {
+  businessName?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+}
+
 interface DocumentGenerationOptions {
   templateTitle: string;
   templateContent: string;
@@ -12,6 +20,7 @@ interface DocumentGenerationOptions {
   stateId: string;
   version?: number;
   updatedAt?: Date;
+  landlordInfo?: LandlordInfo;
 }
 
 // HTML escape function to prevent XSS/injection attacks
@@ -26,10 +35,10 @@ function escapeHtml(unsafe: string): string {
 }
 
 export async function generateDocument(options: DocumentGenerationOptions): Promise<Buffer> {
-  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date() } = options;
+  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
 
   // Create HTML content with filled fields
-  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt);
+  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt, landlordInfo);
 
   // Launch headless browser
   // NOTE: Using system Chromium for stability in Replit environment.
@@ -120,7 +129,8 @@ function generateHTMLFromTemplate(
   fieldValues: FieldValue,
   stateId: string,
   version: number = 1,
-  updatedAt: Date = new Date()
+  updatedAt: Date = new Date(),
+  landlordInfo?: LandlordInfo
 ): string {
   // SECURITY: For MVP, we ONLY use default template generation with fully escaped values.
   // templateContent should always be empty. If it's not empty, we ignore it to prevent injection.
@@ -193,6 +203,12 @@ function generateHTMLFromTemplate(
     .document-header .tagline {
       font-size: 10pt;
       font-style: italic;
+      color: #333;
+      margin-bottom: 8pt;
+    }
+    
+    .document-header .landlord-contact {
+      font-size: 10pt;
       color: #333;
       margin-bottom: 8pt;
     }
@@ -319,8 +335,14 @@ function generateHTMLFromTemplate(
 </head>
 <body>
   <div class="document-header">
-    <div class="firm-name">LEASESHIELD LEGAL DOCUMENTS</div>
-    <div class="tagline">Professional Landlord Protection Services</div>
+    ${landlordInfo?.businessName ? `<div class="firm-name">${escapeHtml(landlordInfo.businessName)}</div>` : '<div class="firm-name">LEASESHIELD LEGAL DOCUMENTS</div>'}
+    ${landlordInfo?.phoneNumber || landlordInfo?.email ? `
+      <div class="landlord-contact">
+        ${landlordInfo.phoneNumber ? `<span>${escapeHtml(landlordInfo.phoneNumber)}</span>` : ''}
+        ${landlordInfo.phoneNumber && landlordInfo.email ? ' | ' : ''}
+        ${landlordInfo.email ? `<span>${escapeHtml(landlordInfo.email)}</span>` : ''}
+      </div>
+    ` : '<div class="tagline">Professional Landlord Protection Services</div>'}
     <div class="state-info">State-Specific Legal Forms for ${safeStateId}</div>
   </div>
   

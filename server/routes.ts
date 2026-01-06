@@ -1738,6 +1738,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Template not found" });
       }
 
+      // Get landlord info for document header
+      const user = await storage.getUser(userId);
+      const landlordInfo = user ? {
+        businessName: user.businessName,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      } : undefined;
+
       // Import document generator
       const { generateDocument } = await import('./utils/documentGenerator');
 
@@ -1749,6 +1759,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stateId: template.stateId,
         version: template.version || 1,
         updatedAt: template.updatedAt || new Date(),
+        landlordInfo,
       });
       
       res.setHeader('Content-Type', 'application/pdf');
@@ -2826,6 +2837,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // 2. Stored as safe placeholder-based templates (not raw HTML)
       // 3. Rendered through a safe templating engine with auto-escaping
 
+      // Get landlord info for document header
+      const userId = getUserId(req);
+      const user = userId ? await storage.getUser(userId) : null;
+      const landlordInfo = user ? {
+        businessName: user.businessName,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+      } : undefined;
+
       // Import document generator
       const { generateDocument } = await import('./utils/documentGenerator');
 
@@ -2837,6 +2859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         stateId: template.stateId,
         version: template.version || 1,
         updatedAt: template.updatedAt || new Date(),
+        landlordInfo,
       });
 
       // Set response headers
@@ -4962,9 +4985,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             
             // Get landlord name
             const landlord = await storage.getUser(userId);
-            const landlordName = landlord?.firstName && landlord?.lastName 
-              ? `${landlord.firstName} ${landlord.lastName}`
-              : undefined;
+            const landlordInfo = landlord ? {
+              name: landlord.firstName && landlord.lastName 
+                ? `${landlord.firstName} ${landlord.lastName}`
+                : undefined,
+              businessName: landlord.businessName || undefined,
+              phoneNumber: landlord.phoneNumber || undefined,
+            } : undefined;
             
             await emailService.sendApplicationDecisionEmail(
               { 
@@ -4974,7 +5001,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               },
               decision as 'approved' | 'denied',
               propertyAddress,
-              landlordName
+              landlordInfo
             );
             console.log(`✅ Decision notification sent to ${primaryApplicant.email}`);
           }
@@ -5361,13 +5388,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Find the primary applicant for the "invited by" info
       const primaryApplicant = people.find(p => p.role === 'applicant' && p.isCompleted);
 
+      // Get landlord info for email
+      const landlord = await storage.getUser(userId);
+      const landlordEmailInfo = landlord ? {
+        businessName: landlord.businessName || undefined,
+        phoneNumber: landlord.phoneNumber || undefined,
+      } : undefined;
+
       // Send the invite email
       await emailService.sendCoApplicantInviteEmail(
         { email: person.email || '', firstName: person.firstName || '', lastName: person.lastName || '' },
         { firstName: primaryApplicant?.firstName || 'Applicant', lastName: primaryApplicant?.lastName || '' },
         propertyName,
         inviteUrl,
-        person.role as 'coapplicant' | 'guarantor'
+        person.role as 'coapplicant' | 'guarantor',
+        landlordEmailInfo
       );
 
       // Log event
@@ -6204,8 +6239,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       const inviteUrl = `/apply/join/${inviteToken}`;
 
-      // Get property name for the email
+      // Get property name and landlord info for the email
       let propertyName = "the property";
+      let landlordEmailInfo: { businessName?: string; phoneNumber?: string } | undefined;
       try {
         const submission = await storage.getRentalSubmission(inviter.submissionId);
         if (submission) {
@@ -6216,6 +6252,14 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               const property = await storage.getRentalPropertyById(unit.propertyId);
               if (property) {
                 propertyName = property.name + (unit.unitLabel ? ` - ${unit.unitLabel}` : '');
+                // Get landlord info
+                const landlord = await storage.getUser(property.userId);
+                if (landlord) {
+                  landlordEmailInfo = {
+                    businessName: landlord.businessName || undefined,
+                    phoneNumber: landlord.phoneNumber || undefined,
+                  };
+                }
               }
             }
           }
@@ -6231,7 +6275,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           { firstName: inviter.firstName || 'Applicant', lastName: inviter.lastName || '' },
           propertyName,
           inviteUrl,
-          roleMap[personType] as 'coapplicant' | 'guarantor'
+          roleMap[personType] as 'coapplicant' | 'guarantor',
+          landlordEmailInfo
         );
         console.log(`✅ Co-applicant invite email sent to ${email}`);
       } catch (emailError) {

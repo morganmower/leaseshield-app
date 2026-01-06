@@ -438,10 +438,12 @@ The LeaseShield App Team
     applicant: EmailRecipient, 
     decision: 'approved' | 'denied',
     propertyAddress: string,
-    landlordName?: string
+    landlordInfo?: { name?: string; businessName?: string; phoneNumber?: string }
   ): Promise<boolean> {
     const firstName = applicant.firstName || 'Applicant';
     const isApproved = decision === 'approved';
+    const displayName = landlordInfo?.businessName || landlordInfo?.name;
+    const contactInfo = landlordInfo?.phoneNumber ? `\n\nContact: ${landlordInfo.phoneNumber}` : '';
     
     const template: EmailTemplate = {
       subject: isApproved 
@@ -452,7 +454,7 @@ The LeaseShield App Team
 
 Great news! Your rental application for ${propertyAddress} has been approved.
 
-${landlordName ? `${landlordName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including signing the lease and move-in details.
+${displayName ? `${displayName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including signing the lease and move-in details.${contactInfo}
 
 Congratulations on your new home!
 
@@ -500,12 +502,13 @@ LeaseShield App
       <p>Great news! Your rental application for <strong>${propertyAddress}</strong> has been <strong style="color: #10b981;">approved</strong>.</p>
       
       <div class="info-box">
-        <p style="margin: 0;">${landlordName ? `${landlordName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including:</p>
+        <p style="margin: 0;">${displayName ? `${displayName} will` : 'The landlord will'} be in touch with you soon regarding next steps, including:</p>
         <ul style="margin-bottom: 0;">
           <li>Signing the lease agreement</li>
           <li>Security deposit and first month's rent</li>
           <li>Move-in date and key pickup</li>
         </ul>
+        ${landlordInfo?.phoneNumber ? `<p style="margin-top: 12px; margin-bottom: 0;"><strong>Contact:</strong> ${landlordInfo.phoneNumber}</p>` : ''}
       </div>
       
       <p>Congratulations on your new home!</p>
@@ -1310,13 +1313,16 @@ The LeaseShield App Team
     inviter: { firstName: string; lastName: string },
     propertyName: string,
     inviteUrl: string,
-    role: 'coapplicant' | 'guarantor'
+    role: 'coapplicant' | 'guarantor',
+    landlordInfo?: { businessName?: string; phoneNumber?: string }
   ): Promise<boolean> {
     const roleLabel = role === 'guarantor' ? 'Guarantor' : 'Co-Applicant';
     const baseUrl = process.env.REPLIT_DOMAINS 
       ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
       : 'https://leaseshieldapp.com';
     const fullInviteUrl = `${baseUrl}${inviteUrl}`;
+    const landlordDisplay = landlordInfo?.businessName || 'the property manager';
+    const contactInfo = landlordInfo?.phoneNumber ? `\n\nProperty Contact: ${landlordInfo.phoneNumber}` : '';
 
     const template: EmailTemplate = {
       subject: `You've been invited to join a rental application for ${propertyName}`,
@@ -1336,7 +1342,7 @@ What you'll need to provide:
 
 This link is unique to you. Please do not share it with anyone else.
 
-If you have any questions, please contact ${inviter.firstName} directly.
+If you have any questions, please contact ${inviter.firstName} directly.${contactInfo}
 
 Thank you,
 LeaseShield App
@@ -1386,6 +1392,7 @@ LeaseShield App
         </ul>
       </div>
       <p class="warning">This link is unique to you. Please do not share it with anyone else.</p>
+      ${landlordInfo?.phoneNumber ? `<p style="font-size: 14px; color: #475569; margin-top: 16px;"><strong>Property Contact:</strong> ${landlordInfo.phoneNumber}</p>` : ''}
       <div class="footer">
         <p>LeaseShield App - Protecting Your Rental Business</p>
       </div>
