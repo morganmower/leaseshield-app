@@ -53,7 +53,7 @@ const mainItems = [
     iconColor: "text-primary",
   },
   {
-    title: "Templates",
+    title: "Leases & Notices",
     url: "/templates",
     icon: FileText,
     iconColor: "text-blue-500 dark:text-blue-400",
@@ -83,7 +83,7 @@ const mainItems = [
     iconColor: "text-primary",
   },
   {
-    title: "Screening Helpers",
+    title: "Screening Decoder",
     url: "/screening",
     icon: Search,
     iconColor: "text-violet-500 dark:text-violet-400",
@@ -95,7 +95,7 @@ const mainItems = [
     iconColor: "text-orange-500 dark:text-orange-400",
   },
   {
-    title: "Legal Updates",
+    title: "Legislation Updates",
     url: "/legal-updates",
     icon: BookOpen,
     iconColor: "text-cyan-500 dark:text-cyan-400",

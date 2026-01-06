@@ -306,10 +306,10 @@ export default function Templates() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Template Library
+            Leases & Notices
           </h1>
           <p className="text-muted-foreground">
-            State-specific templates ready to download or fill online
+            Leases and notices are updated when legislation changes. Choose your state to view the latest versions.
           </p>
         </div>
 

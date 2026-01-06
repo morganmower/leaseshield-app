@@ -327,10 +327,10 @@ export default function Screening() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Screening Toolkit
+            Screening Decoder
           </h1>
           <p className="text-muted-foreground">
-            Learn to read credit reports, spot red flags, and avoid costly screening mistakes
+            Paste any screening report below. LeaseShield explains what matters, what doesn't, and what to ask next.
           </p>
         </div>
 

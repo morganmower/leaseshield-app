@@ -322,7 +322,7 @@ export default function RentalApplications() {
         <div className="mb-8">
           <h1 className="text-4xl font-display font-bold mb-2">Rental Applications</h1>
           <p className="text-muted-foreground">
-            Manage properties, create application links, and process tenant applications
+            Send one link to the applicant. LeaseShield routes screening through Western Verify and tracks each step.
           </p>
         </div>
 
