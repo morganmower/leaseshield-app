@@ -356,6 +356,9 @@ export default function RentalApplications() {
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property
               </Button>
+              <p className="text-xs text-muted-foreground mt-4">
+                LeaseShield manages the workflow. Western Verify performs the screening.
+              </p>
             </CardContent>
           </Card>
         ) : (
