@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, Zap } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, Zap, UserPlus, MapPin, FileCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -232,13 +232,19 @@ export default function Landing() {
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo variant="horizontal" size="lg" />
           </Link>
+          <nav className="hidden md:flex items-center gap-6">
+            <a href="#hero" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-home">Home</a>
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-features">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-how-it-works">How It Works</a>
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</a>
+          </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <Button
               variant="ghost"
               onClick={() => window.location.href = "/login"}
               data-testid="button-login"
-              className="text-sm sm:text-base"
+              className="text-sm sm:text-base min-h-[48px]"
             >
               Log In
             </Button>
@@ -248,9 +254,10 @@ export default function Landing() {
                 window.location.href = "/signup";
               }}
               data-testid="button-start-trial"
-              className="text-sm sm:text-base px-3 sm:px-5"
+              size="lg"
+              className="bg-green-500 hover:bg-green-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
-              <span className="hidden xs:inline">Start </span>Trial
+              Start Trial
             </Button>
           </div>
         </div>
@@ -260,7 +267,7 @@ export default function Landing() {
       <TrialValueMessage />
 
       {/* Hero Section */}
-      <section className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden">
+      <section id="hero" className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden">
         {/* Gradient Background with amber/gold and blue */}
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
@@ -350,11 +357,11 @@ export default function Landing() {
                           trackTrialStart();
                           window.location.href = "/signup";
                         }}
-                        className="w-full sm:w-auto whitespace-nowrap"
+                        className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto whitespace-nowrap"
                         data-testid="button-pricing-cta"
                       >
                         Start Free Trial
-                        <ArrowRight className="ml-2 h-4 w-4" />
+                        <ArrowRight className="ml-2 h-5 w-5" />
                       </Button>
                       <button
                         onClick={() => window.location.href = "/signup?payNow=true"}
@@ -422,8 +429,100 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* How It Works Section */}
+      <section id="how-it-works" className="py-16 sm:py-20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 border-y">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <Badge className="mb-4 px-4 py-1">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Simple 3-Step Process
+            </Badge>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              How It Works
+            </h2>
+            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
+              Get started in minutes, not hours. Here's how easy it is to protect your rental business.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-8 sm:gap-12"
+          >
+            <motion.div variants={fadeInUp} className="text-center">
+              <div className="relative mb-6">
+                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">1</div>
+                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
+                  <UserPlus className="h-10 w-10 text-primary" />
+                </div>
+              </div>
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Sign Up</h3>
+              <p className="text-lg text-muted-foreground">
+                Create your free account in 30 seconds. No credit card required to start your 7-day trial.
+              </p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="text-center">
+              <div className="relative mb-6">
+                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">2</div>
+                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
+                  <MapPin className="h-10 w-10 text-primary" />
+                </div>
+              </div>
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Pick Your State</h3>
+              <p className="text-lg text-muted-foreground">
+                Select from our 14 supported states to get templates tailored to your specific legal requirements.
+              </p>
+            </motion.div>
+
+            <motion.div variants={fadeInUp} className="text-center">
+              <div className="relative mb-6">
+                <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">3</div>
+                <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
+                  <FileCheck className="h-10 w-10 text-primary" />
+                </div>
+              </div>
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Get Templates</h3>
+              <p className="text-lg text-muted-foreground">
+                Download and use your legal documents instantly. Fill online or print—your choice.
+              </p>
+            </motion.div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mt-12"
+          >
+            <Button
+              size="lg"
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
+              data-testid="button-how-it-works-cta"
+            >
+              Get Started Now
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Problems Section */}
-      <section className="py-16 sm:py-20 bg-background">
+      <section id="features" className="py-16 sm:py-20 bg-background">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
@@ -526,10 +625,10 @@ export default function Landing() {
                     onClick={() => {
                       trackTrialStart();
                     }}
-                    className="px-8 whitespace-nowrap"
+                    className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] whitespace-nowrap"
                     data-testid="button-mid-trial-cta"
                   >
-                    <Zap className="mr-2 h-4 w-4" />
+                    <Zap className="mr-2 h-5 w-5" />
                     Start Your Free Trial
                   </Button>
                 </Link>
@@ -644,10 +743,10 @@ export default function Landing() {
                   trackTrialStart();
                   window.location.href = "/signup";
                 }}
-                className="px-8"
+                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
                 data-testid="button-applications-cta"
               >
-                <Sparkles className="mr-2 h-4 w-4" />
+                <Sparkles className="mr-2 h-5 w-5" />
                 Try It Free
               </Button>
             </div>
@@ -1143,12 +1242,15 @@ export default function Landing() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = "/signup"}
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
               data-testid="button-comparison-trial"
-              className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
+              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto"
             >
-              <span className="hidden xs:inline">Start Free Trial - </span><span className="xs:hidden">Start Trial - </span>No Credit Card
-              <ArrowRight className="ml-2 h-4 w-4" />
+              Start Free Trial - No Credit Card
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
         </div>
@@ -1241,12 +1343,15 @@ export default function Landing() {
                     </p>
                     <Button
                       size="lg"
-                      onClick={() => window.location.href = "/signup"}
+                      onClick={() => {
+                        trackTrialStart();
+                        window.location.href = "/signup";
+                      }}
                       data-testid="button-roi-trial"
-                      className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
+                      className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto"
                     >
                       Start Saving Today - Free Trial
-                      <ArrowRight className="ml-2 h-4 w-4" />
+                      <ArrowRight className="ml-2 h-5 w-5" />
                     </Button>
                   </div>
                 </div>
@@ -1364,11 +1469,15 @@ export default function Landing() {
           >
             <Button
               size="lg"
-              onClick={() => window.location.href = "/signup"}
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
               data-testid="button-preview-cta"
+              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
             >
               Get Access Now
-              <ArrowRight className="ml-2 h-4 w-4" />
+              <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
             <p className="text-sm text-muted-foreground mt-3">
               7-day free trial. No credit card required.
@@ -1445,15 +1554,16 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base mt-auto"
+                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
+                  trackTrialStart();
                   localStorage.setItem('billingPeriod', 'monthly');
                   window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-monthly"
               >
                 Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <button
                 onClick={() => {
@@ -1515,15 +1625,16 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base mt-auto"
+                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
+                  trackTrialStart();
                   localStorage.setItem('billingPeriod', 'yearly');
                   window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-annual"
               >
                 Save $20 – Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <button
                 onClick={() => {
@@ -1551,31 +1662,31 @@ export default function Landing() {
             </h3>
             <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
               <div className="flex gap-3">
-                <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm mb-1">Save Hours Each Month</p>
-                  <p className="text-sm text-muted-foreground">No more Googling forms or waiting on lawyer consultations</p>
+                  <p className="font-semibold text-foreground text-base mb-1">Save Hours Each Month</p>
+                  <p className="text-base text-muted-foreground">No more Googling forms or waiting on lawyer consultations</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Shield className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <Shield className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm mb-1">Avoid Costly Mistakes</p>
-                  <p className="text-sm text-muted-foreground">One compliance error costs thousands—we keep you protected</p>
+                  <p className="font-semibold text-foreground text-base mb-1">Avoid Costly Mistakes</p>
+                  <p className="text-base text-muted-foreground">One compliance error costs thousands—we keep you protected</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm mb-1">Screen Tenants Confidently</p>
-                  <p className="text-sm text-muted-foreground">Simple credit reports & fair housing guidance—no legal risks</p>
+                  <p className="font-semibold text-foreground text-base mb-1">Screen Tenants Confidently</p>
+                  <p className="text-base text-muted-foreground">Simple credit reports & fair housing guidance—no legal risks</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Sparkles className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                <Sparkles className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-semibold text-foreground text-sm mb-1">Stay Current Automatically</p>
-                  <p className="text-sm text-muted-foreground">Monthly updates alert you when your state's laws change</p>
+                  <p className="font-semibold text-foreground text-base mb-1">Stay Current Automatically</p>
+                  <p className="text-base text-muted-foreground">Monthly updates alert you when your state's laws change</p>
                 </div>
               </div>
             </div>
@@ -1583,27 +1694,87 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonial */}
+      {/* Testimonials */}
       <section className="py-16 sm:py-20">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center"
+            className="text-center mb-12"
           >
-            <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-              <p className="text-lg sm:text-xl text-foreground font-medium mb-6 italic">
-                "I will recommend LeaseShield to every independent landlord I know. It will save them thousands and untold headaches with the entire tenancy process."
-              </p>
-              <div className="flex items-center justify-center">
-                <div className="text-center">
-                  <p className="font-semibold text-foreground">Brian H.</p>
-                  <p className="text-sm text-muted-foreground">Utah</p>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              What Landlords Are Saying
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-12"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent h-full">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
                 </div>
-              </div>
-            </Card>
+                <p className="text-lg text-foreground font-medium mb-6 italic">
+                  "I will recommend LeaseShield to every independent landlord I know. It will save them thousands and untold headaches with the entire tenancy process."
+                </p>
+                <div className="flex items-center">
+                  <div>
+                    <p className="font-semibold text-foreground">Brian Henderson</p>
+                    <p className="text-sm text-muted-foreground">Property Owner, Utah</p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent h-full">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg text-foreground font-medium mb-6 italic">
+                  "LeaseShield simplified everything. I used to dread dealing with lease paperwork, but now I feel confident and protected."
+                </p>
+                <div className="flex items-center">
+                  <div>
+                    <p className="font-semibold text-foreground">Marcie Seeling</p>
+                    <p className="text-sm text-muted-foreground">Property Owner, Texas</p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          {/* Trust Badges */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex flex-wrap justify-center gap-4 sm:gap-6"
+          >
+            <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-4 py-3">
+              <CheckCircle2 className="h-5 w-5 text-success" />
+              <span className="font-medium text-foreground">Money-Back Guarantee</span>
+            </div>
+            <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
+              <Shield className="h-5 w-5 text-primary" />
+              <span className="font-medium text-foreground">14 States Covered</span>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+              <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <span className="font-medium text-foreground">Attorney-Reviewed Templates</span>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -1633,46 +1804,52 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-cc" className="border-2 border-success/20 rounded-lg mb-2 bg-success/5">
+                <AccordionTrigger className="text-lg font-semibold px-4">Do I need a credit card for the free trial?</AccordionTrigger>
+                <AccordionContent className="text-lg px-4">
+                  <strong>No!</strong> Your 7-day free trial starts immediately with just your email address. You'll
+                  only need to add payment information if you choose to continue after the trial ends. No strings attached.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-legal">
+                <AccordionTrigger className="text-lg">Is this legal advice?</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  No, LeaseShield provides legal templates and guidance for informational purposes only. Our templates are attorney-reviewed and state-specific, but they are not a substitute for legal advice. We recommend consulting an attorney for specific legal questions about your situation.
+                </AccordionContent>
+              </AccordionItem>
               <AccordionItem value="item-1">
-                <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">What states does LeaseShield App currently support?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida</strong> with
                   comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states—let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Are the templates state-specific and up to date?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Are the templates state-specific and up to date?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   Yes! Every template in our library is tailored to each state's specific laws and requirements.
                   We monitor state legislation and update templates whenever laws change to help you stay compliant.
                   However, these are general forms for informational purposes only and we recommend having them reviewed by your own attorney for your specific situation.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>Can I cancel my subscription anytime?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Can I cancel my subscription anytime?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   Absolutely. You can cancel your subscription at any time with no cancellation fees
                   or penalties. Your access will continue until the end of your current billing period.
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-4">
-                <AccordionTrigger>Do I need a credit card for the free trial?</AccordionTrigger>
-                <AccordionContent>
-                  No! Your 7-day free trial starts immediately with just your email address. You'll
-                  only need to add payment information if you choose to continue after the trial ends.
-                </AccordionContent>
-              </AccordionItem>
               <AccordionItem value="item-5">
-                <AccordionTrigger>How often are legal updates published?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">How often are legal updates published?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   We monitor state legislatures and courts continuously. When a law changes that could
                   affect your liability or requirements, we'll send you an email alert within 48 hours
                   along with clear before/after explanations and updated templates if needed.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-6">
-                <AccordionTrigger>What if I have properties in multiple states?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">What if I have properties in multiple states?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   One subscription gives you access to all supported states. You can easily switch
                   between states in your dashboard to access the correct templates and compliance
                   information for each property.
@@ -1683,7 +1860,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Testimonial Section */}
+      {/* Value Proposition Section */}
       <section className="py-16 sm:py-20 bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
@@ -1692,9 +1869,24 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <p className="text-lg sm:text-xl text-foreground italic mb-4">
-              "Stop paying $500+ every time you need a lawyer to review your lease.<br/>LeaseShield App = $10/month or $100/year (save $20) protection."
+            <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-4">
+              Stop paying $500+ every time you need a lawyer to review your lease.
+            </h3>
+            <p className="text-lg sm:text-xl text-muted-foreground mb-6">
+              LeaseShield App = <strong className="text-foreground">$10/month or $100/year (save $20)</strong> protection.
             </p>
+            <Button
+              size="lg"
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
+              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
+              data-testid="button-value-prop-cta"
+            >
+              Start Your Free Trial
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </motion.div>
         </div>
       </section>
@@ -1711,21 +1903,24 @@ export default function Landing() {
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
               Only 43 Founders Spots Left at <strong>$10/mo or $100/year (save $20)</strong>
             </h2>
-            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-xl mx-auto px-4">
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto px-4">
               Price increases to $15 next week
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/signup"}
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
                 data-testid="button-final-cta"
-                className="text-base px-8"
+                className="bg-green-500 hover:bg-green-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
                 Lock In My Spot Before It's Gone
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-base text-muted-foreground">
               7-day free trial • Instant access • Cancel anytime • Full refund if it's not worth 10× the price
             </p>
           </motion.div>
@@ -1785,12 +1980,15 @@ export default function Landing() {
               </div>
               <Button
                 size="lg"
-                className="w-full text-base"
-                onClick={() => window.location.href = "/signup"}
+                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
                 data-testid="button-features-dialog-trial"
               >
                 Start Your 7-Day Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground">
                 No credit card required • Cancel anytime
@@ -1831,12 +2029,15 @@ export default function Landing() {
               <div className="mt-6 pt-6 border-t">
                 <Button
                   size="lg"
-                  className="w-full"
-                  onClick={() => window.location.href = "/signup"}
+                  className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
+                  onClick={() => {
+                    trackTrialStart();
+                    window.location.href = "/signup";
+                  }}
                   data-testid="button-dialog-start-trial"
                 >
                   Start Your Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <p className="text-sm text-muted-foreground text-center mt-3">
                   7-day free trial • No credit card required
@@ -1910,15 +2111,16 @@ export default function Landing() {
             </div>
             <div className="pt-4 border-t">
               <Button 
-                className="w-full" 
+                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]" 
                 size="lg"
                 onClick={() => {
+                  trackTrialStart();
                   setShowBenefitsDialog(false);
                   window.location.href = "/signup";
                 }}
               >
                 Start Your Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -2022,15 +2224,16 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="w-full"
+                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
+                  trackTrialStart();
                   setShowTemplatePreview(false);
                   window.location.href = "/signup";
                 }}
                 data-testid="button-preview-trial"
               >
                 Get Your First Lease in 5 Minutes - Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground text-center">
                 No credit card required • 30-day money-back guarantee
