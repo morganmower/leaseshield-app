@@ -424,7 +424,7 @@ export default function Dashboard() {
         <div className="mb-10">
           <div className="grid md:grid-cols-3 gap-6">
             {/* Pillar A: Applications + Western Verify Screening */}
-            <Card className="p-6" data-testid="card-pillar-applications">
+            <Card className="p-6 flex flex-col" data-testid="card-pillar-applications">
               <div className="flex items-start gap-3 mb-4">
                 <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                   <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
@@ -436,13 +436,13 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground mb-4">
                 The easiest compliant flow: apply → authorize → screen → decide.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 mb-5 list-disc list-inside">
+              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
                 <li>Applicant completes application</li>
                 <li>Authorization captured</li>
                 <li>Screening runs through Western Verify</li>
                 <li>Status updates + reports ready</li>
               </ul>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-5">
                 <Link to="/rental-applications">
                   <Button size="sm" data-testid="button-pillar-create-application">
                     Create Application
@@ -457,7 +457,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Pillar B: AI Screening Helpers */}
-            <Card className="p-6" data-testid="card-pillar-ai-helpers">
+            <Card className="p-6 flex flex-col" data-testid="card-pillar-ai-helpers">
               <div className="flex items-start gap-3 mb-4">
                 <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                   <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
@@ -473,12 +473,12 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground mb-4">
                 Credit / Criminal / Eviction explained in plain English — with the best follow-up questions.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 mb-5 list-disc list-inside">
+              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
                 <li>Key risk flags (and what they mean)</li>
                 <li>Suggested questions to ask applicants</li>
                 <li>Decision notes you can save</li>
               </ul>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-5">
                 <Link to="/screening">
                   <Button size="sm" data-testid="button-pillar-open-decoder">
                     Open Decoder
@@ -488,7 +488,7 @@ export default function Dashboard() {
             </Card>
 
             {/* Pillar C: Updated Leases & Notices */}
-            <Card className="p-6" data-testid="card-pillar-documents">
+            <Card className="p-6 flex flex-col" data-testid="card-pillar-documents">
               <div className="flex items-start gap-3 mb-4">
                 <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
                   <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
@@ -500,13 +500,13 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground mb-4">
                 State-specific templates updated when laws change.
               </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 mb-5 list-disc list-inside">
+              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
                 <li>Leases</li>
                 <li>Late rent + violation notices</li>
                 <li>Move-in / move-out checklists</li>
                 <li>Adverse action letters</li>
               </ul>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2 mt-5">
                 <Link to="/templates">
                   <Button size="sm" data-testid="button-pillar-browse-documents">
                     Browse Documents
