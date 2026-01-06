@@ -1,0 +1,118 @@
+Where It’s Still Weak (And How to Fix It)
+🚨 1️⃣ Western Verify Integration Needs MORE Emphasis
+
+Right now, it’s present — but it should feel like a superpower, not just a feature.
+
+What I still felt as a viewer:
+
+“Okay, Western Verify is integrated… but why is this better than what I already do?”
+
+Final tweak (very important):
+
+Add one explicit line anywhere prominent (dashboard or application section):
+
+“LeaseShield is the control center — Western Verify runs the screening.”
+
+Then reinforce with:
+
+“One link to the applicant”
+
+“Authorization handled”
+
+“Status tracked here”
+
+This removes all confusion about roles.
+
+🚨 2️⃣ The Decoder Is Still Under-Sold
+
+It’s better than before, but it should feel like:
+
+“This alone is worth the subscription.”
+
+Right now it feels optional instead of essential.
+
+Fix (no new UI required):
+
+At the top of the decoder page, add one bold line:
+
+“Most landlords misinterpret at least one item on every screening report. This prevents that.”
+
+That line reframes the tool as risk prevention, not convenience.
+
+🚨 3️⃣ Documents Section Needs “Why Now?”
+
+The documents are solid, but the urgency isn’t obvious.
+
+A landlord’s question is:
+
+“Why shouldn’t I just keep using the lease I already have?”
+
+Add this microcopy:
+
+“Documents are reviewed and updated when legislation changes — older versions may create enforceability risk.”
+
+That single sentence adds urgency without fear-mongering.
+
+Flow Check: Does It Feel Like a System Now?
+Current Flow (Good, but not perfect):
+
+Dashboard → Applications → Decoder → Documents
+
+Ideal Mental Flow:
+
+I collect an application
+
+Western Verify screens the applicant
+
+LeaseShield helps me understand risk
+
+LeaseShield gives me the right document when I act
+
+You’re at about 85% alignment.
+The remaining 15% is just reinforcing that narrative everywhere.
+
+Final Polishing Checklist (No Code, No Redesign)
+
+If you do only these final touches, you’re in great shape:
+
+✅ Add one sentence clarifying the Western Verify relationship
+
+“LeaseShield is the control center. Western Verify runs the screening.”
+
+✅ Strengthen the Decoder’s positioning
+
+“This prevents misinterpretation — the #1 screening mistake landlords make.”
+
+✅ Add urgency to Documents
+
+“Updated as laws change — older versions may create enforceability risk.”
+
+✅ Keep “Start an Application” as the dominant action everywhere
+Would I Show This to a Landlord Now?
+
+Yes.
+Would I launch paid traffic yet? Almost.
+
+You’re now at the stage where:
+
+Demos will land better
+
+Western Verify clients will “get it” faster
+
+The product feels intentional, not experimental
+
+What I’d Recommend Next (Optional but Smart)
+
+If you want to squeeze maximum value out of this:
+
+Record a 2-minute “How LeaseShield Works” video using this new flow
+
+Use that video:
+
+Inside the dashboard
+
+On the landing page
+
+In Western Verify onboarding emails
+
+That will compound everything you’ve just fixed.
