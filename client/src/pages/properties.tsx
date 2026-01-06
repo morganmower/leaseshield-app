@@ -363,17 +363,20 @@ export default function Properties() {
         </div>
 
         {filteredProperties.length === 0 ? (
-          <Card className="p-12">
-            <div className="text-center">
-              <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <h3 className="text-lg font-medium mb-2">No properties yet</h3>
-              <p className="text-muted-foreground mb-4">
-                Add your first property to start managing units and collecting applications
+          <Card className="p-12 border-dashed">
+            <div className="text-center max-w-md mx-auto">
+              <Building2 className="h-16 w-16 text-primary mx-auto mb-6" />
+              <h3 className="text-2xl font-display font-semibold mb-3">Get Started</h3>
+              <p className="text-muted-foreground mb-6">
+                Add your first property to send applications, route screening through Western Verify, and access state-specific leases and notices.
               </p>
-              <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
+              <Button size="lg" onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Property
+                Add Your First Property
               </Button>
+              <p className="text-xs text-muted-foreground mt-4">
+                Properties organize applications, screening, and documents by location.
+              </p>
             </div>
           </Card>
         ) : (

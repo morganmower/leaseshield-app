@@ -522,15 +522,27 @@ export default function MyDocuments() {
 
         {/* Empty State */}
         {filteredDocuments.length === 0 && filteredUploadedDocuments.length === 0 && (
-          <Card>
+          <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Documents Yet</h3>
-              <p className="text-muted-foreground text-center max-w-md mb-4">
+              <FileText className="h-16 w-16 text-primary mb-6" />
+              <h3 className="text-2xl font-display font-semibold mb-3">
+                {searchQuery ? "No Documents Found" : "Need a Lease or Notice?"}
+              </h3>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
                 {searchQuery
                   ? "No documents match your search. Try a different search term."
-                  : "Generate documents using templates or upload your own to start building your library."}
+                  : "Browse state-specific leases and notices updated when legislation changes."}
               </p>
+              {!searchQuery && (
+                <>
+                  <Button size="lg" onClick={() => setLocation('/templates')} data-testid="button-browse-leases-notices">
+                    Browse Leases & Notices
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Documents are reviewed and updated as laws change.
+                  </p>
+                </>
+              )}
             </CardContent>
           </Card>
         )}

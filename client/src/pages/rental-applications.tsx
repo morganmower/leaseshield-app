@@ -51,6 +51,7 @@ import {
   Link as LinkIcon,
   ChevronRight,
   AlertCircle,
+  ClipboardList,
 } from "lucide-react";
 import type { RentalProperty, RentalUnit, RentalApplicationLink } from "@shared/schema";
 
@@ -346,14 +347,14 @@ export default function RentalApplications() {
         {filteredProperties.length === 0 ? (
           <Card className="border-dashed">
             <CardContent className="flex flex-col items-center justify-center py-16">
-              <Building2 className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-semibold mb-2">No Rental Properties Yet</h3>
-              <p className="text-muted-foreground text-center mb-4">
-                Add your first property to start collecting rental applications.
+              <ClipboardList className="h-16 w-16 text-primary mb-6" />
+              <h3 className="text-2xl font-display font-semibold mb-3">Start Your First Application</h3>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                Send one link to the applicant. LeaseShield tracks the process while screening runs through Western Verify.
               </p>
-              <Button onClick={() => setIsAddPropertyOpen(true)} data-testid="button-add-first-rental-property">
+              <Button size="lg" onClick={() => setIsAddPropertyOpen(true)} data-testid="button-add-first-rental-property">
                 <Plus className="h-4 w-4 mr-2" />
-                Add Property
+                Add Your First Property
               </Button>
             </CardContent>
           </Card>

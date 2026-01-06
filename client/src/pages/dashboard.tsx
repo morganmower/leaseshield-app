@@ -29,7 +29,9 @@ import {
   Users,
   ClipboardList
 } from "lucide-react";
-import type { LegalUpdate, Template } from "@shared/schema";
+import type { LegalUpdate, Template, RentalProperty } from "@shared/schema";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { HelpCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
@@ -88,6 +90,15 @@ export default function Dashboard() {
     queryKey: ["/api/templates"],
     enabled: isAuthenticated,
   });
+
+  // Properties for empty state check
+  const { data: properties = [] } = useQuery<{ id: string }[]>({
+    queryKey: ["/api/rental/properties"],
+    enabled: isAuthenticated,
+  });
+
+  // Check if user has completed any meaningful action (for intro dismissal)
+  const hasCompletedAction = properties.length > 0;
 
   // AI Training interest
   const { data: trainingInterest } = useQuery<{ registered: boolean }>({
@@ -286,6 +297,30 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* Welcome Intro - Show when no properties */}
+        {!hasCompletedAction && (
+          <Card className="mb-10 p-8 border-dashed border-2 border-primary/30 bg-primary/5" data-testid="card-welcome-intro">
+            <div className="text-center max-w-xl mx-auto">
+              <Shield className="h-16 w-16 text-primary mx-auto mb-6" />
+              <h2 className="text-2xl font-display font-semibold text-foreground mb-3">Welcome to LeaseShield</h2>
+              <p className="text-muted-foreground mb-6">
+                LeaseShield helps you collect applications, route screening through Western Verify, understand risk, and use the right documents when laws change.
+              </p>
+              <div className="flex flex-wrap justify-center gap-3">
+                <Link to="/rental-applications">
+                  <Button size="lg" data-testid="button-welcome-add-property">
+                    Add Your First Property
+                  </Button>
+                </Link>
+                <Button size="lg" variant="outline" onClick={() => setShowVideoModal(true)} data-testid="button-welcome-quick-tour">
+                  <Play className="h-4 w-4 mr-2" />
+                  Quick Tour (2 min)
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Hero Panel - Protect Your Rentals in 3 Steps */}
         <div className="mb-10">
           <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/3 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 sm:p-8" data-testid="section-hero-panel">
@@ -430,7 +465,17 @@ export default function Dashboard() {
                   <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-display font-semibold text-foreground mb-1">Applications + Western Verify Screening</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Applications + Western Verify Screening</h3>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Send one link to the applicant. Screening runs through Western Verify.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
@@ -466,7 +511,17 @@ export default function Dashboard() {
                   <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-display font-semibold text-foreground mb-1">AI Screening Helpers</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display font-semibold text-foreground mb-1">AI Screening Helpers</h3>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">Prevents misinterpretation of screening reports.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                   <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
                     <Sparkles className="h-3 w-3 mr-1" />
                     AI Powered
@@ -497,7 +552,17 @@ export default function Dashboard() {
                   <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-display font-semibold text-foreground mb-1">Updated Leases & Notices</h3>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-display font-semibold text-foreground mb-1">Updated Leases & Notices</h3>
+                    <Tooltip>
+                      <TooltipTrigger>
+                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p className="max-w-xs">State-specific documents updated when legislation changes.</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </div>
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
