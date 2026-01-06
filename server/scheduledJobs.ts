@@ -4,11 +4,63 @@
 import { storage } from "./storage";
 import { emailService } from "./emailService";
 import { db } from "./db";
-import { users } from "@shared/schema";
+import { users, analyticsEvents } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
 import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
+
+// Landlord tips pool - rotates weekly
+const LANDLORD_TIPS = [
+  {
+    title: "Fair Housing Refresher",
+    summary: "Consistency is your best protection against discrimination claims.",
+    content: "Apply the same screening criteria to every applicant. Document your process and keep records of all applications, even rejected ones. This creates a clear paper trail showing equal treatment.",
+    actionItem: "Review your screening checklist to ensure it's applied uniformly to all applicants.",
+  },
+  {
+    title: "Security Deposit Best Practices",
+    summary: "A thorough move-in inspection prevents disputes at move-out.",
+    content: "Take detailed photos and videos during move-in inspections. Have the tenant sign a condition checklist. This documentation is essential if you need to make deductions from the security deposit later.",
+    actionItem: "Create a standardized move-in checklist if you don't have one already.",
+  },
+  {
+    title: "Maintenance Response Times",
+    summary: "Quick response to repairs builds tenant trust and protects your property.",
+    content: "Establish clear timelines: emergencies within 24 hours, urgent issues within 48 hours, routine repairs within a week. Document all maintenance requests and your responses.",
+    actionItem: "Set up a simple system to track maintenance requests and response times.",
+  },
+  {
+    title: "Late Rent Collection Strategy",
+    summary: "Be consistent but reasonable when handling late payments.",
+    content: "Apply late fees consistently according to your lease terms. Communicate early when rent is overdue - many payment issues stem from simple oversights. Document all communications about late rent.",
+    actionItem: "Review your late rent policy and ensure it's clearly stated in your lease.",
+  },
+  {
+    title: "Annual Lease Review",
+    summary: "Update your lease annually to reflect legal changes.",
+    content: "Laws change regularly, and your lease should too. Review state-specific requirements annually. LeaseShield notifies you when templates are updated for legal compliance - use those updated versions.",
+    actionItem: "Check your LeaseShield dashboard for any template updates you may have missed.",
+  },
+  {
+    title: "Tenant Communication Tips",
+    summary: "Professional, written communication prevents misunderstandings.",
+    content: "Keep important communications in writing (email or text). Be professional but friendly. Respond to tenant inquiries within 24-48 hours. Good communication leads to longer tenancies.",
+    actionItem: "Set up a dedicated email or phone number for tenant communications.",
+  },
+  {
+    title: "Property Inspection Schedule",
+    summary: "Regular inspections catch problems early.",
+    content: "Schedule routine property inspections (with proper notice) at least twice a year. Look for maintenance issues, lease violations, and safety hazards. Document findings with photos.",
+    actionItem: "Add property inspection reminders to your calendar for each rental unit.",
+  },
+  {
+    title: "Insurance Review Reminder",
+    summary: "Ensure your coverage matches your property's current value.",
+    content: "Review your landlord insurance annually. Confirm coverage amounts, liability limits, and any gaps in protection. Require renters insurance from tenants to protect their belongings.",
+    actionItem: "Contact your insurance agent to review your policy before renewal.",
+  },
+];
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
@@ -18,6 +70,7 @@ export class ScheduledJobs {
   private emailSequenceInterval: NodeJS.Timeout | null = null;
   private renewalReminderInterval: NodeJS.Timeout | null = null;
   private uploadCleanupInterval: NodeJS.Timeout | null = null;
+  private weeklyTipsInterval: NodeJS.Timeout | null = null;
   // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
@@ -213,6 +266,187 @@ export class ScheduledJobs {
     } catch (error) {
       console.error('❌ Error notifying legal updates:', error);
     }
+  }
+
+  // Send weekly tips to users who have opted in
+  async sendWeeklyTips(): Promise<void> {
+    try {
+      console.log('💡 Sending weekly landlord tips...');
+
+      // Get week number of the year to determine which tip to send
+      const now = new Date();
+      const startOfYear = new Date(now.getFullYear(), 0, 1);
+      const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000));
+      const tipIndex = weekNumber % LANDLORD_TIPS.length;
+      const tip = LANDLORD_TIPS[tipIndex];
+
+      console.log(`  Selected tip ${tipIndex + 1}/${LANDLORD_TIPS.length}: "${tip.title}"`);
+
+      // Get all active users who have opted in to tips
+      const usersWantingTips = await db
+        .select()
+        .from(users)
+        .where(
+          and(
+            eq(users.subscriptionStatus, 'active'),
+            eq(users.notifyTips, true)
+          )
+        );
+
+      console.log(`  Found ${usersWantingTips.length} users opted in for tips`);
+
+      if (usersWantingTips.length === 0) {
+        console.log('✅ No users to send tips to');
+        return;
+      }
+
+      // Check if we already sent this week's tip (track by tip index + year)
+      const tipKey = `${now.getFullYear()}-week${weekNumber}`;
+      
+      let sentCount = 0;
+      for (const user of usersWantingTips) {
+        if (!user.email) continue;
+
+        // Check if user already received this week's tip
+        const [existingTipEvent] = await db
+          .select()
+          .from(analyticsEvents)
+          .where(
+            and(
+              eq(analyticsEvents.userId, user.id),
+              eq(analyticsEvents.eventType, 'weekly_tip_sent'),
+              sql`${analyticsEvents.eventData}->>'tipKey' = ${tipKey}`
+            )
+          )
+          .limit(1);
+
+        if (existingTipEvent) {
+          continue; // Already sent this tip to this user
+        }
+
+        // Send the tip email
+        await this.sendTipEmail(user, tip);
+
+        // Track that we sent this tip
+        await storage.trackEvent({
+          userId: user.id,
+          eventType: 'weekly_tip_sent',
+          eventData: { tipKey, tipTitle: tip.title },
+        });
+
+        sentCount++;
+      }
+
+      console.log(`✅ Weekly tips sent to ${sentCount} users`);
+    } catch (error) {
+      console.error('❌ Error sending weekly tips:', error);
+    }
+  }
+
+  private async sendTipEmail(user: any, tip: typeof LANDLORD_TIPS[0]): Promise<void> {
+    const { getUncachableResendClient } = await import('./resend');
+    const { client, fromEmail } = await getUncachableResendClient();
+    
+    const firstName = user.firstName || 'there';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+
+    const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 24px 40px;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 20px; font-weight: 600;">
+                LeaseShield Tip of the Week
+              </h1>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 32px 40px;">
+              <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px;">
+                Hi ${firstName},
+              </p>
+              
+              <div style="background-color: #f0fdfa; border-radius: 8px; padding: 24px; margin-bottom: 24px;">
+                <h2 style="margin: 0 0 8px 0; color: #0d9488; font-size: 18px; font-weight: 600;">
+                  ${tip.title}
+                </h2>
+                <p style="margin: 0; color: #475569; font-size: 14px; font-style: italic;">
+                  ${tip.summary}
+                </p>
+              </div>
+
+              <p style="margin: 0 0 20px 0; color: #334155; font-size: 15px; line-height: 1.7;">
+                ${tip.content}
+              </p>
+
+              <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px; border-radius: 4px; margin-bottom: 24px;">
+                <p style="margin: 0; color: #92400e; font-size: 14px;">
+                  <strong>Action Item:</strong> ${tip.actionItem}
+                </p>
+              </div>
+
+              <div style="text-align: center; margin-top: 32px;">
+                <a href="${baseUrl}/dashboard" 
+                   style="display: inline-block; background-color: #14b8a6; color: #ffffff; text-decoration: none; padding: 12px 24px; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                  Go to Dashboard
+                </a>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; color: #94a3b8; font-size: 12px;">
+                You're receiving this because you opted in to Tips & Best Practices.
+                <br>
+                <a href="${baseUrl}/settings" style="color: #64748b;">Manage preferences</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+    `;
+
+    const text = `
+LeaseShield Tip of the Week
+
+Hi ${firstName},
+
+${tip.title}
+${tip.summary}
+
+${tip.content}
+
+ACTION ITEM: ${tip.actionItem}
+
+Visit your dashboard: ${baseUrl}/dashboard
+
+---
+You're receiving this because you opted in to Tips & Best Practices.
+Manage preferences: ${baseUrl}/settings
+    `;
+
+    await client.emails.send({
+      from: fromEmail,
+      to: user.email,
+      subject: `Landlord Tip: ${tip.title}`,
+      html,
+      text,
+    });
   }
 
   // Enroll users in trial expiration sequence 3 days before expiry
@@ -474,6 +708,13 @@ export class ScheduledJobs {
     );
     setTimeout(() => runUploadCleanup().catch(e => console.error('[CLEANUP] startup error:', e)), 5 * 60 * 1000);
 
+    // Send weekly tips every 7 days (check daily, but only send once per week)
+    this.weeklyTipsInterval = setInterval(
+      () => this.sendWeeklyTips(),
+      24 * 60 * 60 * 1000 // Check daily
+    );
+    setTimeout(() => this.sendWeeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -514,6 +755,11 @@ export class ScheduledJobs {
     if (this.uploadCleanupInterval) {
       clearInterval(this.uploadCleanupInterval);
       this.uploadCleanupInterval = null;
+    }
+
+    if (this.weeklyTipsInterval) {
+      clearInterval(this.weeklyTipsInterval);
+      this.weeklyTipsInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

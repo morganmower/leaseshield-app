@@ -10,16 +10,16 @@ export async function notifyUsersOfTemplateUpdate(
     console.log(`📧 Notifying users about template update: ${template.title} v${version.versionNumber}`);
 
     // Get all users in this template's state
-    const usersToNotify = await storage.getUsersByState(template.stateId);
+    const usersInState = await storage.getUsersByState(template.stateId);
     
-    console.log(`  Found ${usersToNotify.length} users to notify in ${template.stateId}`);
+    console.log(`  Found ${usersInState.length} users in ${template.stateId}`);
 
-    if (usersToNotify.length === 0) {
+    if (usersInState.length === 0) {
       return 0;
     }
 
-    // Create in-app notifications for all users
-    for (const user of usersToNotify) {
+    // Create in-app notifications for all users (regardless of email preference)
+    for (const user of usersInState) {
       await storage.createUserNotification({
         userId: user.id,
         templateId: template.id,
@@ -28,11 +28,17 @@ export async function notifyUsersOfTemplateUpdate(
       });
     }
 
-    // Send batch emails
-    await sendTemplateUpdateEmails(usersToNotify, template, version);
+    // Filter users who have opted in to template revision emails
+    const usersWantingEmails = usersInState.filter(user => user.notifyTemplateRevisions === true);
+    console.log(`  ${usersWantingEmails.length} users opted in for email notifications`);
 
-    console.log(`✅ Template update notifications sent to ${usersToNotify.length} users`);
-    return usersToNotify.length;
+    // Send batch emails only to users who want them
+    if (usersWantingEmails.length > 0) {
+      await sendTemplateUpdateEmails(usersWantingEmails, template, version);
+    }
+
+    console.log(`✅ Template update: ${usersInState.length} in-app notifications, ${usersWantingEmails.length} emails sent`);
+    return usersInState.length;
     
   } catch (error) {
     console.error('Error notifying users of template update:', error);
