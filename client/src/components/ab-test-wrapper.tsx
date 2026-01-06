@@ -59,14 +59,16 @@ function PaywallVariant({ testId }: { testId: string }) {
   return (
     <div className="relative overflow-hidden">
       <Card className="max-w-2xl mx-auto p-8 text-center border-2 border-primary/20">
-        <div className="mb-6">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+        <div className="mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-6">
             <Shield className="h-8 w-8 text-primary" />
           </div>
-          <Badge className="mb-4 bg-success text-success-foreground">
-            <Sparkles className="h-3 w-3 mr-1" />
-            Limited Time Offer
-          </Badge>
+          <div>
+            <Badge className="bg-success text-success-foreground">
+              <Sparkles className="h-3 w-3 mr-1" />
+              Limited Time Offer
+            </Badge>
+          </div>
         </div>
 
         <h2 className="text-3xl font-display font-semibold text-foreground mb-4">
