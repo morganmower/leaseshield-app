@@ -1144,10 +1144,10 @@ export default function Landing() {
                   <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-primary font-medium mt-3 h-5">
+                <p className="text-xs sm:text-sm text-primary font-medium mt-3">
                   Introductory pricing • Lock in this rate today
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 h-5">Cancel anytime</p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
               </div>
 
               <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
@@ -1213,10 +1213,10 @@ export default function Landing() {
                   <span className="text-4xl sm:text-5xl font-bold text-success">$100</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/year</span>
                 </div>
-                <p className="text-xs sm:text-sm text-success font-medium mt-3 h-5">
+                <p className="text-xs sm:text-sm text-success font-medium mt-3">
                   Introductory pricing • Save $20 today
                 </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1 h-5">
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
                   <span className="line-through">$120</span> • Just $8.33/month
                 </p>
               </div>
