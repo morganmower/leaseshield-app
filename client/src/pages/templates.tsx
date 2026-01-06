@@ -309,7 +309,7 @@ export default function Templates() {
             Leases & Notices
           </h1>
           <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">Updated as laws change — older versions may create enforceability risk.</span>
+            <span className="font-semibold text-foreground">Documents are updated as legislation changes — older versions may create enforceability risk.</span>
           </p>
           <p className="text-muted-foreground">
             Choose your state to view the latest versions.

@@ -434,7 +434,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
-                LeaseShield is the control center. Western Verify runs the screening.
+                LeaseShield manages the workflow. Western Verify performs the screening.
               </p>
               <p className="text-sm text-muted-foreground mb-4">
                 The easiest compliant flow: apply → authorize → screen → decide.
