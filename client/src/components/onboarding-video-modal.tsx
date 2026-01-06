@@ -31,54 +31,89 @@ interface OnboardingVideoModalProps {
 const slides = [
   {
     id: 1,
-    title: "Your Dashboard",
-    subtitle: "Everything starts here — your command center for rental protection.",
+    title: "How LeaseShield Works",
+    subtitle: "A simple workflow for applications, screening, and compliant documents.",
     icon: LayoutDashboard,
     color: "from-primary/20 to-primary/10",
     iconColor: "text-primary",
     points: [
-      "Start Here section shows the 3-step workflow",
-      "Applications, Decoder, and Documents — all in one place",
-      "Recent updates keep you informed when laws change"
+      "LeaseShield is the control center for your rental workflow"
     ]
   },
   {
     id: 2,
-    title: "Properties & Applications",
+    title: "One Workflow. Clear Roles.",
     subtitle: "LeaseShield manages the workflow. Western Verify performs the screening.",
-    icon: Building2,
-    color: "from-emerald-500/20 to-emerald-500/10",
-    iconColor: "text-emerald-500",
+    icon: Shield,
+    color: "from-primary/20 to-primary/10",
+    iconColor: "text-primary",
     points: [
-      "Add a property to organize your applications",
-      "Create one link — send it to the applicant",
-      "Authorization is captured, screening runs automatically"
+      "LeaseShield manages the workflow",
+      "Western Verify performs the screening"
     ]
   },
   {
     id: 3,
-    title: "Screening Decoder",
-    subtitle: "This prevents misinterpretation — the most common screening mistake.",
-    icon: Search,
-    color: "from-cyan-500/20 to-cyan-500/10",
-    iconColor: "text-cyan-500",
+    title: "Everything Starts With a Property",
+    subtitle: "Properties organize applications, screening, and documents by location.",
+    icon: Building2,
+    color: "from-emerald-500/20 to-emerald-500/10",
+    iconColor: "text-emerald-500",
     points: [
-      "Paste any screening report",
-      "Get plain-English explanations",
-      "See the best follow-up questions to ask"
+      "Applications",
+      "Screening",
+      "Documents"
     ]
   },
   {
     id: 4,
-    title: "Leases & Notices",
-    subtitle: "Updated as legislation changes — older versions may create risk.",
+    title: "Send One Application Link",
+    subtitle: "Send one link to the applicant. Screening runs through Western Verify.",
+    icon: ClipboardList,
+    color: "from-emerald-500/20 to-emerald-500/10",
+    iconColor: "text-emerald-500",
+    points: [
+      "Applicant completes application",
+      "Authorization captured",
+      "Screening runs through Western Verify",
+      "Status tracked in LeaseShield"
+    ]
+  },
+  {
+    id: 5,
+    title: "Understand Screening Results",
+    subtitle: "The Screening Decoder explains what matters and helps prevent misinterpretation.",
+    icon: Search,
+    color: "from-cyan-500/20 to-cyan-500/10",
+    iconColor: "text-cyan-500",
+    points: [
+      "Explains what matters",
+      "Flags common risk areas",
+      "Helps prevent misinterpretation"
+    ]
+  },
+  {
+    id: 6,
+    title: "Use the Right Document When You Act",
+    subtitle: "LeaseShield provides state-specific leases and notices updated as laws change.",
     icon: FileText,
     color: "from-amber-500/20 to-amber-500/10",
     iconColor: "text-amber-500",
     points: [
-      "State-specific leases and notices",
-      "Updated when laws change",
-      "Fill online or download as PDF"
+      "State-specific leases",
+      "Notices and checklists",
+      "Updated as legislation changes"
+    ]
+  },
+  {
+    id: 7,
+    title: "Start Where You're Comfortable",
+    subtitle: "Add a property or create your first application to begin.",
+    icon: Play,
+    color: "from-primary/20 to-primary/10",
+    iconColor: "text-primary",
+    points: [
+      "If you're not sure where to begin, start by adding a property or creating your first application"
     ]
   }
 ];
