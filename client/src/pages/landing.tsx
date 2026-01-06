@@ -388,7 +388,7 @@ export default function Landing() {
       </section>
 
       {/* Micro How It Works - Simple 3-line format */}
-      <section id="how-it-works" className="py-10 sm:py-12 bg-muted/30 border-y">
+      <section id="how-it-works" className="py-10 sm:py-12 bg-muted/30 border-y scroll-mt-24">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
