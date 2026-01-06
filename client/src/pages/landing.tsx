@@ -1894,7 +1894,7 @@ export default function Landing() {
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="mb-4">
-                <Logo variant="horizontal" size="md" />
+                <Logo variant="stacked" size="sm" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Your protective mentor for confident, risk-free property management.
