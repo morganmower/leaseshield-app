@@ -477,7 +477,7 @@ export default function Landing() {
                   <Badge variant="secondary" className="text-xs">UT</Badge>
                   <Badge variant="secondary" className="text-xs">TX</Badge>
                   <Badge variant="secondary" className="text-xs">NC</Badge>
-                  <Badge variant="secondary" className="text-xs">+5</Badge>
+                  <Badge variant="secondary" className="text-xs">+11 more</Badge>
                 </div>
               </Card>
             </motion.div>
