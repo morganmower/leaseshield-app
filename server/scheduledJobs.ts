@@ -370,6 +370,7 @@ export class ScheduledJobs {
           .limit(1);
 
         if (existingTipEvent) {
+          console.log(`  Skipping ${user.email} - already received tip for ${tipKey}`);
           continue; // Already sent this tip to this user
         }
 
