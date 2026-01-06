@@ -1,0 +1,137 @@
+Final Homepage Recommendation for LeaseShield
+
+(Approved Scope: Copy + light structure + visuals only — no redesign)
+
+Executive Decision
+
+Do not expand the page. Do not add heavy sections. Do not change tone.
+Your homepage already wins on trust, restraint, and credibility.
+
+The goal now is faster understanding in the first 5–8 seconds, not more persuasion.
+
+What to Keep Exactly as Is (Critical)
+
+These are working and should not be touched:
+
+Calm, compliance-first tone (no SaaS hype)
+
+Minimal navigation (Log In + Start Trial only)
+
+Pricing transparency and guarantee
+
+Western Verify already positioned as a Trusted Partner
+
+Risk → solution narrative (evictions, compliance exposure)
+
+Overall visual cleanliness and spacing
+
+This restraint is a competitive advantage in your category.
+
+Final Changes to Implement (Only These)
+1️⃣ Add ONE Workflow Line to the Hero (Highest ROI)
+
+Location: Directly under the main hero headline/subheadline
+Purpose: Instantly answers “How does this fit into what I already do?”
+
+Exact copy to add:
+
+Collect applications → Run screening via our trusted partner Western Verify → Decode results with AI guidance → Build compliant leases & notices—all in one simple dashboard.
+
+Why this works:
+
+One line, not a section
+
+Explains end-to-end flow immediately
+
+No extra visual clutter
+
+Aligns perfectly with the in-app experience
+
+2️⃣ Add a Compact “How It Works” Section Above the Fold
+
+Placement: Immediately after the hero
+Structure: 3 steps, light icons optional, no long paragraphs
+
+Exact copy (use verbatim):
+
+How LeaseShield Works in 3 Simple Steps
+
+1. Collect & Screen
+Send applicants a link. Screening runs seamlessly through Western Verify—our trusted integration partner.
+
+2. Understand Results Fast
+AI-powered decoder explains reports clearly, flags risks, and guides fair housing compliance.
+
+3. Protect with Compliant Documents
+Access attorney-reviewed, state-specific leases, notices, and checklists—updated monthly.
+
+Why this works:
+
+Mirrors the in-app flow users now see
+
+Proves simplicity without claiming it
+
+No redundancy with later content
+
+Reduces bounce from “this looks complicated” visitors
+
+3️⃣ Add a Short Differentiation Bullet Block (NOT a Full Section)
+
+Placement: Immediately after “How It Works”
+Purpose: Answer “Why this vs what I already do?” without text bloat
+
+Exact copy:
+
+Why Independent Landlords Choose LeaseShield
+
+Everything in one place—no juggling PDFs, emails, or multiple sites
+
+Built-in guidance to avoid costly screening and decoding mistakes
+
+Always-updated templates—no chasing law changes
+
+Flat, affordable pricing for small portfolios (not enterprise bloat)
+
+This replaces the need for a long “Why Switch?” section.
+
+4️⃣ Move the “Sneak Peek” Higher + Use Real Dashboard Screens
+
+Change: Positional + content upgrade, not redesign
+
+Move “Sneak Peek” closer to the top (just below “How It Works”)
+
+Use real dashboard screenshots (from your app, not mockups)
+
+Why this matters:
+
+Visually proves simplicity faster than copy
+
+Reinforces “this already exists and is usable”
+
+Matches the confidence of your logged-in experience
+
+5️⃣ Small Pricing Reinforcement (One Line Only)
+
+Under pricing table, add:
+
+No contracts • Cancel anytime • No per-screening fees • Works alongside your existing tools
+
+This quietly removes friction without selling harder.
+
+What to Explicitly Avoid (Important)
+
+Do not implement these, even if suggested later:
+
+Long new sections or paragraphs
+
+Repeating Western Verify explanations multiple times
+
+Chat widgets or pop-ups
+
+Aggressive CTAs
+
+SEO keyword stuffing
+
+Overloading testimonials
+
+Your audience values restraint more than persuasion.

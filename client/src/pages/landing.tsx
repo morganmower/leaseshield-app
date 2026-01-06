@@ -300,10 +300,16 @@ export default function Landing() {
             
             <motion.p 
               variants={fadeInUp}
-              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
+              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 leading-relaxed max-w-2xl mx-auto"
             >
-              Built to Fill the Everyday Gaps No Association Is Designed to Cover...<br />
-              Updated monthly leases & notices · credit decoder · move-in checklists · zero-noise updates · AI tailored for property owners
+              A simple workflow for applications, screening, and compliant documents.
+            </motion.p>
+            
+            <motion.p 
+              variants={fadeInUp}
+              className="text-xs sm:text-sm text-muted-foreground/80 mb-8 leading-relaxed max-w-3xl mx-auto"
+            >
+              Collect applications <span className="text-muted-foreground">→</span> Run screening via our trusted partner Western Verify <span className="text-muted-foreground">→</span> Decode results with AI guidance <span className="text-muted-foreground">→</span> Build compliant leases & notices—all in one simple dashboard.
             </motion.p>
           </motion.div>
 
@@ -420,7 +426,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How It Works Section */}
+      {/* How It Works Section - 3 Simple Steps */}
       <section id="how-it-works" className="py-16 sm:py-20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 border-y">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -430,16 +436,9 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <Badge className="mb-4 px-4 py-1">
-              <Sparkles className="h-3 w-3 mr-1" />
-              Simple 3-Step Process
-            </Badge>
             <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              How It Works
+              How LeaseShield Works in 3 Simple Steps
             </h2>
-            <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get started in minutes, not hours. Here's how easy it is to protect your rental business.
-            </p>
           </motion.div>
 
           <motion.div
@@ -456,9 +455,9 @@ export default function Landing() {
                   <UserPlus className="h-10 w-10 text-primary" />
                 </div>
               </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Sign Up</h3>
-              <p className="text-lg text-muted-foreground">
-                Create your free account in 30 seconds. No credit card required to start your 7-day trial.
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Collect & Screen</h3>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Send applicants a link. Screening runs seamlessly through Western Verify—our trusted integration partner.
               </p>
             </motion.div>
 
@@ -466,12 +465,12 @@ export default function Landing() {
               <div className="relative mb-6">
                 <div className="text-5xl sm:text-6xl font-bold text-primary/20 absolute -top-4 left-1/2 transform -translate-x-1/2">2</div>
                 <div className="rounded-full bg-primary/10 w-20 h-20 mx-auto flex items-center justify-center relative z-10">
-                  <MapPin className="h-10 w-10 text-primary" />
+                  <Search className="h-10 w-10 text-primary" />
                 </div>
               </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Pick Your State</h3>
-              <p className="text-lg text-muted-foreground">
-                Select from our 14 supported states to get templates tailored to your specific legal requirements.
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Understand Results Fast</h3>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                AI-powered decoder explains reports clearly, flags risks, and guides fair housing compliance.
               </p>
             </motion.div>
 
@@ -482,10 +481,161 @@ export default function Landing() {
                   <FileCheck className="h-10 w-10 text-primary" />
                 </div>
               </div>
-              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Get Templates</h3>
-              <p className="text-lg text-muted-foreground">
-                Download and use your legal documents instantly. Fill online or print—your choice.
+              <h3 className="font-semibold text-xl sm:text-2xl mb-3 text-foreground">Protect with Compliant Documents</h3>
+              <p className="text-base sm:text-lg text-muted-foreground">
+                Access attorney-reviewed, state-specific leases, notices, and checklists—updated monthly.
               </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Why Independent Landlords Choose LeaseShield */}
+      <section className="py-12 sm:py-16 bg-background">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-8"
+          >
+            <h2 className="font-display text-xl sm:text-2xl md:text-3xl font-semibold text-foreground">
+              Why Independent Landlords Choose LeaseShield
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="space-y-4"
+          >
+            <motion.div variants={fadeInUp} className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-base sm:text-lg text-muted-foreground">
+                <strong className="text-foreground">Everything in one place</strong>—no juggling PDFs, emails, or multiple sites
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-base sm:text-lg text-muted-foreground">
+                <strong className="text-foreground">Built-in guidance</strong> to avoid costly screening and decoding mistakes
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-base sm:text-lg text-muted-foreground">
+                <strong className="text-foreground">Always-updated templates</strong>—no chasing law changes
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex items-start gap-3">
+              <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+              <p className="text-base sm:text-lg text-muted-foreground">
+                <strong className="text-foreground">Flat, affordable pricing</strong> for small portfolios (not enterprise bloat)
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Dashboard Preview / Sneak Peek */}
+      <section className="py-16 md:py-20 bg-muted/30" data-testid="section-preview">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-10"
+          >
+            <Badge variant="outline" className="mb-4">
+              <Building2 className="h-3 w-3 mr-1" />
+              Sneak Peek
+            </Badge>
+            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+              Your Protection Dashboard
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Everything you need in one organized workspace. No clutter, just tools that work.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+          >
+            {/* AI Tools Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Sparkles className="h-6 w-6 text-primary" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">AI Protection Center</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Credit report decoder, screening guidance, and 24/7 AI assistant
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Credit Decoder</Badge>
+                  <Badge variant="secondary" className="text-xs">AI Chat</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Templates Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">{templateCount}+ Legal Templates</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  State-specific lease agreements, notices, and compliance forms
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">UT</Badge>
+                  <Badge variant="secondary" className="text-xs">TX</Badge>
+                  <Badge variant="secondary" className="text-xs">NC</Badge>
+                  <Badge variant="secondary" className="text-xs">+5</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Compliance Updates Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Compliance Alerts</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Real-time law changes with plain-English explanations
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Monthly Updates</Badge>
+                </div>
+              </Card>
+            </motion.div>
+
+            {/* Screening Tools Preview */}
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 h-full border-2 border-transparent bg-card">
+                <div className="rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <Search className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="font-semibold text-foreground mb-2">Screening Toolkit</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Application workflows and Western Verify integration
+                </p>
+                <div className="flex flex-wrap gap-1">
+                  <Badge variant="secondary" className="text-xs">Checklists</Badge>
+                  <Badge variant="secondary" className="text-xs">Reports</Badge>
+                </div>
+              </Card>
             </motion.div>
           </motion.div>
 
@@ -494,7 +644,7 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mt-12"
+            className="text-center mt-10"
           >
             <Button
               size="lg"
@@ -502,12 +652,15 @@ export default function Landing() {
                 trackTrialStart();
                 window.location.href = "/signup";
               }}
+              data-testid="button-preview-cta"
               className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-              data-testid="button-how-it-works-cta"
             >
-              Get Started Now
+              Get Access Now
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
+            <p className="text-sm text-muted-foreground mt-3">
+              7-day free trial. No credit card required.
+            </p>
           </motion.div>
         </div>
       </section>
@@ -1348,131 +1501,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Dashboard Preview / Sneak Peek */}
-      <section className="py-16 md:py-24 bg-muted/30" data-testid="section-preview">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-10"
-          >
-            <Badge variant="outline" className="mb-4">
-              <Building2 className="h-3 w-3 mr-1" />
-              Sneak Peek
-            </Badge>
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Your Protection Dashboard
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Everything you need in one organized workspace. No clutter, just tools that work.
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
-          >
-            {/* AI Tools Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">AI Protection Center</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Credit report decoder, screening guidance, and 24/7 AI assistant
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Credit Decoder</Badge>
-                  <Badge variant="secondary" className="text-xs">AI Chat</Badge>
-                </div>
-              </Card>
-            </motion.div>
-
-            {/* Templates Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">{templateCount}+ Legal Templates</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  State-specific lease agreements, notices, and compliance forms
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">UT</Badge>
-                  <Badge variant="secondary" className="text-xs">TX</Badge>
-                  <Badge variant="secondary" className="text-xs">NC</Badge>
-                  <Badge variant="secondary" className="text-xs">+5</Badge>
-                </div>
-              </Card>
-            </motion.div>
-
-            {/* Compliance Updates Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Compliance Alerts</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Real-time law changes with plain-English explanations
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Monthly Updates</Badge>
-                </div>
-              </Card>
-            </motion.div>
-
-            {/* Screening Tools Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Search className="h-6 w-6 text-purple-600 dark:text-purple-400" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">Screening Toolkit</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Application workflows and Western Verify integration
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Checklists</Badge>
-                  <Badge variant="secondary" className="text-xs">Reports</Badge>
-                </div>
-              </Card>
-            </motion.div>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-10"
-          >
-            <Button
-              size="lg"
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
-              data-testid="button-preview-cta"
-              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-            >
-              Get Access Now
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
-            <p className="text-sm text-muted-foreground mt-3">
-              7-day free trial. No credit card required.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Pricing */}
       <section id="pricing" className="py-20 md:py-28">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -1635,6 +1663,17 @@ export default function Landing() {
               </button>
             </Card>
           </motion.div>
+
+          {/* Pricing Reinforcement */}
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center text-sm text-muted-foreground mt-6"
+          >
+            No contracts &bull; Cancel anytime &bull; No per-screening fees &bull; Works alongside your existing tools
+          </motion.p>
 
           {/* Why LeaseShield Section */}
           <motion.div
