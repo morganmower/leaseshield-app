@@ -31,158 +31,54 @@ interface OnboardingVideoModalProps {
 const slides = [
   {
     id: 1,
-    title: "Welcome to LeaseShield",
-    subtitle: "Your complete landlord protection toolkit",
+    title: "How LeaseShield Works",
+    subtitle: "3 steps to protect your rentals",
     icon: Sparkles,
     color: "from-primary/20 to-primary/10",
     iconColor: "text-primary",
     points: [
-      "10+ state-specific legal templates",
-      "Real-time compliance law updates",
-      "AI-powered tenant screening assistance"
+      "Collect an application",
+      "Understand the screening report",
+      "Use the right document when you act"
     ]
   },
   {
     id: 2,
-    title: "Dashboard",
-    subtitle: "Your command center",
-    icon: LayoutDashboard,
-    color: "from-blue-500/20 to-blue-500/10",
-    iconColor: "text-blue-500",
-    points: [
-      "At-a-glance view of recent updates affecting your rentals",
-      "Quick access to latest legal changes in your states",
-      "See what templates are available this month"
-    ]
-  },
-  {
-    id: 3,
-    title: "Templates",
-    subtitle: "Professional legal documents ready to use",
-    icon: FileText,
-    color: "from-emerald-500/20 to-emerald-500/10",
-    iconColor: "text-emerald-500",
-    points: [
-      "State-specific lease agreements that comply with local laws",
-      "Pre-filled templates with all required disclosures",
-      "Download as PDF or Word—no lawyers needed"
-    ]
-  },
-  {
-    id: 4,
-    title: "My Documents",
-    subtitle: "Organize and manage all your files",
-    icon: FolderOpen,
-    color: "from-orange-500/20 to-orange-500/10",
-    iconColor: "text-orange-500",
-    points: [
-      "Store templates you've downloaded or customized",
-      "Keep PDF uploads of signed leases and agreements",
-      "Link documents to specific properties for easy retrieval"
-    ]
-  },
-  {
-    id: 5,
-    title: "Rental Applications",
-    subtitle: "NEW: Direct to screening integration",
+    title: "Step 1: Applications",
+    subtitle: "LeaseShield manages the workflow. Western Verify performs the screening.",
     icon: ClipboardList,
     color: "from-emerald-500/20 to-emerald-500/10",
     iconColor: "text-emerald-500",
     points: [
-      "Create shareable application links for each property",
-      "Applications feed directly into tenant screening",
-      "State-specific compliance disclosures auto-included"
+      "Send one link to the applicant",
+      "Authorization is captured automatically",
+      "Screening runs through Western Verify"
     ]
   },
   {
-    id: 6,
-    title: "Properties",
-    subtitle: "Manage your rental portfolio",
-    icon: Building2,
-    color: "from-indigo-500/20 to-indigo-500/10",
-    iconColor: "text-indigo-500",
-    points: [
-      "Store details for each rental property you own",
-      "Track state-specific requirements for each location",
-      "Attach documents and notes to individual properties"
-    ]
-  },
-  {
-    id: 7,
-    title: "Compliance",
-    subtitle: "Know what your state requires",
-    icon: Shield,
-    color: "from-red-500/20 to-red-500/10",
-    iconColor: "text-red-500",
-    points: [
-      "Required disclosures (lead paint, utilities, etc.)",
-      "Security deposit limits and handling procedures",
-      "Eviction notice requirements with exact timelines"
-    ]
-  },
-  {
-    id: 8,
-    title: "Screening",
-    subtitle: "Find and evaluate reliable tenants",
+    id: 3,
+    title: "Step 2: Screening Decoder",
+    subtitle: "This prevents misinterpretation — the most common screening mistake.",
     icon: Search,
-    color: "from-purple-500/20 to-purple-500/10",
-    iconColor: "text-purple-500",
-    points: [
-      "Ask AI anything about credit or criminal reports",
-      "Get AI suggestions on other questions to consider before hiring",
-      "Fair Housing guidance ensures legal, non-discriminatory screening"
-    ]
-  },
-  {
-    id: 9,
-    title: "Tenant Issues",
-    subtitle: "Step-by-step resolution guides",
-    icon: AlertCircle,
-    color: "from-yellow-500/20 to-yellow-500/10",
-    iconColor: "text-yellow-500",
-    points: [
-      "Late rent procedures with exact notice timelines",
-      "Lease violation steps and required documentation",
-      "State-specific eviction process guides"
-    ]
-  },
-  {
-    id: 10,
-    title: "Legal Updates",
-    subtitle: "Stay ahead of law changes",
-    icon: BookOpen,
     color: "from-cyan-500/20 to-cyan-500/10",
     iconColor: "text-cyan-500",
     points: [
-      "New laws affecting security deposits or rent",
-      "Court rulings that impact your rights as a landlord",
-      "Automatic notifications when rules change"
+      "Paste any screening report",
+      "Get plain-English explanations",
+      "See the best follow-up questions to ask"
     ]
   },
   {
-    id: 11,
-    title: "Communications",
-    subtitle: "Professional tenant correspondence",
-    icon: MessageCircle,
-    color: "from-teal-500/20 to-teal-500/10",
-    iconColor: "text-teal-500",
+    id: 4,
+    title: "Step 3: Leases & Notices",
+    subtitle: "Updated as legislation changes — older versions may create risk.",
+    icon: FileText,
+    color: "from-amber-500/20 to-amber-500/10",
+    iconColor: "text-amber-500",
     points: [
-      "Templates for notices, requests, and reminders",
-      "Documented communication trail for disputes",
-      "Pre-written letters for common landlord situations"
-    ]
-  },
-  {
-    id: 12,
-    title: "Rent Ledger",
-    subtitle: "Track payments and keep records",
-    icon: DollarSign,
-    color: "from-green-500/20 to-green-500/10",
-    iconColor: "text-green-500",
-    points: [
-      "Record monthly rent payments from each tenant",
-      "Track late payments and payment patterns",
-      "Generate reports for tax time and disputes"
+      "State-specific leases and notices",
+      "Updated when laws change",
+      "Download or fill online"
     ]
   }
 ];
