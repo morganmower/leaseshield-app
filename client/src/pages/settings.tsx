@@ -351,7 +351,19 @@ export default function Settings() {
               <Separator />
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Shield className="h-4 w-4" />
-                <span>Your login credentials are securely managed by Replit.</span>
+                <span>
+                  Your login credentials are securely managed by Replit.{" "}
+                  <a 
+                    href="https://replit.com/account" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-primary hover:underline"
+                    data-testid="link-replit-account"
+                  >
+                    Manage account
+                    <ExternalLink className="inline-block ml-1 h-3 w-3" />
+                  </a>
+                </span>
               </div>
             </CardContent>
           </Card>
