@@ -493,7 +493,8 @@ export default function Landing() {
                   Real-time law changes with plain-English explanations
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Monthly Updates</Badge>
+                  <Badge variant="secondary" className="text-xs">Law Alerts</Badge>
+                  <Badge variant="secondary" className="text-xs">Updates</Badge>
                 </div>
               </Card>
             </motion.div>
@@ -509,8 +510,8 @@ export default function Landing() {
                   Application workflows and Western Verify integration
                 </p>
                 <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Checklists</Badge>
-                  <Badge variant="secondary" className="text-xs">Reports</Badge>
+                  <Badge variant="secondary" className="text-xs">Applications</Badge>
+                  <Badge variant="secondary" className="text-xs">Screening</Badge>
                 </div>
               </Card>
             </motion.div>
