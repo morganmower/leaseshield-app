@@ -108,6 +108,7 @@ router.post('/signup', async (req: Request, res: Response) => {
         isAdmin: newUser.isAdmin,
         subscriptionStatus: newUser.subscriptionStatus,
         trialEndsAt: newUser.trialEndsAt,
+        createdAt: newUser.createdAt,
       },
     });
   } catch (error) {
@@ -180,6 +181,7 @@ router.post('/login', async (req: Request, res: Response) => {
         notifyTemplateRevisions: user.notifyTemplateRevisions,
         notifyBillingAlerts: user.notifyBillingAlerts,
         notifyTips: user.notifyTips,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -277,6 +279,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
         notifyTemplateRevisions: user.notifyTemplateRevisions,
         notifyBillingAlerts: user.notifyBillingAlerts,
         notifyTips: user.notifyTips,
+        createdAt: user.createdAt,
       },
     });
   } catch (error) {
@@ -322,6 +325,7 @@ router.get('/user', async (req: Request, res: Response) => {
       notifyTemplateRevisions: user.notifyTemplateRevisions,
       notifyBillingAlerts: user.notifyBillingAlerts,
       notifyTips: user.notifyTips,
+      createdAt: user.createdAt,
     });
   } catch (error) {
     console.error('Get user error:', error);
@@ -366,6 +370,7 @@ router.get('/me', async (req: Request, res: Response) => {
       notifyTemplateRevisions: user.notifyTemplateRevisions,
       notifyBillingAlerts: user.notifyBillingAlerts,
       notifyTips: user.notifyTips,
+      createdAt: user.createdAt,
     });
   } catch (error) {
     console.error('Get user error:', error);
