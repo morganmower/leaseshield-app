@@ -373,7 +373,7 @@ export class ScheduledJobs {
           </tr>
           <tr>
             <td style="padding: 32px 40px;">
-              <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px;">
+              <p style="margin: 0 0 24px 0; color: #1e293b; font-size: 18px; font-weight: 500;">
                 Hi ${firstName},
               </p>
               
