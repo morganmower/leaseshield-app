@@ -18,6 +18,12 @@ interface EmailRecipient {
 }
 
 export class EmailService {
+  private getBaseUrl(): string {
+    return process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+  }
+
   private async sendEmail(to: EmailRecipient, template: EmailTemplate): Promise<boolean> {
     try {
       // Try to use the Resend connector first
@@ -100,7 +106,7 @@ What you get:
 ✓ Step-by-step workflows for handling tenant issues
 ✓ 24/7 AI chat assistant
 
-Subscribe today and lock in these exclusive prices: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/subscribe
+Subscribe today and lock in these exclusive prices: ${this.getBaseUrl()}/subscribe
 
 Questions? We're here to help.
 
@@ -151,13 +157,13 @@ The LeaseShield App Team
       </div>
 
       <p style="text-align: center;">
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/subscribe" class="cta-button">
+        <a href="${this.getBaseUrl()}/subscribe" class="cta-button">
           Subscribe Now
         </a>
       </p>
 
       <p style="text-align: center; color: #64748b;">
-        Or <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/login" style="color: #14b8a6;">continue exploring your trial</a>
+        Or <a href="${this.getBaseUrl()}/login" style="color: #14b8a6;">continue exploring your trial</a>
       </p>
       
       <div class="feature-list">
@@ -204,7 +210,7 @@ ${updateSummary}
 
 This change has been flagged as ${impactLevel} impact to your rental business.
 
-Log in to LeaseShield App to read the full details, including before/after comparison and why this matters to you: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/compliance
+Log in to LeaseShield App to read the full details, including before/after comparison and why this matters to you: ${this.getBaseUrl()}/compliance
 
 Stay compliant and protected,
 The LeaseShield App Team
@@ -247,7 +253,7 @@ The LeaseShield App Team
       </ul>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/compliance" class="cta-button">
+        <a href="${this.getBaseUrl()}/compliance" class="cta-button">
           View Legal Update
         </a>
       </center>
@@ -282,7 +288,7 @@ You now have unlimited access to:
 • Credit report decoder and tenant screening resources
 • Expert guidance for handling tenant issues
 
-Start protecting your rental business: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/dashboard
+Start protecting your rental business: ${this.getBaseUrl()}/dashboard
 
 Need help getting started? Visit our Help Center or reach out anytime.
 
@@ -326,7 +332,7 @@ The LeaseShield App Team
       </div>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/dashboard" class="cta-button">
+        <a href="${this.getBaseUrl()}/dashboard" class="cta-button">
           Go to Dashboard
         </a>
       </center>
@@ -336,7 +342,7 @@ The LeaseShield App Team
     
     <div class="footer">
       <p>© ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
-      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" style="color: #14b8a6;">Settings</a></p>
+      <p style="margin-top: 5px; font-size: 12px;">Manage your subscription in <a href="${this.getBaseUrl()}/settings" style="color: #14b8a6;">Settings</a></p>
     </div>
   </div>
 </body>
@@ -589,7 +595,7 @@ To continue protecting your rental business, please subscribe for just $10/month
 • Credit report decoder and tenant screening resources
 • Expert guidance for handling tenant issues
 
-Reactivate your subscription: ${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings
+Reactivate your subscription: ${this.getBaseUrl()}/settings
 
 If you have questions or need assistance, reach out anytime.
 
@@ -637,7 +643,7 @@ The LeaseShield App Team
       </div>
 
       <center>
-        <a href="${process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com'}/settings" class="cta-button">
+        <a href="${this.getBaseUrl()}/settings" class="cta-button">
           Reactivate Subscription
         </a>
       </center>
@@ -1161,7 +1167,9 @@ Sent from LeaseShield App Contact Form
     const landlordName = landlord.firstName && landlord.lastName 
       ? `${landlord.firstName} ${landlord.lastName}` 
       : landlord.email;
-    const baseUrl = process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
 
     const template: EmailTemplate = {
       subject: `Action Required: Set Invitation ID for ${landlordName}`,
@@ -1228,7 +1236,9 @@ LeaseShield App
     if (!landlord.email) return false;
 
     const firstName = landlord.firstName || 'there';
-    const baseUrl = process.env.REPLIT_DOMAINS || 'https://leaseshieldapp.com';
+    const baseUrl = process.env.REPLIT_DOMAINS 
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
 
     const template: EmailTemplate = {
       subject: 'Your Tenant Screening Integration is Ready!',
