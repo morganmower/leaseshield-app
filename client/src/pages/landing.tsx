@@ -272,190 +272,157 @@ export default function Landing() {
         <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
         <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
         
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={staggerContainer}
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          {/* Text Content - Centered */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="text-center mb-10"
+          >
+            <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2 justify-center">
+              <Badge className="px-3 py-1 text-sm">
+                <Star className="h-3 w-3 mr-1 fill-current" />
+                Built for Landlords
+              </Badge>
+              <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
+                <BadgeCheck className="h-3 w-3 mr-1" />
+                7-Day Free Trial
+              </Badge>
+            </motion.div>
+            
+            <motion.h1 
+              variants={fadeInUp}
+              className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground leading-tight mb-6"
             >
-              <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2">
-                <Badge className="px-3 py-1 text-sm">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  Built for Landlords
-                </Badge>
-                <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
-                  <BadgeCheck className="h-3 w-3 mr-1" />
-                  7-Day Free Trial
-                </Badge>
-              </motion.div>
-              
-              <motion.h1 
-                variants={fadeInUp}
-                className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-foreground leading-tight mb-6"
-              >
-                The Daily-Use Toolkit Associations Aren't Built For
-              </motion.h1>
-              
-              <motion.p 
-                variants={fadeInUp}
-                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 leading-relaxed"
-              >
-                Built to Fill the Everyday Gaps No Association Is Designed to Cover...<br />
-                Updated monthly leases & notices · credit decoder · move-in checklists · zero-noise updates · AI tailored for property owners
-              </motion.p>
+              The Daily-Use Toolkit Associations Aren't Built For
+            </motion.h1>
+            
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
+            >
+              Built to Fill the Everyday Gaps No Association Is Designed to Cover...<br />
+              Updated monthly leases & notices · credit decoder · move-in checklists · zero-noise updates · AI tailored for property owners
+            </motion.p>
+          </motion.div>
 
-              {/* Cost Calculator */}
-              <motion.div 
-                variants={fadeInUp}
-                className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
-              >
-                <div className="text-center space-y-2">
-                  <p className="text-sm sm:text-base text-foreground">
-                    One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
-                    LeaseShield App = <span className="font-bold">$120/year</span> insurance.
-                  </p>
-                </div>
-              </motion.div>
+          {/* Hero Image - Full Width Below Text */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mb-10 max-w-2xl mx-auto"
+          >
+            <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
+              <img 
+                src={heroImage} 
+                alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
+                className="w-full h-auto object-cover"
+                data-testid="img-hero"
+              />
+            </div>
+          </motion.div>
 
-              {/* LeaseShield Brand Icon Anchor */}
-              <motion.div 
-                variants={fadeInUp}
-                className="flex justify-center mb-4"
-              >
-                <div className="rounded-full bg-primary/20 p-1.5">
-                  <div className="rounded-full bg-white p-3">
-                    <img 
-                      src={leaseShieldIcon} 
-                      alt="LeaseShield" 
-                      className="h-12 w-12 sm:h-14 sm:w-14 object-contain"
-                    />
-                  </div>
-                </div>
-              </motion.div>
-
-              {/* Pricing Display - A/B Test Wrapped */}
-              <ABTestWrapper testId="hero-pricing">
-                <motion.div 
-                  variants={fadeInUp}
-                  className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-6 sm:mb-8"
-                >
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                    <div>
-                      <div className="flex items-baseline gap-2 mb-1">
-                        <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
-                        <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {spotsRemaining} spots remaining • 7-day free trial
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-center gap-2 w-full sm:w-auto">
-                      <Button
-                        size="lg"
-                        onClick={() => {
-                          trackTrialStart();
-                          window.location.href = "/signup";
-                        }}
-                        className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] w-full sm:w-auto whitespace-nowrap"
-                        data-testid="button-pricing-cta"
-                      >
-                        Start Free Trial
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                      <button
-                        onClick={() => window.location.href = "/signup?payNow=true"}
-                        className="text-xs text-primary hover:underline"
-                        data-testid="link-pay-now-hero"
-                      >
-                        Skip trial — Pay now
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              </ABTestWrapper>
-              
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-4">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  data-testid="button-hero-learn"
-                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                  onClick={() => setShowBenefitsDialog(true)}
-                >
-                  Learn More
-                </Button>
-              </motion.div>
-              
-              <motion.div 
-                variants={fadeInUp}
-                className="flex flex-col gap-2 text-sm text-muted-foreground"
-              >
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                  <span>Instant access</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                  <span>Money-back guarantee</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                  <span>Cancel anytime</span>
-                </div>
-                <div className="flex items-start gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0 mt-0.5" />
-                  <span>Updates included</span>
-                </div>
-              </motion.div>
+          {/* Cost Calculator & Pricing */}
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="text-center"
+          >
+            {/* Cost Calculator */}
+            <motion.div 
+              variants={fadeInUp}
+              className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 mb-8 max-w-xl mx-auto"
+            >
+              <p className="text-sm sm:text-base text-foreground">
+                One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
+                LeaseShield App = <span className="font-bold">$120/year</span> insurance.
+              </p>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative hidden lg:block"
+            {/* Pricing Display - A/B Test Wrapped */}
+            <ABTestWrapper testId="hero-pricing">
+              <motion.div 
+                variants={fadeInUp}
+                className="bg-gradient-to-br from-primary/10 to-primary/5 border-2 border-primary/20 rounded-xl p-4 sm:p-6 mb-8 max-w-xl mx-auto"
+              >
+                <div className="flex flex-col items-center gap-4">
+                  <div className="text-center">
+                    <div className="flex items-baseline gap-2 mb-1 justify-center">
+                      <span className="text-3xl sm:text-4xl font-bold text-foreground">$10</span>
+                      <span className="text-lg text-muted-foreground">/month or <strong>$100/year (save $20)</strong></span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">
+                      {spotsRemaining} spots remaining • 7-day free trial
+                    </p>
+                  </div>
+                  <div className="flex flex-col items-center gap-2">
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        trackTrialStart();
+                        window.location.href = "/signup";
+                      }}
+                      className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px] whitespace-nowrap"
+                      data-testid="button-pricing-cta"
+                    >
+                      Start Free Trial
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                    <button
+                      onClick={() => window.location.href = "/signup?payNow=true"}
+                      className="text-xs text-primary hover:underline"
+                      data-testid="link-pay-now-hero"
+                    >
+                      Skip trial — Pay now
+                    </button>
+                  </div>
+                </div>
+              </motion.div>
+            </ABTestWrapper>
+            
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 justify-center">
+              <Button
+                size="lg"
+                variant="outline"
+                data-testid="button-hero-learn"
+                className="text-sm sm:text-base px-4 sm:px-8"
+                onClick={() => setShowBenefitsDialog(true)}
+              >
+                Learn More
+              </Button>
+            </motion.div>
+            
+            <motion.div 
+              variants={fadeInUp}
+              className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground"
             >
-              {/* Decorative background elements */}
-              <div className="absolute -top-8 -right-8 w-64 h-64 bg-gradient-to-br from-primary/20 to-amber-400/20 rounded-full blur-3xl" />
-              <div className="absolute -bottom-8 -left-8 w-48 h-48 bg-gradient-to-tr from-amber-400/20 to-primary/20 rounded-full blur-2xl" />
-              
-              {/* Main image with enhanced styling */}
-              <div className="relative z-10">
-                <div className="rounded-2xl overflow-hidden shadow-2xl border-2 border-primary/20 bg-gradient-to-br from-white to-primary/5 dark:from-gray-900 dark:to-primary/10 p-2">
-                  <div className="rounded-xl overflow-hidden">
-                    <img 
-                      src={heroImage} 
-                      alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
-                      className="w-full h-auto object-cover"
-                      data-testid="img-hero"
-                    />
-                  </div>
-                </div>
-                
-                {/* Floating feature badges */}
-                <div className="absolute -bottom-4 -left-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-border flex items-center gap-2">
-                  <div className="rounded-full bg-green-500/20 p-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-green-600" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">14 States</span>
-                </div>
-                
-                <div className="absolute -top-4 -right-4 bg-white dark:bg-gray-800 rounded-lg shadow-lg p-3 border border-border flex items-center gap-2">
-                  <div className="rounded-full bg-amber-500/20 p-1.5">
-                    <Shield className="h-4 w-4 text-amber-600" />
-                  </div>
-                  <span className="text-sm font-medium text-foreground">Protected</span>
-                </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <span>Instant access</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <span>Money-back guarantee</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <span>Cancel anytime</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
+                <span>Updates included</span>
               </div>
             </motion.div>
-          </div>
+          </motion.div>
         </div>
       </section>
 
       {/* How It Works Section */}
       <section id="how-it-works" className="py-16 sm:py-20 bg-gradient-to-br from-primary/5 via-background to-amber-500/5 border-y">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -546,8 +513,8 @@ export default function Landing() {
       </section>
 
       {/* Problems Section */}
-      <section id="features" className="py-16 sm:py-20 bg-background">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-16 sm:py-20 bg-background">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -677,7 +644,7 @@ export default function Landing() {
 
       {/* Stats Bar */}
       <section className="py-8 sm:py-12 border-y bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -776,7 +743,7 @@ export default function Landing() {
 
       {/* Partner Trust Section */}
       <section className="py-12 sm:py-16 bg-muted/50 border-y">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -805,7 +772,7 @@ export default function Landing() {
 
       {/* Features Grid */}
       <section id="features" className="py-20 md:py-28">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -1007,7 +974,7 @@ export default function Landing() {
 
       {/* Pain Points - What Happens Without LeaseShield */}
       <section className="py-20 md:py-28">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -2265,7 +2232,7 @@ export default function Landing() {
 
       {/* Lawyer-Safe Disclaimer */}
       <section className="py-6 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-foreground">
@@ -2278,7 +2245,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer className="border-t py-12 bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
               <div className="mb-4">
