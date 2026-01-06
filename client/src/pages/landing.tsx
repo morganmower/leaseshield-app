@@ -1435,9 +1435,9 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-cc" className="border-2 border-success/20 rounded-lg mb-2 bg-success/5">
-                <AccordionTrigger className="text-lg font-semibold px-4">Do I need a credit card for the free trial?</AccordionTrigger>
-                <AccordionContent className="text-lg px-4">
+              <AccordionItem value="item-cc">
+                <AccordionTrigger className="text-lg">Do I need a credit card for the free trial?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   <strong>No!</strong> Your 7-day free trial starts immediately with just your email address. You'll
                   only need to add payment information if you choose to continue after the trial ends. No strings attached.
                 </AccordionContent>
