@@ -31,6 +31,18 @@ const SUPPORTED_STATES = [
   { code: "FL", name: "Florida" },
 ];
 
+const CATEGORY_LABELS: Record<string, string> = {
+  deposits: "Security Deposits",
+  disclosures: "Disclosures",
+  evictions: "Evictions",
+  fair_housing: "Fair Housing",
+  rent_increases: "Rent Increases",
+};
+
+function formatCategory(category: string): string {
+  return CATEGORY_LABELS[category] || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
 export default function Compliance() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
@@ -224,7 +236,7 @@ export default function Compliance() {
                         data-testid={`compliance-card-${card.id}`}
                       >
                         <div className="flex items-start justify-between mb-4">
-                          <Badge variant="secondary">{card.category}</Badge>
+                          <Badge variant="secondary">{formatCategory(card.category)}</Badge>
                           <StateBadge stateId={card.stateId} />
                         </div>
 
@@ -240,6 +252,18 @@ export default function Compliance() {
                           data-testid={`card-details-${card.id}`} 
                           className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-4`}
                         >
+                          {/* Sections format (used by rent_increases, evictions) */}
+                          {(card.content as any)?.sections && Array.isArray((card.content as any).sections) && (card.content as any).sections.length > 0 && (
+                            <div className="space-y-3">
+                              {((card.content as any).sections as Array<{title: string; content: string}>).map((section, idx) => (
+                                <div key={idx}>
+                                  <h4 className="text-sm font-semibold text-foreground mb-1">{section.title}</h4>
+                                  <p className="text-sm text-muted-foreground">{section.content}</p>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
                           {/* Statutes */}
                           {(card.content as any)?.statutes && Array.isArray((card.content as any).statutes) && (card.content as any).statutes.length > 0 && (
                             <div>
