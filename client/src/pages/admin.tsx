@@ -1,10 +1,63 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2 } from "lucide-react";
 import { Link } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export default function AdminPage() {
+  const { toast } = useToast();
+  const [isExporting, setIsExporting] = useState(false);
+
+  // Fetch database stats
+  const { data: dbStats, isLoading: statsLoading } = useQuery<{
+    stats: { name: string; count: number }[];
+    totalRecords: number;
+    tableCount: number;
+  }>({
+    queryKey: ['/api/admin/database-stats'],
+  });
+
+  // Download full database export as JSON file
+  const handleExport = async () => {
+    setIsExporting(true);
+    try {
+      const response = await fetch('/api/admin/database-export', {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to export database');
+      }
+      
+      const data = await response.json();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `leaseshield-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      toast({
+        title: "Backup Downloaded",
+        description: `Exported ${data.totalRecords} records from ${data.tableCount} tables.`,
+      });
+    } catch (error) {
+      toast({
+        title: "Export Failed",
+        description: "Could not export database. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="container mx-auto px-4 py-8 max-w-7xl">
       <div className="mb-8">
@@ -193,6 +246,43 @@ export default function AdminPage() {
                     Manage Tips
                   </Button>
                 </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Data Backup</CardTitle>
+                <Database className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-xs text-muted-foreground mb-2">
+                  {statsLoading ? (
+                    "Loading..."
+                  ) : dbStats ? (
+                    `${dbStats.totalRecords} records in ${dbStats.tableCount} tables`
+                  ) : (
+                    "Database stats unavailable"
+                  )}
+                </div>
+                <Button 
+                  size="sm" 
+                  className="w-full" 
+                  onClick={handleExport}
+                  disabled={isExporting}
+                  data-testid="button-export-database"
+                >
+                  {isExporting ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Exporting...
+                    </>
+                  ) : (
+                    <>
+                      <Download className="h-4 w-4 mr-2" />
+                      Download Backup
+                    </>
+                  )}
+                </Button>
               </CardContent>
             </Card>
           </div>
