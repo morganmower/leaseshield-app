@@ -37,7 +37,7 @@ import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialConversionNudge } from "@/components/trial-conversion-nudge";
-import leaseshieldIcon from "../assets/leaseshield-icon.png";
+import leaseshieldIcon from "../assets/leaseshield-icon-v2.png";
 
 export default function Dashboard() {
   const { toast } = useToast();
