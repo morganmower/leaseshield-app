@@ -69,7 +69,10 @@ export default function RentLedger() {
       setPropertyId("");
       toast({ description: "Rent entry added successfully!" });
     },
-    onError: () => toast({ description: "Failed to add entry", variant: "destructive" }),
+    onError: (error: any) => {
+      console.error("Rent ledger create error:", error);
+      toast({ description: `Failed to add entry: ${error?.message || 'Unknown error'}`, variant: "destructive" });
+    },
   });
 
   const deleteMutation = useMutation({

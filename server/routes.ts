@@ -2196,6 +2196,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
+      console.log("📝 Creating rent ledger entry, body:", JSON.stringify(req.body, null, 2));
+
       // Auto-generate month from effectiveDate if not provided
       let month = req.body.month;
       if (!month && req.body.effectiveDate) {
@@ -2215,11 +2217,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         month,
       });
 
+      console.log("✅ Validated rent ledger entry:", JSON.stringify(validated, null, 2));
+
       const entry = await storage.createRentLedgerEntry(validated);
       res.json(entry);
-    } catch (error) {
-      console.error("Error creating rent ledger entry:", error);
-      res.status(500).json({ message: "Failed to create entry" });
+    } catch (error: any) {
+      console.error("❌ Error creating rent ledger entry:", error);
+      console.error("❌ Error details:", error?.message, error?.issues);
+      res.status(500).json({ message: "Failed to create entry", error: error?.message });
     }
   });
 
