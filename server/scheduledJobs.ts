@@ -4,6 +4,7 @@
 import { storage } from "./storage";
 import { emailService } from "./emailService";
 import { db } from "./db";
+import * as schema from "@shared/schema";
 import { users, analyticsEvents } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
 import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
@@ -119,6 +120,7 @@ export class ScheduledJobs {
   private renewalReminderInterval: NodeJS.Timeout | null = null;
   private uploadCleanupInterval: NodeJS.Timeout | null = null;
   private weeklyTipsInterval: NodeJS.Timeout | null = null;
+  private databaseBackupInterval: NodeJS.Timeout | null = null;
   // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
@@ -676,6 +678,182 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
+  // Run monthly database backup (on the 1st of each month)
+  async runMonthlyDatabaseBackup(): Promise<void> {
+    try {
+      const now = new Date();
+      const dayOfMonth = now.getDate();
+
+      // Only run on the 1st of the month
+      if (dayOfMonth !== 1) {
+        return;
+      }
+
+      // Check if we already backed up this month
+      const monthKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      const [existingBackupEvent] = await db
+        .select()
+        .from(analyticsEvents)
+        .where(
+          and(
+            eq(analyticsEvents.eventType, 'monthly_database_backup'),
+            sql`${analyticsEvents.eventData}->>'monthKey' = ${monthKey}`
+          )
+        )
+        .limit(1);
+
+      if (existingBackupEvent) {
+        console.log(`  Database backup already ran for ${monthKey}`);
+        return;
+      }
+
+      console.log(`📦 Running monthly database backup for ${monthKey}...`);
+
+      // Export all tables using direct db.select().from() for reliability
+      const exportData: Record<string, any> = {
+        exportedAt: new Date().toISOString(),
+        exportedBy: 'Automated Monthly Backup',
+        monthKey,
+        tables: {}
+      };
+
+      // Helper to safely export a table
+      const safeExport = async (table: any, name: string) => {
+        try {
+          return await db.select().from(table);
+        } catch (e) {
+          console.warn(`  Could not export table ${name}:`, e);
+          return [];
+        }
+      };
+
+      // Export all tables using the schema definitions
+      exportData.tables.users = await safeExport(schema.users, 'users');
+      exportData.tables.refreshTokens = await safeExport(schema.refreshTokens, 'refreshTokens');
+      exportData.tables.states = await safeExport(schema.states, 'states');
+      exportData.tables.templates = await safeExport(schema.templates, 'templates');
+      exportData.tables.templateVersions = await safeExport(schema.templateVersions, 'templateVersions');
+      exportData.tables.complianceCards = await safeExport(schema.complianceCards, 'complianceCards');
+      exportData.tables.applicationComplianceRules = await safeExport(schema.applicationComplianceRules, 'applicationComplianceRules');
+      exportData.tables.legalUpdates = await safeExport(schema.legalUpdates, 'legalUpdates');
+      exportData.tables.userNotifications = await safeExport(schema.userNotifications, 'userNotifications');
+      exportData.tables.analyticsEvents = await safeExport(schema.analyticsEvents, 'analyticsEvents');
+      exportData.tables.screeningContent = await safeExport(schema.screeningContent, 'screeningContent');
+      exportData.tables.tenantIssueWorkflows = await safeExport(schema.tenantIssueWorkflows, 'tenantIssueWorkflows');
+      exportData.tables.blogPosts = await safeExport(schema.blogPosts, 'blogPosts');
+      exportData.tables.legislativeMonitoring = await safeExport(schema.legislativeMonitoring, 'legislativeMonitoring');
+      exportData.tables.caseLawMonitoring = await safeExport(schema.caseLawMonitoring, 'caseLawMonitoring');
+      exportData.tables.templateReviewQueue = await safeExport(schema.templateReviewQueue, 'templateReviewQueue');
+      exportData.tables.monitoringRuns = await safeExport(schema.monitoringRuns, 'monitoringRuns');
+      exportData.tables.properties = await safeExport(schema.properties, 'properties');
+      exportData.tables.retentionSettings = await safeExport(schema.retentionSettings, 'retentionSettings');
+      exportData.tables.savedDocuments = await safeExport(schema.savedDocuments, 'savedDocuments');
+      exportData.tables.uploadedDocuments = await safeExport(schema.uploadedDocuments, 'uploadedDocuments');
+      exportData.tables.communicationTemplates = await safeExport(schema.communicationTemplates, 'communicationTemplates');
+      exportData.tables.broadcastMessages = await safeExport(schema.broadcastMessages, 'broadcastMessages');
+      exportData.tables.broadcastRecipients = await safeExport(schema.broadcastRecipients, 'broadcastRecipients');
+      exportData.tables.broadcastReplies = await safeExport(schema.broadcastReplies, 'broadcastReplies');
+      exportData.tables.emailSequences = await safeExport(schema.emailSequences, 'emailSequences');
+      exportData.tables.emailSequenceSteps = await safeExport(schema.emailSequenceSteps, 'emailSequenceSteps');
+      exportData.tables.emailSequenceEnrollments = await safeExport(schema.emailSequenceEnrollments, 'emailSequenceEnrollments');
+      exportData.tables.emailEvents = await safeExport(schema.emailEvents, 'emailEvents');
+      exportData.tables.rentLedgerEntries = await safeExport(schema.rentLedgerEntries, 'rentLedgerEntries');
+      exportData.tables.trainingInterest = await safeExport(schema.trainingInterest, 'trainingInterest');
+      exportData.tables.rentalProperties = await safeExport(schema.rentalProperties, 'rentalProperties');
+      exportData.tables.rentalUnits = await safeExport(schema.rentalUnits, 'rentalUnits');
+      exportData.tables.rentalApplicationLinks = await safeExport(schema.rentalApplicationLinks, 'rentalApplicationLinks');
+      exportData.tables.rentalSubmissions = await safeExport(schema.rentalSubmissions, 'rentalSubmissions');
+      exportData.tables.rentalSubmissionPeople = await safeExport(schema.rentalSubmissionPeople, 'rentalSubmissionPeople');
+      exportData.tables.rentalSubmissionFiles = await safeExport(schema.rentalSubmissionFiles, 'rentalSubmissionFiles');
+      exportData.tables.rentalSubmissionAcknowledgements = await safeExport(schema.rentalSubmissionAcknowledgements, 'rentalSubmissionAcknowledgements');
+      exportData.tables.rentalScreeningOrders = await safeExport(schema.rentalScreeningOrders, 'rentalScreeningOrders');
+      exportData.tables.rentalDecisions = await safeExport(schema.rentalDecisions, 'rentalDecisions');
+      exportData.tables.rentalDenialReasons = await safeExport(schema.rentalDenialReasons, 'rentalDenialReasons');
+      exportData.tables.rentalDecisionLetters = await safeExport(schema.rentalDecisionLetters, 'rentalDecisionLetters');
+      exportData.tables.rentalApplicationEvents = await safeExport(schema.rentalApplicationEvents, 'rentalApplicationEvents');
+      exportData.tables.directConversations = await safeExport(schema.directConversations, 'directConversations');
+      exportData.tables.directMessages = await safeExport(schema.directMessages, 'directMessages');
+      exportData.tables.directConversationReadStatus = await safeExport(schema.directConversationReadStatus, 'directConversationReadStatus');
+      exportData.tables.landlordScreeningCredentials = await safeExport(schema.landlordScreeningCredentials, 'landlordScreeningCredentials');
+
+      // Count records
+      let totalRecords = 0;
+      for (const tableName of Object.keys(exportData.tables)) {
+        totalRecords += exportData.tables[tableName]?.length || 0;
+      }
+      exportData.totalRecords = totalRecords;
+      exportData.tableCount = Object.keys(exportData.tables).length;
+
+      // Save backup to file
+      const fs = await import('fs/promises');
+      const backupDir = 'backups';
+      await fs.mkdir(backupDir, { recursive: true });
+      
+      const filename = `leaseshield-backup-${monthKey}.json`;
+      const filepath = `${backupDir}/${filename}`;
+      await fs.writeFile(filepath, JSON.stringify(exportData, null, 2));
+      console.log(`  ✓ Backup saved to ${filepath}`);
+
+      // Rotate old backups (keep last 6 months)
+      const files = await fs.readdir(backupDir);
+      const backupFiles = files.filter(f => f.startsWith('leaseshield-backup-') && f.endsWith('.json'));
+      if (backupFiles.length > 6) {
+        backupFiles.sort(); // Oldest first
+        const toDelete = backupFiles.slice(0, backupFiles.length - 6);
+        for (const oldFile of toDelete) {
+          await fs.unlink(`${backupDir}/${oldFile}`);
+          console.log(`  ✓ Deleted old backup: ${oldFile}`);
+        }
+      }
+
+      // Email backup to admin
+      const admins = await db.select().from(users).where(eq(users.isAdmin, true));
+      
+      if (admins.length > 0) {
+        const { getUncachableResendClient } = await import('./resend');
+        const { client, fromEmail } = await getUncachableResendClient();
+        
+        const baseUrl = process.env.REPLIT_DOMAINS 
+          ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+          : 'https://leaseshieldapp.com';
+
+        for (const admin of admins) {
+          if (!admin.email) continue;
+
+          await client.emails.send({
+            from: fromEmail,
+            to: admin.email,
+            subject: `[LeaseShield] Monthly Database Backup - ${monthKey}`,
+            html: `
+              <h2>Monthly Database Backup Complete</h2>
+              <p>The automated monthly backup for <strong>${monthKey}</strong> has been completed.</p>
+              <ul>
+                <li><strong>Total Records:</strong> ${totalRecords}</li>
+                <li><strong>Tables Exported:</strong> ${Object.keys(exportData.tables).length}</li>
+                <li><strong>Backup File:</strong> ${filename}</li>
+              </ul>
+              <p>You can also download a fresh backup anytime from the <a href="${baseUrl}/admin">Admin Dashboard</a>.</p>
+              <p style="color: #666; font-size: 12px;">This is an automated message from LeaseShield.</p>
+            `,
+            text: `Monthly Database Backup Complete\n\nThe backup for ${monthKey} has completed.\nTotal Records: ${totalRecords}\nTables: ${Object.keys(exportData.tables).length}\n\nDownload anytime from: ${baseUrl}/admin`,
+          });
+          console.log(`  ✓ Backup notification sent to ${admin.email}`);
+        }
+      }
+
+      // Record that backup completed this month
+      await storage.trackEvent({
+        userId: null,
+        eventType: 'monthly_database_backup',
+        eventData: { monthKey, totalRecords, tableCount: Object.keys(exportData.tables).length },
+      });
+
+      console.log(`✅ Monthly database backup complete: ${totalRecords} records from ${Object.keys(exportData.tables).length} tables`);
+    } catch (error) {
+      console.error('❌ Error running monthly database backup:', error);
+    }
+  }
+
   // Check if legislative monitoring should run (monthly on the 1st)
   async checkLegislativeMonitoring(): Promise<void> {
     try {
@@ -765,6 +943,13 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.sendBiweeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
 
+    // Run monthly database backup (check daily, but only runs on 1st)
+    this.databaseBackupInterval = setInterval(
+      () => this.runMonthlyDatabaseBackup(),
+      24 * 60 * 60 * 1000 // Check daily
+    );
+    setTimeout(() => this.runMonthlyDatabaseBackup(), 7 * 60 * 1000); // First check after 7 minutes
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -810,6 +995,11 @@ Manage preferences: ${baseUrl}/settings
     if (this.weeklyTipsInterval) {
       clearInterval(this.weeklyTipsInterval);
       this.weeklyTipsInterval = null;
+    }
+
+    if (this.databaseBackupInterval) {
+      clearInterval(this.databaseBackupInterval);
+      this.databaseBackupInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');
