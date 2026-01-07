@@ -26,10 +26,12 @@ Not specified.
 The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, matching the LeaseShield logo branding. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone.
 
 ### Logo & Branding
+- **Primary Icon**: `client/src/assets/leaseshield-icon.png` - House-and-key logo with 15% transparent padding on all sides. This is the master icon that should be used everywhere.
 - **Logo Files**: Horizontal logo at `client/src/assets/logo-horizontal.png`, stacked logo at `client/src/assets/logo-stacked.png`
 - **Logo Sizes**: sm (h-8), md (h-12), lg (h-16), xl (h-32) for horizontal variant
 - **Primary Color**: Teal/turquoise (HSL 168 76% 42%)
 - **Text Color**: Navy blue (HSL 215 35% 20%)
+- **CRITICAL - Logo Padding**: All icon/logo images MUST have ~15% transparent padding around the artwork. Without padding, logos appear "cut off" when displayed in contexts with rounded corners (favicons, touch icons) or constrained sizes. The master icon at `leaseshield-icon.png` has proper padding built in.
 
 ### Technical Implementations
 - **Frontend**: React, TypeScript, TanStack Query, Wouter, Shadcn UI.
