@@ -325,9 +325,12 @@ export default function Dashboard() {
         {/* Hero Panel - Protect Your Rentals in 3 Steps */}
         <div className="mb-10">
           <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/3 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 sm:p-8" data-testid="section-hero-panel">
-            <h2 className="text-2xl sm:text-3xl font-display font-semibold text-foreground mb-3">
-              Protect your rentals in 3 steps.
-            </h2>
+            <div className="flex items-start gap-4 mb-3">
+              <img src={leaseshieldIcon} alt="LeaseShield" className="h-12 w-12 sm:h-14 sm:w-14 flex-shrink-0" />
+              <h2 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">
+                Protect your rentals in 3 steps.
+              </h2>
+            </div>
             <p className="text-foreground/80 dark:text-foreground/90 mb-6 max-w-3xl">
               Run applications through Western Verify, decode screening reports in plain English, and use updated state-specific leases & notices when legislation changes.
             </p>
