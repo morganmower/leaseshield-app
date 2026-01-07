@@ -26,6 +26,7 @@ import {
 } from "@/components/ui/dialog";
 import { FileText, Download, Search, Filter, Lock, AlertTriangle } from "lucide-react";
 import type { Template } from "@shared/schema";
+import { SessionExpired, isSessionExpiredError, hasExpiredSession } from "@/components/session-expired";
 
 export default function Templates() {
   const { toast } = useToast();
@@ -163,19 +164,8 @@ export default function Templates() {
     }
   };
 
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/login";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  // Note: Removed auto-redirect to /login here - SessionExpired component handles 401s
+  // Users who aren't logged in at all will see the !user return null below
 
   // Initialize filters from URL query parameters or user preferences
   useEffect(() => {
@@ -229,6 +219,16 @@ export default function Templates() {
         <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
       </div>
     );
+  }
+
+  // Check for session expired - either from 401 error or stale token with no auth
+  if (isSessionExpiredError(templatesError)) {
+    return <SessionExpired />;
+  }
+  
+  // If not authenticated but has a token in storage, session expired
+  if (!isLoading && !isAuthenticated && hasExpiredSession()) {
+    return <SessionExpired />;
   }
 
   if (!user) return null;
