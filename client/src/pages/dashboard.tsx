@@ -37,6 +37,7 @@ import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialConversionNudge } from "@/components/trial-conversion-nudge";
+import leaseshieldIcon from "../assets/leaseshield-icon.png";
 
 export default function Dashboard() {
   const { toast } = useToast();
@@ -301,7 +302,7 @@ export default function Dashboard() {
         {!hasCompletedAction && (
           <Card className="mb-10 p-8 border-dashed border-2 border-primary/30 bg-primary/5" data-testid="card-welcome-intro">
             <div className="text-center max-w-xl mx-auto">
-              <Shield className="h-16 w-16 text-primary mx-auto mb-6" />
+              <img src={leaseshieldIcon} alt="LeaseShield" className="h-16 w-16 mx-auto mb-6" />
               <h2 className="text-2xl font-display font-semibold text-foreground mb-3">Welcome to LeaseShield</h2>
               <p className="text-muted-foreground mb-6">
                 LeaseShield helps you collect applications, route screening through Western Verify, understand risk, and use the right documents when laws change.
