@@ -167,8 +167,8 @@ export default function RentLedger() {
       const dateStr = new Date(entry.createdAt).toLocaleDateString();
       const effectiveDateStr = entry.effectiveDate ? new Date(entry.effectiveDate).toLocaleDateString() : "";
       const entryType = entry.type === "payment" ? "Payment" : "Charge";
-      const chargeDisplay = entry.type === "charge" ? charge.toFixed(2) : "0.00";
-      const paymentDisplay = entry.type === "payment" ? payment.toFixed(2) : "0.00";
+      const chargeDisplay = charge > 0 ? charge.toFixed(2) : "0.00";
+      const paymentDisplay = payment > 0 ? payment.toFixed(2) : "0.00";
 
       csvRows.push(
         `"${dateStr}","${effectiveDateStr}","${entryType}","${entry.category || ""}","${entry.description || ""}","$${chargeDisplay}","$${paymentDisplay}","$${runningBalance.toFixed(2)}","${entry.paymentMethod || ""}","${entry.referenceNumber || ""}","${(entry.notes || "").replace(/"/g, '""')}"`
@@ -566,8 +566,8 @@ export default function RentLedger() {
                                 </TableCell>
                               )}
                               <TableCell className="text-xs">{entry.category}</TableCell>
-                              <TableCell className="text-right font-mono text-xs">${entry.type === "charge" ? expected.toFixed(2) : "0.00"}</TableCell>
-                              <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${entry.type === "payment" ? received.toFixed(2) : "0.00"}</TableCell>
+                              <TableCell className="text-right font-mono text-xs">${expected > 0 ? expected.toFixed(2) : "0.00"}</TableCell>
+                              <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${received > 0 ? received.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono font-semibold text-xs">${cumulativeBalance.toFixed(2)}</TableCell>
                               <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
                               <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
