@@ -532,12 +532,24 @@ export default function RentLedger() {
                           return entry.propertyId === filterPropertyId;
                         });
                         
-                        const sortedEntries = filteredEntries.sort((a, b) => {
+                        // Sort chronologically (oldest first) to calculate correct running balances
+                        const chronologicalEntries = [...filteredEntries].sort((a, b) => {
                           const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
                           const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
-                          return dateB - dateA;
+                          return dateA - dateB;
                         });
-                        let cumulativeBalance = 0;
+                        
+                        // Calculate running balance for each entry
+                        let runningBalance = 0;
+                        const entriesWithBalance = chronologicalEntries.map((entry) => {
+                          const expected = entry.amountExpected / 100;
+                          const received = (entry.amountReceived ?? 0) / 100;
+                          runningBalance += expected - received;
+                          return { ...entry, calculatedBalance: runningBalance };
+                        });
+                        
+                        // Now sort for display (newest first)
+                        const sortedEntries = entriesWithBalance.reverse();
                         
                         if (sortedEntries.length === 0) {
                           return (
@@ -552,7 +564,6 @@ export default function RentLedger() {
                         return sortedEntries.map((entry) => {
                           const expected = entry.amountExpected / 100;
                           const received = (entry.amountReceived ?? 0) / 100;
-                          cumulativeBalance += expected - received;
                           return (
                             <TableRow key={entry.id}>
                               <TableCell className="text-xs">{new Date(entry.createdAt).toLocaleDateString()}</TableCell>
@@ -568,7 +579,7 @@ export default function RentLedger() {
                               <TableCell className="text-xs">{entry.category}</TableCell>
                               <TableCell className="text-right font-mono text-xs">${expected > 0 ? expected.toFixed(2) : "0.00"}</TableCell>
                               <TableCell className="text-right font-mono text-green-600 dark:text-green-400 text-xs">${received > 0 ? received.toFixed(2) : "0.00"}</TableCell>
-                              <TableCell className="text-right font-mono font-semibold text-xs">${cumulativeBalance.toFixed(2)}</TableCell>
+                              <TableCell className="text-right font-mono font-semibold text-xs">${entry.calculatedBalance.toFixed(2)}</TableCell>
                               <TableCell className="text-xs">{entry.paymentMethod || "-"}</TableCell>
                               <TableCell className="text-xs">{entry.referenceNumber || "-"}</TableCell>
                               <TableCell className="flex gap-1">
