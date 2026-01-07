@@ -2196,9 +2196,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(401).json({ message: "Unauthorized" });
       }
 
+      // Auto-generate month from effectiveDate if not provided
+      let month = req.body.month;
+      if (!month && req.body.effectiveDate) {
+        const effectiveDate = new Date(req.body.effectiveDate);
+        const year = effectiveDate.getFullYear();
+        const monthNum = String(effectiveDate.getMonth() + 1).padStart(2, '0');
+        month = `${year}-${monthNum}`;
+      } else if (!month) {
+        // Fallback to current month
+        const now = new Date();
+        month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+      }
+
       const validated = insertRentLedgerEntrySchema.parse({
         ...req.body,
         userId,
+        month,
       });
 
       const entry = await storage.createRentLedgerEntry(validated);
