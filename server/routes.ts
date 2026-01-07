@@ -2202,29 +2202,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let month = req.body.month;
       if (!month && req.body.effectiveDate) {
         const effectiveDate = new Date(req.body.effectiveDate);
-        const year = effectiveDate.getFullYear();
-        const monthNum = String(effectiveDate.getMonth() + 1).padStart(2, '0');
-        month = `${year}-${monthNum}`;
-      } else if (!month) {
+        if (!isNaN(effectiveDate.getTime())) {
+          const year = effectiveDate.getFullYear();
+          const monthNum = String(effectiveDate.getMonth() + 1).padStart(2, '0');
+          month = `${year}-${monthNum}`;
+        }
+      }
+      if (!month) {
         // Fallback to current month
         const now = new Date();
         month = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
       }
 
-      const validated = insertRentLedgerEntrySchema.parse({
+      // Clean up optional fields - convert empty strings to null
+      const dataToValidate = {
         ...req.body,
         userId,
         month,
-      });
+        propertyId: req.body.propertyId || null,
+        description: req.body.description || null,
+        notes: req.body.notes || null,
+        paymentMethod: req.body.paymentMethod || null,
+        referenceNumber: req.body.referenceNumber || null,
+      };
 
-      console.log("✅ Validated rent ledger entry:", JSON.stringify(validated, null, 2));
+      console.log("📝 Data to validate:", JSON.stringify(dataToValidate, null, 2));
+
+      const validated = insertRentLedgerEntrySchema.parse(dataToValidate);
+
+      console.log("✅ Validated rent ledger entry");
 
       const entry = await storage.createRentLedgerEntry(validated);
       res.json(entry);
     } catch (error: any) {
       console.error("❌ Error creating rent ledger entry:", error);
-      console.error("❌ Error details:", error?.message, error?.issues);
-      res.status(500).json({ message: "Failed to create entry", error: error?.message });
+      // Handle Zod validation errors specifically
+      if (error?.issues) {
+        console.error("❌ Zod validation issues:", JSON.stringify(error.issues, null, 2));
+        const errorDetails = error.issues.map((i: any) => `${i.path.join('.')}: ${i.message}`).join(', ');
+        return res.status(500).json({ message: `Validation failed: ${errorDetails}` });
+      }
+      // Handle database errors (like foreign key constraint)
+      if (error?.code === '23503') {
+        console.error("❌ Foreign key violation - property not found");
+        return res.status(500).json({ message: "Property not found. Please select a valid property or leave it blank." });
+      }
+      console.error("❌ Error details:", error?.message, error?.code);
+      res.status(500).json({ message: error?.message || "Failed to create entry" });
     }
   });
 

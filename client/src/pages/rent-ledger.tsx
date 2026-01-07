@@ -71,7 +71,9 @@ export default function RentLedger() {
     },
     onError: (error: any) => {
       console.error("Rent ledger create error:", error);
-      toast({ description: `Failed to add entry: ${error?.message || 'Unknown error'}`, variant: "destructive" });
+      // Extract the detailed message from the API response
+      const errorMessage = error?.body?.message || error?.message || 'Unknown error';
+      toast({ description: `Failed to add entry: ${errorMessage}`, variant: "destructive" });
     },
   });
 
