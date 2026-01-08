@@ -461,7 +461,7 @@ export default function Landing() {
             <span className="font-medium text-foreground">Designed to complement your apartment association membership.</span>
             <br className="hidden sm:block" />
             <span className="sm:inline"> </span>
-            LeaseShield handles day-to-day screening decisions, compliance workflows, and tools most associations don't provide.
+            LeaseShield helps landlords understand screening results and manage compliance workflows.
             <br className="hidden sm:block" />
             <span className="sm:inline"> </span>
             <span className="text-muted-foreground/80">Most landlords use both — associations for education and advocacy, LeaseShield for execution.</span>
