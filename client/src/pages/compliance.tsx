@@ -9,9 +9,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { StateBadge } from "@/components/state-badge";
-import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, MapPin } from "lucide-react";
+import { Shield, AlertTriangle, CheckCircle, ArrowRight, ArrowLeft, MapPin, FileText, Scale, Home, Users, DollarSign, Clock, BookOpen, Gavel } from "lucide-react";
 import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
+import { format } from "date-fns";
 import { getAccessToken } from "@/lib/queryClient";
 
 const SUPPORTED_STATES = [
@@ -31,16 +32,53 @@ const SUPPORTED_STATES = [
   { code: "FL", name: "Florida" },
 ];
 
-const CATEGORY_LABELS: Record<string, string> = {
-  deposits: "Security Deposits",
-  disclosures: "Disclosures",
-  evictions: "Evictions",
-  fair_housing: "Fair Housing",
-  rent_increases: "Rent Increases",
+const CATEGORY_CONFIG: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
+  deposits: { 
+    label: "Security Deposits", 
+    icon: DollarSign, 
+    color: "text-emerald-600 dark:text-emerald-400",
+    bgColor: "bg-emerald-50 dark:bg-emerald-950/30 border-emerald-200 dark:border-emerald-800"
+  },
+  disclosures: { 
+    label: "Disclosures", 
+    icon: FileText, 
+    color: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800"
+  },
+  evictions: { 
+    label: "Evictions", 
+    icon: Gavel, 
+    color: "text-red-600 dark:text-red-400",
+    bgColor: "bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800"
+  },
+  fair_housing: { 
+    label: "Fair Housing", 
+    icon: Users, 
+    color: "text-purple-600 dark:text-purple-400",
+    bgColor: "bg-purple-50 dark:bg-purple-950/30 border-purple-200 dark:border-purple-800"
+  },
+  rent_increases: { 
+    label: "Rent Increases", 
+    icon: Scale, 
+    color: "text-amber-600 dark:text-amber-400",
+    bgColor: "bg-amber-50 dark:bg-amber-950/30 border-amber-200 dark:border-amber-800"
+  },
 };
 
 function formatCategory(category: string): string {
-  return CATEGORY_LABELS[category] || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+  return CATEGORY_CONFIG[category]?.label || category.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+}
+
+function getCategoryIcon(category: string) {
+  return CATEGORY_CONFIG[category]?.icon || Shield;
+}
+
+function getCategoryColor(category: string) {
+  return CATEGORY_CONFIG[category]?.color || "text-primary";
+}
+
+function getCategoryBgColor(category: string) {
+  return CATEGORY_CONFIG[category]?.bgColor || "bg-muted";
 }
 
 export default function Compliance() {
@@ -121,39 +159,73 @@ export default function Compliance() {
     );
   }
 
+  const selectedStateName = SUPPORTED_STATES.find(s => s.code === selectedState)?.name || selectedState;
+  const cardCount = complianceCards?.length || 0;
+  const categoryCount = complianceCards ? new Set(complianceCards.map(c => c.category)).size : 0;
+
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Compliance Toolkit
-          </h1>
-          <p className="text-muted-foreground">
-            Stay current with state-specific requirements
-          </p>
-        </div>
-
-        {/* Legal Disclaimer */}
-        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                <strong>Not Legal Advice:</strong> This compliance guidance is educational only and may not reflect 
-                the most current laws in your jurisdiction. Always verify requirements with local authorities or a 
-                licensed attorney before taking action. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
-              </p>
+      {/* Hero Header with Gradient */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-xl">
+                <Shield className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-display font-bold text-foreground mb-1">
+                  Compliance Toolkit
+                </h1>
+                <p className="text-muted-foreground">
+                  State-specific landlord requirements, updated as laws change
+                </p>
+              </div>
             </div>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-md">
+                    <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">{cardCount}</span>
+                    <span className="text-muted-foreground ml-1">Requirements</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
+                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                  </div>
+                  <div>
+                    <span className="font-semibold text-foreground">{categoryCount}</span>
+                    <span className="text-muted-foreground ml-1">Categories</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Legal Disclaimer - Compact */}
+        <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Educational Only:</strong> Verify with local authorities or attorney. 
+              <Link to="/disclaimers" className="text-primary hover:underline ml-1">Full disclaimers</Link>
+            </p>
           </div>
         </div>
 
         {/* State Selector - Mobile Dropdown */}
         <div className="md:hidden mb-6">
           <Select value={selectedState} onValueChange={setSelectedState}>
-            <SelectTrigger className="w-full" data-testid="select-state-mobile">
+            <SelectTrigger className="w-full bg-card" data-testid="select-state-mobile">
               <div className="flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <MapPin className="h-4 w-4 text-primary" />
                 <SelectValue placeholder="Select a state" />
               </div>
             </SelectTrigger>
@@ -167,17 +239,21 @@ export default function Compliance() {
           </Select>
         </div>
 
-        {/* State Tabs - Desktop Scrollable */}
-        <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-8">
-          <div className="hidden md:block mb-4">
+        {/* State Tabs - Desktop with enhanced styling */}
+        <Tabs value={selectedState} onValueChange={setSelectedState} className="mb-6">
+          <div className="hidden md:block mb-6">
+            <div className="flex items-center gap-3 mb-3">
+              <MapPin className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-muted-foreground">Select your state:</span>
+            </div>
             <ScrollArea className="w-full whitespace-nowrap">
-              <TabsList className="inline-flex h-10 items-center justify-start gap-1 bg-muted p-1 rounded-md" data-testid="tabs-state-selector">
+              <TabsList className="inline-flex h-11 items-center justify-start gap-1 bg-muted/50 p-1.5 rounded-lg border" data-testid="tabs-state-selector">
                 {SUPPORTED_STATES.map((state) => (
                   <TabsTrigger 
                     key={state.code} 
                     value={state.code} 
                     data-testid={`tab-state-${state.code}`}
-                    className="px-3 py-1.5 text-sm whitespace-nowrap"
+                    className="px-4 py-2 text-sm font-medium whitespace-nowrap rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
                   >
                     {state.name}
                   </TabsTrigger>
@@ -188,15 +264,30 @@ export default function Compliance() {
           </div>
 
           {SUPPORTED_STATES.map(({ code: state }) => (
-            <TabsContent key={state} value={state} className="space-y-8">
+            <TabsContent key={state} value={state} className="space-y-6 mt-0">
+              {/* State Header Card */}
+              <Card className="p-4 bg-gradient-to-r from-primary/5 to-transparent border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <StateBadge stateId={state} />
+                    <div>
+                      <h2 className="text-lg font-display font-semibold text-foreground">
+                        {SUPPORTED_STATES.find(s => s.code === state)?.name} Compliance
+                      </h2>
+                      <p className="text-sm text-muted-foreground">
+                        {complianceCards?.length || 0} requirements across {categoryCount} categories
+                      </p>
+                    </div>
+                  </div>
+                  <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>Updated {format(new Date(), 'MMM yyyy')}</span>
+                  </div>
+                </div>
+              </Card>
+
               {/* Compliance Cards Section */}
               <div>
-                <div className="flex items-center gap-2 mb-6">
-                  <Shield className="h-6 w-6 text-primary" />
-                  <h2 className="text-2xl font-display font-semibold text-foreground">
-                    Compliance Requirements
-                  </h2>
-                </div>
 
                 {cardsLoading ? (
                   <div className="grid md:grid-cols-2 gap-6">
@@ -224,118 +315,158 @@ export default function Compliance() {
                     </div>
                   </Card>
                 ) : complianceCards && complianceCards.length > 0 ? (
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 gap-5">
                     {complianceCards.filter((card, index, self) => 
                       index === self.findIndex(c => c.id === card.id)
                     ).map((card) => {
                       const isExpanded = expandedCards.has(card.id);
+                      const CategoryIcon = getCategoryIcon(card.category);
+                      const categoryColor = getCategoryColor(card.category);
+                      const categoryBgColor = getCategoryBgColor(card.category);
                       return (
                       <Card
                         key={card.id}
-                        className="p-6 hover-elevate transition-all"
+                        className="overflow-hidden hover-elevate transition-all"
                         data-testid={`compliance-card-${card.id}`}
                       >
-                        <div className="flex items-start justify-between mb-4">
-                          <Badge variant="secondary">{formatCategory(card.category)}</Badge>
-                          <StateBadge stateId={card.stateId} />
+                        {/* Card Header with Category Color */}
+                        <div className={`px-5 py-3 ${categoryBgColor}`}>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <div className={`p-1.5 rounded-md ${
+                                card.category === 'deposits' ? 'bg-emerald-100 dark:bg-emerald-900/50' :
+                                card.category === 'disclosures' ? 'bg-blue-100 dark:bg-blue-900/50' :
+                                card.category === 'evictions' ? 'bg-red-100 dark:bg-red-900/50' :
+                                card.category === 'fair_housing' ? 'bg-purple-100 dark:bg-purple-900/50' :
+                                card.category === 'rent_increases' ? 'bg-amber-100 dark:bg-amber-900/50' :
+                                'bg-primary/20'
+                              }`}>
+                                <CategoryIcon className={`h-4 w-4 ${categoryColor}`} />
+                              </div>
+                              <span className={`text-sm font-medium ${categoryColor}`}>
+                                {formatCategory(card.category)}
+                              </span>
+                            </div>
+                            <StateBadge stateId={card.stateId} />
+                          </div>
                         </div>
 
-                        <h3 className="font-semibold text-lg text-foreground mb-3">
-                          {card.title}
-                        </h3>
+                        {/* Card Body */}
+                        <div className="p-5">
+                          <h3 className="font-semibold text-lg text-foreground mb-2 leading-tight">
+                            {card.title}
+                          </h3>
 
-                        <p className="text-sm text-muted-foreground mb-4 line-clamp-3">
-                          {card.summary}
-                        </p>
+                          <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                            {card.summary}
+                          </p>
 
-                        <div 
-                          data-testid={`card-details-${card.id}`} 
-                          className={`${isExpanded ? '' : 'hidden'} mt-4 pt-4 border-t space-y-4`}
-                        >
-                          {/* Sections format (used by rent_increases, evictions) */}
-                          {(card.content as any)?.sections && Array.isArray((card.content as any).sections) && (card.content as any).sections.length > 0 && (
-                            <div className="space-y-3">
-                              {((card.content as any).sections as Array<{title: string; content: string}>).map((section, idx) => (
-                                <div key={idx}>
-                                  <h4 className="text-sm font-semibold text-foreground mb-1">{section.title}</h4>
-                                  <p className="text-sm text-muted-foreground">{section.content}</p>
+                          <div 
+                            data-testid={`card-details-${card.id}`} 
+                            className={`${isExpanded ? '' : 'hidden'} mb-4 space-y-4`}
+                          >
+                            {/* Sections format (used by rent_increases, evictions) */}
+                            {(card.content as any)?.sections && Array.isArray((card.content as any).sections) && (card.content as any).sections.length > 0 && (
+                              <div className="space-y-3 bg-muted/30 rounded-lg p-4">
+                                {((card.content as any).sections as Array<{title: string; content: string}>).map((section, idx) => (
+                                  <div key={idx} className="border-l-2 border-primary/30 pl-3">
+                                    <h4 className="text-sm font-semibold text-foreground mb-1">{section.title}</h4>
+                                    <p className="text-sm text-muted-foreground">{section.content}</p>
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* Statutes */}
+                            {(card.content as any)?.statutes && Array.isArray((card.content as any).statutes) && (card.content as any).statutes.length > 0 && (
+                              <div className="bg-muted/30 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <Gavel className="h-4 w-4 text-muted-foreground" />
+                                  <h4 className="text-sm font-semibold text-foreground">Legal Authority</h4>
                                 </div>
-                              ))}
-                            </div>
-                          )}
-                          
-                          {/* Statutes */}
-                          {(card.content as any)?.statutes && Array.isArray((card.content as any).statutes) && (card.content as any).statutes.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Legal Authority</h4>
-                              <ul className="space-y-1">
-                                {((card.content as any).statutes as string[]).map((statute: string, idx: number) => (
-                                  <li key={idx} className="text-sm text-muted-foreground">• {statute}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          
-                          {/* Requirements */}
-                          {(card.content as any)?.requirements && Array.isArray((card.content as any).requirements) && (card.content as any).requirements.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Key Requirements</h4>
-                              <ul className="space-y-1">
-                                {((card.content as any).requirements as string[]).map((req: string, idx: number) => (
-                                  <li key={idx} className="text-sm text-muted-foreground">• {req}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          )}
-                          
-                          {/* Actionable Steps */}
-                          {(card.content as any)?.actionableSteps && Array.isArray((card.content as any).actionableSteps) && (card.content as any).actionableSteps.length > 0 && (
-                            <div>
-                              <h4 className="text-sm font-semibold text-foreground mb-2">Actionable Steps</h4>
-                              <ol className="space-y-1">
-                                {((card.content as any).actionableSteps as string[]).map((step: string, idx: number) => (
-                                  <li key={idx} className="text-sm text-muted-foreground">{idx + 1}. {step}</li>
-                                ))}
-                              </ol>
-                            </div>
-                          )}
-                        </div>
+                                <ul className="space-y-1.5 ml-6">
+                                  {((card.content as any).statutes as string[]).map((statute: string, idx: number) => (
+                                    <li key={idx} className="text-sm text-muted-foreground list-disc">{statute}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Requirements */}
+                            {(card.content as any)?.requirements && Array.isArray((card.content as any).requirements) && (card.content as any).requirements.length > 0 && (
+                              <div className="bg-muted/30 rounded-lg p-4">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <CheckCircle className="h-4 w-4 text-emerald-600" />
+                                  <h4 className="text-sm font-semibold text-foreground">Key Requirements</h4>
+                                </div>
+                                <ul className="space-y-1.5">
+                                  {((card.content as any).requirements as string[]).map((req: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-2 text-sm text-muted-foreground">
+                                      <CheckCircle className="h-3.5 w-3.5 text-emerald-500 mt-0.5 flex-shrink-0" />
+                                      <span>{req}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Actionable Steps */}
+                            {(card.content as any)?.actionableSteps && Array.isArray((card.content as any).actionableSteps) && (card.content as any).actionableSteps.length > 0 && (
+                              <div className="bg-primary/5 rounded-lg p-4 border border-primary/10">
+                                <div className="flex items-center gap-2 mb-2">
+                                  <ArrowRight className="h-4 w-4 text-primary" />
+                                  <h4 className="text-sm font-semibold text-foreground">Actionable Steps</h4>
+                                </div>
+                                <ol className="space-y-2">
+                                  {((card.content as any).actionableSteps as string[]).map((step: string, idx: number) => (
+                                    <li key={idx} className="flex items-start gap-3 text-sm text-muted-foreground">
+                                      <span className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10 text-primary text-xs font-semibold flex-shrink-0">
+                                        {idx + 1}
+                                      </span>
+                                      <span>{step}</span>
+                                    </li>
+                                  ))}
+                                </ol>
+                              </div>
+                            )}
+                          </div>
                         
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          data-testid={`button-view-card-${card.id}`}
-                          onClick={() => {
-                            if (card.relatedTemplateId) {
-                              setLocation(`/templates/${card.relatedTemplateId}/fill`);
-                            } else {
-                              const newExpanded = new Set(expandedCards);
-                              if (newExpanded.has(card.id)) {
-                                newExpanded.delete(card.id);
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            data-testid={`button-view-card-${card.id}`}
+                            onClick={() => {
+                              if (card.relatedTemplateId) {
+                                setLocation(`/templates/${card.relatedTemplateId}/fill`);
                               } else {
-                                newExpanded.add(card.id);
+                                const newExpanded = new Set(expandedCards);
+                                if (newExpanded.has(card.id)) {
+                                  newExpanded.delete(card.id);
+                                } else {
+                                  newExpanded.add(card.id);
+                                }
+                                setExpandedCards(newExpanded);
                               }
-                              setExpandedCards(newExpanded);
-                            }
-                          }}
-                        >
-                          {card.relatedTemplateId ? (
-                            <>
-                              View Template
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </>
-                          ) : isExpanded ? (
-                            <>
-                              Back
-                              <ArrowLeft className="ml-2 h-4 w-4" />
-                            </>
-                          ) : (
-                            <>
-                              View Requirements
-                              <ArrowRight className="ml-2 h-4 w-4" />
-                            </>
-                          )}
-                        </Button>
+                            }}
+                          >
+                            {card.relatedTemplateId ? (
+                              <>
+                                View Template
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </>
+                            ) : isExpanded ? (
+                              <>
+                                Back
+                                <ArrowLeft className="ml-2 h-4 w-4" />
+                              </>
+                            ) : (
+                              <>
+                                View Requirements
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                              </>
+                            )}
+                          </Button>
+                        </div>
                       </Card>
                     );
                     })}
