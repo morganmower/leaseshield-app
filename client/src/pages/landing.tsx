@@ -412,9 +412,12 @@ export default function Landing() {
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">1.</span>
                 <div>
-                  <span className="font-semibold text-foreground">Collect & Screen Applicants</span>
+                  <span className="font-semibold text-foreground">Collect Applications & Screen Tenants</span>
                   <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                    Send applications and run tenant screening via trusted partner Western Verify.
+                    Send applicants a link to apply and run screening via trusted partner Western Verify.
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">
+                    LeaseShield connects to your screening provider for a seamless, compliant workflow.
                   </p>
                 </div>
               </li>
