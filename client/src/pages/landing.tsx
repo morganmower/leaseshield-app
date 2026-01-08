@@ -392,7 +392,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Micro How It Works - Simple 3-line format */}
+      {/* How It Works - Simple 3-step workflow */}
       <section id="how-it-works" className="py-10 sm:py-12 bg-muted/30 border-y scroll-mt-24">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -402,27 +402,42 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center"
           >
+            <p className="text-sm font-semibold text-muted-foreground mb-2">
+              A simple workflow to protect you from common landlord mistakes
+            </p>
             <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-6">
-              How It Works:
+              How It Works
             </h2>
-            <ol className="space-y-3 text-left max-w-xl mx-auto">
+            <ol className="space-y-5 text-left max-w-xl mx-auto">
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">1.</span>
-                <span className="text-base sm:text-lg text-muted-foreground">
-                  Collect applications & run screening (via trusted partner Western Verify)
-                </span>
+                <div>
+                  <span className="font-semibold text-foreground">Collect & Screen Applicants</span>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    Send applications and run tenant screening via trusted partner Western Verify.
+                  </p>
+                </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">2.</span>
-                <span className="text-base sm:text-lg text-muted-foreground">
-                  Decode results with AI guidance & compliance checks
-                </span>
+                <div>
+                  <span className="font-semibold text-foreground">Decode Reports Instantly</span>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    AI guidance explains results in plain English and flags compliance risks.
+                  </p>
+                </div>
               </li>
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">3.</span>
-                <span className="text-base sm:text-lg text-muted-foreground">
-                  Build and use state-specific leases & notices
-                </span>
+                <div>
+                  <span className="font-semibold text-foreground">Build Compliant Documents</span>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                    Generate state-specific leases, notices, and forms—always up to date.
+                  </p>
+                  <p className="text-xs text-muted-foreground/70 mt-2">
+                    Documents update automatically as laws change—no manual tracking needed.
+                  </p>
+                </div>
               </li>
             </ol>
           </motion.div>
