@@ -412,11 +412,11 @@ export default function Landing() {
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">1.</span>
                 <div>
-                  <span className="font-semibold text-foreground">Collect Applications & Screen Tenants</span>
+                  <span className="font-bold text-foreground">Collect Applications & Screen Tenants</span>
                   <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     Send applicants a link to apply and run screening via trusted partner Western Verify.
                   </p>
-                  <p className="text-xs text-muted-foreground/70 mt-2">
+                  <p className="text-xs text-muted-foreground/60 mt-2">
                     LeaseShield connects to your screening provider for a seamless, compliant workflow.
                   </p>
                 </div>
@@ -424,7 +424,7 @@ export default function Landing() {
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">2.</span>
                 <div>
-                  <span className="font-semibold text-foreground">Decode Reports Instantly</span>
+                  <span className="font-bold text-foreground">Decode Reports Instantly</span>
                   <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     AI guidance explains results in plain English and flags compliance risks.
                   </p>
@@ -433,11 +433,11 @@ export default function Landing() {
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">3.</span>
                 <div>
-                  <span className="font-semibold text-foreground">Build Compliant Documents</span>
+                  <span className="font-bold text-foreground">Build Compliant Documents</span>
                   <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     Generate state-specific leases, notices, and forms—always up to date.
                   </p>
-                  <p className="text-xs text-muted-foreground/70 mt-2">
+                  <p className="text-xs text-muted-foreground/60 mt-2">
                     Documents update automatically as laws change—no manual tracking needed.
                   </p>
                 </div>
@@ -455,7 +455,7 @@ export default function Landing() {
       </div>
 
       {/* Association Complement */}
-      <div className="py-6 bg-background text-center border-b">
+      <div className="py-8 bg-background text-center border-b">
         <div className="container max-w-2xl mx-auto px-4">
           <p className="text-sm text-muted-foreground" data-testid="text-association-complement">
             <span className="font-medium text-foreground">Designed to complement your apartment association membership.</span>

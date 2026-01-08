@@ -1,0 +1,127 @@
+font choices are good — nothing is wrong — but there are 2 very small hierarchy tweaks that would noticeably improve readability and perceived polish.
+
+You’re at the “refinement” stage, not redesign.
+
+What’s Working Well (Don’t Change)
+
+✅ Typeface itself (clean, modern, SaaS-appropriate)
+✅ Consistent font family across the section
+✅ Calm, professional tone (fits compliance product)
+✅ Good contrast between headings and body text
+✅ Spacing is already solid
+
+So no need to swap fonts or introduce new ones.
+
+The Real Issue (Subtle Hierarchy, Not Font Choice)
+
+Right now, everything feels slightly too similar in weight, which causes:
+
+Step titles
+
+Step descriptions
+
+Clarifying lines
+
+Trust + association blocks
+
+to visually compete with each other.
+
+The eye should clearly know:
+
+What to read first
+
+What is supporting detail
+
+What is reassurance / optional context
+
+✅ Recommended Micro-Typography Tweaks (Very Light)
+1️⃣ Make Step Titles Slightly Stronger
+
+Current:
+Step titles are bold, but close to body weight.
+
+Recommendation:
+
+Increase font-weight one notch (e.g., from 500 → 600)
+
+Or increase font-size by ~2px
+
+Result:
+The eye locks onto the steps instantly, improving scan speed.
+
+Example:
+
+Collect Applications & Screen Tenants ← feels more decisive
+
+2️⃣ De-Emphasize the Clarifying Gray Lines Just a Touch More
+
+These two lines are correct content-wise — they just need to feel more “supporting.”
+
+Lines like:
+
+“LeaseShield connects to your screening provider…”
+
+“Documents update automatically as laws change…”
+
+Recommendation:
+
+Reduce font-size slightly (e.g., 0.85–0.9em)
+
+Keep gray color, but slightly lighter if possible
+
+Result:
+They read as reassurance, not core instruction — exactly what you want.
+
+3️⃣ Separate Trust Signal vs. Association Block More Clearly
+
+This is the one place I’d adjust spacing, not font.
+
+Right now:
+
+“Built by professionals…”
+
+“Designed to complement your apartment association…”
+
+are close enough that they can feel like one block.
+
+Recommendation:
+
+Add a little more vertical spacing between them
+
+OR slightly reduce the font size of the association block
+
+Why:
+
+Trust signal = credibility
+
+Association clarification = objection handling
+
+They serve different psychological jobs and should feel distinct.
+
+❌ What I Would NOT Change
+
+Do not:
+
+Introduce a second font
+
+Use italics for emphasis
+
+Increase contrast aggressively
+
+Make association text too bold
+
+Turn this into a “callout box”
+
+It should remain calm and confident.
+
+Final Verdict
+
+Do fonts need to change?
+👉 No. Typeface is right.
+
+Do hierarchy and emphasis need light tuning?
+👉 Yes — small weight/size adjustments will improve clarity and polish.
+
+If I had to summarize in one sentence:
+
+Your typography is correct; it just needs slightly clearer visual leadership.
