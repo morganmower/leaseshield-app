@@ -24,7 +24,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { FileText, Download, Search, Filter, Lock, AlertTriangle } from "lucide-react";
+import { 
+  FileText, 
+  Download, 
+  Search, 
+  Filter, 
+  Lock, 
+  AlertTriangle, 
+  ClipboardList, 
+  UserCheck, 
+  Scale, 
+  MessageSquareWarning, 
+  Bell, 
+  Home,
+  FolderOpen,
+  X
+} from "lucide-react";
 import type { Template } from "@shared/schema";
 import { SessionExpired, isSessionExpiredError, hasExpiredSession } from "@/components/session-expired";
 
@@ -300,211 +315,406 @@ export default function Templates() {
     move_in_out: "Move-In/Out",
   };
 
+  // Category icon mapping
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case 'leasing': return ClipboardList;
+      case 'screening': return UserCheck;
+      case 'compliance': return Scale;
+      case 'tenant_issues': return MessageSquareWarning;
+      case 'notices': return Bell;
+      case 'move_in_out': return Home;
+      default: return FileText;
+    }
+  };
+
+  // Category color mapping
+  const getCategoryColor = (category: string) => {
+    switch (category) {
+      case 'leasing': return 'text-blue-600 dark:text-blue-400';
+      case 'screening': return 'text-emerald-600 dark:text-emerald-400';
+      case 'compliance': return 'text-purple-600 dark:text-purple-400';
+      case 'tenant_issues': return 'text-red-600 dark:text-red-400';
+      case 'notices': return 'text-amber-600 dark:text-amber-400';
+      case 'move_in_out': return 'text-teal-600 dark:text-teal-400';
+      default: return 'text-primary';
+    }
+  };
+
+  const getCategoryBgColor = (category: string) => {
+    switch (category) {
+      case 'leasing': return 'bg-blue-100 dark:bg-blue-900/50';
+      case 'screening': return 'bg-emerald-100 dark:bg-emerald-900/50';
+      case 'compliance': return 'bg-purple-100 dark:bg-purple-900/50';
+      case 'tenant_issues': return 'bg-red-100 dark:bg-red-900/50';
+      case 'notices': return 'bg-amber-100 dark:bg-amber-900/50';
+      case 'move_in_out': return 'bg-teal-100 dark:bg-teal-900/50';
+      default: return 'bg-primary/20';
+    }
+  };
+
+  // Count unique categories in templates
+  const uniqueCategories = new Set(templates?.map(t => t.category) || []);
+  const categoryCount = uniqueCategories.size;
+
+  // Get most recent update date from templates
+  const mostRecentUpdate = templates?.reduce((latest, template) => {
+    const templateDate = template.updatedAt ? new Date(template.updatedAt) : null;
+    if (!templateDate) return latest;
+    return !latest || templateDate > latest ? templateDate : latest;
+  }, null as Date | null);
+
+  const formatLastUpdated = (date: Date | null) => {
+    if (!date) return 'Recently';
+    const now = new Date();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  };
+
+  // Quick filter categories
+  const quickFilterCategories = [
+    { key: 'leasing', label: 'Leasing', icon: ClipboardList },
+    { key: 'notices', label: 'Notices', icon: Bell },
+    { key: 'screening', label: 'Screening', icon: UserCheck },
+    { key: 'tenant_issues', label: 'Issues', icon: MessageSquareWarning },
+    { key: 'compliance', label: 'Compliance', icon: Scale },
+    { key: 'move_in_out', label: 'Move-In/Out', icon: Home },
+  ];
+
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Leases & Notices
-          </h1>
-          <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">Documents are updated as legislation changes — older versions may create enforceability risk.</span>
-          </p>
-          <p className="text-muted-foreground">
-            Choose your state to view the latest versions.
-          </p>
-        </div>
-
-        {/* Legal Disclaimer */}
-        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
+      {/* Hero Header with Gradient */}
+      <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex-1">
-              <p className="text-sm text-foreground">
-                <strong>Not Legal Advice:</strong> These templates are general forms for informational purposes only. 
-                They must be customized for your specific situation and reviewed by a licensed attorney. Using these 
-                templates does not create an attorney-client relationship. <Link to="/disclaimers" className="text-primary hover:underline" data-testid="link-disclaimers">Read full disclaimers</Link>
+              <div className="flex items-center gap-3 mb-3">
+                <div className="p-2.5 rounded-xl bg-primary/15">
+                  <FolderOpen className="h-6 w-6 text-primary" />
+                </div>
+                <h1 className="text-3xl font-display font-semibold text-foreground">
+                  Leases & Notices
+                </h1>
+              </div>
+              <p className="text-muted-foreground max-w-2xl">
+                <span className="font-medium text-foreground">Documents are updated as legislation changes — older versions may create enforceability risk.</span>
               </p>
             </div>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="mb-8">
-          <div className="grid md:grid-cols-4 gap-4">
-            <div className="md:col-span-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search templates..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10"
-                  data-testid="input-search-templates"
-                />
+            
+            {/* Metrics */}
+            <div className="flex flex-wrap gap-4 md:gap-6">
+              <div className="text-center min-w-[60px]">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{templates?.length || 0}</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Templates</div>
+              </div>
+              <div className="text-center min-w-[60px]">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{categoryCount}</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Categories</div>
+              </div>
+              <div className="text-center min-w-[60px]">
+                <div className="text-2xl md:text-3xl font-bold text-primary">14</div>
+                <div className="text-xs md:text-sm text-muted-foreground">States</div>
+              </div>
+              <div className="text-center min-w-[60px]">
+                <div className="text-lg md:text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                  {formatLastUpdated(mostRecentUpdate)}
+                </div>
+                <div className="text-xs md:text-sm text-muted-foreground">Last Updated</div>
               </div>
             </div>
-            <Select value={selectedState} onValueChange={setSelectedState}>
-              <SelectTrigger data-testid="select-state-filter">
-                <SelectValue placeholder="All States" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All States</SelectItem>
-                <SelectItem value="UT">Utah</SelectItem>
-                <SelectItem value="TX">Texas</SelectItem>
-                <SelectItem value="ND">North Dakota</SelectItem>
-                <SelectItem value="SD">South Dakota</SelectItem>
-                <SelectItem value="NC">North Carolina</SelectItem>
-                <SelectItem value="OH">Ohio</SelectItem>
-                <SelectItem value="MI">Michigan</SelectItem>
-                <SelectItem value="ID">Idaho</SelectItem>
-                <SelectItem value="WY">Wyoming</SelectItem>
-                <SelectItem value="CA">California</SelectItem>
-                <SelectItem value="VA">Virginia</SelectItem>
-                <SelectItem value="NV">Nevada</SelectItem>
-                <SelectItem value="AZ">Arizona</SelectItem>
-                <SelectItem value="FL">Florida</SelectItem>
-              </SelectContent>
-            </Select>
-            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-              <SelectTrigger data-testid="select-category-filter">
-                <SelectValue placeholder="All Categories" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
-                <SelectItem value="leasing">Leasing</SelectItem>
-                <SelectItem value="screening">Screening</SelectItem>
-                <SelectItem value="compliance">Compliance</SelectItem>
-                <SelectItem value="tenant_issues">Tenant Issues</SelectItem>
-                <SelectItem value="notices">Notices</SelectItem>
-                <SelectItem value="move_in_out">Move-In/Out</SelectItem>
-              </SelectContent>
-            </Select>
+          </div>
+        </div>
+      </div>
+
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Legal Disclaimer - More Compact */}
+        <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg px-4 py-3">
+          <div className="flex items-center gap-3">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-sm text-muted-foreground">
+              <strong className="text-foreground">Not Legal Advice:</strong> Templates must be reviewed by a licensed attorney. <Link to="/disclaimers" className="text-primary hover:underline" data-testid="link-disclaimers">Read disclaimers</Link>
+            </p>
           </div>
         </div>
 
-        {/* Results Count */}
-        <div className="mb-6 flex items-center justify-between">
-          <p className="text-sm text-muted-foreground">
-            {templatesLoading ? (
-              "Loading templates..."
-            ) : (
-              `${filteredTemplates.length} ${filteredTemplates.length === 1 ? 'template' : 'templates'} found`
-            )}
-          </p>
-          {(selectedState !== "all" || selectedCategory !== "all") && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSelectedState("all");
-                setSelectedCategory("all");
-                setSearchQuery("");
-              }}
-              data-testid="button-clear-filters"
-            >
-              <Filter className="mr-2 h-4 w-4" />
-              Clear Filters
-            </Button>
-          )}
-        </div>
+        {/* Filter Section */}
+        <Card className="mb-6 p-4">
+          <div className="space-y-4">
+            {/* Search and Selects Row */}
+            <div className="grid md:grid-cols-4 gap-4">
+              <div className="md:col-span-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search templates..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                    data-testid="input-search-templates"
+                  />
+                </div>
+              </div>
+              <Select value={selectedState} onValueChange={setSelectedState}>
+                <SelectTrigger data-testid="select-state-filter">
+                  <SelectValue placeholder="All States" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All States</SelectItem>
+                  <SelectItem value="UT">Utah</SelectItem>
+                  <SelectItem value="TX">Texas</SelectItem>
+                  <SelectItem value="ND">North Dakota</SelectItem>
+                  <SelectItem value="SD">South Dakota</SelectItem>
+                  <SelectItem value="NC">North Carolina</SelectItem>
+                  <SelectItem value="OH">Ohio</SelectItem>
+                  <SelectItem value="MI">Michigan</SelectItem>
+                  <SelectItem value="ID">Idaho</SelectItem>
+                  <SelectItem value="WY">Wyoming</SelectItem>
+                  <SelectItem value="CA">California</SelectItem>
+                  <SelectItem value="VA">Virginia</SelectItem>
+                  <SelectItem value="NV">Nevada</SelectItem>
+                  <SelectItem value="AZ">Arizona</SelectItem>
+                  <SelectItem value="FL">Florida</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                <SelectTrigger data-testid="select-category-filter">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="leasing">Leasing</SelectItem>
+                  <SelectItem value="screening">Screening</SelectItem>
+                  <SelectItem value="compliance">Compliance</SelectItem>
+                  <SelectItem value="tenant_issues">Tenant Issues</SelectItem>
+                  <SelectItem value="notices">Notices</SelectItem>
+                  <SelectItem value="move_in_out">Move-In/Out</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {/* Quick Filter Chips */}
+            <div className="flex flex-wrap gap-2">
+              {quickFilterCategories.map(({ key, label, icon: Icon }) => (
+                <Button
+                  key={key}
+                  variant={selectedCategory === key ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedCategory(selectedCategory === key ? "all" : key)}
+                  data-testid={`button-quick-filter-${key}`}
+                  className="gap-1.5"
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </Button>
+              ))}
+            </div>
+
+            {/* Active Filters & Results */}
+            <div className="flex items-center justify-between pt-2 border-t">
+              <p className="text-sm text-muted-foreground">
+                {templatesLoading ? (
+                  "Loading templates..."
+                ) : (
+                  <>
+                    <span className="font-medium text-foreground">{filteredTemplates.length}</span>
+                    {` ${filteredTemplates.length === 1 ? 'template' : 'templates'} found`}
+                    {selectedState !== "all" && (
+                      <Badge variant="secondary" className="ml-2 gap-1">
+                        {selectedState}
+                        <X 
+                          className="h-3 w-3 cursor-pointer" 
+                          onClick={() => setSelectedState("all")}
+                        />
+                      </Badge>
+                    )}
+                  </>
+                )}
+              </p>
+              {(selectedState !== "all" || selectedCategory !== "all" || searchQuery) && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => {
+                    setSelectedState("all");
+                    setSelectedCategory("all");
+                    setSearchQuery("");
+                  }}
+                  data-testid="button-clear-filters"
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  Clear All
+                </Button>
+              )}
+            </div>
+          </div>
+        </Card>
 
         {/* Templates Grid */}
         {templatesLoading ? (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="p-6">
-                <div className="h-40 animate-pulse bg-muted rounded-md" />
+              <Card key={i} className="overflow-hidden">
+                <div className="h-12 animate-pulse bg-muted" />
+                <div className="p-5 space-y-3">
+                  <div className="h-5 animate-pulse bg-muted rounded w-3/4" />
+                  <div className="h-4 animate-pulse bg-muted rounded w-full" />
+                  <div className="h-4 animate-pulse bg-muted rounded w-2/3" />
+                  <div className="h-9 animate-pulse bg-muted rounded mt-4" />
+                </div>
               </Card>
             ))}
           </div>
         ) : filteredTemplates.length === 0 ? (
-          <Card className="p-12 text-center">
-            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-            <h3 className="font-semibold text-lg mb-2">No templates found</h3>
-            <p className="text-muted-foreground mb-4">
-              Try adjusting your search or filter criteria
-            </p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedState("all");
-                setSelectedCategory("all");
-              }}
-              data-testid="button-reset-search"
-            >
-              Reset Filters
-            </Button>
+          <Card className="p-12">
+            <div className="max-w-md mx-auto text-center">
+              <div className="p-4 rounded-full bg-muted/50 w-20 h-20 mx-auto mb-6 flex items-center justify-center">
+                <Search className="h-10 w-10 text-muted-foreground" />
+              </div>
+              <h3 className="font-semibold text-xl mb-2 text-foreground">No templates found</h3>
+              <p className="text-muted-foreground mb-6">
+                We couldn't find any templates matching your current filters. Try adjusting your search or browse all templates.
+              </p>
+              <div className="flex gap-3 justify-center">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSelectedState("all");
+                    setSelectedCategory("all");
+                  }}
+                  data-testid="button-reset-search"
+                >
+                  <Filter className="mr-2 h-4 w-4" />
+                  Reset Filters
+                </Button>
+                <Button
+                  variant="default"
+                  onClick={() => setSelectedState(user?.preferredState || "UT")}
+                  data-testid="button-view-state-templates"
+                >
+                  View {user?.preferredState || "UT"} Templates
+                </Button>
+              </div>
+            </div>
           </Card>
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredTemplates.map((template) => (
-              <Card
-                key={template.id}
-                className="p-6 hover-elevate transition-all flex flex-col"
-                data-testid={`template-card-${template.id}`}
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                    <FileText className="h-6 w-6 text-primary" />
+            {filteredTemplates.map((template) => {
+              const CategoryIcon = getCategoryIcon(template.category);
+              const categoryColor = getCategoryColor(template.category);
+              const categoryBgColor = getCategoryBgColor(template.category);
+              
+              return (
+                <Card
+                  key={template.id}
+                  className="overflow-hidden hover-elevate transition-all flex flex-col"
+                  data-testid={`template-card-${template.id}`}
+                >
+                  {/* Card Header with Category */}
+                  <div className={`px-5 py-3 ${categoryBgColor}`}>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={`p-1.5 rounded-md ${
+                          template.category === 'leasing' ? 'bg-blue-200/50 dark:bg-blue-800/50' :
+                          template.category === 'screening' ? 'bg-emerald-200/50 dark:bg-emerald-800/50' :
+                          template.category === 'compliance' ? 'bg-purple-200/50 dark:bg-purple-800/50' :
+                          template.category === 'tenant_issues' ? 'bg-red-200/50 dark:bg-red-800/50' :
+                          template.category === 'notices' ? 'bg-amber-200/50 dark:bg-amber-800/50' :
+                          template.category === 'move_in_out' ? 'bg-teal-200/50 dark:bg-teal-800/50' :
+                          'bg-primary/30'
+                        }`}>
+                          <CategoryIcon className={`h-4 w-4 ${categoryColor}`} />
+                        </div>
+                        <span className={`text-sm font-medium ${categoryColor}`}>
+                          {categoryLabels[template.category]}
+                        </span>
+                      </div>
+                      <StateBadge stateId={template.stateId} />
+                    </div>
                   </div>
-                  <div className="flex flex-col gap-2 items-end">
-                    <StateBadge stateId={template.stateId} />
-                    <Badge variant="secondary" className="text-xs">
-                      {categoryLabels[template.category]}
-                    </Badge>
-                  </div>
-                </div>
 
-                <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
-                  {template.title}
-                </h3>
-                <p className="text-sm text-muted-foreground mb-4 flex-1 line-clamp-3">
-                  {template.description}
-                </p>
+                  {/* Card Body */}
+                  <div className="p-5 flex flex-col flex-1">
+                    <h3 className="font-semibold text-foreground mb-2 line-clamp-2">
+                      {template.title}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-4 flex-1 line-clamp-3">
+                      {template.description}
+                    </p>
 
-                <div className="flex gap-2">
-                  {template.generationMode === 'static' ? (
-                    <Button
-                      variant="default"
-                      size="sm"
-                      className="flex-1"
-                      onClick={() => handleTemplateAction('download-blank', template.id)}
-                      data-testid={`button-download-blank-${template.id}`}
-                    >
-                      <Download className="mr-2 h-4 w-4" />
-                      Download Blank Form
-                    </Button>
-                  ) : (
-                    <>
-                      <Button
-                        variant="default"
-                        size="sm"
-                        className="flex-1"
-                        onClick={() => handleTemplateAction('download', template.id)}
-                        data-testid={`button-download-${template.id}`}
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        Download
-                      </Button>
+                    {/* Format Badge */}
+                    <div className="mb-4">
                       {template.fillableFormData ? (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <FileText className="h-3 w-3" />
+                          Fillable Form
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-xs gap-1">
+                          <Download className="h-3 w-3" />
+                          PDF Download
+                        </Badge>
+                      )}
+                    </div>
+
+                    {/* Actions */}
+                    <div className="flex gap-2">
+                      {template.generationMode === 'static' ? (
                         <Button
-                          variant="outline"
+                          variant="default"
                           size="sm"
                           className="flex-1"
-                          onClick={() => handleTemplateAction('fill', template.id)}
-                          data-testid={`button-fill-${template.id}`}
+                          onClick={() => handleTemplateAction('download-blank', template.id)}
+                          data-testid={`button-download-blank-${template.id}`}
                         >
-                          Fill Online
+                          <Download className="mr-2 h-4 w-4" />
+                          Download
                         </Button>
-                      ) : null}
-                    </>
-                  )}
-                </div>
-              </Card>
-            ))}
+                      ) : (
+                        <>
+                          {template.fillableFormData ? (
+                            <>
+                              <Button
+                                variant="default"
+                                size="sm"
+                                className="flex-1"
+                                onClick={() => handleTemplateAction('fill', template.id)}
+                                data-testid={`button-fill-${template.id}`}
+                              >
+                                Fill Online
+                              </Button>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => handleTemplateAction('download', template.id)}
+                                data-testid={`button-download-${template.id}`}
+                              >
+                                <Download className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="flex-1"
+                              onClick={() => handleTemplateAction('download', template.id)}
+                              data-testid={`button-download-${template.id}`}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
+                            </Button>
+                          )}
+                        </>
+                      )}
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
         )}
 
