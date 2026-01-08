@@ -1884,8 +1884,7 @@ export default function Landing() {
           <div className="flex items-start gap-3">
             <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
             <p className="text-sm text-foreground">
-              <strong>Important:</strong> These are general templates based on current state laws. 
-              This is not legal advice. Always have your final documents reviewed by a licensed attorney in your state.
+              The information and general templates provided are based on current state laws. They do not constitute legal advice and do not create an attorney-client relationship. Laws vary and can change by jurisdiction. You should have all final documents reviewed by a licensed attorney in your state.
             </p>
           </div>
         </div>
