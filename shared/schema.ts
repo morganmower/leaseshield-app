@@ -439,6 +439,7 @@ export const legislativeMonitoring = pgTable("legislative_monitoring", {
   relevanceLevel: relevanceEnum("relevance_level"),
   aiAnalysis: text("ai_analysis"), // AI explanation of why this matters
   affectedTemplateIds: text("affected_template_ids").array(), // Which templates might need updates
+  affectedComplianceCategories: text("affected_compliance_categories").array(), // Which compliance categories are affected (deposits, disclosures, evictions, fair_housing, rent_increases)
   // Tracking
   isMonitored: boolean("is_monitored").default(true),
   isReviewed: boolean("is_reviewed").default(false),

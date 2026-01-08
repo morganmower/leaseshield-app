@@ -11,6 +11,7 @@ interface BillAnalysisResult {
   relevanceLevel: 'high' | 'medium' | 'low' | 'dismissed';
   aiAnalysis: string;
   affectedTemplateIds: string[];
+  affectedComplianceCategories: string[];
   recommendedChanges: string;
 }
 
@@ -37,7 +38,8 @@ export class BillAnalysisService {
 
 1. How relevant is this bill to landlord-tenant law and rental property management?
 2. Which specific templates (if any) would need to be updated if this bill becomes law?
-3. What changes would be required to those templates?
+3. Which compliance categories would be affected?
+4. What changes would be required?
 
 BILL INFORMATION:
 Title: ${billTitle}
@@ -47,21 +49,29 @@ ${billText ? `\n\nFull Bill Text:\n${billText.substring(0, 10000)}` : ''}
 AVAILABLE TEMPLATES FOR ${stateId}:
 ${templateList}
 
+COMPLIANCE CATEGORIES TO CONSIDER:
+- deposits: Security deposit limits, return timelines, deduction rules
+- disclosures: Required landlord disclosures to tenants
+- evictions: Eviction procedures, notice requirements, just cause
+- fair_housing: Anti-discrimination, protected classes, accommodations
+- rent_increases: Rent increase notice periods, rent control, caps on increases
+
 Please respond in JSON format with:
 {
   "relevanceLevel": "high" | "medium" | "low" | "dismissed",
   "analysis": "Brief explanation of why this bill matters or doesn't matter to landlords",
   "affectedTemplateIds": ["template-id-1", "template-id-2"],
-  "recommendedChanges": "Specific changes needed to affected templates, or empty string if no changes needed"
+  "affectedComplianceCategories": ["rent_increases", "deposits"],
+  "recommendedChanges": "Specific changes needed to affected templates or compliance cards, or empty string if no changes needed"
 }
 
 Relevance Guidelines:
-- HIGH: Directly changes landlord-tenant law, requires immediate template updates
-- MEDIUM: Related to rental housing, may affect templates indirectly
+- HIGH: Directly changes landlord-tenant law, requires immediate template/compliance card updates
+- MEDIUM: Related to rental housing, may affect templates or compliance indirectly
 - LOW: Tangentially related to housing, unlikely to affect templates
 - DISMISSED: Not related to landlord-tenant law at all
 
-Be conservative - only mark as HIGH if templates definitely need updates.`;
+Be conservative - only mark as HIGH if templates or compliance cards definitely need updates.`;
 
       const completion = await openai.chat.completions.create({
         model: 'gpt-4o',
@@ -91,10 +101,17 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
         stateTemplates.some(t => t.id === id)
       );
 
+      // Validate compliance categories
+      const validCategories = ['deposits', 'disclosures', 'evictions', 'fair_housing', 'rent_increases'];
+      const validComplianceCategories = (parsed.affectedComplianceCategories || []).filter((cat: string) =>
+        validCategories.includes(cat)
+      );
+
       return {
         relevanceLevel: parsed.relevanceLevel,
         aiAnalysis: parsed.analysis,
         affectedTemplateIds: validTemplateIds,
+        affectedComplianceCategories: validComplianceCategories,
         recommendedChanges: parsed.recommendedChanges || '',
       };
     } catch (error) {
@@ -111,30 +128,56 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
   private fallbackAnalysis(billTitle: string, billDescription: string): BillAnalysisResult {
     const text = `${billTitle} ${billDescription}`.toLowerCase();
     
+    // Keywords mapped to compliance categories
+    const categoryKeywords: Record<string, string[]> = {
+      rent_increases: [
+        'rent increase', 'rent control', 'rent cap', 'rent stabilization',
+        'rent limit', 'rental increase', 'rent notice', 'rent raise',
+        'tenant protection act', 'just cause', 'rent regulation',
+      ],
+      deposits: [
+        'security deposit', 'deposit return', 'deposit limit', 'deposit refund',
+      ],
+      evictions: [
+        'eviction', 'unlawful detainer', 'lease termination', 'notice to quit',
+        'eviction moratorium', 'eviction protection',
+      ],
+      disclosures: [
+        'disclosure', 'lead paint', 'mold disclosure', 'bed bug',
+      ],
+      fair_housing: [
+        'fair housing', 'discrimination', 'protected class', 'source of income',
+        'housing discrimination', 'reasonable accommodation',
+      ],
+    };
+
     const highPriorityKeywords = [
-      'eviction',
-      'security deposit',
-      'lease termination',
-      'notice requirement',
-      'habitability',
-      'rent increase',
+      'eviction', 'security deposit', 'lease termination', 'notice requirement',
+      'habitability', 'rent increase', 'rent control', 'rent cap', 'rent limit',
+      'tenant protection', 'rent stabilization', 'just cause eviction',
     ];
 
     const mediumPriorityKeywords = [
-      'landlord',
-      'tenant',
-      'rental',
-      'lease',
+      'landlord', 'tenant', 'rental', 'lease', 'housing',
     ];
 
     const hasHighPriority = highPriorityKeywords.some(k => text.includes(k));
     const hasMediumPriority = mediumPriorityKeywords.some(k => text.includes(k));
+
+    // Determine affected compliance categories
+    const affectedComplianceCategories: string[] = [];
+    for (const [category, keywords] of Object.entries(categoryKeywords)) {
+      if (keywords.some(k => text.includes(k))) {
+        affectedComplianceCategories.push(category);
+      }
+    }
 
     if (hasHighPriority) {
       return {
         relevanceLevel: 'high',
         aiAnalysis: 'This bill contains keywords indicating it directly affects landlord-tenant law. Manual review required.',
         affectedTemplateIds: [],
+        affectedComplianceCategories,
         recommendedChanges: 'Manual review needed to determine specific changes.',
       };
     } else if (hasMediumPriority) {
@@ -142,6 +185,7 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
         relevanceLevel: 'medium',
         aiAnalysis: 'This bill may be related to landlord-tenant law. Review recommended.',
         affectedTemplateIds: [],
+        affectedComplianceCategories,
         recommendedChanges: '',
       };
     } else {
@@ -149,6 +193,7 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
         relevanceLevel: 'low',
         aiAnalysis: 'This bill does not appear to be directly related to landlord-tenant law.',
         affectedTemplateIds: [],
+        affectedComplianceCategories: [],
         recommendedChanges: '',
       };
     }
@@ -308,10 +353,17 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
         stateTemplates.some(t => t.id === id)
       );
 
+      // Validate compliance categories
+      const validCategories = ['deposits', 'disclosures', 'evictions', 'fair_housing', 'rent_increases'];
+      const validComplianceCategories = (parsed.affectedComplianceCategories || []).filter((cat: string) =>
+        validCategories.includes(cat)
+      );
+
       return {
         relevanceLevel: parsed.relevanceLevel,
         aiAnalysis: parsed.analysis,
         affectedTemplateIds: validTemplateIds,
+        affectedComplianceCategories: validComplianceCategories,
         recommendedChanges: parsed.recommendedChanges || '',
       };
     } catch (error) {

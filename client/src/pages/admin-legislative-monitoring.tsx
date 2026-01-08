@@ -23,6 +23,7 @@ interface LegislativeBill {
   relevanceLevel: 'high' | 'medium' | 'low' | 'dismissed';
   aiAnalysis: string;
   affectedTemplateIds: string[];
+  affectedComplianceCategories?: string[];
   isReviewed: boolean;
   reviewedBy: string | null;
   reviewedAt: string | null;
@@ -387,6 +388,31 @@ export default function AdminLegislativeMonitoring() {
                             <Badge key={idx} variant="secondary" data-testid={`badge-template-${bill.id}-${idx}`}>
                               <FileText className="h-3 w-3 mr-1" />
                               {templateId}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {bill.affectedComplianceCategories && bill.affectedComplianceCategories.length > 0 && (
+                      <div>
+                        <h4 className="font-semibold text-sm text-foreground mb-2">
+                          Affected Compliance Categories ({bill.affectedComplianceCategories.length}):
+                        </h4>
+                        <div className="flex flex-wrap gap-2">
+                          {bill.affectedComplianceCategories.map((category, idx) => (
+                            <Badge 
+                              key={idx} 
+                              variant="outline" 
+                              className="bg-primary/10 border-primary/30"
+                              data-testid={`badge-compliance-${bill.id}-${idx}`}
+                            >
+                              {category === 'rent_increases' ? 'Rent Increases' :
+                               category === 'deposits' ? 'Security Deposits' :
+                               category === 'evictions' ? 'Evictions' :
+                               category === 'disclosures' ? 'Disclosures' :
+                               category === 'fair_housing' ? 'Fair Housing' :
+                               category}
                             </Badge>
                           ))}
                         </div>
