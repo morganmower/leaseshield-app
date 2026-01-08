@@ -145,6 +145,26 @@ export default function AdminLegislativeMonitoring() {
     },
   });
 
+  const reanalyzeMutation = useMutation({
+    mutationFn: async () => {
+      return await apiRequest('POST', '/api/admin/legislative-monitoring/reanalyze', {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
+      toast({
+        title: 'Re-analysis Complete',
+        description: data.message || 'Bills have been re-analyzed for compliance categories.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to re-analyze bills',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getRelevanceBadge = (level: string) => {
     const config = {
       high: { variant: 'destructive' as const, label: 'High Priority' },
@@ -168,14 +188,25 @@ export default function AdminLegislativeMonitoring() {
               Monitor legislative changes and review auto-published template updates
             </p>
           </div>
-          <Button 
-            onClick={() => runMonitoringMutation.mutate()}
-            disabled={runMonitoringMutation.isPending}
-            data-testid="button-run-monitoring"
-          >
-            <PlayCircle className="h-4 w-4 mr-2" />
-            {runMonitoringMutation.isPending ? 'Running...' : 'Run Monitoring Now'}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              variant="outline"
+              onClick={() => reanalyzeMutation.mutate()}
+              disabled={reanalyzeMutation.isPending}
+              data-testid="button-reanalyze"
+            >
+              <RefreshCw className="h-4 w-4 mr-2" />
+              {reanalyzeMutation.isPending ? 'Analyzing...' : 'Re-analyze Bills'}
+            </Button>
+            <Button 
+              onClick={() => runMonitoringMutation.mutate()}
+              disabled={runMonitoringMutation.isPending}
+              data-testid="button-run-monitoring"
+            >
+              <PlayCircle className="h-4 w-4 mr-2" />
+              {runMonitoringMutation.isPending ? 'Running...' : 'Run Monitoring Now'}
+            </Button>
+          </div>
         </div>
 
         {/* Monitoring Status Card */}

@@ -3199,6 +3199,100 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Re-analyze existing bills to populate compliance categories (admin only)
+  app.post('/api/admin/legislative-monitoring/reanalyze', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      console.log('🔄 Re-analyzing existing bills for compliance categories...');
+      
+      // Get all bills that don't have compliance categories
+      const allBills = await storage.getAllLegislativeMonitoring({});
+      const billsToReanalyze = allBills.filter(b => 
+        !b.affectedComplianceCategories || b.affectedComplianceCategories.length === 0
+      );
+
+      console.log(`Found ${billsToReanalyze.length} bills to re-analyze`);
+
+      // Import the analysis service
+      const { BillAnalysisService } = await import('./billAnalysisService');
+      const analysisService = new BillAnalysisService();
+
+      let updated = 0;
+      for (const bill of billsToReanalyze) {
+        try {
+          // Use fallback analysis (faster, no API calls)
+          // Safely build analysis text with null-guarding
+          const text = [
+            bill.title || '',
+            bill.description || '',
+            bill.aiAnalysis || ''
+          ].join(' ').toLowerCase();
+          
+          const categoryKeywords: Record<string, string[]> = {
+            rent_increases: [
+              'rent increase', 'rent control', 'rent cap', 'rent stabilization',
+              'rent limit', 'rental increase', 'rent notice', 'rent raise',
+              'tenant protection act', 'just cause', 'rent regulation',
+            ],
+            deposits: [
+              'security deposit', 'deposit return', 'deposit limit', 'deposit refund',
+            ],
+            evictions: [
+              'eviction', 'unlawful detainer', 'lease termination', 'notice to quit',
+              'eviction moratorium', 'eviction protection',
+            ],
+            disclosures: [
+              'disclosure', 'lead paint', 'mold disclosure', 'bed bug',
+            ],
+            fair_housing: [
+              'fair housing', 'discrimination', 'protected class', 'source of income',
+              'housing discrimination', 'reasonable accommodation',
+            ],
+          };
+
+          const affectedCategories: string[] = [];
+          for (const [category, keywords] of Object.entries(categoryKeywords)) {
+            if (keywords.some(k => text.includes(k))) {
+              affectedCategories.push(category);
+            }
+          }
+
+          if (affectedCategories.length > 0) {
+            // Use bill.id (primary key) not bill.billId (source system ID)
+            await storage.updateLegislativeMonitoring(bill.id, {
+              affectedComplianceCategories: affectedCategories,
+            });
+            updated++;
+            console.log(`  Updated ${bill.billNumber}: ${affectedCategories.join(', ')}`);
+          }
+        } catch (err) {
+          console.error(`Error re-analyzing bill ${bill.id}:`, err);
+        }
+      }
+
+      console.log(`✅ Re-analysis complete. Updated ${updated} bills with compliance categories.`);
+
+      return res.json({
+        success: true,
+        message: `Re-analyzed ${billsToReanalyze.length} bills, updated ${updated} with compliance categories`,
+        analyzed: billsToReanalyze.length,
+        updated,
+      });
+    } catch (error) {
+      console.error('Error re-analyzing bills:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Something went wrong. Please try again."
+      });
+    }
+  });
+
   // Automated cron endpoint for legislative monitoring (protected by secret key)
   app.post('/api/cron/legislative-monitoring', async (req, res) => {
     try {
