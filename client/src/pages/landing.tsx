@@ -693,16 +693,16 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8"
           >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-amber-600 dark:text-amber-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Leases & Notices</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Leases & Notices</h3>
                   <p className="text-muted-foreground mb-4">
                     Stop guessing what your state requires. Get attorney-quality leases, notices, and checklists that keep you compliant and protect your investment.
                   </p>
@@ -725,13 +725,13 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Shield className="h-6 w-6 text-primary" />
+                  <div className="rounded-lg bg-primary/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Compliance Tools</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
                     Stay legally compliant without hiring an attorney. Adverse action letters, compliance checklists, and monthly legal updates—always protected when laws change.
                   </p>
@@ -754,13 +754,13 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Search className="h-5 w-5 md:h-6 md:w-6 text-cyan-600 dark:text-cyan-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Credit & Screening Decoder</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
                     Confidently screen tenants without legal mistakes. Simple credit report explanations and fair housing guidance—no confusing jargon, no discrimination risks.
                   </p>
@@ -783,13 +783,13 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Building2 className="h-5 w-5 md:h-6 md:w-6 text-violet-600 dark:text-violet-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Landlord Toolkit Dashboard</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Landlord Toolkit Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
                     Everything in one place. Leases, notices, checklists, guides, and compliance resources—organized by property for instant access.
                   </p>
@@ -812,13 +812,13 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <MessageCircle className="h-6 w-6 text-rose-600 dark:text-rose-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-rose-600 dark:text-rose-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Communications</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Communications</h3>
                   <p className="text-muted-foreground mb-4">
                     Pre-written, state-compliant tenant notices and messages. Track your communications with built-in templates for common scenarios.
                   </p>
@@ -841,13 +841,13 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <DollarSign className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-emerald-600 dark:text-emerald-500" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Rent Ledger</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Ledger</h3>
                   <p className="text-muted-foreground mb-4">
                     Track rental payments and income simply. Excel template for quick setup or in-app tracking with payment status overview.
                   </p>
@@ -1397,7 +1397,7 @@ export default function Landing() {
           >
             <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-4 py-3">
               <CheckCircle2 className="h-5 w-5 text-success" />
-              <span className="font-medium text-foreground">Money-Back Guarantee</span>
+              <span className="font-medium text-foreground">7-Day Free Trial</span>
             </div>
             <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
               <Shield className="h-5 w-5 text-primary" />
@@ -1553,7 +1553,10 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-base text-muted-foreground">
-              7-day free trial • Instant access • Cancel anytime • Full refund if it's not worth 10× the price
+              7-day free trial • Instant access • Cancel anytime
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-4 max-w-lg mx-auto">
+              *The information and general templates provided are based on current state laws. They do not constitute legal advice and do not create an attorney-client relationship. Laws vary and can change by jurisdiction. You should have all final documents reviewed by a licensed attorney in your state.
             </p>
           </motion.div>
         </div>
@@ -1868,7 +1871,7 @@ export default function Landing() {
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                No credit card required • 30-day money-back guarantee
+                No credit card required • 7-day free trial • Cancel anytime
               </p>
             </div>
           </div>
