@@ -1555,8 +1555,8 @@ export default function Landing() {
             <p className="text-base text-muted-foreground">
               7-day free trial • Instant access • Cancel anytime
             </p>
-            <p className="text-xs text-muted-foreground/70 mt-4 max-w-lg mx-auto">
-              *The information and general templates provided are based on current state laws. They do not constitute legal advice and do not create an attorney-client relationship. Laws vary and can change by jurisdiction. You should have all final documents reviewed by a licensed attorney in your state.
+            <p className="text-xs text-muted-foreground/70 mt-3">
+              *Not legal advice. See disclaimer below.
             </p>
           </motion.div>
         </div>
