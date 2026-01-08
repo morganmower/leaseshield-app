@@ -444,6 +444,13 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Trust Signal */}
+      <div className="py-6 bg-muted/30 text-center">
+        <p className="text-sm text-muted-foreground" data-testid="text-trust-signal">
+          Built by professionals with decades of experience in tenant screening and compliance.
+        </p>
+      </div>
+
       {/* Dashboard Preview / Sneak Peek */}
       <section className="py-12 md:py-16 bg-background" data-testid="section-preview">
         <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
