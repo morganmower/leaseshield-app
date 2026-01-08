@@ -454,6 +454,18 @@ export default function Landing() {
         </p>
       </div>
 
+      {/* Association Complement */}
+      <div className="py-6 bg-background text-center border-b">
+        <div className="container max-w-2xl mx-auto px-4">
+          <p className="text-sm text-muted-foreground" data-testid="text-association-complement">
+            <span className="font-medium text-foreground">Designed to complement your apartment association membership.</span>
+            <br className="hidden sm:block" />
+            <span className="sm:inline"> </span>
+            LeaseShield handles day-to-day screening decisions, compliance workflows, and tools most associations don't provide.
+          </p>
+        </div>
+      </div>
+
       {/* Dashboard Preview / Sneak Peek */}
       <section className="py-12 md:py-16 bg-background" data-testid="section-preview">
         <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
