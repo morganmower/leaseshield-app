@@ -285,25 +285,61 @@ export default function Landing() {
               variants={fadeInUp}
               className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground leading-tight mb-6"
             >
-              The Daily-Use Toolkit Associations Aren't Built For
+              Landlord Protection Without the Guesswork
             </motion.h1>
             
             <motion.p 
               variants={fadeInUp}
-              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-4 leading-relaxed max-w-2xl mx-auto"
+              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-2 leading-relaxed max-w-2xl mx-auto"
             >
-              A simple workflow for applications, screening, and compliant documents.
+              State-specific leases, AI screening decoder, and compliance alerts — all in one simple dashboard.
             </motion.p>
             
             <motion.p 
               variants={fadeInUp}
-              className="text-xs sm:text-sm text-muted-foreground/80 mb-8 leading-relaxed max-w-3xl mx-auto"
+              className="text-sm sm:text-base md:text-lg text-foreground/80 font-medium mb-6 leading-relaxed max-w-2xl mx-auto"
             >
-              Collect applications <span className="text-muted-foreground">→</span> Run screening via our trusted partner Western Verify <span className="text-muted-foreground">→</span> Decode results with AI guidance <span className="text-muted-foreground">→</span> Build compliant leases & notices—all in one simple dashboard.
+              Avoid costly mistakes before they turn into legal problems.
             </motion.p>
+
+            {/* CTA Area - Before screenshot on mobile */}
+            <motion.div variants={fadeInUp} className="mb-4">
+              <Button
+                size="lg"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
+                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
+                data-testid="button-hero-cta"
+              >
+                Start Free 7-Day Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
+            
+            {/* Reassurance micro-copy */}
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm text-muted-foreground mb-4"
+            >
+              No credit card • Instant access • Cancel anytime
+            </motion.p>
+            
+            {/* Secondary CTA */}
+            <motion.div variants={fadeInUp} className="mb-8">
+              <a 
+                href="#how-it-works" 
+                className="text-sm font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1"
+                data-testid="link-see-how-it-works"
+              >
+                See How It Works
+                <ArrowRight className="h-4 w-4" />
+              </a>
+            </motion.div>
           </motion.div>
 
-          {/* Hero Image - Full Width Below Text */}
+          {/* Hero Image - Full Width Below CTA */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -320,13 +356,20 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Cost Calculator & Pricing */}
+          {/* Supporting text below screenshot */}
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
             className="text-center"
           >
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm text-muted-foreground mb-6"
+            >
+              7 days to test everything — no card required. Instant access.
+            </motion.p>
+            
             {/* Cost Calculator */}
             <motion.div 
               variants={fadeInUp}
@@ -336,52 +379,6 @@ export default function Landing() {
                 One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
                 LeaseShield App = <span className="font-bold">$120/year</span> insurance.
               </p>
-            </motion.div>
-
-            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 justify-center">
-              <Button
-                size="lg"
-                onClick={() => {
-                  trackTrialStart();
-                  window.location.href = "/signup";
-                }}
-                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-                data-testid="button-hero-cta"
-              >
-                Start Free Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                data-testid="button-hero-learn"
-                className="text-sm sm:text-base px-4 sm:px-8"
-                onClick={() => setShowBenefitsDialog(true)}
-              >
-                Learn More
-              </Button>
-            </motion.div>
-            
-            <motion.div 
-              variants={fadeInUp}
-              className="flex flex-wrap justify-center gap-4 sm:gap-6 text-sm text-muted-foreground"
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span>Instant access</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span>Money-back guarantee</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span>Cancel anytime</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                <span>Updates included</span>
-              </div>
             </motion.div>
           </motion.div>
         </div>
