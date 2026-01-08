@@ -292,7 +292,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-sm sm:text-base md:text-lg text-muted-foreground mb-2 leading-relaxed max-w-2xl mx-auto"
             >
-              State-specific leases, AI screening decoder, and compliance alerts — all in one simple dashboard.
+              Applications, state-specific leases, AI screening decoder, and compliance alerts — all in one simple dashboard.
             </motion.p>
             
             <motion.p 
