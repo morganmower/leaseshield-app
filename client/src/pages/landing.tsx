@@ -1553,7 +1553,7 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-base text-muted-foreground">
-              7-day free trial • Instant access • Cancel anytime
+              7 days to test everything - no card required. Instant access to leases, decoder, and all tools.
             </p>
             <p className="text-xs text-muted-foreground/70 mt-3">
               *Not legal advice. See disclaimer below.
