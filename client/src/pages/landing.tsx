@@ -462,6 +462,9 @@ export default function Landing() {
             <br className="hidden sm:block" />
             <span className="sm:inline"> </span>
             LeaseShield handles day-to-day screening decisions, compliance workflows, and tools most associations don't provide.
+            <br className="hidden sm:block" />
+            <span className="sm:inline"> </span>
+            <span className="text-muted-foreground/80">Most landlords use both — associations for education and advocacy, LeaseShield for execution.</span>
           </p>
         </div>
       </div>
