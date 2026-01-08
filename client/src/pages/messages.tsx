@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import DOMPurify from "dompurify";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -446,7 +447,7 @@ export default function Messages() {
                         
                         <div 
                           className="prose prose-sm dark:prose-invert max-w-none mb-6"
-                          dangerouslySetInnerHTML={{ __html: message.broadcast.content.replace(/\n/g, '<br/>') }}
+                          dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.broadcast.content.replace(/\n/g, '<br/>')) }}
                         />
 
                         {hasReplies && (
