@@ -318,12 +318,20 @@ export default function Landing() {
               </Button>
             </motion.div>
             
-            {/* Reassurance micro-copy */}
+            {/* Reassurance micro-copy - Line 1 (close to button) */}
             <motion.p 
               variants={fadeInUp}
-              className="text-sm text-muted-foreground mb-4"
+              className="text-sm text-muted-foreground mb-2"
             >
-              No credit card • Instant access • Cancel anytime
+              No credit card required • Instant access • Cancel anytime
+            </motion.p>
+            
+            {/* Reassurance micro-copy - Line 2 (more spacing, lighter) */}
+            <motion.p 
+              variants={fadeInUp}
+              className="text-xs text-muted-foreground/70 mb-6"
+            >
+              Built for small & midsize landlords — avoid costly screening and compliance mistakes.
             </motion.p>
             
             {/* Secondary CTA */}
