@@ -92,15 +92,6 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-  // Properties for empty state check
-  const { data: properties = [] } = useQuery<{ id: string }[]>({
-    queryKey: ["/api/rental/properties"],
-    enabled: isAuthenticated,
-  });
-
-  // Check if user has completed any meaningful action (for intro dismissal)
-  const hasCompletedAction = properties.length > 0;
-
   // AI Training interest
   const { data: trainingInterest } = useQuery<{ registered: boolean }>({
     queryKey: ["/api/training-interest"],
@@ -294,30 +285,6 @@ export default function Dashboard() {
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Link>
-            </div>
-          </Card>
-        )}
-
-        {/* Welcome Intro - Show when no properties */}
-        {!hasCompletedAction && (
-          <Card className="mb-10 p-8 border-dashed border-2 border-primary/30 bg-primary/5" data-testid="card-welcome-intro">
-            <div className="text-center max-w-xl mx-auto">
-              <img src={leaseshieldIcon} alt="LeaseShield" className="h-16 w-16 mx-auto mb-6" />
-              <h2 className="text-2xl font-display font-semibold text-foreground mb-3">Welcome to LeaseShield</h2>
-              <p className="text-muted-foreground mb-6">
-                LeaseShield helps you collect applications, route screening through Western Verify, understand risk, and use the right documents when laws change.
-              </p>
-              <div className="flex flex-wrap justify-center gap-3">
-                <Link to="/rental-applications">
-                  <Button size="lg" data-testid="button-welcome-add-property">
-                    Add Your First Property
-                  </Button>
-                </Link>
-                <Button size="lg" variant="outline" onClick={() => setShowVideoModal(true)} data-testid="button-welcome-quick-tour">
-                  <Play className="h-4 w-4 mr-2" />
-                  Quick Tour (2 min)
-                </Button>
-              </div>
             </div>
           </Card>
         )}
