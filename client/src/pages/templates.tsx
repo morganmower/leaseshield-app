@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { getAccessToken } from "@/lib/queryClient";
+import { useStates } from "@/hooks/useStates";
 import type { LegalUpdate } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -54,6 +55,7 @@ import { SessionExpired, isSessionExpiredError, hasExpiredSession } from "@/comp
 export default function Templates() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
+  const { states } = useStates();
   const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
@@ -61,6 +63,11 @@ export default function Templates() {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
   const [highlightedTemplateId, setHighlightedTemplateId] = useState<string | null>(null);
   const templateRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  
+  const sortedStates = useMemo(() => 
+    [...states].sort((a, b) => a.name.localeCompare(b.name)), 
+    [states]
+  );
 
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
   const isPayingMember = (user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
@@ -527,20 +534,11 @@ export default function Templates() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All States</SelectItem>
-                  <SelectItem value="UT">Utah</SelectItem>
-                  <SelectItem value="TX">Texas</SelectItem>
-                  <SelectItem value="ND">North Dakota</SelectItem>
-                  <SelectItem value="SD">South Dakota</SelectItem>
-                  <SelectItem value="NC">North Carolina</SelectItem>
-                  <SelectItem value="OH">Ohio</SelectItem>
-                  <SelectItem value="MI">Michigan</SelectItem>
-                  <SelectItem value="ID">Idaho</SelectItem>
-                  <SelectItem value="WY">Wyoming</SelectItem>
-                  <SelectItem value="CA">California</SelectItem>
-                  <SelectItem value="VA">Virginia</SelectItem>
-                  <SelectItem value="NV">Nevada</SelectItem>
-                  <SelectItem value="AZ">Arizona</SelectItem>
-                  <SelectItem value="FL">Florida</SelectItem>
+                  {sortedStates.map((state) => (
+                    <SelectItem key={state.id} value={state.id}>
+                      {state.name}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <Select value={selectedCategory} onValueChange={setSelectedCategory}>

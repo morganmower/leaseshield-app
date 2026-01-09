@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
 import { queryClient, getAccessToken } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
+import { useStates } from "@/hooks/useStates";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,22 +21,6 @@ import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, Ex
 import type { RentalProperty, RentalUnit, RentalApplicationLink, SavedDocument, UploadedDocument } from "@shared/schema";
 import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 
-const US_STATES = [
-  { value: "UT", label: "Utah" },
-  { value: "TX", label: "Texas" },
-  { value: "ND", label: "North Dakota" },
-  { value: "SD", label: "South Dakota" },
-  { value: "NC", label: "North Carolina" },
-  { value: "OH", label: "Ohio" },
-  { value: "MI", label: "Michigan" },
-  { value: "ID", label: "Idaho" },
-  { value: "WY", label: "Wyoming" },
-  { value: "CA", label: "California" },
-  { value: "VA", label: "Virginia" },
-  { value: "NV", label: "Nevada" },
-  { value: "AZ", label: "Arizona" },
-  { value: "FL", label: "Florida" },
-];
 
 const PROPERTY_TYPES = [
   "Single Family",
@@ -59,6 +44,13 @@ interface PropertyFormData {
 
 export default function Properties() {
   const { toast } = useToast();
+  const { states } = useStates();
+  
+  const sortedStates = useMemo(() => 
+    [...states].sort((a, b) => a.name.localeCompare(b.name)), 
+    [states]
+  );
+  
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -444,9 +436,9 @@ export default function Properties() {
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      {US_STATES.map((state) => (
-                        <SelectItem key={state.value} value={state.value}>
-                          {state.label}
+                      {sortedStates.map((state) => (
+                        <SelectItem key={state.id} value={state.id}>
+                          {state.name}
                         </SelectItem>
                       ))}
                     </SelectContent>
@@ -625,9 +617,9 @@ export default function Properties() {
                       <SelectValue placeholder="Select state" />
                     </SelectTrigger>
                     <SelectContent>
-                      {US_STATES.map((state) => (
-                        <SelectItem key={state.value} value={state.value}>
-                          {state.label}
+                      {sortedStates.map((state) => (
+                        <SelectItem key={state.id} value={state.id}>
+                          {state.name}
                         </SelectItem>
                       ))}
                     </SelectContent>

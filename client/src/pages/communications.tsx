@@ -10,26 +10,10 @@ import { MessageCircle, Copy, Download, Calendar } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { format } from "date-fns";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
 import { getAccessToken } from "@/lib/queryClient";
-
-const STATE_NAMES: Record<string, string> = {
-  UT: "Utah",
-  TX: "Texas",
-  ND: "North Dakota",
-  SD: "South Dakota",
-  NC: "North Carolina",
-  OH: "Ohio",
-  MI: "Michigan",
-  ID: "Idaho",
-  WY: "Wyoming",
-  CA: "California",
-  VA: "Virginia",
-  NV: "Nevada",
-  AZ: "Arizona",
-  FL: "Florida",
-};
+import { useStates } from "@/hooks/useStates";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   rent_reminder: "Rent Reminder",
@@ -82,6 +66,13 @@ function DatePickerField({
 export default function Communications() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const { states } = useStates();
+  
+  const sortedStates = useMemo(() => 
+    [...states].sort((a, b) => a.name.localeCompare(b.name)), 
+    [states]
+  );
+  
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedTemplate, setSelectedTemplate] = useState<CommunicationTemplate | null>(null);
   const [mergeFields, setMergeFields] = useState<Record<string, string>>({});
@@ -156,8 +147,6 @@ export default function Communications() {
     toast({ description: "Download started!" });
   };
 
-  const stateKeys = Object.keys(STATE_NAMES).sort();
-
   return (
     <div className="container max-w-6xl mx-auto py-8 px-4">
       <div className="mb-8">
@@ -189,9 +178,9 @@ export default function Communications() {
                 className="w-full mt-2 px-3 py-2 border rounded-md bg-background"
                 data-testid="select-state"
               >
-                {stateKeys.map((code) => (
-                  <option key={code} value={code}>
-                    {STATE_NAMES[code]}
+                {sortedStates.map((state) => (
+                  <option key={state.id} value={state.id}>
+                    {state.name}
                   </option>
                 ))}
               </select>
