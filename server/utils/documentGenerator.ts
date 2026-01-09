@@ -1,6 +1,6 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
-import HTMLtoDOCX from 'html-to-docx';
+import { Document, Packer, Paragraph, TextRun, HeadingLevel, AlignmentType, BorderStyle, PageBreak } from 'docx';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -125,30 +125,173 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
 }
 
 export async function generateDocumentDOCX(options: DocumentGenerationOptions): Promise<Buffer> {
-  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
+  const { templateTitle, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
   
   console.log('📝 Generating DOCX document...');
   const startTime = Date.now();
   
-  // Generate the same HTML content used for PDF - ensures content parity
-  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt, landlordInfo);
+  // Build document sections
+  const sections: Paragraph[] = [];
   
-  // Convert HTML to DOCX using html-to-docx library
-  const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
-    table: { row: { cantSplit: true } },
-    footer: true,
-    pageNumber: true,
-    margins: {
-      top: 1440,    // 1 inch in twips
-      right: 1440,
-      bottom: 1440,
-      left: 1440,
-    },
+  // Add header with landlord info
+  if (landlordInfo?.businessName) {
+    sections.push(new Paragraph({
+      children: [new TextRun({ text: landlordInfo.businessName, bold: true, size: 32 })],
+      alignment: AlignmentType.CENTER,
+    }));
+  }
+  
+  // Add contact info
+  const contactParts: string[] = [];
+  if (landlordInfo?.phoneNumber) contactParts.push(landlordInfo.phoneNumber);
+  if (landlordInfo?.email) contactParts.push(landlordInfo.email);
+  if (contactParts.length > 0) {
+    sections.push(new Paragraph({
+      children: [new TextRun({ text: contactParts.join(' | '), size: 20 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+    }));
+  }
+  
+  // Add document title
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: templateTitle.toUpperCase(), bold: true, size: 28 })],
+    alignment: AlignmentType.CENTER,
+    heading: HeadingLevel.HEADING_1,
+    spacing: { before: 400, after: 200 },
+  }));
+  
+  // Add state badge
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: `State: ${stateId}`, size: 22 })],
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 400 },
+  }));
+  
+  // Add version info
+  sections.push(new Paragraph({
+    children: [
+      new TextRun({ text: 'Document Version: ', bold: true, size: 20 }),
+      new TextRun({ text: String(version), size: 20 }),
+    ],
+  }));
+  sections.push(new Paragraph({
+    children: [
+      new TextRun({ text: 'Last Updated: ', bold: true, size: 20 }),
+      new TextRun({ text: new Date(updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), size: 20 }),
+    ],
+  }));
+  sections.push(new Paragraph({
+    children: [
+      new TextRun({ text: 'Generated: ', bold: true, size: 20 }),
+      new TextRun({ text: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), size: 20 }),
+    ],
+    spacing: { after: 400 },
+  }));
+  
+  // Add field values as sections
+  const fieldOrder = [
+    { key: 'landlordName', label: 'Landlord' },
+    { key: 'tenantName', label: 'Tenant(s)' },
+    { key: 'propertyAddress', label: 'Property Address' },
+    { key: 'leaseStartDate', label: 'Lease Start Date' },
+    { key: 'leaseEndDate', label: 'Lease End Date' },
+    { key: 'monthlyRent', label: 'Monthly Rent' },
+    { key: 'securityDeposit', label: 'Security Deposit' },
+    { key: 'petDeposit', label: 'Pet Deposit' },
+    { key: 'lateFee', label: 'Late Fee' },
+    { key: 'rentDueDay', label: 'Rent Due Day' },
+    { key: 'gracePeriodDays', label: 'Grace Period (days)' },
+    { key: 'occupants', label: 'Additional Occupants' },
+    { key: 'petPolicy', label: 'Pet Policy' },
+    { key: 'utilitiesIncluded', label: 'Utilities Included' },
+    { key: 'utilitiesTenantPays', label: 'Utilities Tenant Pays' },
+    { key: 'parkingDetails', label: 'Parking' },
+    { key: 'additionalTerms', label: 'Additional Terms' },
+  ];
+  
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: 'AGREEMENT TERMS', bold: true, size: 24 })],
+    heading: HeadingLevel.HEADING_2,
+    spacing: { before: 400, after: 200 },
+  }));
+  
+  // Add known fields in order
+  for (const { key, label } of fieldOrder) {
+    const value = fieldValues[key];
+    if (value !== undefined && value !== '') {
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({ text: `${label}: `, bold: true, size: 24 }),
+          new TextRun({ text: String(value), size: 24 }),
+        ],
+        spacing: { after: 120 },
+      }));
+    }
+  }
+  
+  // Add any remaining fields not in the standard order
+  const handledKeys = new Set(fieldOrder.map(f => f.key));
+  for (const [key, value] of Object.entries(fieldValues)) {
+    if (!handledKeys.has(key) && value !== undefined && value !== '') {
+      const label = key.replace(/([A-Z])/g, ' $1').replace(/^./, s => s.toUpperCase());
+      sections.push(new Paragraph({
+        children: [
+          new TextRun({ text: `${label}: `, bold: true, size: 24 }),
+          new TextRun({ text: String(value), size: 24 }),
+        ],
+        spacing: { after: 120 },
+      }));
+    }
+  }
+  
+  // Add signature section
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: 'SIGNATURES', bold: true, size: 24 })],
+    heading: HeadingLevel.HEADING_2,
+    spacing: { before: 600, after: 200 },
+  }));
+  
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: '_________________________________', size: 24 })],
+    spacing: { before: 400, after: 80 },
+  }));
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: 'Landlord Signature                    Date', size: 20 })],
+    spacing: { after: 300 },
+  }));
+  
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: '_________________________________', size: 24 })],
+    spacing: { before: 200, after: 80 },
+  }));
+  sections.push(new Paragraph({
+    children: [new TextRun({ text: 'Tenant Signature                       Date', size: 20 })],
+    spacing: { after: 200 },
+  }));
+  
+  // Create the document
+  const doc = new Document({
+    sections: [{
+      properties: {
+        page: {
+          margin: {
+            top: 1440,    // 1 inch in twips
+            right: 1440,
+            bottom: 1440,
+            left: 1440,
+          },
+        },
+      },
+      children: sections,
+    }],
   });
+  
+  const buffer = await Packer.toBuffer(doc);
   
   console.log(`📝 DOCX generated successfully in ${Date.now() - startTime}ms`);
   
-  return Buffer.from(docxBuffer);
+  return Buffer.from(buffer);
 }
 
 function generateHTMLFromTemplate(
