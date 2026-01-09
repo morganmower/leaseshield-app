@@ -486,7 +486,7 @@ export default function Templates() {
                 <div className="text-xs md:text-sm text-muted-foreground">Categories</div>
               </div>
               <div className="text-center min-w-[60px]">
-                <div className="text-2xl md:text-3xl font-bold text-primary">14</div>
+                <div className="text-2xl md:text-3xl font-bold text-primary">{states?.length || 15}</div>
                 <div className="text-xs md:text-sm text-muted-foreground">States</div>
               </div>
               <div className="text-center min-w-[60px]">

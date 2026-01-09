@@ -155,7 +155,7 @@ export default function Landing() {
       icon: FileText,
       description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
-        "Residential lease agreements compliant with all 14 supported state laws",
+        "Residential lease agreements compliant with all 15 supported state laws",
         "Rental application forms with fair housing compliance",
         "Move-in and move-out inspection checklists",
         "Lease addendums for pets, parking, utilities, and more",
@@ -1446,7 +1446,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="font-medium text-foreground">14 States Covered</span>
+              <span className="font-medium text-foreground">15 States Covered</span>
             </div>
             <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
               <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -1613,7 +1613,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for all 14 supported states
+              Comprehensive landlord protection for all 15 supported states
             </DialogDescription>
           </DialogHeader>
           

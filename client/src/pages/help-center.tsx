@@ -54,7 +54,7 @@ export default function HelpCenter() {
       questions: [
         {
           q: "How do I access legal templates?",
-          a: "After subscribing, navigate to the Templates section from your dashboard. Select your state from our 14 supported states, choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization."
+          a: "After subscribing, navigate to the Templates section from your dashboard. Select your state from our 15 supported states, choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization."
         },
         {
           q: "What's included in my subscription?",
