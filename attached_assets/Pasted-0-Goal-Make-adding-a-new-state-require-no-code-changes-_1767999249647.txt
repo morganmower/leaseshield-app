@@ -1,0 +1,362 @@
+0) Goal
+
+Make adding a new state require no code changes outside:
+
+adding the state row (states)
+
+adding state content (templates/compliance/communications/disclosures)
+…and make seeds idempotent (re-running never duplicates).
+
+1) DB: Add stable keys + unique constraints (DO THIS FIRST)
+1.1 Add key columns
+templates: add key (stable identifier)
+
+Example keys: lease_main, notice_pay_or_quit, notice_cure_or_quit, move_in_checklist
+
+compliance_cards: add key
+
+Example keys: security_deposit_rules, late_fees_rules, entry_notice_rules
+
+communication_templates: add key
+
+Example keys: rent_reminder_1, welcome_move_in, late_payment_1
+
+Migration SQL (Postgres)
+-- 1) Add key columns (nullable at first)
+ALTER TABLE templates ADD COLUMN IF NOT EXISTS key text;
+ALTER TABLE compliance_cards ADD COLUMN IF NOT EXISTS key text;
+ALTER TABLE communication_templates ADD COLUMN IF NOT EXISTS key text;
+
+-- 2) Backfill keys (temporary strategy)
+-- templates: derive key from template_type + title (slugged). Adjust if you have better mapping.
+UPDATE templates
+SET key = lower(regexp_replace(template_type::text || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+UPDATE compliance_cards
+SET key = lower(regexp_replace(category || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+UPDATE communication_templates
+SET key = lower(regexp_replace(template_type::text || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+
+If you already have known canonical names, backfill keys explicitly in seeds (preferred). The slug fallback is just to get you through migration safely.
+
+1.2 Dedupe existing rows BEFORE adding constraints
+
+You have created_at, so keep the newest row per duplicate group.
+
+templates dedupe (per state_id + key + version)
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, key, COALESCE(version, 1)
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM templates
+)
+DELETE FROM templates
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+compliance_cards dedupe (per state_id + key)
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, key
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM compliance_cards
+)
+DELETE FROM compliance_cards
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+communication_templates dedupe (per state_id + template_type + key)
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, template_type, key
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM communication_templates
+)
+DELETE FROM communication_templates
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+1.3 Add unique constraints (the real fix)
+-- Templates unique (state + key + version)
+ALTER TABLE templates
+ADD CONSTRAINT templates_state_key_version_unique
+UNIQUE (state_id, key, version);
+
+-- Compliance unique (state + key)
+ALTER TABLE compliance_cards
+ADD CONSTRAINT compliance_state_key_unique
+UNIQUE (state_id, key);
+
+-- Communications unique (state + type + key)
+ALTER TABLE communication_templates
+ADD CONSTRAINT comm_state_type_key_unique
+UNIQUE (state_id, template_type, key);
+
+1.4 Make keys NOT NULL (only after you confirm backfill worked)
+ALTER TABLE templates ALTER COLUMN key SET NOT NULL;
+ALTER TABLE compliance_cards ALTER COLUMN key SET NOT NULL;
+ALTER TABLE communication_templates ALTER COLUMN key SET NOT NULL;
+
+2) Seeds: convert to UPSERT (idempotent)
+2.1 templates seed upsert pattern
+
+Use (state_id, key, version) conflict target.
+
+INSERT INTO templates (id, key, title, description, category, template_type, state_id, pdf_url,
+                       fillable_form_data, generation_mode, version, version_notes, last_update_reason,
+                       is_active, sort_order, created_at, updated_at)
+VALUES (...)
+ON CONFLICT (state_id, key, version)
+DO UPDATE SET
+  title = EXCLUDED.title,
+  description = EXCLUDED.description,
+  category = EXCLUDED.category,
+  template_type = EXCLUDED.template_type,
+  pdf_url = EXCLUDED.pdf_url,
+  fillable_form_data = EXCLUDED.fillable_form_data,
+  generation_mode = EXCLUDED.generation_mode,
+  version_notes = EXCLUDED.version_notes,
+  last_update_reason = EXCLUDED.last_update_reason,
+  is_active = EXCLUDED.is_active,
+  sort_order = EXCLUDED.sort_order,
+  updated_at = now();
+
+2.2 compliance seed upsert pattern
+
+Conflict target (state_id, key).
+
+INSERT INTO compliance_cards (id, state_id, key, title, summary, category, content, related_template_id,
+                              sort_order, is_active, created_at, updated_at)
+VALUES (...)
+ON CONFLICT (state_id, key)
+DO UPDATE SET
+  title = EXCLUDED.title,
+  summary = EXCLUDED.summary,
+  category = EXCLUDED.category,
+  content = EXCLUDED.content,
+  related_template_id = EXCLUDED.related_template_id,
+  sort_order = EXCLUDED.sort_order,
+  is_active = EXCLUDED.is_active,
+  updated_at = now();
+
+2.3 communication seed upsert pattern
+
+Conflict target (state_id, template_type, key).
+
+INSERT INTO communication_templates (id, state_id, template_type, key, title, body_text,
+                                    is_active, created_at, updated_at)
+VALUES (...)
+ON CONFLICT (state_id, template_type, key)
+DO UPDATE SET
+  title = EXCLUDED.title,
+  body_text = EXCLUDED.body_text,
+  is_active = EXCLUDED.is_active,
+  updated_at = now();
+
+
+✅ After this, you can re-run seeds safely forever.
+
+3) Remove hardcoded state lists (replace with DB active states)
+3.1 Create helper: getActiveStateIds()
+
+Create server/states/getActiveStates.ts:
+
+import { db } from "../db";
+import { states } from "../../shared/schema";
+import { eq } from "drizzle-orm";
+
+let cache: { at: number; ids: string[] } | null = null;
+
+export async function getActiveStateIds(): Promise<string[]> {
+  const now = Date.now();
+  if (cache && (now - cache.at) < 5 * 60_000) return cache.ids;
+
+  const rows = await db.select({ id: states.id }).from(states).where(eq(states.isActive, true));
+  const ids = rows.map(r => r.id).sort();
+  cache = { at: now, ids };
+  return ids;
+}
+
+3.2 docxBuilder: remove STATE_NAMES duplication
+
+Delete STATE_NAMES object
+
+Use DB states table for name lookup, or pass name in
+
+Create server/states/getStateName.ts:
+
+import { db } from "../db";
+import { states } from "../../shared/schema";
+import { eq } from "drizzle-orm";
+
+const nameCache = new Map<string, string>();
+
+export async function getStateName(stateId: string): Promise<string> {
+  const cached = nameCache.get(stateId);
+  if (cached) return cached;
+
+  const row = await db.select({ name: states.name }).from(states).where(eq(states.id, stateId)).limit(1);
+  const name = row[0]?.name ?? stateId;
+  nameCache.set(stateId, name);
+  return name;
+}
+
+3.3 docxBuilder: replace big switch with a disclosure registry
+
+Create server/states/disclosures.ts:
+
+import { Paragraph } from "docx";
+
+export function genericDisclosures(): Paragraph[] {
+  // existing generic fair housing + lead paint + security deposit paragraphs
+  return [];
+}
+
+export const DISCLOSURES: Record<string, () => Paragraph[]> = {
+  IL: () => {
+    // IL-specific paragraphs (your existing IL case moved here)
+    return [];
+  },
+  UT: () => [],
+  // ... other states
+};
+
+export function getStateDisclosures(stateId: string): Paragraph[] {
+  return (DISCLOSURES[stateId] ?? genericDisclosures)();
+}
+
+
+Then in docxBuilder.ts:
+
+import and use this getStateDisclosures()
+
+3.4 LegiScan adapter: remove hardcoded fallback
+
+Change:
+
+const states = params.states || ['UT', ...];
+
+
+To:
+
+import { getActiveStateIds } from "../../../states/getActiveStates";
+
+const states = params.states ?? await getActiveStateIds();
+
+
+Or better: require caller to pass states; throw if missing.
+
+3.5 seed-communications: remove NEW_STATES + duplicate STATE_NAMES
+
+Replace with:
+
+query states where isActive=true
+
+seed templates for every active state
+
+OR seed “only missing keys” per state
+
+4) Kill “default UT” fallbacks
+
+Search for any patterns like:
+
+|| 'UT'
+
+?? 'UT'
+
+defaultState = 'UT'
+
+stateId: 'UT'
+
+Replace logic:
+
+Prefer property.state
+
+else user.preferredState
+
+else error (“State required”)
+
+5) Add verification script: verifyStateSetup
+
+Create server/scripts/verifyStateSetup.ts:
+
+Checks:
+
+state exists + active
+
+required template keys exist for that state
+
+required compliance keys exist
+
+required comm keys exist
+
+duplicates (should be impossible now)
+
+Example required keys list (edit to match your product):
+
+const REQUIRED_TEMPLATE_KEYS = [
+  "lease_main",
+  "notice_late_rent",
+  "move_in_checklist",
+];
+
+const REQUIRED_COMPLIANCE_KEYS = [
+  "security_deposit_rules",
+];
+
+const REQUIRED_COMM_KEYS = [
+  "rent_reminder_1",
+];
+
+
+Run:
+
+node server/scripts/verifyStateSetup.js IL
+
+6) Add ADDING_NEW_STATE.md (one page)
+
+Include:
+
+Add row in states (seed or admin)
+
+Add templates/compliance/communications with stable keys
+
+Add disclosures entry (if needed)
+
+Run seeds (safe to rerun)
+
+Run verify script
+
+Smoke test checklist
+
+7) What you should NOT do (based on your system)
+
+Don’t use UNIQUE(title, state_id) as your primary uniqueness (titles change).
+
+Don’t keep multiple STATE_NAMES maps in multiple files.
+
+Don’t let adapters silently use hardcoded lists if params missing.
+
+Quick “do this now” sequence (fastest path)
+
+Add key columns + backfill
+
+Dedupe existing data
+
+Add unique constraints
+
+Convert seeds to upsert by keys
+
+Replace hardcoded state lists (docxBuilder + LegiScan + seed-communications)
+
+Add verification script + markdown guide
+
+Remove UT defaults
