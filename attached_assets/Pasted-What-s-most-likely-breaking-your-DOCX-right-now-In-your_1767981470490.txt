@@ -1,0 +1,225 @@
+What’s most likely breaking your DOCX right now
+
+In your setup, the DOCX buffer gets corrupted when any of these happen:
+
+Compression middleware touches the response (compression() gzip/br)
+Word expects a raw docx zip, not a compressed transfer it can’t interpret properly (especially if headers are off).
+
+Express sends the buffer as text (implicit encoding)
+e.g. res.send(buffer.toString()) or something upstream treating it as utf-8.
+
+You’re actually sending an error page (HTML) with a .docx filename
+Common if your template lookup throws and you still “download” the error page.
+
+Missing Content-Length + connection interruptions (less common but real)
+
+The “never fails” download pattern (Express + TypeScript)
+1) Create a dedicated download route with no compression
+
+If you use compression() globally, explicitly disable it for download routes.
+
+import compression from "compression";
+import express from "express";
+
+const app = express();
+
+// If you need compression elsewhere:
+app.use(
+  compression({
+    filter: (req, res) => {
+      // Disable compression for downloads
+      if (req.path.startsWith("/api/download/")) return false;
+      return compression.filter(req, res);
+    },
+  })
+);
+
+
+If you’re behind any proxy layer that compresses, this still helps a lot.
+
+2) A helper that sends binary safely (DOCX/PDF)
+
+This does 4 important things:
+
+Sets the correct Content-Type
+
+Forces attachment
+
+Sets Content-Length
+
+Uses res.end(buffer) (very safe for binary)
+
+import type { Response } from "express";
+
+function sendDownload(res: Response, opts: {
+  buffer: Buffer;
+  filename: string;
+  contentType: string;
+}) {
+  const { buffer, filename, contentType } = opts;
+
+  res.status(200);
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Length", buffer.length.toString());
+  res.setHeader("Cache-Control", "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+
+  // Important: end with the raw buffer
+  res.end(buffer);
+}
+
+3) Add “magic byte” validation (catches silent corruption instantly)
+
+DOCX should start with PK (zip).
+PDF should start with %PDF.
+
+function assertLooksLikeDocx(buf: Buffer) {
+  // "PK" zip signature
+  if (buf.length < 2 || buf[0] !== 0x50 || buf[1] !== 0x4b) {
+    throw new Error("Generated DOCX does not look like a DOCX (missing PK header).");
+  }
+}
+
+function assertLooksLikePdf(buf: Buffer) {
+  const sig = buf.subarray(0, 4).toString("utf8");
+  if (sig !== "%PDF") {
+    throw new Error("Generated PDF does not look like a PDF (missing %PDF header).");
+  }
+}
+
+
+This prevents the #1 “Word error” cause: accidentally returning HTML/JSON as a .docx.
+
+DOCX route (html-to-docx) done correctly
+import { Router } from "express";
+import htmlToDocx from "html-to-docx";
+
+const router = Router();
+
+router.get("/api/download/docx/:templateId", async (req, res, next) => {
+  try {
+    const { templateId } = req.params;
+
+    // 1) Load template HTML from DB
+    const html = await loadTemplateHtmlFromDb(templateId); // you already have this
+
+    // 2) Generate DOCX buffer
+    const docxBuffer = await htmlToDocx(html, undefined, {
+      // optional: tune as needed
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+    });
+
+    const buf = Buffer.isBuffer(docxBuffer) ? docxBuffer : Buffer.from(docxBuffer);
+
+    // 3) Validate buffer
+    assertLooksLikeDocx(buf);
+
+    // 4) Send download
+    sendDownload(res, {
+      buffer: buf,
+      filename: `Lease_${templateId}.docx`,
+      contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+Two big “don’ts”:
+
+Don’t stream it using res.write(buf.toString())
+
+Don’t return it through a generic JSON response wrapper
+
+PDF route (Puppeteer) done correctly
+router.get("/api/download/pdf/:templateId", async (req, res, next) => {
+  try {
+    const { templateId } = req.params;
+
+    const html = await loadTemplateHtmlFromDb(templateId);
+
+    const pdfBuffer = await renderPdfWithPuppeteer(html); // should return Buffer
+    assertLooksLikePdf(pdfBuffer);
+
+    sendDownload(res, {
+      buffer: pdfBuffer,
+      filename: `Lease_${templateId}.pdf`,
+      contentType: "application/pdf",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+
+Puppeteer best practice: use page.setContent(html, { waitUntil: "networkidle0" }) and then page.pdf({ printBackground: true }).
+
+Critical middleware ordering tip
+
+Make sure you do not have any middleware that might:
+
+write to the response early,
+
+transform the body (compression),
+
+or set a conflicting content-type.
+
+Best approach: mount download routes early:
+
+app.use(router); // download routes mounted before any SPA fallback
+
+// Only AFTER:
+app.use(express.static("dist"));
+app.get("*", (req, res) => res.sendFile("dist/index.html"));
+
+
+If your Vite/React fallback catches the route, you’ll download HTML with a .docx name → Word error.
+
+Add server-side logging that instantly tells you what users are receiving
+
+This helps you pinpoint “sometimes fails” issues.
+
+function logBinaryResponse(label: string, buf: Buffer) {
+  const head = buf.subarray(0, 16).toString("utf8").replace(/\s/g, " ");
+  console.log(`[${label}] bytes=${buf.length} head="${head}"`);
+}
+
+
+Use it before sending. If you ever see <!doctype html> or { "error": ... } in the head, you found your culprit.
+
+Reliability + your “auto legislation updates” problem
+
+Generating fresh every time is fine, but don’t regenerate from scratch for every click if you can avoid it.
+
+The easiest upgrade (still simple) is:
+
+“Generate on demand, cache for 24 hours”
+
+Compute a stable key like: templateId + state + versionHash
+
+Store the generated PDF/DOCX in object storage (R2/S3) OR even a DB bytea table if small
+
+Serve it via a signed URL or stream from storage
+This eliminates:
+
+intermittent Puppeteer failures,
+
+timeouts,
+
+and concurrency glitches.
+
+If you want the lowest friction option: Cloudflare R2 is great for this workflow.
+
+If you want the “easy win” right now
+
+Do these 3 things and your Word error usually disappears:
+
+Disable compression for /api/download/*
+
+Use Content-Length + res.end(buffer) for DOCX/PDF
+
+Add “magic byte” validation so you never send HTML as a doc

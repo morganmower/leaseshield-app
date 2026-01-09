@@ -1,0 +1,156 @@
+1) Add a single reusable “sendBinaryDownload” helper
+
+Use this everywhere you return PDFs/DOCX.
+
+// utils/download.ts
+import type { Response } from "express";
+
+export function sendBinaryDownload(
+  res: Response,
+  opts: {
+    buffer: Buffer;
+    filename: string;
+    contentType: string;
+    cacheControl?: string; // default no-store
+  }
+) {
+  const { buffer, filename, contentType } = opts;
+
+  res.status(200);
+  res.setHeader("Content-Type", contentType);
+  res.setHeader("Content-Disposition", `attachment; filename="${filename}"`);
+  res.setHeader("Content-Length", String(buffer.length));
+  res.setHeader("Cache-Control", opts.cacheControl ?? "no-store");
+  res.setHeader("X-Content-Type-Options", "nosniff");
+
+  // Avoid any implicit encoding behavior
+  res.end(buffer);
+}
+
+
+Why res.end(buffer) instead of res.send(buffer)?
+res.send(Buffer) should work, but res.end(buffer) removes ambiguity and reduces “some middleware touched it” weirdness.
+
+2) Add magic-byte validation (DOCX + PDF)
+
+This catches: wrong route fallback, auth redirect HTML, JSON error responses, partial buffers.
+
+// utils/magicBytes.ts
+export function assertLooksLikeDocx(buf: Buffer) {
+  // DOCX is a ZIP: starts with PK
+  if (buf.length < 4 || buf[0] !== 0x50 || buf[1] !== 0x4b) {
+    const head = buf.subarray(0, 64).toString("utf8");
+    throw new Error(`DOCX invalid (missing PK header). Head: ${JSON.stringify(head)}`);
+  }
+}
+
+export function assertLooksLikePdf(buf: Buffer) {
+  if (buf.length < 4 || buf.subarray(0, 4).toString("utf8") !== "%PDF") {
+    const head = buf.subarray(0, 64).toString("utf8");
+    throw new Error(`PDF invalid (missing %PDF header). Head: ${JSON.stringify(head)}`);
+  }
+}
+
+
+Tip: That Head: snippet is gold when debugging.
+
+3) Apply explicit headers + validation in routes
+DOCX route example
+import { Router } from "express";
+import htmlToDocx from "html-to-docx";
+import { sendBinaryDownload } from "../utils/download";
+import { assertLooksLikeDocx } from "../utils/magicBytes";
+
+const router = Router();
+
+router.get("/api/download/docx/:templateId", async (req, res, next) => {
+  try {
+    const { templateId } = req.params;
+
+    const html = await loadTemplateHtmlFromDb(templateId);
+
+    const out = await htmlToDocx(html);
+    const buf = Buffer.isBuffer(out) ? out : Buffer.from(out);
+
+    assertLooksLikeDocx(buf);
+
+    sendBinaryDownload(res, {
+      buffer: buf,
+      filename: `Lease_${templateId}.docx`,
+      contentType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+PDF route example
+import { assertLooksLikePdf } from "../utils/magicBytes";
+
+router.get("/api/download/pdf/:templateId", async (req, res, next) => {
+  try {
+    const { templateId } = req.params;
+
+    const html = await loadTemplateHtmlFromDb(templateId);
+    const pdfBuffer = await renderPdfWithPuppeteer(html); // must return Buffer
+
+    assertLooksLikePdf(pdfBuffer);
+
+    sendBinaryDownload(res, {
+      buffer: pdfBuffer,
+      filename: `Lease_${templateId}.pdf`,
+      contentType: "application/pdf",
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+4) Compression: add a safe filter (only if you use it)
+
+You said “need to check.” Here’s the clean pattern:
+
+import compression from "compression";
+
+app.use(
+  compression({
+    filter: (req, res) => {
+      if (req.path.startsWith("/api/download/")) return false;
+      return compression.filter(req, res);
+    },
+  })
+);
+
+
+If you don’t use compression globally, skip this.
+
+5) Middleware ordering: one quick verify that prevents SPA fallback collisions
+
+This is the common silent killer: React/Vite catch-all serving index.html for a download URL.
+
+✅ Desired order:
+
+// 1) API routes first
+app.use("/api", apiRouter);
+
+// 2) Then static frontend
+app.use(express.static("dist"));
+
+// 3) Then SPA fallback
+app.get("*", (req, res) => res.sendFile("dist/index.html"));
+
+
+If your download routes are /api/download/..., you’re safe as long as the /api router is mounted before the wildcard.
+
+6) Add one “download integrity” log line (optional but worth it)
+
+This helps you catch intermittent issues instantly.
+
+function logBinary(label: string, buf: Buffer) {
+  const head = buf.subarray(0, 16).toString("utf8").replace(/\s/g, " ");
+  console.log(`[${label}] bytes=${buf.length} head="${head}"`);
+}
+
+
+Call logBinary("docx", buf) right before sending.

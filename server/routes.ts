@@ -15,6 +15,7 @@ import { getUncachableResendClient } from "./resend";
 import { generateLegalUpdateEmail } from "./email-templates";
 import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 import { asyncHandler, RateLimiter } from "./utils/validation";
+import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, CONTENT_TYPES } from "./utils/download";
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -1404,9 +1405,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updatedAt: template.updatedAt || new Date(),
             checklistType,
           });
-          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
-          res.send(docxBuffer);
+          assertLooksLikeDocx(docxBuffer);
+          sendBinaryDownload(res, {
+            buffer: docxBuffer,
+            filename: `${safeFilename}.docx`,
+            contentType: CONTENT_TYPES.DOCX,
+          });
         } else {
           const pdfBuffer = await generateMoveOutChecklistPdf({
             templateTitle: template.title,
@@ -1415,9 +1419,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updatedAt: template.updatedAt || new Date(),
             checklistType,
           });
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
-          res.send(pdfBuffer);
+          assertLooksLikePdf(pdfBuffer);
+          sendBinaryDownload(res, {
+            buffer: pdfBuffer,
+            filename: `${safeFilename}.pdf`,
+            contentType: CONTENT_TYPES.PDF,
+          });
         }
       } else {
         // Default to rental application generator for other static templates
@@ -1430,9 +1437,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             version: template.version || 1,
             updatedAt: template.updatedAt || new Date(),
           });
-          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
-          res.send(docxBuffer);
+          assertLooksLikeDocx(docxBuffer);
+          sendBinaryDownload(res, {
+            buffer: docxBuffer,
+            filename: `${safeFilename}.docx`,
+            contentType: CONTENT_TYPES.DOCX,
+          });
         } else {
           const pdfBuffer = await generateBlankApplicationPdf({
             templateTitle: template.title,
@@ -1440,9 +1450,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
             version: template.version || 1,
             updatedAt: template.updatedAt || new Date(),
           });
-          res.setHeader('Content-Type', 'application/pdf');
-          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
-          res.send(pdfBuffer);
+          assertLooksLikePdf(pdfBuffer);
+          sendBinaryDownload(res, {
+            buffer: pdfBuffer,
+            filename: `${safeFilename}.pdf`,
+            contentType: CONTENT_TYPES.PDF,
+          });
         }
       }
 
@@ -2997,6 +3010,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const isLeaseAgreement = template.title.toLowerCase().includes('lease') || 
                                template.title.toLowerCase().includes('rental agreement');
 
+      const safeFilename = template.title.replace(/[^a-z0-9]/gi, '_');
+      
       if (format === 'docx') {
         let docxBuffer: Buffer;
         
@@ -3014,15 +3029,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           docxBuffer = await generateDocumentDOCX(generationOptions);
         }
         
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.docx"`);
-        res.send(docxBuffer);
+        assertLooksLikeDocx(docxBuffer);
+        sendBinaryDownload(res, {
+          buffer: docxBuffer,
+          filename: `${safeFilename}.docx`,
+          contentType: CONTENT_TYPES.DOCX,
+        });
       } else {
         // Generate PDF (default)
         const pdfBuffer = await generateDocument(generationOptions);
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
-        res.send(pdfBuffer);
+        assertLooksLikePdf(pdfBuffer);
+        sendBinaryDownload(res, {
+          buffer: pdfBuffer,
+          filename: `${safeFilename}.pdf`,
+          contentType: CONTENT_TYPES.PDF,
+        });
       }
     } catch (error: any) {
       console.error('Document generation error:', error);
