@@ -78,8 +78,6 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
   try {
     const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
       table: { row: { cantSplit: true } },
-      footer: true,
-      pageNumber: true,
       margins: {
         top: 1440,
         right: 1440,

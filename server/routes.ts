@@ -15,7 +15,7 @@ import { getUncachableResendClient } from "./resend";
 import { generateLegalUpdateEmail } from "./email-templates";
 import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 import { asyncHandler, RateLimiter } from "./utils/validation";
-import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, CONTENT_TYPES } from "./utils/download";
+import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, assertValidDocx, CONTENT_TYPES } from "./utils/download";
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -1405,7 +1405,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             updatedAt: template.updatedAt || new Date(),
             checklistType,
           });
-          assertLooksLikeDocx(docxBuffer);
+          await assertValidDocx(docxBuffer);
           sendBinaryDownload(res, {
             buffer: docxBuffer,
             filename: `${safeFilename}.docx`,
@@ -1437,7 +1437,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             version: template.version || 1,
             updatedAt: template.updatedAt || new Date(),
           });
-          assertLooksLikeDocx(docxBuffer);
+          await assertValidDocx(docxBuffer);
           sendBinaryDownload(res, {
             buffer: docxBuffer,
             filename: `${safeFilename}.docx`,
@@ -3029,7 +3029,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           docxBuffer = await generateDocumentDOCX(generationOptions);
         }
         
-        assertLooksLikeDocx(docxBuffer);
+        await assertValidDocx(docxBuffer);
         sendBinaryDownload(res, {
           buffer: docxBuffer,
           filename: `${safeFilename}.docx`,

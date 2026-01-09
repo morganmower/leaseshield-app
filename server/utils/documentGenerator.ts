@@ -137,10 +137,8 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
     // Convert HTML to DOCX using html-to-docx library
     const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
       table: { row: { cantSplit: true } },
-      footer: true,
-      pageNumber: true,
       margins: {
-        top: 1440,    // 1 inch in twips
+        top: 1440,
         right: 1440,
         bottom: 1440,
         left: 1440,

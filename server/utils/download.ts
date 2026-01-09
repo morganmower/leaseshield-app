@@ -1,4 +1,5 @@
 import type { Response } from "express";
+import JSZip from "jszip";
 
 /**
  * Safe binary download helper for DOCX and PDF files.
@@ -62,3 +63,51 @@ export const CONTENT_TYPES = {
   PDF: "application/pdf",
   DOCX: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
 } as const;
+
+/**
+ * Validates DOCX structural integrity by checking required OPC parts exist.
+ * Ensures no dangling footer/header relationships that would cause Word errors.
+ * Throws an error with diagnostic info if validation fails.
+ */
+export async function assertValidDocx(buf: Buffer): Promise<void> {
+  try {
+    const zip = await JSZip.loadAsync(buf);
+
+    const required = ["[Content_Types].xml", "_rels/.rels", "word/document.xml"];
+    for (const f of required) {
+      if (!zip.file(f)) {
+        throw new Error(`DOCX missing required part: ${f}`);
+      }
+    }
+
+    const relsFile = zip.file("word/_rels/document.xml.rels");
+    if (relsFile) {
+      const relsXml = await relsFile.async("text");
+      
+      const footerRegex = /Target="(footer\d+\.xml)"/g;
+      let footerMatch;
+      while ((footerMatch = footerRegex.exec(relsXml)) !== null) {
+        const ft = footerMatch[1];
+        if (!zip.file(`word/${ft}`)) {
+          throw new Error(`DOCX references missing footer part: word/${ft}`);
+        }
+      }
+      
+      const headerRegex = /Target="(header\d+\.xml)"/g;
+      let headerMatch;
+      while ((headerMatch = headerRegex.exec(relsXml)) !== null) {
+        const ht = headerMatch[1];
+        if (!zip.file(`word/${ht}`)) {
+          throw new Error(`DOCX references missing header part: word/${ht}`);
+        }
+      }
+    }
+
+    console.log(`✅ DOCX structural validation passed (${buf.length} bytes)`);
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("DOCX")) {
+      throw error;
+    }
+    throw new Error(`DOCX validation failed: unable to parse as ZIP. ${error}`);
+  }
+}

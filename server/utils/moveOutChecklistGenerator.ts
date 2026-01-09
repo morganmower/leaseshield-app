@@ -111,8 +111,6 @@ export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOpti
   try {
     const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
       table: { row: { cantSplit: true } },
-      footer: true,
-      pageNumber: true,
       margins: {
         top: 720,
         right: 720,
