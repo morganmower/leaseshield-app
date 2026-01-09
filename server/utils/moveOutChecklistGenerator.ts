@@ -403,80 +403,111 @@ function generateMoveOutChecklistHTML(
   </div>
 
   <div class="legend">
-    <strong>Condition Rating:</strong> G = Good (clean, no damage) | F = Fair (minor wear, normal use) | P = Poor (damage beyond normal wear) | N/A = Not Applicable
+    <strong>Condition Rating Guide:</strong> E = Excellent, G = Good, F = Fair, P = Poor, N/A = Not Applicable
   </div>
 
   <div class="room-section">
-    <div class="room-title">Living Room / Common Areas</div>
+    <div class="room-title">LIVING ROOM</div>
     <table class="checklist-table">
-      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
-      <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Ceiling</td><td></td><td></td><td></td></tr>
-      <tr><td>Flooring/Carpet</td><td></td><td></td><td></td></tr>
-      <tr><td>Windows & Screens</td><td></td><td></td><td></td></tr>
-      <tr><td>Light Fixtures</td><td></td><td></td><td></td></tr>
-      <tr><td>Doors & Locks</td><td></td><td></td><td></td></tr>
+      <tr><th>Item</th><th>Condition</th><th>Notes/Damage Description</th></tr>
+      <tr><td>Walls/Paint</td><td></td><td></td></tr>
+      <tr><td>Ceiling</td><td></td><td></td></tr>
+      <tr><td>Flooring/Carpet</td><td></td><td></td></tr>
+      <tr><td>Windows/Screens</td><td></td><td></td></tr>
+      <tr><td>Blinds/Curtains</td><td></td><td></td></tr>
+      <tr><td>Light Fixtures</td><td></td><td></td></tr>
+      <tr><td>Electrical Outlets</td><td></td><td></td></tr>
+      <tr><td>Doors/Locks</td><td></td><td></td></tr>
     </table>
   </div>
 
   <div class="room-section">
-    <div class="room-title">Kitchen</div>
+    <div class="room-title">KITCHEN</div>
     <table class="checklist-table">
-      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
-      <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Countertops</td><td></td><td></td><td></td></tr>
-      <tr><td>Cabinets & Drawers</td><td></td><td></td><td></td></tr>
-      <tr><td>Sink & Faucet</td><td></td><td></td><td></td></tr>
-      <tr><td>Refrigerator</td><td></td><td></td><td></td></tr>
-      <tr><td>Stove/Oven</td><td></td><td></td><td></td></tr>
-      <tr><td>Dishwasher</td><td></td><td></td><td></td></tr>
+      <tr><th>Item</th><th>Condition</th><th>Notes/Damage Description</th></tr>
+      <tr><td>Walls/Paint</td><td></td><td></td></tr>
+      <tr><td>Flooring</td><td></td><td></td></tr>
+      <tr><td>Countertops</td><td></td><td></td></tr>
+      <tr><td>Cabinets/Drawers</td><td></td><td></td></tr>
+      <tr><td>Sink/Faucet</td><td></td><td></td></tr>
+      <tr><td>Stove/Oven</td><td></td><td></td></tr>
+      <tr><td>Refrigerator</td><td></td><td></td></tr>
+      <tr><td>Dishwasher</td><td></td><td></td></tr>
+      <tr><td>Microwave</td><td></td><td></td></tr>
+      <tr><td>Exhaust Fan/Hood</td><td></td><td></td></tr>
     </table>
   </div>
 
   <div class="room-section">
-    <div class="room-title">Bathroom(s)</div>
+    <div class="room-title">BEDROOM(S)</div>
     <table class="checklist-table">
-      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
-      <tr><td>Toilet</td><td></td><td></td><td></td></tr>
-      <tr><td>Sink & Vanity</td><td></td><td></td><td></td></tr>
-      <tr><td>Bathtub/Shower</td><td></td><td></td><td></td></tr>
-      <tr><td>Faucets</td><td></td><td></td><td></td></tr>
-      <tr><td>Mirror & Medicine Cabinet</td><td></td><td></td><td></td></tr>
+      <tr><th>Item</th><th>Condition</th><th>Notes/Damage Description</th></tr>
+      <tr><td>Walls/Paint</td><td></td><td></td></tr>
+      <tr><td>Ceiling</td><td></td><td></td></tr>
+      <tr><td>Flooring/Carpet</td><td></td><td></td></tr>
+      <tr><td>Windows/Screens</td><td></td><td></td></tr>
+      <tr><td>Blinds/Curtains</td><td></td><td></td></tr>
+      <tr><td>Closet Doors</td><td></td><td></td></tr>
+      <tr><td>Light Fixtures</td><td></td><td></td></tr>
+      <tr><td>Electrical Outlets</td><td></td><td></td></tr>
     </table>
   </div>
 
   <div class="room-section">
-    <div class="room-title">Bedroom(s)</div>
+    <div class="room-title">BATHROOM(S)</div>
     <table class="checklist-table">
-      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
-      <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Flooring/Carpet</td><td></td><td></td><td></td></tr>
-      <tr><td>Windows & Screens</td><td></td><td></td><td></td></tr>
-      <tr><td>Closet & Doors</td><td></td><td></td><td></td></tr>
-      <tr><td>Light Fixtures</td><td></td><td></td><td></td></tr>
+      <tr><th>Item</th><th>Condition</th><th>Notes/Damage Description</th></tr>
+      <tr><td>Walls/Paint</td><td></td><td></td></tr>
+      <tr><td>Flooring</td><td></td><td></td></tr>
+      <tr><td>Toilet</td><td></td><td></td></tr>
+      <tr><td>Sink/Vanity</td><td></td><td></td></tr>
+      <tr><td>Bathtub/Shower</td><td></td><td></td></tr>
+      <tr><td>Faucets/Fixtures</td><td></td><td></td></tr>
+      <tr><td>Mirror/Cabinet</td><td></td><td></td></tr>
+      <tr><td>Exhaust Fan</td><td></td><td></td></tr>
+      <tr><td>Towel Bars</td><td></td><td></td></tr>
     </table>
   </div>
 
   <div class="room-section">
-    <div class="room-title">General Items</div>
+    <div class="room-title">OTHER AREAS</div>
     <table class="checklist-table">
-      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
-      <tr><td>HVAC System/Thermostat</td><td></td><td></td><td></td></tr>
-      <tr><td>Smoke Detectors</td><td></td><td></td><td></td></tr>
-      <tr><td>CO Detectors</td><td></td><td></td><td></td></tr>
-      <tr><td>Keys Returned</td><td>N/A</td><td></td><td># of keys: ___</td></tr>
+      <tr><th>Item</th><th>Condition</th><th>Notes/Damage Description</th></tr>
+      <tr><td>Hallways</td><td></td><td></td></tr>
+      <tr><td>Stairs/Railings</td><td></td><td></td></tr>
+      <tr><td>Garage</td><td></td><td></td></tr>
+      <tr><td>Patio/Balcony</td><td></td><td></td></tr>
+      <tr><td>HVAC System</td><td></td><td></td></tr>
+      <tr><td>Water Heater</td><td></td><td></td></tr>
+      <tr><td>Smoke Detectors</td><td></td><td></td></tr>
+      <tr><td>CO Detectors</td><td></td><td></td></tr>
     </table>
   </div>
 
   <div class="section">
-    <h2 class="section-title">Signatures</h2>
+    <h2 class="section-title">ADDITIONAL NOTES</h2>
+    <div style="border-bottom: 1pt solid #000; height: 20pt; margin-bottom: 6pt;"></div>
+    <div style="border-bottom: 1pt solid #000; height: 20pt; margin-bottom: 6pt;"></div>
+    <div style="border-bottom: 1pt solid #000; height: 20pt;"></div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">SIGNATURES</h2>
+    <p style="font-size: 9pt; font-weight: bold; margin-bottom: 4pt;">LANDLORD/AGENT:</p>
     <div class="field-row">
-      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Landlord/Agent Signature</div></div>
-      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Signature:</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date:</div></div>
     </div>
-    <div class="field-row" style="margin-top: 12pt;">
-      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Tenant Signature</div></div>
-      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
+    <div class="field-row">
+      <div class="field"><div class="signature-line"></div><div class="signature-label">Print Name:</div></div>
+    </div>
+    <p style="font-size: 9pt; font-weight: bold; margin-top: 10pt; margin-bottom: 4pt;">TENANT:</p>
+    <div class="field-row">
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Signature:</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date:</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="signature-line"></div><div class="signature-label">Print Name:</div></div>
     </div>
   </div>
 

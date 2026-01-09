@@ -369,98 +369,177 @@ function generateBlankApplicationHTML(
   </div>
 
   <div class="instructions">
-    <strong>Instructions:</strong> Complete all sections. Provide accurate information. False statements may result in denial of application or termination of tenancy.
+    <strong>Instructions:</strong> Please complete all sections. Incomplete applications may delay processing. All information will be verified.
   </div>
 
   <div class="section">
-    <h2 class="section-title">Property Information</h2>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Property Address</div><div class="field-line"></div></div>
-      <div class="field" style="flex: 0.4;"><div class="field-label">Unit #</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Monthly Rent Amount</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Desired Move-In Date</div><div class="field-line"></div></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <h2 class="section-title">Applicant Information</h2>
+    <h2 class="section-title">PROPERTY INFORMATION</h2>
+    <div class="field-row"><div class="field"><div class="field-label">Property Address:</div><div class="field-line"></div></div></div>
     <div class="field-row-3">
-      <div class="field"><div class="field-label">First Name</div><div class="field-line"></div></div>
-      <div class="field" style="flex: 0.5;"><div class="field-label">Middle</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Last Name</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row-3">
-      <div class="field"><div class="field-label">Date of Birth</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Social Security Number</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Driver's License # / State</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Phone Number</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Email Address</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">Unit #:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Desired Move-In Date:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Monthly Rent: $</div><div class="field-line"></div></div>
     </div>
   </div>
 
   <div class="section">
-    <h2 class="section-title">Current Residence</h2>
-    <div class="field-row"><div class="field"><div class="field-label">Current Address</div><div class="field-line"></div></div></div>
+    <h2 class="section-title">APPLICANT INFORMATION</h2>
+    <div class="field-row"><div class="field"><div class="field-label">Full Legal Name:</div><div class="field-line"></div></div></div>
     <div class="field-row-3">
-      <div class="field"><div class="field-label">City</div><div class="field-line"></div></div>
-      <div class="field" style="flex: 0.3;"><div class="field-label">State</div><div class="field-line"></div></div>
-      <div class="field" style="flex: 0.4;"><div class="field-label">ZIP Code</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Date of Birth:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">SSN:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Driver's License #:</div><div class="field-line"></div></div>
     </div>
     <div class="field-row-2">
-      <div class="field"><div class="field-label">Monthly Rent/Mortgage</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Length of Residency</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Landlord/Property Manager Name</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Landlord Phone</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row"><div class="field"><div class="field-label">Reason for Leaving</div><div class="field-line"></div></div></div>
-  </div>
-
-  <div class="section">
-    <h2 class="section-title">Employment Information</h2>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Current Employer</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Position/Title</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row"><div class="field"><div class="field-label">Employer Address</div><div class="field-line"></div></div></div>
-    <div class="field-row-3">
-      <div class="field"><div class="field-label">Supervisor Name</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Supervisor Phone</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Employment Start Date</div><div class="field-line"></div></div>
-    </div>
-    <div class="field-row-2">
-      <div class="field"><div class="field-label">Gross Monthly Income</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Other Income (Source & Amount)</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Email:</div><div class="field-line"></div></div>
     </div>
   </div>
 
   <div class="section">
-    <h2 class="section-title">Emergency Contact</h2>
+    <h2 class="section-title">CURRENT RESIDENCE</h2>
+    <div class="field-row"><div class="field"><div class="field-label">Current Address:</div><div class="field-line"></div></div></div>
     <div class="field-row-3">
-      <div class="field"><div class="field-label">Name</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Relationship</div><div class="field-line"></div></div>
-      <div class="field"><div class="field-label">Phone</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">City:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.3;"><div class="field-label">State:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">ZIP:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Monthly Rent: $</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Length of Residency:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Landlord Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row"><div class="field"><div class="field-label">Reason for Leaving:</div><div class="field-line"></div></div></div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">PREVIOUS RESIDENCE</h2>
+    <div class="field-row"><div class="field"><div class="field-label">Previous Address:</div><div class="field-line"></div></div></div>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">City:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.3;"><div class="field-label">State:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">ZIP:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Monthly Rent: $</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Length of Residency:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Landlord Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
     </div>
   </div>
 
   <div class="section">
-    <h2 class="section-title">Authorization & Certification</h2>
+    <h2 class="section-title">EMPLOYMENT INFORMATION</h2>
+    <div class="field-row"><div class="field"><div class="field-label">Current Employer:</div><div class="field-line"></div></div></div>
+    <div class="field-row"><div class="field"><div class="field-label">Employer Address:</div><div class="field-line"></div></div></div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Position/Title:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Length of Employment:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Supervisor Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Monthly Gross Income: $</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Additional Income: $</div><div class="field-line"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">EMERGENCY CONTACT</h2>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-2">
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Address:</div><div class="field-line"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">ADDITIONAL OCCUPANTS</h2>
+    <p style="font-size: 9pt; margin-bottom: 6pt;">List all persons who will occupy the premises:</p>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">Age:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">Age:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">Name:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.4;"><div class="field-label">Age:</div><div class="field-line"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">PETS</h2>
+    <div class="field-row">
+      <div>[ ] Yes  [ ] No   Do you have pets?</div>
+    </div>
+    <div class="field-row"><div class="field"><div class="field-label">If yes, describe (type, breed, weight):</div><div class="field-line"></div></div></div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">BACKGROUND QUESTIONS</h2>
+    <div class="field-row">
+      <div>[ ] Yes  [ ] No   Have you ever been evicted?</div>
+    </div>
+    <div class="field-row"><div class="field"><div class="field-label">If yes, explain:</div><div class="field-line"></div></div></div>
+    <div class="field-row">
+      <div>[ ] Yes  [ ] No   Have you ever filed for bankruptcy?</div>
+    </div>
+    <div class="field-row">
+      <div>[ ] Yes  [ ] No   Have you ever been convicted of a felony?</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">REFERENCES</h2>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">Reference 1:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+    </div>
+    <div class="field-row-3">
+      <div class="field"><div class="field-label">Reference 2:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Phone:</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Relationship:</div><div class="field-line"></div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <h2 class="section-title">AUTHORIZATION & CERTIFICATION</h2>
     <p style="font-size: 9pt;">I certify that all information provided is true and complete. I authorize the landlord and their agents to verify all information, including obtaining credit reports, criminal background checks, and contacting employers and references. I understand that providing false information is grounds for rejection or termination of tenancy.</p>
   </div>
 
   <div class="signature-section">
+    <p style="font-size: 9pt; font-weight: bold; margin-bottom: 4pt;">APPLICANT:</p>
     <div class="field-row-2">
-      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Applicant Signature</div></div>
-      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Signature:</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date:</div></div>
     </div>
-    <div class="field-row-2" style="margin-top: 16pt;">
-      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Co-Applicant Signature</div></div>
-      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
+    <div class="field-row">
+      <div class="field"><div class="signature-line"></div><div class="signature-label">Print Name:</div></div>
+    </div>
+    <p style="font-size: 9pt; font-weight: bold; margin-top: 12pt; margin-bottom: 4pt;">CO-APPLICANT:</p>
+    <div class="field-row-2">
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Signature:</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date:</div></div>
+    </div>
+    <div class="field-row">
+      <div class="field"><div class="signature-line"></div><div class="signature-label">Print Name:</div></div>
     </div>
   </div>
 
