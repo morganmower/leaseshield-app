@@ -15,7 +15,7 @@ export function useStates(options?: { includeInactive?: boolean }) {
 
   const { data: states = [], isLoading, error } = useQuery<State[]>({
     queryKey,
-    staleTime: 1000 * 60 * 60, // Cache for 1 hour
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
   return {
