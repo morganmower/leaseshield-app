@@ -1,3 +1,6 @@
+// NOTE: DOCX generation must use `docx` library only.
+// HTML → DOCX conversion (html-to-docx) caused Word corruption issues.
+// These tests validate that DOCX files are structurally valid OOXML.
 import JSZip from 'jszip';
 import { generateDocx, H1, H2, P, HR, Footer } from '../docxBuilder';
 import { generateDocumentDOCX } from '../documentGenerator';

@@ -1,3 +1,7 @@
+// NOTE: DOCX generation must use `docx` library only.
+// HTML → DOCX conversion (html-to-docx) caused Word corruption issues.
+// PDF = delivery / legal / courts (uses Puppeteer)
+// DOCX = editable / customer convenience (uses docx library)
 import {
   Document,
   Packer,
