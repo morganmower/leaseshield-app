@@ -3,18 +3,17 @@ import { communicationTemplates } from "@shared/schema";
 
 import { generateCommunicationKey } from "./utils/seedHelpers";
 import { getActiveStateIds } from "./states";
+import { getStateNames } from "./states/getStateName";
 
-const STATE_NAMES: Record<string, string> = {
-  WY: "Wyoming",
-  CA: "California",
-  VA: "Virginia",
-  NV: "Nevada",
-  AZ: "Arizona",
-  FL: "Florida",
-  IL: "Illinois",
-};
-
-const STATE_CODES: Record<string, string> = {
+const STATE_STATUTE_REFS: Record<string, string> = {
+  UT: "Utah Code",
+  TX: "Texas Property Code",
+  ND: "North Dakota Century Code",
+  SD: "South Dakota Codified Laws",
+  NC: "North Carolina General Statutes",
+  OH: "Ohio Revised Code",
+  MI: "Michigan Compiled Laws",
+  ID: "Idaho Code",
   WY: "Wyoming Statutes",
   CA: "California Civil Code",
   VA: "Virginia Code",
@@ -24,9 +23,8 @@ const STATE_CODES: Record<string, string> = {
   IL: "Illinois Compiled Statutes",
 };
 
-function getTemplates(stateCode: string) {
-  const stateName = STATE_NAMES[stateCode];
-  const stateCodeRef = STATE_CODES[stateCode];
+function getTemplates(stateCode: string, stateName: string) {
+  const stateCodeRef = STATE_STATUTE_REFS[stateCode] || `${stateName} state law`;
 
   return [
     {
@@ -138,18 +136,19 @@ async function seedCommunicationTemplates() {
   console.log("🔧 Adding communication templates for all active states...\n");
 
   const activeStates = await getActiveStateIds();
+  const stateNames = await getStateNames();
   let upserted = 0;
   let errors = 0;
 
   for (const stateCode of activeStates) {
-    const stateName = STATE_NAMES[stateCode];
+    const stateName = stateNames[stateCode];
     if (!stateName) {
-      console.log(`  ⏭️  Skipping ${stateCode} (no state name configured)`);
+      console.log(`  ⏭️  Skipping ${stateCode} (no state name in database)`);
       continue;
     }
     console.log(`\n📍 Processing ${stateName} (${stateCode})...`);
 
-    const templates = getTemplates(stateCode);
+    const templates = getTemplates(stateCode, stateName);
 
     for (const template of templates) {
       const key = generateCommunicationKey(template.templateType, template.title);

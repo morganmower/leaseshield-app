@@ -41,19 +41,27 @@ The state registry cache (5-minute TTL) will automatically pick up the new state
 
 Edit `server/seed-comprehensive.ts` to add templates for the new state. Each state needs these core templates:
 
-### Required Template Types
+### Core Template Types (REQUIRED - blocking issues if missing)
+
+These are required for a state to pass verification:
 
 | Type | Category | Purpose |
 |------|----------|---------|
 | `lease` | leasing | Residential lease agreement |
 | `application` | screening | Rental application form |
+
+### Recommended Template Types (non-blocking warnings if missing)
+
+These are recommended for full coverage but won't block state activation:
+
+| Type | Category | Purpose |
+|------|----------|---------|
 | `adverse_action` | screening | Adverse action notice |
 | `move_in_checklist` | move_in_out | Property condition documentation |
 | `move_out_checklist` | move_in_out | Move-out inspection |
 | `late_rent_notice` | notices | Rent payment demand |
 | `lease_violation_notice` | notices | Lease violation warning |
 | `eviction_notice` | evictions | Notice to quit/vacate |
-| `security_deposit_return` | move_in_out | Deposit accounting |
 
 ### Template Entry Format
 

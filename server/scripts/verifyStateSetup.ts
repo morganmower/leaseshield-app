@@ -2,6 +2,9 @@ import { db } from '../db';
 import { states, templates, complianceCards, communicationTemplates, legalUpdates } from '../../shared/schema';
 import { eq, and } from 'drizzle-orm';
 
+type TemplateType = typeof templates.$inferSelect.templateType;
+type CommTemplateType = typeof communicationTemplates.$inferSelect.templateType;
+
 interface VerificationResult {
   stateId: string;
   stateName: string;
@@ -25,16 +28,18 @@ interface VerificationReport {
   results: VerificationResult[];
 }
 
-const REQUIRED_TEMPLATE_TYPES = [
+const CORE_TEMPLATE_TYPES = [
   'lease',
   'application',
+];
+
+const RECOMMENDED_TEMPLATE_TYPES = [
   'adverse_action',
   'move_in_checklist',
   'move_out_checklist',
   'late_rent_notice',
   'lease_violation_notice',
   'eviction_notice',
-  'security_deposit_return',
 ];
 
 const REQUIRED_COMPLIANCE_CATEGORIES = [
@@ -48,9 +53,9 @@ const REQUIRED_COMPLIANCE_CATEGORIES = [
 const REQUIRED_COMMUNICATION_TYPES = [
   'welcome_letter',
   'rent_reminder',
-  'lease_renewal',
-  'maintenance_response',
-  'late_rent_notice',
+  'lease_renewal_notice',
+  'late_payment_notice',
+  'move_in_welcome',
 ];
 
 async function verifyState(stateId: string): Promise<VerificationResult> {
@@ -82,9 +87,14 @@ async function verifyState(stateId: string): Promise<VerificationResult> {
     .where(and(eq(templates.stateId, stateId), eq(templates.isActive, true)));
 
   const templateTypes = new Set(stateTemplates.map(t => t.templateType));
-  for (const requiredType of REQUIRED_TEMPLATE_TYPES) {
-    if (!templateTypes.has(requiredType as typeof stateTemplates[0]['templateType'])) {
-      issues.push(`Missing required template type: ${requiredType}`);
+  for (const coreType of CORE_TEMPLATE_TYPES) {
+    if (!templateTypes.has(coreType as TemplateType)) {
+      issues.push(`Missing core template type: ${coreType}`);
+    }
+  }
+  for (const recType of RECOMMENDED_TEMPLATE_TYPES) {
+    if (!templateTypes.has(recType as TemplateType)) {
+      warnings.push(`Missing recommended template type: ${recType}`);
     }
   }
 
@@ -120,7 +130,7 @@ async function verifyState(stateId: string): Promise<VerificationResult> {
 
   const commTypes = new Set(stateCommTemplates.map(t => t.templateType));
   for (const requiredType of REQUIRED_COMMUNICATION_TYPES) {
-    if (!commTypes.has(requiredType as typeof stateCommTemplates[0]['templateType'])) {
+    if (!commTypes.has(requiredType as CommTemplateType)) {
       warnings.push(`Missing communication template type: ${requiredType}`);
     }
   }

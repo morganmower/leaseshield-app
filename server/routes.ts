@@ -234,9 +234,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = userPreferencesSchema.parse(req.body);
       
       // Only allow supported states - dynamically fetched from database
-      const supportedStates = await getActiveStateIds();
-      if (validatedData.preferredState && !supportedStates.includes(validatedData.preferredState)) {
-        return res.status(400).json({ message: "Invalid state selection" });
+      if (validatedData.preferredState) {
+        try {
+          const supportedStates = await getActiveStateIds();
+          if (!supportedStates.includes(validatedData.preferredState)) {
+            return res.status(400).json({ message: "Invalid state selection" });
+          }
+        } catch (error) {
+          console.error("Error fetching active states:", error);
+          return res.status(500).json({ message: "Unable to validate state selection" });
+        }
       }
       
       const user = await storage.updateUserPreferences(userId, validatedData);
