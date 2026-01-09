@@ -458,11 +458,17 @@ function getStateDisclosuresExpanded(stateId: string): string {
       <h2>19. UTAH STATE-SPECIFIC PROVISIONS</h2>
       <h3>19.1 Fair Housing Disclosure</h3>
       <p>In accordance with the Utah Fair Housing Act (Utah Code § 34-42-1 et seq.), it is unlawful to refuse to rent, discriminate, or discriminate in advertising because of protected class status.</p>
-      <h3>19.2 Radon Gas Disclosure</h3>
+      <h3>19.2 Mold Prevention and Disclosure Addendum</h3>
+      <p><strong>PURPOSE:</strong> This Mold Prevention Addendum establishes responsibilities for maintaining a healthy living environment and preventing mold growth, consistent with the Utah Fit Premises Act (Utah Code § 57-22-4).</p>
+      <p><strong>Landlord Disclosure:</strong> Landlord discloses that: (a) there is no known mold contamination on the premises that exceeds permissible exposure limits per Utah Administrative Code R392-105; (b) all known mold issues have been remediated according to professional standards; (c) Landlord has provided information about mold prevention to Tenant.</p>
+      <p><strong>Tenant Responsibilities:</strong> Tenant agrees to: (a) maintain adequate ventilation by using exhaust fans and opening windows when possible; (b) promptly report any water leaks, moisture problems, or visible mold to Landlord in writing within 48 hours of discovery; (c) avoid blocking air vents or creating conditions that promote moisture buildup; (d) use heating and cooling systems appropriately to control humidity levels.</p>
+      <p><strong>Landlord Responsibilities:</strong> Under Utah Code § 57-22-4, upon receiving written notice of water intrusion or mold, Landlord shall take substantial action within 10 days, including: (a) inspecting the affected area; (b) remediating any mold issues using qualified professionals if necessary; (c) addressing the source of moisture to prevent recurrence; (d) providing Tenant with written notice of remediation completion.</p>
+      <p><strong>Health Advisory:</strong> Mold exposure may cause health effects in some individuals, including allergic reactions, respiratory issues, and other symptoms. Individuals with respiratory conditions, allergies, or compromised immune systems may be more susceptible. Consult a healthcare provider if you experience symptoms you believe may be related to mold exposure.</p>
+      <h3>19.3 Radon Gas Disclosure</h3>
       <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings in Utah. Long-term exposure may pose health risks. Testing for radon is recommended. Information about radon is available from the Utah Department of Environmental Quality.</p>
-      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <h3>19.4 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
       <p>If the property was built before January 1, 1978, Landlord has disclosed all known information regarding lead-based paint and lead-based paint hazards. Tenant has been provided with the pamphlet "Protect Your Family from Lead in Your Home." Tenant acknowledges receipt of this disclosure.</p>
-      <h3>19.4 Security Deposit Laws (Utah Code § 34-42-1)</h3>
+      <h3>19.5 Security Deposit Laws (Utah Code § 57-17)</h3>
       <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized accounting of any deductions.</p>
     `,
     TX: `

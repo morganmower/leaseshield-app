@@ -22,10 +22,24 @@ interface FieldDefinition {
   required: boolean;
   category: string;
   defaultValue?: string;
+  options?: string[];
+}
+
+interface FillableSection {
+  title: string;
+  fields: Array<{
+    name: string;
+    type: string;
+    label: string;
+    required: boolean;
+    defaultValue?: string;
+    options?: string[];
+  }>;
 }
 
 interface FillableFormData {
-  fields: FieldDefinition[];
+  fields?: FieldDefinition[];
+  sections?: FillableSection[];
 }
 
 export default function DocumentWizard() {
@@ -75,7 +89,21 @@ export default function DocumentWizard() {
   });
 
   const fillableData = template?.fillableFormData as FillableFormData | null;
-  const fields = fillableData?.fields || [];
+  
+  // Handle both legacy 'fields' format and new 'sections' format
+  const fields: FieldDefinition[] = fillableData?.sections 
+    ? fillableData.sections.flatMap(section => 
+        section.fields.map(field => ({
+          id: field.name,
+          label: field.label,
+          type: field.type,
+          required: field.required,
+          category: section.title,
+          defaultValue: field.defaultValue,
+          options: field.options,
+        }))
+      )
+    : fillableData?.fields || [];
 
   // Group fields by category
   const categories = fields.reduce((acc, field) => {
@@ -175,6 +203,31 @@ export default function DocumentWizard() {
       }
     }
   }, [documentId, savedDocument?.createdAt, fields.length, form]);
+
+  // Auto-calculate lease end date based on term period and start date
+  const leaseTerm = form.watch('leaseTerm');
+  const leaseStartDate = form.watch('leaseStartDate');
+
+  useEffect(() => {
+    if (leaseTerm && leaseStartDate && leaseTerm !== 'Custom') {
+      const startDate = new Date(leaseStartDate);
+      if (!isNaN(startDate.getTime())) {
+        let endDate = new Date(startDate);
+        if (leaseTerm === '1 Year') {
+          endDate.setFullYear(endDate.getFullYear() + 1);
+          endDate.setDate(endDate.getDate() - 1);
+        } else if (leaseTerm === '2 Years') {
+          endDate.setFullYear(endDate.getFullYear() + 2);
+          endDate.setDate(endDate.getDate() - 1);
+        }
+        const endDateStr = endDate.toISOString().split('T')[0];
+        const currentEndDate = form.getValues('leaseEndDate');
+        if (currentEndDate !== endDateStr) {
+          form.setValue('leaseEndDate', endDateStr);
+        }
+      }
+    }
+  }, [leaseTerm, leaseStartDate, form]);
 
   // Save document mutation
   const saveMutation = useMutation({
@@ -475,24 +528,57 @@ export default function DocumentWizard() {
                           control={form.control}
                           name={field.id}
                           render={({ field: formField }) => (
-                            <FormItem className={field.type === 'text' && field.id.includes('Address') ? 'md:col-span-2' : ''}>
+                            <FormItem className={field.type === 'text' && field.id.includes('Address') ? 'md:col-span-2' : field.type === 'checkbox' ? 'md:col-span-2' : ''}>
                               <FormLabel>
                                 {field.label}
                                 {field.required && <span className="text-destructive ml-1">*</span>}
                               </FormLabel>
                               <FormControl>
-                                <Input
-                                  type={field.type === 'currency' ? 'text' : field.type}
-                                  placeholder={
-                                    field.type === 'currency' ? '0.00' :
-                                    field.type === 'date' ? 'YYYY-MM-DD' :
-                                    field.type === 'tel' ? '(555) 555-5555' :
-                                    `Enter ${field.label.toLowerCase()}`
-                                  }
-                                  {...formField}
-                                  data-testid={`input-${field.id}`}
-                                />
+                                {field.type === 'select' && field.options ? (
+                                  <Select
+                                    value={formField.value || ''}
+                                    onValueChange={formField.onChange}
+                                  >
+                                    <SelectTrigger data-testid={`select-${field.id}`}>
+                                      <SelectValue placeholder={`Select ${field.label.toLowerCase()}`} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {field.options.map((option) => (
+                                        <SelectItem key={option} value={option}>
+                                          {option}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                ) : field.type === 'checkbox' ? (
+                                  <div className="flex items-center gap-2">
+                                    <input
+                                      type="checkbox"
+                                      checked={formField.value === 'true'}
+                                      onChange={(e) => formField.onChange(e.target.checked ? 'true' : '')}
+                                      className="h-4 w-4 rounded border-gray-300"
+                                      data-testid={`checkbox-${field.id}`}
+                                    />
+                                    <span className="text-sm text-muted-foreground">I confirm</span>
+                                  </div>
+                                ) : (
+                                  <Input
+                                    type={field.type === 'currency' ? 'text' : field.type}
+                                    placeholder={
+                                      field.type === 'currency' ? '0.00' :
+                                      field.type === 'date' ? 'YYYY-MM-DD' :
+                                      field.type === 'tel' ? '(555) 555-5555' :
+                                      `Enter ${field.label.toLowerCase()}`
+                                    }
+                                    disabled={field.id === 'leaseEndDate' && !!leaseTerm && leaseTerm !== 'Custom'}
+                                    {...formField}
+                                    data-testid={`input-${field.id}`}
+                                  />
+                                )}
                               </FormControl>
+                              {field.id === 'leaseEndDate' && leaseTerm && leaseTerm !== 'Custom' && (
+                                <p className="text-xs text-muted-foreground">Auto-calculated based on {leaseTerm} term</p>
+                              )}
                               <FormMessage />
                             </FormItem>
                           )}
