@@ -925,6 +925,413 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 5,
   },
+
+  // ENTRY NOTICE REQUIREMENTS - All States
+  {
+    stateId: "UT",
+    title: "Entry Notice Requirements",
+    summary: "Utah requires landlords to provide reasonable notice before entering a rental unit",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "24-Hour Notice Required",
+          content: "Utah Code §57-22-4 requires landlords to give at least 24 hours' notice before entering for non-emergency reasons.",
+        },
+        {
+          title: "Permitted Entry Reasons",
+          content: "Landlords may enter for repairs, inspections, showing the unit to prospective tenants or buyers, and emergencies.",
+        },
+        {
+          title: "Emergency Entry",
+          content: "No notice required for genuine emergencies such as fire, flooding, or gas leaks that threaten life or property.",
+        },
+        {
+          title: "Reasonable Hours",
+          content: "Non-emergency entries should occur during reasonable hours (typically 8am-8pm) unless tenant agrees otherwise.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "TX",
+    title: "Entry Notice Requirements",
+    summary: "Texas relies primarily on lease terms to govern landlord entry rights",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "No Statutory Requirement",
+          content: "Texas Property Code does not specify a required notice period. Entry rights are governed by the lease agreement.",
+        },
+        {
+          title: "Best Practice: 24-Hour Notice",
+          content: "Industry standard is to provide at least 24 hours' notice and include entry provisions in the lease.",
+        },
+        {
+          title: "Emergency Entry",
+          content: "Landlords may enter without notice in genuine emergencies to prevent property damage or protect tenant safety.",
+        },
+        {
+          title: "Lease Terms Govern",
+          content: "Include clear entry notice requirements in your lease to establish expectations and avoid disputes.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "ND",
+    title: "Entry Notice Requirements",
+    summary: "North Dakota requires reasonable notice before landlord entry into rental units",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "Reasonable Notice Required",
+          content: "N.D.C.C. §47-16-07.3 requires landlords to give reasonable notice before entering. 24 hours is considered reasonable.",
+        },
+        {
+          title: "Permitted Entry Purposes",
+          content: "Entry allowed for repairs, inspections, showing the property, or when tenant has abandoned the premises.",
+        },
+        {
+          title: "Emergency Exception",
+          content: "No notice required for emergencies such as fire, water damage, or situations threatening health and safety.",
+        },
+        {
+          title: "Tenant Rights",
+          content: "Tenant may request specific entry times. Landlord should accommodate reasonable requests when possible.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "SD",
+    title: "Entry Notice Requirements",
+    summary: "South Dakota law requires reasonable notice for landlord entry",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "Reasonable Notice Standard",
+          content: "South Dakota requires 'reasonable' advance notice. Courts generally consider 24 hours sufficient.",
+        },
+        {
+          title: "Entry During Reasonable Hours",
+          content: "Non-emergency entry should be during daytime hours unless otherwise agreed with the tenant.",
+        },
+        {
+          title: "Emergency Access",
+          content: "Landlord may enter without notice in emergencies to prevent property damage or address safety concerns.",
+        },
+        {
+          title: "Document All Entries",
+          content: "Keep records of entry notices and purpose. This protects both landlord and tenant interests.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "NC",
+    title: "Entry Notice Requirements",
+    summary: "North Carolina relies on lease terms and common law for landlord entry rules",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "No Specific Statute",
+          content: "North Carolina does not have a specific statute requiring advance notice for landlord entry.",
+        },
+        {
+          title: "Common Law Standard",
+          content: "Courts apply common law requiring reasonable notice. 24-hour notice is the industry standard.",
+        },
+        {
+          title: "Include in Lease",
+          content: "Best practice is to specify entry notice requirements in the lease agreement (recommend 24-48 hours).",
+        },
+        {
+          title: "Emergency Entry Rights",
+          content: "Landlords may enter without notice for genuine emergencies threatening life or property.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "OH",
+    title: "Entry Notice Requirements",
+    summary: "Ohio requires landlords to provide reasonable notice before entering a rental unit",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "Reasonable Notice Required",
+          content: "Ohio Rev. Code §5321.04(A)(8) requires landlords to give reasonable notice. 24 hours is standard practice.",
+        },
+        {
+          title: "Reasonable Times Only",
+          content: "Entry must be at reasonable times unless emergency exists. Typically 8am-8pm on weekdays.",
+        },
+        {
+          title: "Permitted Purposes",
+          content: "Entry allowed for inspections, repairs, showing unit, and when tenant has abandoned the property.",
+        },
+        {
+          title: "Tenant Remedies",
+          content: "Repeated unauthorized entry may constitute landlord harassment and tenant can seek legal remedies.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "MI",
+    title: "Entry Notice Requirements",
+    summary: "Michigan relies on lease provisions and common law for landlord entry",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "No Statutory Notice Period",
+          content: "Michigan does not have a specific statute mandating advance notice for landlord entry.",
+        },
+        {
+          title: "Lease Terms Control",
+          content: "Entry rights should be clearly defined in the lease. Include 24-hour notice requirement.",
+        },
+        {
+          title: "Quiet Enjoyment",
+          content: "Michigan recognizes tenant's right to quiet enjoyment. Excessive entry may violate this right.",
+        },
+        {
+          title: "Emergency Exception",
+          content: "Immediate entry permitted in emergencies such as fire, flooding, or safety hazards.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "ID",
+    title: "Entry Notice Requirements",
+    summary: "Idaho relies on lease terms and reasonable notice standards for landlord entry",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "No Specific Statute",
+          content: "Idaho does not have a specific statutory requirement for landlord entry notice.",
+        },
+        {
+          title: "Best Practice",
+          content: "Include 24-hour notice requirement in lease. This protects both landlord and tenant.",
+        },
+        {
+          title: "Reasonable Access",
+          content: "Tenant must allow reasonable access for repairs and inspections. Cannot unreasonably deny entry.",
+        },
+        {
+          title: "Emergency Entry",
+          content: "No notice required for genuine emergencies that threaten property or tenant safety.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "WY",
+    title: "Entry Notice Requirements",
+    summary: "Wyoming has no specific statute but requires reasonable notice for entry",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "No Statutory Requirement",
+          content: "Wyoming does not have a statute specifying landlord entry notice requirements.",
+        },
+        {
+          title: "Common Law Standard",
+          content: "Reasonable notice is required under common law principles. 24 hours is industry standard.",
+        },
+        {
+          title: "Include in Lease",
+          content: "Specify entry procedures in the lease to avoid disputes. Include notice period and permitted purposes.",
+        },
+        {
+          title: "Emergency Access",
+          content: "Landlord may enter immediately in emergencies to prevent property damage or protect safety.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "CA",
+    title: "Entry Notice Requirements",
+    summary: "California Civil Code strictly regulates landlord entry with specific notice requirements",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "24-Hour Written Notice",
+          content: "Cal. Civil Code §1954 requires at least 24 hours' written notice for most entries. 48 hours for initial move-out inspection.",
+        },
+        {
+          title: "Permitted Entry Purposes",
+          content: "Entry allowed for repairs, agreed services, showing unit, inspections, and court-ordered access.",
+        },
+        {
+          title: "Normal Business Hours",
+          content: "Entry must be during normal business hours unless tenant consents to other times or emergency exists.",
+        },
+        {
+          title: "Notice Content",
+          content: "Notice must state date, approximate time, and purpose of entry. Must be served per statutory methods.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "VA",
+    title: "Entry Notice Requirements",
+    summary: "Virginia requires landlords to provide notice before entering rental units",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "24-Hour Notice Standard",
+          content: "Va. Code §55.1-1229 requires landlords to give at least 24 hours' notice before entry.",
+        },
+        {
+          title: "Reasonable Times",
+          content: "Entry should be at reasonable times unless emergency or tenant consent for other times.",
+        },
+        {
+          title: "Permitted Purposes",
+          content: "Entry allowed for inspections, repairs, pest control, showing to prospective tenants/buyers.",
+        },
+        {
+          title: "Emergency Entry",
+          content: "Immediate entry permitted in emergencies. Document the emergency and actions taken.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "NV",
+    title: "Entry Notice Requirements",
+    summary: "Nevada requires 24-hour notice for most landlord entries",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "24-Hour Written Notice",
+          content: "NRS 118A.330 requires at least 24 hours' written notice before entering for inspections or repairs.",
+        },
+        {
+          title: "Reasonable Hours",
+          content: "Entry must be during reasonable hours unless emergency or tenant agrees to other times.",
+        },
+        {
+          title: "Permitted Entry Reasons",
+          content: "Entry allowed for inspections, repairs, showing unit, and when tenant has abandoned the property.",
+        },
+        {
+          title: "Tenant May Not Unreasonably Deny",
+          content: "Tenant cannot unreasonably refuse access for legitimate purposes after proper notice.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "AZ",
+    title: "Entry Notice Requirements",
+    summary: "Arizona requires two days' notice before landlord entry in most cases",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "Two Business Days' Notice",
+          content: "A.R.S. §33-1343 requires at least two days' notice before entering to make inspections or repairs.",
+        },
+        {
+          title: "Reasonable Times Only",
+          content: "Entry must be at reasonable times. Courts typically interpret this as normal business hours.",
+        },
+        {
+          title: "Immediate Access Exceptions",
+          content: "Landlord may enter without notice in emergencies or when tenant has abandoned the unit.",
+        },
+        {
+          title: "Showing the Property",
+          content: "For showing to prospective tenants, shorter notice may be reasonable but still required.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "FL",
+    title: "Entry Notice Requirements",
+    summary: "Florida requires reasonable notice before landlord entry",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "12-Hour Notice Minimum",
+          content: "Fla. Stat. §83.53 requires at least 12 hours' notice before entry. Best practice is 24 hours.",
+        },
+        {
+          title: "Reasonable Time Required",
+          content: "Entry must be at a reasonable time, typically during normal business hours (9am-6pm).",
+        },
+        {
+          title: "Written Notice Recommended",
+          content: "While not strictly required, written notice provides documentation and reduces disputes.",
+        },
+        {
+          title: "Emergency Exception",
+          content: "Landlord may enter without notice in emergencies to prevent property damage or protect safety.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
+  {
+    stateId: "IL",
+    title: "Entry Notice Requirements",
+    summary: "Illinois requires landlords to provide reasonable notice before entering",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "Reasonable Notice Standard",
+          content: "Illinois law requires 'reasonable' notice. Courts generally consider 24 hours sufficient.",
+        },
+        {
+          title: "Chicago RLTO Requirements",
+          content: "Chicago Residential Landlord Tenant Ordinance requires 48 hours' notice for entry.",
+        },
+        {
+          title: "Reasonable Hours",
+          content: "Entry should be during reasonable hours unless emergency or tenant consents to other times.",
+        },
+        {
+          title: "Emergency Access",
+          content: "Immediate entry allowed for emergencies threatening property or tenant safety.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
 ];
 
 async function seedComplianceCards() {

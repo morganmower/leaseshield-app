@@ -269,6 +269,38 @@ const legalUpdates = [
     effectiveDate: new Date("2024-01-01"),
     impactLevel: "high",
   },
+
+  // ILLINOIS Legal Updates
+  {
+    stateId: "IL",
+    title: "Security Deposit Return Act Updates",
+    summary: "Illinois clarified the 30/45-day deposit return framework under the Security Deposit Return Act.",
+    whyItMatters: "Missing these deadlines results in forfeiting ALL deduction rights plus potential penalties of up to 2x the deposit amount.",
+    beforeText: "Return timelines existed but some landlords confused the two different timeframes.",
+    afterText: "30 days to return deposit with itemized deductions; 45 days if repairs needed and estimate provided. Must include receipts for all deductions over $25.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "IL",
+    title: "Radon Disclosure Requirement",
+    summary: "Illinois requires landlords to provide the Illinois EPA radon disclosure to all residential tenants.",
+    whyItMatters: "Radon is a leading cause of lung cancer. Proper disclosure protects you from liability for health-related claims.",
+    beforeText: "Radon disclosures were recommended but enforcement was inconsistent.",
+    afterText: "Must provide Illinois EPA Radon Disclosure form before lease signing. Keep signed copy for your records.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+  {
+    stateId: "IL",
+    title: "Chicago RLTO Notice Requirements",
+    summary: "Chicago landlords must comply with stricter notice requirements under the Residential Landlord and Tenant Ordinance.",
+    whyItMatters: "Chicago properties have additional requirements beyond state law. Non-compliance can result in significant penalties.",
+    beforeText: "RLTO requirements were sometimes overlooked by landlords managing Chicago properties.",
+    afterText: "Chicago requires: 48-hour entry notice, security deposit receipt with bank info, RLTO summary attached to every lease. Fines up to $500 per violation.",
+    effectiveDate: new Date("2023-01-01"),
+    impactLevel: "high",
+  },
 ];
 
 async function seedLegalUpdates() {
