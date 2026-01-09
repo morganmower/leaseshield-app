@@ -561,19 +561,31 @@ export default function Templates() {
 
             {/* Quick Filter Chips */}
             <div className="flex flex-wrap gap-2">
-              {quickFilterCategories.map(({ key, label, icon: Icon }) => (
-                <Button
-                  key={key}
-                  variant={selectedCategory === key ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => setSelectedCategory(selectedCategory === key ? "all" : key)}
-                  data-testid={`button-quick-filter-${key}`}
-                  className="gap-1.5"
-                >
-                  <Icon className="h-3.5 w-3.5" />
-                  {label}
-                </Button>
-              ))}
+              {quickFilterCategories.map(({ key, label, icon: Icon }) => {
+                const isSelected = selectedCategory === key;
+                const colorClasses = isSelected ? {
+                  leasing: 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600',
+                  screening: 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600',
+                  compliance: 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600',
+                  tenant_issues: 'bg-red-600 hover:bg-red-700 text-white border-red-600',
+                  notices: 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600',
+                  move_in_out: 'bg-teal-600 hover:bg-teal-700 text-white border-teal-600',
+                }[key] || '' : '';
+                
+                return (
+                  <Button
+                    key={key}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedCategory(selectedCategory === key ? "all" : key)}
+                    data-testid={`button-quick-filter-${key}`}
+                    className={`gap-1.5 ${isSelected ? colorClasses : ''}`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </Button>
+                );
+              })}
             </div>
 
             {/* Active Filters & Results */}
