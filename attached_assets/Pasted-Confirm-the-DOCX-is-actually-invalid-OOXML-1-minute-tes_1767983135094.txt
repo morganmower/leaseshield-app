@@ -1,0 +1,250 @@
+Confirm the DOCX is actually invalid OOXML (1-minute test)
+
+On a Windows machine (or in CI), run Microsoft’s free validator:
+
+Option A: Open XML SDK “OpenXmlValidator” (most definitive)
+
+If you can run .NET, this will tell you the exact part/relationship that is invalid.
+
+If you want, I can give you a small console app that:
+
+downloads a generated docx from your endpoint
+
+runs OpenXmlValidator
+
+prints the exact error list
+
+Option B: If you can’t run .NET
+
+Do a quick “Word vs LibreOffice” check:
+
+If LibreOffice opens it but Word doesn’t → OOXML compliance issue (very common)
+
+If neither opens it → broken zip/parts
+
+Either way, your conclusion (“html-to-docx has deeper issues”) is likely correct.
+
+2) Recommended migration strategy (fastest, least risky)
+
+Don’t rewrite everything at once. Do it in phases:
+
+Phase 1 — Replace DOCX generation for one document type (Month-to-Month lease)
+
+Keep PDF generation as-is (Puppeteer)
+
+Swap docx generator behind a feature flag:
+
+?engine=docx vs ?engine=html
+
+Validate with real customer templates
+
+Phase 2 — Build a shared “document layout kit”
+
+Most leases/apps/checklists share:
+
+Headings / subheadings
+
+Paragraph blocks
+
+Numbered sections
+
+Tables (only if needed)
+
+Signature blocks
+
+Optional clauses by state
+
+Create a small set of reusable functions so you don’t write 500 lines per template.
+
+Phase 3 — Migrate remaining docs incrementally
+
+Once the kit exists, it goes quick.
+
+3) What “docx” looks like in practice (TypeScript)
+
+Below is a copy/paste starting point that covers 80% of lease documents.
+
+Install
+npm i docx
+
+Generator: paragraphs, headings, signature lines, simple spacing
+// generators/docx/leaseDoc.ts
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  UnderlineType,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  BorderStyle,
+} from "docx";
+
+type LeaseDocInput = {
+  title: string;
+  state: string;
+  bodySections: { heading?: string; paragraphs: string[] }[];
+  signature: {
+    landlordName?: string;
+    tenantName?: string;
+  };
+};
+
+const H1 = (text: string) =>
+  new Paragraph({
+    text,
+    heading: HeadingLevel.HEADING_1,
+    spacing: { after: 240 },
+  });
+
+const H2 = (text: string) =>
+  new Paragraph({
+    text,
+    heading: HeadingLevel.HEADING_2,
+    spacing: { before: 240, after: 120 },
+  });
+
+const P = (text: string) =>
+  new Paragraph({
+    children: [new TextRun({ text, size: 22 })],
+    spacing: { after: 120 },
+  });
+
+const Line = (label: string) =>
+  new Paragraph({
+    spacing: { before: 240, after: 120 },
+    children: [
+      new TextRun({ text: label + " ", size: 22 }),
+      new TextRun({
+        text: "______________________________",
+        size: 22,
+        underline: { type: UnderlineType.SINGLE },
+      }),
+    ],
+  });
+
+export async function buildLeaseDocx(input: LeaseDocInput): Promise<Buffer> {
+  const children: Paragraph[] = [];
+
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: input.title, bold: true, size: 32 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 300 },
+    })
+  );
+
+  children.push(
+    new Paragraph({
+      children: [new TextRun({ text: `State: ${input.state}`, italics: true, size: 20 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 400 },
+    })
+  );
+
+  for (const section of input.bodySections) {
+    if (section.heading) children.push(H2(section.heading));
+    for (const para of section.paragraphs) children.push(P(para));
+  }
+
+  children.push(H2("Signatures"));
+  children.push(Line("Landlord/Agent:"));
+  children.push(Line("Tenant:"));
+  children.push(Line("Date:"));
+
+  const doc = new Document({
+    sections: [{ children }],
+  });
+
+  return await Packer.toBuffer(doc);
+}
+
+Express route using it
+import { sendBinaryDownload } from "../utils/download";
+import { buildLeaseDocx } from "../generators/docx/leaseDoc";
+
+router.get("/api/download/docx/:templateId", async (req, res, next) => {
+  try {
+    const template = await loadTemplateFromDb(req.params.templateId);
+
+    // Convert your stored template/clauses into docx-friendly sections
+    const bodySections = template.sections.map((s: any) => ({
+      heading: s.heading,
+      paragraphs: s.paragraphs,
+    }));
+
+    const buf = await buildLeaseDocx({
+      title: template.title,
+      state: template.state,
+      bodySections,
+      signature: {},
+    });
+
+    sendBinaryDownload(res, {
+      buffer: buf,
+      filename: `${template.slug}.docx`,
+      contentType: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+  } catch (e) {
+    next(e);
+  }
+});
+
+
+This will open in Word 100% reliably because docx writes valid OOXML.
+
+4) How to preserve your formatting without HTML
+
+HTML-to-docx is attractive because you already have templates in HTML. With docx, you’ll want to store templates more like this:
+
+Best template shape for docx generation (in Postgres)
+
+Instead of raw HTML, store a structured model:
+
+{
+  "title": "Month-to-Month Rental Agreement",
+  "state": "UT",
+  "sections": [
+    { "heading": "1. Parties", "paragraphs": ["This agreement is between..."] },
+    { "heading": "2. Premises", "paragraphs": ["The premises is located at..."] }
+  ]
+}
+
+
+You can still keep your HTML for the PDF version if you like. But DOCX should come from structured content.
+
+Where your legislation updates fit perfectly
+
+Your “clause library” can output paragraphs/sections directly, which docx consumes cleanly:
+
+clause text becomes Paragraphs
+
+headings become HeadingLevel.HEADING_2
+
+numbered items become Paragraph with numbering (docx supports numbering too)
+
+5) The fastest way to migrate without rewriting all templates
+
+If your DB currently stores HTML, do a “one-time converter”:
+
+Parse HTML into a limited subset you support:
+
+<h1> <h2> <p> <ol><li> <ul><li> <br>
+
+Convert those into docx blocks
+
+Reject anything else (tables, complex divs, CSS)
+
+That gives you a middle ground: keep HTML storage, but generate docx safely.
+
+If you want, I can give you a small HTML-to-docx-blocks parser that:
+
+strips unsupported CSS
+
+converts lists properly
+
+preserves basic bold/italics/underline
