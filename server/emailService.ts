@@ -100,7 +100,7 @@ Ready to protect your rental business? You have two options:
 If you want to keep exploring before committing, you can continue your free trial access.
 
 What you get:
-✓ State-specific legal templates for UT, TX, ND, SD, NC, OH, MI, and ID
+✓ State-specific legal templates for all 15 states
 ✓ Compliance cards keeping you up-to-date with landlord-tenant laws
 ✓ AI credit report decoder and tenant screening toolkit
 ✓ Step-by-step workflows for handling tenant issues
@@ -169,7 +169,7 @@ The LeaseShield App Team
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>What you get with LeaseShield:</strong></p>
         <ul style="margin-bottom: 0;">
-          <li>State-specific legal templates for all 8 states</li>
+          <li>State-specific legal templates for all 15 states</li>
           <li>Compliance cards keeping you up-to-date</li>
           <li>AI credit report decoder and screening toolkit</li>
           <li>Step-by-step tenant issue workflows</li>
@@ -283,7 +283,7 @@ The LeaseShield App Team
 Welcome to LeaseShield App! Your subscription is now active.
 
 You now have unlimited access to:
-• State-specific legal templates for UT, TX, ND, SD
+• State-specific legal templates for all 15 states
 • Real-time compliance updates and legal change notifications
 • Credit report decoder and tenant screening resources
 • Expert guidance for handling tenant issues
@@ -324,7 +324,7 @@ The LeaseShield App Team
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>Here's what you can do now:</strong></p>
         <ul>
-          <li>Download state-specific legal templates for UT, TX, ND, SD</li>
+          <li>Download state-specific legal templates for all 15 states</li>
           <li>Get real-time compliance updates and legal change notifications</li>
           <li>Decode credit reports and screen tenants with confidence</li>
           <li>Access expert guidance for handling tenant issues</li>
@@ -593,7 +593,7 @@ LeaseShield App
 Your 7-day free trial of LeaseShield App has ended.
 
 To continue protecting your rental business, please subscribe for just $10/month:
-• State-specific legal templates for UT, TX, ND, SD
+• State-specific legal templates for all 15 states
 • Real-time compliance updates and legal change notifications
 • Credit report decoder and tenant screening resources
 • Expert guidance for handling tenant issues
@@ -638,7 +638,7 @@ The LeaseShield App Team
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>With your subscription, you'll get:</strong></p>
         <ul>
-          <li>State-specific legal templates for UT, TX, ND, SD</li>
+          <li>State-specific legal templates for all 15 states</li>
           <li>Real-time compliance updates and legal change notifications</li>
           <li>Credit report decoder and tenant screening resources</li>
           <li>Expert guidance for handling tenant issues</li>
