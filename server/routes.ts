@@ -1798,7 +1798,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import document generators
       const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
-      const { generateLeaseAgreementDocx } = await import('./utils/leaseAgreementGenerator');
+      const { generateLeaseAgreementDocx, generateLeaseAgreementPdf } = await import('./utils/leaseAgreementGenerator');
 
       const generationOptions = {
         templateTitle: template.title,
@@ -1835,7 +1835,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.docx"`);
         res.send(docxBuffer);
       } else {
-        const pdfBuffer = await generateDocument(generationOptions);
+        let pdfBuffer: Buffer;
+        
+        if (isLeaseAgreement) {
+          // Use specialized lease generator for consistent PDF/DOCX output
+          pdfBuffer = await generateLeaseAgreementPdf({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            fieldValues: document.formData as Record<string, string>,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            landlordInfo,
+          });
+        } else {
+          pdfBuffer = await generateDocument(generationOptions);
+        }
+        
         res.setHeader('Content-Type', 'application/pdf');
         res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.pdf"`);
         res.send(pdfBuffer);
@@ -2994,7 +3009,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Import document generators
       const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
-      const { generateLeaseAgreementDocx } = await import('./utils/leaseAgreementGenerator');
+      const { generateLeaseAgreementDocx, generateLeaseAgreementPdf } = await import('./utils/leaseAgreementGenerator');
 
       const generationOptions = {
         templateTitle: template.title,
@@ -3037,7 +3052,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       } else {
         // Generate PDF (default)
-        const pdfBuffer = await generateDocument(generationOptions);
+        let pdfBuffer: Buffer;
+        
+        if (isLeaseAgreement) {
+          // Use specialized lease generator for consistent PDF/DOCX output
+          pdfBuffer = await generateLeaseAgreementPdf({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            fieldValues,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            landlordInfo,
+          });
+        } else {
+          pdfBuffer = await generateDocument(generationOptions);
+        }
+        
         assertLooksLikePdf(pdfBuffer);
         sendBinaryDownload(res, {
           buffer: pdfBuffer,
