@@ -338,7 +338,7 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="mb-8">
               <a 
                 href="#how-it-works" 
-                className="text-base font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
+                className="text-lg font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
                 data-testid="link-see-how-it-works"
               >
                 See How It Works
