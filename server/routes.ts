@@ -1783,8 +1783,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName,
       } : undefined;
 
-      // Import document generator
+      // Import document generators
       const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
+      const { generateLeaseAgreementDocx } = await import('./utils/leaseAgreementGenerator');
 
       const generationOptions = {
         templateTitle: template.title,
@@ -1796,8 +1797,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         landlordInfo,
       };
 
+      // Check if this is a lease agreement template
+      const isLeaseAgreement = template.title.toLowerCase().includes('lease') || 
+                               template.title.toLowerCase().includes('rental agreement');
+
       if (format === 'docx') {
-        const docxBuffer = await generateDocumentDOCX(generationOptions);
+        let docxBuffer: Buffer;
+        
+        if (isLeaseAgreement) {
+          // Use specialized lease generator for cleaner DOCX output
+          docxBuffer = await generateLeaseAgreementDocx({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            fieldValues: document.formData as Record<string, string>,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            landlordInfo,
+          });
+        } else {
+          docxBuffer = await generateDocumentDOCX(generationOptions);
+        }
+        
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.docx"`);
         res.send(docxBuffer);
@@ -2959,8 +2979,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName,
       } : undefined;
 
-      // Import document generator
+      // Import document generators
       const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
+      const { generateLeaseAgreementDocx } = await import('./utils/leaseAgreementGenerator');
 
       const generationOptions = {
         templateTitle: template.title,
@@ -2972,9 +2993,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
         landlordInfo,
       };
 
+      // Check if this is a lease agreement template
+      const isLeaseAgreement = template.title.toLowerCase().includes('lease') || 
+                               template.title.toLowerCase().includes('rental agreement');
+
       if (format === 'docx') {
-        // Generate Word document
-        const docxBuffer = await generateDocumentDOCX(generationOptions);
+        let docxBuffer: Buffer;
+        
+        if (isLeaseAgreement) {
+          // Use specialized lease generator for cleaner DOCX output
+          docxBuffer = await generateLeaseAgreementDocx({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            fieldValues,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            landlordInfo,
+          });
+        } else {
+          docxBuffer = await generateDocumentDOCX(generationOptions);
+        }
+        
         res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
         res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.docx"`);
         res.send(docxBuffer);
