@@ -186,6 +186,8 @@ export default function DocumentWizard() {
   });
 
   const [lastGeneratedData, setLastGeneratedData] = useState<Record<string, string> | null>(null);
+  const [lastGeneratedFormat, setLastGeneratedFormat] = useState<'pdf' | 'docx'>('pdf');
+  const [selectedFormat, setSelectedFormat] = useState<'pdf' | 'docx'>('pdf');
   const [showSuccessBanner, setShowSuccessBanner] = useState(false);
 
   // Reset form with saved document data when documentId or document changes
@@ -266,9 +268,9 @@ export default function DocumentWizard() {
 
   // Generate document mutation
   const generateMutation = useMutation({
-    mutationFn: async (fieldValues: Record<string, string>) => {
+    mutationFn: async ({ fieldValues, format }: { fieldValues: Record<string, string>; format: 'pdf' | 'docx' }) => {
       const token = getAccessToken();
-      const response = await fetch(`/api/documents/generate`, {
+      const response = await fetch(`/api/documents/generate?format=${format}`, {
         method: 'POST',
         credentials: 'include',
         body: JSON.stringify({ templateId, fieldValues }),
@@ -284,21 +286,23 @@ export default function DocumentWizard() {
         throw new Error(error.message || 'Failed to generate document');
       }
 
-      return response.blob();
+      return { blob: await response.blob(), format };
     },
-    onSuccess: (blob, fieldValues) => {
+    onSuccess: ({ blob, format }, { fieldValues }) => {
       // Create download link
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
+      const extension = format === 'docx' ? 'docx' : 'pdf';
+      a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_')}.${extension}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
-      // Store the data for saving
+      // Store the data and format for saving
       setLastGeneratedData(fieldValues);
+      setLastGeneratedFormat(format);
 
       // Auto-save to document library
       if (template) {
@@ -322,9 +326,10 @@ export default function DocumentWizard() {
       // Show success banner
       setShowSuccessBanner(true);
 
+      const formatLabel = format === 'docx' ? 'Word document' : 'PDF';
       toast({
         title: "Document Generated!",
-        description: "Your PDF has been downloaded and saved to your library.",
+        description: `Your ${formatLabel} has been downloaded and saved to your library.`,
       });
     },
     onError: (error: Error) => {
@@ -336,7 +341,7 @@ export default function DocumentWizard() {
     },
   });
 
-  const onSubmit = (data: Record<string, string>) => {
+  const handleGenerate = (data: Record<string, string>, format: 'pdf' | 'docx') => {
     // Format fields for document generation
     // Note: Currency values are sent without $ prefix - the server template adds it
     const formattedData = Object.entries(data).reduce((acc, [key, value]) => {
@@ -356,7 +361,11 @@ export default function DocumentWizard() {
       return acc;
     }, {} as Record<string, string>);
 
-    generateMutation.mutate(formattedData);
+    generateMutation.mutate({ fieldValues: formattedData, format });
+  };
+
+  const onSubmit = (data: Record<string, string>) => {
+    handleGenerate(data, selectedFormat);
   };
 
   if (isLoading || isLoadingSavedDoc) {
@@ -446,7 +455,7 @@ export default function DocumentWizard() {
                     Document Generated Successfully!
                   </h3>
                   <p className="text-sm text-green-700 dark:text-green-300 mt-1">
-                    Your PDF has been downloaded and saved to your library. You can generate another document or view all your saved documents.
+                    Your {lastGeneratedFormat === 'docx' ? 'Word document' : 'PDF'} has been downloaded and saved to your library. You can generate another document or view all your saved documents.
                   </p>
                   <div className="flex gap-3 mt-4">
                     <Button
@@ -480,7 +489,7 @@ export default function DocumentWizard() {
           <CardHeader>
             <CardTitle>Fill Out Document</CardTitle>
             <CardDescription>
-              Complete all required fields below. Your information will be used to generate a customized PDF document.
+              Complete all required fields below. Your information will be used to generate a customized document.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -588,29 +597,59 @@ export default function DocumentWizard() {
                   </div>
                 ))}
 
-                {/* Submit Button */}
-                <div className="flex items-center gap-4 pt-6 border-t">
-                  <Button
-                    type="submit"
-                    size="lg"
-                    disabled={generateMutation.isPending}
-                    data-testid="button-generate-document"
-                  >
-                    {generateMutation.isPending ? (
-                      <>
-                        <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Generating PDF...
-                      </>
-                    ) : (
-                      <>
-                        <Download className="h-5 w-5 mr-2" />
-                        Generate & Download PDF
-                      </>
-                    )}
-                  </Button>
+                {/* Submit Buttons - PDF and Word options */}
+                <div className="flex flex-col gap-4 pt-6 border-t">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <Button
+                      type="button"
+                      size="lg"
+                      disabled={generateMutation.isPending}
+                      onClick={() => {
+                        setSelectedFormat('pdf');
+                        form.handleSubmit((data) => handleGenerate(data, 'pdf'))();
+                      }}
+                      data-testid="button-generate-pdf"
+                    >
+                      {generateMutation.isPending && selectedFormat === 'pdf' ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Generating PDF...
+                        </>
+                      ) : (
+                        <>
+                          <Download className="h-5 w-5 mr-2" />
+                          Download PDF
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button
+                      type="button"
+                      size="lg"
+                      variant="outline"
+                      disabled={generateMutation.isPending}
+                      onClick={() => {
+                        setSelectedFormat('docx');
+                        form.handleSubmit((data) => handleGenerate(data, 'docx'))();
+                      }}
+                      data-testid="button-generate-docx"
+                    >
+                      {generateMutation.isPending && selectedFormat === 'docx' ? (
+                        <>
+                          <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                          Generating Word...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="h-5 w-5 mr-2" />
+                          Download Word
+                        </>
+                      )}
+                    </Button>
+                  </div>
                   
                   <p className="text-sm text-muted-foreground">
-                    Your document will be downloaded as a PDF file.
+                    Download as PDF for viewing/printing, or Word for editing.
                   </p>
                 </div>
               </form>

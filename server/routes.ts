@@ -1738,6 +1738,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Template not found" });
       }
 
+      // Get format from query param (default: pdf)
+      const format = (req.query.format as string)?.toLowerCase() === 'docx' ? 'docx' : 'pdf';
+
       // Get landlord info for document header
       const user = await storage.getUser(userId);
       const landlordInfo = user ? {
@@ -1749,22 +1752,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } : undefined;
 
       // Import document generator
-      const { generateDocument } = await import('./utils/documentGenerator');
+      const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
 
-      // Generate PDF using default template (all user input is HTML-escaped)
-      const pdfBuffer = await generateDocument({
+      const generationOptions = {
         templateTitle: template.title,
-        templateContent: '', // Always empty - use default generation only
+        templateContent: '',
         fieldValues: document.formData as Record<string, string>,
         stateId: template.stateId,
         version: template.version || 1,
         updatedAt: template.updatedAt || new Date(),
         landlordInfo,
-      });
-      
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.pdf"`);
-      res.send(pdfBuffer);
+      };
+
+      if (format === 'docx') {
+        const docxBuffer = await generateDocumentDOCX(generationOptions);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.docx"`);
+        res.send(docxBuffer);
+      } else {
+        const pdfBuffer = await generateDocument(generationOptions);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${document.documentName}.pdf"`);
+        res.send(pdfBuffer);
+      }
 
       await storage.trackEvent({
         userId,
@@ -2873,17 +2883,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Generate filled document (PDF)
+  // Generate filled document (PDF or DOCX)
   app.post('/api/documents/generate', isAuthenticated, async (req: any, res) => {
     try {
       const { templateId, fieldValues } = req.body;
+      const format = (req.query.format as string)?.toLowerCase() === 'docx' ? 'docx' : 'pdf';
 
       if (!templateId || !fieldValues) {
         return res.status(400).json({ message: "Template ID and field values are required" });
       }
 
-      console.log('📄 Document generation request:', {
+      console.log(`📄 Document generation request (${format.toUpperCase()}):`, {
         templateId,
+        format,
         fieldCount: Object.keys(fieldValues || {}).length,
         fieldIds: Object.keys(fieldValues || {}),
         sampleValues: Object.entries(fieldValues || {}).slice(0, 3).map(([k, v]) => `${k}=${v}`)
@@ -2895,7 +2907,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Template not found" });
       }
 
-      console.log('📄 Template found:', template.title, '- Generating PDF with field values...');
+      console.log('📄 Template found:', template.title, `- Generating ${format.toUpperCase()} with field values...`);
 
       // SECURITY: We NEVER use custom templateContent from the database to prevent HTML injection.
       // All documents are generated using the default template generator with fully escaped user input.
@@ -2916,10 +2928,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } : undefined;
 
       // Import document generator
-      const { generateDocument } = await import('./utils/documentGenerator');
+      const { generateDocument, generateDocumentDOCX } = await import('./utils/documentGenerator');
 
-      // Generate PDF using default template (all user input is HTML-escaped)
-      const pdfBuffer = await generateDocument({
+      const generationOptions = {
         templateTitle: template.title,
         templateContent: '', // Always empty - use default generation only
         fieldValues,
@@ -2927,12 +2938,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
         version: template.version || 1,
         updatedAt: template.updatedAt || new Date(),
         landlordInfo,
-      });
+      };
 
-      // Set response headers
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
-      res.send(pdfBuffer);
+      if (format === 'docx') {
+        // Generate Word document
+        const docxBuffer = await generateDocumentDOCX(generationOptions);
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.docx"`);
+        res.send(docxBuffer);
+      } else {
+        // Generate PDF (default)
+        const pdfBuffer = await generateDocument(generationOptions);
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
+        res.send(pdfBuffer);
+      }
     } catch (error: any) {
       console.error('Document generation error:', error);
       res.status(500).json({ message: "Something went wrong. Please try again." });

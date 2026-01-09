@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
+import HTMLtoDOCX from 'html-to-docx';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -121,6 +122,33 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
     await browser.close();
     console.log(`📄 Browser closed. Total time: ${Date.now() - startTime}ms`);
   }
+}
+
+export async function generateDocumentDOCX(options: DocumentGenerationOptions): Promise<Buffer> {
+  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
+  
+  console.log('📝 Generating DOCX document...');
+  const startTime = Date.now();
+  
+  // Generate the same HTML content used for PDF - ensures content parity
+  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt, landlordInfo);
+  
+  // Convert HTML to DOCX using html-to-docx library
+  const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
+    table: { row: { cantSplit: true } },
+    footer: true,
+    pageNumber: true,
+    margins: {
+      top: 1440,    // 1 inch in twips
+      right: 1440,
+      bottom: 1440,
+      left: 1440,
+    },
+  });
+  
+  console.log(`📝 DOCX generated successfully in ${Date.now() - startTime}ms`);
+  
+  return Buffer.from(docxBuffer);
 }
 
 function generateHTMLFromTemplate(
