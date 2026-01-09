@@ -222,6 +222,132 @@ export interface DocxInput {
   };
 }
 
+export function getStateDisclosures(stateId: string): Paragraph[] {
+  const stateName = STATE_NAMES[stateId] || stateId;
+  const disclosures: Paragraph[] = [];
+
+  disclosures.push(H2(`25. ${stateName.toUpperCase()} STATE-SPECIFIC PROVISIONS`));
+
+  switch (stateId) {
+    case 'UT':
+      disclosures.push(H3("25.1 Fair Housing Disclosure"));
+      disclosures.push(P("In accordance with the Utah Fair Housing Act (Utah Code 57-21-1 et seq.), it is unlawful to refuse to rent, discriminate, or discriminate in advertising because of race, color, religion, sex, national origin, familial status, source of income, or disability."));
+      disclosures.push(H3("25.2 Mold Prevention and Disclosure"));
+      disclosures.push(P("Pursuant to the Utah Fit Premises Act (Utah Code 57-22-4), Landlord discloses that there is no known mold contamination on the Premises. Tenant agrees to maintain adequate ventilation and promptly report any water leaks or visible mold within 48 hours of discovery."));
+      disclosures.push(H3("25.3 Radon Gas Disclosure"));
+      disclosures.push(P("Radon is a naturally occurring radioactive gas that may accumulate in buildings. Long-term exposure may pose health risks. Testing is recommended."));
+      disclosures.push(H3("25.4 Lead-Based Paint Disclosure (Pre-1978 Properties)"));
+      disclosures.push(P("If the property was built before January 1, 1978, Landlord has disclosed all known information regarding lead-based paint hazards."));
+      disclosures.push(H3("25.5 Security Deposit (Utah Code 57-17-3)"));
+      disclosures.push(P("Landlord shall return the security deposit within 30 days of lease termination with an itemized statement of any deductions. Security deposit may not exceed the equivalent of two months' rent."));
+      disclosures.push(H3("25.6 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."));
+      break;
+    case 'TX':
+      disclosures.push(H3("25.1 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Texas Fair Housing Act and Texas Property Code 92.001 et seq., it is unlawful to discriminate based on race, color, religion, sex, national origin, familial status, or disability."));
+      disclosures.push(H3("25.2 Texas Property Code Compliance"));
+      disclosures.push(P("This Lease is governed by Texas Property Code Chapter 92. Landlord must repair conditions that materially affect health and safety within a reasonable time after receiving written notice."));
+      disclosures.push(H3("25.3 Security Deposit (Texas Property Code 92.103-109)"));
+      disclosures.push(P("Landlord shall return the security deposit within 30 days of lease termination with an itemized accounting. No statutory limit on security deposit amount."));
+      disclosures.push(H3("25.4 Late Fees (Texas Property Code 92.019)"));
+      disclosures.push(P("Late fees cannot be charged until rent is at least one full day late. Late fees must be reasonable and specified in the lease."));
+      disclosures.push(H3("25.5 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord certifies disclosure of all known lead-based paint hazards."));
+      disclosures.push(H3("25.6 Entry Notice"));
+      disclosures.push(P("Texas law does not specify a minimum notice period, but reasonable notice is required except in emergencies."));
+      break;
+    case 'CA':
+      disclosures.push(H3("25.1 California Civil Code Compliance"));
+      disclosures.push(P("This Lease is governed by California Civil Code 1940 et seq. Both parties acknowledge their rights under California tenant protection laws."));
+      disclosures.push(H3("25.2 Fair Housing (California Fair Employment and Housing Act)"));
+      disclosures.push(P("Discrimination is prohibited based on race, color, religion, sex, sexual orientation, gender identity, national origin, disability, familial status, source of income, or other protected characteristics."));
+      disclosures.push(H3("25.3 Security Deposit (Civil Code 1950.5)"));
+      disclosures.push(P("Security deposit may not exceed two months' rent (three months for furnished units). Landlord shall return the deposit within 21 days of move-out with an itemized statement."));
+      disclosures.push(H3("25.4 Rent Control Notice"));
+      disclosures.push(P("If the property is subject to local rent control or the California Tenant Protection Act (AB 1482), Tenant has been notified of applicable rent increase limits and just cause eviction protections."));
+      disclosures.push(H3("25.5 Mold Disclosure (Health and Safety Code 26147)"));
+      disclosures.push(P("Landlord discloses any known mold contamination that exceeds permissible exposure limits."));
+      disclosures.push(H3("25.6 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.7 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 24 hours' written notice before entering the Premises except in emergencies."));
+      break;
+    case 'FL':
+      disclosures.push(H3("25.1 Florida Residential Landlord and Tenant Act"));
+      disclosures.push(P("This Lease is governed by Florida Statutes Chapter 83 (Florida Residential Landlord and Tenant Act)."));
+      disclosures.push(H3("25.2 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Florida Fair Housing Act (F.S. 760.20-760.37), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability."));
+      disclosures.push(H3("25.3 Security Deposit (F.S. 83.49)"));
+      disclosures.push(P("Landlord shall hold the security deposit in a Florida banking institution. Within 30 days of receiving the deposit, Landlord shall notify Tenant in writing of where the deposit is held. Deposit shall be returned within 15-60 days after lease termination depending on claims."));
+      disclosures.push(H3("25.4 Radon Gas Disclosure (F.S. 404.056)"));
+      disclosures.push(P("RADON GAS: Radon is a naturally occurring radioactive gas that, when accumulated in a building in sufficient quantities, may present health risks. Radon testing is encouraged."));
+      disclosures.push(H3("25.5 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.6 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 12 hours' notice before entering the Premises except in emergencies."));
+      break;
+    case 'AZ':
+      disclosures.push(H3("25.1 Arizona Residential Landlord and Tenant Act"));
+      disclosures.push(P("This Lease is governed by A.R.S. 33-1301 et seq. (Arizona Residential Landlord and Tenant Act). Both parties acknowledge their rights and obligations under this Act."));
+      disclosures.push(H3("25.2 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Arizona Fair Housing Act (A.R.S. 41-1491), discrimination is prohibited based on race, color, religion, sex, familial status, national origin, or disability."));
+      disclosures.push(H3("25.3 Security Deposit (A.R.S. 33-1321)"));
+      disclosures.push(P("Security deposit may not exceed one and one-half months' rent. Landlord shall return the deposit within 14 business days after termination with an itemized statement of deductions."));
+      disclosures.push(H3("25.4 Pool/Spa Disclosure"));
+      disclosures.push(P("If the property has a pool or spa, Tenant acknowledges receiving information about pool safety and barrier requirements per A.R.S. 36-1681."));
+      disclosures.push(H3("25.5 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.6 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 48 hours' notice before entering the Premises for non-emergency purposes."));
+      disclosures.push(H3("25.7 Bed Bug Disclosure"));
+      disclosures.push(P("Landlord discloses any known bed bug infestations within the last year per A.R.S. 33-1319."));
+      break;
+    case 'NV':
+      disclosures.push(H3("25.1 Nevada Revised Statutes Compliance"));
+      disclosures.push(P("This Lease is governed by NRS Chapter 118A (Landlord and Tenant: Dwellings). Both parties acknowledge their rights and obligations under Nevada law."));
+      disclosures.push(H3("25.2 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Nevada Fair Housing Law (NRS 118.010-120), discrimination is prohibited based on race, religious creed, color, national origin, disability, ancestry, familial status, sex, sexual orientation, or gender identity."));
+      disclosures.push(H3("25.3 Security Deposit (NRS 118A.242)"));
+      disclosures.push(P("Security deposit may not exceed three months' rent. Landlord shall return the deposit within 30 days of lease termination with an itemized statement."));
+      disclosures.push(H3("25.4 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.5 Entry Notice (NRS 118A.330)"));
+      disclosures.push(P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."));
+      disclosures.push(H3("25.6 Foreclosure Disclosure"));
+      disclosures.push(P("Landlord must disclose if the property is subject to a notice of default, notice of sale, or pending foreclosure per NRS 118A.275."));
+      break;
+    case 'VA':
+      disclosures.push(H3("25.1 Virginia Residential Landlord and Tenant Act"));
+      disclosures.push(P("This Lease is governed by Virginia Code 55.1-1200 et seq. (Virginia Residential Landlord and Tenant Act). Both parties acknowledge their rights and obligations under this Act."));
+      disclosures.push(H3("25.2 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Virginia Fair Housing Law (Va. Code 36-96.1), discrimination is prohibited based on race, color, religion, national origin, sex, elderliness, familial status, source of funds, sexual orientation, gender identity, military status, or disability."));
+      disclosures.push(H3("25.3 Security Deposit (Va. Code 55.1-1226)"));
+      disclosures.push(P("Security deposit may not exceed two months' rent. Landlord shall return the deposit within 45 days of lease termination with an itemized statement."));
+      disclosures.push(H3("25.4 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.5 Mold Disclosure"));
+      disclosures.push(P("Landlord shall disclose visible mold in areas readily accessible within the dwelling unit per Va. Code 55.1-1215."));
+      disclosures.push(H3("25.6 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."));
+      disclosures.push(H3("25.7 Military Personnel Rights"));
+      disclosures.push(P("Members of the armed forces have additional termination rights under the federal Servicemembers Civil Relief Act and Virginia law."));
+      break;
+    default:
+      disclosures.push(H3("25.1 Fair Housing Compliance"));
+      disclosures.push(P("Landlord shall comply with all applicable federal, state, and local fair housing laws. Discrimination based on race, color, religion, sex, national origin, familial status, or disability is prohibited."));
+      disclosures.push(H3("25.2 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.3 Security Deposit"));
+      disclosures.push(P("Landlord shall return the security deposit within the time period required by applicable state law after Tenant vacates the Premises with an itemized statement of any deductions."));
+      disclosures.push(H3("25.4 Entry Notice"));
+      disclosures.push(P("Landlord shall provide reasonable notice before entering the Premises except in emergencies."));
+      break;
+  }
+
+  return disclosures;
+}
+
 export async function generateDocx(input: DocxInput): Promise<Buffer> {
   const { title, stateId, version = 1, updatedAt = new Date(), children, margins } = input;
 

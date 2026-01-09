@@ -5,11 +5,9 @@ import {
   Packer,
   Paragraph,
   TextRun,
-  HeadingLevel,
   AlignmentType,
-  BorderStyle,
 } from 'docx';
-import { STATE_NAMES } from './docxBuilder';
+import { STATE_NAMES, H1, H2, H3, P, SignatureLine, HR, Footer, getStateDisclosures } from './docxBuilder';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -141,51 +139,6 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
   
   const stateName = STATE_NAMES[stateId] || stateId;
   const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  
-  const H1 = (text: string): Paragraph =>
-    new Paragraph({
-      children: [new TextRun({ text, bold: true, size: 32 })],
-      heading: HeadingLevel.HEADING_1,
-      alignment: AlignmentType.CENTER,
-      spacing: { after: 120 },
-    });
-
-  const H2 = (text: string): Paragraph =>
-    new Paragraph({
-      children: [new TextRun({ text, bold: true, size: 24 })],
-      heading: HeadingLevel.HEADING_2,
-      spacing: { before: 240, after: 120 },
-    });
-
-  const P = (text: string, options?: { bold?: boolean; italic?: boolean }): Paragraph =>
-    new Paragraph({
-      children: [
-        new TextRun({
-          text,
-          size: 22,
-          bold: options?.bold,
-          italics: options?.italic,
-        }),
-      ],
-      spacing: { after: 120 },
-    });
-
-  const SignatureLine = (label: string): Paragraph =>
-    new Paragraph({
-      children: [
-        new TextRun({ text: label + " ", bold: true, size: 22 }),
-        new TextRun({ text: "________________________________________________", size: 22 }),
-      ],
-      spacing: { before: 200, after: 80 },
-    });
-
-  const HR = (): Paragraph =>
-    new Paragraph({
-      border: {
-        bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
-      },
-      spacing: { before: 150, after: 150 },
-    });
 
   const getField = (key: string, defaultValue: string = '[_____________]'): string => {
     const value = fieldValues[key];
@@ -217,7 +170,7 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
   }
 
   children.push(H1(templateTitle.toUpperCase()));
-  children.push(P(`State: ${stateName}`, { italic: true }));
+  children.push(P(`State: ${stateName}`, { italic: true, center: true }));
   children.push(HR());
 
   children.push(P(`Document Version: ${version}`, { bold: true }));
@@ -227,54 +180,130 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
 
   children.push(H2("1. TERM OF LEASE"));
   children.push(P(`This Residential Lease Agreement ("Lease") is entered into as of ${getField('leaseStartDate', '[DATE]')} between the undersigned Landlord and Tenant(s) for the rental of the property located at ${getField('propertyAddress', '[ADDRESS]')}, ${getField('propertyCity', '[CITY]')}, ${stateId} ${getField('propertyZip', '[ZIP]')} ("Premises").`));
+  children.push(P(`1.1 Lease Term: This Lease shall commence on ${getField('leaseStartDate', '[START DATE]')} and shall terminate on ${getField('leaseEndDate', '[END DATE]')}, unless earlier terminated or extended pursuant to the terms herein.`));
+  children.push(P("1.2 Renewal Terms: Upon expiration of the initial term, this Lease shall convert to a month-to-month tenancy under the same terms and conditions until either party provides written notice of termination as required by applicable law."));
 
   children.push(H2("2. PARTIES"));
-  children.push(P(`Landlord: ${getField('landlordName', '[LANDLORD NAME]')}`));
-  children.push(P(`Tenant(s): ${getField('tenantName', '[TENANT NAME]')}`));
+  children.push(P(`2.1 Landlord: ${getField('landlordName', '[LANDLORD NAME]')} ("Landlord") is the owner or authorized agent of the Premises and shall be responsible for all obligations of a landlord under applicable law.`));
+  children.push(P(`2.2 Tenant(s): ${getField('tenantName', '[TENANT NAME]')} ("Tenant") shall be the only occupant(s) of the Premises unless otherwise agreed in writing. Tenant represents that all information provided in the rental application is true and accurate.`));
+  children.push(P("2.3 Occupancy Limits: Total occupancy shall not exceed the maximum allowed by applicable housing codes. Unauthorized occupants may result in lease termination."));
 
   children.push(H2("3. RENT"));
-  children.push(P(`Monthly Rent: $${getField('monthlyRent', '[AMOUNT]')} due on the ${getField('rentDueDay', '1st')} of each month.`));
-  children.push(P(`Late Fee: $${getField('lateFeeAmount', '[AMOUNT]')} if rent is not received by the ${getField('lateFeeDays', '5th')} day.`));
+  children.push(P(`3.1 Monthly Rent: Tenant agrees to pay Landlord the sum of $${getField('monthlyRent', '[AMOUNT]')} per month as rent for the Premises, due on the ${getField('rentDueDay', '1st')} day of each month.`));
+  children.push(P(`3.2 Late Fee: If rent is not received by the ${getField('lateFeeDays', '5th')} day of the month, Tenant shall pay a late fee of $${getField('lateFeeAmount', '[AMOUNT]')} as additional rent. This late fee is a reasonable estimate of administrative costs incurred due to late payment.`));
+  children.push(P("3.3 Payment Method: Rent shall be payable by check, money order, cashier's check, or electronic payment. Personal checks returned for insufficient funds shall incur a fee of $35 plus any bank charges."));
+  children.push(P("3.4 Prorated Rent: If Tenant takes possession on a date other than the first of the month, rent shall be prorated on a daily basis."));
 
   children.push(H2("4. SECURITY DEPOSIT"));
-  children.push(P(`Security Deposit: $${getField('securityDeposit', '[AMOUNT]')} to be held for the faithful performance of this Lease.`));
+  children.push(P(`4.1 Deposit Amount: Upon execution of this Lease, Tenant shall pay a security deposit in the amount of $${getField('securityDeposit', '[AMOUNT]')} to be held by Landlord as security for the faithful performance of Tenant's obligations under this Lease.`));
+  children.push(P("4.2 Use of Deposit: The security deposit may be used for unpaid rent, cleaning, repairs for damages beyond normal wear and tear, and any other amounts owed under this Lease."));
+  children.push(P("4.3 Return of Deposit: The deposit, less any lawful deductions, shall be returned within the time period required by applicable law after Tenant vacates the Premises."));
+  children.push(P("4.4 Non-Refundable Fees: Any non-refundable fees shall be clearly identified in an addendum to this Lease."));
 
-  children.push(H2("5. MAINTENANCE AND REPAIRS"));
-  children.push(P("Tenant shall maintain the Premises in clean condition and notify Landlord of repairs within 48 hours."));
+  children.push(H2("5. UTILITIES AND SERVICES"));
+  children.push(P("5.1 Tenant Responsibilities: Unless otherwise agreed, Tenant shall be responsible for all utilities and services including electricity, gas, water, sewer, trash removal, internet, cable, and telephone."));
+  children.push(P("5.2 Landlord Responsibilities: Landlord shall be responsible for the following utilities: [SPECIFY OR NONE]."));
+  children.push(P("5.3 Utility Transfers: Tenant agrees to transfer utilities into Tenant's name within 3 days of move-in."));
 
   children.push(H2("6. USE OF PREMISES"));
-  children.push(P("The Premises shall be used solely as a residential dwelling. No business or illegal activities permitted."));
+  children.push(P("6.1 Residential Use Only: The Premises shall be used exclusively as a private residence for Tenant and approved occupants. No business, trade, or profession may be conducted on the Premises without prior written consent of Landlord."));
+  children.push(P("6.2 Illegal Activities: Tenant shall not use the Premises for any illegal purpose. Any illegal activity may result in immediate lease termination."));
+  children.push(P("6.3 Nuisance: Tenant shall not create or permit any nuisance on the Premises or interfere with the quiet enjoyment of other tenants or neighbors."));
+  children.push(P("6.4 Compliance: Tenant shall comply with all applicable laws, ordinances, and rules of any homeowners' or condominium association."));
 
-  children.push(H2("7. GOVERNING LAW"));
-  children.push(P(`This Lease is governed by the laws of the State of ${stateName}.`));
+  children.push(H2("7. MAINTENANCE AND REPAIRS"));
+  children.push(P("7.1 Landlord Obligations: Landlord shall maintain the Premises in habitable condition, including structural repairs, plumbing, electrical, heating, and common areas."));
+  children.push(P("7.2 Tenant Obligations: Tenant shall maintain the Premises in clean and sanitary condition and promptly notify Landlord of any needed repairs within 48 hours of discovery."));
+  children.push(P("7.3 Damage by Tenant: Tenant shall be responsible for repairs of damages caused by Tenant, household members, or guests."));
+  children.push(P("7.4 Emergency Repairs: In case of emergency affecting health or safety, Tenant shall immediately notify Landlord and take reasonable steps to prevent further damage."));
+
+  children.push(H2("8. ALTERATIONS"));
+  children.push(P("8.1 No Alterations: Tenant shall not make any alterations, improvements, or additions to the Premises without prior written consent of Landlord."));
+  children.push(P("8.2 Approved Changes: Any approved alterations become the property of Landlord unless otherwise agreed in writing."));
+
+  children.push(H2("9. PETS"));
+  children.push(P(`9.1 Pet Policy: Pets are ${getField('petsAllowed', '[ALLOWED/NOT ALLOWED]')} on the Premises. Any approved pet requires a separate pet agreement and additional deposit.`));
+  children.push(P("9.2 Service Animals: This section does not apply to service animals or emotional support animals as required by law."));
+
+  children.push(H2("10. ENTRY BY LANDLORD"));
+  children.push(P("10.1 Right of Entry: Landlord may enter the Premises with reasonable notice for inspections, repairs, showings to prospective tenants or buyers, and emergencies."));
+  children.push(P("10.2 Notice Period: Except in emergencies, Landlord shall provide notice as required by applicable state law before entering."));
+
+  children.push(H2("11. INSURANCE"));
+  children.push(P("11.1 Renter's Insurance: Tenant is strongly encouraged to obtain renter's insurance covering personal property and liability. Landlord's insurance does not cover Tenant's personal property."));
+  children.push(P("11.2 Liability: Tenant assumes responsibility for damage or loss to personal property from any cause."));
+
+  children.push(H2("12. SUBLETTING AND ASSIGNMENT"));
+  children.push(P("12.1 Prohibition: Tenant shall not sublet the Premises or assign this Lease without prior written consent of Landlord."));
+  children.push(P("12.2 Short-term Rentals: Tenant shall not use the Premises for short-term vacation rentals (Airbnb, VRBO, etc.) without express written permission."));
+
+  children.push(H2("13. DEFAULT AND REMEDIES"));
+  children.push(P("13.1 Default by Tenant: Failure to pay rent, violation of lease terms, or illegal activity constitutes default under this Lease."));
+  children.push(P("13.2 Notice to Cure: Landlord shall provide notice as required by law before initiating eviction proceedings for curable defaults."));
+  children.push(P("13.3 Remedies: Upon default, Landlord may pursue all legal remedies including eviction, recovery of unpaid rent, damages, and attorney's fees."));
+  children.push(P("13.4 Acceleration: Upon default, all remaining rent for the lease term may become immediately due and payable."));
+
+  children.push(H2("14. TERMINATION"));
+  children.push(P("14.1 End of Term: This Lease terminates at the end of the lease term unless renewed in writing."));
+  children.push(P("14.2 Early Termination: Early termination may be permitted with payment of an early termination fee equal to two months' rent plus forfeiture of security deposit."));
+  children.push(P("14.3 Abandonment: If Tenant abandons the Premises, Landlord may retake possession and pursue all available remedies."));
+
+  children.push(H2("15. MOVE-OUT PROCEDURES"));
+  children.push(P("15.1 Notice Required: Tenant shall provide written notice of intent to vacate as required by applicable law."));
+  children.push(P("15.2 Condition: The Premises shall be returned in the same condition as received, normal wear and tear excepted."));
+  children.push(P("15.3 Cleaning: Tenant shall thoroughly clean the Premises including walls, floors, carpet, and appliances."));
+  children.push(P("15.4 Keys and Access: All keys, remotes, and access devices shall be returned upon vacating."));
+
+  children.push(H2("16. FAIR HOUSING"));
+  children.push(P("Landlord shall not discriminate against Tenant based on protected class status including race, color, religion, sex, national origin, disability, familial status, or sexual orientation, in accordance with the Fair Housing Act and state laws."));
+
+  children.push(H2("17. ENTIRE AGREEMENT"));
+  children.push(P("This Lease constitutes the entire agreement between Landlord and Tenant and supersedes all prior negotiations and agreements, whether written or oral. This Lease may be modified only by written amendment signed by both parties."));
+
+  children.push(H2("18. GOVERNING LAW"));
+  children.push(P(`This Lease shall be governed by and construed in accordance with the laws of the State of ${stateName}.`));
+
+  children.push(H2("19. DISPUTE RESOLUTION"));
+  children.push(P("Any disputes arising from this Lease shall be resolved in the appropriate court of competent jurisdiction in the county where the Premises is located."));
+
+  children.push(H2("20. SEVERABILITY"));
+  children.push(P("If any provision of this Lease is found to be invalid or unenforceable, all other provisions shall remain in full force and effect."));
+
+  children.push(H2("21. INDEMNIFICATION"));
+  children.push(P("21.1 Tenant agrees to indemnify and hold harmless Landlord from and against any claims, actions, damages, and expenses arising from Tenant's use of the Premises or breach of this Lease."));
+  children.push(P("21.2 Landlord's Limited Liability: Except as required by law, Landlord shall not be liable for injury or damage caused by theft, criminal activity, fire, water damage, or acts of God."));
+
+  children.push(H2("22. ATTORNEY'S FEES"));
+  children.push(P("In the event of any legal action arising out of this Lease, the prevailing party shall be entitled to recover reasonable attorneys' fees and court costs."));
+
+  children.push(H2("23. NOTICES"));
+  children.push(P("All notices required under this Lease shall be in writing and delivered personally, by certified mail, or by email with confirmed receipt."));
+
+  children.push(H2("24. ADDITIONAL PROVISIONS"));
+  children.push(P("24.1 Time is of the Essence: Time is of the essence with respect to all provisions of this Lease."));
+  children.push(P("24.2 Waiver: No waiver by Landlord of any breach shall be construed as a waiver of subsequent breaches."));
+  children.push(P("24.3 Joint and Several Liability: If multiple Tenants sign this Lease, each shall be jointly and severally liable."));
+  children.push(P("24.4 Binding Effect: This Lease is binding upon the parties and their heirs, executors, and successors."));
+
+  const stateDisclosures = getStateDisclosures(stateId);
+  children.push(...stateDisclosures);
 
   children.push(HR());
 
-  children.push(new Paragraph({
-    children: [new TextRun({ text: "SIGNATURES", bold: true, size: 28 })],
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 300, after: 200 },
-  }));
+  children.push(H2("SIGNATURES"));
+  children.push(P("By signing below, the parties acknowledge that they have read, understand, and agree to be bound by all terms of this Lease."));
 
   children.push(P("LANDLORD:", { bold: true }));
-  children.push(SignatureLine("Signature:"));
-  children.push(SignatureLine("Date:"));
+  children.push(SignatureLine("Signature"));
+  children.push(SignatureLine("Printed Name"));
+  children.push(SignatureLine("Date"));
 
   children.push(P("TENANT:", { bold: true }));
-  children.push(SignatureLine("Signature:"));
-  children.push(SignatureLine("Date:"));
+  children.push(SignatureLine("Signature"));
+  children.push(SignatureLine("Printed Name"));
+  children.push(SignatureLine("Date"));
 
-  children.push(new Paragraph({
-    children: [
-      new TextRun({
-        text: "For informational purposes only. Consult with a licensed attorney for legal advice.",
-        size: 18,
-        italics: true,
-      }),
-    ],
-    alignment: AlignmentType.CENTER,
-    spacing: { before: 400 },
-  }));
+  children.push(Footer());
 
   const doc = new Document({
     sections: [
