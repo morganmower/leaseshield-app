@@ -421,6 +421,11 @@ export const dataSourceEnum = pgEnum('data_source', [
   'legiscan',          // LegiScan API
   'plural_policy',     // Plural Policy (Open States) API
   'federal_register',  // Federal Register API (HUD regulations)
+  'court_listener',    // CourtListener case law
+  'utah_glen',         // Utah GLEN API (Utah bills)
+  'congress_gov',      // Congress.gov API
+  'hud_onap',          // HUD ONAP/PIH pages
+  'ecfr',              // eCFR API (CFR changes)
   'manual',            // Manually added by admin
 ]);
 
@@ -1692,3 +1697,182 @@ export const insertDirectConversationReadStatusSchema = createInsertSchema(direc
 });
 export type InsertDirectConversationReadStatus = z.infer<typeof insertDirectConversationReadStatusSchema>;
 export type DirectConversationReadStatus = typeof directConversationReadStatus.$inferSelect;
+
+// ============================================================================
+// LEGISLATIVE SOURCE ADAPTERS - Normalized multi-source monitoring system
+// ============================================================================
+
+// Topic tags for filtering which updates go to which templates
+export const topicTagEnum = pgEnum('topic_tag', [
+  'landlord_tenant',
+  'nahasda_core',
+  'tribal_adjacent',
+  'ihbg',
+  'hud_general',
+  'fair_housing',
+  'security_deposit',
+  'eviction',
+  'environmental',
+  'procurement',
+  'income_limits',
+  'not_relevant',
+]);
+
+// Jurisdiction level for filtering
+export const jurisdictionLevelEnum = pgEnum('jurisdiction_level', [
+  'federal',
+  'state',
+  'tribal',
+  'local',
+]);
+
+// Item types from various sources
+export const legislationItemTypeEnum = pgEnum('legislation_item_type', [
+  'bill',
+  'regulation',
+  'case',
+  'notice',
+  'cfr_change',
+]);
+
+// Severity levels
+export const severityEnum = pgEnum('severity_level', [
+  'low',
+  'medium',
+  'high',
+  'critical',
+]);
+
+// Source type (API or page polling)
+export const sourceTypeEnum = pgEnum('source_type', [
+  'api',
+  'page_poll',
+]);
+
+// Legislation Sources - configuration for each data source
+export const legislationSources = pgTable("legislation_sources", {
+  id: varchar("id").primaryKey(), // e.g., 'legiscan', 'federal_register'
+  name: text("name").notNull(),
+  type: sourceTypeEnum("type").notNull(),
+  enabled: boolean("enabled").default(true),
+  pollIntervalMinutes: integer("poll_interval_minutes").default(720), // 12 hours default
+  lastCursor: text("last_cursor"), // For pagination/incremental fetching
+  lastSeenDate: timestamp("last_seen_date"),
+  lastRunAt: timestamp("last_run_at"),
+  lastRunStatus: varchar("last_run_status"), // 'success', 'partial', 'failed'
+  lastRunError: text("last_run_error"),
+  topicFilter: text("topic_filter").array(), // Only fetch items matching these topics
+  stateFilter: text("state_filter").array(), // Only fetch items for these states
+  config: jsonb("config"), // Additional source-specific configuration
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const insertLegislationSourceSchema = createInsertSchema(legislationSources).omit({
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertLegislationSource = z.infer<typeof insertLegislationSourceSchema>;
+export type LegislationSource = typeof legislationSources.$inferSelect;
+
+// Raw Legislation Items - stores original data from sources for audit trail
+export const rawLegislationItems = pgTable("raw_legislation_items", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceId: varchar("source_id").notNull().references(() => legislationSources.id),
+  externalId: text("external_id").notNull(), // ID from the source (bill_id, doc_number, etc.)
+  url: text("url"),
+  publishedAt: timestamp("published_at"),
+  title: text("title").notNull(),
+  body: text("body"), // Full text or summary
+  rawData: jsonb("raw_data").notNull(), // Original API response
+  contentHash: text("content_hash"), // For detecting changes
+  fetchedAt: timestamp("fetched_at").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_raw_items_source").on(table.sourceId),
+  index("IDX_raw_items_external").on(table.externalId),
+  index("IDX_raw_items_published").on(table.publishedAt),
+]);
+
+export const insertRawLegislationItemSchema = createInsertSchema(rawLegislationItems).omit({
+  id: true,
+  fetchedAt: true,
+  createdAt: true,
+});
+export type InsertRawLegislationItem = z.infer<typeof insertRawLegislationItemSchema>;
+export type RawLegislationItem = typeof rawLegislationItems.$inferSelect;
+
+// Normalized Updates - unified format from all sources for downstream processing
+export const normalizedUpdates = pgTable("normalized_updates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceId: varchar("source_id").notNull().references(() => legislationSources.id),
+  rawItemId: varchar("raw_item_id").references(() => rawLegislationItems.id),
+  sourceKey: text("source_key").notNull(), // Unique ID from source
+  crossRefKey: text("cross_ref_key"), // For deduplication across sources (e.g., 'UT-HB123-2026')
+  itemType: legislationItemTypeEnum("item_type").notNull(),
+  jurisdictionLevel: jurisdictionLevelEnum("jurisdiction_level").notNull(),
+  jurisdictionState: varchar("jurisdiction_state", { length: 2 }),
+  jurisdictionTribe: text("jurisdiction_tribe"),
+  title: text("title").notNull(),
+  summary: text("summary"),
+  status: text("status"),
+  introducedDate: timestamp("introduced_date"),
+  effectiveDate: timestamp("effective_date"),
+  publishedAt: timestamp("published_at"),
+  url: text("url"),
+  pdfUrl: text("pdf_url"),
+  topics: text("topics").array().notNull(), // Array of topic_tag values
+  severity: severityEnum("severity"),
+  cfrReferences: jsonb("cfr_references"), // Array of {title, part, section}
+  // AI Analysis
+  aiAnalyzed: boolean("ai_analyzed").default(false),
+  aiRelevanceScore: integer("ai_relevance_score"), // 0-100
+  aiAnalysis: text("ai_analysis"),
+  aiRecommendedActions: text("ai_recommended_actions"),
+  affectedTemplateIds: text("affected_template_ids").array(),
+  // Processing status
+  isDuplicate: boolean("is_duplicate").default(false),
+  duplicateOfId: varchar("duplicate_of_id"),
+  isProcessed: boolean("is_processed").default(false),
+  processedAt: timestamp("processed_at"),
+  isQueued: boolean("is_queued").default(false),
+  queuedAt: timestamp("queued_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_normalized_source").on(table.sourceId),
+  index("IDX_normalized_crossref").on(table.crossRefKey),
+  index("IDX_normalized_topics").on(table.topics),
+  index("IDX_normalized_jurisdiction").on(table.jurisdictionLevel, table.jurisdictionState),
+  index("IDX_normalized_processed").on(table.isProcessed),
+]);
+
+export const insertNormalizedUpdateSchema = createInsertSchema(normalizedUpdates).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertNormalizedUpdate = z.infer<typeof insertNormalizedUpdateSchema>;
+export type NormalizedUpdate = typeof normalizedUpdates.$inferSelect;
+
+// Template Topic Routing - defines which topics update which templates
+export const templateTopicRouting = pgTable("template_topic_routing", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => templates.id),
+  topic: topicTagEnum("topic").notNull(),
+  jurisdictionLevel: jurisdictionLevelEnum("jurisdiction_level"),
+  jurisdictionState: varchar("jurisdiction_state", { length: 2 }),
+  jurisdictionTribe: text("jurisdiction_tribe"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_routing_template").on(table.templateId),
+  index("IDX_routing_topic").on(table.topic),
+]);
+
+export const insertTemplateTopicRoutingSchema = createInsertSchema(templateTopicRouting).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertTemplateTopicRouting = z.infer<typeof insertTemplateTopicRoutingSchema>;
+export type TemplateTopicRouting = typeof templateTopicRouting.$inferSelect;

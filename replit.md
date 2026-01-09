@@ -45,7 +45,14 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
   - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
   - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
   - **State-specific content**: All 14 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
-- **Legislative Monitoring**: Automated system using four data sources (LegiScan API, Plural Policy/Open States API, Federal Register API, CourtListener API) tracks state bills, federal HUD regulations, and court cases, uses GPT-4 for relevance analysis, and auto-publishes template updates with versioning and user notifications. Bills display color-coded source badges in admin UI (green=LegiScan, blue=Plural Policy, purple=Federal Register).
+- **Legislative Monitoring**: Normalized source adapter architecture with 8 data sources:
+  - **State Sources**: LegiScan API, Plural Policy/Open States API, Utah GLEN API (UT-specific)
+  - **Federal Sources**: Federal Register API (HUD), eCFR API (24 CFR Part 1000), Congress.gov API
+  - **Court/Notice Sources**: CourtListener API, HUD ONAP/PIH page poller
+  - **Topic-Based Routing**: Updates tagged with topics (landlord_tenant, nahasda_core, ihbg, etc.) route only to relevant templates
+  - **Tribal Housing Support**: Separate `runTribalMonitoring()` pipeline isolates NAHASDA/IHBG updates from landlord-tenant content
+  - **Pipeline Modes**: `runLandlordTenantMonitoring()` for 14-state landlord content, `runTribalMonitoring()` for tribal housing authorities
+  - Uses GPT-4 for relevance analysis, auto-publishes updates with versioning and notifications
 - **Template Review & Publishing**: Atomic auto-publishing system with transactional updates, versioning, history tracking, automatic approval, legislative bill flagging, and user notifications via Resend.
 - **Email Notifications**: Integrated with Resend for legal and template update notifications.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
@@ -73,10 +80,15 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **PostgreSQL (Neon)**: Relational database.
 - **Stripe**: Payment gateway.
 - **Replit Auth**: User authentication.
-- **LegiScan API**: Legislative tracking.
-- **Plural Policy API (Open States v3)**: Additional legislative bill coverage with rate limiting (1 req/sec, 500 daily requests).
-- **Federal Register API**: Federal HUD housing regulations and rulemaking tracking via Data.gov.
-- **CourtListener API**: Court case and legal precedent tracking.
+- **Legislative Source APIs (8 total)**:
+  - **LegiScan API**: State bill tracking (14 states)
+  - **Plural Policy API (Open States v3)**: Additional bill coverage (rate limited: 1 req/sec, 500 daily)
+  - **Utah GLEN API**: Utah-specific state legislation
+  - **Federal Register API**: HUD regulations via Data.gov
+  - **eCFR API**: Code of Federal Regulations changes (24 CFR Part 1000 for NAHASDA)
+  - **Congress.gov API**: Federal housing bills (optional, requires API key)
+  - **HUD ONAP/PIH Notices**: Page polling for tribal housing notices
+  - **CourtListener API**: Court case and legal precedent tracking
 - **GPT-4 (OpenAI API via Replit AI Integration)**: AI analysis.
 - **Puppeteer**: Server-side PDF generation.
 - **Western Verify LLC**: Tenant screening services (via CTAs).
