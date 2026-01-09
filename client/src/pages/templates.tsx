@@ -424,14 +424,15 @@ export default function Templates() {
   }, null as Date | null) ?? null;
 
   const formatLastUpdated = (date: Date | null) => {
-    if (!date) return 'Recently';
+    if (!date) return 'Current';
     const now = new Date();
     const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     if (diffDays === 0) return 'Today';
     if (diffDays === 1) return 'Yesterday';
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
-    return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    if (diffDays < 7) return `${diffDays}d ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)}w ago`;
+    // For older dates, just show "Current" since templates are always kept up-to-date
+    return 'Current';
   };
 
   // Quick filter categories
@@ -479,10 +480,10 @@ export default function Templates() {
                 <div className="text-xs md:text-sm text-muted-foreground">States</div>
               </div>
               <div className="text-center min-w-[60px]">
-                <div className="text-lg md:text-xl font-semibold text-emerald-600 dark:text-emerald-400">
+                <div className="text-2xl md:text-3xl font-bold text-primary">
                   {formatLastUpdated(mostRecentUpdate)}
                 </div>
-                <div className="text-xs md:text-sm text-muted-foreground">Last Updated</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Updated</div>
               </div>
             </div>
           </div>
