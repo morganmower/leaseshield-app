@@ -1,5 +1,21 @@
 import { storage } from "./storage";
 
+// Template IDs for linking legal updates to affected templates
+// These are dynamically looked up, but we include common ones for reference
+const TEMPLATE_REFS = {
+  UT_LEASE: "63f3873a-034e-4354-b573-31097ed45de4",  // Utah Residential Lease Agreement
+  UT_MONTH_TO_MONTH: "88a93a73-6731-494d-a1b7-801c02508aed", // Month-to-Month Rental Agreement (UT)
+  TX_LEASE: "tx-residential-lease", // Will be looked up dynamically
+  ND_LEASE: "75dd5539-5c6c-4e5d-bf02-81f1aaf9081f", // North Dakota Residential Lease Agreement
+  SD_LEASE: "sd-residential-lease", // Will be looked up dynamically
+  CA_LEASE: "eeda2791-2237-4f26-b078-2ec3e80d2e16", // California Residential Lease Agreement
+  VA_LEASE: "va-residential-lease",
+  NV_LEASE: "f81e9bcb-6da2-423a-bd0e-b2a51db9cc6b", // Nevada Residential Lease Agreement
+  AZ_LEASE: "ee09de92-aa2d-46a6-a6df-c9f3a5179288", // Arizona Residential Lease Agreement
+  FL_LEASE: "26883f07-03ec-4dec-b9d3-a2ffbac7f634", // Florida Residential Lease Agreement
+  WY_LEASE: "wy-residential-lease",
+};
+
 // Comprehensive legal updates for all 4 launch states
 const legalUpdates = [
   // UTAH Legal Updates
@@ -12,6 +28,7 @@ const legalUpdates = [
     afterText: "Landlords MUST provide itemized deduction notice within 30 days of move-out or forfeit ALL deduction rights, including for documented damages.",
     effectiveDate: new Date("2024-01-01"),
     impactLevel: "high",
+    affectedTemplateIds: [TEMPLATE_REFS.UT_LEASE, TEMPLATE_REFS.UT_MONTH_TO_MONTH],
   },
   {
     stateId: "UT",
@@ -22,6 +39,7 @@ const legalUpdates = [
     afterText: "The Utah mold addendum is now mandatory for all residential leases, explaining tenant responsibilities for preventing moisture and reporting mold issues promptly.",
     effectiveDate: new Date("2023-07-01"),
     impactLevel: "high",
+    affectedTemplateIds: [TEMPLATE_REFS.UT_LEASE, TEMPLATE_REFS.UT_MONTH_TO_MONTH],
   },
   {
     stateId: "UT",
