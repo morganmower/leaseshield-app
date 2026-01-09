@@ -292,7 +292,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-sm sm:text-base md:text-lg text-muted-foreground mb-2 leading-relaxed max-w-2xl mx-auto"
             >
-              Applications, state-specific leases, AI screening decoder, and compliance alerts — all in one simple dashboard.
+              Applications, state-specific leases, AI screening decoder, and compliance alerts. All in one simple dashboard.
             </motion.p>
             
             <motion.p 
@@ -331,7 +331,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-xs text-muted-foreground/70 mb-6"
             >
-              Built for small & midsize landlords — avoid costly screening and compliance mistakes.
+              Built for small and midsize landlords. Avoid costly screening and compliance mistakes.
             </motion.p>
             
             {/* Secondary CTA */}
@@ -375,7 +375,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-sm text-muted-foreground mb-6"
             >
-              7 days to test everything — no card required. Instant access.
+              7 days to test everything. No card required. Instant access.
             </motion.p>
             
             {/* Cost Calculator */}
@@ -435,10 +435,10 @@ export default function Landing() {
                 <div>
                   <span className="font-bold text-foreground">Build Compliant Documents</span>
                   <p className="text-sm sm:text-base text-muted-foreground mt-1">
-                    Generate state-specific leases, notices, and forms—always up to date.
+                    Generate state-specific leases, notices, and forms. Always up to date.
                   </p>
                   <p className="text-xs text-muted-foreground/60 mt-2">
-                    Documents update automatically as laws change—no manual tracking needed.
+                    Documents update automatically as laws change. No manual tracking needed.
                   </p>
                 </div>
               </li>
@@ -464,7 +464,7 @@ export default function Landing() {
             LeaseShield helps landlords understand screening results and manage compliance workflows.
             <br className="hidden sm:block" />
             <span className="sm:inline"> </span>
-            <span className="text-muted-foreground/80">Most landlords use both — associations for education and advocacy, LeaseShield for execution.</span>
+            <span className="text-muted-foreground/80">Most landlords use both: associations for education and advocacy, LeaseShield for execution.</span>
           </p>
         </div>
       </div>
@@ -778,7 +778,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
-                    Stay legally compliant without hiring an attorney. Adverse action letters, compliance checklists, and monthly legal updates—always protected when laws change.
+                    Stay legally compliant without hiring an attorney. Adverse action letters, compliance checklists, and monthly legal updates. Always protected when laws change.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -807,7 +807,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
-                    Confidently screen tenants without legal mistakes. Simple credit report explanations and fair housing guidance—no confusing jargon, no discrimination risks.
+                    Confidently screen tenants without legal mistakes. Simple credit report explanations and fair housing guidance. No confusing jargon, no discrimination risks.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -836,7 +836,7 @@ export default function Landing() {
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Landlord Toolkit Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
-                    Everything in one place. Leases, notices, checklists, guides, and compliance resources—organized by property for instant access.
+                    Everything in one place. Leases, notices, checklists, guides, and compliance resources. Organized by property for instant access.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
@@ -1239,7 +1239,7 @@ export default function Landing() {
                 className="text-xs text-primary hover:underline mt-2"
                 data-testid="link-pay-now-monthly"
               >
-                Skip trial — Pay now
+                Skip trial - Pay now
               </button>
             </Card>
 
@@ -1310,7 +1310,7 @@ export default function Landing() {
                 className="text-xs text-primary hover:underline mt-2"
                 data-testid="link-pay-now-annual"
               >
-                Skip trial — Pay now
+                Skip trial - Pay now
               </button>
             </Card>
           </motion.div>
@@ -1349,14 +1349,14 @@ export default function Landing() {
                 <Shield className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Avoid Costly Mistakes</p>
-                  <p className="text-base text-muted-foreground">One compliance error costs thousands—we keep you protected</p>
+                  <p className="text-base text-muted-foreground">One compliance error costs thousands. We keep you protected</p>
                 </div>
               </div>
               <div className="flex gap-3">
                 <CheckCircle2 className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Screen Tenants Confidently</p>
-                  <p className="text-base text-muted-foreground">Simple credit reports & fair housing guidance—no legal risks</p>
+                  <p className="text-base text-muted-foreground">Simple credit reports and fair housing guidance. No legal risks</p>
                 </div>
               </div>
               <div className="flex gap-3">
@@ -1498,7 +1498,7 @@ export default function Landing() {
                 <AccordionTrigger className="text-lg">What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent className="text-lg">
                   We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida</strong> with
-                  comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states—let us know which state you'd like to see next!
+                  comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states. Let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">

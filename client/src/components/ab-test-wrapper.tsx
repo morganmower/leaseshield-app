@@ -72,7 +72,7 @@ function PaywallVariant({ testId }: { testId: string }) {
         </div>
 
         <h2 className="text-3xl font-display font-semibold text-foreground mb-4">
-          Full Access — Everything Small Landlords Need to Stay Compliant
+          Full Access: Everything Small Landlords Need to Stay Compliant
         </h2>
         
         <p className="text-lg text-muted-foreground mb-6">

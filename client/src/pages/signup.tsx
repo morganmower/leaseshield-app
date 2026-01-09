@@ -386,7 +386,7 @@ export default function Signup() {
                 className="text-sm text-primary font-medium hover:underline"
                 data-testid="link-skip-trial"
               >
-                Skip trial — Pay now
+                Skip trial - Pay now
               </Link>
             </div>
           )}

@@ -123,7 +123,7 @@ export function TrialValueMessage() {
     <div className="text-center py-2 px-4 bg-gradient-to-r from-success/10 via-success/5 to-success/10 border-y border-success/20">
       <p className="text-sm text-foreground">
         <Sparkles className="inline h-4 w-4 mr-1 text-success" />
-        <strong>7 days to test everything</strong> — no card required. Instant access to leases, decoder, and all tools.
+        <strong>7 days to test everything.</strong> No card required. Instant access to leases, decoder, and all tools.
       </p>
     </div>
   );
@@ -132,7 +132,7 @@ export function TrialValueMessage() {
 export function TrialNote() {
   return (
     <p className="text-sm text-muted-foreground text-center">
-      <strong>7 days to test everything</strong> — no card required. Instant access to leases, decoder, and all tools.
+      <strong>7 days to test everything.</strong> No card required. Instant access to leases, decoder, and all tools.
     </p>
   );
 }

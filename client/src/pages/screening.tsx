@@ -330,7 +330,7 @@ export default function Screening() {
             Screening Decoder
           </h1>
           <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">This prevents misinterpretation — the most common screening mistake landlords make.</span>
+            <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
           </p>
           <p className="text-muted-foreground">
             Paste any screening report below. LeaseShield explains what matters, what doesn't, and what to ask next.

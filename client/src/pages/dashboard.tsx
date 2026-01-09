@@ -446,7 +446,7 @@ export default function Dashboard() {
                 <h3 className="font-semibold text-foreground">Use updated state-specific documents when you need to act</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Leases and notices updated as legislation changes — late rent, violations, non-renewal, and more.
+                Leases and notices updated as legislation changes: late rent, violations, non-renewal, and more.
               </p>
               <div className="flex flex-wrap gap-2">
                 <Link to="/templates">
@@ -533,7 +533,7 @@ export default function Dashboard() {
                 </div>
               </div>
               <p className="text-sm text-muted-foreground mb-4">
-                Credit / Criminal / Eviction explained in plain English — with the best follow-up questions.
+                Credit, Criminal, and Eviction reports explained in plain English with the best follow-up questions.
               </p>
               <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
                 <li>Key risk flags (and what they mean)</li>

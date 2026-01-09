@@ -464,7 +464,7 @@ export default function Templates() {
                 </h1>
               </div>
               <p className="text-muted-foreground max-w-2xl">
-                <span className="font-medium text-foreground">Documents are updated as legislation changes — older versions may create enforceability risk.</span>
+                <span className="font-medium text-foreground">Documents are updated as legislation changes. Older versions may create enforceability risk.</span>
               </p>
             </div>
             
