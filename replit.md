@@ -78,6 +78,7 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Database Schema**: Comprehensive schema for users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties, savedDocuments, and uploadedDocuments.
 - **API Endpoints**: Structured API for all core functionalities.
 - **Template Alignment**: Templates include form fields and legal text that align with all compliance card requirements for each state.
+- **API-Driven States**: States are fetched from `/api/states` endpoint (single source of truth). Frontend uses `useStates()` hook with React Query caching (1 hour staleTime). Adding new states requires only `seed.ts` update + content creation - no frontend code changes needed.
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database.

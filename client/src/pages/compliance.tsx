@@ -144,7 +144,7 @@ export default function Compliance() {
     );
   }
 
-  const selectedStateName = SUPPORTED_STATES.find(s => s.code === selectedState)?.name || selectedState;
+  const selectedStateName = states.find(s => s.id === selectedState)?.name || selectedState;
   const cardCount = complianceCards?.length || 0;
   const categoryCount = complianceCards ? new Set(complianceCards.map(c => c.category)).size : 0;
 
@@ -215,8 +215,8 @@ export default function Compliance() {
               </div>
             </SelectTrigger>
             <SelectContent>
-              {SUPPORTED_STATES.map((state) => (
-                <SelectItem key={state.code} value={state.code} data-testid={`select-state-${state.code}`}>
+              {states.map((state) => (
+                <SelectItem key={state.id} value={state.id} data-testid={`select-state-${state.id}`}>
                   {state.name}
                 </SelectItem>
               ))}
@@ -233,11 +233,11 @@ export default function Compliance() {
             </div>
             <ScrollArea className="w-full whitespace-nowrap">
               <TabsList className="inline-flex h-11 items-center justify-start gap-1 bg-muted/50 p-1.5 rounded-lg border" data-testid="tabs-state-selector">
-                {SUPPORTED_STATES.map((state) => (
+                {states.map((state) => (
                   <TabsTrigger 
-                    key={state.code} 
-                    value={state.code} 
-                    data-testid={`tab-state-${state.code}`}
+                    key={state.id} 
+                    value={state.id} 
+                    data-testid={`tab-state-${state.id}`}
                     className="px-4 py-2 text-sm font-medium whitespace-nowrap rounded-md data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm transition-all"
                   >
                     {state.name}
@@ -248,16 +248,16 @@ export default function Compliance() {
             </ScrollArea>
           </div>
 
-          {SUPPORTED_STATES.map(({ code: state }) => (
-            <TabsContent key={state} value={state} className="space-y-6 mt-0">
+          {states.map((stateItem) => (
+            <TabsContent key={stateItem.id} value={stateItem.id} className="space-y-6 mt-0">
               {/* State Header Card */}
               <Card className="p-4 bg-gradient-to-r from-primary/5 to-transparent border-primary/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <StateBadge stateId={state} />
+                    <StateBadge stateId={stateItem.id} />
                     <div>
                       <h2 className="text-lg font-display font-semibold text-foreground">
-                        {SUPPORTED_STATES.find(s => s.code === state)?.name} Compliance
+                        {stateItem.name} Compliance
                       </h2>
                       <p className="text-sm text-muted-foreground">
                         {complianceCards?.length || 0} requirements across {categoryCount} categories
@@ -459,7 +459,7 @@ export default function Compliance() {
                 ) : (
                   <Card className="p-12 text-center">
                     <p className="text-muted-foreground">
-                      Compliance cards for {state} are being prepared.
+                      Compliance cards for {stateItem.name} are being prepared.
                     </p>
                   </Card>
                 )}
