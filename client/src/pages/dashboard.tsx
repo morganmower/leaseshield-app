@@ -61,19 +61,12 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  // Show tour on first visit, then video modal (disabled for now)
+  // Tour disabled - users can click "Quick Guide" button if they want to see it
   useEffect(() => {
     if (user && !isLoading) {
-      const hasSeenTour = localStorage.getItem('leaseshield_tour_seen');
-      const hasSeenVideo = localStorage.getItem('leaseshield_video_seen');
-      
-      // Tour disabled - users can restart it manually if needed via "Quick Guide" button
+      // Mark tour as seen so it doesn't auto-start
       localStorage.setItem('leaseshield_tour_seen', 'true');
-      
-      if (!hasSeenVideo) {
-        // Show video after tour is done
-        setTimeout(() => setShowVideoModal(true), 500);
-      }
+      // Video modal no longer auto-pops - users click "Quick Guide" button when ready
     }
   }, [user, isLoading]);
 

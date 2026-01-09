@@ -1,7 +1,7 @@
 import { db } from "./db";
 import { communicationTemplates } from "@shared/schema";
 
-const NEW_STATES = ["WY", "CA", "VA", "NV", "AZ", "FL"];
+const NEW_STATES = ["WY", "CA", "VA", "NV", "AZ", "FL", "IL"];
 
 const STATE_NAMES: Record<string, string> = {
   WY: "Wyoming",
@@ -10,6 +10,7 @@ const STATE_NAMES: Record<string, string> = {
   NV: "Nevada",
   AZ: "Arizona",
   FL: "Florida",
+  IL: "Illinois",
 };
 
 const STATE_CODES: Record<string, string> = {
@@ -19,6 +20,7 @@ const STATE_CODES: Record<string, string> = {
   NV: "Nevada Revised Statutes",
   AZ: "Arizona Revised Statutes",
   FL: "Florida Statutes",
+  IL: "Illinois Compiled Statutes",
 };
 
 function getTemplates(stateCode: string) {
