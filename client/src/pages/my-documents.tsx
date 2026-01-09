@@ -17,7 +17,13 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File } from "lucide-react";
+import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { queryClient, getAccessToken } from "@/lib/queryClient";
 import type { SavedDocument, RentalProperty, UploadedDocument } from "@shared/schema";
 import { format } from "date-fns";
@@ -55,31 +61,33 @@ export default function MyDocuments() {
   });
 
   const downloadMutation = useMutation({
-    mutationFn: async (id: string) => {
+    mutationFn: async ({ id, format }: { id: string; format: 'pdf' | 'docx' }) => {
       const token = getAccessToken();
-      const response = await fetch(`/api/saved-documents/${id}/download`, {
+      const response = await fetch(`/api/saved-documents/${id}/download?format=${format}`, {
         credentials: 'include',
         headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to download document');
       }
-      return { blob: await response.blob(), id };
+      return { blob: await response.blob(), id, format };
     },
-    onSuccess: ({ blob, id }) => {
+    onSuccess: ({ blob, id, format }) => {
       const savedDoc = documents.find(d => d.id === id);
+      const extension = format === 'docx' ? 'docx' : 'pdf';
       const url = window.URL.createObjectURL(blob);
       const a = window.document.createElement('a');
       a.href = url;
-      a.download = `${savedDoc?.documentName || 'document'}.pdf`;
+      a.download = `${savedDoc?.documentName || 'document'}.${extension}`;
       window.document.body.appendChild(a);
       a.click();
       window.document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
+      const formatLabel = format === 'docx' ? 'Word document' : 'PDF';
       toast({
         title: "Document Downloaded",
-        description: "Your PDF has been downloaded successfully.",
+        description: `Your ${formatLabel} has been downloaded successfully.`,
       });
     },
     onError: () => {
@@ -407,16 +415,36 @@ export default function MyDocuments() {
                     )}
                   </div>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={() => downloadMutation.mutate(document.id)}
-                      disabled={downloadMutation.isPending}
-                      className="flex-1"
-                      data-testid={`button-download-${document.id}`}
-                    >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          disabled={downloadMutation.isPending}
+                          className="flex-1"
+                          data-testid={`button-download-${document.id}`}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem
+                          onClick={() => downloadMutation.mutate({ id: document.id, format: 'pdf' })}
+                          data-testid={`button-download-pdf-${document.id}`}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => downloadMutation.mutate({ id: document.id, format: 'docx' })}
+                          data-testid={`button-download-docx-${document.id}`}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download Word
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button
                       size="sm"
                       variant="outline"

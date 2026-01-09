@@ -38,8 +38,15 @@ import {
   Bell, 
   Home,
   FolderOpen,
-  X
+  X,
+  ChevronDown
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { Template } from "@shared/schema";
 import { SessionExpired, isSessionExpiredError, hasExpiredSession } from "@/components/session-expired";
 
@@ -56,7 +63,7 @@ export default function Templates() {
   const isPayingMember = (user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
   const isTrialing = user?.subscriptionStatus === 'trialing';
 
-  const handleTemplateAction = async (action: 'download' | 'download-blank' | 'fill', templateId: string) => {
+  const handleTemplateAction = async (action: 'download' | 'download-blank' | 'fill', templateId: string, format: 'pdf' | 'docx' = 'pdf') => {
     if (action === 'fill') {
       setLocation(`/templates/${templateId}/fill`);
     } else if (action === 'download-blank') {
@@ -136,7 +143,7 @@ export default function Templates() {
           });
         }
 
-        const response = await fetch('/api/documents/generate', {
+        const response = await fetch(`/api/documents/generate?format=${format}`, {
           method: 'POST',
           credentials: 'include',
           body: JSON.stringify({ templateId, fieldValues: blankFieldValues }),
@@ -156,18 +163,20 @@ export default function Templates() {
         }
 
         const blob = await response.blob();
+        const extension = format === 'docx' ? 'docx' : 'pdf';
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_') || 'template'}.pdf`;
+        a.download = `${template?.title.replace(/[^a-z0-9]/gi, '_') || 'template'}.${extension}`;
         document.body.appendChild(a);
         a.click();
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
 
+        const formatLabel = format === 'docx' ? 'Word document' : 'PDF';
         toast({
           title: 'Download Complete',
-          description: 'Your template has been downloaded successfully.',
+          description: `Your ${formatLabel} has been downloaded successfully.`,
         });
       } catch (error) {
         toast({
@@ -687,26 +696,66 @@ export default function Templates() {
                               >
                                 Fill Online
                               </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleTemplateAction('download', template.id)}
-                                data-testid={`button-download-${template.id}`}
-                              >
-                                <Download className="h-4 w-4" />
-                              </Button>
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    data-testid={`button-download-${template.id}`}
+                                  >
+                                    <Download className="h-4 w-4" />
+                                    <ChevronDown className="h-3 w-3 ml-1" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem
+                                    onClick={() => handleTemplateAction('download', template.id, 'pdf')}
+                                    data-testid={`button-download-pdf-${template.id}`}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Download PDF
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem
+                                    onClick={() => handleTemplateAction('download', template.id, 'docx')}
+                                    data-testid={`button-download-docx-${template.id}`}
+                                  >
+                                    <FileText className="h-4 w-4 mr-2" />
+                                    Download Word
+                                  </DropdownMenuItem>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </>
                           ) : (
-                            <Button
-                              variant="default"
-                              size="sm"
-                              className="flex-1"
-                              onClick={() => handleTemplateAction('download', template.id)}
-                              data-testid={`button-download-${template.id}`}
-                            >
-                              <Download className="mr-2 h-4 w-4" />
-                              Download
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="default"
+                                  size="sm"
+                                  className="flex-1"
+                                  data-testid={`button-download-${template.id}`}
+                                >
+                                  <Download className="mr-2 h-4 w-4" />
+                                  Download
+                                  <ChevronDown className="h-3 w-3 ml-1" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="start">
+                                <DropdownMenuItem
+                                  onClick={() => handleTemplateAction('download', template.id, 'pdf')}
+                                  data-testid={`button-download-pdf-${template.id}`}
+                                >
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Download PDF
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                  onClick={() => handleTemplateAction('download', template.id, 'docx')}
+                                  data-testid={`button-download-docx-${template.id}`}
+                                >
+                                  <FileText className="h-4 w-4 mr-2" />
+                                  Download Word
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           )}
                         </>
                       )}
