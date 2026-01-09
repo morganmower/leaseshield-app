@@ -563,19 +563,19 @@ export default function Templates() {
             <div className="flex flex-wrap gap-2">
               {quickFilterCategories.map(({ key, label, icon: Icon }) => {
                 const isSelected = selectedCategory === key;
-                const colorClasses = isSelected ? {
+                const colorClasses = {
                   leasing: 'bg-blue-600 hover:bg-blue-700 text-white border-blue-600',
                   screening: 'bg-emerald-600 hover:bg-emerald-700 text-white border-emerald-600',
                   compliance: 'bg-purple-600 hover:bg-purple-700 text-white border-purple-600',
                   tenant_issues: 'bg-red-600 hover:bg-red-700 text-white border-red-600',
                   notices: 'bg-amber-600 hover:bg-amber-700 text-white border-amber-600',
                   move_in_out: 'bg-teal-600 hover:bg-teal-700 text-white border-teal-600',
-                }[key] || '' : '';
+                }[key] || '';
                 
                 return (
                   <Button
                     key={key}
-                    variant="outline"
+                    variant={isSelected ? "default" : "outline"}
                     size="sm"
                     onClick={() => setSelectedCategory(selectedCategory === key ? "all" : key)}
                     data-testid={`button-quick-filter-${key}`}
