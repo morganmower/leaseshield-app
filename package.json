@@ -68,7 +68,6 @@
     "express-session": "^1.18.1",
     "fast-xml-parser": "^5.3.3",
     "framer-motion": "^11.13.1",
-    "html-to-docx": "^1.8.0",
     "input-otp": "^1.4.2",
     "jsdom": "^27.2.0",
     "jsonwebtoken": "^9.0.3",

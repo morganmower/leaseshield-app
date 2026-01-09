@@ -1,6 +1,15 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
-import HTMLtoDOCX from 'html-to-docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  BorderStyle,
+} from 'docx';
+import { STATE_NAMES } from './docxBuilder';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -127,95 +136,172 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
 export async function generateDocumentDOCX(options: DocumentGenerationOptions): Promise<Buffer> {
   const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
   
-  console.log('📝 Generating DOCX document...');
+  console.log('📝 Generating DOCX document with docx library...');
   const startTime = Date.now();
   
-  // Generate simplified HTML specifically for DOCX conversion (avoid complex CSS)
-  const htmlContent = generateSimplifiedHTMLForDOCX(templateTitle, templateContent, fieldValues, stateId, version, updatedAt, landlordInfo);
+  const stateName = STATE_NAMES[stateId] || stateId;
+  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
   
-  try {
-    // Convert HTML to DOCX using html-to-docx library
-    const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
-      table: { row: { cantSplit: true } },
-      margins: {
-        top: 1440,
-        right: 1440,
-        bottom: 1440,
-        left: 1440,
-      },
+  const H1 = (text: string): Paragraph =>
+    new Paragraph({
+      children: [new TextRun({ text, bold: true, size: 32 })],
+      heading: HeadingLevel.HEADING_1,
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 120 },
     });
-    
-    console.log(`📝 DOCX generated successfully in ${Date.now() - startTime}ms`);
-    
-    return Buffer.from(docxBuffer);
+
+  const H2 = (text: string): Paragraph =>
+    new Paragraph({
+      children: [new TextRun({ text, bold: true, size: 24 })],
+      heading: HeadingLevel.HEADING_2,
+      spacing: { before: 240, after: 120 },
+    });
+
+  const P = (text: string, options?: { bold?: boolean; italic?: boolean }): Paragraph =>
+    new Paragraph({
+      children: [
+        new TextRun({
+          text,
+          size: 22,
+          bold: options?.bold,
+          italics: options?.italic,
+        }),
+      ],
+      spacing: { after: 120 },
+    });
+
+  const SignatureLine = (label: string): Paragraph =>
+    new Paragraph({
+      children: [
+        new TextRun({ text: label + " ", bold: true, size: 22 }),
+        new TextRun({ text: "________________________________________________", size: 22 }),
+      ],
+      spacing: { before: 200, after: 80 },
+    });
+
+  const HR = (): Paragraph =>
+    new Paragraph({
+      border: {
+        bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+      },
+      spacing: { before: 150, after: 150 },
+    });
+
+  const getField = (key: string, defaultValue: string = '[_____________]'): string => {
+    const value = fieldValues[key];
+    if (value === undefined || value === null || value === '') {
+      return defaultValue;
+    }
+    return String(value);
+  };
+
+  const children: Paragraph[] = [];
+
+  if (landlordInfo?.businessName) {
+    children.push(new Paragraph({
+      children: [new TextRun({ text: landlordInfo.businessName, bold: true, size: 28 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 80 },
+    }));
+  }
+
+  if (landlordInfo?.phoneNumber || landlordInfo?.email) {
+    const contactParts: string[] = [];
+    if (landlordInfo.phoneNumber) contactParts.push(landlordInfo.phoneNumber);
+    if (landlordInfo.email) contactParts.push(landlordInfo.email);
+    children.push(new Paragraph({
+      children: [new TextRun({ text: contactParts.join(' | '), size: 20 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 80 },
+    }));
+  }
+
+  children.push(H1(templateTitle.toUpperCase()));
+  children.push(P(`State: ${stateName}`, { italic: true }));
+  children.push(HR());
+
+  children.push(P(`Document Version: ${version}`, { bold: true }));
+  children.push(P(`Last Updated: ${formattedDate}`));
+  children.push(P(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`));
+  children.push(HR());
+
+  children.push(H2("1. TERM OF LEASE"));
+  children.push(P(`This Residential Lease Agreement ("Lease") is entered into as of ${getField('leaseStartDate', '[DATE]')} between the undersigned Landlord and Tenant(s) for the rental of the property located at ${getField('propertyAddress', '[ADDRESS]')}, ${getField('propertyCity', '[CITY]')}, ${stateId} ${getField('propertyZip', '[ZIP]')} ("Premises").`));
+
+  children.push(H2("2. PARTIES"));
+  children.push(P(`Landlord: ${getField('landlordName', '[LANDLORD NAME]')}`));
+  children.push(P(`Tenant(s): ${getField('tenantName', '[TENANT NAME]')}`));
+
+  children.push(H2("3. RENT"));
+  children.push(P(`Monthly Rent: $${getField('monthlyRent', '[AMOUNT]')} due on the ${getField('rentDueDay', '1st')} of each month.`));
+  children.push(P(`Late Fee: $${getField('lateFeeAmount', '[AMOUNT]')} if rent is not received by the ${getField('lateFeeDays', '5th')} day.`));
+
+  children.push(H2("4. SECURITY DEPOSIT"));
+  children.push(P(`Security Deposit: $${getField('securityDeposit', '[AMOUNT]')} to be held for the faithful performance of this Lease.`));
+
+  children.push(H2("5. MAINTENANCE AND REPAIRS"));
+  children.push(P("Tenant shall maintain the Premises in clean condition and notify Landlord of repairs within 48 hours."));
+
+  children.push(H2("6. USE OF PREMISES"));
+  children.push(P("The Premises shall be used solely as a residential dwelling. No business or illegal activities permitted."));
+
+  children.push(H2("7. GOVERNING LAW"));
+  children.push(P(`This Lease is governed by the laws of the State of ${stateName}.`));
+
+  children.push(HR());
+
+  children.push(new Paragraph({
+    children: [new TextRun({ text: "SIGNATURES", bold: true, size: 28 })],
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 300, after: 200 },
+  }));
+
+  children.push(P("LANDLORD:", { bold: true }));
+  children.push(SignatureLine("Signature:"));
+  children.push(SignatureLine("Date:"));
+
+  children.push(P("TENANT:", { bold: true }));
+  children.push(SignatureLine("Signature:"));
+  children.push(SignatureLine("Date:"));
+
+  children.push(new Paragraph({
+    children: [
+      new TextRun({
+        text: "For informational purposes only. Consult with a licensed attorney for legal advice.",
+        size: 18,
+        italics: true,
+      }),
+    ],
+    alignment: AlignmentType.CENTER,
+    spacing: { before: 400 },
+  }));
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 1440,
+              right: 1440,
+              bottom: 1440,
+              left: 1440,
+            },
+          },
+        },
+        children,
+      },
+    ],
+  });
+
+  try {
+    const buffer = await Packer.toBuffer(doc);
+    console.log(`📝 DOCX generated successfully in ${Date.now() - startTime}ms (${buffer.length} bytes)`);
+    return Buffer.from(buffer);
   } catch (error) {
     console.error('📝 Error generating DOCX:', error);
     throw error;
   }
-}
-
-// Generate simplified HTML that works well with html-to-docx conversion
-function generateSimplifiedHTMLForDOCX(
-  templateTitle: string,
-  templateContent: string,
-  fieldValues: FieldValue,
-  stateId: string,
-  version: number,
-  updatedAt: Date,
-  landlordInfo?: LandlordInfo
-): string {
-  const safeTitle = escapeHtml(templateTitle);
-  const safeStateId = escapeHtml(stateId);
-  
-  // Get the full template content
-  const filledContent = generateDefaultTemplateContent(safeTitle, fieldValues, safeStateId, version, updatedAt);
-  
-  // Build header section
-  let headerHtml = '';
-  if (landlordInfo?.businessName) {
-    headerHtml += `<h2 style="text-align: center; margin-bottom: 5px;">${escapeHtml(landlordInfo.businessName)}</h2>`;
-  }
-  
-  const contactParts: string[] = [];
-  if (landlordInfo?.phoneNumber) contactParts.push(landlordInfo.phoneNumber);
-  if (landlordInfo?.email) contactParts.push(landlordInfo.email);
-  if (contactParts.length > 0) {
-    headerHtml += `<p style="text-align: center; margin-top: 0;">${escapeHtml(contactParts.join(' | '))}</p>`;
-  }
-  
-  // Create simplified HTML without complex CSS (html-to-docx handles basic styling)
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${safeTitle}</title>
-</head>
-<body style="font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.6;">
-  ${headerHtml}
-  <h1 style="text-align: center; text-transform: uppercase; margin-bottom: 10px;">${safeTitle}</h1>
-  <p style="text-align: center; margin-bottom: 20px;">State: ${safeStateId}</p>
-  
-  <p><strong>Document Version:</strong> ${version}</p>
-  <p><strong>Last Updated:</strong> ${new Date(updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-  <p><strong>Generated:</strong> ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-  
-  <hr style="margin: 20px 0;">
-  
-  ${filledContent}
-  
-  <hr style="margin: 20px 0;">
-  
-  <h2>SIGNATURES</h2>
-  
-  <p style="margin-top: 40px;">_________________________________</p>
-  <p>Landlord Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</p>
-  
-  <p style="margin-top: 30px;">_________________________________</p>
-  <p>Tenant Signature &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; Date</p>
-</body>
-</html>
-`;
 }
 
 function generateHTMLFromTemplate(
