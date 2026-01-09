@@ -121,7 +121,11 @@ class LegiScanAdapter implements LegislationSourceAdapter {
       return { items, errors };
     }
 
-    const states = params.states || ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL', 'IL'];
+    if (!params.states || params.states.length === 0) {
+      errors.push('LegiScan requires states to be provided via params.states (no hardcoded fallback)');
+      return { items, errors };
+    }
+    const states = params.states;
     const year = new Date().getFullYear();
     
     for (const state of states) {

@@ -121,6 +121,7 @@ export const templates = pgTable("templates", {
   category: categoryEnum("category").notNull(),
   templateType: templateTypeEnum("template_type").notNull(),
   stateId: varchar("state_id", { length: 2 }).notNull(),
+  key: varchar("key", { length: 100 }).notNull(), // Canonical key for upsert: e.g., "lease_residential_lease_agreement"
   // File storage - could be URLs or file paths
   pdfUrl: text("pdf_url"),
   fillableFormData: jsonb("fillable_form_data"), // JSON structure for fillable fields
@@ -155,6 +156,7 @@ export type Template = typeof templates.$inferSelect;
 export const complianceCards = pgTable("compliance_cards", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   stateId: varchar("state_id", { length: 2 }).notNull(),
+  key: varchar("key", { length: 100 }).notNull(), // Canonical key for upsert: e.g., "security_deposit_rules"
   title: text("title").notNull(),
   summary: text("summary").notNull(),
   category: text("category").notNull(), // 'disclosures', 'screening', 'eviction', 'general'
@@ -729,6 +731,7 @@ export const communicationTemplates = pgTable("communication_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   stateId: varchar("state_id", { length: 2 }).notNull(),
   templateType: communicationTemplateTypeEnum("template_type").notNull(),
+  key: varchar("key", { length: 100 }).notNull(), // Canonical key for upsert: e.g., "rent_due_reminder"
   title: text("title").notNull(),
   bodyText: text("body_text").notNull(), // Contains {{merge_fields}} like {{tenant_name}}, {{amount_due}}, {{due_date}}
   isActive: boolean("is_active").default(true),
