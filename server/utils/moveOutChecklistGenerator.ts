@@ -1,11 +1,13 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
+import HTMLtoDOCX from 'html-to-docx';
 
 interface MoveOutChecklistOptions {
   templateTitle: string;
   stateId: string;
   version?: number;
   updatedAt?: Date;
+  checklistType?: 'move_in' | 'move_out';
 }
 
 const STATE_NAMES: Record<string, string> = {
@@ -36,9 +38,9 @@ function escapeHtml(unsafe: string): string {
 }
 
 export async function generateMoveOutChecklistPdf(options: MoveOutChecklistOptions): Promise<Buffer> {
-  const { templateTitle, stateId, version = 1, updatedAt = new Date() } = options;
+  const { templateTitle, stateId, version = 1, updatedAt = new Date(), checklistType = 'move_out' } = options;
 
-  const htmlContent = generateMoveOutChecklistHTML(templateTitle, stateId, version, updatedAt);
+  const htmlContent = generateMoveOutChecklistHTML(templateTitle, stateId, version, updatedAt, checklistType);
 
   let chromiumPath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
   try {
@@ -97,11 +99,41 @@ export async function generateMoveOutChecklistPdf(options: MoveOutChecklistOptio
   }
 }
 
+export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOptions): Promise<Buffer> {
+  const { templateTitle, stateId, version = 1, updatedAt = new Date(), checklistType = 'move_out' } = options;
+
+  console.log('📝 Generating checklist DOCX...');
+  const startTime = Date.now();
+
+  const htmlContent = generateMoveOutChecklistHTML(templateTitle, stateId, version, updatedAt, checklistType);
+
+  try {
+    const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+      margins: {
+        top: 720,   // 0.5 inch in twips
+        right: 720,
+        bottom: 720,
+        left: 720,
+      },
+    });
+
+    console.log(`📝 Checklist DOCX generated successfully in ${Date.now() - startTime}ms`);
+    return Buffer.from(docxBuffer);
+  } catch (error) {
+    console.error('📝 Error generating checklist DOCX:', error);
+    throw error;
+  }
+}
+
 function generateMoveOutChecklistHTML(
   templateTitle: string,
   stateId: string,
   version: number,
-  updatedAt: Date
+  updatedAt: Date,
+  checklistType: 'move_in' | 'move_out' = 'move_out'
 ): string {
   const safeTitle = escapeHtml(templateTitle);
   const stateName = STATE_NAMES[stateId] || stateId;
@@ -110,6 +142,14 @@ function generateMoveOutChecklistHTML(
     month: 'long', 
     day: 'numeric' 
   });
+  
+  // Dynamic labels based on checklist type
+  const isMoveIn = checklistType === 'move_in';
+  const checklistLabel = isMoveIn ? 'Move-In' : 'Move-Out';
+  const dateLabel = isMoveIn ? 'Move-In Date' : 'Move-Out Date';
+  const instructionsText = isMoveIn 
+    ? 'Complete this checklist during the initial walkthrough before tenant move-in. Document the condition of each area to establish baseline condition. Both landlord and tenant should sign upon completion.'
+    : 'Complete this checklist during the final walkthrough before tenant move-out. Document the condition of each area and note any damages beyond normal wear and tear. Both landlord and tenant should sign upon completion.';
 
   return `
 <!DOCTYPE html>
@@ -323,13 +363,13 @@ function generateMoveOutChecklistHTML(
 </head>
 <body>
   <div class="header">
-    <h1>Move-Out Inspection Checklist</h1>
+    <h1>${checklistLabel} Inspection Checklist</h1>
     <p class="subtitle">${escapeHtml(stateName)} Property Inspection Form</p>
     <p class="state-info">Version ${version} | Last Updated: ${formattedDate}</p>
   </div>
 
   <div class="instructions">
-    <strong>Instructions:</strong> Complete this checklist during the final walkthrough before tenant move-out. Document the condition of each area and note any damages beyond normal wear and tear. Both landlord and tenant should sign upon completion.
+    <strong>Instructions:</strong> ${instructionsText}
   </div>
 
   <div class="section">
@@ -354,7 +394,7 @@ function generateMoveOutChecklistHTML(
         <div class="field-line"></div>
       </div>
       <div class="field">
-        <div class="field-label">Move-Out Date</div>
+        <div class="field-label">${dateLabel}</div>
         <div class="field-line"></div>
       </div>
     </div>
@@ -545,7 +585,7 @@ function generateMoveOutChecklistHTML(
   </div>
 
   <div class="footer">
-    <p>LeaseShield | State-Compliant ${escapeHtml(stateName)} Move-Out Inspection Form | Version ${version}</p>
+    <p>LeaseShield | State-Compliant ${escapeHtml(stateName)} ${checklistLabel} Inspection Form | Version ${version}</p>
     <p>This form is provided for informational purposes. Consult with a licensed attorney for legal advice.</p>
   </div>
 </body>

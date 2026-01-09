@@ -71,13 +71,14 @@ export default function Templates() {
       setLocation(`/templates/${templateId}/fill`);
     } else if (action === 'download-blank') {
       try {
+        const formatLabel = format === 'docx' ? 'Word document' : 'PDF';
         toast({
           title: 'Download Started',
-          description: 'Your blank form is being downloaded...',
+          description: `Your blank ${formatLabel} is being generated...`,
         });
 
         const token = getAccessToken();
-        const response = await fetch(`/api/templates/${templateId}/download-blank`, {
+        const response = await fetch(`/api/templates/${templateId}/download-blank?format=${format}`, {
           credentials: 'include',
           headers: token ? { 'Authorization': `Bearer ${token}` } : {}
         });
@@ -92,11 +93,13 @@ export default function Templates() {
         }
 
         const blob = await response.blob();
+        const extension = format === 'docx' ? 'docx' : 'pdf';
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
         const contentDisposition = response.headers.get('Content-Disposition');
-        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || 'Rental_Application.pdf';
+        const defaultFilename = `Rental_Application.${extension}`;
+        const filename = contentDisposition?.match(/filename="(.+)"/)?.[1] || defaultFilename;
         a.download = filename;
         document.body.appendChild(a);
         a.click();
@@ -105,7 +108,7 @@ export default function Templates() {
 
         toast({
           title: 'Download Complete',
-          description: 'Your blank form has been downloaded successfully.',
+          description: `Your blank ${formatLabel} has been downloaded successfully.`,
         });
       } catch (error) {
         toast({
@@ -739,16 +742,36 @@ export default function Templates() {
                     {/* Actions */}
                     <div className="flex gap-2">
                       {template.generationMode === 'static' ? (
-                        <Button
-                          variant="default"
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleTemplateAction('download-blank', template.id)}
-                          data-testid={`button-download-blank-${template.id}`}
-                        >
-                          <Download className="mr-2 h-4 w-4" />
-                          Download
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button
+                              variant="default"
+                              size="sm"
+                              className="flex-1"
+                              data-testid={`button-download-blank-${template.id}`}
+                            >
+                              <Download className="mr-2 h-4 w-4" />
+                              Download
+                              <ChevronDown className="h-3 w-3 ml-1" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="start">
+                            <DropdownMenuItem
+                              onClick={() => handleTemplateAction('download-blank', template.id, 'pdf')}
+                              data-testid={`button-download-blank-pdf-${template.id}`}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              Download PDF
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => handleTemplateAction('download-blank', template.id, 'docx')}
+                              data-testid={`button-download-blank-docx-${template.id}`}
+                            >
+                              <FileText className="h-4 w-4 mr-2" />
+                              Download Word
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       ) : (
                         <>
                           {template.fillableFormData ? (

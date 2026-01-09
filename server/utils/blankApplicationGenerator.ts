@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
+import HTMLtoDOCX from 'html-to-docx';
 
 interface BlankApplicationOptions {
   templateTitle: string;
@@ -94,6 +95,35 @@ export async function generateBlankApplicationPdf(options: BlankApplicationOptio
     return Buffer.from(pdfBuffer);
   } finally {
     await browser.close();
+  }
+}
+
+export async function generateBlankApplicationDocx(options: BlankApplicationOptions): Promise<Buffer> {
+  const { templateTitle, stateId, version = 1, updatedAt = new Date() } = options;
+
+  console.log('📝 Generating blank application DOCX...');
+  const startTime = Date.now();
+
+  const htmlContent = generateBlankApplicationHTML(templateTitle, stateId, version, updatedAt);
+
+  try {
+    const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
+      table: { row: { cantSplit: true } },
+      footer: true,
+      pageNumber: true,
+      margins: {
+        top: 720,   // 0.5 inch in twips
+        right: 720,
+        bottom: 720,
+        left: 720,
+      },
+    });
+
+    console.log(`📝 Blank application DOCX generated successfully in ${Date.now() - startTime}ms`);
+    return Buffer.from(docxBuffer);
+  } catch (error) {
+    console.error('📝 Error generating blank application DOCX:', error);
+    throw error;
   }
 }
 

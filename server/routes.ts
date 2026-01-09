@@ -1386,39 +1386,71 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: "This template requires filling out via the wizard" });
       }
 
-      let pdfBuffer: Buffer;
+      // Get format from query param (default: pdf)
+      const format = (req.query.format as string)?.toLowerCase() === 'docx' ? 'docx' : 'pdf';
+      const safeFilename = template.title.replace(/[^a-z0-9]/gi, '_');
       
       // Route to appropriate generator based on template type
       if (template.templateType === 'move_out_checklist' || template.templateType === 'move_in_checklist') {
-        // Use move-out/move-in checklist generator
-        const { generateMoveOutChecklistPdf } = await import('./utils/moveOutChecklistGenerator');
-        pdfBuffer = await generateMoveOutChecklistPdf({
-          templateTitle: template.title,
-          stateId: template.stateId,
-          version: template.version || 1,
-          updatedAt: template.updatedAt || new Date(),
-        });
+        // Use move-out/move-in checklist generator with correct type
+        const { generateMoveOutChecklistPdf, generateMoveOutChecklistDocx } = await import('./utils/moveOutChecklistGenerator');
+        const checklistType = template.templateType === 'move_in_checklist' ? 'move_in' : 'move_out';
+        
+        if (format === 'docx') {
+          const docxBuffer = await generateMoveOutChecklistDocx({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            checklistType,
+          });
+          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
+          res.send(docxBuffer);
+        } else {
+          const pdfBuffer = await generateMoveOutChecklistPdf({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+            checklistType,
+          });
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
+          res.send(pdfBuffer);
+        }
       } else {
         // Default to rental application generator for other static templates
-        const { generateBlankApplicationPdf } = await import('./utils/blankApplicationGenerator');
-        pdfBuffer = await generateBlankApplicationPdf({
-          templateTitle: template.title,
-          stateId: template.stateId,
-          version: template.version || 1,
-          updatedAt: template.updatedAt || new Date(),
-        });
+        const { generateBlankApplicationPdf, generateBlankApplicationDocx } = await import('./utils/blankApplicationGenerator');
+        
+        if (format === 'docx') {
+          const docxBuffer = await generateBlankApplicationDocx({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+          });
+          res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.docx"`);
+          res.send(docxBuffer);
+        } else {
+          const pdfBuffer = await generateBlankApplicationPdf({
+            templateTitle: template.title,
+            stateId: template.stateId,
+            version: template.version || 1,
+            updatedAt: template.updatedAt || new Date(),
+          });
+          res.setHeader('Content-Type', 'application/pdf');
+          res.setHeader('Content-Disposition', `attachment; filename="${safeFilename}.pdf"`);
+          res.send(pdfBuffer);
+        }
       }
-
-      // Set response headers
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf"`);
-      res.send(pdfBuffer);
 
       // Track analytics event
       await storage.trackEvent({
         userId,
         eventType: 'blank_template_downloaded',
-        eventData: { templateId: template.id, templateTitle: template.title },
+        eventData: { templateId: template.id, templateTitle: template.title, format },
       });
     } catch (error: any) {
       console.error('Error downloading blank template:', error);
