@@ -45,15 +45,18 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
   - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
   - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
   - **State-specific content**: All 14 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
-- **Legislative Monitoring**: Normalized source adapter architecture with 8 data sources:
-  - **State Sources**: LegiScan API, Plural Policy/Open States API, Utah GLEN API (UT-specific)
-  - **Federal Sources**: Federal Register API (HUD), eCFR API (24 CFR Part 1000), Congress.gov API
-  - **Court/Notice Sources**: CourtListener API, HUD ONAP/PIH page poller
-  - **Topic-Based Routing**: Updates tagged with topics (landlord_tenant, nahasda_core, ihbg, etc.) route only to relevant templates
-  - **Tribal Housing Support**: Separate `runTribalMonitoring()` pipeline isolates NAHASDA/IHBG updates from landlord-tenant content
-  - **Pipeline Modes**: `runLandlordTenantMonitoring()` for 14-state landlord content, `runTribalMonitoring()` for tribal housing authorities
-  - Uses GPT-4 for relevance analysis, auto-publishes updates with versioning and notifications
-- **Template Review & Publishing**: Atomic auto-publishing system with transactional updates, versioning, history tracking, automatic approval, legislative bill flagging, and user notifications via Resend.
+- **Legislative Monitoring**: Safe two-job architecture with approval gates:
+  - **Data Sources (8 total)**: LegiScan API, Plural Policy API, Utah GLEN API, Federal Register API, eCFR API, Congress.gov API, HUD ONAP/PIH poller, CourtListener API
+  - **Safe Workflow**:
+    1. `ingestNow()` - Fetch and normalize updates from all sources (no publishing)
+    2. `queueFromLatestIngest()` - Create template review entries for admin approval (no publishing)
+    3. `publishApproved()` - Only publish items that admin has explicitly approved
+  - **Job Lock**: Single lock key "legislative-monitoring" prevents overlapping runs (`server/utils/jobLock.ts`)
+  - **Topic-Based Routing**: Updates tagged with topics route only to relevant templates; tribal updates isolated from landlord-tenant content
+  - **Scheduled Jobs**: Nightly ingest (daily at ~1:30am), Monthly queue (1st of month) - both use safe workflow with job lock
+  - **API Endpoints**: `/api/admin/legislative-monitoring/run?mode=queueOnly|ingestOnly|publishApproved` (default: queueOnly)
+  - **DEPRECATED**: `runMonthlyMonitoring()` throws error directing to safe methods
+- **Template Review & Publishing**: Approval-gated system with transactional updates, versioning, history tracking, admin review queue, legislative bill flagging, and user notifications via Resend.
 - **Email Notifications**: Integrated with Resend for legal and template update notifications.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
 - **AI Chat Assistant**: Integrated GPT-4o-mini chat widget (OpenAI) for instant help on landlord-tenant law and platform features.

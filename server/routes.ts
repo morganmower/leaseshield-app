@@ -3310,7 +3310,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manually trigger legislative monitoring run (admin only)
+  // Legislative Monitoring Orchestrator (admin only)
+  // Modes: queueOnly (default), ingestOnly, publishApproved
   app.post('/api/admin/legislative-monitoring/run', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3320,23 +3321,48 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      console.log('📋 Manually triggered legislative monitoring run by admin:', user.email);
+      const mode = String(req.query.mode || 'queueOnly').toLowerCase();
+      const validModes = ['queueonly', 'ingestonly', 'publishapproved'];
       
-      // Run the monitoring service in background (don't await)
+      if (!validModes.includes(mode)) {
+        return res.status(400).json({
+          success: false,
+          error: `Invalid mode "${mode}". Valid modes: queueOnly, ingestOnly, publishApproved`,
+        });
+      }
+
+      console.log(`📋 Legislative monitoring run triggered by ${user.email} (mode: ${mode})`);
+      
+      const { withJobLock } = await import('./utils/jobLock');
       const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
-      legislativeMonitoringService.runMonthlyMonitoring().catch(err => {
-        console.error('Background monitoring error:', err);
+
+      const result = await withJobLock('legislative-monitoring', async () => {
+        if (mode === 'ingestonly') {
+          const ingest = await legislativeMonitoringService.ingestNow();
+          return { ingest, note: 'Ingest only - no queuing or publishing performed.' };
+        }
+
+        if (mode === 'publishapproved') {
+          const ingest = await legislativeMonitoringService.ingestNow();
+          const publish = await legislativeMonitoringService.publishApproved();
+          return { ingest, publish, note: 'Published approved items only.' };
+        }
+
+        // Default: queueOnly (safe)
+        const ingest = await legislativeMonitoringService.ingestNow();
+        const queue = await legislativeMonitoringService.queueFromLatestIngest();
+        return { ingest, queue, note: 'Queued for review (no publishing performed).' };
       });
 
-      return res.json({
-        success: true,
-        message: 'Monitoring run started in background',
-      });
-    } catch (error) {
-      console.error('Error running legislative monitoring:', error);
-      return res.status(500).json({ 
-        success: false,
-        message: "Something went wrong. Please try again."
+      return res.json({ success: true, mode, result });
+    } catch (err: any) {
+      console.error('Error in legislative monitoring run:', err);
+      const status = err?.status || 500;
+      return res.status(status).json({ 
+        success: false, 
+        error: err?.message || 'Unknown error',
+        currentJob: err?.currentJob,
+        lockedSince: err?.lockedSince,
       });
     }
   });
@@ -3435,7 +3461,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Manually trigger nightly ingest (admin only)
+  // Ingest only endpoint (admin only) - with job lock
   app.post('/api/admin/legislative-monitoring/ingest', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3445,26 +3471,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      console.log('🌙 Manually triggered legislative ingest by admin:', user.email);
+      console.log('🌙 Ingest triggered by admin:', user.email);
       
-      const { runNightlyIngest } = await import('./legislation/ingestService');
-      const result = await runNightlyIngest();
+      const { withJobLock } = await import('./utils/jobLock');
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
 
-      return res.json({
-        success: true,
-        message: `Ingest complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`,
-        ...result,
+      const result = await withJobLock('legislative-monitoring', async () => {
+        return await legislativeMonitoringService.ingestNow();
       });
-    } catch (error) {
-      console.error('Error running legislative ingest:', error);
-      return res.status(500).json({ 
-        success: false,
-        message: "Something went wrong. Please try again."
+
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      console.error('Error running legislative ingest:', err);
+      const status = err?.status || 500;
+      return res.status(status).json({ 
+        success: false, 
+        error: err?.message || 'Unknown error',
+        currentJob: err?.currentJob,
+        lockedSince: err?.lockedSince,
       });
     }
   });
 
-  // Manually trigger monthly publish (admin only)
+  // Publish approved only endpoint (admin only) - with job lock and approval gate
   app.post('/api/admin/legislative-monitoring/publish', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3474,21 +3503,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      console.log('📦 Manually triggered legislative publish by admin:', user.email);
+      console.log('📦 Publish approved triggered by admin:', user.email);
       
-      const { runMonthlyPublish } = await import('./legislation/publishService');
-      const result = await runMonthlyPublish('manual');
+      const { withJobLock } = await import('./utils/jobLock');
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
 
-      return res.json({
-        success: true,
-        message: `Publish complete: ${result.updatesProcessed} updates, ${result.templatesQueued} templates queued`,
-        ...result,
+      const result = await withJobLock('legislative-monitoring', async () => {
+        return await legislativeMonitoringService.publishApproved();
       });
-    } catch (error) {
-      console.error('Error running legislative publish:', error);
-      return res.status(500).json({ 
-        success: false,
-        message: "Something went wrong. Please try again."
+
+      return res.json({ success: true, result });
+    } catch (err: any) {
+      console.error('Error running legislative publish:', err);
+      const status = err?.status || 500;
+      return res.status(status).json({ 
+        success: false, 
+        error: err?.message || 'Unknown error',
+        currentJob: err?.currentJob,
+        lockedSince: err?.lockedSince,
       });
     }
   });

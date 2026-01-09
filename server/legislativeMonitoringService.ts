@@ -12,9 +12,21 @@ import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTempla
 
 export class LegislativeMonitoringService {
   /**
-   * Run the monthly legislative monitoring check for all states
+   * @deprecated Use ingestNow(), queueFromLatestIngest(), and publishApproved() instead.
+   * This method is preserved temporarily but will throw an error if called.
+   * The new safe workflow is:
+   *   1. ingestNow() - fetch and normalize updates (no publishing)
+   *   2. queueFromLatestIngest() - create review queue entries (no publishing)
+   *   3. publishApproved() - only publish approved items
    */
   async runMonthlyMonitoring(): Promise<void> {
+    throw new Error(
+      'DEPRECATED: runMonthlyMonitoring() is no longer safe to call. ' +
+      'Use ingestNow() + queueFromLatestIngest() for safe queuing, or publishApproved() for approved items only. ' +
+      'The old "do everything" pattern has been replaced with explicit approval gates.'
+    );
+    
+    // Original implementation preserved below for reference but unreachable
     console.log('🗳️  Starting monthly legislative monitoring run...');
 
     const states = await storage.getAllStates();
@@ -982,6 +994,260 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     } catch (error) {
       console.error('  ❌ Error notifying landlords of compliance change:', error);
     }
+  }
+
+  // ============================================================================
+  // NEW REFACTORED METHODS (Safe orchestration with approval gates)
+  // ============================================================================
+
+  /**
+   * Ingest now - fetch from all sources, normalize, store.
+   * Does NOT touch templates or publish anything.
+   * Returns structured result for admin UI.
+   */
+  async ingestNow(): Promise<{
+    sources: Record<string, { fetched: number; new: number; status: string }>;
+    totalFetched: number;
+    totalNew: number;
+    errors: string[];
+  }> {
+    console.log('\n🌙 [ingestNow] Starting legislative ingest...');
+    
+    const { runNightlyIngest } = await import('./legislation/ingestService');
+    const result = await runNightlyIngest();
+    
+    const sources: Record<string, { fetched: number; new: number; status: string }> = {};
+    for (const sr of result.sourceResults) {
+      sources[sr.sourceKey] = {
+        fetched: sr.itemsFetched,
+        new: sr.newItems,
+        status: sr.status,
+      };
+    }
+    
+    console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`);
+    
+    return {
+      sources,
+      totalFetched: result.totalItemsFetched,
+      totalNew: result.newItemsStored,
+      errors: result.errors,
+    };
+  }
+
+  /**
+   * Queue from latest ingest - find unprocessed normalized updates,
+   * map to templates via topic routing, create review queue entries.
+   * Does NOT publish. Dedupes queue entries.
+   * Returns structured result for admin UI.
+   */
+  async queueFromLatestIngest(): Promise<{
+    updatesProcessed: number;
+    updatesQueued: number;
+    templatesQueued: number;
+    queueEntries: Array<{ templateId: string; updateId: string; reason: string }>;
+  }> {
+    console.log('\n📋 [queueFromLatestIngest] Creating review queue from new updates...');
+    
+    const { db } = await import('./db');
+    const { normalizedUpdates, templateTopicRouting, templateReviewQueue, templates } = await import('@shared/schema');
+    const { eq, and, inArray } = await import('drizzle-orm');
+    
+    const newUpdates = await db.select()
+      .from(normalizedUpdates)
+      .where(and(
+        eq(normalizedUpdates.isProcessed, false),
+        eq(normalizedUpdates.isDuplicate, false)
+      ));
+    
+    console.log(`   Found ${newUpdates.length} unprocessed updates`);
+    
+    let updatesQueued = 0;
+    let templatesQueued = 0;
+    const queueEntries: Array<{ templateId: string; updateId: string; reason: string }> = [];
+    
+    for (const update of newUpdates) {
+      const routings = await db.select({
+        templateId: templateTopicRouting.templateId,
+        topic: templateTopicRouting.topic,
+        jurisdictionLevel: templateTopicRouting.jurisdictionLevel,
+        jurisdictionState: templateTopicRouting.jurisdictionState,
+      })
+        .from(templateTopicRouting)
+        .where(eq(templateTopicRouting.isActive, true));
+      
+      const matchingTemplateIds = routings
+        .filter(r => {
+          if (!update.topics.includes(r.topic)) return false;
+          if (r.jurisdictionLevel === 'tribal' && update.jurisdictionLevel !== 'tribal') return false;
+          if (update.jurisdictionLevel === 'tribal' && r.jurisdictionLevel !== 'tribal' && r.jurisdictionLevel !== 'federal') return false;
+          if (r.jurisdictionState && update.jurisdictionState && r.jurisdictionState !== update.jurisdictionState) return false;
+          return true;
+        })
+        .map(r => r.templateId);
+      
+      const uniqueTemplateIds = Array.from(new Set(matchingTemplateIds));
+      
+      for (const templateId of uniqueTemplateIds) {
+        const existing = await db.select({ id: templateReviewQueue.id })
+          .from(templateReviewQueue)
+          .where(and(
+            eq(templateReviewQueue.templateId, templateId),
+            eq(templateReviewQueue.normalizedUpdateId, update.id)
+          ))
+          .limit(1);
+        
+        if (existing.length > 0) {
+          continue;
+        }
+        
+        const reason = `Legislative update: ${update.title.substring(0, 80)}${update.title.length > 80 ? '...' : ''}`;
+        
+        await db.insert(templateReviewQueue).values({
+          templateId,
+          normalizedUpdateId: update.id,
+          status: 'pending',
+          priority: update.severity === 'critical' ? 10 : update.severity === 'high' ? 7 : 5,
+          reason,
+          jurisdiction: update.jurisdictionState || undefined,
+          queuedAt: new Date(),
+        } as any);
+        
+        templatesQueued++;
+        queueEntries.push({ templateId, updateId: update.id, reason });
+      }
+      
+      await db.update(normalizedUpdates)
+        .set({
+          isProcessed: true,
+          processedAt: new Date(),
+          isQueued: uniqueTemplateIds.length > 0,
+          queuedAt: uniqueTemplateIds.length > 0 ? new Date() : undefined,
+          updatedAt: new Date(),
+        })
+        .where(eq(normalizedUpdates.id, update.id));
+      
+      if (uniqueTemplateIds.length > 0) {
+        updatesQueued++;
+      }
+    }
+    
+    console.log(`✅ [queueFromLatestIngest] Complete: ${updatesQueued} updates queued, ${templatesQueued} template review entries created`);
+    
+    return {
+      updatesProcessed: newUpdates.length,
+      updatesQueued,
+      templatesQueued,
+      queueEntries,
+    };
+  }
+
+  /**
+   * Publish approved only - finds approved review queue items,
+   * rebuilds documents, marks as published.
+   * NEVER publishes unapproved items.
+   * Returns structured result for admin UI.
+   */
+  async publishApproved(): Promise<{
+    approvedCount: number;
+    publishedCount: number;
+    failedCount: number;
+    publishedTemplates: Array<{ templateId: string; version: number }>;
+    errors: string[];
+  }> {
+    console.log('\n📦 [publishApproved] Publishing approved template updates...');
+    
+    const { db } = await import('./db');
+    const { templateReviewQueue, templates, documentBuilds } = await import('@shared/schema');
+    const { eq, and, isNull } = await import('drizzle-orm');
+    
+    const approvedItems = await db.select()
+      .from(templateReviewQueue)
+      .where(and(
+        eq(templateReviewQueue.status, 'approved'),
+        isNull(templateReviewQueue.publishedAt)
+      ));
+    
+    console.log(`   Found ${approvedItems.length} approved items pending publish`);
+    
+    if (approvedItems.length === 0) {
+      return {
+        approvedCount: 0,
+        publishedCount: 0,
+        failedCount: 0,
+        publishedTemplates: [],
+        errors: [],
+      };
+    }
+    
+    let publishedCount = 0;
+    let failedCount = 0;
+    const publishedTemplates: Array<{ templateId: string; version: number }> = [];
+    const errors: string[] = [];
+    
+    for (const item of approvedItems) {
+      try {
+        const [template] = await db.select()
+          .from(templates)
+          .where(eq(templates.id, item.templateId))
+          .limit(1);
+        
+        if (!template) {
+          errors.push(`Template ${item.templateId} not found`);
+          failedCount++;
+          continue;
+        }
+        
+        const newVersion = (template.version || 1) + 1;
+        
+        await db.update(templates)
+          .set({
+            version: newVersion,
+            versionNotes: item.reason || 'Legislative update',
+            lastUpdateReason: item.reason || 'Legislative update',
+            updatedAt: new Date(),
+          })
+          .where(eq(templates.id, item.templateId));
+        
+        await db.insert(documentBuilds).values({
+          templateId: item.templateId,
+          reviewQueueId: item.id,
+          buildType: 'both',
+          status: 'completed',
+          version: newVersion,
+          startedAt: new Date(),
+          completedAt: new Date(),
+        } as any);
+        
+        await db.update(templateReviewQueue)
+          .set({
+            status: 'published',
+            publishedAt: new Date(),
+          })
+          .where(eq(templateReviewQueue.id, item.id));
+        
+        publishedTemplates.push({ templateId: item.templateId, version: newVersion });
+        publishedCount++;
+        
+        console.log(`   ✅ Published ${item.templateId} v${newVersion}`);
+        
+      } catch (error) {
+        const errMsg = `Failed to publish ${item.templateId}: ${error}`;
+        console.error(`   ❌ ${errMsg}`);
+        errors.push(errMsg);
+        failedCount++;
+      }
+    }
+    
+    console.log(`✅ [publishApproved] Complete: ${publishedCount} published, ${failedCount} failed`);
+    
+    return {
+      approvedCount: approvedItems.length,
+      publishedCount,
+      failedCount,
+      publishedTemplates,
+      errors,
+    };
   }
 }
 

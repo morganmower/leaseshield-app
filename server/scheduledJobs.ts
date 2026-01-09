@@ -7,11 +7,9 @@ import { db } from "./db";
 import * as schema from "@shared/schema";
 import { users, analyticsEvents } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
-import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
-import { runNightlyIngest } from "./legislation/ingestService";
-import { runMonthlyPublish } from "./legislation/publishService";
+// Note: Legislative monitoring methods now imported dynamically via legislativeMonitoringService
 
 // Landlord tips pool - rotates biweekly (every 2 weeks)
 export const LANDLORD_TIPS = [
@@ -859,6 +857,7 @@ Manage preferences: ${baseUrl}/settings
   }
 
   // Check if legislative monitoring should run (monthly on the 1st)
+  // Uses safe workflow: ingest + queue only (no auto-publishing)
   async checkLegislativeMonitoring(): Promise<void> {
     try {
       const now = new Date();
@@ -876,26 +875,54 @@ Manage preferences: ${baseUrl}/settings
         return;
       }
 
-      console.log('🔍 Running monthly legislative monitoring...');
-      await runMonthlyLegislativeMonitoring();
+      const { withJobLock } = await import('./utils/jobLock');
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+
+      console.log('🔍 Running monthly legislative monitoring (safe workflow)...');
       
-    } catch (error) {
-      console.error('❌ Error in legislative monitoring check:', error);
+      const result = await withJobLock('legislative-monitoring', async () => {
+        // Safe workflow: ingest + queue only (no publishing)
+        const ingest = await legislativeMonitoringService.ingestNow();
+        const queue = await legislativeMonitoringService.queueFromLatestIngest();
+        return { ingest, queue };
+      });
+      
+      console.log(`✅ Monthly monitoring complete: ${result.queue.templatesQueued} templates queued for review`);
+      
+    } catch (error: any) {
+      if (error?.status === 409) {
+        console.log('⏭️ Monthly monitoring skipped - another job is running');
+      } else {
+        console.error('❌ Error in legislative monitoring check:', error);
+      }
     }
   }
 
   // Run nightly ingest to pull updates from all 8 legislative sources
+  // Uses job lock to prevent overlapping runs
   async runNightlyIngestJob(): Promise<void> {
     try {
+      const { withJobLock } = await import('./utils/jobLock');
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      
       console.log('🌙 Running nightly legislative ingest...');
-      const result = await runNightlyIngest();
-      console.log(`✅ Nightly ingest complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`);
-    } catch (error) {
-      console.error('❌ Error in nightly ingest:', error);
+      
+      const result = await withJobLock('legislative-monitoring', async () => {
+        return await legislativeMonitoringService.ingestNow();
+      });
+      
+      console.log(`✅ Nightly ingest complete: ${result.totalNew} new items from ${Object.keys(result.sources).length} sources`);
+    } catch (error: any) {
+      if (error?.status === 409) {
+        console.log('⏭️ Nightly ingest skipped - another job is running');
+      } else {
+        console.error('❌ Error in nightly ingest:', error);
+      }
     }
   }
 
-  // Run monthly publish to process accumulated updates and queue template reviews
+  // Run monthly queue to process accumulated updates and create template review entries
+  // Uses job lock and ONLY queues for review (no publishing)
   async runMonthlyPublishJob(): Promise<void> {
     try {
       const now = new Date();
@@ -906,11 +933,25 @@ Manage preferences: ${baseUrl}/settings
         return;
       }
 
-      console.log('📦 Running monthly legislative publish...');
-      const result = await runMonthlyPublish('monthly');
-      console.log(`✅ Monthly publish complete: ${result.updatesProcessed} updates, ${result.templatesQueued} templates queued`);
-    } catch (error) {
-      console.error('❌ Error in monthly publish:', error);
+      const { withJobLock } = await import('./utils/jobLock');
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+
+      console.log('📦 Running monthly queue (safe - no auto-publishing)...');
+      
+      const result = await withJobLock('legislative-monitoring', async () => {
+        // Safe workflow: ingest + queue only (no publishing)
+        const ingest = await legislativeMonitoringService.ingestNow();
+        const queue = await legislativeMonitoringService.queueFromLatestIngest();
+        return { ingest, queue };
+      });
+      
+      console.log(`✅ Monthly queue complete: ${result.queue.templatesQueued} templates queued for review`);
+    } catch (error: any) {
+      if (error?.status === 409) {
+        console.log('⏭️ Monthly queue skipped - another job is running');
+      } else {
+        console.error('❌ Error in monthly queue:', error);
+      }
     }
   }
 
