@@ -104,7 +104,8 @@ export async function generateBlankApplicationDocx(options: BlankApplicationOpti
   console.log('📝 Generating blank application DOCX...');
   const startTime = Date.now();
 
-  const htmlContent = generateBlankApplicationHTML(templateTitle, stateId, version, updatedAt);
+  // Use simplified HTML for DOCX (no complex CSS like flexbox)
+  const htmlContent = generateSimplifiedApplicationHTMLForDOCX(templateTitle, stateId, version, updatedAt);
 
   try {
     const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
@@ -112,7 +113,7 @@ export async function generateBlankApplicationDocx(options: BlankApplicationOpti
       footer: true,
       pageNumber: true,
       margins: {
-        top: 720,   // 0.5 inch in twips
+        top: 720,
         right: 720,
         bottom: 720,
         left: 720,
@@ -125,6 +126,130 @@ export async function generateBlankApplicationDocx(options: BlankApplicationOpti
     console.error('📝 Error generating blank application DOCX:', error);
     throw error;
   }
+}
+
+// Simplified HTML for DOCX that avoids complex CSS (no flex, uses tables instead)
+function generateSimplifiedApplicationHTMLForDOCX(
+  templateTitle: string,
+  stateId: string,
+  version: number,
+  updatedAt: Date
+): string {
+  const safeTitle = escapeHtml(templateTitle);
+  const stateName = STATE_NAMES[stateId] || stateId;
+  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${safeTitle}</title>
+</head>
+<body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.5;">
+  <h1 style="text-align: center; text-transform: uppercase;">RENTAL APPLICATION</h1>
+  <p style="text-align: center;">${stateName} - Version ${version}</p>
+  <p style="text-align: center; font-size: 9pt;">Last Updated: ${formattedDate}</p>
+  
+  <hr>
+  
+  <p style="font-size: 9pt;"><strong>Instructions:</strong> Please complete all sections. Incomplete applications may delay processing. All information will be verified.</p>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">PROPERTY INFORMATION</h2>
+  <table style="width: 100%;">
+    <tr><td>Property Address: _________________________________________________________________</td></tr>
+    <tr><td>Unit #: _________________ Desired Move-In Date: _________________ Monthly Rent: $_________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">APPLICANT INFORMATION</h2>
+  <table style="width: 100%;">
+    <tr><td>Full Legal Name: _________________________________________________________________</td></tr>
+    <tr><td>Date of Birth: _________________ Social Security Number: _________________ Driver's License #: _________________</td></tr>
+    <tr><td>Phone: _________________ Email: _________________________________________________________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">CURRENT RESIDENCE</h2>
+  <table style="width: 100%;">
+    <tr><td>Current Address: _________________________________________________________________</td></tr>
+    <tr><td>City: _________________________ State: _________ ZIP: _________________</td></tr>
+    <tr><td>Monthly Rent: $_________________ Length of Residency: _________________</td></tr>
+    <tr><td>Landlord Name: _________________________________ Phone: _________________________________</td></tr>
+    <tr><td>Reason for Leaving: _________________________________________________________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">PREVIOUS RESIDENCE</h2>
+  <table style="width: 100%;">
+    <tr><td>Previous Address: _________________________________________________________________</td></tr>
+    <tr><td>City: _________________________ State: _________ ZIP: _________________</td></tr>
+    <tr><td>Monthly Rent: $_________________ Length of Residency: _________________</td></tr>
+    <tr><td>Landlord Name: _________________________________ Phone: _________________________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">EMPLOYMENT INFORMATION</h2>
+  <table style="width: 100%;">
+    <tr><td>Current Employer: _________________________________________________________________</td></tr>
+    <tr><td>Employer Address: _________________________________________________________________</td></tr>
+    <tr><td>Position/Title: _________________________________ Length of Employment: _________________</td></tr>
+    <tr><td>Supervisor Name: _________________________________ Phone: _________________________________</td></tr>
+    <tr><td>Monthly Gross Income: $_________________ Additional Income (if any): $_________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">EMERGENCY CONTACT</h2>
+  <table style="width: 100%;">
+    <tr><td>Name: _________________________________ Relationship: _________________________________</td></tr>
+    <tr><td>Phone: _________________________________ Address: _________________________________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">ADDITIONAL OCCUPANTS</h2>
+  <table style="width: 100%; border-collapse: collapse;">
+    <tr style="background-color: #e0e0e0;">
+      <th style="border: 1px solid #ccc; padding: 5px;">Name</th>
+      <th style="border: 1px solid #ccc; padding: 5px;">Relationship</th>
+      <th style="border: 1px solid #ccc; padding: 5px;">Age</th>
+    </tr>
+    <tr><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td></tr>
+    <tr><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td></tr>
+    <tr><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">PETS</h2>
+  <p>Do you have pets? [ ] Yes [ ] No</p>
+  <p>If yes, describe (type, breed, weight): _________________________________________________________________</p>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">BACKGROUND QUESTIONS</h2>
+  <p>Have you ever been evicted? [ ] Yes [ ] No &nbsp;&nbsp; If yes, explain: _________________________________</p>
+  <p>Have you ever filed for bankruptcy? [ ] Yes [ ] No</p>
+  <p>Have you ever been convicted of a felony? [ ] Yes [ ] No</p>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">REFERENCES</h2>
+  <table style="width: 100%;">
+    <tr><td>Reference 1: _________________________________ Phone: _________________________________ Relationship: _____________</td></tr>
+    <tr><td>Reference 2: _________________________________ Phone: _________________________________ Relationship: _____________</td></tr>
+  </table>
+  
+  <h2 style="background-color: #f0f0f0; padding: 5px;">AUTHORIZATION & CERTIFICATION</h2>
+  <p style="font-size: 9pt;">I certify that all information provided is true and complete. I authorize the landlord and their agents to verify all information, including obtaining credit reports, criminal background checks, and contacting employers and references. I understand that providing false information is grounds for rejection or termination of tenancy.</p>
+  
+  <table style="width: 100%; margin-top: 30px;">
+    <tr>
+      <td style="width: 50%;">
+        <p>Applicant Signature: _________________________</p>
+        <p>Print Name: _________________________</p>
+        <p>Date: _________________________</p>
+      </td>
+      <td>
+        <p>Co-Applicant Signature: _________________________</p>
+        <p>Print Name: _________________________</p>
+        <p>Date: _________________________</p>
+      </td>
+    </tr>
+  </table>
+  
+  <hr style="margin-top: 20px;">
+  <p style="font-size: 9pt; text-align: center;">Generated by LeaseShield - Protecting Landlords with State-Compliant Documents</p>
+</body>
+</html>
+`;
 }
 
 function generateBlankApplicationHTML(

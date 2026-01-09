@@ -105,7 +105,8 @@ export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOpti
   console.log('📝 Generating checklist DOCX...');
   const startTime = Date.now();
 
-  const htmlContent = generateMoveOutChecklistHTML(templateTitle, stateId, version, updatedAt, checklistType);
+  // Use simplified HTML for DOCX (no complex CSS like flexbox)
+  const htmlContent = generateSimplifiedChecklistHTMLForDOCX(templateTitle, stateId, version, updatedAt, checklistType);
 
   try {
     const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
@@ -113,7 +114,7 @@ export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOpti
       footer: true,
       pageNumber: true,
       margins: {
-        top: 720,   // 0.5 inch in twips
+        top: 720,
         right: 720,
         bottom: 720,
         left: 720,
@@ -126,6 +127,103 @@ export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOpti
     console.error('📝 Error generating checklist DOCX:', error);
     throw error;
   }
+}
+
+// Simplified HTML for DOCX that avoids complex CSS (no flex, uses tables instead)
+function generateSimplifiedChecklistHTMLForDOCX(
+  templateTitle: string,
+  stateId: string,
+  version: number,
+  updatedAt: Date,
+  checklistType: 'move_in' | 'move_out' = 'move_out'
+): string {
+  const safeTitle = escapeHtml(templateTitle);
+  const stateName = STATE_NAMES[stateId] || stateId;
+  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const isMoveIn = checklistType === 'move_in';
+  const checklistLabel = isMoveIn ? 'Move-In' : 'Move-Out';
+  const dateLabel = isMoveIn ? 'Move-In Date' : 'Move-Out Date';
+  const instructionsText = isMoveIn 
+    ? 'Complete this checklist during the initial walkthrough before tenant move-in. Document the condition of each area to establish baseline condition. Both landlord and tenant should sign upon completion.'
+    : 'Complete this checklist during the final walkthrough before tenant move-out. Document the condition of each area and note any damages beyond normal wear and tear. Both landlord and tenant should sign upon completion.';
+
+  const rooms = [
+    { name: 'LIVING ROOM', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Light Fixtures', 'Electrical Outlets', 'Doors/Locks'] },
+    { name: 'KITCHEN', items: ['Walls/Paint', 'Flooring', 'Countertops', 'Cabinets/Drawers', 'Sink/Faucet', 'Stove/Oven', 'Refrigerator', 'Dishwasher', 'Microwave', 'Exhaust Fan/Hood', 'Light Fixtures'] },
+    { name: 'BEDROOM(S)', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Closet Doors', 'Light Fixtures', 'Electrical Outlets'] },
+    { name: 'BATHROOM(S)', items: ['Walls/Paint', 'Flooring', 'Toilet', 'Sink/Vanity', 'Bathtub/Shower', 'Faucets/Fixtures', 'Mirror/Cabinet', 'Exhaust Fan', 'Towel Bars'] },
+    { name: 'OTHER AREAS', items: ['Hallways', 'Stairs/Railings', 'Garage', 'Patio/Balcony', 'Yard/Landscaping', 'HVAC System', 'Water Heater', 'Smoke Detectors', 'Carbon Monoxide Detectors'] }
+  ];
+
+  let roomsHtml = '';
+  rooms.forEach(room => {
+    roomsHtml += `<h3 style="background-color: #f0f0f0; padding: 5px; margin-top: 15px;">${room.name}</h3>`;
+    roomsHtml += '<table style="width: 100%; border-collapse: collapse;">';
+    roomsHtml += '<tr style="background-color: #e0e0e0;"><th style="border: 1px solid #ccc; padding: 5px; text-align: left;">Item</th><th style="border: 1px solid #ccc; padding: 5px; width: 80px;">Condition</th><th style="border: 1px solid #ccc; padding: 5px;">Notes/Damage Description</th></tr>';
+    room.items.forEach(item => {
+      roomsHtml += `<tr><td style="border: 1px solid #ccc; padding: 5px;">${item}</td><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td></tr>`;
+    });
+    roomsHtml += '</table>';
+  });
+
+  return `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>${safeTitle}</title>
+</head>
+<body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4;">
+  <h1 style="text-align: center; text-transform: uppercase;">${checklistLabel} INSPECTION CHECKLIST</h1>
+  <p style="text-align: center;">${stateName} - Version ${version}</p>
+  <p style="text-align: center; font-size: 9pt;">Last Updated: ${formattedDate}</p>
+  
+  <hr>
+  
+  <p><strong>Instructions:</strong> ${instructionsText}</p>
+  <p><strong>Condition Rating Guide:</strong> E = Excellent, G = Good, F = Fair, P = Poor, N/A = Not Applicable</p>
+  
+  <hr>
+  
+  <table style="width: 100%; margin-bottom: 15px;">
+    <tr>
+      <td style="width: 50%;"><strong>Property Address:</strong> _______________________________</td>
+      <td><strong>Unit #:</strong> _______________</td>
+    </tr>
+    <tr>
+      <td><strong>Tenant Name:</strong> _______________________________</td>
+      <td><strong>${dateLabel}:</strong> _______________</td>
+    </tr>
+  </table>
+  
+  ${roomsHtml}
+  
+  <h3 style="margin-top: 20px;">ADDITIONAL NOTES</h3>
+  <p>____________________________________________________________________________</p>
+  <p>____________________________________________________________________________</p>
+  <p>____________________________________________________________________________</p>
+  
+  <h3 style="margin-top: 20px;">SIGNATURES</h3>
+  <table style="width: 100%; margin-top: 20px;">
+    <tr>
+      <td style="width: 50%;">
+        <p>Landlord/Agent Signature: _________________________</p>
+        <p>Print Name: _________________________</p>
+        <p>Date: _________________________</p>
+      </td>
+      <td>
+        <p>Tenant Signature: _________________________</p>
+        <p>Print Name: _________________________</p>
+        <p>Date: _________________________</p>
+      </td>
+    </tr>
+  </table>
+  
+  <hr style="margin-top: 20px;">
+  <p style="font-size: 9pt; text-align: center;">Generated by LeaseShield - Protecting Landlords with State-Compliant Documents</p>
+</body>
+</html>
+`;
 }
 
 function generateMoveOutChecklistHTML(

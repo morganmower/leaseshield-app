@@ -7,6 +7,7 @@ import { federalRegisterService } from './federalRegisterService';
 import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
+import { notifyUsersOfTemplateUpdate } from './templateNotifications';
 import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -206,8 +207,8 @@ export class LegislativeMonitoringService {
                   }
                 }
                 
-                // If publish succeeded, update review to approved
-                if (publishSucceeded) {
+                // If publish succeeded, update review to approved and notify users
+                if (publishSucceeded && publishResult) {
                   try {
                     await storage.updateTemplateReviewQueue(createdReview.id, {
                       status: 'approved',
@@ -220,8 +221,9 @@ export class LegislativeMonitoringService {
                     });
                     templatesQueued++;
                     
-                    // TODO: Notify users of template update
-                    // This will be done via a separate notification job
+                    // Send immediate email notifications to affected users
+                    await notifyUsersOfTemplateUpdate(publishResult.template, publishResult.version);
+                    console.log(`  📧 Notifications sent for ${template.title}`);
                   } catch (updateError) {
                     console.error(`  ⚠️  Template published but failed to update review status:`, updateError);
                     console.error(`  ⚠️  MANUAL ACTION REQUIRED: Review ${createdReview.id} should be marked as approved`);
@@ -248,7 +250,7 @@ export class LegislativeMonitoringService {
               
               // Check if bill is enacted - only auto-activate if bill status indicates it's law
               const billStatus = legiscanService.mapBillStatus(bill.status);
-              const isEnacted = billStatus === 'enacted';
+              const isEnacted = billStatus === 'signed';
               
               try {
                 const complianceRule: InsertApplicationComplianceRule = {
@@ -434,7 +436,7 @@ export class LegislativeMonitoringService {
                 
                 // Auto-publish the template update
                 try {
-                  await storage.publishTemplateUpdate({
+                  const ppPublishResult = await storage.publishTemplateUpdate({
                     templateId: templateId,
                     reviewId: createdReview.id,
                     versionNotes: analysis.recommendedChanges || 'Legislative update',
@@ -453,6 +455,10 @@ export class LegislativeMonitoringService {
                   });
                   templatesQueued++;
                   console.log(`  📄 Template update published for ${template.title}`);
+                  
+                  // Send immediate email notifications to affected users
+                  await notifyUsersOfTemplateUpdate(ppPublishResult.template, ppPublishResult.version);
+                  console.log(`  📧 Notifications sent for ${template.title}`);
                 } catch (publishError) {
                   console.error(`  ❌ Failed to publish template update:`, publishError);
                 }
@@ -579,7 +585,7 @@ export class LegislativeMonitoringService {
               
               // Auto-publish the template update
               try {
-                await storage.publishTemplateUpdate({
+                const frPublishResult = await storage.publishTemplateUpdate({
                   templateId: templateId,
                   reviewId: createdReview.id,
                   versionNotes: analysis.recommendedChanges || 'Federal regulatory update',
@@ -598,6 +604,10 @@ export class LegislativeMonitoringService {
                 });
                 templatesQueued++;
                 console.log(`  📄 Template update published for ${template.title}`);
+                
+                // Send immediate email notifications to affected users
+                await notifyUsersOfTemplateUpdate(frPublishResult.template, frPublishResult.version);
+                console.log(`  📧 Notifications sent for ${template.title}`);
               } catch (publishError) {
                 console.error(`  ❌ Failed to publish template update:`, publishError);
               }
@@ -628,6 +638,12 @@ export class LegislativeMonitoringService {
 
           // Process each case (limit to first 10 for MVP)
           for (const caseCluster of caseSearchResults.results.slice(0, 10)) {
+            // Skip cases without an ID
+            if (!caseCluster.id) {
+              console.log(`  ⏭️  Skipping case with no ID`);
+              continue;
+            }
+            
             // Check if we've already processed this case - if so, skip to avoid duplicates
             // (CourtListener returns national results, so different state searches may find same cases)
             const existingCase = await storage.getCaseLawMonitoringByCaseId(caseCluster.id.toString());
@@ -743,10 +759,11 @@ export class LegislativeMonitoringService {
                 const createdCaseReview = await storage.createTemplateReviewQueue(caseReviewData);
                 
                 // Auto-publish the template update immediately
+                let casePublishResult: any = null;
                 let publishSucceeded = false;
                 
                 try {
-                  const publishResult = await storage.publishTemplateUpdate({
+                  casePublishResult = await storage.publishTemplateUpdate({
                     templateId: templateId,
                     reviewId: createdCaseReview.id,
                     versionNotes: caseAnalysis.recommendedChanges || 'Case law update',
@@ -754,7 +771,7 @@ export class LegislativeMonitoringService {
                     publishedBy: 'system',
                   });
                   publishSucceeded = true;
-                  console.log(`  ✅ Published ${template.title} (v${publishResult.version.versionNumber})`);
+                  console.log(`  ✅ Published ${template.title} (v${casePublishResult.version.versionNumber})`);
                 } catch (publishError) {
                   console.error(`  ❌ Failed to publish ${template.title}:`, publishError);
                   // Update review entry to rejected status on publish failure
@@ -770,8 +787,8 @@ export class LegislativeMonitoringService {
                   }
                 }
                 
-                // If publish succeeded, update review to approved
-                if (publishSucceeded) {
+                // If publish succeeded, update review to approved and notify users
+                if (publishSucceeded && casePublishResult) {
                   try {
                     await storage.updateTemplateReviewQueue(createdCaseReview.id, {
                       status: 'approved',
@@ -783,6 +800,10 @@ export class LegislativeMonitoringService {
                       publishedBy: 'system',
                     });
                     templatesQueued++;
+                    
+                    // Send immediate email notifications to affected users
+                    await notifyUsersOfTemplateUpdate(casePublishResult.template, casePublishResult.version);
+                    console.log(`  📧 Notifications sent for ${template.title}`);
                   } catch (updateError) {
                     console.error(`  ⚠️  Template published but failed to update review status:`, updateError);
                     console.error(`  ⚠️  MANUAL ACTION REQUIRED: Review ${createdCaseReview.id} should be marked as approved`);
