@@ -778,6 +778,151 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 3,
   },
+
+  // ILLINOIS Compliance Cards
+  {
+    stateId: "IL",
+    title: "Required Lease Disclosures",
+    summary: "Illinois landlords must provide specific disclosures under state and local laws",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal law. Must provide EPA pamphlet.",
+        },
+        {
+          title: "Radon Disclosure",
+          content: "Illinois Radon Awareness Act requires disclosure about radon hazards in all leases.",
+        },
+        {
+          title: "Utility Disclosure",
+          content: "Must disclose how utilities are billed if not separately metered to tenant.",
+        },
+        {
+          title: "Carbon Monoxide Detector Notice",
+          content: "Must provide written notice about carbon monoxide detectors per Illinois Carbon Monoxide Alarm Detector Act.",
+        },
+        {
+          title: "Concession Disclosure",
+          content: "Any rent concessions must be disclosed in writing in the lease agreement.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "IL",
+    title: "Security Deposit Rules",
+    summary: "Illinois Security Deposit Return Act governs deposit limits and return timelines",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Deposit Limit (5+ Units)",
+          content: "For properties with 5+ units, deposit cannot exceed 1.5 months' rent.",
+        },
+        {
+          title: "No State Limit (Under 5 Units)",
+          content: "Properties with fewer than 5 units have no statutory deposit limit.",
+        },
+        {
+          title: "30/45-Day Return Requirement",
+          content: "Must return deposit within 30 days if no deductions; 45 days if itemized deductions provided.",
+        },
+        {
+          title: "Itemized Statement Required",
+          content: "Must provide itemized statement of deductions with estimated or actual costs within 30 days.",
+        },
+        {
+          title: "Interest Requirement (Chicago)",
+          content: "Chicago landlords must pay annual interest on security deposits per Chicago RLTO.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "IL",
+    title: "Eviction Notice Requirements",
+    summary: "Illinois Forcible Entry and Detainer Act specifies notice periods and procedures",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "5-Day Notice (Non-Payment)",
+          content: "For unpaid rent, serve 5-day notice to pay or quit. Must clearly state amount owed.",
+        },
+        {
+          title: "10-Day Notice (Lease Violations)",
+          content: "For lease violations, provide 10-day notice to cure or vacate.",
+        },
+        {
+          title: "30-Day Notice (Month-to-Month)",
+          content: "To terminate month-to-month tenancy, provide 30-day written notice.",
+        },
+        {
+          title: "Court Filing Required",
+          content: "Self-help evictions prohibited. Must file forcible entry and detainer lawsuit in court.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+  {
+    stateId: "IL",
+    title: "Fair Housing Protections",
+    summary: "Illinois Human Rights Act provides broad fair housing protections beyond federal law",
+    category: "fair_housing",
+    content: {
+      sections: [
+        {
+          title: "Protected Classes",
+          content: "Illinois adds protections for sexual orientation, gender identity, military status, order of protection status, and ancestry.",
+        },
+        {
+          title: "Source of Income Protection",
+          content: "Cannot discriminate based on lawful source of income including housing vouchers (Section 8).",
+        },
+        {
+          title: "Domestic Violence Survivor Protections",
+          content: "Cannot refuse to rent or evict tenants solely due to domestic violence status.",
+        },
+        {
+          title: "Chicago RLTO Additional Protections",
+          content: "Chicago has additional tenant protections under the Residential Landlord and Tenant Ordinance.",
+        },
+      ],
+    },
+    sortOrder: 4,
+  },
+  {
+    stateId: "IL",
+    title: "Rent Increase Rules",
+    summary: "Illinois has no statewide rent control but requires proper notice for increases",
+    category: "rent_increases",
+    content: {
+      sections: [
+        {
+          title: "No Statewide Rent Control",
+          content: "Illinois preempts local rent control ordinances—no municipal rent caps allowed.",
+        },
+        {
+          title: "30-Day Notice Required",
+          content: "For month-to-month tenancies, rent increases require 30-day advance written notice.",
+        },
+        {
+          title: "Lease Term Increases",
+          content: "Cannot increase rent during fixed lease term unless lease specifically allows it.",
+        },
+        {
+          title: "Retaliatory Increase Prohibited",
+          content: "Cannot increase rent in retaliation for tenant exercising legal rights or filing complaints.",
+        },
+      ],
+    },
+    sortOrder: 5,
+  },
 ];
 
 async function seedComplianceCards() {

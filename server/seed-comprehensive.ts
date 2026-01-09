@@ -830,6 +830,83 @@ const comprehensiveTemplates = [
     version: 1,
     sortOrder: 31,
   },
+
+  // ILLINOIS - Leasing
+  {
+    title: "Illinois Residential Lease Agreement",
+    description: "Comprehensive lease with all Illinois disclosures including radon and security deposit notices",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (IL)",
+    description: "Flexible rental agreement compliant with Illinois requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 2,
+  },
+  // ILLINOIS - Screening
+  {
+    title: "Illinois Rental Application",
+    description: "Fair Housing-compliant application meeting Illinois Human Rights Act requirements",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 10,
+  },
+  // ILLINOIS - Move In/Out
+  {
+    title: "Move-In Inspection Form (IL)",
+    description: "Property condition checklist for Illinois rentals",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (IL)",
+    description: "Final walkthrough documentation for Illinois properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (IL)",
+    description: "Illinois 30/45-day itemized deduction statement per Security Deposit Return Act",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 22,
+  },
+  // ILLINOIS - Notices
+  {
+    title: "5-Day Notice to Pay or Quit (IL)",
+    description: "Illinois required notice for non-payment of rent per Forcible Entry and Detainer Act",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "10-Day Lease Violation Notice (IL)",
+    description: "Notice to cure lease violations per Illinois law",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 31,
+  },
 ];
 
 async function seedComprehensiveTemplates() {
