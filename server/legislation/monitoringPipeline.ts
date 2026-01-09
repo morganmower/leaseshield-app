@@ -298,12 +298,16 @@ export async function runTribalMonitoring(): Promise<MonitoringRunResult> {
 }
 
 export async function runLandlordTenantMonitoring(): Promise<MonitoringRunResult> {
-  console.log('\n🏘️ Starting Landlord-Tenant Monitoring (15 states)\n');
+  // Import dynamically to avoid circular dependencies at module load
+  const { getActiveStateIds } = await import('../states/getActiveStates');
+  const activeStates = await getActiveStateIds();
+  
+  console.log(`\n🏘️ Starting Landlord-Tenant Monitoring (${activeStates.length} states)\n`);
   
   return runMonitoringPipeline({
     sourceIds: ['legiscan', 'pluralPolicy', 'federalRegister', 'courtListener'],
     topics: ['landlord_tenant', 'fair_housing', 'security_deposit', 'eviction'],
-    states: ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL', 'IL'],
+    states: activeStates,
     includeTribal: false,
   });
 }

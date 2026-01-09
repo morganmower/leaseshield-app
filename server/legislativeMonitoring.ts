@@ -1,8 +1,7 @@
 import { legiScanService } from './legiscan';
 import { storage } from './storage';
 import { getUncachableResendClient } from './resend';
-
-const MONITORED_STATES = ['UT', 'TX', 'ND', 'SD', 'NC'];
+import { getActiveStateIds } from './states/getActiveStates';
 
 export async function runMonthlyLegislativeMonitoring(): Promise<void> {
   console.log('🔍 Starting monthly legislative monitoring...');
@@ -16,8 +15,11 @@ export async function runMonthlyLegislativeMonitoring(): Promise<void> {
   try {
     // Get all templates for AI analysis
     const allTemplates = await storage.getAllTemplates();
+    
+    // Get active states from database (cached for 5 minutes)
+    const monitoredStates = await getActiveStateIds();
 
-    for (const stateCode of MONITORED_STATES) {
+    for (const stateCode of monitoredStates) {
       console.log(`  Checking ${stateCode}...`);
       summaryParts.push(`\n## ${stateCode} - ${getStateName(stateCode)}`);
 
@@ -112,7 +114,7 @@ export async function runMonthlyLegislativeMonitoring(): Promise<void> {
     // Create monitoring run record
     const summaryReport = summaryParts.join('\n');
     await storage.createMonitoringRun({
-      statesChecked: MONITORED_STATES,
+      statesChecked: monitoredStates,
       billsFound: totalBillsFound,
       relevantBills: totalRelevantBills,
       templatesQueued: totalTemplatesQueued,
@@ -134,8 +136,10 @@ export async function runMonthlyLegislativeMonitoring(): Promise<void> {
   } catch (error) {
     console.error('❌ Legislative monitoring failed:', error);
     
+    // Fallback to empty array if we couldn't fetch states
+    const fallbackStates = await getActiveStateIds().catch(() => [] as string[]);
     await storage.createMonitoringRun({
-      statesChecked: MONITORED_STATES,
+      statesChecked: fallbackStates,
       billsFound: totalBillsFound,
       relevantBills: totalRelevantBills,
       templatesQueued: totalTemplatesQueued,

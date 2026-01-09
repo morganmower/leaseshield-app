@@ -9,6 +9,7 @@ LeaseShield App is a subscription-based SaaS platform for small and midsize land
 - **[README.md](./README.md)** — Business plan, mission statement, monetization strategy, competitive positioning, and feature overview. This is the foundational document explaining the project's purpose and goals.
 - **[progress.md](./progress.md)** — Detailed feature implementation checklist with checkbox tracking. Shows completed vs. pending features, organized by category. Use this to track development progress and identify remaining work.
 - **[replit.md](./replit.md)** (this file) — Technical architecture, system design decisions, and AI agent context. Maintains session memory and project state.
+- **[docs/ADDING_NEW_STATE.md](./docs/ADDING_NEW_STATE.md)** — Step-by-step guide for adding support for a new U.S. state, including database setup, templates, compliance cards, and verification.
 
 ### Documentation Purposes
 | File | Purpose | When to Update |
@@ -76,9 +77,16 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 ### System Design Choices
 - **Deployment**: Automated deployments via Replit.
 - **Database Schema**: Comprehensive schema for users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties, savedDocuments, and uploadedDocuments.
+  - **Unique Constraints**: Templates use `(state_id, key, version)`, compliance cards use `(state_id, key)`, communication templates use `(state_id, template_type, key)` for upsert-safe seeding.
+  - **Canonical Keys**: All content tables have a `key` column (NOT NULL) for idempotent upserts. Keys are auto-generated using slug pattern: `{category}_{type}_{slugified_title}`.
 - **API Endpoints**: Structured API for all core functionalities.
 - **Template Alignment**: Templates include form fields and legal text that align with all compliance card requirements for each state.
-- **API-Driven States**: States are fetched from `/api/states` endpoint (single source of truth). Frontend uses `useStates()` hook with React Query caching (1 hour staleTime). Adding new states requires only `seed.ts` update + content creation - no frontend code changes needed.
+- **State Registry Architecture**:
+  - **Database-Driven**: States table is single source of truth. No hardcoded state lists in code.
+  - **Caching**: `getActiveStateIds()` from `server/states/getActiveStates.ts` with 5-minute TTL via memoizee.
+  - **API Endpoint**: Frontend uses `/api/states` with `useStates()` hook (1 hour staleTime).
+  - **Adding States**: See `docs/ADDING_NEW_STATE.md` for complete workflow.
+  - **Verification**: Run `npx tsx server/scripts/verifyStateSetup.ts [STATE]` to validate state content.
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database.

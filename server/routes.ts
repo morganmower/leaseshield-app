@@ -16,6 +16,7 @@ import { generateLegalUpdateEmail } from "./email-templates";
 import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 import { asyncHandler, RateLimiter } from "./utils/validation";
 import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, assertValidDocx, CONTENT_TYPES } from "./utils/download";
+import { getActiveStateIds } from "./states/getActiveStates";
 import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
@@ -232,8 +233,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Validate input to prevent malicious data
       const validatedData = userPreferencesSchema.parse(req.body);
       
-      // Only allow supported states
-      const supportedStates = ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL'];
+      // Only allow supported states - dynamically fetched from database
+      const supportedStates = await getActiveStateIds();
       if (validatedData.preferredState && !supportedStates.includes(validatedData.preferredState)) {
         return res.status(400).json({ message: "Invalid state selection" });
       }
