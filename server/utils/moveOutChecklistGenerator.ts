@@ -1,6 +1,19 @@
 import puppeteer from 'puppeteer';
 import { execSync } from 'child_process';
-import HTMLtoDOCX from 'html-to-docx';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  HeadingLevel,
+  AlignmentType,
+  BorderStyle,
+  Table,
+  TableRow,
+  TableCell,
+  WidthType,
+  TableLayoutType,
+} from 'docx';
 
 interface MoveOutChecklistOptions {
   templateTitle: string;
@@ -35,6 +48,213 @@ function escapeHtml(unsafe: string): string {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;")
     .replace(/\//g, "&#x2F;");
+}
+
+const H1 = (text: string): Paragraph =>
+  new Paragraph({
+    children: [new TextRun({ text, bold: true, size: 28 })],
+    heading: HeadingLevel.HEADING_1,
+    alignment: AlignmentType.CENTER,
+    spacing: { after: 100 },
+  });
+
+const H2 = (text: string): Paragraph =>
+  new Paragraph({
+    children: [new TextRun({ text, bold: true, size: 22 })],
+    heading: HeadingLevel.HEADING_2,
+    shading: { fill: "f0f0f0" },
+    spacing: { before: 200, after: 100 },
+  });
+
+const H3 = (text: string): Paragraph =>
+  new Paragraph({
+    children: [new TextRun({ text, bold: true, size: 20 })],
+    shading: { fill: "e8e8e8" },
+    spacing: { before: 150, after: 80 },
+  });
+
+const P = (text: string, options?: { bold?: boolean; italic?: boolean; size?: number }): Paragraph =>
+  new Paragraph({
+    children: [
+      new TextRun({
+        text,
+        size: options?.size || 20,
+        bold: options?.bold,
+        italics: options?.italic,
+      }),
+    ],
+    spacing: { after: 80 },
+  });
+
+const FieldLine = (label: string): Paragraph =>
+  new Paragraph({
+    children: [
+      new TextRun({ text: label + " ", size: 20 }),
+      new TextRun({ text: "_".repeat(40), size: 20 }),
+    ],
+    spacing: { after: 80 },
+  });
+
+const SignatureLine = (label: string): Paragraph =>
+  new Paragraph({
+    children: [
+      new TextRun({ text: label + " ", size: 20 }),
+      new TextRun({ text: "_".repeat(35), size: 20 }),
+    ],
+    spacing: { before: 150, after: 80 },
+  });
+
+const HR = (): Paragraph =>
+  new Paragraph({
+    border: {
+      bottom: { style: BorderStyle.SINGLE, size: 6, color: "000000" },
+    },
+    spacing: { before: 150, after: 150 },
+  });
+
+function createChecklistTable(items: string[]): Table {
+  const headerRow = new TableRow({
+    children: [
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: "Item", bold: true, size: 18 })] })],
+        width: { size: 30, type: WidthType.PERCENTAGE },
+      }),
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: "Condition", bold: true, size: 18 })] })],
+        width: { size: 15, type: WidthType.PERCENTAGE },
+      }),
+      new TableCell({
+        children: [new Paragraph({ children: [new TextRun({ text: "Notes/Damage Description", bold: true, size: 18 })] })],
+        width: { size: 55, type: WidthType.PERCENTAGE },
+      }),
+    ],
+  });
+
+  const dataRows = items.map(item => 
+    new TableRow({
+      children: [
+        new TableCell({
+          children: [new Paragraph({ children: [new TextRun({ text: item, size: 18 })] })],
+        }),
+        new TableCell({
+          children: [new Paragraph({ children: [new TextRun({ text: "", size: 18 })] })],
+        }),
+        new TableCell({
+          children: [new Paragraph({ children: [new TextRun({ text: "", size: 18 })] })],
+        }),
+      ],
+    })
+  );
+
+  return new Table({
+    width: { size: 100, type: WidthType.PERCENTAGE },
+    layout: TableLayoutType.FIXED,
+    rows: [headerRow, ...dataRows],
+  });
+}
+
+export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOptions): Promise<Buffer> {
+  const { templateTitle, stateId, version = 1, updatedAt = new Date(), checklistType = 'move_out' } = options;
+
+  console.log('📝 Generating checklist DOCX with docx library...');
+  const startTime = Date.now();
+
+  const stateName = STATE_NAMES[stateId] || stateId;
+  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+  const isMoveIn = checklistType === 'move_in';
+  const checklistLabel = isMoveIn ? 'Move-In' : 'Move-Out';
+  const dateLabel = isMoveIn ? 'Move-In Date' : 'Move-Out Date';
+  const instructionsText = isMoveIn 
+    ? 'Complete this checklist during the initial walkthrough before tenant move-in. Document the condition of each area to establish baseline condition. Both landlord and tenant should sign upon completion.'
+    : 'Complete this checklist during the final walkthrough before tenant move-out. Document the condition of each area and note any damages beyond normal wear and tear. Both landlord and tenant should sign upon completion.';
+
+  const rooms = [
+    { name: 'LIVING ROOM', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Light Fixtures', 'Electrical Outlets', 'Doors/Locks'] },
+    { name: 'KITCHEN', items: ['Walls/Paint', 'Flooring', 'Countertops', 'Cabinets/Drawers', 'Sink/Faucet', 'Stove/Oven', 'Refrigerator', 'Dishwasher', 'Microwave', 'Exhaust Fan/Hood'] },
+    { name: 'BEDROOM(S)', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Closet Doors', 'Light Fixtures', 'Electrical Outlets'] },
+    { name: 'BATHROOM(S)', items: ['Walls/Paint', 'Flooring', 'Toilet', 'Sink/Vanity', 'Bathtub/Shower', 'Faucets/Fixtures', 'Mirror/Cabinet', 'Exhaust Fan', 'Towel Bars'] },
+    { name: 'OTHER AREAS', items: ['Hallways', 'Stairs/Railings', 'Garage', 'Patio/Balcony', 'HVAC System', 'Water Heater', 'Smoke Detectors', 'CO Detectors'] }
+  ];
+
+  const children: (Paragraph | Table)[] = [];
+
+  children.push(H1(`${checklistLabel.toUpperCase()} INSPECTION CHECKLIST`));
+  children.push(P(`${stateName} - Version ${version}`, { italic: true }));
+  children.push(P(`Last Updated: ${formattedDate}`, { size: 18 }));
+  children.push(HR());
+
+  children.push(P(`Instructions: ${instructionsText}`, { italic: true, size: 18 }));
+  children.push(P("Condition Rating Guide: E = Excellent, G = Good, F = Fair, P = Poor, N/A = Not Applicable", { bold: true, size: 18 }));
+  children.push(HR());
+
+  children.push(FieldLine("Property Address:"));
+  children.push(FieldLine("Unit #:"));
+  children.push(FieldLine("Tenant Name:"));
+  children.push(FieldLine(`${dateLabel}:`));
+  children.push(HR());
+
+  for (const room of rooms) {
+    children.push(H3(room.name));
+    children.push(createChecklistTable(room.items));
+  }
+
+  children.push(H2("ADDITIONAL NOTES"));
+  children.push(P("_".repeat(80)));
+  children.push(P("_".repeat(80)));
+  children.push(P("_".repeat(80)));
+
+  children.push(H2("SIGNATURES"));
+  children.push(P("LANDLORD/AGENT:", { bold: true }));
+  children.push(SignatureLine("Signature:"));
+  children.push(SignatureLine("Print Name:"));
+  children.push(SignatureLine("Date:"));
+
+  children.push(P("TENANT:", { bold: true }));
+  children.push(SignatureLine("Signature:"));
+  children.push(SignatureLine("Print Name:"));
+  children.push(SignatureLine("Date:"));
+
+  children.push(HR());
+  children.push(
+    new Paragraph({
+      children: [
+        new TextRun({
+          text: "Generated by LeaseShield - Protecting Landlords with State-Compliant Documents",
+          size: 16,
+          italics: true,
+        }),
+      ],
+      alignment: AlignmentType.CENTER,
+      spacing: { before: 200 },
+    })
+  );
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 720,
+              right: 720,
+              bottom: 720,
+              left: 720,
+            },
+          },
+        },
+        children,
+      },
+    ],
+  });
+
+  try {
+    const buffer = await Packer.toBuffer(doc);
+    console.log(`📝 Checklist DOCX generated successfully in ${Date.now() - startTime}ms (${buffer.length} bytes)`);
+    return Buffer.from(buffer);
+  } catch (error) {
+    console.error('📝 Error generating checklist DOCX:', error);
+    throw error;
+  }
 }
 
 export async function generateMoveOutChecklistPdf(options: MoveOutChecklistOptions): Promise<Buffer> {
@@ -99,131 +319,6 @@ export async function generateMoveOutChecklistPdf(options: MoveOutChecklistOptio
   }
 }
 
-export async function generateMoveOutChecklistDocx(options: MoveOutChecklistOptions): Promise<Buffer> {
-  const { templateTitle, stateId, version = 1, updatedAt = new Date(), checklistType = 'move_out' } = options;
-
-  console.log('📝 Generating checklist DOCX...');
-  const startTime = Date.now();
-
-  // Use simplified HTML for DOCX (no complex CSS like flexbox)
-  const htmlContent = generateSimplifiedChecklistHTMLForDOCX(templateTitle, stateId, version, updatedAt, checklistType);
-
-  try {
-    const docxBuffer = await HTMLtoDOCX(htmlContent, null, {
-      table: { row: { cantSplit: true } },
-      margins: {
-        top: 720,
-        right: 720,
-        bottom: 720,
-        left: 720,
-      },
-    });
-
-    console.log(`📝 Checklist DOCX generated successfully in ${Date.now() - startTime}ms`);
-    return Buffer.from(docxBuffer);
-  } catch (error) {
-    console.error('📝 Error generating checklist DOCX:', error);
-    throw error;
-  }
-}
-
-// Simplified HTML for DOCX that avoids complex CSS (no flex, uses tables instead)
-function generateSimplifiedChecklistHTMLForDOCX(
-  templateTitle: string,
-  stateId: string,
-  version: number,
-  updatedAt: Date,
-  checklistType: 'move_in' | 'move_out' = 'move_out'
-): string {
-  const safeTitle = escapeHtml(templateTitle);
-  const stateName = STATE_NAMES[stateId] || stateId;
-  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-  const isMoveIn = checklistType === 'move_in';
-  const checklistLabel = isMoveIn ? 'Move-In' : 'Move-Out';
-  const dateLabel = isMoveIn ? 'Move-In Date' : 'Move-Out Date';
-  const instructionsText = isMoveIn 
-    ? 'Complete this checklist during the initial walkthrough before tenant move-in. Document the condition of each area to establish baseline condition. Both landlord and tenant should sign upon completion.'
-    : 'Complete this checklist during the final walkthrough before tenant move-out. Document the condition of each area and note any damages beyond normal wear and tear. Both landlord and tenant should sign upon completion.';
-
-  const rooms = [
-    { name: 'LIVING ROOM', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Light Fixtures', 'Electrical Outlets', 'Doors/Locks'] },
-    { name: 'KITCHEN', items: ['Walls/Paint', 'Flooring', 'Countertops', 'Cabinets/Drawers', 'Sink/Faucet', 'Stove/Oven', 'Refrigerator', 'Dishwasher', 'Microwave', 'Exhaust Fan/Hood', 'Light Fixtures'] },
-    { name: 'BEDROOM(S)', items: ['Walls/Paint', 'Ceiling', 'Flooring/Carpet', 'Windows/Screens', 'Blinds/Curtains', 'Closet Doors', 'Light Fixtures', 'Electrical Outlets'] },
-    { name: 'BATHROOM(S)', items: ['Walls/Paint', 'Flooring', 'Toilet', 'Sink/Vanity', 'Bathtub/Shower', 'Faucets/Fixtures', 'Mirror/Cabinet', 'Exhaust Fan', 'Towel Bars'] },
-    { name: 'OTHER AREAS', items: ['Hallways', 'Stairs/Railings', 'Garage', 'Patio/Balcony', 'Yard/Landscaping', 'HVAC System', 'Water Heater', 'Smoke Detectors', 'Carbon Monoxide Detectors'] }
-  ];
-
-  let roomsHtml = '';
-  rooms.forEach(room => {
-    roomsHtml += `<h3 style="background-color: #f0f0f0; padding: 5px; margin-top: 15px;">${room.name}</h3>`;
-    roomsHtml += '<table style="width: 100%; border-collapse: collapse;">';
-    roomsHtml += '<tr style="background-color: #e0e0e0;"><th style="border: 1px solid #ccc; padding: 5px; text-align: left;">Item</th><th style="border: 1px solid #ccc; padding: 5px; width: 80px;">Condition</th><th style="border: 1px solid #ccc; padding: 5px;">Notes/Damage Description</th></tr>';
-    room.items.forEach(item => {
-      roomsHtml += `<tr><td style="border: 1px solid #ccc; padding: 5px;">${item}</td><td style="border: 1px solid #ccc; padding: 5px;"></td><td style="border: 1px solid #ccc; padding: 5px;"></td></tr>`;
-    });
-    roomsHtml += '</table>';
-  });
-
-  return `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="UTF-8">
-  <title>${safeTitle}</title>
-</head>
-<body style="font-family: Arial, sans-serif; font-size: 11pt; line-height: 1.4;">
-  <h1 style="text-align: center; text-transform: uppercase;">${checklistLabel} INSPECTION CHECKLIST</h1>
-  <p style="text-align: center;">${stateName} - Version ${version}</p>
-  <p style="text-align: center; font-size: 9pt;">Last Updated: ${formattedDate}</p>
-  
-  <hr>
-  
-  <p><strong>Instructions:</strong> ${instructionsText}</p>
-  <p><strong>Condition Rating Guide:</strong> E = Excellent, G = Good, F = Fair, P = Poor, N/A = Not Applicable</p>
-  
-  <hr>
-  
-  <table style="width: 100%; margin-bottom: 15px;">
-    <tr>
-      <td style="width: 50%;"><strong>Property Address:</strong> _______________________________</td>
-      <td><strong>Unit #:</strong> _______________</td>
-    </tr>
-    <tr>
-      <td><strong>Tenant Name:</strong> _______________________________</td>
-      <td><strong>${dateLabel}:</strong> _______________</td>
-    </tr>
-  </table>
-  
-  ${roomsHtml}
-  
-  <h3 style="margin-top: 20px;">ADDITIONAL NOTES</h3>
-  <p>____________________________________________________________________________</p>
-  <p>____________________________________________________________________________</p>
-  <p>____________________________________________________________________________</p>
-  
-  <h3 style="margin-top: 20px;">SIGNATURES</h3>
-  <table style="width: 100%; margin-top: 20px;">
-    <tr>
-      <td style="width: 50%;">
-        <p>Landlord/Agent Signature: _________________________</p>
-        <p>Print Name: _________________________</p>
-        <p>Date: _________________________</p>
-      </td>
-      <td>
-        <p>Tenant Signature: _________________________</p>
-        <p>Print Name: _________________________</p>
-        <p>Date: _________________________</p>
-      </td>
-    </tr>
-  </table>
-  
-  <hr style="margin-top: 20px;">
-  <p style="font-size: 9pt; text-align: center;">Generated by LeaseShield - Protecting Landlords with State-Compliant Documents</p>
-</body>
-</html>
-`;
-}
-
 function generateMoveOutChecklistHTML(
   templateTitle: string,
   stateId: string,
@@ -239,7 +334,6 @@ function generateMoveOutChecklistHTML(
     day: 'numeric' 
   });
   
-  // Dynamic labels based on checklist type
   const isMoveIn = checklistType === 'move_in';
   const checklistLabel = isMoveIn ? 'Move-In' : 'Move-Out';
   const dateLabel = isMoveIn ? 'Move-In Date' : 'Move-Out Date';
@@ -255,206 +349,29 @@ function generateMoveOutChecklistHTML(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${safeTitle}</title>
   <style>
-    @page {
-      size: Letter;
-      margin: 0.4in;
-    }
-    
-    * {
-      box-sizing: border-box;
-    }
-    
-    body {
-      font-family: 'Arial', 'Helvetica', sans-serif;
-      font-size: 9pt;
-      line-height: 1.3;
-      color: #000;
-      margin: 0;
-      padding: 0;
-    }
-    
-    .header {
-      text-align: center;
-      border-bottom: 2px solid #1a1a1a;
-      padding-bottom: 10pt;
-      margin-bottom: 12pt;
-    }
-    
-    .header h1 {
-      font-size: 14pt;
-      font-weight: bold;
-      margin: 0 0 4pt 0;
-      text-transform: uppercase;
-      letter-spacing: 1pt;
-    }
-    
-    .header .subtitle {
-      font-size: 10pt;
-      color: #333;
-      margin: 0;
-    }
-    
-    .header .state-info {
-      font-size: 8pt;
-      color: #666;
-      margin-top: 4pt;
-    }
-    
-    .section {
-      margin-bottom: 12pt;
-    }
-    
-    .section-title {
-      font-size: 10pt;
-      font-weight: bold;
-      background-color: #f0f0f0;
-      padding: 5pt 6pt;
-      margin: 0 0 6pt 0;
-      border-left: 3pt solid #333;
-    }
-    
-    .field-row {
-      display: flex;
-      margin-bottom: 6pt;
-      align-items: flex-end;
-      gap: 8pt;
-    }
-    
-    .field {
-      flex: 1;
-    }
-    
-    .field-label {
-      font-size: 8pt;
-      color: #333;
-      margin-bottom: 2pt;
-    }
-    
-    .field-line {
-      border-bottom: 1pt solid #000;
-      height: 16pt;
-      min-width: 80pt;
-    }
-    
-    .instructions {
-      font-size: 8pt;
-      color: #444;
-      margin-bottom: 10pt;
-      padding: 6pt;
-      background-color: #f9f9f9;
-      border: 1pt solid #ddd;
-    }
-    
-    .room-section {
-      margin-bottom: 10pt;
-      border: 1pt solid #ccc;
-      padding: 6pt;
-    }
-    
-    .room-title {
-      font-size: 9pt;
-      font-weight: bold;
-      margin-bottom: 6pt;
-      padding-bottom: 3pt;
-      border-bottom: 1pt solid #ddd;
-    }
-    
-    .checklist-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 8pt;
-    }
-    
-    .checklist-table th {
-      background-color: #f5f5f5;
-      padding: 4pt;
-      text-align: left;
-      border: 1pt solid #ccc;
-      font-weight: bold;
-    }
-    
-    .checklist-table td {
-      padding: 4pt;
-      border: 1pt solid #ccc;
-      vertical-align: top;
-    }
-    
-    .checklist-table .item-col {
-      width: 30%;
-    }
-    
-    .checklist-table .condition-col {
-      width: 15%;
-      text-align: center;
-    }
-    
-    .checklist-table .notes-col {
-      width: 40%;
-    }
-    
-    .checkbox {
-      width: 10pt;
-      height: 10pt;
-      border: 1pt solid #000;
-      display: inline-block;
-      margin-right: 3pt;
-      vertical-align: middle;
-    }
-    
-    .condition-options {
-      display: flex;
-      justify-content: space-around;
-      font-size: 7pt;
-    }
-    
-    .condition-option {
-      text-align: center;
-    }
-    
-    .signature-section {
-      margin-top: 16pt;
-      page-break-inside: avoid;
-    }
-    
-    .signature-line {
-      border-bottom: 1pt solid #000;
-      height: 24pt;
-      margin-top: 16pt;
-    }
-    
-    .signature-label {
-      font-size: 8pt;
-      color: #333;
-      margin-top: 2pt;
-    }
-    
-    .footer {
-      margin-top: 14pt;
-      padding-top: 6pt;
-      border-top: 1pt solid #ccc;
-      font-size: 7pt;
-      color: #666;
-      text-align: center;
-    }
-    
-    .legend {
-      font-size: 7pt;
-      color: #444;
-      margin-bottom: 8pt;
-      padding: 4pt 6pt;
-      background-color: #fafafa;
-      border: 1pt solid #eee;
-    }
-    
-    .notes-area {
-      border: 1pt solid #000;
-      min-height: 40pt;
-      margin-top: 4pt;
-    }
-    
-    .compact-table td, .compact-table th {
-      padding: 3pt 4pt;
-    }
+    @page { size: Letter; margin: 0.4in; }
+    * { box-sizing: border-box; }
+    body { font-family: 'Arial', 'Helvetica', sans-serif; font-size: 9pt; line-height: 1.3; color: #000; margin: 0; padding: 0; }
+    .header { text-align: center; border-bottom: 2px solid #1a1a1a; padding-bottom: 10pt; margin-bottom: 12pt; }
+    .header h1 { font-size: 14pt; font-weight: bold; margin: 0 0 4pt 0; text-transform: uppercase; letter-spacing: 1pt; }
+    .header .subtitle { font-size: 10pt; color: #333; margin: 0; }
+    .header .state-info { font-size: 8pt; color: #666; margin-top: 4pt; }
+    .section { margin-bottom: 12pt; }
+    .section-title { font-size: 10pt; font-weight: bold; background-color: #f0f0f0; padding: 5pt 6pt; margin: 0 0 6pt 0; border-left: 3pt solid #333; }
+    .field-row { display: flex; margin-bottom: 6pt; align-items: flex-end; gap: 8pt; }
+    .field { flex: 1; }
+    .field-label { font-size: 8pt; color: #333; margin-bottom: 2pt; }
+    .field-line { border-bottom: 1pt solid #000; height: 16pt; min-width: 80pt; }
+    .instructions { font-size: 8pt; color: #444; margin-bottom: 10pt; padding: 6pt; background-color: #f9f9f9; border: 1pt solid #ddd; }
+    .room-section { margin-bottom: 10pt; border: 1pt solid #ccc; padding: 6pt; }
+    .room-title { font-size: 9pt; font-weight: bold; margin-bottom: 6pt; padding-bottom: 3pt; border-bottom: 1pt solid #ddd; }
+    .checklist-table { width: 100%; border-collapse: collapse; font-size: 8pt; }
+    .checklist-table th { background-color: #f5f5f5; padding: 4pt; text-align: left; border: 1pt solid #ccc; font-weight: bold; }
+    .checklist-table td { padding: 4pt; border: 1pt solid #ccc; vertical-align: top; }
+    .signature-line { border-bottom: 1pt solid #000; height: 24pt; margin-top: 16pt; }
+    .signature-label { font-size: 8pt; color: #333; margin-top: 2pt; }
+    .footer { margin-top: 14pt; padding-top: 6pt; border-top: 1pt solid #ccc; font-size: 7pt; color: #666; text-align: center; }
+    .legend { font-size: 7pt; color: #444; margin-bottom: 8pt; padding: 4pt 6pt; background-color: #fafafa; border: 1pt solid #eee; }
   </style>
 </head>
 <body>
@@ -471,28 +388,13 @@ function generateMoveOutChecklistHTML(
   <div class="section">
     <h2 class="section-title">Property Information</h2>
     <div class="field-row">
-      <div class="field" style="flex: 2;">
-        <div class="field-label">Property Address</div>
-        <div class="field-line"></div>
-      </div>
-      <div class="field" style="flex: 0.5;">
-        <div class="field-label">Unit #</div>
-        <div class="field-line"></div>
-      </div>
+      <div class="field" style="flex: 2;"><div class="field-label">Property Address</div><div class="field-line"></div></div>
+      <div class="field" style="flex: 0.5;"><div class="field-label">Unit #</div><div class="field-line"></div></div>
     </div>
     <div class="field-row">
-      <div class="field">
-        <div class="field-label">Tenant Name(s)</div>
-        <div class="field-line"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Inspection Date</div>
-        <div class="field-line"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">${dateLabel}</div>
-        <div class="field-line"></div>
-      </div>
+      <div class="field"><div class="field-label">Tenant Name(s)</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">Inspection Date</div><div class="field-line"></div></div>
+      <div class="field"><div class="field-label">${dateLabel}</div><div class="field-line"></div></div>
     </div>
   </div>
 
@@ -500,191 +402,81 @@ function generateMoveOutChecklistHTML(
     <strong>Condition Rating:</strong> G = Good (clean, no damage) | F = Fair (minor wear, normal use) | P = Poor (damage beyond normal wear) | N/A = Not Applicable
   </div>
 
-  <!-- Living Room -->
   <div class="room-section">
     <div class="room-title">Living Room / Common Areas</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
+    <table class="checklist-table">
+      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
       <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
       <tr><td>Ceiling</td><td></td><td></td><td></td></tr>
       <tr><td>Flooring/Carpet</td><td></td><td></td><td></td></tr>
       <tr><td>Windows & Screens</td><td></td><td></td><td></td></tr>
-      <tr><td>Window Coverings</td><td></td><td></td><td></td></tr>
       <tr><td>Light Fixtures</td><td></td><td></td><td></td></tr>
-      <tr><td>Electrical Outlets</td><td></td><td></td><td></td></tr>
       <tr><td>Doors & Locks</td><td></td><td></td><td></td></tr>
     </table>
   </div>
 
-  <!-- Kitchen -->
   <div class="room-section">
     <div class="room-title">Kitchen</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
+    <table class="checklist-table">
+      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
       <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Flooring</td><td></td><td></td><td></td></tr>
       <tr><td>Countertops</td><td></td><td></td><td></td></tr>
       <tr><td>Cabinets & Drawers</td><td></td><td></td><td></td></tr>
       <tr><td>Sink & Faucet</td><td></td><td></td><td></td></tr>
       <tr><td>Refrigerator</td><td></td><td></td><td></td></tr>
       <tr><td>Stove/Oven</td><td></td><td></td><td></td></tr>
       <tr><td>Dishwasher</td><td></td><td></td><td></td></tr>
-      <tr><td>Microwave</td><td></td><td></td><td></td></tr>
-      <tr><td>Exhaust Fan/Hood</td><td></td><td></td><td></td></tr>
     </table>
   </div>
 
-  <!-- Bathroom(s) -->
   <div class="room-section">
     <div class="room-title">Bathroom(s)</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
-      <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Flooring</td><td></td><td></td><td></td></tr>
+    <table class="checklist-table">
+      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
       <tr><td>Toilet</td><td></td><td></td><td></td></tr>
       <tr><td>Sink & Vanity</td><td></td><td></td><td></td></tr>
       <tr><td>Bathtub/Shower</td><td></td><td></td><td></td></tr>
       <tr><td>Faucets</td><td></td><td></td><td></td></tr>
       <tr><td>Mirror & Medicine Cabinet</td><td></td><td></td><td></td></tr>
-      <tr><td>Exhaust Fan</td><td></td><td></td><td></td></tr>
-      <tr><td>Towel Bars/Hardware</td><td></td><td></td><td></td></tr>
     </table>
   </div>
 
-  <!-- Bedroom(s) -->
   <div class="room-section">
     <div class="room-title">Bedroom(s)</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
+    <table class="checklist-table">
+      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
       <tr><td>Walls & Paint</td><td></td><td></td><td></td></tr>
-      <tr><td>Ceiling</td><td></td><td></td><td></td></tr>
       <tr><td>Flooring/Carpet</td><td></td><td></td><td></td></tr>
       <tr><td>Windows & Screens</td><td></td><td></td><td></td></tr>
-      <tr><td>Window Coverings</td><td></td><td></td><td></td></tr>
       <tr><td>Closet & Doors</td><td></td><td></td><td></td></tr>
       <tr><td>Light Fixtures</td><td></td><td></td><td></td></tr>
-      <tr><td>Electrical Outlets</td><td></td><td></td><td></td></tr>
     </table>
   </div>
 
-  <!-- Other Areas -->
-  <div class="room-section">
-    <div class="room-title">Other Areas (Garage, Patio, Storage, etc.)</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
-      <tr><td>Garage Door/Opener</td><td></td><td></td><td></td></tr>
-      <tr><td>Patio/Balcony</td><td></td><td></td><td></td></tr>
-      <tr><td>Storage Areas</td><td></td><td></td><td></td></tr>
-      <tr><td>Exterior Doors</td><td></td><td></td><td></td></tr>
-      <tr><td>Mailbox</td><td></td><td></td><td></td></tr>
-    </table>
-  </div>
-
-  <!-- General Items -->
   <div class="room-section">
     <div class="room-title">General Items</div>
-    <table class="checklist-table compact-table">
-      <tr>
-        <th class="item-col">Item</th>
-        <th class="condition-col">Move-In</th>
-        <th class="condition-col">Move-Out</th>
-        <th class="notes-col">Damage/Notes</th>
-      </tr>
+    <table class="checklist-table">
+      <tr><th>Item</th><th>Move-In</th><th>Move-Out</th><th>Damage/Notes</th></tr>
       <tr><td>HVAC System/Thermostat</td><td></td><td></td><td></td></tr>
-      <tr><td>Water Heater</td><td></td><td></td><td></td></tr>
       <tr><td>Smoke Detectors</td><td></td><td></td><td></td></tr>
-      <tr><td>Carbon Monoxide Detectors</td><td></td><td></td><td></td></tr>
+      <tr><td>CO Detectors</td><td></td><td></td><td></td></tr>
       <tr><td>Keys Returned</td><td>N/A</td><td></td><td># of keys: ___</td></tr>
-      <tr><td>Garage Remotes Returned</td><td>N/A</td><td></td><td># of remotes: ___</td></tr>
     </table>
   </div>
 
-  <!-- Summary -->
   <div class="section">
-    <h2 class="section-title">Inspection Summary</h2>
-    <div style="margin-bottom: 6pt;">
-      <div class="field-label">Additional Damages or Notes:</div>
-      <div class="notes-area"></div>
-    </div>
-    <div class="field-row" style="margin-top: 8pt;">
-      <div class="field">
-        <div class="field-label">Estimated Repair/Cleaning Costs</div>
-        <div class="field-line"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Security Deposit Amount</div>
-        <div class="field-line"></div>
-      </div>
-    </div>
+    <h2 class="section-title">Signatures</h2>
     <div class="field-row">
-      <div class="field">
-        <div class="field-label">Deductions from Deposit</div>
-        <div class="field-line"></div>
-      </div>
-      <div class="field">
-        <div class="field-label">Amount to be Returned</div>
-        <div class="field-line"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="signature-section">
-    <div class="field-row">
-      <div class="field" style="flex: 2;">
-        <div class="signature-line"></div>
-        <div class="signature-label">Landlord/Agent Signature</div>
-      </div>
-      <div class="field" style="flex: 1;">
-        <div class="signature-line"></div>
-        <div class="signature-label">Date</div>
-      </div>
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Landlord/Agent Signature</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
     </div>
     <div class="field-row" style="margin-top: 12pt;">
-      <div class="field" style="flex: 2;">
-        <div class="signature-line"></div>
-        <div class="signature-label">Tenant Signature</div>
-      </div>
-      <div class="field" style="flex: 1;">
-        <div class="signature-line"></div>
-        <div class="signature-label">Date</div>
-      </div>
-    </div>
-    <div style="margin-top: 8pt; font-size: 7pt; color: #666;">
-      <span class="checkbox"></span> Tenant agrees with inspection findings
-      <span style="margin-left: 16pt;"><span class="checkbox"></span> Tenant disagrees (see notes above)</span>
+      <div class="field" style="flex: 2;"><div class="signature-line"></div><div class="signature-label">Tenant Signature</div></div>
+      <div class="field" style="flex: 1;"><div class="signature-line"></div><div class="signature-label">Date</div></div>
     </div>
   </div>
 
-  <div class="footer">
-    <p>LeaseShield | State-Compliant ${escapeHtml(stateName)} ${checklistLabel} Inspection Form | Version ${version}</p>
-    <p>This form is provided for informational purposes. Consult with a licensed attorney for legal advice.</p>
-  </div>
+  <div class="footer">Generated by LeaseShield - Protecting Landlords with State-Compliant Documents</div>
 </body>
-</html>
-`;
+</html>`;
 }
