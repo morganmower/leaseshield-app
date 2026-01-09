@@ -1,4 +1,6 @@
-import { storage } from "./storage";
+import { db } from "./db";
+import { complianceCards } from "@shared/schema";
+import { generateComplianceKey } from "./utils/seedHelpers";
 
 // Comprehensive compliance cards for all 4 launch states
 const comprehensiveComplianceCards = [
@@ -928,20 +930,37 @@ const comprehensiveComplianceCards = [
 async function seedComplianceCards() {
   console.log(`🌱 Seeding ${comprehensiveComplianceCards.length} compliance cards...`);
   
-  let created = 0;
-  let skipped = 0;
+  let upserted = 0;
+  let errors = 0;
 
   for (const card of comprehensiveComplianceCards) {
+    const key = generateComplianceKey(card.category, card.title);
     try {
-      await storage.createComplianceCard(card);
+      await db.insert(complianceCards)
+        .values({
+          ...card,
+          key,
+        })
+        .onConflictDoUpdate({
+          target: [complianceCards.stateId, complianceCards.key],
+          set: {
+            title: card.title,
+            summary: card.summary,
+            category: card.category,
+            content: card.content,
+            sortOrder: card.sortOrder,
+            updatedAt: new Date(),
+          },
+        });
       console.log(`  ✓ ${card.title} (${card.stateId})`);
-      created++;
-    } catch (error) {
-      skipped++;
+      upserted++;
+    } catch (error: any) {
+      console.error(`  ✗ ${card.title}: ${error.message}`);
+      errors++;
     }
   }
 
-  console.log(`\n✅ Compliance cards seeded: ${created} created, ${skipped} already existed`);
+  console.log(`\n✅ Compliance cards seeded: ${upserted} upserted, ${errors} errors`);
 }
 
 // Run if executed directly

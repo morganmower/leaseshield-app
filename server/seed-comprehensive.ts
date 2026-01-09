@@ -1,4 +1,6 @@
-import { storage } from "./storage";
+import { db } from "./db";
+import { templates } from "@shared/schema";
+import { generateTemplateKey } from "./utils/seedHelpers";
 
 // Comprehensive template library for all 4 launch states
 const comprehensiveTemplates = [
@@ -912,20 +914,39 @@ const comprehensiveTemplates = [
 async function seedComprehensiveTemplates() {
   console.log(`🌱 Seeding ${comprehensiveTemplates.length} comprehensive templates...`);
   
-  let created = 0;
-  let skipped = 0;
+  let upserted = 0;
+  let errors = 0;
 
   for (const template of comprehensiveTemplates) {
+    const key = generateTemplateKey(template.category, template.templateType, template.title);
+    const version = template.version ?? 1;
     try {
-      await storage.createTemplate(template);
+      await db.insert(templates)
+        .values({
+          ...template,
+          key,
+          version,
+        })
+        .onConflictDoUpdate({
+          target: [templates.stateId, templates.key, templates.version],
+          set: {
+            title: template.title,
+            description: template.description,
+            category: template.category,
+            templateType: template.templateType,
+            sortOrder: template.sortOrder,
+            updatedAt: new Date(),
+          },
+        });
       console.log(`  ✓ ${template.title} (${template.stateId})`);
-      created++;
-    } catch (error) {
-      skipped++;
+      upserted++;
+    } catch (error: any) {
+      console.error(`  ✗ ${template.title}: ${error.message}`);
+      errors++;
     }
   }
 
-  console.log(`\n✅ Templates seeded: ${created} created, ${skipped} already existed`);
+  console.log(`\n✅ Templates seeded: ${upserted} upserted, ${errors} errors`);
 }
 
 // Run if executed directly

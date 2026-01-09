@@ -111,7 +111,11 @@ class CourtListenerAdapter implements LegislationSourceAdapter {
       return { items, errors };
     }
 
-    const states = params.states || Object.keys(STATE_COURT_MAP);
+    if (!params.states || params.states.length === 0) {
+      errors.push('CourtListener requires states to be provided via params.states (no hardcoded fallback)');
+      return { items, errors };
+    }
+    const states = params.states;
     const searchTerms = ['landlord tenant', 'eviction', 'lease'];
     
     for (const state of states.slice(0, 5)) {

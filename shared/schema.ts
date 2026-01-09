@@ -87,6 +87,7 @@ export const categoryEnum = pgEnum('category', [
   'tenant_issues',
   'notices',
   'move_in_out',
+  'evictions',
 ]);
 
 export const templateTypeEnum = pgEnum('template_type', [
@@ -97,6 +98,7 @@ export const templateTypeEnum = pgEnum('template_type', [
   'lease_violation_notice',
   'non_renewal_notice',
   'rent_increase_notice',
+  'rent_increase',
   'move_in_checklist',
   'move_out_checklist',
   'esa_documentation',
@@ -104,7 +106,11 @@ export const templateTypeEnum = pgEnum('template_type', [
   'partial_payment_form',
   'tenant_complaint_form',
   'eviction_notice',
+  'eviction_complaint',
   'security_deposit_return',
+  'screening_authorization',
+  'deposit_itemization',
+  'notice_to_vacate',
 ]);
 
 // Generation mode for templates - wizard (landlord fills) vs static (blank download for tenant/applicant)

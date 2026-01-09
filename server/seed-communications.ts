@@ -1,7 +1,8 @@
 import { db } from "./db";
 import { communicationTemplates } from "@shared/schema";
 
-const NEW_STATES = ["WY", "CA", "VA", "NV", "AZ", "FL", "IL"];
+import { generateCommunicationKey } from "./utils/seedHelpers";
+import { getActiveStateIds } from "./states";
 
 const STATE_NAMES: Record<string, string> = {
   WY: "Wyoming",
@@ -134,28 +135,50 @@ Welcome to the community!
 }
 
 async function seedCommunicationTemplates() {
-  console.log("🔧 Adding communication templates for new states...\n");
+  console.log("🔧 Adding communication templates for all active states...\n");
 
-  for (const stateCode of NEW_STATES) {
-    console.log(`\n📍 Processing ${STATE_NAMES[stateCode]} (${stateCode})...`);
+  const activeStates = await getActiveStateIds();
+  let upserted = 0;
+  let errors = 0;
+
+  for (const stateCode of activeStates) {
+    const stateName = STATE_NAMES[stateCode];
+    if (!stateName) {
+      console.log(`  ⏭️  Skipping ${stateCode} (no state name configured)`);
+      continue;
+    }
+    console.log(`\n📍 Processing ${stateName} (${stateCode})...`);
 
     const templates = getTemplates(stateCode);
 
     for (const template of templates) {
+      const key = generateCommunicationKey(template.templateType, template.title);
       try {
-        await db.insert(communicationTemplates).values(template);
-        console.log(`  ✅ Created: ${template.title}`);
+        await db.insert(communicationTemplates)
+          .values({
+            ...template,
+            key,
+            templateType: template.templateType as "rent_reminder" | "welcome_letter" | "lease_renewal_notice" | "late_payment_notice" | "move_in_welcome",
+          })
+          .onConflictDoUpdate({
+            target: [communicationTemplates.stateId, communicationTemplates.templateType, communicationTemplates.key],
+            set: {
+              title: template.title,
+              bodyText: template.bodyText,
+              isActive: template.isActive,
+              updatedAt: new Date(),
+            },
+          });
+        console.log(`  ✓ ${template.title}`);
+        upserted++;
       } catch (error: any) {
-        if (error.code === "23505") {
-          console.log(`  ⏭️  Skipped (exists): ${template.title}`);
-        } else {
-          console.error(`  ❌ Error: ${template.title}`, error.message);
-        }
+        console.error(`  ✗ ${template.title}: ${error.message}`);
+        errors++;
       }
     }
   }
 
-  console.log("\n✅ Communication templates seeding complete!");
+  console.log(`\n✅ Communication templates seeded: ${upserted} upserted, ${errors} errors`);
 }
 
 seedCommunicationTemplates()

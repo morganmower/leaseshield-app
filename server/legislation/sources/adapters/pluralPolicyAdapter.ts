@@ -152,7 +152,11 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
       return { items, errors };
     }
 
-    const states = params.states || Object.keys(STATE_JURISDICTION_MAP);
+    if (!params.states || params.states.length === 0) {
+      errors.push('Plural Policy requires states to be provided via params.states (no hardcoded fallback)');
+      return { items, errors };
+    }
+    const states = params.states;
     const searchTerms = ['landlord tenant', 'eviction', 'rental property', 'security deposit'];
     
     for (const state of states) {
