@@ -2,6 +2,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
+import { useStates } from "@/hooks/useStates";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,23 +15,6 @@ import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { getAccessToken } from "@/lib/queryClient";
-
-const SUPPORTED_STATES = [
-  { code: "UT", name: "Utah" },
-  { code: "TX", name: "Texas" },
-  { code: "ND", name: "N. Dakota" },
-  { code: "SD", name: "S. Dakota" },
-  { code: "NC", name: "N. Carolina" },
-  { code: "OH", name: "Ohio" },
-  { code: "MI", name: "Michigan" },
-  { code: "ID", name: "Idaho" },
-  { code: "WY", name: "Wyoming" },
-  { code: "CA", name: "California" },
-  { code: "VA", name: "Virginia" },
-  { code: "NV", name: "Nevada" },
-  { code: "AZ", name: "Arizona" },
-  { code: "FL", name: "Florida" },
-];
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
   deposits: { 
@@ -85,6 +69,7 @@ export default function Compliance() {
   const { toast } = useToast();
   const { isAuthenticated, isLoading, user } = useAuth();
   const [, setLocation] = useLocation();
+  const { states } = useStates();
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
 

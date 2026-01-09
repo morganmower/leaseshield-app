@@ -12,25 +12,9 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
+import { useStates } from "@/hooks/useStates";
 import { Eye, EyeOff, Shield, Loader2, CheckCircle2 } from "lucide-react";
 import logoHorizontal from "@/assets/logo-horizontal.png";
-
-const SUPPORTED_STATES = [
-  { code: "AZ", name: "Arizona" },
-  { code: "CA", name: "California" },
-  { code: "FL", name: "Florida" },
-  { code: "ID", name: "Idaho" },
-  { code: "MI", name: "Michigan" },
-  { code: "NC", name: "North Carolina" },
-  { code: "ND", name: "North Dakota" },
-  { code: "NV", name: "Nevada" },
-  { code: "OH", name: "Ohio" },
-  { code: "SD", name: "South Dakota" },
-  { code: "TX", name: "Texas" },
-  { code: "UT", name: "Utah" },
-  { code: "VA", name: "Virginia" },
-  { code: "WY", name: "Wyoming" },
-];
 
 const signupSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -59,6 +43,7 @@ export default function Signup() {
   const searchString = useSearch();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { states } = useStates();
   
   // Check if user wants to skip trial and pay immediately
   const isPayNow = new URLSearchParams(searchString).get('payNow') === 'true';
@@ -305,8 +290,8 @@ export default function Signup() {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {SUPPORTED_STATES.map((state) => (
-                          <SelectItem key={state.code} value={state.code}>
+                        {states.map((state) => (
+                          <SelectItem key={state.id} value={state.id}>
                             {state.name}
                           </SelectItem>
                         ))}

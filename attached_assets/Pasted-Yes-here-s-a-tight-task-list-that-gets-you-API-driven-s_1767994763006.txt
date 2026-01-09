@@ -1,0 +1,187 @@
+Yes — here’s a tight task list that gets you API-driven states first, then Illinois, in a way that makes every future state add mostly “seed + content.”
+
+Phase 1: Make states API-driven (highest leverage)
+1) Backend: add GET /api/states
+
+Goal: frontend never hardcodes state lists again.
+
+Route: GET /api/states
+
+Query params:
+
+active=true|false (default true)
+
+Response:
+
+[{ "id": "UT", "name": "Utah", "description": "...", "isActive": true }]
+
+
+Implementation notes
+
+Pull from states table
+
+Order by name
+
+Default filter isActive = true unless active=false or omitted based on your preference
+
+2) Frontend: create useStates() hook
+
+Goal: single reusable source everywhere.
+
+Create client/src/hooks/useStates.ts
+
+Returns:
+
+states
+
+loading
+
+error
+
+Cache results (React Query if you have it; otherwise a simple memoized fetch is fine)
+
+3) Replace all SUPPORTED_STATES arrays
+
+Goal: no more hunting through files.
+
+Search/replace targets:
+
+signup.tsx (state dropdown)
+
+compliance pages
+
+settings/profile pages
+
+any “add property” flow
+
+application flows that show state options
+
+Rule: anywhere you render a state dropdown/list, use useStates().
+
+4) Add a tiny shared UI component for state selection
+
+Goal: prevent future reintroductions.
+
+Create StateSelect component that:
+
+calls useStates()
+
+accepts value, onChange
+
+renders loading/error states gracefully
+
+Then reuse it everywhere.
+
+5) Remove dead constants
+
+Delete or stop exporting any remaining SUPPORTED_STATES constants so nobody reuses them later.
+
+Phase 2: Enforce data integrity with state foreign keys (worth it)
+6) DB migration: FK references for state columns
+
+You currently have:
+
+properties.state as varchar(2)
+
+rental_properties.state as varchar(2)
+
+Migration steps
+
+Normalize existing data:
+
+Trim + uppercase
+
+Null out anything invalid
+
+Add foreign keys:
+
+properties.state → states.id
+
+rental_properties.state → states.id
+
+(Optional but recommended) add NOT NULL where appropriate if your UI requires it.
+
+Important: keep varchar(2) but enforce FK so it stays clean.
+
+7) Backend validation
+
+Anywhere you accept state input:
+
+validate it exists in states and isActive (if required)
+
+reject invalid codes with clear message
+
+Phase 3: Add Illinois (now it’s seed + content, not code)
+8) Seed: add Illinois to states
+
+Add:
+
+{ id: "IL", name: "Illinois", description: "...", isActive: true }
+
+Run seed.
+
+9) Templates: create IL template set (separate templates, consistent structure)
+
+You’re right to avoid overlays for now. The way to keep it sane is:
+
+Keep separate IL templates
+
+Ensure they share:
+
+same section headings
+
+same field IDs (tenant_name, rent_amount, notice_date, etc.)
+
+same internal templateType/category mapping
+
+Minimum IL pack to ship:
+
+Lease (IL)
+
+Late rent notice (IL)
+
+Cure/quit (if supported)
+
+Termination notice (month-to-month)
+
+Move-in/move-out checklist (mostly generic with IL notes)
+
+10) Compliance cards: IL entries
+
+Add IL compliance content where you store it (DB table or config).
+
+If you have a compliance page that’s state filtered, ensure it’s driven by stateId.
+
+11) Legislative monitoring: ensure IL included
+
+Since LegiScan / Plural Policy are already multi-state:
+
+verify your ingest job iterates states where isActive=true
+
+verify topic tagging assigns jurisdiction.level="state" and state="IL"
+
+confirm IL updates show up in admin monitoring UI
+
+Quality gates (so you don’t break production)
+
+After Phase 1:
+
+✅ Signup state dropdown populated from DB
+
+✅ Settings/compliance/property state dropdowns populated from DB
+
+✅ No SUPPORTED_STATES arrays remain
+
+After Phase 2:
+
+✅ Can’t save property with invalid state
+
+✅ Existing properties still load and render
+
+After Phase 3:
+
+✅ Illinois appears everywhere automatically
+
+✅ IL templates show when stateId=IL
+
+✅ IL legislative updates can be ingested/tagged

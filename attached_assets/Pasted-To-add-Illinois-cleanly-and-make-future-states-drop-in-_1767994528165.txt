@@ -1,0 +1,116 @@
+To add Illinois cleanly (and make future states “drop-in”), I need a very specific snapshot of how your app currently models states across: documents/templates, properties, legislation ingestion, and applications. You don’t have to give me the whole repo — just these items.
+
+What I need from Replit (copy/paste or screenshots)
+1) Where “supported states” are defined
+
+One of these usually exists:
+
+SUPPORTED_STATES array
+
+states.ts / constants/states.ts
+
+stateConfig object
+
+DB table like states / jurisdictions
+
+Send:
+
+The file(s) where states are listed/configured
+
+Any place you see state abbreviations (UT, TX…) hardcoded
+
+2) Template/document system
+
+I need to see how templates are stored and selected.
+
+Send:
+
+DB schema or model for templates (tables/models for templates, template_versions, documents, etc.)
+
+The code that answers: “Given a property in UT, which lease/notice templates do I show?”
+
+Routes like /api/templates, /api/documents, /api/generate-pdf, etc.
+
+Any folder structure like:
+
+templates/UT/...
+
+documents/states/UT/...
+
+or a single template with state = 'UT'
+
+3) Properties & state linkage
+
+Illinois will break things if property/state isn’t normalized.
+
+Send:
+
+DB schema/model for properties (or whatever you call them)
+
+The field that stores state (state, stateCode, etc.)
+
+Any validation code for property creation/editing (dropdown list, checks)
+
+4) Legislative monitoring system (the part we just refactored)
+
+Illinois requires a new ingestion config and tagging rules.
+
+Send:
+
+legislativeMonitoringService (or the source ingestors folder)
+
+The “mapping rules” file that maps updates → templates / jurisdictions
+
+Any jurisdiction enum / type used (federal/utah/etc.)
+
+5) Applications flow
+
+Illinois impacts what shows on the application (state-specific disclosures, fees logic, etc.)
+
+Send:
+
+Where application fields/questions are defined (schema or config)
+
+Where state-specific logic lives (if any)
+
+The route that creates/updates an application
+
+Any “disclosures/consents” section logic
+
+6) UI state dropdown / routing
+
+Send:
+
+The component that renders the State dropdown
+
+Any shared frontend constants file listing states
+
+Any Zod/Joi validation schema that restricts state values
+
+The fastest way to send this from Replit
+
+If you want the quickest path, send:
+
+Repo tree for these folders only (screenshot or text):
+
+server/ (or src/ backend)
+
+db/ or migrations
+
+templates/ (if exists)
+
+client/ or frontend folder
+
+The contents of these files (or closest equivalents):
+
+states.ts / constants.ts (where states are defined)
+
+legislativeMonitoringService.ts
+
+scheduledJobs.ts
+
+Template selection/generation route/controller
+
+Property model/schema
+
+Application model/schema

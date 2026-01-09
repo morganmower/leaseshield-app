@@ -181,7 +181,7 @@ export interface IStorage {
   getUsersByState(stateId: string): Promise<User[]>;
 
   // State operations
-  getAllStates(): Promise<State[]>;
+  getAllStates(options?: { includeInactive?: boolean }): Promise<State[]>;
   getState(id: string): Promise<State | undefined>;
   getStateById(id: string): Promise<State | undefined>;
   createState(state: InsertState): Promise<State>;
@@ -609,11 +609,14 @@ export class DatabaseStorage implements IStorage {
   }
 
   // State operations
-  async getAllStates(): Promise<State[]> {
+  async getAllStates(options?: { includeInactive?: boolean }): Promise<State[]> {
     return handleDbOperation(async () => {
-      // Use cache for states (rarely change)
-      return stateCache.getOrSet('all-states', async () => {
-        return await db.select().from(states).where(eq(states.isActive, true));
+      const cacheKey = options?.includeInactive ? 'all-states-including-inactive' : 'all-states';
+      return stateCache.getOrSet(cacheKey, async () => {
+        if (options?.includeInactive) {
+          return await db.select().from(states).orderBy(states.name);
+        }
+        return await db.select().from(states).where(eq(states.isActive, true)).orderBy(states.name);
       }, 3600); // Cache for 1 hour
     }, 'getAllStates');
   }
