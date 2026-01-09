@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useRoute, useLocation } from "wouter";
+import { useRoute, useLocation, Link } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -9,11 +9,13 @@ import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, For
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, FileText, Download, Loader2, Save, Building2 } from "lucide-react";
+import { ArrowLeft, FileText, Download, Loader2, Save, Building2, AlertCircle, ChevronDown, ChevronUp } from "lucide-react";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
-import type { Template, RentalProperty } from "@shared/schema";
+import type { Template, RentalProperty, LegalUpdate } from "@shared/schema";
 import { useState, useEffect } from "react";
+import { format } from "date-fns";
 
 interface FieldDefinition {
   id: string;
@@ -49,6 +51,7 @@ export default function DocumentWizard() {
   const templateId = params?.id;
   const documentId = params?.documentId; // Optional: for re-editing saved documents
   const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
+  const [showLegalUpdates, setShowLegalUpdates] = useState(false);
 
   // Fetch template
   const { data: template, isLoading } = useQuery<Template>({
@@ -86,6 +89,34 @@ export default function DocumentWizard() {
   // Fetch properties
   const { data: properties = [] } = useQuery<RentalProperty[]>({
     queryKey: ['/api/rental/properties'],
+  });
+
+  // Fetch legal updates that affect this template
+  const { data: relatedLegalUpdates = [] } = useQuery<LegalUpdate[]>({
+    queryKey: ["/api/legal-updates", template?.stateId, templateId],
+    queryFn: async () => {
+      if (!template?.stateId || !templateId) return [];
+      // Guard against non-browser environments
+      if (typeof window === 'undefined') return [];
+      
+      const url = `/api/legal-updates?stateId=${template.stateId}`;
+      try {
+        const token = getAccessToken();
+        const response = await fetch(url, { 
+          credentials: 'include',
+          headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+        });
+        if (!response.ok) return [];
+        const allUpdates: LegalUpdate[] = await response.json();
+        // Filter to only updates that affect this template
+        return allUpdates.filter(update => 
+          update.affectedTemplateIds?.includes(templateId)
+        );
+      } catch {
+        return [];
+      }
+    },
+    enabled: !!template?.stateId && !!templateId,
   });
 
   const fillableData = template?.fillableFormData as FillableFormData | null;
@@ -439,6 +470,99 @@ export default function DocumentWizard() {
             </div>
           </div>
         </div>
+
+        {/* Legal Updates Banner - Shows recent law changes affecting this document */}
+        {relatedLegalUpdates.length > 0 && (
+          <Card className="mb-6 border-emerald-200 bg-emerald-50/50 dark:border-emerald-800 dark:bg-emerald-950/30" data-testid="card-legal-updates-banner">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="flex-shrink-0">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900">
+                    <AlertCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                  </div>
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h3 className="text-lg font-semibold text-emerald-900 dark:text-emerald-100">
+                      This Document Reflects Recent Legal Updates
+                    </h3>
+                    <Badge 
+                      variant="default" 
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs"
+                    >
+                      {relatedLegalUpdates.length} Update{relatedLegalUpdates.length > 1 ? 's' : ''}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
+                    This template has been updated to reflect the latest legislative changes in your state.
+                  </p>
+                  
+                  {/* Toggle to show/hide details */}
+                  <button
+                    onClick={() => setShowLegalUpdates(!showLegalUpdates)}
+                    className="flex items-center gap-1 text-sm font-medium text-emerald-700 dark:text-emerald-300 mt-2 hover:text-emerald-800 dark:hover:text-emerald-200 transition-colors"
+                    data-testid="button-toggle-legal-updates"
+                  >
+                    {showLegalUpdates ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Hide Details
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        View What Changed
+                      </>
+                    )}
+                  </button>
+                  
+                  {/* Expanded legal updates list */}
+                  {showLegalUpdates && (
+                    <div className="mt-4 space-y-3">
+                      {relatedLegalUpdates.map((update) => (
+                        <div 
+                          key={update.id} 
+                          className="bg-white dark:bg-emerald-900/30 rounded-lg p-4 border border-emerald-100 dark:border-emerald-800"
+                          data-testid={`legal-update-item-${update.id}`}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <h4 className="font-medium text-foreground">{update.title}</h4>
+                            <Badge 
+                              variant={update.impactLevel === 'high' ? 'destructive' : update.impactLevel === 'medium' ? 'default' : 'secondary'}
+                              className="text-xs flex-shrink-0"
+                            >
+                              {update.impactLevel} impact
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {update.whyItMatters}
+                          </p>
+                          {update.effectiveDate && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Effective: {format(new Date(update.effectiveDate), "MMMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                      <div className="pt-2">
+                        <Link to={`/legal-updates?stateId=${template.stateId}`}>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="text-emerald-700 border-emerald-300 hover:bg-emerald-100 dark:text-emerald-300 dark:border-emerald-700 dark:hover:bg-emerald-900"
+                            data-testid="button-view-all-legal-updates"
+                          >
+                            View All Legal Updates
+                          </Button>
+                        </Link>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Success Banner */}
         {showSuccessBanner && (

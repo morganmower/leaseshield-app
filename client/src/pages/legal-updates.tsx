@@ -7,8 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel } from "lucide-react";
-import type { LegalUpdate, CaseLawMonitoring } from "@shared/schema";
+import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText } from "lucide-react";
+import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { getAccessToken } from "@/lib/queryClient";
@@ -74,6 +74,34 @@ export default function LegalUpdatesPage() {
     queryKey: ["/api/states"],
     enabled: isAuthenticated,
   });
+
+  // Collect all affected template IDs from legal updates to fetch them
+  const affectedTemplateIds = new Set(
+    (legalUpdates || []).flatMap(update => update.affectedTemplateIds || [])
+  );
+
+  // Fetch templates for the affected template IDs
+  const { data: templates } = useQuery<Template[]>({
+    queryKey: ["/api/templates", selectedState, "all-categories"],
+    enabled: isAuthenticated && !!selectedState && affectedTemplateIds.size > 0,
+    queryFn: async () => {
+      // Fetch all templates for the state (no category filter) to ensure we get all affected templates
+      const url = `/api/templates?stateId=${selectedState}`;
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Helper to get template details by ID - returns template info or a fallback
+  const getTemplateById = (templateId: string): { id: string; title: string } | undefined => {
+    const template = templates?.find(t => t.id === templateId);
+    return template ? { id: template.id, title: template.title } : undefined;
+  };
 
   if (isLoading) {
     return (
@@ -263,6 +291,31 @@ export default function LegalUpdatesPage() {
                                 <p className="text-sm text-muted-foreground">{update.afterText}</p>
                               </div>
                             </div>
+                            {/* View Updated Templates section */}
+                            {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
+                              <div className="pt-2">
+                                <h4 className="font-semibold text-sm mb-3">Updated Documents</h4>
+                                <div className="flex flex-wrap gap-2">
+                                  {update.affectedTemplateIds.map((templateId) => {
+                                    const template = getTemplateById(templateId);
+                                    if (!template) return null;
+                                    return (
+                                      <Link key={templateId} to={`/templates?highlight=${templateId}`}>
+                                        <Button
+                                          variant="outline"
+                                          size="sm"
+                                          className="gap-2"
+                                          data-testid={`button-view-template-${templateId}`}
+                                        >
+                                          <FileText className="h-4 w-4" />
+                                          {template.title.replace(` (${update.stateId})`, '')}
+                                        </Button>
+                                      </Link>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         )}
                       </Card>

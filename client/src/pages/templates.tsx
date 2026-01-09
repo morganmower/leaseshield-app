@@ -1,9 +1,10 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { useLocation, Link } from "wouter";
 import { getAccessToken } from "@/lib/queryClient";
+import type { LegalUpdate } from "@shared/schema";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -58,6 +59,8 @@ export default function Templates() {
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
+  const [highlightedTemplateId, setHighlightedTemplateId] = useState<string | null>(null);
+  const templateRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
   const isPayingMember = (user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
@@ -196,6 +199,7 @@ export default function Templates() {
     const params = new URLSearchParams(window.location.search);
     const categoryParam = params.get('category');
     const stateParam = params.get('stateId');
+    const highlightParam = params.get('highlight');
     
     if (categoryParam && categoryParam !== selectedCategory) {
       setSelectedCategory(categoryParam);
@@ -206,7 +210,39 @@ export default function Templates() {
       // If no URL param, use user's preferred state
       setSelectedState(user.preferredState);
     }
+    // Handle highlight parameter for navigating from legal updates
+    if (highlightParam) {
+      setHighlightedTemplateId(highlightParam);
+    }
   }, [user]); // Run when user loads
+
+  // Fetch legal updates to identify recently updated templates
+  const { data: legalUpdates } = useQuery<LegalUpdate[]>({
+    queryKey: ["/api/legal-updates", selectedState],
+    enabled: isAuthenticated && !!selectedState,
+    queryFn: async () => {
+      const url = `/api/legal-updates?stateId=${selectedState}`;
+      const token = getAccessToken();
+      const response = await fetch(url, { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!response.ok) return [];
+      return response.json();
+    },
+  });
+
+  // Get template IDs that have been recently updated due to legal changes (within 30 days)
+  const recentlyUpdatedTemplateIds = new Set(
+    (legalUpdates || [])
+      .filter(update => {
+        if (!update.effectiveDate) return false;
+        const thirtyDaysAgo = new Date();
+        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+        return new Date(update.effectiveDate) >= thirtyDaysAgo;
+      })
+      .flatMap(update => update.affectedTemplateIds || [])
+  );
 
   const { data: templates, isLoading: templatesLoading, error: templatesError, refetch } = useQuery<Template[]>({
     queryKey: ["/api/templates", selectedState, selectedCategory],
@@ -236,6 +272,20 @@ export default function Templates() {
       return response.json();
     },
   });
+
+  // Scroll to highlighted template when it becomes available
+  useEffect(() => {
+    if (highlightedTemplateId && templateRefs.current[highlightedTemplateId]) {
+      setTimeout(() => {
+        templateRefs.current[highlightedTemplateId]?.scrollIntoView({ 
+          behavior: 'smooth', 
+          block: 'center' 
+        });
+        // Remove highlight after a few seconds
+        setTimeout(() => setHighlightedTemplateId(null), 3000);
+      }, 300);
+    }
+  }, [highlightedTemplateId, templates]);
 
   if (isLoading) {
     return (
@@ -371,7 +421,7 @@ export default function Templates() {
     const templateDate = template.updatedAt ? new Date(template.updatedAt) : null;
     if (!templateDate) return latest;
     return !latest || templateDate > latest ? templateDate : latest;
-  }, null as Date | null);
+  }, null as Date | null) ?? null;
 
   const formatLastUpdated = (date: Date | null) => {
     if (!date) return 'Recently';
@@ -524,7 +574,7 @@ export default function Templates() {
 
             {/* Active Filters & Results */}
             <div className="flex items-center justify-between pt-2 border-t">
-              <p className="text-sm text-muted-foreground">
+              <div className="text-sm text-muted-foreground flex items-center gap-1">
                 {templatesLoading ? (
                   "Loading templates..."
                 ) : (
@@ -542,7 +592,7 @@ export default function Templates() {
                     )}
                   </>
                 )}
-              </p>
+              </div>
               {(selectedState !== "all" || selectedCategory !== "all" || searchQuery) && (
                 <Button
                   variant="ghost"
@@ -616,11 +666,16 @@ export default function Templates() {
               const CategoryIcon = getCategoryIcon(template.category);
               const categoryColor = getCategoryColor(template.category);
               const categoryBgColor = getCategoryBgColor(template.category);
+              const isHighlighted = highlightedTemplateId === template.id;
+              const isRecentlyUpdated = recentlyUpdatedTemplateIds.has(template.id);
               
               return (
                 <Card
                   key={template.id}
-                  className="overflow-hidden hover-elevate transition-all flex flex-col"
+                  ref={(el: HTMLDivElement | null) => { templateRefs.current[template.id] = el; }}
+                  className={`overflow-hidden hover-elevate transition-all flex flex-col ${
+                    isHighlighted ? 'ring-2 ring-primary ring-offset-2 ring-offset-background animate-pulse' : ''
+                  }`}
                   data-testid={`template-card-${template.id}`}
                 >
                   {/* Card Header with Category */}
@@ -656,7 +711,7 @@ export default function Templates() {
                     </p>
 
                     {/* Format Badge */}
-                    <div className="mb-4">
+                    <div className="mb-4 flex flex-wrap gap-2">
                       {template.fillableFormData ? (
                         <Badge variant="outline" className="text-xs gap-1">
                           <FileText className="h-3 w-3" />
@@ -666,6 +721,16 @@ export default function Templates() {
                         <Badge variant="outline" className="text-xs gap-1">
                           <Download className="h-3 w-3" />
                           PDF Download
+                        </Badge>
+                      )}
+                      {isRecentlyUpdated && (
+                        <Badge 
+                          variant="default" 
+                          className="text-xs gap-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                          data-testid={`badge-recently-updated-${template.id}`}
+                        >
+                          <Bell className="h-3 w-3" />
+                          Recently Updated
                         </Badge>
                       )}
                     </div>
