@@ -511,6 +511,8 @@ export const templateReviewQueue = pgTable("template_review_queue", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   templateId: varchar("template_id").notNull(),
   billId: varchar("bill_id"), // Reference to legislativeMonitoring
+  normalizedUpdateId: varchar("normalized_update_id"), // Reference to normalizedUpdates
+  jurisdiction: varchar("jurisdiction", { length: 2 }), // State code if state-specific
   // Review details
   status: reviewStatusEnum("status").default('pending'),
   priority: integer("priority").default(5), // 1-10, higher = more urgent
@@ -527,6 +529,8 @@ export const templateReviewQueue = pgTable("template_review_queue", {
   approvedAt: timestamp("approved_at"),
   rejectedAt: timestamp("rejected_at"),
   updatedTemplateSnapshot: jsonb("updated_template_snapshot"), // Stores approved changes payload
+  // Queueing
+  queuedAt: timestamp("queued_at"),
   // Publishing
   publishedAt: timestamp("published_at"),
   publishedBy: varchar("published_by"),
@@ -1876,3 +1880,115 @@ export const insertTemplateTopicRoutingSchema = createInsertSchema(templateTopic
 });
 export type InsertTemplateTopicRouting = z.infer<typeof insertTemplateTopicRoutingSchema>;
 export type TemplateTopicRouting = typeof templateTopicRouting.$inferSelect;
+
+// Source Runs - tracks each ingestion run for a source
+export const sourceRunStatusEnum = pgEnum('source_run_status', [
+  'running',
+  'success',
+  'partial',
+  'failed',
+]);
+
+export const sourceRuns = pgTable("source_runs", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  sourceKey: varchar("source_key").notNull(), // e.g., 'federal_register', 'ut_glen'
+  startedAt: timestamp("started_at").defaultNow(),
+  finishedAt: timestamp("finished_at"),
+  status: sourceRunStatusEnum("status").default('running'),
+  cursorBefore: text("cursor_before"), // Pagination state before run
+  cursorAfter: text("cursor_after"), // Pagination state after run
+  newItemsCount: integer("new_items_count").default(0),
+  errorMessage: text("error_message"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_source_runs_source").on(table.sourceKey),
+  index("IDX_source_runs_started").on(table.startedAt),
+]);
+
+export const insertSourceRunSchema = createInsertSchema(sourceRuns).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertSourceRun = z.infer<typeof insertSourceRunSchema>;
+export type SourceRun = typeof sourceRuns.$inferSelect;
+
+// Release Batches - tracks monthly publishing cycles
+export const releaseBatchStatusEnum = pgEnum('release_batch_status', [
+  'running',
+  'pending_review',
+  'publishing',
+  'published',
+  'failed',
+  'aborted',
+]);
+
+export const releaseBatches = pgTable("release_batches", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  batchType: varchar("batch_type").notNull().default('monthly'), // 'monthly', 'manual', 'hotfix'
+  period: varchar("period").notNull(), // e.g., '2026-02' for Feb 2026
+  startedAt: timestamp("started_at").defaultNow(),
+  publishedAt: timestamp("published_at"),
+  status: releaseBatchStatusEnum("status").default('running'),
+  updatesProcessed: integer("updates_processed").default(0),
+  templatesQueued: integer("templates_queued").default(0),
+  templatesApproved: integer("templates_approved").default(0),
+  templatesBuilt: integer("templates_built").default(0),
+  errorMessage: text("error_message"),
+  summaryReport: text("summary_report"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_release_batches_period").on(table.period),
+  index("IDX_release_batches_status").on(table.status),
+]);
+
+export const insertReleaseBatchSchema = createInsertSchema(releaseBatches).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertReleaseBatch = z.infer<typeof insertReleaseBatchSchema>;
+export type ReleaseBatch = typeof releaseBatches.$inferSelect;
+
+// Document Builds - tracks DOCX/PDF generation for templates
+export const documentBuildStatusEnum = pgEnum('document_build_status', [
+  'queued',
+  'building',
+  'success',
+  'failed',
+]);
+
+export const documentBuilds = pgTable("document_builds", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  templateId: varchar("template_id").notNull().references(() => templates.id),
+  templateVersion: integer("template_version").notNull(),
+  batchId: varchar("batch_id").references(() => releaseBatches.id),
+  docxPath: text("docx_path"),
+  pdfPath: text("pdf_path"),
+  docxChecksum: text("docx_checksum"),
+  pdfChecksum: text("pdf_checksum"),
+  status: documentBuildStatusEnum("status").default('queued'),
+  errorMessage: text("error_message"),
+  buildStartedAt: timestamp("build_started_at"),
+  buildFinishedAt: timestamp("build_finished_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_document_builds_template").on(table.templateId),
+  index("IDX_document_builds_batch").on(table.batchId),
+  index("IDX_document_builds_status").on(table.status),
+]);
+
+export const insertDocumentBuildSchema = createInsertSchema(documentBuilds).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertDocumentBuild = z.infer<typeof insertDocumentBuildSchema>;
+export type DocumentBuild = typeof documentBuilds.$inferSelect;
+
+// Update status enum for normalized updates workflow
+export const updateWorkflowStatusEnum = pgEnum('update_workflow_status', [
+  'new',
+  'queued',
+  'in_review',
+  'approved',
+  'published',
+  'ignored',
+]);

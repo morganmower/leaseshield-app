@@ -3435,6 +3435,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Manually trigger nightly ingest (admin only)
+  app.post('/api/admin/legislative-monitoring/ingest', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      console.log('🌙 Manually triggered legislative ingest by admin:', user.email);
+      
+      const { runNightlyIngest } = await import('./legislation/ingestService');
+      const result = await runNightlyIngest();
+
+      return res.json({
+        success: true,
+        message: `Ingest complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`,
+        ...result,
+      });
+    } catch (error) {
+      console.error('Error running legislative ingest:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Something went wrong. Please try again."
+      });
+    }
+  });
+
+  // Manually trigger monthly publish (admin only)
+  app.post('/api/admin/legislative-monitoring/publish', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      console.log('📦 Manually triggered legislative publish by admin:', user.email);
+      
+      const { runMonthlyPublish } = await import('./legislation/publishService');
+      const result = await runMonthlyPublish('manual');
+
+      return res.json({
+        success: true,
+        message: `Publish complete: ${result.updatesProcessed} updates, ${result.templatesQueued} templates queued`,
+        ...result,
+      });
+    } catch (error) {
+      console.error('Error running legislative publish:', error);
+      return res.status(500).json({ 
+        success: false,
+        message: "Something went wrong. Please try again."
+      });
+    }
+  });
+
+  // Get legislative source status (admin only)
+  app.get('/api/admin/legislative-sources', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { legislationSources, sourceRuns, releaseBatches } = await import('@shared/schema');
+      const { db } = await import('./db');
+      const { desc, eq } = await import('drizzle-orm');
+
+      const sources = await db.select().from(legislationSources);
+      const recentRuns = await db.select()
+        .from(sourceRuns)
+        .orderBy(desc(sourceRuns.startedAt))
+        .limit(50);
+      const recentBatches = await db.select()
+        .from(releaseBatches)
+        .orderBy(desc(releaseBatches.startedAt))
+        .limit(10);
+
+      return res.json({
+        sources,
+        recentRuns,
+        recentBatches,
+      });
+    } catch (error) {
+      console.error('Error fetching legislative sources:', error);
+      return res.status(500).json({ message: 'Failed to fetch sources' });
+    }
+  });
+
   // Automated cron endpoint for legislative monitoring (protected by secret key)
   app.post('/api/cron/legislative-monitoring', async (req, res) => {
     try {

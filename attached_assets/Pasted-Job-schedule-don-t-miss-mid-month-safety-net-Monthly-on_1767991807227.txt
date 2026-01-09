@@ -1,0 +1,302 @@
+Job schedule + “don’t miss mid-month” safety net
+
+Monthly on the 1st is great for predictable cadence, but some sources (Federal Register, Utah GLEN) can publish impactful items mid-month.
+
+Do this:
+
+Monthly “publish cycle” job (1st @ 2:15am)
+Purpose: create the monthly release batch, queue template reviews, regenerate docs, notify.
+
+Daily “ingest + detect” job (every night @ 1:30am)
+Purpose: pull the 8 sources and store new items + diffs so your monthly job is fast and doesn’t miss anything.
+
+So your monthly job becomes: “look at everything discovered since last cycle and publish it cleanly.”
+
+2) Data model you’ll want (minimal but complete)
+A) Source ingestion tracking
+
+source_runs
+
+id
+
+source_key (e.g., federal_register, ut_glen)
+
+started_at, finished_at
+
+status (success|partial|failed)
+
+cursor_before, cursor_after (string/json)
+
+new_items_count
+
+error (text)
+
+B) Raw updates + normalized updates
+
+raw_updates
+
+id
+
+source_key
+
+external_id (or URL hash)
+
+published_at
+
+title
+
+url
+
+content_text (or extracted text)
+
+content_hash
+
+unique index: (source_key, external_id) OR (source_key, url)
+
+normalized_updates
+
+id
+
+jurisdiction (federal, utah, national)
+
+topic_tags (array) e.g. ["NAHASDA","IHBG","24_CFR_1000"]
+
+impact_score (0–100)
+
+summary_plain
+
+effective_date (nullable)
+
+linked_raw_update_ids (array)
+
+status (new|queued|published|ignored)
+
+C) Template review + document builds
+
+template_review_queue
+
+id
+
+template_id
+
+jurisdiction
+
+reason (text)
+
+normalized_update_id
+
+queued_at
+
+status (queued|in_review|approved|rejected)
+
+reviewer_user_id (nullable)
+
+review_notes (nullable)
+
+document_builds
+
+id
+
+template_id
+
+template_version
+
+build_batch_id (monthly run id)
+
+docx_path
+
+pdf_path
+
+status (building|success|failed)
+
+error (nullable)
+
+created_at
+
+release_batches
+
+id
+
+batch_type (monthly)
+
+period (2026-02)
+
+started_at, published_at
+
+status (running|published|failed|aborted)
+
+This is the backbone that makes the system explainable: “what changed, why, who approved, what got regenerated.”
+
+3) The monthly workflow (exact order of operations)
+Step 1 — Start batch + lock
+
+Create release_batches row with status running
+
+Acquire a lock (DB advisory lock or redis lock) so you don’t run twice.
+
+Step 2 — Pull “new since last batch”
+
+Query normalized_updates where:
+
+status = new
+
+published_at (or raw linked) > last batch cutoff
+
+If none → mark batch “published” with “no changes” and exit.
+
+Step 3 — Determine affected templates (rule-based mapping)
+
+Create a mapping table or config like:
+
+NAHASDA / 24 CFR 1000 → templates: tribal lease addendum, tribal notices, compliance checklists, etc.
+
+Utah landlord-tenant / eviction / notices → UT lease templates + UT notices
+
+When an update hits, compute:
+
+which jurisdictions
+
+which template families
+
+severity / must-review vs FYI
+
+Step 4 — Queue template reviews
+
+Insert into template_review_queue for each affected template:
+
+status = queued
+
+reference the normalized_update_id
+
+include reason like “24 CFR 1000 update detected re: eligibility definitions”
+
+Step 5 — Review gate (don’t auto-publish legal text blindly)
+
+This is the key: You should not auto-regenerate legally sensitive templates without a review checkpoint, even if the job is automated.
+
+So the monthly job can do either:
+
+Option A (recommended): auto-generate “proposed changes” drafts, but only regenerate/publish final docs after approved
+
+Option B: auto-regenerate only non-legal “guidance docs” (checklists, explainers), require approval for leases/notices
+
+Step 6 — Regenerate DOCX + PDF (after approval)
+
+For each approved template:
+
+increment template_version
+
+generate DOCX
+
+generate PDF from DOCX
+
+save to storage paths
+
+write document_builds row
+
+Step 7 — Publish + notify
+
+When all builds succeed:
+
+mark batch published
+
+mark updates published
+
+send email notifications:
+
+admins: full changelog + failed builds
+
+users: only updates relevant to their state/jurisdiction + “what changed” summary
+
+If builds partially fail:
+
+keep batch running or mark failed depending on threshold
+
+notify admins immediately
+
+do not publish broken templates
+
+4) Failure handling rules (so you don’t corrupt your library)
+
+If ingestion fails for 1–2 sources: batch can continue, but mark partial and notify admins.
+
+If document build fails for a template:
+
+keep prior version active
+
+mark build failed
+
+notify admins
+
+template stays “approved but not built” until rerun
+
+Add idempotency:
+
+unique batch id
+
+don’t requeue same (template_id + normalized_update_id) twice
+
+5) Email notifications (what to send)
+Users
+
+Subject: “LeaseShield: February compliance updates (UT + NAHASDA)”
+
+Body:
+
+3–5 bullets “what changed” (plain English)
+
+links to updated docs
+
+“effective date” if known
+
+“why you should care” (risk/penalty/denial risk)
+
+Admins
+
+list of all updates found
+
+all templates queued
+
+approvals pending
+
+build successes/failures with stack traces
+
+6) How this plugs into your scheduledJobs.ts pattern
+
+Add two jobs:
+
+nightlyIngestJob()
+
+loops sources
+
+persists raw_updates
+
+generates/updates normalized_updates
+
+never touches templates/docs
+
+monthlyPublishJob()
+
+creates batch
+
+queues reviews
+
+optionally generates draft diffs
+
+for approved items: triggers build pipeline + notifications
+
+If you already have a job runner pattern, this is just two new entries + a few service modules.
+
+7) The one thing I’d change in your plan
+
+Your plan says: “queue affected templates for review, regenerate documents in both formats, and notify users” all in one run.
+
+I’d split it into:
+
+Monthly run = queue + drafts + notify admins
+
+Publish run (can still be automated) = only approved templates get rebuilt + users notified
+
+That preserves speed and protects you from accidentally “auto-changing legal documents” without a human checkpoint.
+
+If you paste your current scheduledJobs.ts structure (or just the shape: cron library + how you register jobs), I’ll write the exact job definitions + service function signatures to match your repo conventions.

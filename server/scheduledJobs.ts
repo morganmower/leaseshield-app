@@ -10,6 +10,8 @@ import { and, eq, lt, gte, sql } from "drizzle-orm";
 import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
+import { runNightlyIngest } from "./legislation/ingestService";
+import { runMonthlyPublish } from "./legislation/publishService";
 
 // Landlord tips pool - rotates biweekly (every 2 weeks)
 export const LANDLORD_TIPS = [
@@ -121,6 +123,8 @@ export class ScheduledJobs {
   private uploadCleanupInterval: NodeJS.Timeout | null = null;
   private weeklyTipsInterval: NodeJS.Timeout | null = null;
   private databaseBackupInterval: NodeJS.Timeout | null = null;
+  private nightlyIngestInterval: NodeJS.Timeout | null = null;
+  private monthlyPublishInterval: NodeJS.Timeout | null = null;
   // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
@@ -880,6 +884,36 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
+  // Run nightly ingest to pull updates from all 8 legislative sources
+  async runNightlyIngestJob(): Promise<void> {
+    try {
+      console.log('🌙 Running nightly legislative ingest...');
+      const result = await runNightlyIngest();
+      console.log(`✅ Nightly ingest complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`);
+    } catch (error) {
+      console.error('❌ Error in nightly ingest:', error);
+    }
+  }
+
+  // Run monthly publish to process accumulated updates and queue template reviews
+  async runMonthlyPublishJob(): Promise<void> {
+    try {
+      const now = new Date();
+      const dayOfMonth = now.getDate();
+
+      // Only run on the 1st of the month
+      if (dayOfMonth !== 1) {
+        return;
+      }
+
+      console.log('📦 Running monthly legislative publish...');
+      const result = await runMonthlyPublish('monthly');
+      console.log(`✅ Monthly publish complete: ${result.updatesProcessed} updates, ${result.templatesQueued} templates queued`);
+    } catch (error) {
+      console.error('❌ Error in monthly publish:', error);
+    }
+  }
+
   // Start all scheduled jobs
   async start(): Promise<void> {
     console.log('🚀 Starting scheduled jobs...');
@@ -950,6 +984,21 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.runMonthlyDatabaseBackup(), 7 * 60 * 1000); // First check after 7 minutes
 
+    // Nightly ingest - runs daily at ~1:30am (every 24 hours)
+    this.nightlyIngestInterval = setInterval(
+      () => this.runNightlyIngestJob(),
+      24 * 60 * 60 * 1000 // Every 24 hours
+    );
+    // Don't run on startup - only on schedule (8 minutes after start for first run)
+    setTimeout(() => this.runNightlyIngestJob(), 8 * 60 * 1000);
+
+    // Monthly publish - runs on the 1st at ~2:15am (check daily)
+    this.monthlyPublishInterval = setInterval(
+      () => this.runMonthlyPublishJob(),
+      24 * 60 * 60 * 1000 // Check daily
+    );
+    setTimeout(() => this.runMonthlyPublishJob(), 9 * 60 * 1000); // First check after 9 minutes
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1000,6 +1049,16 @@ Manage preferences: ${baseUrl}/settings
     if (this.databaseBackupInterval) {
       clearInterval(this.databaseBackupInterval);
       this.databaseBackupInterval = null;
+    }
+
+    if (this.nightlyIngestInterval) {
+      clearInterval(this.nightlyIngestInterval);
+      this.nightlyIngestInterval = null;
+    }
+
+    if (this.monthlyPublishInterval) {
+      clearInterval(this.monthlyPublishInterval);
+      this.monthlyPublishInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');
