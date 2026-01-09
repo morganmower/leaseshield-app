@@ -153,6 +153,33 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 3,
   },
+  {
+    stateId: "TX",
+    title: "Texas Lease Disclosures Checklist",
+    summary: "Complete checklist of all required lease disclosures under Texas Property Code and federal law",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Federal requirement for pre-1978 properties. Must provide EPA pamphlet and signed disclosure before lease execution.",
+        },
+        {
+          title: "Flood History Disclosure",
+          content: "Per Texas Property Code §92.0135, must disclose any flooding in past 5 years and whether property is in a 100-year floodplain.",
+        },
+        {
+          title: "Security Device Disclosure",
+          content: "Must describe all installed security devices (deadbolts, window locks, peepholes) and their condition.",
+        },
+        {
+          title: "Tenant Rights Information",
+          content: "Lease must include notice of tenant rights under Texas Property Code including repair remedies and security deposit rights.",
+        },
+      ],
+    },
+    sortOrder: 5,
+  },
 
   // NORTH DAKOTA Compliance Cards
   {
@@ -223,6 +250,33 @@ const comprehensiveComplianceCards = [
       ],
     },
     sortOrder: 3,
+  },
+  {
+    stateId: "ND",
+    title: "North Dakota Lease Disclosures",
+    summary: "Required disclosures under N.D.C.C. Chapter 47-16 and federal fair housing law",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Federal requirement for pre-1978 properties. Provide EPA pamphlet and disclosure form before lease signing.",
+        },
+        {
+          title: "Landlord/Agent Identity",
+          content: "Per N.D.C.C. §47-16-07.1, lease must identify the owner or authorized agent with address for legal notices.",
+        },
+        {
+          title: "Security Deposit Terms",
+          content: "Must clearly state deposit amount, conditions for deductions, and 30-day return timeline in the lease.",
+        },
+        {
+          title: "Utility Arrangements",
+          content: "Clearly disclose which utilities are included in rent and which are tenant responsibility.",
+        },
+      ],
+    },
+    sortOrder: 5,
   },
 
   // SOUTH DAKOTA Compliance Cards
@@ -366,6 +420,33 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 3,
   },
+  {
+    stateId: "WY",
+    title: "Fair Housing Protections",
+    summary: "Wyoming follows federal Fair Housing Act with state-level enforcement through the Wyoming Department of Workforce Services",
+    category: "fair_housing",
+    content: {
+      sections: [
+        {
+          title: "Federal Protected Classes",
+          content: "Cannot discriminate based on race, color, national origin, religion, sex, familial status, or disability per the federal Fair Housing Act.",
+        },
+        {
+          title: "State Enforcement",
+          content: "Wyoming Department of Workforce Services handles housing discrimination complaints and works with HUD on enforcement.",
+        },
+        {
+          title: "Reasonable Accommodations",
+          content: "Must make reasonable accommodations for tenants with disabilities, including allowing service animals and emotional support animals with proper documentation.",
+        },
+        {
+          title: "Advertising Compliance",
+          content: "All rental advertising must comply with Fair Housing guidelines. Avoid language that suggests preference for or against any protected class.",
+        },
+      ],
+    },
+    sortOrder: 4,
+  },
 
   // CALIFORNIA Compliance Cards
   {
@@ -457,7 +538,7 @@ const comprehensiveComplianceCards = [
     stateId: "CA",
     title: "Rent Control & Tenant Protections",
     summary: "California's Tenant Protection Act (AB 1482) provides statewide rent caps and just cause protections",
-    category: "fair_housing",
+    category: "rent_control",
     content: {
       sections: [
         {
@@ -475,6 +556,33 @@ const comprehensiveComplianceCards = [
       ],
     },
     sortOrder: 4,
+  },
+  {
+    stateId: "CA",
+    title: "Fair Housing Protections",
+    summary: "California Fair Employment and Housing Act (FEHA) provides extensive fair housing protections beyond federal law",
+    category: "fair_housing",
+    content: {
+      sections: [
+        {
+          title: "Expanded Protected Classes",
+          content: "California adds protections for sexual orientation, gender identity, gender expression, marital status, source of income, and genetic information.",
+        },
+        {
+          title: "Source of Income Protection",
+          content: "Cannot discriminate against tenants using Section 8 vouchers or other lawful sources of income including government assistance.",
+        },
+        {
+          title: "Criminal History Restrictions",
+          content: "Cannot have blanket policies rejecting all applicants with criminal records. Must conduct individualized assessment.",
+        },
+        {
+          title: "Immigration Status",
+          content: "Cannot inquire about immigration or citizenship status, or require specific immigration documents.",
+        },
+      ],
+    },
+    sortOrder: 5,
   },
 
   // VIRGINIA Compliance Cards

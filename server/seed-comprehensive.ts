@@ -1102,6 +1102,26 @@ const comprehensiveTemplates = [
     version: 1,
     sortOrder: 40,
   },
+
+  // LATE RENT NOTICE TEMPLATES - States Missing Them
+  {
+    title: "3-Day Notice to Pay Rent (OH)",
+    description: "Ohio Revised Code compliant notice demanding rent payment before eviction proceedings",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "OH",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "3-Day Notice to Pay Rent (ID)",
+    description: "Idaho Code compliant notice for non-payment of rent with proper service requirements",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "ID",
+    version: 1,
+    sortOrder: 30,
+  },
 ];
 
 async function seedComprehensiveTemplates() {
