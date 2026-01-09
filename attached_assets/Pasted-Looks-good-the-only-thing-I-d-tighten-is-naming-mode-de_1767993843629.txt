@@ -1,0 +1,85 @@
+Looks good — the only thing I’d tighten is naming + mode defaults so it’s impossible to accidentally publish, and you don’t end up with two “monthly” concepts.
+
+Here are the final tweaks I’d make before you code it:
+
+Small adjustments to your plan (worth doing)
+1) Mode names: make “safe” explicit
+
+Use:
+
+mode=queueOnly (default)
+
+mode=ingestOnly
+
+mode=publishApproved
+
+Avoid safe as a mode name — it’s ambiguous later.
+
+Default behavior should always be queueOnly.
+
+2) Put the approval gate in two places (belt + suspenders)
+
+You already said publishApproved() only publishes approved items — perfect.
+Also add a guard in the route layer:
+
+If mode=publishApproved but there are 0 approved items, return success with publishedCount=0 (don’t error).
+
+If someone tries mode=publishAll or anything else, return 400.
+
+3) Idempotency: dedupe review queue inserts
+
+In queueFromLatestIngest():
+
+enforce a unique constraint like:
+
+(template_id, normalized_update_id) or
+
+(template_id, update_fingerprint)
+So re-running /run doesn’t spam the queue.
+
+4) Keep old runMonthlyMonitoring() but hard-disable it
+
+Instead of deleting immediately, keep it for a week but make it throw:
+
+throw new Error("Deprecated: use ingestNow()/queueFromLatestIngest()/publishApproved()");
+
+
+This prevents a hidden caller (cron, another route, an old admin button) from silently doing risky publishing.
+
+5) Lock naming: separate ingest vs publish (optional)
+
+If your ingest takes a while and you want to allow publish separately, use two locks:
+
+legislative-ingest
+
+legislative-publish
+
+If you want maximum safety/simplicity, one lock legislative-monitoring is fine.
+
+Your summary (approved version)
+
+✅ Add job lock utility (server/utils/jobLock.ts)
+✅ Refactor /run as orchestrator with mode query param (default queueOnly)
+✅ Update /ingest and /publish to use the lock + synchronous results
+✅ Add service methods:
+
+ingestNow() → wraps runNightlyIngest()
+
+queueFromLatestIngest() → queues review entries from new normalized updates (deduped)
+
+publishApproved() → publishes only approved items
+✅ Remove/disable old runMonthlyMonitoring() from routes/schedules
+
+If you want one more “pro” touch: have /run return a consistent payload shape:
+
+{
+  "success": true,
+  "mode": "queueOnly",
+  "result": {
+    "ingest": { "sources": {...}, "newRaw": 12, "newNormalized": 4 },
+    "queue": { "updatesQueued": 3, "templatesQueued": 9 }
+  }
+}
+
+
+That makes your admin UI trivial.
