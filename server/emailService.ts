@@ -780,7 +780,7 @@ If you'd like to:
 - Cancel your subscription: ${baseUrl}/subscription
 
 Your subscription includes:
-- State-specific legal templates for all 14 states
+- State-specific legal templates for all 15 states
 - Real-time compliance updates and legal change notifications
 - AI credit report decoder and tenant screening resources
 - Expert guidance for handling tenant issues
@@ -827,7 +827,7 @@ The LeaseShield App Team
       <div class="feature-list">
         <p style="margin-top: 0;"><strong>Your subscription includes:</strong></p>
         <ul style="margin-bottom: 0;">
-          <li>State-specific legal templates for all 14 states</li>
+          <li>State-specific legal templates for all 15 states</li>
           <li>Real-time compliance updates and legal change notifications</li>
           <li>AI credit report decoder and tenant screening resources</li>
           <li>Expert guidance for handling tenant issues</li>

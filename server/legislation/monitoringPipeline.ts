@@ -298,12 +298,12 @@ export async function runTribalMonitoring(): Promise<MonitoringRunResult> {
 }
 
 export async function runLandlordTenantMonitoring(): Promise<MonitoringRunResult> {
-  console.log('\n🏘️ Starting Landlord-Tenant Monitoring (14 states)\n');
+  console.log('\n🏘️ Starting Landlord-Tenant Monitoring (15 states)\n');
   
   return runMonitoringPipeline({
     sourceIds: ['legiscan', 'pluralPolicy', 'federalRegister', 'courtListener'],
     topics: ['landlord_tenant', 'fair_housing', 'security_deposit', 'eviction'],
-    states: ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL'],
+    states: ['UT', 'TX', 'ND', 'SD', 'NC', 'OH', 'MI', 'ID', 'WY', 'CA', 'VA', 'NV', 'AZ', 'FL', 'IL'],
     includeTribal: false,
   });
 }

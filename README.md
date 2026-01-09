@@ -182,7 +182,7 @@ Utah (UT), Texas (TX), North Dakota (ND), South Dakota (SD), North Carolina (NC)
 ## Roadmap
 
 ### Phase 1 — Launch (Current)
-- Core templates for 14 states
+- Core templates for 15 states
 - Compliance cards
 - Credit Report Decoder
 - Adverse action templates

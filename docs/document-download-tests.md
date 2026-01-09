@@ -193,10 +193,10 @@ wait
 
 After any changes to document generation:
 
-- [ ] Download PDF for Fixed-term Lease Agreement (all 14 states)
-- [ ] Download DOCX for Fixed-term Lease Agreement (all 14 states)
-- [ ] Download PDF for Month-to-Month Lease Agreement (all 14 states)
-- [ ] Download DOCX for Month-to-Month Lease Agreement (all 14 states)
+- [ ] Download PDF for Fixed-term Lease Agreement (all 15 states)
+- [ ] Download DOCX for Fixed-term Lease Agreement (all 15 states)
+- [ ] Download PDF for Month-to-Month Lease Agreement (all 15 states)
+- [ ] Download DOCX for Month-to-Month Lease Agreement (all 15 states)
 - [ ] Download blank Rental Application (PDF and DOCX)
 - [ ] Download Move-In Checklist (PDF and DOCX)
 - [ ] Download Move-Out Checklist (PDF and DOCX)

@@ -43,6 +43,7 @@ const STATE_NAMES: Record<string, string> = {
   NV: 'Nevada',
   AZ: 'Arizona',
   FL: 'Florida',
+  IL: 'Illinois',
 };
 
 const DEPOSIT_RETURN_DAYS: Record<string, string> = {
@@ -60,6 +61,7 @@ const DEPOSIT_RETURN_DAYS: Record<string, string> = {
   NV: '30',
   AZ: '14',
   FL: '15-60',
+  IL: '30-45',
 };
 
 function escapeHtml(unsafe: string): string {
@@ -134,7 +136,7 @@ const HR = (): Paragraph =>
     spacing: { before: 200, after: 200 },
   });
 
-// NOTE: This function provides comprehensive state-specific disclosures for all 14 states.
+// NOTE: This function provides comprehensive state-specific disclosures for all 15 states.
 // Includes mold, radon, bed bugs, and all required statutory disclosures per state law.
 function getStateProvisionsParagraphs(stateId: string, depositDays: string): Paragraph[] {
   const stateName = STATE_NAMES[stateId] || stateId;
@@ -238,6 +240,16 @@ function getStateProvisionsParagraphs(stateId: string, depositDays: string): Par
       { title: "Fair Housing:", text: " In accordance with the Wyoming Fair Housing Act (Wyo. Stat. 40-26-101), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability." },
       { title: "Security Deposit (W.S. 1-21-1207-1208):", text: " Deposit must be returned within 30 days (or 15 days if no deductions). Deposit may not exceed two months rent unless otherwise agreed." },
       { title: "Entry Notice:", text: " Wyoming law does not specify minimum notice, but reasonable notice is required except in emergencies." },
+      { title: "Lead-Based Paint:", text: " Disclosure required for pre-1978 properties." },
+    ],
+    IL: [
+      { title: "Fair Housing (Illinois Human Rights Act):", text: " In accordance with 775 ILCS 5/, discrimination is prohibited based on race, color, religion, sex, national origin, ancestry, age, order of protection status, marital status, physical or mental disability, military status, sexual orientation, gender identity, or unfavorable discharge from military service." },
+      { title: "Source of Income Protection:", text: " Illinois law prohibits discrimination based on lawful source of income, including housing subsidies such as Section 8 vouchers." },
+      { title: "Security Deposit (765 ILCS 710):", text: " For properties with 5+ units, deposit may not exceed 1.5 months rent. Must be returned within 30 days if no deductions, or 45 days with itemized statement. Chicago landlords must pay interest per Chicago RLTO." },
+      { title: "Radon Disclosure (765 ILCS 742):", text: " RADON DISCLOSURE: Radon is a Class A human carcinogen and the leading cause of lung cancer among non-smokers. The Illinois Emergency Management Agency recommends testing for radon." },
+      { title: "Carbon Monoxide Detector Notice (430 ILCS 135):", text: " Landlord certifies that carbon monoxide detectors are installed in accordance with state law." },
+      { title: "Entry Notice:", text: " Landlord shall provide at least 24 hours notice before entering except in emergencies." },
+      { title: "Chicago RLTO (If Applicable):", text: " If property is located in Chicago, additional tenant protections apply under the Chicago Residential Landlord and Tenant Ordinance." },
       { title: "Lead-Based Paint:", text: " Disclosure required for pre-1978 properties." },
     ],
   };
@@ -615,7 +627,7 @@ ${getStateProvisionsHtml(stateId, depositDays)}
 </html>`;
 }
 
-// NOTE: This function provides comprehensive state-specific disclosures for all 14 states (HTML version for PDF).
+// NOTE: This function provides comprehensive state-specific disclosures for all 15 states (HTML version for PDF).
 // Includes mold, radon, bed bugs, and all required statutory disclosures per state law.
 function getStateProvisionsHtml(stateId: string, depositDays: string): string {
   const provisions: Record<string, string> = {
@@ -690,6 +702,14 @@ function getStateProvisionsHtml(stateId: string, depositDays: string): string {
     WY: `<p><strong>Fair Housing:</strong> In accordance with the Wyoming Fair Housing Act (Wyo. Stat. 40-26-101), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability.</p>
 <p><strong>Security Deposit (W.S. 1-21-1207-1208):</strong> Deposit must be returned within 30 days (or 15 days if no deductions). Deposit may not exceed two months rent unless otherwise agreed.</p>
 <p><strong>Entry Notice:</strong> Wyoming law does not specify minimum notice, but reasonable notice is required except in emergencies.</p>
+<p><strong>Lead-Based Paint:</strong> Disclosure required for pre-1978 properties.</p>`,
+    IL: `<p><strong>Fair Housing (Illinois Human Rights Act):</strong> In accordance with 775 ILCS 5/, discrimination is prohibited based on race, color, religion, sex, national origin, ancestry, age, order of protection status, marital status, physical or mental disability, military status, sexual orientation, gender identity, or unfavorable discharge from military service.</p>
+<p><strong>Source of Income Protection:</strong> Illinois law prohibits discrimination based on lawful source of income, including housing subsidies such as Section 8 vouchers.</p>
+<p><strong>Security Deposit (765 ILCS 710):</strong> For properties with 5+ units, deposit may not exceed 1.5 months rent. Must be returned within 30 days if no deductions, or 45 days with itemized statement. Chicago landlords must pay interest per Chicago RLTO.</p>
+<p><strong>Radon Disclosure (765 ILCS 742):</strong> RADON DISCLOSURE: Radon is a Class A human carcinogen and the leading cause of lung cancer among non-smokers. The Illinois Emergency Management Agency recommends testing for radon.</p>
+<p><strong>Carbon Monoxide Detector Notice (430 ILCS 135):</strong> Landlord certifies that carbon monoxide detectors are installed in accordance with state law.</p>
+<p><strong>Entry Notice:</strong> Landlord shall provide at least 24 hours notice before entering except in emergencies.</p>
+<p><strong>Chicago RLTO (If Applicable):</strong> If property is located in Chicago, additional tenant protections apply under the Chicago Residential Landlord and Tenant Ordinance.</p>
 <p><strong>Lead-Based Paint:</strong> Disclosure required for pre-1978 properties.</p>`,
   };
 

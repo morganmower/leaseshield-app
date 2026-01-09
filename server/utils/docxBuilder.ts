@@ -34,6 +34,7 @@ export const STATE_NAMES: Record<string, string> = {
   NV: 'Nevada',
   AZ: 'Arizona',
   FL: 'Florida',
+  IL: 'Illinois',
 };
 
 export const H1 = (text: string): Paragraph =>
@@ -336,6 +337,26 @@ export function getStateDisclosures(stateId: string): Paragraph[] {
       disclosures.push(P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."));
       disclosures.push(H3("25.7 Military Personnel Rights"));
       disclosures.push(P("Members of the armed forces have additional termination rights under the federal Servicemembers Civil Relief Act and Virginia law."));
+      break;
+    case 'IL':
+      disclosures.push(H3("25.1 Illinois Landlord and Tenant Act"));
+      disclosures.push(P("This Lease is governed by applicable provisions of the Illinois Compiled Statutes, including 765 ILCS 705 (Security Deposit Return Act) and 765 ILCS 742 (Radon Awareness Act)."));
+      disclosures.push(H3("25.2 Fair Housing Compliance"));
+      disclosures.push(P("In accordance with the Illinois Human Rights Act (775 ILCS 5/), discrimination is prohibited based on race, color, religion, sex, national origin, ancestry, age, order of protection status, marital status, physical or mental disability, military status, sexual orientation, gender identity, or unfavorable discharge from military service."));
+      disclosures.push(H3("25.3 Source of Income Protection"));
+      disclosures.push(P("Illinois law prohibits discrimination based on lawful source of income, including housing subsidies such as Section 8 vouchers."));
+      disclosures.push(H3("25.4 Security Deposit (765 ILCS 710)"));
+      disclosures.push(P("For properties with 5 or more units, security deposit may not exceed 1.5 months' rent. Landlord shall return the deposit within 30 days if no deductions, or 45 days with an itemized statement of deductions. Chicago landlords must pay interest on deposits per the Chicago RLTO."));
+      disclosures.push(H3("25.5 Radon Gas Disclosure (765 ILCS 742)"));
+      disclosures.push(P("RADON DISCLOSURE: Radon is a Class A human carcinogen and the leading cause of lung cancer among non-smokers. The Illinois Emergency Management Agency recommends testing for radon. The seller or lessor may provide test results or the buyer/lessee may request that testing be performed."));
+      disclosures.push(H3("25.6 Carbon Monoxide Detector Notice"));
+      disclosures.push(P("Per the Illinois Carbon Monoxide Alarm Detector Act (430 ILCS 135/), the Landlord certifies that carbon monoxide detectors are installed in accordance with state law."));
+      disclosures.push(H3("25.7 Lead-Based Paint Disclosure"));
+      disclosures.push(P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."));
+      disclosures.push(H3("25.8 Entry Notice"));
+      disclosures.push(P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."));
+      disclosures.push(H3("25.9 Chicago RLTO (If Applicable)"));
+      disclosures.push(P("If the property is located in Chicago, additional tenant protections apply under the Chicago Residential Landlord and Tenant Ordinance, including required interest on security deposits, specific move-in/move-out procedures, and additional disclosure requirements."));
       break;
     default:
       disclosures.push(H3("25.1 Fair Housing Compliance"));

@@ -90,7 +90,7 @@ This document tracks the implementation status of all features for LeaseShield A
 - [x] Fillable online forms (Document Wizard)
 - [x] Multi-step form wizard with validation
 - [x] Server-side PDF generation (Puppeteer)
-- [x] State-specific versions (14 states)
+- [x] State-specific versions (15 states)
 - [x] Template categorization and filtering
 - [x] Template version tracking
 - [x] Template search functionality
@@ -121,6 +121,7 @@ This document tracks the implementation status of all features for LeaseShield A
 - [x] Nevada (NV)
 - [x] Arizona (AZ)
 - [x] Florida (FL)
+- [x] Illinois (IL)
 
 ### Compliance Features
 - [x] State "Compliance Card" pages
@@ -485,7 +486,7 @@ This document tracks the implementation status of all features for LeaseShield A
 ## Notes
 
 - Platform is fully functional for core use cases
-- All 14 states have templates and compliance content
+- All 15 states have templates and compliance content
 - AI features are operational
 - Stripe billing is live
 - Legislative monitoring is automated
