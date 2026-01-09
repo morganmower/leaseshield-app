@@ -7197,7 +7197,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   };
 
   // Export all database tables as JSON (admin only)
-  app.get('/api/admin/database-export', requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/database-export', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const exportData: Record<string, any> = {
         exportedAt: new Date().toISOString(),
@@ -7279,7 +7279,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // Get list of tables and their record counts (admin only)
-  app.get('/api/admin/database-stats', requireAdmin, async (req: any, res) => {
+  app.get('/api/admin/database-stats', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const stats: { name: string; count: number }[] = [];
       
