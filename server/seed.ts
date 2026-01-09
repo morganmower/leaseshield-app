@@ -20,6 +20,7 @@ async function seedDatabase() {
     { id: "NV", name: "Nevada", description: "State-specific templates and compliance for Nevada landlords" },
     { id: "AZ", name: "Arizona", description: "State-specific templates and compliance for Arizona landlords" },
     { id: "FL", name: "Florida", description: "State-specific templates and compliance for Florida landlords" },
+    { id: "IL", name: "Illinois", description: "State-specific templates and compliance for Illinois landlords" },
   ];
 
   for (const state of statesToCreate) {

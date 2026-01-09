@@ -1,7 +1,7 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect investments and ensure legal compliance. The platform currently supports 14 states (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL).
+LeaseShield App is a subscription-based SaaS platform for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect investments and ensure legal compliance. The platform currently supports 15 states (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL, IL).
 
 ## Project Documentation
 
