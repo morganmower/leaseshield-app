@@ -1131,7 +1131,8 @@ async function seedComprehensiveTemplates() {
   let errors = 0;
 
   for (const template of comprehensiveTemplates) {
-    const key = generateTemplateKey(template.category, template.templateType, template.title);
+    // Prefer explicit key if provided; fallback to generated key for legacy migration
+    const key = (template as any).key || generateTemplateKey(template.category, template.templateType, template.title);
     const version = template.version ?? 1;
     try {
       await db.insert(templates)
@@ -1148,6 +1149,13 @@ async function seedComprehensiveTemplates() {
             category: template.category,
             templateType: template.templateType,
             sortOrder: template.sortOrder,
+            // Only update optional fields if explicitly provided in seed record
+            ...((template as any).pdfUrl !== undefined && { pdfUrl: (template as any).pdfUrl }),
+            ...((template as any).fillableFormData !== undefined && { fillableFormData: (template as any).fillableFormData }),
+            ...((template as any).generationMode !== undefined && { generationMode: (template as any).generationMode }),
+            ...((template as any).versionNotes !== undefined && { versionNotes: (template as any).versionNotes }),
+            ...((template as any).lastUpdateReason !== undefined && { lastUpdateReason: (template as any).lastUpdateReason }),
+            ...((template as any).isActive !== undefined && { isActive: (template as any).isActive }),
             updatedAt: new Date(),
           },
         });

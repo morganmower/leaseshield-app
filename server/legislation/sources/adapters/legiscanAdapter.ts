@@ -117,13 +117,11 @@ class LegiScanAdapter implements LegislationSourceAdapter {
     const errors: string[] = [];
     
     if (!this.apiKey) {
-      errors.push('LEGISCAN_API_KEY not configured');
-      return { items, errors };
+      throw new Error('LEGISCAN_API_KEY not configured - cannot proceed with legislative monitoring');
     }
 
     if (!params.states || params.states.length === 0) {
-      errors.push('LegiScan requires states to be provided via params.states (no hardcoded fallback)');
-      return { items, errors };
+      throw new Error('LegiScan requires states to be provided via params.states (no hardcoded fallback)');
     }
     const states = params.states;
     const year = new Date().getFullYear();

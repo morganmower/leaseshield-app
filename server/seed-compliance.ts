@@ -1449,7 +1449,8 @@ async function seedComplianceCards() {
   let errors = 0;
 
   for (const card of comprehensiveComplianceCards) {
-    const key = generateComplianceKey(card.category, card.title);
+    // Prefer explicit key if provided; fallback to generated key for legacy migration
+    const key = (card as any).key || generateComplianceKey(card.category, card.title);
     try {
       await db.insert(complianceCards)
         .values({
@@ -1464,6 +1465,8 @@ async function seedComplianceCards() {
             category: card.category,
             content: card.content,
             sortOrder: card.sortOrder,
+            // Only update isActive if explicitly provided in seed record
+            ...((card as any).isActive !== undefined && { isActive: (card as any).isActive }),
             updatedAt: new Date(),
           },
         });

@@ -11,7 +11,7 @@ import {
   TextRun,
   AlignmentType,
 } from 'docx';
-import { STATE_NAMES, H1, H2, H3, P, SignatureLine, HR, Footer, getStateDisclosures } from './docxBuilder';
+import { H1, H2, H3, P, SignatureLine, HR, Footer, getStateDisclosuresSync, getStateName } from './docxBuilder';
 
 interface FieldValue {
   [key: string]: string | number;
@@ -141,7 +141,7 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
   console.log('📝 Generating DOCX document with docx library...');
   const startTime = Date.now();
   
-  const stateName = STATE_NAMES[stateId] || stateId;
+  const stateName = await getStateName(stateId);
   const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
   const getField = (key: string, defaultValue: string = '[_____________]'): string => {
@@ -289,7 +289,7 @@ export async function generateDocumentDOCX(options: DocumentGenerationOptions): 
   children.push(P("24.3 Joint and Several Liability: If multiple Tenants sign this Lease, each shall be jointly and severally liable."));
   children.push(P("24.4 Binding Effect: This Lease is binding upon the parties and their heirs, executors, and successors."));
 
-  const stateDisclosures = getStateDisclosures(stateId);
+  const stateDisclosures = getStateDisclosuresSync(stateId, stateName);
   children.push(...stateDisclosures);
 
   children.push(HR());

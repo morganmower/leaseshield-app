@@ -236,8 +236,11 @@ function getDefaultDisclosures(): Paragraph[] {
   ];
 }
 
-export async function getStateDisclosures(stateId: string): Promise<Paragraph[]> {
-  const stateName = await getStateName(stateId);
+/**
+ * Sync version for use when stateName is already known.
+ * Preferred for performance when caller has already fetched state info.
+ */
+export function getStateDisclosuresSync(stateId: string, stateName: string): Paragraph[] {
   const disclosures: Paragraph[] = [];
 
   disclosures.push(H2(`25. ${stateName.toUpperCase()} STATE-SPECIFIC PROVISIONS`));
@@ -250,4 +253,13 @@ export async function getStateDisclosures(stateId: string): Promise<Paragraph[]>
   }
 
   return disclosures;
+}
+
+/**
+ * Async version that fetches state name from DB.
+ * Use getStateDisclosuresSync when stateName is already available.
+ */
+export async function getStateDisclosures(stateId: string): Promise<Paragraph[]> {
+  const stateName = await getStateName(stateId);
+  return getStateDisclosuresSync(stateId, stateName);
 }
