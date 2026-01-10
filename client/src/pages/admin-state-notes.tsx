@@ -106,7 +106,9 @@ export default function AdminStateNotes() {
   const [filterState, setFilterState] = useState<string>('all');
   const [selectedNote, setSelectedNote] = useState<StateNote | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isApproveDialogOpen, setIsApproveDialogOpen] = useState(false);
+  const [editingNote, setEditingNote] = useState<StateNote | null>(null);
 
   // Form state for create/edit
   const [formData, setFormData] = useState({
@@ -265,6 +267,49 @@ export default function AdminStateNotes() {
       toast({ title: 'Error', description: 'Failed to archive', variant: 'destructive' });
     },
   });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: typeof formData }) => {
+      const response = await fetch(`/api/admin/state-notes/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', ...getAuthHeaders() },
+        body: JSON.stringify({
+          title: data.title,
+          bullets: data.bullets.filter(b => b.trim()),
+          sourceLinks: data.sourceLinks.filter(l => l.trim()),
+        }),
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        const err = await response.json();
+        throw new Error(err.message || 'Failed to update');
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({ title: 'Updated', description: 'State note updated successfully.' });
+      setIsEditDialogOpen(false);
+      setEditingNote(null);
+      resetForm();
+      refetchNotes();
+    },
+    onError: (err: Error) => {
+      toast({ title: 'Error', description: err.message, variant: 'destructive' });
+    },
+  });
+
+  const openEditDialog = (note: StateNote) => {
+    setEditingNote(note);
+    setFormData({
+      stateId: note.stateId,
+      decoder: note.decoder,
+      topic: note.topic,
+      title: note.title,
+      bullets: note.bullets.length > 0 ? note.bullets : [''],
+      sourceLinks: note.sourceLinks.length > 0 ? note.sourceLinks : [''],
+    });
+    setIsEditDialogOpen(true);
+  };
 
   const resetForm = () => {
     setFormData({
@@ -445,15 +490,26 @@ export default function AdminStateNotes() {
                       </div>
                       <div className="flex gap-2">
                         {note.status === 'draft' && (
-                          <Button 
-                            size="sm" 
-                            variant="outline"
-                            onClick={() => submitForReviewMutation.mutate(note.id)}
-                            data-testid={`button-submit-${note.id}`}
-                          >
-                            <Send className="h-3 w-3 mr-1" />
-                            Submit
-                          </Button>
+                          <>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => openEditDialog(note)}
+                              data-testid={`button-edit-${note.id}`}
+                            >
+                              <Edit className="h-3 w-3 mr-1" />
+                              Edit
+                            </Button>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => submitForReviewMutation.mutate(note.id)}
+                              data-testid={`button-submit-${note.id}`}
+                            >
+                              <Send className="h-3 w-3 mr-1" />
+                              Submit
+                            </Button>
+                          </>
                         )}
                         {note.status === 'pending_review' && (
                           <Button 
@@ -686,6 +742,106 @@ export default function AdminStateNotes() {
               data-testid="button-submit-create"
             >
               Create Draft
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) { setEditingNote(null); resetForm(); } }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit State Note</DialogTitle>
+            <DialogDescription>
+              Edit the content of this state note. Only drafts can be edited.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {editingNote && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-4">
+                <div>
+                  <Label className="text-muted-foreground">State</Label>
+                  <div className="font-medium">{editingNote.stateId}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Decoder</Label>
+                  <div className="font-medium">{editingNote.decoder}</div>
+                </div>
+                <div>
+                  <Label className="text-muted-foreground">Topic</Label>
+                  <div className="font-medium">{editingNote.topic.replace(/_/g, ' ')}</div>
+                </div>
+              </div>
+
+              <div>
+                <Label>Title</Label>
+                <Input 
+                  value={formData.title}
+                  onChange={e => setFormData(p => ({ ...p, title: e.target.value }))}
+                  placeholder="e.g., California Security Deposit Limits"
+                  data-testid="input-edit-title"
+                />
+              </div>
+
+              <div>
+                <Label>Bullet Points</Label>
+                <div className="space-y-2">
+                  {formData.bullets.map((bullet, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input 
+                        value={bullet}
+                        onChange={e => updateBullet(i, e.target.value)}
+                        placeholder="Enter bullet point"
+                        data-testid={`input-edit-bullet-${i}`}
+                      />
+                      {formData.bullets.length > 1 && (
+                        <Button size="icon" variant="ghost" onClick={() => removeBullet(i)}>
+                          <X className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={addBullet}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Bullet
+                  </Button>
+                </div>
+              </div>
+
+              <div>
+                <Label>Source Links (optional)</Label>
+                <div className="space-y-2">
+                  {formData.sourceLinks.map((link, i) => (
+                    <div key={i} className="flex gap-2">
+                      <Input 
+                        value={link}
+                        onChange={e => updateSourceLink(i, e.target.value)}
+                        placeholder="https://..."
+                        data-testid={`input-edit-source-${i}`}
+                      />
+                      <Button size="icon" variant="ghost" onClick={() => removeSourceLink(i)}>
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={addSourceLink}>
+                    <Plus className="h-3 w-3 mr-1" /> Add Source
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => { setIsEditDialogOpen(false); setEditingNote(null); resetForm(); }}>
+              Cancel
+            </Button>
+            <Button 
+              onClick={() => editingNote && updateMutation.mutate({ id: editingNote.id, data: formData })}
+              disabled={!formData.title || formData.bullets.every(b => !b.trim())}
+              data-testid="button-submit-edit"
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
