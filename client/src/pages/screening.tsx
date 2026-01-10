@@ -239,6 +239,11 @@ function DecoderDisplay({ explanation, decoderType, userState, userStateName }: 
                 </AccordionTrigger>
                 <AccordionContent className="px-4 pb-4 pt-2">
                   <div className="text-sm leading-relaxed ml-7">
+                    {section.id === 'documentation' && (
+                      <p className="text-muted-foreground mb-3">
+                        Use this neutral language to document your screening decision consistently, whether you approve or deny the application.
+                      </p>
+                    )}
                     {formatContent(section.content)}
                     {section.id === 'documentation' && (
                       <Button 
