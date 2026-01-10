@@ -506,7 +506,7 @@ export default function Apply() {
       return res.json();
     },
     onSuccess: () => {
-      toast({ title: "Application Submitted!", description: "The landlord will review your application." });
+      toast({ title: "Application Submitted Successfully", description: "The property manager will review your application using their standard screening criteria." });
       refetchPerson();
     },
     onError: () => {
@@ -617,14 +617,14 @@ export default function Apply() {
         <Card className="w-full max-w-md text-center p-8">
           <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">
-            {allSubmitted ? "Application Submitted" : "Your Application is Complete"}
+            {allSubmitted ? "Application Submitted Successfully" : "Your Application is Complete"}
           </h2>
           <p className="text-muted-foreground mb-4">
             Thank you for applying to {linkData.propertyName}
             {linkData.unitLabel && ` - ${linkData.unitLabel}`}. 
             {allSubmitted 
-              ? "The landlord will review your application and contact you."
-              : "We're waiting for other applicants to complete their portions. Once everyone submits, your application will be sent to the landlord for review."
+              ? "The property manager will review your application using their standard screening criteria. You'll be contacted if additional information is needed."
+              : "We're waiting for other applicants to complete their portions. Once everyone submits, your application will be reviewed using standard screening criteria."
             }
           </p>
           <Badge variant="secondary" className="text-base px-4 py-2 mb-6">
@@ -695,6 +695,9 @@ export default function Apply() {
           {currentStep === 0 && (
             <>
               <CardHeader className="text-center border-b pb-6">
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 text-sm text-muted-foreground">
+                  This application collects basic information needed to evaluate your rental request. All applications are reviewed using the same screening criteria.
+                </div>
                 <CardTitle className="text-2xl">{linkData.coverPage?.title || "Application Requirements"}</CardTitle>
                 <CardDescription className="text-base mt-2">
                   {linkData.coverPage?.intro}
@@ -1445,8 +1448,8 @@ export default function Apply() {
                 </Button>
 
                 {isFieldVisible("emergencyContact") && (
-                  <div className="pt-4 border-t space-y-4">
-                    <h3 className="font-semibold">Emergency Contact {isFieldRequired("emergencyContact") && "*"}</h3>
+                  <div className="pt-6 border-t space-y-4">
+                    <h3 className="font-semibold text-lg">Emergency Contact {isFieldRequired("emergencyContact") ? <span className="text-destructive">*</span> : <span className="text-muted-foreground font-normal text-sm">(Optional)</span>}</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Name</Label>
@@ -1491,11 +1494,11 @@ export default function Apply() {
             </>
           )}
 
-          {/* Step 4: Pets */}
+          {/* Step 4: Pets (Optional) */}
           {currentStep === 4 && (
             <>
               <CardHeader>
-                <CardTitle>Pets</CardTitle>
+                <CardTitle>Pets <span className="text-muted-foreground font-normal text-base">(Optional)</span></CardTitle>
                 <CardDescription>Tell us about any pets that will reside in the unit</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1673,12 +1676,12 @@ export default function Apply() {
             </>
           )}
 
-          {/* Step 5: Vehicles */}
+          {/* Step 5: Vehicles (Optional) */}
           {currentStep === 5 && (
             <>
               <CardHeader>
-                <CardTitle>Vehicles</CardTitle>
-                <CardDescription>Tell us about any vehicles that will be parked at the property</CardDescription>
+                <CardTitle>Vehicles <span className="text-muted-foreground font-normal text-base">(Optional)</span></CardTitle>
+                <CardDescription>Tell us about any vehicles that will be parked at the property. This information helps with parking management.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
@@ -2144,9 +2147,12 @@ export default function Apply() {
                   );
                 })}
 
-                {/* Certification */}
-                <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg">
-                  <div className="flex items-start gap-3">
+                {/* Authorization & Certification */}
+                <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-3">
+                  <p className="text-sm text-muted-foreground">
+                    By submitting this application, you authorize the verification of the information provided, including background and credit screening where permitted by law.
+                  </p>
+                  <div className="flex items-start gap-3 pt-2 border-t border-primary/10">
                     <Checkbox
                       id="certify"
                       checked={formData.certifyAccurate || false}
