@@ -726,7 +726,7 @@ export default function Templates() {
                       ) : (
                         <Badge variant="outline" className="text-xs gap-1">
                           <Download className="h-3 w-3" />
-                          PDF Download
+                          PDF & Word
                         </Badge>
                       )}
                       {isRecentlyUpdated && (
