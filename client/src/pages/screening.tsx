@@ -22,42 +22,102 @@ import {
   HelpCircle,
   Lightbulb,
   ArrowLeft,
+  Scale,
+  ClipboardCheck,
+  Copy,
+  Users,
+  Info,
+  MessageSquare,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
 
-interface ParsedSection {
+interface DecoderSection {
+  id: string;
   title: string;
   content: string;
-  type: 'info' | 'warning' | 'questions' | 'protection' | 'liability';
+  icon: 'info' | 'scale' | 'alert' | 'users' | 'check' | 'copy' | 'questions';
+  alwaysVisible: boolean;
 }
 
-function parseAIExplanation(text: string): ParsedSection[] | null {
+interface ParsedDecoder {
+  alwaysVisible: DecoderSection[];
+  collapsible: DecoderSection[];
+}
+
+function parseNewDecoderFormat(text: string): ParsedDecoder | null {
   if (!text) return null;
   
-  const sections: ParsedSection[] = [];
-  
   const sectionPatterns = [
-    { pattern: /\*\*WHAT THIS MEANS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'What This Means', type: 'info' as const },
-    { pattern: /\*\*YOUR LIABILITY AS A LANDLORD\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Your Liability as a Landlord', type: 'liability' as const },
-    { pattern: /\*\*RED FLAGS TO WATCH FOR\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Red Flags to Watch For', type: 'warning' as const },
-    { pattern: /\*\*FCRA & FAIR HOUSING COMPLIANCE\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'FCRA & Fair Housing Compliance', type: 'warning' as const },
-    { pattern: /\*\*FAIR HOUSING & HUD REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing & HUD Requirements', type: 'warning' as const },
-    { pattern: /\*\*FAIR HOUSING REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Requirements', type: 'warning' as const },
-    { pattern: /\*\*FAIR HOUSING CONSIDERATIONS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Fair Housing Considerations', type: 'warning' as const },
-    { pattern: /\*\*QUESTIONS TO ASK THE APPLICANT\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Questions to Ask the Applicant', type: 'questions' as const },
-    { pattern: /\*\*STEPS TO PROTECT YOURSELF\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Steps to Protect Yourself', type: 'protection' as const },
-    { pattern: /\*\*COMPLIANCE REMINDER\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, title: 'Compliance Reminder', type: 'info' as const },
+    { pattern: /\*\*WHAT THIS MEANS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'meaning', title: 'What This Means', icon: 'info' as const, alwaysVisible: true },
+    { pattern: /\*\*HOW LANDLORDS TYPICALLY WEIGH THIS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'weighting', title: 'How Landlords Typically Weigh This', icon: 'scale' as const, alwaysVisible: true },
+    { pattern: /\*\*HOW THIS IS COMMONLY EVALUATED\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'weighting', title: 'How This Is Commonly Evaluated', icon: 'scale' as const, alwaysVisible: true },
+    { pattern: /\*\*WHAT THIS DOES NOT MEAN\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'not-mean', title: 'What This Does NOT Mean', icon: 'alert' as const, alwaysVisible: true },
+    { pattern: /\*\*STATE-SPECIFIC NOTES\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'state-notes', title: 'State-Specific Notes', icon: 'info' as const, alwaysVisible: false },
+    { pattern: /\*\*COMMON SCREENING APPROACHES\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'approaches', title: 'Common Screening Approaches', icon: 'users' as const, alwaysVisible: false },
+    { pattern: /\*\*CONSISTENCY CHECK\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'consistency', title: 'Consistency Check (Fair Housing)', icon: 'check' as const, alwaysVisible: false },
+    { pattern: /\*\*DOCUMENTATION HELPER\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'documentation', title: 'Documentation Helper', icon: 'copy' as const, alwaysVisible: false },
+    { pattern: /\*\*OPTIONAL FOLLOW-UP QUESTIONS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'questions', title: 'Optional Follow-Up Questions', icon: 'questions' as const, alwaysVisible: false },
   ];
   
-  for (const { pattern, title, type } of sectionPatterns) {
+  const alwaysVisible: DecoderSection[] = [];
+  const collapsible: DecoderSection[] = [];
+  
+  for (const { pattern, id, title, icon, alwaysVisible: isVisible } of sectionPatterns) {
     const match = text.match(pattern);
     if (match && match[1].trim()) {
-      sections.push({ title, content: match[1].trim(), type });
+      const section = { id, title, content: match[1].trim(), icon, alwaysVisible: isVisible };
+      if (isVisible) {
+        alwaysVisible.push(section);
+      } else {
+        collapsible.push(section);
+      }
+    }
+  }
+  
+  return (alwaysVisible.length > 0 || collapsible.length > 0) ? { alwaysVisible, collapsible } : null;
+}
+
+function parseLegacyFormat(text: string): DecoderSection[] | null {
+  if (!text) return null;
+  
+  const sections: DecoderSection[] = [];
+  
+  const legacyPatterns = [
+    { pattern: /\*\*WHAT THIS MEANS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'meaning', title: 'What This Means', icon: 'info' as const },
+    { pattern: /\*\*YOUR LIABILITY AS A LANDLORD\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'liability', title: 'Your Liability as a Landlord', icon: 'alert' as const },
+    { pattern: /\*\*RED FLAGS TO WATCH FOR\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'flags', title: 'Red Flags to Watch For', icon: 'alert' as const },
+    { pattern: /\*\*FCRA & FAIR HOUSING COMPLIANCE\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'compliance', title: 'FCRA & Fair Housing Compliance', icon: 'check' as const },
+    { pattern: /\*\*FAIR HOUSING & HUD REQUIREMENTS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'fairhousing', title: 'Fair Housing & HUD Requirements', icon: 'check' as const },
+    { pattern: /\*\*QUESTIONS TO ASK THE APPLICANT\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'questions', title: 'Questions to Ask the Applicant', icon: 'questions' as const },
+    { pattern: /\*\*STEPS TO PROTECT YOURSELF\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'protection', title: 'Steps to Protect Yourself', icon: 'users' as const },
+  ];
+  
+  for (const { pattern, id, title, icon } of legacyPatterns) {
+    const match = text.match(pattern);
+    if (match && match[1].trim()) {
+      sections.push({ id, title, content: match[1].trim(), icon, alwaysVisible: true });
     }
   }
   
   return sections.length > 0 ? sections : null;
+}
+
+function getAccordionState(key: string): string[] {
+  try {
+    const stored = localStorage.getItem(`decoder-accordion-${key}`);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+}
+
+function setAccordionState(key: string, value: string[]) {
+  try {
+    localStorage.setItem(`decoder-accordion-${key}`, JSON.stringify(value));
+  } catch {
+    // Ignore localStorage errors
+  }
 }
 
 function formatContent(content: string): JSX.Element {
@@ -86,6 +146,166 @@ function formatContent(content: string): JSX.Element {
         }
         return <p key={i}>{trimmed}</p>;
       })}
+    </div>
+  );
+}
+
+function getSectionIcon(iconType: DecoderSection['icon']) {
+  const iconClass = "h-5 w-5";
+  switch (iconType) {
+    case 'info': return <Info className={`${iconClass} text-primary`} />;
+    case 'scale': return <Scale className={`${iconClass} text-primary`} />;
+    case 'alert': return <AlertTriangle className={`${iconClass} text-amber-600`} />;
+    case 'users': return <Users className={`${iconClass} text-primary`} />;
+    case 'check': return <ClipboardCheck className={`${iconClass} text-success`} />;
+    case 'copy': return <Copy className={`${iconClass} text-primary`} />;
+    case 'questions': return <MessageSquare className={`${iconClass} text-primary`} />;
+    default: return <FileText className={`${iconClass} text-primary`} />;
+  }
+}
+
+function getSectionBg(iconType: DecoderSection['icon']) {
+  switch (iconType) {
+    case 'alert': return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
+    case 'check': return 'bg-success/5 border-success/20';
+    default: return 'bg-muted/30 border-muted';
+  }
+}
+
+interface DecoderDisplayProps {
+  explanation: string;
+  decoderType: 'credit' | 'criminal';
+  userState?: string | null;
+  userStateName?: string | null;
+}
+
+function DecoderDisplay({ explanation, decoderType, userState, userStateName }: DecoderDisplayProps) {
+  const { toast } = useToast();
+  const parsed = parseNewDecoderFormat(explanation);
+  const legacy = parsed ? null : parseLegacyFormat(explanation);
+  
+  const [openSections, setOpenSections] = useState<string[]>(() => 
+    getAccordionState(decoderType)
+  );
+
+  const handleAccordionChange = (value: string[]) => {
+    setOpenSections(value);
+    setAccordionState(decoderType, value);
+  };
+
+  const handleCopyDocumentation = (content: string) => {
+    const match = content.match(/"([^"]+)"/);
+    const textToCopy = match ? match[1] : content;
+    navigator.clipboard.writeText(textToCopy);
+    toast({
+      title: "Copied!",
+      description: "Documentation language copied to clipboard.",
+    });
+  };
+
+  if (parsed) {
+    return (
+      <div className="space-y-4" data-testid={`container-${decoderType}-explanation`}>
+        {parsed.alwaysVisible.map((section) => (
+          <div key={section.id} className={`p-4 rounded-lg border ${getSectionBg(section.icon)}`}>
+            <div className="flex items-center gap-2 mb-3">
+              {getSectionIcon(section.icon)}
+              <h4 className="font-semibold text-foreground">{section.title}</h4>
+            </div>
+            <div className="text-foreground text-sm leading-relaxed ml-7">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        ))}
+        
+        {parsed.collapsible.length > 0 && (
+          <Accordion 
+            type="multiple" 
+            value={openSections}
+            onValueChange={handleAccordionChange}
+            className="space-y-2"
+          >
+            {parsed.collapsible.map((section) => (
+              <AccordionItem 
+                key={section.id} 
+                value={section.id} 
+                className="border rounded-lg overflow-hidden"
+              >
+                <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/50" data-testid={`accordion-${section.id}`}>
+                  <span className="flex items-center gap-2 text-sm font-medium">
+                    {getSectionIcon(section.icon)}
+                    {section.title}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4 pt-2">
+                  <div className="text-sm leading-relaxed ml-7">
+                    {formatContent(section.content)}
+                    {section.id === 'documentation' && (
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="mt-3"
+                        onClick={() => handleCopyDocumentation(section.content)}
+                        data-testid="button-copy-documentation"
+                      >
+                        <Copy className="h-3 w-3 mr-2" />
+                        Copy to Clipboard
+                      </Button>
+                    )}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        )}
+        
+        <div className="pt-2 text-xs text-muted-foreground border-t border-muted/50 mt-4 space-y-1">
+          {userStateName && (
+            <p className="flex items-center gap-1">
+              Based on your selected state: <span className="font-medium">{userStateName}</span>.{' '}
+              <a href="/settings" className="text-primary hover:underline inline-flex items-center gap-0.5">
+                Change in Settings
+              </a>
+            </p>
+          )}
+          <p>This explanation is informational only and does not direct approval or denial decisions. Final screening decisions should be based on your written criteria and applied consistently.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (legacy) {
+    return (
+      <div className="space-y-4" data-testid={`container-${decoderType}-explanation`}>
+        {legacy.map((section) => (
+          <div key={section.id} className={`p-4 rounded-lg border ${getSectionBg(section.icon)}`}>
+            <div className="flex items-center gap-2 mb-3">
+              {getSectionIcon(section.icon)}
+              <h4 className="font-semibold text-foreground">{section.title}</h4>
+            </div>
+            <div className="text-foreground text-sm leading-relaxed ml-7">
+              {formatContent(section.content)}
+            </div>
+          </div>
+        ))}
+        <div className="pt-2 text-xs text-muted-foreground space-y-1">
+          {userStateName && (
+            <p className="flex items-center gap-1">
+              Based on your selected state: <span className="font-medium">{userStateName}</span>.{' '}
+              <a href="/settings" className="text-primary hover:underline inline-flex items-center gap-0.5">
+                Change in Settings
+              </a>
+            </p>
+          )}
+          <p>This is educational guidance only, not legal advice. Always apply consistent criteria to all applicants.</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid={`container-${decoderType}-explanation`}>
+      <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid={`text-${decoderType}-explanation`}>{explanation}</div>
     </div>
   );
 }
@@ -129,12 +349,16 @@ export default function Screening() {
   const [userQuestion, setUserQuestion] = useState('');
   const [explanation, setExplanation] = useState('');
   const [isExplaining, setIsExplaining] = useState(false);
+  const [creditUserState, setCreditUserState] = useState<string | null>(null);
+  const [creditUserStateName, setCreditUserStateName] = useState<string | null>(null);
 
   // Criminal & Eviction Helper state
   const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
   const [criminalUserQuestion, setCriminalUserQuestion] = useState('');
   const [criminalExplanation, setCriminalExplanation] = useState('');
   const [isCriminalExplaining, setIsCriminalExplaining] = useState(false);
+  const [criminalUserState, setCriminalUserState] = useState<string | null>(null);
+  const [criminalUserStateName, setCriminalUserStateName] = useState<string | null>(null);
 
   const handleExplain = async () => {
     const input = userQuestion.trim();
@@ -186,6 +410,8 @@ export default function Screening() {
 
       const data = await response.json();
       setExplanation(data.explanation || 'Unable to get explanation. Please try again.');
+      setCreditUserState(data.userState || null);
+      setCreditUserStateName(data.userStateName || null);
     } catch (error) {
       console.error('Error getting explanation:', error);
       setExplanation('Something went wrong. Please try again in a moment.');
@@ -244,6 +470,8 @@ export default function Screening() {
 
       const data = await response.json();
       setCriminalExplanation(data.explanation || 'Unable to get explanation. Please try again.');
+      setCriminalUserState(data.userState || null);
+      setCriminalUserStateName(data.userStateName || null);
     } catch (error) {
       console.error('Error getting criminal/eviction explanation:', error);
       setCriminalExplanation('Something went wrong. Please try again in a moment.');
@@ -463,57 +691,14 @@ export default function Screening() {
                 </div>
               )}
 
-              {!isExplaining && explanation && (() => {
-                const sections = parseAIExplanation(explanation);
-                
-                if (!sections) {
-                  return (
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-credit-explanation">
-                      <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-credit-explanation">{explanation}</div>
-                    </div>
-                  );
-                }
-                
-                const getIcon = (type: string) => {
-                  switch (type) {
-                    case 'liability': return <AlertTriangle className="h-5 w-5 text-destructive" />;
-                    case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
-                    case 'questions': return <HelpCircle className="h-5 w-5 text-primary" />;
-                    case 'protection': return <CheckCircle className="h-5 w-5 text-success" />;
-                    default: return <FileText className="h-5 w-5 text-primary" />;
-                  }
-                };
-                
-                const getBgColor = (type: string) => {
-                  switch (type) {
-                    case 'liability': return 'bg-destructive/5 border-destructive/20';
-                    case 'warning': return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
-                    case 'questions': return 'bg-primary/5 border-primary/20';
-                    case 'protection': return 'bg-success/5 border-success/20';
-                    default: return 'bg-muted/30 border-muted';
-                  }
-                };
-                
-                return (
-                  <div className="space-y-4" data-testid="container-credit-explanation">
-                    {sections.map((section, idx) => (
-                      <div key={idx} className={`p-4 rounded-lg border ${getBgColor(section.type)}`}>
-                        <div className="flex items-center gap-2 mb-3">
-                          {getIcon(section.type)}
-                          <h4 className="font-semibold text-foreground">{section.title}</h4>
-                        </div>
-                        <div className="text-foreground text-sm leading-relaxed ml-7">
-                          {formatContent(section.content)}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="pt-2 text-xs text-muted-foreground">
-                      This is educational guidance only, not legal advice. Always apply consistent criteria to all applicants.
-                    </div>
-                  </div>
-                );
-              })()}
+              {!isExplaining && explanation && (
+                <DecoderDisplay 
+                  explanation={explanation} 
+                  decoderType="credit" 
+                  userState={creditUserState}
+                  userStateName={creditUserStateName}
+                />
+              )}
 
               {/* Collapsible Learn Section */}
               <Accordion type="single" collapsible className="mt-4">
@@ -622,57 +807,14 @@ export default function Screening() {
                 </div>
               )}
 
-              {!isCriminalExplaining && criminalExplanation && (() => {
-                const sections = parseAIExplanation(criminalExplanation);
-                
-                if (!sections) {
-                  return (
-                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 dark:from-primary/5 dark:to-transparent border-2 border-primary/30 p-6 rounded-lg" data-testid="container-criminal-explanation">
-                      <div className="text-foreground whitespace-pre-wrap leading-relaxed" data-testid="text-criminal-explanation">{criminalExplanation}</div>
-                    </div>
-                  );
-                }
-                
-                const getIcon = (type: string) => {
-                  switch (type) {
-                    case 'liability': return <AlertTriangle className="h-5 w-5 text-destructive" />;
-                    case 'warning': return <AlertTriangle className="h-5 w-5 text-amber-600" />;
-                    case 'questions': return <HelpCircle className="h-5 w-5 text-primary" />;
-                    case 'protection': return <CheckCircle className="h-5 w-5 text-success" />;
-                    default: return <FileText className="h-5 w-5 text-primary" />;
-                  }
-                };
-                
-                const getBgColor = (type: string) => {
-                  switch (type) {
-                    case 'liability': return 'bg-destructive/5 border-destructive/20';
-                    case 'warning': return 'bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800';
-                    case 'questions': return 'bg-primary/5 border-primary/20';
-                    case 'protection': return 'bg-success/5 border-success/20';
-                    default: return 'bg-muted/30 border-muted';
-                  }
-                };
-                
-                return (
-                  <div className="space-y-4" data-testid="container-criminal-explanation">
-                    {sections.map((section, idx) => (
-                      <div key={idx} className={`p-4 rounded-lg border ${getBgColor(section.type)}`}>
-                        <div className="flex items-center gap-2 mb-3">
-                          {getIcon(section.type)}
-                          <h4 className="font-semibold text-foreground">{section.title}</h4>
-                        </div>
-                        <div className="text-foreground text-sm leading-relaxed ml-7">
-                          {formatContent(section.content)}
-                        </div>
-                      </div>
-                    ))}
-                    
-                    <div className="pt-2 text-xs text-muted-foreground">
-                      This is educational guidance only, not legal advice. Fair Housing requires individualized assessment - never use blanket bans.
-                    </div>
-                  </div>
-                );
-              })()}
+              {!isCriminalExplaining && criminalExplanation && (
+                <DecoderDisplay 
+                  explanation={criminalExplanation} 
+                  decoderType="criminal"
+                  userState={criminalUserState}
+                  userStateName={criminalUserStateName}
+                />
+              )}
 
               {/* Collapsible Learn Section */}
               <Accordion type="single" collapsible className="mt-4">

@@ -3690,98 +3690,96 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
     }
 
+    // Get user's preferred state for state-specific notes
+    const userId = getUserId(req);
+    let userState: string | null = null;
+    let userStateName: string | null = null;
+    if (userId) {
+      const user = await storage.getUser(userId);
+      if (user?.preferredState) {
+        userState = user.preferredState;
+        const stateNames: Record<string, string> = {
+          UT: "Utah", TX: "Texas", ND: "North Dakota", SD: "South Dakota", NC: "North Carolina",
+          OH: "Ohio", MI: "Michigan", ID: "Idaho", WY: "Wyoming", CA: "California",
+          VA: "Virginia", NV: "Nevada", AZ: "Arizona", FL: "Florida", IL: "Illinois",
+        };
+        userStateName = stateNames[userState] || userState;
+      }
+    }
+
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that explains credit report information to landlords reviewing tenant applications. Help them understand risk, protect themselves from liability, and know what questions to ask.
+            content: `You are a helpful assistant that explains credit report information to landlords reviewing tenant applications. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform.
 
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
 **WHAT THIS MEANS**
-[1-2 sentences in plain English explaining the term or credit situation]
+[2-3 sentences in plain English explaining what this credit item is and why it appears on reports]
 
-**YOUR LIABILITY AS A LANDLORD**
-• [How this could affect you financially - unpaid rent, property damage, legal costs]
-• [Risk level: low/medium/high and why]
+**HOW LANDLORDS TYPICALLY WEIGH THIS**
+Factors that increase weight:
+• [Factor that makes this more concerning - e.g., recency, amount, multiple occurrences]
+• [Another factor]
+Factors that reduce weight:
+• [Factor that makes this less concerning - e.g., age, medical-related, evidence of recovery]
+• [Another factor]
 
-**RED FLAGS TO WATCH FOR**
-• [Specific warning sign]
-• [Another warning sign]
-• [Pattern to look for]
+**WHAT THIS DOES NOT MEAN**
+• [Clarification to prevent over-reaction - e.g., "Does not automatically mean they will miss rent"]
+• [Another clarification - e.g., "Older items may have limited relevance"]
+• [Context note - e.g., "One-time hardship events differ from patterns"]
 
-**FCRA & FAIR HOUSING COMPLIANCE**
-• [FCRA adverse action notice requirement if denying based on credit]
-• [Equal application of criteria to all applicants]
-• [Documentation requirement]
+**COMMON SCREENING APPROACHES**
+• Some landlords require higher income ratios when this appears
+• Some landlords allow a qualified co-signer to offset credit risk
+• Some landlords apply stricter criteria only if the item is recent
+• [Add 1-2 more relevant approaches based on the specific item]
 
-**QUESTIONS TO ASK THE APPLICANT**
-1. "[Specific conversational question]"
-2. "[Follow-up question to dig deeper]"
-3. "[Question about their current stability]"
+**CONSISTENCY CHECK**
+Before relying on this information, confirm that:
+• This factor is addressed in your written screening criteria
+• You apply the same standards to all applicants
+• Any exceptions are documented consistently
+• You have not made exceptions based on protected characteristics
 
-**STEPS TO PROTECT YOURSELF**
-• [Specific protective action - verify income, require larger deposit, etc.]
-• [Documentation step]
-• [Additional safeguard if applicable]
+**DOCUMENTATION HELPER**
+Neutral language (use whether approving or denying):
+"Application reviewed using standard screening criteria. Credit report reflects [item type] dated [MM/YYYY]. Applicant was evaluated using the same criteria applied to all applicants."
+
+**OPTIONAL FOLLOW-UP QUESTIONS**
+1. "[Conversational question about context]"
+2. "[Question about what's changed since]"
+3. "[Question about current stability]"
 
 CRITICAL RULES:
-- ALWAYS explain the landlord's financial risk/liability
-- ALWAYS include 2-3 specific questions to ask the applicant
-- ALWAYS include protective steps they can take
-- Use bullet points and numbered lists - easy to scan
-- Be direct about risks but not alarmist
-- Focus on: Will this person pay rent? Will they damage my property?
+- NEVER say "approve" or "deny" - you inform, landlords decide
+- Use "Some landlords..." phrasing for actions - describe industry behavior, don't prescribe
+- Always include the "What This Does NOT Mean" section to prevent over-reaction
+- Always include the Consistency Check - this is critical for Fair Housing compliance
+- Use bullet points and short sentences - easy to scan quickly
+- Be balanced - risks AND context that reduces weight
 
-EXAMPLE FOR "charge-off":
+TONE: Neutral compliance advisor, not fear-based advisor. Premium and legally sophisticated.${userStateName ? `
 
-**WHAT THIS MEANS**
-A charge-off means the lender gave up trying to collect this debt after many missed payments. The applicant still owes the money and it severely damages their credit score.
-
-**YOUR LIABILITY AS A LANDLORD**
-• If they didn't pay a creditor, there's increased risk they won't pay you
-• You could face 2-3 months of unpaid rent plus eviction costs ($2,000-5,000)
-• Risk level: MEDIUM to HIGH depending on recency and amount
-
-**RED FLAGS TO WATCH FOR**
-• Multiple charge-offs = pattern of not paying debts
-• Recent charge-offs (within 2 years) are more concerning
-• Large dollar amounts indicate bigger financial problems
-
-**FCRA & FAIR HOUSING COMPLIANCE**
-• FCRA requires: If you deny based on credit, you MUST provide an adverse action notice with the credit bureau's contact info
-• Apply the same credit criteria to ALL applicants equally - inconsistency = discrimination lawsuit risk
-• Document your minimum credit score/criteria IN WRITING before screening
-
-**QUESTIONS TO ASK THE APPLICANT**
-1. "I see there was an issue with [account type] - can you tell me what happened?"
-2. "Have you been able to pay this off or set up a payment plan?"
-3. "What's your current income and employment situation?"
-
-**STEPS TO PROTECT YOURSELF**
-• Verify current income is at least 3x monthly rent
-• Request a larger security deposit (if state law allows)
-• Require a co-signer with good credit
-• Get employer verification and recent pay stubs
-
-TONE: Protective mentor looking out for the landlord's investment.`
+STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-specific laws that are directly relevant to this credit item (such as look-back period limits, discrimination protections, or reporting restrictions specific to ${userStateName}), include a **STATE-SPECIFIC NOTES** section after WHAT THIS DOES NOT MEAN. If no state-specific laws apply, skip this section entirely.` : ''}`
           },
           {
             role: "user",
-            content: `Analyze this credit report information for a landlord: "${trimmedTerm}"`
+            content: `Explain this credit report information for a landlord${userStateName ? ` in ${userStateName}` : ''}: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1000,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
         "I couldn't generate an explanation. Please try rephrasing your question.";
 
       // Track credit helper usage
-      const userId = getUserId(req);
       if (userId) {
         await storage.trackEvent({
           userId,
@@ -3790,7 +3788,11 @@ TONE: Protective mentor looking out for the landlord's investment.`
         });
       }
 
-      res.json({ explanation });
+      res.json({ 
+        explanation,
+        userState: userState || null,
+        userStateName: userStateName || null,
+      });
     } catch (error) {
       console.error('Error explaining credit term:', error);
       res.status(500).json({
@@ -3860,94 +3862,102 @@ TONE: Protective mentor looking out for the landlord's investment.`
       });
     }
 
+    // Get user's preferred state for state-specific notes
+    const userId = getUserId(req);
+    let userState: string | null = null;
+    let userStateName: string | null = null;
+    if (userId) {
+      const user = await storage.getUser(userId);
+      if (user?.preferredState) {
+        userState = user.preferredState;
+        const stateNames: Record<string, string> = {
+          UT: "Utah", TX: "Texas", ND: "North Dakota", SD: "South Dakota", NC: "North Carolina",
+          OH: "Ohio", MI: "Michigan", ID: "Idaho", WY: "Wyoming", CA: "California",
+          VA: "Virginia", NV: "Nevada", AZ: "Arizona", FL: "Florida", IL: "Illinois",
+        };
+        userStateName = stateNames[userState] || userState;
+      }
+    }
+
     try {
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
-            content: `You are a helpful assistant that explains criminal background and eviction screening findings to landlords. Help them understand their liability, screen tenants FAIRLY and LEGALLY, and protect their investment.
+            content: `You are a helpful assistant that explains criminal background and eviction screening findings to landlords. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform and emphasize individualized assessment.
 
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
 **WHAT THIS MEANS**
-[1-2 sentences in plain English explaining the term, charge, or eviction record]
+[2-3 sentences explaining what this criminal/eviction record means. Note: Criminal and eviction records reflect information from public court sources. Their relevance depends on type, outcome, timing, and behavior since.]
 
-**YOUR LIABILITY AS A LANDLORD**
-• [Property damage risk, safety concerns for other tenants, or legal exposure]
-• [Financial risk - unpaid rent, eviction costs, potential lawsuits]
-• [Risk level and what factors increase/decrease it]
+**HOW THIS IS COMMONLY EVALUATED**
+Factors that increase weight:
+• [Factor - e.g., record is recent, involves violence/property damage, multiple occurrences]
+• [Another factor]
+Factors that reduce weight:
+• [Factor - e.g., record is older, was dismissed, followed by stable housing/employment]
+• [Another factor]
 
-**FAIR HOUSING & HUD REQUIREMENTS**
-• [Key legal requirement - you MUST do individual assessment per HUD 2016 guidance]
-• [What you CAN deny for: specific crimes with clear connection to tenant safety or property protection]
-• [What you CANNOT do: blanket bans denying anyone with ANY criminal history regardless of offense type, severity, or recency]
-• [Discrimination warning - blanket policies have disparate impact and lawsuits can cost $50,000+]
+**WHAT THIS DOES NOT MEAN**
+• A criminal or eviction record does not require denial
+• [Specific clarification - e.g., "Arrests without conviction are not equivalent to convictions"]
+• [Another clarification - e.g., "Eviction filings do not always result in removal"]
+• Older records may have limited relevance
+• Context and outcomes matter
 
-**QUESTIONS TO ASK THE APPLICANT**
-1. "[Specific conversational question about the situation]"
-2. "[Question about rehabilitation or what's changed]"
-3. "[Question about current stability - job, references, etc.]"
+**COMMON SCREENING APPROACHES**
+• Some landlords distinguish between arrests and convictions
+• Some landlords focus on completed evictions vs. filings
+• Some landlords apply defined look-back periods
+• Some landlords place greater emphasis on recent rental references
+• Some landlords consider post-event stability more heavily than the event itself
 
-**STEPS TO PROTECT YOURSELF**
-• [Specific protective action you can legally take]
-• [Documentation requirement]
-• [Additional safeguard - references, larger deposit if legal, etc.]
+**CONSISTENCY CHECK**
+Before relying on criminal or eviction history, confirm that:
+• Your written screening criteria address criminal and eviction records
+• The same standards are applied to all applicants
+• Arrest-only records are not treated the same as convictions
+• Eviction filings and judgments are evaluated differently
+• Reviews are individualized, not automatic
+
+**DOCUMENTATION HELPER**
+Neutral language (use whether approving or denying):
+"Application reviewed using standard screening criteria. Public record information reflects prior criminal and/or eviction history dated [MM/YYYY]. The application was evaluated using the same criteria applied to all applicants."
+
+**OPTIONAL FOLLOW-UP QUESTIONS**
+(Use only if permitted by your screening process)
+1. "[Question about context and time since]"
+2. "[Question about outcome or resolution]"
+3. "[Question about stable housing/employment since]"
 
 CRITICAL RULES:
-- ALWAYS explain landlord's potential liability (financial AND legal)
-- ALWAYS include 2-3 specific questions to ask the applicant
-- ALWAYS include protective steps they can take
-- ALWAYS mention Fair Housing - they can be sued for discrimination
-- NEVER suggest automatic denial - individual assessment required
-- Use bullet points and numbered lists - easy to scan
-- Be direct about risks while staying legally compliant
+- NEVER say "approve" or "deny" - you inform, landlords decide
+- Use "Some landlords..." phrasing - describe industry behavior, don't prescribe
+- Always emphasize individualized assessment per HUD 2016 guidance
+- Always include "What This Does NOT Mean" section to prevent over-reaction
+- Always include Consistency Check - critical for Fair Housing compliance
+- NEVER suggest blanket bans - these violate Fair Housing
+- Be balanced - concerns AND context that reduces weight
 
-EXAMPLE FOR "felony drug possession 5 years ago":
+TONE: Neutral compliance advisor. Premium and legally sophisticated. Focus on Fair Housing.${userStateName ? `
 
-**WHAT THIS MEANS**
-A felony drug possession conviction is a serious criminal offense related to controlled substances. This occurred 5 years ago, which provides time to assess rehabilitation.
-
-**YOUR LIABILITY AS A LANDLORD**
-• Drug-related activity could put other tenants at risk and expose you to lawsuits
-• If they're still using, you may face property damage and eviction costs
-• 5-year gap reduces risk - look for signs of stability and recovery
-• Risk level: MEDIUM - requires individual assessment
-
-**FAIR HOUSING & HUD REQUIREMENTS**
-• HUD's 2016 guidance: You CAN deny for SPECIFIC crimes that directly relate to tenant safety or property protection
-• What you CANNOT do: Have a blanket policy that denies EVERYONE with ANY criminal history regardless of offense type, severity, or recency
-• Individual assessment REQUIRED: Consider the nature of the crime, severity, time elapsed, and relevance to being a good tenant
-• Blanket bans have "disparate impact" on protected classes - lawsuits can cost $50,000+. Document criteria and apply equally to ALL applicants
-
-**QUESTIONS TO ASK THE APPLICANT**
-1. "I see something on your background check from 2019 - would you like to share what happened and what's changed since then?"
-2. "Can you tell me about your living situation for the past few years?"
-3. "Do you have references from recent landlords or employers I could contact?"
-
-**STEPS TO PROTECT YOURSELF**
-• Document your screening criteria IN WRITING and apply to ALL applicants equally
-• Verify current employment and income (3x rent minimum)
-• Contact previous landlords for rental history
-• If you deny, provide written reason based on your documented criteria
-• Consider consulting a Fair Housing attorney about your policies
-
-TONE: Protective mentor who helps landlords avoid BOTH bad tenants AND discrimination lawsuits.`
+STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-specific laws that are directly relevant to this criminal/eviction screening (such as "ban the box" laws, fair chance housing ordinances, look-back period limits, or record sealing/expungement rules specific to ${userStateName}), include a **STATE-SPECIFIC NOTES** section after WHAT THIS DOES NOT MEAN. If no state-specific laws apply, skip this section entirely.` : ''}`
           },
           {
             role: "user",
-            content: `Analyze this criminal/eviction screening information for a landlord: "${trimmedTerm}"`
+            content: `Explain this criminal/eviction screening information for a landlord${userStateName ? ` in ${userStateName}` : ''}: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
-        max_tokens: 800,
+        max_tokens: 1000,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
         "I couldn't generate an explanation. Please try rephrasing your question.";
 
       // Track criminal/eviction helper usage
-      const userId = getUserId(req);
       if (userId) {
         await storage.trackEvent({
           userId,
@@ -3956,7 +3966,11 @@ TONE: Protective mentor who helps landlords avoid BOTH bad tenants AND discrimin
         });
       }
 
-      res.json({ explanation });
+      res.json({ 
+        explanation,
+        userState: userState || null,
+        userStateName: userStateName || null,
+      });
     } catch (error) {
       console.error('Error explaining criminal/eviction term:', error);
       res.status(500).json({
