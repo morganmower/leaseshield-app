@@ -225,7 +225,7 @@ export default function Properties() {
     setIsEditDialogOpen(true);
   };
 
-  // Quick link mutation - uses existing unit or creates one automatically
+  // Quick link mutation - uses existing unit to create a link
   const quickLinkMutation = useMutation({
     mutationFn: async (propertyId: string) => {
       const token = getAccessToken();
@@ -237,7 +237,13 @@ export default function Properties() {
         },
         credentials: "include",
       });
-      if (!response.ok) throw new Error("Failed to create link");
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        const error = new Error(errorData.message || "Failed to create link") as Error & { code?: string; propertyId?: string };
+        error.code = errorData.code;
+        error.propertyId = propertyId;
+        throw error;
+      }
       return response.json();
     },
     onSuccess: (result, propertyId) => {
@@ -256,8 +262,22 @@ export default function Properties() {
         setExpandedPropertyId(propertyId);
       }
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to create application link.", variant: "destructive" });
+    onError: (error: Error & { code?: string; propertyId?: string }) => {
+      if (error.code === "NO_UNITS") {
+        // No units exist - prompt user to add a unit first
+        toast({ 
+          title: "Add a Unit First", 
+          description: "Please add a unit to this property before creating an application link.", 
+        });
+        // Open the add unit dialog for this property
+        if (error.propertyId) {
+          setAddUnitPropertyId(error.propertyId);
+          setUnitForm({ unitLabel: "" });
+          setIsAddUnitOpen(true);
+        }
+      } else {
+        toast({ title: "Error", description: error.message || "Failed to create application link.", variant: "destructive" });
+      }
     },
   });
 
