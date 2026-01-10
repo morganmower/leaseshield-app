@@ -1,0 +1,165 @@
+Think of the decoder as doing 4 things (you’re doing 2.5 right now):
+
+Explain (what it means) ✅
+
+Contextualize risk (why landlords care) ✅
+
+Show compliant paths forward (how to proceed safely) ⚠️ partial
+
+Create consistency + defensibility (this is the big unlock) ❌ not fully yet
+
+Below are concrete enhancements you can add that increase value, reduce liability, and stay neutral.
+
+1️⃣ Add a “What This Does Not Mean” section (huge trust boost)
+
+Right now you explain what a charge-off is. Add a short counterbalance so landlords don’t overreact.
+
+Example:
+
+What This Does NOT Automatically Mean
+• A charge-off does not mean the applicant will fail to pay rent.
+• Older or medical charge-offs may have limited relevance to current rent behavior.
+• A single charge-off can sometimes be the result of a one-time hardship (job loss, medical event).
+
+Why this helps:
+
+Reinforces you are not telling them what to do
+
+Signals fairness and compliance mindset
+
+Makes LeaseShield feel legally sophisticated, not fear-based
+
+2️⃣ Replace “Steps to Protect Yourself” with “Common Screening Responses”
+
+Language matters. “Steps to protect yourself” can sound like advice.
+Instead, frame actions as commonly used screening responses.
+
+Rename the section to:
+
+Common Screening Responses Used by Landlords
+
+Reframe bullets like this:
+
+Some landlords require higher income ratios when derogatory credit items appear.
+
+Some landlords allow a qualified co-signer to offset credit risk.
+
+Some landlords apply longer rental history requirements in these cases.
+
+Some landlords proceed only if the charge-off is older than X years.
+
+Why this matters:
+You’re describing industry behavior, not prescribing action.
+
+3️⃣ Add a “Consistency Check” (this is a killer feature)
+
+This keeps you neutral while adding massive compliance value.
+
+New section:
+
+Consistency Check (Important for Fair Housing)
+
+Example output:
+
+Before relying on this information, confirm that:
+• You apply the same charge-off standards to every applicant
+• Your written criteria address charge-offs (or credit score thresholds)
+• You have not made exceptions based on protected characteristics
+
+Optional AI follow-up:
+
+If you'd like, paste your written screening criteria here and I can check whether this factor is addressed consistently.
+
+This is huge value without making decisions.
+
+4️⃣ Add a “Documentation Language” helper (non-decisional, high value)
+
+Instead of telling them what to decide, help them document why.
+
+New section:
+
+Neutral Documentation Language (Optional)
+
+Example:
+
+“Application reviewed using standard screening criteria. Credit report reflects a charge-off dated [MM/YYYY]. Applicant was evaluated using the same credit standards applied to all applicants.”
+
+This protects them whether they approve or deny.
+
+5️⃣ Introduce “Risk Factors That Increase or Decrease Weight”
+
+Instead of a single “Risk level: MEDIUM to HIGH”, give weighting factors.
+
+Example:
+
+Factors That Increase Weight
+• Charge-off within the last 24 months
+• Multiple charge-offs
+• Charge-off amount exceeds one month’s rent
+
+Factors That Reduce Weight
+• Charge-off older than 3–5 years
+• Medical or utility-related charge-off
+• Evidence of stable income since the event
+
+This helps landlords think clearly without you deciding.
+
+6️⃣ Add a “How This Interacts With Other Report Sections”
+
+This is advanced and very valuable.
+
+Example:
+
+How This Should Be Viewed Alongside Other Report Items
+• A charge-off combined with recent late rent history increases concern
+• A charge-off paired with strong rental references may carry less weight
+• Multiple derogatory categories together often matter more than any single item
+
+This reinforces holistic review — a compliance best practice.
+
+7️⃣ Add a soft legal boundary statement (subtle but important)
+
+At the bottom:
+
+This explanation is informational only and does not direct approval or denial decisions. Final screening decisions should be based on your written criteria and applied consistently.
+
+This protects you and increases perceived professionalism.
+
+8️⃣ Optional next-level feature: “Policy Alignment Mode”
+
+Later enhancement (this is powerful):
+
+Landlord pastes their written screening criteria
+
+Decoder responds with:
+
+“This factor IS / IS NOT addressed in your policy”
+
+“If relied upon, consider updating policy language for consistency”
+
+You’re not deciding — you’re aligning.
+
+Summary: What to change without crossing the line
+
+You don’t need to remove anything you have.
+You need to reframe + add structure.
+
+Keep:
+
+Plain-English explanation
+
+Compliance reminders
+
+Applicant questions
+
+Add:
+
+What this does not mean
+
+Consistency checks
+
+Documentation language
+
+Weighting factors
+
+Policy alignment framing

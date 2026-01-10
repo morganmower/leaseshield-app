@@ -1,0 +1,128 @@
+How to implement Option A correctly (this matters)
+1️⃣ Automatically inject state context (silently)
+
+When generating decoder output:
+
+Pull user.preferredState from profile
+
+Pass it into the decoder prompt/context
+
+Do not ask the user to specify state
+
+The AI response then includes state-specific notes only where relevant, not everywhere.
+
+2️⃣ Surface state context subtly (not as a decision input)
+
+At the bottom of the decoder, add a small, muted line:
+
+State-specific notes shown for: Illinois
+Change in Settings
+
+This does three things:
+
+Transparency (important for trust)
+
+Gives control without friction
+
+Avoids interrupting the flow
+
+No dropdown. No modal. No cognitive load.
+
+3️⃣ Where state-specific law should appear (very important)
+
+Do NOT mix state law into the main explanation.
+
+Instead, add a collapsible section that only appears if:
+
+the state has relevant rules for that topic
+
+Example (Criminal / Eviction Decoder):
+
+▸ State-Specific Notes (Illinois)
+
+• Illinois has fair-chance housing protections that limit how criminal records may be used in housing decisions.
+• Individualized assessment is required before relying on criminal history.
+• Arrest-only records may not be considered.
+
+This keeps:
+
+the core explanation universal
+
+the state law clearly scoped
+
+the user in control
+
+4️⃣ Credit decoder: use state notes sparingly
+
+For credit:
+
+Most rules are federal (FCRA)
+
+State law usually affects:
+
+security deposit limits
+
+application fees
+
+adverse action nuances
+
+So only show a state section when relevant, e.g.:
+
+▸ State-Specific Notes (California)
+
+• Security deposit amounts are capped by state law.
+• Application fees may be limited or require itemization.
+
+If there’s nothing meaningful → don’t show the section at all.
+
+Why Option B is better later, not now
+
+A per-query dropdown makes sense when:
+
+You have multi-state PMs screening across portfolios
+
+Users explicitly ask: “Can I change the state?”
+
+You add bulk screening or portfolio views
+
+Until then:
+
+It adds UI noise
+
+It increases user error
+
+It slows down the “quick answer” use case
+
+The key is: design for 80% now, not 20% edge cases.
+
+Best-practice hybrid (future-safe)
+
+Build Option A in a way that allows Option B later without refactor:
+
+Decoder function accepts stateId as a parameter
+
+UI currently passes user.preferredState
+
+Later, you can add a dropdown that overrides it
+
+No architectural regret.
+
+Final call (locked recommendation)
+
+✅ Go with Option A
+✅ Auto-use preferred state
+✅ Surface state context subtly
+✅ Put state law in a collapsible section
+✅ No extra user input required
+
+This keeps the decoder:
+
+fast
+
+compliant
+
+intelligent
+
+non-decisional
+
+and on-brand for LeaseShield
