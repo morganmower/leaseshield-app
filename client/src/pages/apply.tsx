@@ -623,8 +623,8 @@ export default function Apply() {
             Thank you for applying to {linkData.propertyName}
             {linkData.unitLabel && ` - ${linkData.unitLabel}`}. 
             {allSubmitted 
-              ? "The property manager will review your application using their standard screening criteria. You'll be contacted if additional information is needed."
-              : "We're waiting for other applicants to complete their portions. Once everyone submits, your application will be reviewed using standard screening criteria."
+              ? "Your application has been received and will be reviewed using the same objective criteria applied to all applicants. There's nothing more you need to do right now. If additional information is needed, you'll be contacted directly."
+              : "Your portion is complete. We're now waiting for other applicants to finish their sections. Once everyone has submitted, the full application will be reviewed together using the same objective criteria applied to all applicants."
             }
           </p>
           <Badge variant="secondary" className="text-base px-4 py-2 mb-6">
@@ -1502,6 +1502,9 @@ export default function Apply() {
                 <CardDescription>Tell us about any pets that will reside in the unit</CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
+                <p className="text-sm text-muted-foreground bg-muted/50 p-3 rounded-lg">
+                  If you have pets that will live in the unit, please provide details below. You may skip this section if you don't have pets or prefer not to include them in your application at this time.
+                </p>
                 <div className="space-y-4">
                   <Label className="text-base font-medium">Do you have any pets that will reside in the unit?</Label>
                   <div className="flex gap-6">
