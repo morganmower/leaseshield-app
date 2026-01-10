@@ -225,7 +225,7 @@ export default function Properties() {
     setIsEditDialogOpen(true);
   };
 
-  // Quick link mutation - uses existing unit to create a link
+  // Quick link mutation - creates link for property (auto-creates unit if needed)
   const quickLinkMutation = useMutation({
     mutationFn: async (propertyId: string) => {
       const token = getAccessToken();
@@ -237,13 +237,7 @@ export default function Properties() {
         },
         credentials: "include",
       });
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        const error = new Error(errorData.message || "Failed to create link") as Error & { code?: string; propertyId?: string };
-        error.code = errorData.code;
-        error.propertyId = propertyId;
-        throw error;
-      }
+      if (!response.ok) throw new Error("Failed to create link");
       return response.json();
     },
     onSuccess: (result, propertyId) => {
@@ -262,22 +256,8 @@ export default function Properties() {
         setExpandedPropertyId(propertyId);
       }
     },
-    onError: (error: Error & { code?: string; propertyId?: string }) => {
-      if (error.code === "NO_UNITS") {
-        // No units exist - prompt user to add a unit first
-        toast({ 
-          title: "Add a Unit First", 
-          description: "Please add a unit to this property before creating an application link.", 
-        });
-        // Open the add unit dialog for this property
-        if (error.propertyId) {
-          setAddUnitPropertyId(error.propertyId);
-          setUnitForm({ unitLabel: "" });
-          setIsAddUnitOpen(true);
-        }
-      } else {
-        toast({ title: "Error", description: error.message || "Failed to create application link.", variant: "destructive" });
-      }
+    onError: () => {
+      toast({ title: "Error", description: "Failed to create application link.", variant: "destructive" });
     },
   });
 
@@ -1096,7 +1076,7 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
             </div>
           ) : (
             <div className="flex items-center gap-1">
-              <span className="font-medium text-sm">{unit.unitLabel || "Main Unit"}</span>
+              <span className="font-medium text-sm">{unit.unitLabel || "Default"}</span>
               <Button
                 size="icon"
                 variant="ghost"

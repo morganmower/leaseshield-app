@@ -5194,24 +5194,32 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Check for existing units
       const existingUnits = await storage.getRentalUnitsByPropertyId(req.params.propertyId);
       
-      if (existingUnits.length === 0) {
-        // No units exist - require user to add a unit first
-        return res.status(400).json({ 
-          message: "Please add a unit first before creating an application link.",
-          code: "NO_UNITS"
+      let unit;
+      let unitCreated = false;
+      
+      if (existingUnits.length > 0) {
+        // Use the first existing unit
+        unit = existingUnits[0];
+        
+        // Check if this unit already has an active link
+        const existingLinks = await storage.getRentalApplicationLinksByUnitId(unit.id);
+        const activeLink = existingLinks.find(l => l.isActive);
+        
+        if (activeLink) {
+          // Return the existing link instead of creating a duplicate
+          return res.status(200).json({ unit, link: activeLink, unitCreated: false, reused: true });
+        }
+      } else {
+        // Create a default unit silently (user doesn't need to see it)
+        unit = await storage.createRentalUnit({
+          propertyId: req.params.propertyId,
+          unitLabel: "", // Empty label - shows property name only
+          coverPageOverrideEnabled: false,
+          coverPageOverrideJson: null,
+          fieldSchemaOverrideEnabled: false,
+          fieldSchemaOverrideJson: null,
         });
-      }
-      
-      // Use the first existing unit
-      const unit = existingUnits[0];
-      
-      // Check if this unit already has an active link
-      const existingLinks = await storage.getRentalApplicationLinksByUnitId(unit.id);
-      const activeLink = existingLinks.find(l => l.isActive);
-      
-      if (activeLink) {
-        // Return the existing link instead of creating a duplicate
-        return res.status(200).json({ unit, link: activeLink, unitCreated: false, reused: true });
+        unitCreated = true;
       }
 
       // Create the application link
@@ -5227,7 +5235,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         expiresAt: null,
       });
 
-      res.status(201).json({ unit, link, unitCreated: false });
+      res.status(201).json({ unit, link, unitCreated });
     } catch (error) {
       console.error("Error creating quick link:", error);
       res.status(500).json({ message: "Failed to create application link" });
