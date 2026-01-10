@@ -1,4 +1,5 @@
 import { useQuery, useMutation } from '@tanstack/react-query';
+import { useEffect, useRef } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -86,6 +87,9 @@ interface MonitoringStatus {
   } | null;
   hasRunThisMonth: boolean;
   nextScheduledDay: number;
+  jobInProgress?: boolean;
+  currentJob?: string | null;
+  jobStartedAt?: string | null;
 }
 
 const safeFormatDate = (dateString: string | null | undefined, formatStr: string): string => {
@@ -101,6 +105,7 @@ const safeFormatDate = (dateString: string | null | undefined, formatStr: string
 
 export default function AdminLegislativeMonitoring() {
   const { toast } = useToast();
+  const wasJobInProgress = useRef(false);
 
   const { data: pendingBills = [] } = useQuery<LegislativeBill[]>({
     queryKey: ['/api/admin/legislative-bills?isReviewed=false'],
@@ -121,27 +126,50 @@ export default function AdminLegislativeMonitoring() {
 
   const { data: monitoringStatus } = useQuery<MonitoringStatus>({
     queryKey: ['/api/admin/monitoring-status'],
+    refetchInterval: (query) => {
+      const data = query.state.data as MonitoringStatus | undefined;
+      return data?.jobInProgress ? 3000 : 30000;
+    },
   });
+
+  useEffect(() => {
+    if (wasJobInProgress.current && !monitoringStatus?.jobInProgress) {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/case-law'] });
+      toast({
+        title: 'Monitoring Complete',
+        description: 'Legislative monitoring job has finished.',
+      });
+    }
+    wasJobInProgress.current = !!monitoringStatus?.jobInProgress;
+  }, [monitoringStatus?.jobInProgress, toast]);
 
   const runMonitoringMutation = useMutation({
     mutationFn: async () => {
       return await apiRequest('POST', '/api/admin/legislative-monitoring/run', {});
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/monitoring-status'] });
       toast({
-        title: 'Monitoring Run Started',
-        description: 'Checking for new legislative bills and analyzing them...',
+        title: 'Monitoring Job Started',
+        description: 'Running in background. This page will update when complete.',
       });
     },
-    onError: () => {
-      toast({
-        title: 'Error',
-        description: 'Failed to run legislative monitoring',
-        variant: 'destructive',
-      });
+    onError: (error: any) => {
+      if (error?.status === 409) {
+        toast({
+          title: 'Job Already Running',
+          description: 'A monitoring job is already in progress. Please wait.',
+          variant: 'default',
+        });
+      } else {
+        toast({
+          title: 'Error',
+          description: 'Failed to start legislative monitoring',
+          variant: 'destructive',
+        });
+      }
     },
   });
 
@@ -200,29 +228,50 @@ export default function AdminLegislativeMonitoring() {
             </Button>
             <Button 
               onClick={() => runMonitoringMutation.mutate()}
-              disabled={runMonitoringMutation.isPending}
+              disabled={runMonitoringMutation.isPending || monitoringStatus?.jobInProgress}
               data-testid="button-run-monitoring"
             >
-              <PlayCircle className="h-4 w-4 mr-2" />
-              {runMonitoringMutation.isPending ? 'Running...' : 'Run Monitoring Now'}
+              {monitoringStatus?.jobInProgress ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Job Running...
+                </>
+              ) : (
+                <>
+                  <PlayCircle className="h-4 w-4 mr-2" />
+                  {runMonitoringMutation.isPending ? 'Starting...' : 'Run Monitoring Now'}
+                </>
+              )}
             </Button>
           </div>
         </div>
 
         {/* Monitoring Status Card */}
-        <Card className="bg-muted/30">
+        <Card className={monitoringStatus?.jobInProgress ? "bg-primary/10 border-primary/30" : "bg-muted/30"}>
           <CardContent className="py-4">
             <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">Last Monitored:</span>
-                  <span className="text-sm text-muted-foreground" data-testid="text-last-monitored">
-                    {monitoringStatus?.lastRun 
-                      ? `${safeFormatDate(monitoringStatus.lastRun.createdAt, 'MMM d, yyyy h:mm a')} (${formatDistanceToNow(new Date(monitoringStatus.lastRun.createdAt), { addSuffix: true })})`
-                      : 'Never'}
-                  </span>
-                </div>
+                {monitoringStatus?.jobInProgress ? (
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="h-4 w-4 text-primary animate-spin" />
+                    <span className="text-sm font-medium text-primary">Job In Progress</span>
+                    {monitoringStatus.jobStartedAt && (
+                      <span className="text-sm text-muted-foreground">
+                        (started {formatDistanceToNow(new Date(monitoringStatus.jobStartedAt), { addSuffix: true })})
+                      </span>
+                    )}
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-medium">Last Monitored:</span>
+                    <span className="text-sm text-muted-foreground" data-testid="text-last-monitored">
+                      {monitoringStatus?.lastRun 
+                        ? `${safeFormatDate(monitoringStatus.lastRun.createdAt, 'MMM d, yyyy h:mm a')} (${formatDistanceToNow(new Date(monitoringStatus.lastRun.createdAt), { addSuffix: true })})`
+                        : 'Never'}
+                    </span>
+                  </div>
+                )}
                 {monitoringStatus?.lastRun && (
                   <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>Bills found: <strong className="text-foreground">{monitoringStatus.lastRun.billsFound}</strong></span>

@@ -3308,6 +3308,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
+      const { getLockStatus } = await import('./utils/jobLock');
+      const lockStatus = getLockStatus();
+
       const lastRun = await storage.getLastSuccessfulMonitoringRun();
       const hasRunThisMonth = await storage.hasMonitoringRunThisMonth();
       
@@ -3315,6 +3318,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastRun: lastRun || null,
         hasRunThisMonth,
         nextScheduledDay: 1, // Runs on the 1st of each month
+        jobInProgress: lockStatus.locked,
+        currentJob: lockStatus.job,
+        jobStartedAt: lockStatus.since,
       });
     } catch (error) {
       console.error('Error fetching monitoring status:', error);
@@ -3324,6 +3330,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Legislative Monitoring Orchestrator (admin only)
   // Modes: queueOnly (default), ingestOnly, publishApproved
+  // Returns immediately (async job) - poll /api/admin/monitoring-status for progress
   app.post('/api/admin/legislative-monitoring/run', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3343,38 +3350,72 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      console.log(`📋 Legislative monitoring run triggered by ${user.email} (mode: ${mode})`);
+      const { tryAcquireLock, releaseLock, getLockStatus } = await import('./utils/jobLock');
       
-      const { withJobLock } = await import('./utils/jobLock');
-      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      // Try to acquire lock synchronously before responding
+      const lockAcquired = tryAcquireLock('legislative-monitoring');
+      
+      if (!lockAcquired) {
+        const lockStatus = getLockStatus();
+        return res.status(409).json({
+          success: false,
+          error: 'A monitoring job is already running',
+          currentJob: lockStatus.job,
+          lockedSince: lockStatus.since,
+        });
+      }
 
-      const result = await withJobLock('legislative-monitoring', async () => {
-        if (mode === 'ingestonly') {
-          const ingest = await legislativeMonitoringService.ingestNow();
-          return { ingest, note: 'Ingest only - no queuing or publishing performed.' };
+      // Lock acquired - wrap everything in try/catch to ensure lock release on failure
+      let legislativeMonitoringService: any;
+      try {
+        const module = await import('./legislativeMonitoringService');
+        legislativeMonitoringService = module.legislativeMonitoringService;
+      } catch (importErr) {
+        releaseLock('legislative-monitoring');
+        throw importErr;
+      }
+
+      console.log(`📋 Legislative monitoring run triggered by ${user.email} (mode: ${mode})`);
+
+      // Run job in background (lock already acquired)
+      (async () => {
+        try {
+          if (mode === 'ingestonly') {
+            await legislativeMonitoringService.ingestNow();
+            return;
+          }
+
+          if (mode === 'publishapproved') {
+            await legislativeMonitoringService.ingestNow();
+            await legislativeMonitoringService.publishApproved();
+            return;
+          }
+
+          // Default: queueOnly (safe)
+          await legislativeMonitoringService.ingestNow();
+          await legislativeMonitoringService.queueFromLatestIngest();
+        } catch (err) {
+          console.error('Background monitoring job failed:', err);
+        } finally {
+          releaseLock('legislative-monitoring');
         }
+      })();
 
-        if (mode === 'publishapproved') {
-          const ingest = await legislativeMonitoringService.ingestNow();
-          const publish = await legislativeMonitoringService.publishApproved();
-          return { ingest, publish, note: 'Published approved items only.' };
-        }
-
-        // Default: queueOnly (safe)
-        const ingest = await legislativeMonitoringService.ingestNow();
-        const queue = await legislativeMonitoringService.queueFromLatestIngest();
-        return { ingest, queue, note: 'Queued for review (no publishing performed).' };
+      // Return immediately - lock is confirmed acquired
+      return res.json({ 
+        success: true, 
+        mode, 
+        message: 'Monitoring job started. Poll /api/admin/monitoring-status to track progress.',
+        async: true,
       });
-
-      return res.json({ success: true, mode, result });
     } catch (err: any) {
-      console.error('Error in legislative monitoring run:', err);
-      const status = err?.status || 500;
-      return res.status(status).json({ 
+      // Ensure lock is released if we somehow get here with lock held
+      const { releaseLock } = await import('./utils/jobLock');
+      releaseLock('legislative-monitoring');
+      console.error('Error starting legislative monitoring run:', err);
+      return res.status(500).json({ 
         success: false, 
         error: err?.message || 'Unknown error',
-        currentJob: err?.currentJob,
-        lockedSince: err?.lockedSince,
       });
     }
   });

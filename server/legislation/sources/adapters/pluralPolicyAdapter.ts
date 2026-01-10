@@ -108,6 +108,7 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
   private apiKey: string;
   private lastRequestTime = 0;
   private minRequestInterval = 1100;
+  private maxRetries = 3;
 
   constructor() {
     this.apiKey = process.env.PLURAL_POLICY_API_KEY || '';
@@ -117,7 +118,7 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
     return !!this.apiKey;
   }
 
-  private async rateLimitedFetch(url: string): Promise<Response | null> {
+  private async rateLimitedFetch(url: string, retryCount = 0): Promise<Response | null> {
     const now = Date.now();
     const timeSinceLastRequest = now - this.lastRequestTime;
     
@@ -135,9 +136,14 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
     });
 
     if (response.status === 429) {
-      console.warn('⚠️ Plural Policy rate limit exceeded, waiting 60s...');
-      await new Promise(resolve => setTimeout(resolve, 60000));
-      return this.rateLimitedFetch(url);
+      if (retryCount >= this.maxRetries) {
+        console.warn(`⚠️ Plural Policy rate limit exceeded after ${this.maxRetries} retries, skipping...`);
+        return null;
+      }
+      const backoffMs = Math.min(5000 * Math.pow(2, retryCount), 30000);
+      console.warn(`⚠️ Plural Policy rate limit, retry ${retryCount + 1}/${this.maxRetries} in ${backoffMs/1000}s...`);
+      await new Promise(resolve => setTimeout(resolve, backoffMs));
+      return this.rateLimitedFetch(url, retryCount + 1);
     }
 
     return response.ok ? response : null;

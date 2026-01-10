@@ -55,3 +55,23 @@ export function getLockStatus(): { locked: boolean; job: string | null; since: D
     since: lockStartTime,
   };
 }
+
+export function tryAcquireLock(jobName: string): boolean {
+  if (locked) {
+    return false;
+  }
+  locked = true;
+  currentJob = jobName;
+  lockStartTime = new Date();
+  console.log(`🔒 [JobLock] Acquired lock for: ${jobName}`);
+  return true;
+}
+
+export function releaseLock(jobName: string): void {
+  if (currentJob === jobName) {
+    console.log(`🔓 [JobLock] Released lock for: ${jobName} (duration: ${Date.now() - (lockStartTime?.getTime() || Date.now())}ms)`);
+    locked = false;
+    currentJob = null;
+    lockStartTime = null;
+  }
+}
