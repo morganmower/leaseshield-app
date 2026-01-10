@@ -1,0 +1,152 @@
+1️⃣ Add a single “orientation sentence” at the very start
+
+Problem:
+First-time applicants (and older landlords reviewing it) don’t always understand what this application is vs what screening is.
+
+Solution (1 sentence, top of page):
+
+This application collects basic information needed to evaluate your rental request. All applications are reviewed using the same screening criteria.
+
+Why this matters:
+
+Sets fairness expectations
+
+Reduces applicant anxiety
+
+Protects the landlord
+
+Costs you nothing
+
+2️⃣ Label “Optional” fields more explicitly
+
+Problem:
+Applicants assume everything is required → frustration → abandonment.
+
+Solution:
+Any non-essential field should visibly say:
+
+(Optional)
+
+Especially for:
+
+additional comments
+
+secondary phone numbers
+
+vehicle info
+
+emergency contact info (if present)
+
+This alone can reduce drop-off significantly.
+
+3️⃣ Criminal / eviction questions: timing & phrasing check
+
+If you are currently asking:
+
+about criminal history
+
+about prior evictions
+
+before screening authorization
+
+⚠️ That’s a risk zone, depending on state.
+
+Safe framing (if questions exist):
+
+Instead of:
+
+“Have you ever been convicted…”
+
+Use:
+
+“Information you provide may be verified through a background screening process.”
+
+And do not require narrative explanations in the application itself.
+
+Key rule:
+👉 Explanation belongs in the decoder phase, not the application.
+
+4️⃣ Income & employment questions — neutral framing
+
+Income questions are usually fine, but phrasing matters.
+
+Good framing:
+
+“Current monthly income (before taxes)”
+
+Avoid:
+
+value judgments
+
+“must earn”
+
+“minimum required”
+
+Those belong in landlord criteria, not the application.
+
+5️⃣ Authorization & consent section (this is important)
+
+This should be:
+
+visually distinct
+
+near the end
+
+clearly labeled
+
+One small improvement: add this line above the checkbox:
+
+By submitting this application, you authorize the verification of the information provided, including background and credit screening where permitted by law.
+
+This:
+
+ties consent to action
+
+avoids legal jargon
+
+reinforces transparency
+
+Also ensure you capture:
+
+timestamp
+
+IP
+
+applicant name as typed
+
+(You likely already do — just confirming.)
+
+6️⃣ Final submit confirmation (small UX win)
+
+After submission, show a calming confirmation, not just “submitted.”
+
+Example:
+
+Application submitted successfully
+The property manager will review your application using their standard screening criteria. You’ll be contacted if additional information is needed.
+
+This reduces follow-up emails and anxiety.
+
+What I don’t recommend adding
+
+To keep this lightweight and safe:
+
+❌ No scoring
+❌ No “likelihood” language
+❌ No conditional logic that hides questions per applicant
+❌ No explanations of criminal/credit items inside the application
+❌ No state-specific legal explanations here (belongs in decoders)
+
+The big picture (important reassurance)
+
+Your application:
+
+is already compliant-leaning
+
+doesn’t overstep
+
+doesn’t decide anything
+
+and fits perfectly with your decoder model
+
+What we’re doing now is polish and risk-reduction, not redesign.
