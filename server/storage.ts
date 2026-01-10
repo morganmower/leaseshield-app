@@ -139,6 +139,9 @@ import {
   type InsertDirectMessage,
   type DirectConversationReadStatus,
   type InsertDirectConversationReadStatus,
+  stateNotes,
+  type StateNote,
+  type InsertStateNote,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray } from "drizzle-orm";
@@ -492,6 +495,17 @@ export interface IStorage {
   upsertDirectConversationReadStatus(conversationId: string, userId: string): Promise<DirectConversationReadStatus>;
   getUnreadDirectMessageCount(userId: string, isAdmin: boolean): Promise<number>;
   archiveDirectConversation(id: string): Promise<void>;
+
+  // State Notes operations (for decoder state-specific snippets)
+  getApprovedStateNote(stateId: string, decoder: 'credit' | 'criminal_eviction', topic: string): Promise<StateNote | undefined>;
+  getStateNotes(filters?: { stateId?: string; decoder?: 'credit' | 'criminal_eviction'; topic?: string; status?: string }): Promise<StateNote[]>;
+  getStateNote(id: string): Promise<StateNote | undefined>;
+  createStateNote(note: InsertStateNote): Promise<StateNote>;
+  updateStateNote(id: string, note: Partial<InsertStateNote>): Promise<StateNote | null>;
+  submitStateNoteForReview(id: string): Promise<StateNote | null>;
+  approveStateNote(id: string, reviewedByUserId: string, approvalChecklist: Record<string, boolean>): Promise<StateNote | null>;
+  archiveStateNote(id: string): Promise<StateNote | null>;
+  getStateNotesCoverage(): Promise<Array<{ stateId: string; decoder: string; topic: string; hasApproved: boolean; lastReviewedAt: Date | null }>>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2764,6 +2778,154 @@ export class DatabaseStorage implements IStorage {
         .set({ isArchived: true, updatedAt: new Date() })
         .where(eq(directConversations.id, id));
     }, 'archiveDirectConversation');
+  }
+
+  // State Notes operations
+  async getApprovedStateNote(stateId: string, decoder: 'credit' | 'criminal_eviction', topic: string): Promise<StateNote | undefined> {
+    return handleDbOperation(async () => {
+      const [note] = await db.select().from(stateNotes)
+        .where(and(
+          eq(stateNotes.stateId, stateId),
+          eq(stateNotes.decoder, decoder),
+          eq(stateNotes.topic, topic),
+          eq(stateNotes.status, 'approved'),
+          eq(stateNotes.isActive, true)
+        ))
+        .orderBy(desc(stateNotes.version))
+        .limit(1);
+      return note;
+    }, 'getApprovedStateNote');
+  }
+
+  async getStateNotes(filters?: { stateId?: string; decoder?: 'credit' | 'criminal_eviction'; topic?: string; status?: string }): Promise<StateNote[]> {
+    return handleDbOperation(async () => {
+      const conditions = [];
+      if (filters?.stateId) conditions.push(eq(stateNotes.stateId, filters.stateId));
+      if (filters?.decoder) conditions.push(eq(stateNotes.decoder, filters.decoder));
+      if (filters?.topic) conditions.push(eq(stateNotes.topic, filters.topic));
+      if (filters?.status) conditions.push(eq(stateNotes.status, filters.status as 'draft' | 'in_review' | 'approved' | 'archived'));
+
+      const query = conditions.length > 0
+        ? db.select().from(stateNotes).where(and(...conditions))
+        : db.select().from(stateNotes);
+
+      return await query.orderBy(desc(stateNotes.updatedAt));
+    }, 'getStateNotes');
+  }
+
+  async getStateNote(id: string): Promise<StateNote | undefined> {
+    return handleDbOperation(async () => {
+      const [note] = await db.select().from(stateNotes).where(eq(stateNotes.id, id));
+      return note;
+    }, 'getStateNote');
+  }
+
+  async createStateNote(note: InsertStateNote): Promise<StateNote> {
+    return handleDbOperation(async () => {
+      const [created] = await db.insert(stateNotes).values({
+        ...note,
+        bullets: note.bullets as string[],
+        sourceLinks: note.sourceLinks as string[] | undefined,
+        approvalChecklist: note.approvalChecklist as Record<string, boolean> | undefined,
+      }).returning();
+      return created;
+    }, 'createStateNote');
+  }
+
+  async updateStateNote(id: string, note: Partial<InsertStateNote>): Promise<StateNote | null> {
+    return handleDbOperation(async () => {
+      const updateData: any = { ...note, updatedAt: new Date() };
+      if (note.bullets) updateData.bullets = note.bullets as string[];
+      if (note.sourceLinks) updateData.sourceLinks = note.sourceLinks as string[];
+      if (note.approvalChecklist) updateData.approvalChecklist = note.approvalChecklist as Record<string, boolean>;
+      
+      const [updated] = await db.update(stateNotes)
+        .set(updateData)
+        .where(eq(stateNotes.id, id))
+        .returning();
+      return updated || null;
+    }, 'updateStateNote');
+  }
+
+  async submitStateNoteForReview(id: string): Promise<StateNote | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(stateNotes)
+        .set({ status: 'in_review', updatedAt: new Date() })
+        .where(and(eq(stateNotes.id, id), eq(stateNotes.status, 'draft')))
+        .returning();
+      return updated || null;
+    }, 'submitStateNoteForReview');
+  }
+
+  async approveStateNote(id: string, reviewedByUserId: string, approvalChecklist: Record<string, boolean>): Promise<StateNote | null> {
+    return handleDbOperation(async () => {
+      // First archive any existing approved note for the same state/decoder/topic
+      const noteToApprove = await this.getStateNote(id);
+      if (!noteToApprove) return null;
+
+      await db.update(stateNotes)
+        .set({ status: 'archived', isActive: false, updatedAt: new Date() })
+        .where(and(
+          eq(stateNotes.stateId, noteToApprove.stateId),
+          eq(stateNotes.decoder, noteToApprove.decoder),
+          eq(stateNotes.topic, noteToApprove.topic),
+          eq(stateNotes.status, 'approved'),
+          eq(stateNotes.isActive, true)
+        ));
+
+      // Approve the new note
+      const [updated] = await db.update(stateNotes)
+        .set({
+          status: 'approved',
+          isActive: true,
+          reviewedByUserId,
+          approvalChecklist,
+          lastReviewedAt: new Date(),
+          updatedAt: new Date()
+        })
+        .where(eq(stateNotes.id, id))
+        .returning();
+      return updated || null;
+    }, 'approveStateNote');
+  }
+
+  async archiveStateNote(id: string): Promise<StateNote | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(stateNotes)
+        .set({ status: 'archived', isActive: false, updatedAt: new Date() })
+        .where(eq(stateNotes.id, id))
+        .returning();
+      return updated || null;
+    }, 'archiveStateNote');
+  }
+
+  async getStateNotesCoverage(): Promise<Array<{ stateId: string; decoder: string; topic: string; hasApproved: boolean; lastReviewedAt: Date | null }>> {
+    return handleDbOperation(async () => {
+      // Get all approved notes grouped by state/decoder/topic
+      const approvedNotes = await db.select({
+        stateId: stateNotes.stateId,
+        decoder: stateNotes.decoder,
+        topic: stateNotes.topic,
+        lastReviewedAt: stateNotes.lastReviewedAt
+      }).from(stateNotes)
+        .where(and(eq(stateNotes.status, 'approved'), eq(stateNotes.isActive, true)));
+
+      // Build coverage map
+      const coverageMap = new Map<string, { stateId: string; decoder: string; topic: string; hasApproved: boolean; lastReviewedAt: Date | null }>();
+      
+      for (const note of approvedNotes) {
+        const key = `${note.stateId}-${note.decoder}-${note.topic}`;
+        coverageMap.set(key, {
+          stateId: note.stateId,
+          decoder: note.decoder,
+          topic: note.topic,
+          hasApproved: true,
+          lastReviewedAt: note.lastReviewedAt
+        });
+      }
+
+      return Array.from(coverageMap.values());
+    }, 'getStateNotesCoverage');
   }
 }
 

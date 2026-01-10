@@ -3708,12 +3708,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
+      // Import state law helpers
+      const { classifyTopic } = await import('./decoders/topicClassifier');
+      const { isStateSpecificQuestion, extractStateFromQuestion, shouldTriggerStateLawFallback, STATE_LAW_FALLBACK_TEXT } = await import('./decoders/stateLawFallback');
+
+      // Classify topic for potential state note lookup
+      const topicMatch = await classifyTopic(trimmedTerm, 'credit', openai);
+      
+      // Check if question references state law or mentions specific state
+      const asksAboutStateLaw = isStateSpecificQuestion(trimmedTerm);
+      const mentionedState = extractStateFromQuestion(trimmedTerm);
+      
+      // Determine which state to use for snippet lookup
+      const lookupState = mentionedState || userState;
+      
+      // Fetch vetted state note if we have a topic and state
+      let stateNote = null;
+      let fallbackText = null;
+      if (lookupState && topicMatch) {
+        stateNote = await storage.getApprovedStateNote(lookupState, 'credit', topicMatch.topic);
+      }
+      
+      // Determine if fallback is needed using full fallback logic
+      if (shouldTriggerStateLawFallback(trimmedTerm, stateNote, topicMatch)) {
+        fallbackText = STATE_LAW_FALLBACK_TEXT;
+      }
+
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
             content: `You are a helpful assistant that explains credit report information to landlords reviewing tenant applications. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform.
+
+STATE-SPECIFIC LAW GUARDRAILS:
+- Do NOT generate or infer state or local laws.
+- Do NOT include a "State-Specific Notes" section - state-specific guidance will be provided separately by the system.
+- If the user asks about a specific state or local law, do NOT attempt to explain it.
+- Focus only on explaining the credit item itself in general terms.
 
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
@@ -3762,14 +3794,13 @@ CRITICAL RULES:
 - Always include the Consistency Check - this is critical for Fair Housing compliance
 - Use bullet points and short sentences - easy to scan quickly
 - Be balanced - risks AND context that reduces weight
+- NEVER generate state-specific legal content
 
-TONE: Neutral compliance advisor, not fear-based advisor. Premium and legally sophisticated.${userStateName ? `
-
-STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-specific laws that are directly relevant to this credit item (such as look-back period limits, discrimination protections, or reporting restrictions specific to ${userStateName}), include a **STATE-SPECIFIC NOTES** section after WHAT THIS DOES NOT MEAN. If no state-specific laws apply, skip this section entirely.` : ''}`
+TONE: Neutral compliance advisor, not fear-based advisor. Premium and legally sophisticated.`
           },
           {
             role: "user",
-            content: `Explain this credit report information for a landlord${userStateName ? ` in ${userStateName}` : ''}: "${trimmedTerm}"`
+            content: `Explain this credit report information for a landlord: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
@@ -3792,6 +3823,9 @@ STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-spe
         explanation,
         userState: userState || null,
         userStateName: userStateName || null,
+        stateNote: stateNote || null,
+        fallbackText: fallbackText || null,
+        classifiedTopic: topicMatch?.topic || null,
       });
     } catch (error) {
       console.error('Error explaining credit term:', error);
@@ -3880,12 +3914,44 @@ STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-spe
     }
 
     try {
+      // Import state law helpers
+      const { classifyTopic } = await import('./decoders/topicClassifier');
+      const { isStateSpecificQuestion, extractStateFromQuestion, shouldTriggerStateLawFallback, STATE_LAW_FALLBACK_TEXT } = await import('./decoders/stateLawFallback');
+
+      // Classify topic for potential state note lookup
+      const topicMatch = await classifyTopic(trimmedTerm, 'criminal_eviction', openai);
+      
+      // Check if question references state law or mentions specific state
+      const asksAboutStateLaw = isStateSpecificQuestion(trimmedTerm);
+      const mentionedState = extractStateFromQuestion(trimmedTerm);
+      
+      // Determine which state to use for snippet lookup
+      const lookupState = mentionedState || userState;
+      
+      // Fetch vetted state note if we have a topic and state
+      let stateNote = null;
+      let fallbackText = null;
+      if (lookupState && topicMatch) {
+        stateNote = await storage.getApprovedStateNote(lookupState, 'criminal_eviction', topicMatch.topic);
+      }
+      
+      // Determine if fallback is needed using full fallback logic
+      if (shouldTriggerStateLawFallback(trimmedTerm, stateNote, topicMatch)) {
+        fallbackText = STATE_LAW_FALLBACK_TEXT;
+      }
+
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
             content: `You are a helpful assistant that explains criminal background and eviction screening findings to landlords. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform and emphasize individualized assessment.
+
+STATE-SPECIFIC LAW GUARDRAILS:
+- Do NOT generate or infer state or local laws.
+- Do NOT include a "State-Specific Notes" section - state-specific guidance will be provided separately by the system.
+- If the user asks about a specific state or local law, do NOT attempt to explain it.
+- Focus only on explaining the criminal/eviction item itself in general terms.
 
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
@@ -3940,14 +4006,13 @@ CRITICAL RULES:
 - Always include Consistency Check - critical for Fair Housing compliance
 - NEVER suggest blanket bans - these violate Fair Housing
 - Be balanced - concerns AND context that reduces weight
+- NEVER generate state-specific legal content
 
-TONE: Neutral compliance advisor. Premium and legally sophisticated. Focus on Fair Housing.${userStateName ? `
-
-STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-specific laws that are directly relevant to this criminal/eviction screening (such as "ban the box" laws, fair chance housing ordinances, look-back period limits, or record sealing/expungement rules specific to ${userStateName}), include a **STATE-SPECIFIC NOTES** section after WHAT THIS DOES NOT MEAN. If no state-specific laws apply, skip this section entirely.` : ''}`
+TONE: Neutral compliance advisor. Premium and legally sophisticated. Focus on Fair Housing.`
           },
           {
             role: "user",
-            content: `Explain this criminal/eviction screening information for a landlord${userStateName ? ` in ${userStateName}` : ''}: "${trimmedTerm}"`
+            content: `Explain this criminal/eviction screening information for a landlord: "${trimmedTerm}"`
           }
         ],
         temperature: 0.7,
@@ -3970,6 +4035,9 @@ STATE CONTEXT: The landlord is based in ${userStateName}. If there are state-spe
         explanation,
         userState: userState || null,
         userStateName: userStateName || null,
+        stateNote: stateNote || null,
+        fallbackText: fallbackText || null,
+        classifiedTopic: topicMatch?.topic || null,
       });
     } catch (error) {
       console.error('Error explaining criminal/eviction term:', error);
@@ -7391,6 +7459,218 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.status(500).json({ message: "Failed to get database stats" });
     }
   });
+
+  // ===== State Notes API (for decoder state-specific snippets) =====
+  
+  // Public endpoint: Get approved state note for decoder runtime
+  app.get('/api/state-notes', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { stateId, decoder, topic } = req.query;
+    
+    if (!stateId || !decoder || !topic) {
+      return res.status(400).json({ message: "stateId, decoder, and topic are required" });
+    }
+    
+    if (!['credit', 'criminal_eviction'].includes(decoder)) {
+      return res.status(400).json({ message: "decoder must be 'credit' or 'criminal_eviction'" });
+    }
+    
+    const note = await storage.getApprovedStateNote(stateId, decoder as 'credit' | 'criminal_eviction', topic);
+    res.json({ note: note || null });
+  }));
+
+  // Admin: List all state notes with filters
+  app.get('/api/admin/state-notes', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const { stateId, decoder, topic, status } = req.query;
+    
+    const filters: any = {};
+    if (stateId) filters.stateId = stateId;
+    if (decoder && ['credit', 'criminal_eviction'].includes(decoder)) filters.decoder = decoder;
+    if (topic) filters.topic = topic;
+    if (status) filters.status = status;
+    
+    const notes = await storage.getStateNotes(filters);
+    res.json(notes);
+  }));
+
+  // Admin: Get single state note
+  app.get('/api/admin/state-notes/:id', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const note = await storage.getStateNote(req.params.id);
+    if (!note) {
+      return res.status(404).json({ message: "State note not found" });
+    }
+    res.json(note);
+  }));
+
+  // Admin: Create new state note (draft)
+  app.post('/api/admin/state-notes', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const { stateId, decoder, topic, title, bullets, sourceLinks } = req.body;
+    
+    if (!stateId || !decoder || !topic || !title || !bullets) {
+      return res.status(400).json({ message: "stateId, decoder, topic, title, and bullets are required" });
+    }
+    
+    if (!['credit', 'criminal_eviction'].includes(decoder)) {
+      return res.status(400).json({ message: "decoder must be 'credit' or 'criminal_eviction'" });
+    }
+    
+    // Validate topic is from allowed list to prevent arbitrary topics
+    const { CREDIT_TOPICS, CRIMINAL_EVICTION_TOPICS } = await import('@shared/decoderTopics');
+    const allowedTopics = decoder === 'credit' ? CREDIT_TOPICS : CRIMINAL_EVICTION_TOPICS;
+    if (!allowedTopics.includes(topic as any)) {
+      return res.status(400).json({ message: `Invalid topic '${topic}' for ${decoder} decoder. Allowed: ${allowedTopics.join(', ')}` });
+    }
+    
+    if (!Array.isArray(bullets) || bullets.length === 0) {
+      return res.status(400).json({ message: "bullets must be a non-empty array of strings" });
+    }
+    
+    const note = await storage.createStateNote({
+      stateId,
+      decoder,
+      topic,
+      title,
+      bullets,
+      sourceLinks: sourceLinks || [],
+      status: 'draft',
+      isActive: false,
+      version: 1,
+    });
+    
+    res.status(201).json(note);
+  }));
+
+  // Admin: Update state note (only drafts can be edited)
+  app.put('/api/admin/state-notes/:id', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const existing = await storage.getStateNote(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "State note not found" });
+    }
+    
+    if (existing.status !== 'draft') {
+      return res.status(400).json({ message: "Only draft notes can be edited. Create a new version instead." });
+    }
+    
+    const { title, bullets, sourceLinks } = req.body;
+    const updateData: any = {};
+    if (title) updateData.title = title;
+    if (bullets) updateData.bullets = bullets;
+    if (sourceLinks !== undefined) updateData.sourceLinks = sourceLinks;
+    
+    const updated = await storage.updateStateNote(req.params.id, updateData);
+    res.json(updated);
+  }));
+
+  // Admin: Submit state note for review
+  app.post('/api/admin/state-notes/:id/submit', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const note = await storage.submitStateNoteForReview(req.params.id);
+    if (!note) {
+      return res.status(400).json({ message: "Note not found or not in draft status" });
+    }
+    res.json(note);
+  }));
+
+  // Admin: Approve state note (requires approval checklist)
+  app.post('/api/admin/state-notes/:id/approve', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const { approvalChecklist } = req.body;
+    
+    if (!approvalChecklist || typeof approvalChecklist !== 'object') {
+      return res.status(400).json({ message: "approvalChecklist is required" });
+    }
+    
+    // Validate all checklist items are checked
+    const requiredChecks = [
+      'contentAccuracy',
+      'neutralFraming',
+      'fairHousingCompliance',
+      'toneConsistency',
+      'auditTrailComplete',
+    ];
+    
+    const allChecked = requiredChecks.every(key => approvalChecklist[key] === true);
+    if (!allChecked) {
+      return res.status(400).json({ message: "All approval checklist items must be checked" });
+    }
+    
+    const note = await storage.approveStateNote(req.params.id, req.user.id, approvalChecklist);
+    if (!note) {
+      return res.status(400).json({ message: "Note not found or approval failed" });
+    }
+    res.json(note);
+  }));
+
+  // Admin: Archive state note
+  app.post('/api/admin/state-notes/:id/archive', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const note = await storage.archiveStateNote(req.params.id);
+    if (!note) {
+      return res.status(404).json({ message: "State note not found" });
+    }
+    res.json(note);
+  }));
+
+  // Admin: Get coverage report (all states x topics matrix)
+  app.get('/api/admin/state-notes/coverage', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
+    const coverage = await storage.getStateNotesCoverage();
+    const states = await storage.getAllStates();
+    
+    // Import topics from shared module
+    const { CREDIT_TOPICS, CRIMINAL_EVICTION_TOPICS, HIGH_RISK_TOPICS } = await import('@shared/decoderTopics');
+    
+    // Build full coverage matrix
+    const matrix: Array<{
+      stateId: string;
+      stateName: string;
+      decoder: string;
+      topic: string;
+      hasApproved: boolean;
+      lastReviewedAt: Date | null;
+      isHighRisk: boolean;
+    }> = [];
+    
+    for (const state of states.filter(s => s.isActive)) {
+      // Credit topics
+      for (const topic of CREDIT_TOPICS) {
+        const existing = coverage.find(c => c.stateId === state.id && c.decoder === 'credit' && c.topic === topic);
+        matrix.push({
+          stateId: state.id,
+          stateName: state.name,
+          decoder: 'credit',
+          topic,
+          hasApproved: existing?.hasApproved || false,
+          lastReviewedAt: existing?.lastReviewedAt || null,
+          isHighRisk: HIGH_RISK_TOPICS.includes(topic as any),
+        });
+      }
+      
+      // Criminal/eviction topics
+      for (const topic of CRIMINAL_EVICTION_TOPICS) {
+        const existing = coverage.find(c => c.stateId === state.id && c.decoder === 'criminal_eviction' && c.topic === topic);
+        matrix.push({
+          stateId: state.id,
+          stateName: state.name,
+          decoder: 'criminal_eviction',
+          topic,
+          hasApproved: existing?.hasApproved || false,
+          lastReviewedAt: existing?.lastReviewedAt || null,
+          isHighRisk: HIGH_RISK_TOPICS.includes(topic as any),
+        });
+      }
+    }
+    
+    // Calculate summary stats
+    const totalCells = matrix.length;
+    const approvedCount = matrix.filter(m => m.hasApproved).length;
+    const highRiskMissing = matrix.filter(m => m.isHighRisk && !m.hasApproved);
+    
+    res.json({
+      matrix,
+      summary: {
+        totalCells,
+        approvedCount,
+        coveragePercent: Math.round((approvedCount / totalCells) * 100),
+        highRiskMissingCount: highRiskMissing.length,
+      }
+    });
+  }));
 
   const httpServer = createServer(app);
   return httpServer;

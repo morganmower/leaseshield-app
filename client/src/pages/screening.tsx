@@ -172,14 +172,22 @@ function getSectionBg(iconType: DecoderSection['icon']) {
   }
 }
 
+interface StateNoteData {
+  title: string;
+  bullets: string[];
+  sourceLinks: string[];
+}
+
 interface DecoderDisplayProps {
   explanation: string;
   decoderType: 'credit' | 'criminal';
   userState?: string | null;
   userStateName?: string | null;
+  stateNote?: StateNoteData | null;
+  fallbackText?: string | null;
 }
 
-function DecoderDisplay({ explanation, decoderType, userState, userStateName }: DecoderDisplayProps) {
+function DecoderDisplay({ explanation, decoderType, userState, userStateName, stateNote, fallbackText }: DecoderDisplayProps) {
   const { toast } = useToast();
   const parsed = parseNewDecoderFormat(explanation);
   const legacy = parsed ? null : parseLegacyFormat(explanation);
@@ -262,6 +270,56 @@ function DecoderDisplay({ explanation, decoderType, userState, userStateName }: 
               </AccordionItem>
             ))}
           </Accordion>
+        )}
+        
+        {/* State-Specific Notes - from vetted database snippets */}
+        {stateNote && userStateName && (
+          <div className="p-4 rounded-lg border bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+            <div className="flex items-center gap-2 mb-3">
+              <Scale className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h4 className="font-semibold text-foreground">{stateNote.title}</h4>
+              <span className="text-xs bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full">
+                {userStateName}
+              </span>
+            </div>
+            <ul className="text-foreground text-sm leading-relaxed ml-7 space-y-1">
+              {stateNote.bullets.map((bullet, i) => (
+                <li key={i} className="flex items-start gap-2">
+                  <span className="text-blue-600 dark:text-blue-400 mt-1">•</span>
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+            {stateNote.sourceLinks && stateNote.sourceLinks.length > 0 && (
+              <div className="mt-3 ml-7">
+                <p className="text-xs text-muted-foreground">Sources:</p>
+                <div className="flex flex-wrap gap-2 mt-1">
+                  {stateNote.sourceLinks.map((link, i) => (
+                    <a 
+                      key={i} 
+                      href={link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-xs text-primary hover:underline"
+                    >
+                      {new URL(link).hostname}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+        
+        {/* Fallback Text - when state law question but no vetted snippet */}
+        {fallbackText && !stateNote && (
+          <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
+            <div className="flex items-center gap-2 mb-2">
+              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <h4 className="font-semibold text-foreground">State-Specific Requirements</h4>
+            </div>
+            <p className="text-foreground text-sm leading-relaxed ml-7">{fallbackText}</p>
+          </div>
         )}
         
         <div className="pt-2 text-xs text-muted-foreground border-t border-muted/50 mt-4 space-y-1">
@@ -356,6 +414,8 @@ export default function Screening() {
   const [isExplaining, setIsExplaining] = useState(false);
   const [creditUserState, setCreditUserState] = useState<string | null>(null);
   const [creditUserStateName, setCreditUserStateName] = useState<string | null>(null);
+  const [creditStateNote, setCreditStateNote] = useState<{ title: string; bullets: string[]; sourceLinks: string[] } | null>(null);
+  const [creditFallbackText, setCreditFallbackText] = useState<string | null>(null);
 
   // Criminal & Eviction Helper state
   const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
@@ -364,6 +424,8 @@ export default function Screening() {
   const [isCriminalExplaining, setIsCriminalExplaining] = useState(false);
   const [criminalUserState, setCriminalUserState] = useState<string | null>(null);
   const [criminalUserStateName, setCriminalUserStateName] = useState<string | null>(null);
+  const [criminalStateNote, setCriminalStateNote] = useState<{ title: string; bullets: string[]; sourceLinks: string[] } | null>(null);
+  const [criminalFallbackText, setCriminalFallbackText] = useState<string | null>(null);
 
   const handleExplain = async () => {
     const input = userQuestion.trim();
@@ -417,6 +479,8 @@ export default function Screening() {
       setExplanation(data.explanation || 'Unable to get explanation. Please try again.');
       setCreditUserState(data.userState || null);
       setCreditUserStateName(data.userStateName || null);
+      setCreditStateNote(data.stateNote || null);
+      setCreditFallbackText(data.fallbackText || null);
     } catch (error) {
       console.error('Error getting explanation:', error);
       setExplanation('Something went wrong. Please try again in a moment.');
@@ -477,6 +541,8 @@ export default function Screening() {
       setCriminalExplanation(data.explanation || 'Unable to get explanation. Please try again.');
       setCriminalUserState(data.userState || null);
       setCriminalUserStateName(data.userStateName || null);
+      setCriminalStateNote(data.stateNote || null);
+      setCriminalFallbackText(data.fallbackText || null);
     } catch (error) {
       console.error('Error getting criminal/eviction explanation:', error);
       setCriminalExplanation('Something went wrong. Please try again in a moment.');
@@ -702,6 +768,8 @@ export default function Screening() {
                   decoderType="credit" 
                   userState={creditUserState}
                   userStateName={creditUserStateName}
+                  stateNote={creditStateNote}
+                  fallbackText={creditFallbackText}
                 />
               )}
 
@@ -818,6 +886,8 @@ export default function Screening() {
                   decoderType="criminal"
                   userState={criminalUserState}
                   userStateName={criminalUserStateName}
+                  stateNote={criminalStateNote}
+                  fallbackText={criminalFallbackText}
                 />
               )}
 

@@ -2001,3 +2001,60 @@ export const updateWorkflowStatusEnum = pgEnum('update_workflow_status', [
   'published',
   'ignored',
 ]);
+
+// Decoder types for state notes
+export const decoderTypeEnum = pgEnum('decoder_type', [
+  'credit',
+  'criminal_eviction',
+]);
+
+// State note status for approval workflow
+export const stateNoteStatusEnum = pgEnum('state_note_status', [
+  'draft',
+  'in_review',
+  'approved',
+  'archived',
+]);
+
+// State Notes - vetted state-specific snippets for decoders
+export const stateNotes = pgTable("state_notes", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull().references(() => states.id),
+  decoder: decoderTypeEnum("decoder").notNull(),
+  topic: varchar("topic", { length: 50 }).notNull(), // Controlled list from decoderTopics.ts
+  title: text("title").notNull(), // e.g., "State-Specific Notes (Illinois)"
+  bullets: jsonb("bullets").notNull().$type<string[]>(), // Array of bullet point strings
+  isActive: boolean("is_active").default(true),
+  version: integer("version").default(1),
+  status: stateNoteStatusEnum("status").default('draft'),
+  lastReviewedAt: timestamp("last_reviewed_at"),
+  reviewedByUserId: varchar("reviewed_by_user_id").references(() => users.id),
+  approvalChecklist: jsonb("approval_checklist").$type<Record<string, boolean>>(), // Checklist responses
+  sourceLinks: jsonb("source_links").$type<string[]>(), // Internal references, not shown to users
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("IDX_state_notes_state").on(table.stateId),
+  index("IDX_state_notes_decoder").on(table.decoder),
+  index("IDX_state_notes_topic").on(table.topic),
+  index("IDX_state_notes_status").on(table.status),
+]);
+
+export const stateNotesRelations = relations(stateNotes, ({ one }) => ({
+  state: one(states, {
+    fields: [stateNotes.stateId],
+    references: [states.id],
+  }),
+  reviewedBy: one(users, {
+    fields: [stateNotes.reviewedByUserId],
+    references: [users.id],
+  }),
+}));
+
+export const insertStateNoteSchema = createInsertSchema(stateNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertStateNote = z.infer<typeof insertStateNoteSchema>;
+export type StateNote = typeof stateNotes.$inferSelect;
