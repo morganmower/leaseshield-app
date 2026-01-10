@@ -60,6 +60,14 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Template Review & Publishing**: Approval-gated system with transactional updates, versioning, history tracking, admin review queue, legislative bill flagging, and user notifications via Resend.
 - **Email Notifications**: Integrated with Resend for legal and template update notifications.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
+- **State Notes Safety System**: Zero AI-generated state law content in decoders:
+  - **DB Schema**: `state_notes` table with versioning, approval workflow, 5-point checklist validation
+  - **Topic Registry**: Controlled topic lists in `shared/decoderTopics.ts` (credit: 5 topics, criminal_eviction: 7 topics)
+  - **Required Topics**: `REQUIRED_CRIMINAL_EVICTION_TOPICS` (fair_chance_housing, individualized_assessment, local_overrides_present), `REQUIRED_CREDIT_TOPICS` (source_of_income)
+  - **Fallback Logic**: `shouldTriggerStateLawFallback()` detects state-specific questions; shows fallback text when no approved snippet exists
+  - **Prompt Guardrails**: Decoders instructed to never generate state-specific content; state notes injected at runtime from DB
+  - **Admin Scripts**: `initStateNotes.ts` seeds draft placeholders, `verifyStateNotes.ts` checks required coverage
+  - **Readiness Flag**: `states.decoder_notes_ready` boolean tracks when required topics are approved
 - **AI Chat Assistant**: Integrated GPT-4o-mini chat widget (OpenAI) for instant help on landlord-tenant law and platform features.
 - **Multi-Property Management**: CRUD operations for properties, document association, and filtering.
 - **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming and optional property association.
