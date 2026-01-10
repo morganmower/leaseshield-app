@@ -213,6 +213,25 @@ export default function AdminPage() {
 
             <Card className="hover-elevate">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">State Notes</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/state-notes" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-state-notes"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    Decoder Notes
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Screening Setup</CardTitle>
                 <Users className="h-4 w-4 text-muted-foreground" />
               </CardHeader>
