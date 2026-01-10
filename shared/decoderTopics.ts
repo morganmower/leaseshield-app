@@ -51,6 +51,23 @@ export const HIGH_RISK_TOPICS: DecoderTopic[] = [
   "source_of_income",
 ];
 
+// Required topics per decoder - minimum to mark state as "decoder-ready"
+// Criminal/Eviction required first (legal risk), Credit is phase 2
+export const REQUIRED_CRIMINAL_EVICTION_TOPICS: CriminalEvictionTopic[] = [
+  "fair_chance_housing",
+  "individualized_assessment",
+  "local_overrides_present",
+];
+
+export const REQUIRED_CREDIT_TOPICS: CreditTopic[] = [
+  "source_of_income", // Only required if state has SOI protections
+];
+
+// Get required topics for a decoder
+export function getRequiredTopicsForDecoder(decoder: "credit" | "criminal_eviction"): readonly string[] {
+  return decoder === "credit" ? REQUIRED_CREDIT_TOPICS : REQUIRED_CRIMINAL_EVICTION_TOPICS;
+}
+
 // Helper to check if a topic belongs to a decoder
 export function isTopicForDecoder(topic: string, decoder: "credit" | "criminal_eviction"): boolean {
   if (decoder === "credit") {

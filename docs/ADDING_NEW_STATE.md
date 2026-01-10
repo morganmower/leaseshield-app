@@ -188,7 +188,42 @@ export const stateDisclosures: Record<string, StateDisclosure[]> = {
 };
 ```
 
-## Step 7: Run Seeds
+## Step 7: Initialize Decoder Notes
+
+After adding the state, create decoder note placeholders so admins can see coverage gaps:
+
+```bash
+# Initialize decoder notes for the new state
+npx tsx server/scripts/initStateNotes.ts NY
+```
+
+This creates draft placeholders for all required decoder topics:
+- Criminal/Eviction: fair_chance_housing, individualized_assessment, local_overrides_present
+- Credit: source_of_income (if state has SOI protections)
+
+**Important**: This does NOT create legal content - just empty slots for admins to fill and approve later.
+
+### Filling Decoder Notes
+
+1. Go to Admin → State Notes → Coverage tab
+2. Find the new state in the matrix (red cells = required topics missing)
+3. Click "Create Draft" or edit existing placeholder
+4. Add vetted content with source citations
+5. Submit for review → Approve with legal checklist
+6. Run verification: `npx tsx server/scripts/verifyStateNotes.ts NY`
+
+### Decoder Notes Checklist
+
+- [ ] Run `initStateNotes <STATE>` to create placeholders
+- [ ] In Admin → State Notes Coverage, confirm required topics exist
+- [ ] Add bullets + sources for required topics (at minimum)
+- [ ] Submit → Approve each required topic
+- [ ] Run `verifyStateNotes <STATE>` to confirm all required approved
+- [ ] Smoke test: ask a state-law question and confirm:
+  - Approved note appears in decoder
+  - Missing note triggers fallback sentence
+
+## Step 8: Run Content Seeds
 
 After adding all content, run the seed scripts:
 
@@ -206,7 +241,7 @@ npx tsx server/seed-communications.ts
 npx tsx server/seed-legal-updates.ts
 ```
 
-## Step 8: Verify Setup
+## Step 9: Verify Setup
 
 Run the verification script to ensure complete setup:
 
@@ -236,7 +271,7 @@ STATE SETUP VERIFICATION REPORT
     Templates: 12 | Compliance: 8 | Communications: 5 | Legal Updates: 2
 ```
 
-## Step 9: Test in Application
+## Step 10: Test in Application
 
 1. Log in to the application
 2. Set the new state as your preferred state
@@ -256,8 +291,11 @@ Use this checklist before considering the state complete:
 - [ ] Legal updates added (if applicable)
 - [ ] State disclosures added (if applicable)
 - [ ] Seeds executed successfully
-- [ ] Verification script passes
-- [ ] Manual testing completed
+- [ ] Verification script passes (`verifyStateSetup.ts`)
+- [ ] **Decoder Notes initialized** (`initStateNotes.ts <STATE>`)
+- [ ] **Required decoder topics approved** (fair_chance_housing, individualized_assessment, local_overrides_present)
+- [ ] **Decoder notes verification passes** (`verifyStateNotes.ts <STATE>`)
+- [ ] Manual testing completed (including decoder smoke test)
 - [ ] replit.md updated with new state
 
 ## Troubleshooting

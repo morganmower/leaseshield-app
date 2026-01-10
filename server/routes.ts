@@ -7610,10 +7610,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   // Admin: Get coverage report (all states x topics matrix)
   app.get('/api/admin/state-notes/coverage', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
     const coverage = await storage.getStateNotesCoverage();
-    const states = await storage.getAllStates();
+    const allStates = await storage.getAllStates();
     
     // Import topics from shared module
-    const { CREDIT_TOPICS, CRIMINAL_EVICTION_TOPICS, HIGH_RISK_TOPICS } = await import('@shared/decoderTopics');
+    const { 
+      CREDIT_TOPICS, 
+      CRIMINAL_EVICTION_TOPICS, 
+      HIGH_RISK_TOPICS,
+      REQUIRED_CREDIT_TOPICS,
+      REQUIRED_CRIMINAL_EVICTION_TOPICS,
+    } = await import('@shared/decoderTopics');
     
     // Build full coverage matrix
     const matrix: Array<{
@@ -7624,50 +7630,98 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       hasApproved: boolean;
       lastReviewedAt: Date | null;
       isHighRisk: boolean;
+      isRequired: boolean;
     }> = [];
     
-    for (const state of states.filter(s => s.isActive)) {
+    // Per-state decoder-ready status
+    const stateStatus: Array<{
+      stateId: string;
+      stateName: string;
+      decoderNotesReady: boolean;
+      requiredCriminalEvictionApproved: number;
+      requiredCriminalEvictionTotal: number;
+      requiredCreditApproved: number;
+      requiredCreditTotal: number;
+      isActuallyReady: boolean;
+    }> = [];
+    
+    for (const state of allStates.filter(s => s.isActive)) {
+      let requiredCriminalEvictionApproved = 0;
+      let requiredCreditApproved = 0;
+      
       // Credit topics
       for (const topic of CREDIT_TOPICS) {
         const existing = coverage.find(c => c.stateId === state.id && c.decoder === 'credit' && c.topic === topic);
+        const isRequired = REQUIRED_CREDIT_TOPICS.includes(topic as any);
+        const hasApproved = existing?.hasApproved || false;
+        
+        if (isRequired && hasApproved) requiredCreditApproved++;
+        
         matrix.push({
           stateId: state.id,
           stateName: state.name,
           decoder: 'credit',
           topic,
-          hasApproved: existing?.hasApproved || false,
+          hasApproved,
           lastReviewedAt: existing?.lastReviewedAt || null,
           isHighRisk: HIGH_RISK_TOPICS.includes(topic as any),
+          isRequired,
         });
       }
       
       // Criminal/eviction topics
       for (const topic of CRIMINAL_EVICTION_TOPICS) {
         const existing = coverage.find(c => c.stateId === state.id && c.decoder === 'criminal_eviction' && c.topic === topic);
+        const isRequired = REQUIRED_CRIMINAL_EVICTION_TOPICS.includes(topic as any);
+        const hasApproved = existing?.hasApproved || false;
+        
+        if (isRequired && hasApproved) requiredCriminalEvictionApproved++;
+        
         matrix.push({
           stateId: state.id,
           stateName: state.name,
           decoder: 'criminal_eviction',
           topic,
-          hasApproved: existing?.hasApproved || false,
+          hasApproved,
           lastReviewedAt: existing?.lastReviewedAt || null,
           isHighRisk: HIGH_RISK_TOPICS.includes(topic as any),
+          isRequired,
         });
       }
+      
+      // Compute actual readiness (all required topics approved)
+      const isActuallyReady = 
+        requiredCriminalEvictionApproved === REQUIRED_CRIMINAL_EVICTION_TOPICS.length &&
+        requiredCreditApproved === REQUIRED_CREDIT_TOPICS.length;
+      
+      stateStatus.push({
+        stateId: state.id,
+        stateName: state.name,
+        decoderNotesReady: state.decoderNotesReady || false,
+        requiredCriminalEvictionApproved,
+        requiredCriminalEvictionTotal: REQUIRED_CRIMINAL_EVICTION_TOPICS.length,
+        requiredCreditApproved,
+        requiredCreditTotal: REQUIRED_CREDIT_TOPICS.length,
+        isActuallyReady,
+      });
     }
     
     // Calculate summary stats
     const totalCells = matrix.length;
     const approvedCount = matrix.filter(m => m.hasApproved).length;
     const highRiskMissing = matrix.filter(m => m.isHighRisk && !m.hasApproved);
+    const statesReady = stateStatus.filter(s => s.isActuallyReady).length;
     
     res.json({
       matrix,
+      stateStatus,
       summary: {
         totalCells,
         approvedCount,
         coveragePercent: Math.round((approvedCount / totalCells) * 100),
         highRiskMissingCount: highRiskMissing.length,
+        statesReady,
+        statesTotal: stateStatus.length,
       }
     });
   }));

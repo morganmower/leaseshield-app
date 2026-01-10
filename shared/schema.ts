@@ -70,6 +70,7 @@ export const states = pgTable("states", {
   name: text("name").notNull(), // Utah, Texas, etc.
   description: text("description"),
   isActive: boolean("is_active").default(true),
+  decoderNotesReady: boolean("decoder_notes_ready").default(false), // True when required decoder topics are approved
   createdAt: timestamp("created_at").defaultNow(),
 });
 
