@@ -906,6 +906,18 @@ Best regards`;
                         </div>
                       </div>
                       
+                      {!person.isCompleted && person.role === 'applicant' && (
+                        <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <FileText className="h-4 w-4 text-amber-500" />
+                            <span className="text-sm text-amber-600">Application incomplete - awaiting signature</span>
+                          </div>
+                          <Badge variant="outline" className="text-amber-600 border-amber-500">
+                            Awaiting Signature
+                          </Badge>
+                        </div>
+                      )}
+
                       {!person.isCompleted && person.role !== 'applicant' && (
                         <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
@@ -977,6 +989,22 @@ Best regards`;
                                   {personOrder.status === 'in_progress' && 'In Progress'}
                                   {personOrder.status === 'complete' && 'Complete'}
                                 </Badge>
+                                {personOrder.status === 'sent' && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => selectedSubmission && screeningMutation.mutate({ submissionId: selectedSubmission, personId: person.id })}
+                                    disabled={screeningMutation.isPending}
+                                    data-testid={`button-resend-screening-${person.id}`}
+                                  >
+                                    {screeningMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <Mail className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Resend Invitation</span>
+                                  </Button>
+                                )}
                                 {personOrder.status === 'in_progress' && (
                                   <Button
                                     size="sm"

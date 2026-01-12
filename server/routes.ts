@@ -5920,14 +5920,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         }
       }
 
-      // Check if screening already exists for this person - allow retry if previous request failed
+      // SAFETY GUARDRAIL: Only allow screening for completed applications (signed with disclosure)
+      if (!targetPerson.isCompleted) {
+        return res.status(400).json({ message: "Cannot request screening until the applicant completes and signs their application" });
+      }
+
+      // Check if screening already exists for this person - allow retry for failed, not_sent, or sent (resend invitation)
       const existingOrder = await storage.getRentalScreeningOrderByPerson(targetPerson.id);
-      if (existingOrder && existingOrder.status !== 'error' && existingOrder.status !== 'not_sent') {
+      const allowedRetryStatuses = ['error', 'not_sent', 'sent'];
+      if (existingOrder && !allowedRetryStatuses.includes(existingOrder.status)) {
         return res.status(400).json({ message: `Screening already requested for ${targetPerson.firstName} ${targetPerson.lastName}` });
       }
       
-      // If there's a failed or stuck order for this person, delete it so we can retry
-      if (existingOrder && (existingOrder.status === 'error' || existingOrder.status === 'not_sent')) {
+      // If there's a failed or stuck order for this person (error/not_sent), delete it so we can send a fresh invitation
+      // For 'sent' orders, we also delete and recreate since Western Verify AppScreen generates a new invitation each time
+      if (existingOrder && allowedRetryStatuses.includes(existingOrder.status)) {
         await storage.deleteRentalScreeningOrder(existingOrder.id);
       }
 
