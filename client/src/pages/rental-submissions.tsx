@@ -1025,17 +1025,30 @@ Best regards`;
                                   <Button
                                     size="sm"
                                     variant="outline"
-                                    onClick={() => {
-                                      apiRequest('POST', '/api/analytics/track', {
-                                        eventType: 'western_verify_click',
-                                        eventData: { source: 'rental_submissions', action: 'view_report' },
-                                      }).catch(() => {});
-                                      window.open('https://secure.westernverify.com/report_lookup.cfm', '_blank');
+                                    onClick={async () => {
+                                      try {
+                                        apiRequest('POST', '/api/analytics/track', {
+                                          eventType: 'western_verify_click',
+                                          eventData: { source: 'rental_submissions', action: 'view_report' },
+                                        }).catch(() => {});
+                                        
+                                        const response = await apiRequest('GET', `/api/rental/screening/${personOrder.id}/report-url`);
+                                        const data = await response.json();
+                                        
+                                        if (data.redirectUrl) {
+                                          window.open(data.redirectUrl, '_blank');
+                                        } else {
+                                          toast({ title: "Report not available", description: "Unable to generate report link. Please try again.", variant: "destructive" });
+                                        }
+                                      } catch (error) {
+                                        console.error("Failed to get report URL:", error);
+                                        toast({ title: "Error", description: "Failed to open report. Please try again.", variant: "destructive" });
+                                      }
                                     }}
                                     data-testid={`button-view-report-${person.id}`}
                                   >
                                     <ExternalLink className="h-4 w-4 mr-1" />
-                                    View on Western Verify
+                                    View Report
                                   </Button>
                                 )}
                               </div>
