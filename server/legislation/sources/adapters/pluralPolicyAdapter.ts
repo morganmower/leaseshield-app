@@ -122,7 +122,7 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
   
   private baseUrl = 'https://v3.openstates.org';
   private apiKey: string;
-  private maxRetries = 3;
+  private dailyLimitExhausted = false;
 
   constructor() {
     this.apiKey = process.env.PLURAL_POLICY_API_KEY || '';
@@ -132,7 +132,7 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
     return !!this.apiKey;
   }
 
-  private async rateLimitedFetch(url: string, retryCount = 0): Promise<Response | null> {
+  private async rateLimitedFetch(url: string): Promise<Response | 'rate_limited' | null> {
     // Use global rate limiter to ensure all calls are properly spaced
     await globalRateLimitedDelay();
 
@@ -144,17 +144,8 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
     });
 
     if (response.status === 429) {
-      if (retryCount >= this.maxRetries) {
-        console.warn(`⚠️ Plural Policy rate limit exceeded after ${this.maxRetries} retries, skipping...`);
-        return null;
-      }
-      // Exponential backoff: 5s, 10s, 20s
-      const backoffMs = 5000 * Math.pow(2, retryCount);
-      console.warn(`⚠️ Plural Policy rate limit, retry ${retryCount + 1}/${this.maxRetries} in ${backoffMs/1000}s...`);
-      await new Promise(resolve => setTimeout(resolve, backoffMs));
-      // Reset the global timer after backoff
-      globalLastRequestTime = Date.now();
-      return this.rateLimitedFetch(url, retryCount + 1);
+      // Return special marker instead of retrying - daily limit likely exhausted
+      return 'rate_limited';
     }
 
     return response.ok ? response : null;
@@ -163,6 +154,9 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
   async fetch(params: SourceFetchParams): Promise<SourceFetchResult> {
     const items: NormalizedLegislationItem[] = [];
     const errors: string[] = [];
+    
+    // Reset daily limit flag at start of each fetch cycle
+    this.dailyLimitExhausted = false;
     
     if (!this.apiKey) {
       errors.push('PLURAL_POLICY_API_KEY not configured');
@@ -174,13 +168,18 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
       return { items, errors };
     }
     const states = params.states;
-    const searchTerms = ['landlord tenant', 'eviction', 'rental property', 'security deposit'];
+    const searchTerms = ['landlord tenant', 'eviction'];
     
     for (const state of states) {
+      // Early exit if daily limit is exhausted
+      if (this.dailyLimitExhausted) {
+        break;
+      }
+      
       const jurisdiction = STATE_JURISDICTION_MAP[state];
       if (!jurisdiction) continue;
 
-      for (const searchTerm of searchTerms.slice(0, 2)) {
+      for (const searchTerm of searchTerms) {
         try {
           const urlParams = new URLSearchParams({
             jurisdiction,
@@ -189,6 +188,14 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
           });
 
           const response = await this.rateLimitedFetch(`${this.baseUrl}/bills?${urlParams}`);
+          
+          // Check for rate limit - if hit, skip entire source
+          if (response === 'rate_limited') {
+            console.warn(`⏸️ Plural Policy daily limit exhausted - skipping remaining states (will retry tomorrow)`);
+            this.dailyLimitExhausted = true;
+            errors.push('Plural Policy daily rate limit exhausted - skipped remaining states');
+            break;
+          }
           
           if (!response) {
             errors.push(`Plural Policy error for ${state}: no response`);
@@ -212,7 +219,9 @@ class PluralPolicyAdapter implements LegislationSourceAdapter {
         }
       }
       
-      console.log(`🔍 Plural Policy ${state}: Processed`);
+      if (!this.dailyLimitExhausted) {
+        console.log(`🔍 Plural Policy ${state}: Processed`);
+      }
     }
 
     return { items, errors };
