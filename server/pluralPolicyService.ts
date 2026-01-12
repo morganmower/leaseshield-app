@@ -105,12 +105,26 @@ const LANDLORD_TENANT_SEARCH_TERMS = [
   'residential lease',
 ];
 
+// Shared rate limiter for all Plural Policy API calls
+let globalLastRequestTime = 0;
+const GLOBAL_MIN_INTERVAL = 2500; // 2.5 seconds between any Plural Policy request
+
+async function globalRateLimitedDelay(): Promise<void> {
+  const now = Date.now();
+  const timeSinceLastRequest = now - globalLastRequestTime;
+  
+  if (timeSinceLastRequest < GLOBAL_MIN_INTERVAL) {
+    const waitTime = GLOBAL_MIN_INTERVAL - timeSinceLastRequest;
+    await new Promise(resolve => setTimeout(resolve, waitTime));
+  }
+  
+  globalLastRequestTime = Date.now();
+}
+
 class PluralPolicyService {
   private baseUrl = 'https://v3.openstates.org';
   private apiKey: string;
-  private requestQueue: Array<() => Promise<any>> = [];
-  private lastRequestTime = 0;
-  private minRequestInterval = 1100; // 1 request per second + buffer
+  private maxRetries = 3;
 
   constructor() {
     this.apiKey = process.env.PLURAL_POLICY_API_KEY || '';
@@ -119,15 +133,9 @@ class PluralPolicyService {
     }
   }
 
-  private async rateLimitedFetch(url: string): Promise<Response | null> {
-    const now = Date.now();
-    const timeSinceLastRequest = now - this.lastRequestTime;
-    
-    if (timeSinceLastRequest < this.minRequestInterval) {
-      await new Promise(resolve => setTimeout(resolve, this.minRequestInterval - timeSinceLastRequest));
-    }
-    
-    this.lastRequestTime = Date.now();
+  private async rateLimitedFetch(url: string, retryCount = 0): Promise<Response | null> {
+    // Use global rate limiter to ensure all calls are properly spaced
+    await globalRateLimitedDelay();
 
     try {
       const response = await fetch(url, {
@@ -139,9 +147,16 @@ class PluralPolicyService {
 
       if (!response.ok) {
         if (response.status === 429) {
-          console.warn('⚠️ Plural Policy rate limit exceeded, waiting 60s...');
-          await new Promise(resolve => setTimeout(resolve, 60000));
-          return this.rateLimitedFetch(url);
+          if (retryCount >= this.maxRetries) {
+            console.warn(`⚠️ Plural Policy rate limit exceeded after ${this.maxRetries} retries, skipping...`);
+            return null;
+          }
+          // Exponential backoff: 5s, 10s, 20s
+          const backoffMs = 5000 * Math.pow(2, retryCount);
+          console.warn(`⚠️ Plural Policy rate limit, retry ${retryCount + 1}/${this.maxRetries} in ${backoffMs/1000}s...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+          globalLastRequestTime = Date.now();
+          return this.rateLimitedFetch(url, retryCount + 1);
         }
         console.error(`Plural Policy API error: ${response.status} ${response.statusText}`);
         return null;
