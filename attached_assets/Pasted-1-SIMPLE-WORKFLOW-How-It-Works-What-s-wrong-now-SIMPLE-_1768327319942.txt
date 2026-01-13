@@ -1,0 +1,267 @@
+1️⃣ “SIMPLE WORKFLOW / How It Works”
+❌ What’s wrong now
+
+“SIMPLE WORKFLOW” is tiny → looks like a label
+
+“How It Works” is correct, but underpowered
+
+Supporting line is too light → fades away
+
+Steps feel informational, not authoritative
+
+✅ What it should feel like
+
+“Here’s the core system. This is how the platform works.”
+
+🔧 EXACT FIX
+Eyebrow (keep, but upgrade)
+
+Text
+
+HOW LEASESHIELD WORKS
+
+
+Style
+
+Font size: 15px
+
+Letter spacing: 0.08em
+
+Font weight: 600
+
+Color: #475569 (not light gray)
+
+Margin-bottom: 12px
+
+Main heading
+
+Text
+
+A Simple Workflow That Protects You From Costly Mistakes
+
+
+Style
+
+Font size: 34–36px
+
+Font weight: 700
+
+Color: #0F172A
+
+Line height: 1.2
+
+Margin-bottom: 20px
+
+Supporting line
+
+Text
+
+From application to screening to compliant documents — all in one connected process.
+
+
+Style
+
+Font size: 17–18px
+
+Font weight: 400
+
+Color: #475569
+
+Max-width: 720px
+
+Margin-bottom: 48px
+
+Step layout tweaks (important)
+
+Keep your step copy, but:
+
+Increase vertical spacing between steps (32–40px)
+
+Make step numbers more visually distinct:
+
+Color: brand green
+
+Font-weight: 700
+
+Step titles at 18–19px, not body size
+
+Descriptions at 16px, normal weight
+
+This prevents the “instruction manual” look.
+
+2️⃣ “Built by professionals…” (THIS IS NOT A FOOTNOTE)
+❌ Why it looks legal now
+
+Small font
+
+Single line
+
+No section framing
+
+Buried between bigger sections
+
+✅ What it should feel like
+
+“You’re in experienced hands.”
+
+🔧 EXACT FIX
+
+Turn this into a Trust Band, not a sentence.
+
+Structure
+
+Wrap it in a container with:
+
+Background: #F8FAFC
+
+Padding: 48px top / bottom
+
+Text centered
+
+Text (rewrite slightly but same meaning)
+
+Heading
+
+Built by Screening & Compliance Professionals
+
+
+Font size: 24–26px
+
+Font weight: 600
+
+Color: #0F172A
+
+Margin-bottom: 12px
+
+Supporting text
+
+Decades of hands-on experience helping landlords interpret screening results and stay compliant.
+
+
+Font size: 16–17px
+
+Color: #475569
+
+Max-width: 640px
+
+Centered
+
+This instantly removes the “legal disclaimer” feel.
+
+3️⃣ “Designed to complement your apartment association membership”
+
+This one is especially important — and yes, right now it absolutely looks like legal fine print.
+
+❌ What’s wrong
+
+Too small
+
+Reads like a caveat
+
+No visual emphasis
+
+Sits naked on white background
+
+✅ What it should feel like
+
+“This works with what you already trust — not against it.”
+
+🔧 EXACT FIX
+Give it its own Context Section
+
+Eyebrow
+
+NOT A REPLACEMENT — A COMPLEMENT
+
+
+Font size: 14–15px
+
+Letter spacing: 0.08em
+
+Font weight: 600
+
+Color: #475569
+
+Margin-bottom: 12px
+
+Main heading
+
+Designed to Work Alongside Your Apartment Association
+
+
+Font size: 26–28px
+
+Font weight: 600
+
+Color: #0F172A
+
+Margin-bottom: 16px
+
+Body text
+
+Associations provide education and advocacy.  
+LeaseShield provides day-to-day execution — interpreting screening results, managing compliance workflows, and generating current documents.
+
+
+Font size: 16–17px
+
+Color: #475569
+
+Line height: 1.6
+
+Max-width: 720px
+
+Optional (strong but calm closer)
+Most landlords use both — and that’s exactly how LeaseShield was designed.
+
+
+Italic or slightly lighter weight.
+
+4️⃣ Global Fix: Subtitle Consistency (THIS IS KEY)
+
+Right now:
+
+“Start Here”
+
+“Beyond Screening”
+
+“Simple Workflow”
+
+“Built by professionals”
+
+All feel like different visual systems.
+
+Rule to enforce everywhere:
+
+Eyebrows: 14–15px, uppercase, letter-spaced
+
+Section headers: 26–36px, bold
+
+Supporting text: 16–18px
+
+If something matters → it CANNOT be tiny.
+
+FINAL VERDICT (no fluff)
+
+You’re not wrong — your instincts are excellent.
+
+Nothing looks “cheap” because of color or branding.
+It looks cheap because important ideas are being visually whispered.
+
+Once you:
+
+Increase section authority
+
+Add breathing room
+
+Stop using small text for strategic messaging
+
+…the site will feel:
+
+confident
+
+intentional
+
+premium
+
+trustworthy
