@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -322,9 +322,9 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Decision Section - Premium Two-Card Layout */}
-      <section className="py-16 bg-[#F9FAFB] dark:bg-muted/20">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* PRIMARY HERO: Decision Section */}
+      <section className="py-20 md:py-24 bg-gradient-to-b from-[#F9FAFB] to-white dark:from-muted/20 dark:to-background">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -332,41 +332,37 @@ export default function Landing() {
             variants={staggerContainer}
           >
             {/* Section Header */}
-            <motion.div variants={fadeInUp} className="text-center mb-10">
-              <h2 className="text-2xl md:text-[32px] font-bold text-[#111827] dark:text-foreground leading-tight mb-2">
+            <motion.div variants={fadeInUp} className="text-center mb-12">
+              <h2 className="text-3xl md:text-[40px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-3">
                 What would you like help with right now?
               </h2>
-              <p className="text-base text-[#6B7280] dark:text-muted-foreground">
-                Most landlords start by explaining an existing screening report.
+              <p className="text-lg text-[#475569] dark:text-muted-foreground font-medium">
+                Most landlords start here.
               </p>
             </motion.div>
             
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Card 1: Explain Report - Primary Path */}
+            <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-stretch">
+              {/* Card 1: Explain Report - PRIMARY DOMINANT */}
               <motion.div variants={fadeInUp}>
                 <div 
-                  className="p-6 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/30 cursor-pointer transition-all hover:shadow-xl h-full flex flex-col"
-                  style={{ boxShadow: '0 10px 30px rgba(16, 185, 129, 0.15)' }}
+                  className="p-8 md:p-10 rounded-2xl bg-[#ECFDF5] dark:bg-emerald-950/30 cursor-pointer transition-shadow hover:shadow-2xl min-h-[420px] md:min-h-[460px] flex flex-col"
+                  style={{ boxShadow: '0 12px 40px rgba(16, 185, 129, 0.18)' }}
                   onClick={() => window.location.href = "/screening/explain"}
                   data-testid="card-explain-report"
                 >
-                  <div className="flex items-start gap-4 mb-4">
-                    <div className="w-12 h-12 rounded-xl bg-[#10B981] flex items-center justify-center flex-shrink-0">
-                      <Search className="h-6 w-6 text-white" />
-                    </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-xl text-[#065F46] dark:text-emerald-300 mb-2">
-                        Explain My Screening Report
-                      </h3>
-                      <p className="text-[15px] leading-relaxed text-[#374151] dark:text-muted-foreground">
-                        Plain-English explanations of credit, criminal, or eviction reports with compliance risk flags.
-                      </p>
-                    </div>
+                  <div className="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center flex-shrink-0 mb-6">
+                    <Search className="h-7 w-7 text-white" />
                   </div>
-                  <div className="mt-auto pt-4">
+                  <h3 className="font-bold text-[22px] md:text-2xl text-[#065F46] dark:text-emerald-300 mb-3">
+                    Explain My Screening Report
+                  </h3>
+                  <p className="text-base md:text-[17px] leading-relaxed text-[#374151] dark:text-muted-foreground mb-6 flex-grow">
+                    Paste or upload any credit, criminal, or eviction report. Get a plain-English breakdown with compliance risk flags — instantly.
+                  </p>
+                  <div className="mt-auto">
                     <Button
                       size="lg"
-                      className="bg-[#10B981] hover:bg-[#059669] text-white font-semibold rounded-xl h-12 px-6"
+                      className="bg-[#10B981] hover:bg-[#059669] text-white font-semibold rounded-xl h-14 px-8 text-base w-full md:w-auto"
                       data-testid="button-explain-card"
                     >
                       Explain My Screening Report
@@ -376,28 +372,24 @@ export default function Landing() {
                 </div>
               </motion.div>
 
-              {/* Card 2: New Application - Secondary Path */}
+              {/* Card 2: New Application - Secondary */}
               <motion.div variants={fadeInUp}>
                 <div 
-                  className="p-6 rounded-xl bg-white dark:bg-card border border-[#E5E7EB] dark:border-border cursor-pointer transition-all hover:shadow-lg h-full relative"
-                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
+                  className="p-6 md:p-8 rounded-2xl bg-white dark:bg-card border border-[#E5E7EB] dark:border-border cursor-pointer transition-all hover:shadow-lg min-h-[420px] md:min-h-[460px] flex flex-col relative"
+                  style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
                   onClick={() => window.location.href = "/properties"}
                   data-testid="card-new-application"
                 >
-                  <ArrowRight className="absolute top-6 right-6 h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
-                  <div className="flex items-start gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] dark:bg-muted flex items-center justify-center flex-shrink-0">
-                      <UserPlus className="h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
-                    </div>
-                    <div className="flex-1 pr-8">
-                      <h3 className="font-semibold text-lg text-[#111827] dark:text-foreground mb-2">
-                        New Tenant Application + Screening
-                      </h3>
-                      <p className="text-[15px] leading-relaxed text-[#374151] dark:text-muted-foreground">
-                        Send an application link and run screening through Western Verify as part of a full compliant workflow.
-                      </p>
-                    </div>
+                  <ArrowRight className="absolute top-6 right-6 h-5 w-5 text-[#9CA3AF] dark:text-muted-foreground" />
+                  <div className="w-11 h-11 rounded-xl bg-[#F3F4F6] dark:bg-muted flex items-center justify-center flex-shrink-0 mb-5">
+                    <UserPlus className="h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
                   </div>
+                  <h3 className="font-semibold text-lg md:text-xl text-[#111827] dark:text-foreground mb-3 pr-8">
+                    New Tenant Application + Screening
+                  </h3>
+                  <p className="text-[15px] md:text-base leading-relaxed text-[#64748B] dark:text-muted-foreground">
+                    Send an application link and run screening through Western Verify as part of a full compliant workflow.
+                  </p>
                 </div>
               </motion.div>
             </div>
@@ -405,8 +397,134 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Beyond Screening Section */}
-      <section className="py-12 md:py-16 bg-muted/20 border-t">
+      {/* Transition Section: Complete Protection System */}
+      <section className="py-16 md:py-20 bg-white dark:bg-background border-t">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-10 md:gap-16 items-center"
+          >
+            {/* Left: Text Content */}
+            <motion.div variants={fadeInUp} className="order-2 md:order-1">
+              <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-4">
+                This Is More Than a Decoder
+              </p>
+              <h2 className="font-display text-2xl sm:text-[32px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-4">
+                LeaseShield Is a Complete Landlord Protection System
+              </h2>
+              <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground mb-6 leading-relaxed">
+                Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more — all in one connected dashboard.
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 inline-block">
+                <p className="text-sm sm:text-base text-foreground">
+                  One bad eviction = <span className="font-bold">$8,400</span> average cost.<br/>
+                  LeaseShield = <span className="font-bold">$120/year</span> protection.
+                </p>
+              </div>
+            </motion.div>
+
+            {/* Right: Hero Image */}
+            <motion.div 
+              variants={fadeInUp}
+              className="order-1 md:order-2"
+            >
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
+                <img 
+                  src={heroImage} 
+                  alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
+                  className="w-full h-auto object-cover"
+                  data-testid="img-hero"
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How It Works - Horizontal Step Cards */}
+      <section id="how-it-works" className="py-20 sm:py-24 bg-[#F8FAFC] dark:bg-muted/20 scroll-mt-24">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-16"
+          >
+            <p className="text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
+              How LeaseShield Works
+            </p>
+            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-5">
+              A Simple Workflow That Protects You
+            </h2>
+            <p className="text-[17px] sm:text-lg text-[#475569] dark:text-muted-foreground max-w-[640px] mx-auto">
+              From application to screening to compliant documents — all connected.
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-6 md:gap-8 relative"
+          >
+            {/* Connector line (desktop only) */}
+            <div className="hidden md:block absolute top-14 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 dark:from-emerald-600 dark:via-emerald-500 dark:to-emerald-600" />
+            
+            {/* Step 1 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">1</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                  Screen Tenants
+                </h3>
+                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                  Send applicants a link to apply and run screening via Western Verify.
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Step 2 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">2</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                  Decode Reports
+                </h3>
+                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                  AI explains results in plain English and flags compliance risks.
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Step 3 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">3</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                  Build Documents
+                </h3>
+                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                  Generate state-specific leases, notices, and forms. Always current.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Trust Band with Icons */}
+      <section className="py-14 bg-white dark:bg-background border-y">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
@@ -415,150 +533,126 @@ export default function Landing() {
             variants={staggerContainer}
             className="text-center mb-10"
           >
-            <motion.p variants={fadeInUp} className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
-              Beyond Screening
-            </motion.p>
-            <motion.h2 
-              variants={fadeInUp}
-              className="font-display text-2xl sm:text-[28px] md:text-[32px] font-bold text-[#0F172A] dark:text-foreground mb-4"
-            >
-              What Else LeaseShield Does
-            </motion.h2>
-            <motion.p 
-              variants={fadeInUp}
-              className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground max-w-2xl mx-auto"
-            >
-              Applications, state-specific leases, compliance alerts, and more. All in one simple dashboard.
-            </motion.p>
-          </motion.div>
-
-          {/* Hero Image */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.5 }}
-            className="mb-8 max-w-2xl mx-auto"
-          >
-            <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
-              <img 
-                src={heroImage} 
-                alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
-                className="w-full h-auto object-cover"
-                data-testid="img-hero"
-              />
-            </div>
-          </motion.div>
-
-          {/* Cost reminder */}
-          <motion.div 
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 max-w-xl mx-auto text-center"
-          >
-            <p className="text-sm sm:text-base text-foreground">
-              One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
-              LeaseShield App = <span className="font-bold">$120/year</span> insurance.
-            </p>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* How It Works - Simple 3-step workflow */}
-      <section id="how-it-works" className="py-16 sm:py-20 bg-muted/30 border-y scroll-mt-24">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center"
-          >
-            <p className="text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
-              How LeaseShield Works
-            </p>
-            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-5">
-              A Simple Workflow That Protects You From Costly Mistakes
-            </h2>
-            <p className="text-[17px] sm:text-lg text-[#475569] dark:text-muted-foreground max-w-[720px] mx-auto mb-12">
-              From application to screening to compliant documents — all in one connected process.
-            </p>
-            <ol className="space-y-8 sm:space-y-10 text-left max-w-xl mx-auto">
-              <li className="flex items-start gap-4">
-                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">1.</span>
-                <div>
-                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Collect Applications & Screen Tenants</span>
-                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
-                    Send applicants a link to apply and run screening via trusted partner Western Verify.
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">2.</span>
-                <div>
-                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Decode Reports Instantly</span>
-                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
-                    AI guidance explains results in plain English and flags compliance risks.
-                  </p>
-                </div>
-              </li>
-              <li className="flex items-start gap-4">
-                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">3.</span>
-                <div>
-                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Build Compliant Documents</span>
-                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
-                    Generate state-specific leases, notices, and forms. Always up to date.
-                  </p>
-                </div>
-              </li>
-            </ol>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* Trust Band */}
-      <section className="py-12 bg-[#F8FAFC] dark:bg-muted/20">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-          >
-            <h3 className="text-2xl sm:text-[26px] font-semibold text-[#0F172A] dark:text-foreground mb-3" data-testid="text-trust-signal">
+            <h3 className="text-2xl sm:text-[26px] font-semibold text-[#0F172A] dark:text-foreground" data-testid="text-trust-signal">
               Built by Screening & Compliance Professionals
             </h3>
-            <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground max-w-[640px] mx-auto">
-              Decades of hands-on experience helping landlords interpret screening results and stay compliant.
-            </p>
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid sm:grid-cols-3 gap-6 md:gap-10"
+          >
+            <motion.div variants={fadeInUp} className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <Shield className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+              </div>
+              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
+                Decades of screening experience
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <Scale className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+              </div>
+              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
+                Built with compliance professionals
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex items-center gap-4">
+              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
+                <CheckCircle2 className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+              </div>
+              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
+                Designed for real landlord decisions
+              </p>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
-      {/* Association Complement Section */}
-      <section className="py-12 sm:py-16 bg-background border-b">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+      {/* Association Comparison Section */}
+      <section className="py-16 sm:py-20 bg-[#F8FAFC] dark:bg-muted/20">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
+            className="text-center mb-12"
           >
             <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
               Not a Replacement — A Complement
             </p>
-            <h3 className="text-xl sm:text-2xl md:text-[28px] font-semibold text-[#0F172A] dark:text-foreground mb-4" data-testid="text-association-complement">
+            <h3 className="text-xl sm:text-2xl md:text-[28px] font-semibold text-[#0F172A] dark:text-foreground" data-testid="text-association-complement">
               Designed to Work Alongside Your Apartment Association
             </h3>
-            <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground leading-relaxed max-w-[720px] mx-auto mb-4">
-              Associations provide education and advocacy. LeaseShield provides day-to-day execution — interpreting screening results, managing compliance workflows, and generating current documents.
-            </p>
-            <p className="text-base sm:text-[17px] text-[#64748B] dark:text-muted-foreground/80 italic max-w-[640px] mx-auto">
-              Most landlords use both — and that's exactly how LeaseShield was designed.
-            </p>
           </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto mb-10"
+          >
+            {/* Associations Column */}
+            <motion.div variants={fadeInUp}>
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border h-full">
+                <h4 className="font-bold text-lg text-[#0F172A] dark:text-foreground mb-5">
+                  Apartment Associations
+                </h4>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
+                    Education & training
+                  </li>
+                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
+                    Industry advocacy
+                  </li>
+                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
+                    Annual template packets
+                  </li>
+                </ul>
+              </div>
+            </motion.div>
+            
+            {/* LeaseShield Column */}
+            <motion.div variants={fadeInUp}>
+              <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl p-6 md:p-8 border border-emerald-200 dark:border-emerald-800 h-full">
+                <h4 className="font-bold text-lg text-emerald-700 dark:text-emerald-300 mb-5">
+                  LeaseShield
+                </h4>
+                <ul className="space-y-3">
+                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Day-to-day decisions
+                  </li>
+                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Screening interpretation
+                  </li>
+                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
+                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                    Live compliance tools
+                  </li>
+                </ul>
+              </div>
+            </motion.div>
+          </motion.div>
+          
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center text-base sm:text-[17px] text-[#64748B] dark:text-muted-foreground/80 italic max-w-[640px] mx-auto"
+          >
+            Most landlords use both — and that's exactly how LeaseShield was designed.
+          </motion.p>
         </div>
       </section>
 
