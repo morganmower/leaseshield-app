@@ -280,7 +280,7 @@ export default function Landing() {
           >
             <motion.h1 
               variants={fadeInUp}
-              className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground leading-tight mb-4"
+              className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-tight mb-4"
             >
               Have a Screening Report You Don't Understand?
             </motion.h1>
@@ -880,7 +880,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               One Bad Lease Can Cost You $10,000+ in 2025
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
@@ -1030,7 +1030,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Everything You Need to Operate Confidently
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -1232,7 +1232,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               What Happens Without LeaseShield?
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -1329,7 +1329,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               How LeaseShield Compares
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -1467,7 +1467,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
@@ -1686,7 +1686,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               What Landlords Are Saying
             </h2>
           </motion.div>
@@ -1771,7 +1771,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Frequently Asked Questions
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
@@ -1882,7 +1882,7 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Only 43 Founders Spots Left at <strong>$10/mo or $100/year (save $20)</strong>
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto px-4">
