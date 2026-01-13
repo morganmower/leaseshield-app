@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck } from "lucide-react";
+import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -256,103 +256,224 @@ export default function Landing() {
       {/* Trial Value Message Banner */}
       <TrialValueMessage />
 
-      {/* Hero Section */}
-      <section id="hero" className="relative pt-12 pb-16 md:pt-16 md:pb-20 overflow-hidden">
-        {/* Gradient Background with amber/gold and blue */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+      {/* NEW: Screening-First Hero Section */}
+      <section id="hero" className="relative pt-12 pb-8 md:pt-16 md:pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5 pointer-events-none" />
         
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          {/* Text Content - Centered */}
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
             initial="hidden"
             animate="visible"
             variants={staggerContainer}
-            className="text-center mb-10"
+            className="text-center"
           >
-            <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2 justify-center">
-              <Badge className="px-3 py-1 text-sm">
-                <Star className="h-3 w-3 mr-1 fill-current" />
-                Built for Landlords
-              </Badge>
-              <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
-                <BadgeCheck className="h-3 w-3 mr-1" />
-                7-Day Free Trial
-              </Badge>
-            </motion.div>
-            
             <motion.h1 
               variants={fadeInUp}
-              className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground leading-tight mb-6"
+              className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-semibold text-foreground leading-tight mb-4"
             >
-              Landlord Protection Without the Guesswork
+              Have a Screening Report You Don't Understand?
             </motion.h1>
             
             <motion.p 
               variants={fadeInUp}
-              className="text-sm sm:text-base md:text-lg text-muted-foreground mb-2 leading-relaxed max-w-2xl mx-auto"
+              className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
             >
-              Applications, state-specific leases, AI screening decoder, and compliance alerts. All in one simple dashboard.
-            </motion.p>
-            
-            <motion.p 
-              variants={fadeInUp}
-              className="text-sm sm:text-base md:text-lg text-foreground/80 font-medium mb-6 leading-relaxed max-w-2xl mx-auto"
-            >
-              Avoid costly mistakes before they turn into legal problems.
+              LeaseShield explains credit, criminal, and eviction reports in plain English — flags compliance risks and helps you take compliant next steps.
             </motion.p>
 
-            {/* CTA Area - Before screenshot on mobile */}
-            <motion.div variants={fadeInUp} className="mb-4">
+            {/* Primary CTA */}
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
               <Button
                 size="lg"
+                onClick={() => window.location.href = "/screening/explain"}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white text-lg px-8 py-4 min-h-[52px]"
+                data-testid="button-explain-report"
+              >
+                <Search className="mr-2 h-5 w-5" />
+                Explain My Screening Report
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
                 onClick={() => {
                   trackTrialStart();
                   window.location.href = "/signup";
                 }}
-                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
-                data-testid="button-hero-cta"
+                className="text-lg px-6 py-4 min-h-[52px]"
+                data-testid="button-hero-trial"
               >
                 Start Free 7-Day Trial
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </motion.div>
             
-            {/* Reassurance micro-copy - Line 1 (close to button) */}
             <motion.p 
               variants={fadeInUp}
-              className="text-sm text-muted-foreground mb-2"
+              className="text-sm text-muted-foreground"
             >
-              No credit card required • Instant access • Cancel anytime
+              Works with Western Verify and other providers. Instant access. No credit card needed.
             </motion.p>
-            
-            {/* Reassurance micro-copy - Line 2 (more spacing, lighter) */}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* NEW: Two-Card "Start Here" Section */}
+      <section className="py-10 md:py-14 bg-muted/30 border-y">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+          >
             <motion.p 
               variants={fadeInUp}
-              className="text-xs text-muted-foreground/70 mb-6"
+              className="text-center text-sm font-medium text-muted-foreground mb-6"
             >
-              Built for small and midsize landlords. Avoid costly screening and compliance mistakes.
+              Start Here
             </motion.p>
             
-            {/* Secondary CTA */}
-            <motion.div variants={fadeInUp} className="mb-8">
-              <a 
-                href="#how-it-works" 
-                className="text-lg font-medium text-primary hover:text-primary/80 transition-colors inline-flex items-center gap-1.5"
-                data-testid="link-see-how-it-works"
-              >
-                See How It Works
-                <ArrowRight className="h-5 w-5" />
-              </a>
-            </motion.div>
+            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+              {/* Card 1: Explain Report - Primary/Dominant */}
+              <motion.div variants={fadeInUp}>
+                <Card 
+                  className="p-6 border-2 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer transition-all hover:border-emerald-500 hover:shadow-lg h-full"
+                  onClick={() => window.location.href = "/screening/explain"}
+                  data-testid="card-explain-report"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-xl bg-emerald-500 p-3 flex-shrink-0">
+                      <Search className="h-6 w-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-foreground mb-2">Explain My Screening Report</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Connect or upload your existing report → Get a plain-English breakdown with compliance flags.
+                      </p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-1" />
+                  </div>
+                </Card>
+              </motion.div>
+
+              {/* Card 2: New Application - Secondary */}
+              <motion.div variants={fadeInUp}>
+                <Card 
+                  className="p-6 border cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg h-full"
+                  onClick={() => window.location.href = "/properties"}
+                  data-testid="card-new-application"
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="rounded-xl bg-muted p-3 flex-shrink-0">
+                      <UserPlus className="h-6 w-6 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-lg text-foreground mb-2">New Tenant Application + Screening</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Send an application link → Run screening via Western Verify → Full compliant workflow.
+                      </p>
+                    </div>
+                    <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+                  </div>
+                </Card>
+              </motion.div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* NEW: Simple Diagram - Visual Translation Flow */}
+      <section className="py-10 md:py-14">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center"
+          >
+            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
+              {/* Step 1 */}
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 rounded-2xl bg-red-100 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 flex items-center justify-center mb-3">
+                  <FileText className="h-8 w-8 text-red-500" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Confusing Report</p>
+                <p className="text-xs text-muted-foreground italic mt-1">"What does this mean?"</p>
+              </div>
+              
+              {/* Arrow */}
+              <div className="hidden md:block">
+                <ArrowRight className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <div className="block md:hidden">
+                <ArrowRight className="h-6 w-6 text-muted-foreground/50 rotate-90" />
+              </div>
+              
+              {/* Step 2 */}
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 rounded-2xl bg-amber-100 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 flex items-center justify-center mb-3">
+                  <Lightbulb className="h-8 w-8 text-amber-500" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Plain-English Explanation</p>
+                <p className="text-xs text-muted-foreground italic mt-1">"Watch out for this risk..."</p>
+              </div>
+              
+              {/* Arrow */}
+              <div className="hidden md:block">
+                <ArrowRight className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <div className="block md:hidden">
+                <ArrowRight className="h-6 w-6 text-muted-foreground/50 rotate-90" />
+              </div>
+              
+              {/* Step 3 */}
+              <div className="flex flex-col items-center">
+                <div className="w-20 h-20 rounded-2xl bg-emerald-100 dark:bg-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-800 flex items-center justify-center mb-3">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500" />
+                </div>
+                <p className="text-sm font-medium text-foreground">Compliant Next Steps</p>
+                <p className="text-xs text-muted-foreground italic mt-1">"Here's what to consider..."</p>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* DEMOTED: Original "What Else LeaseShield Does" Section */}
+      <section className="py-12 md:py-16 bg-muted/20 border-t">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center mb-10"
+          >
+            <motion.p variants={fadeInUp} className="text-sm font-medium text-muted-foreground mb-2">
+              Beyond Screening
+            </motion.p>
+            <motion.h2 
+              variants={fadeInUp}
+              className="font-display text-xl sm:text-2xl md:text-3xl font-semibold text-foreground mb-4"
+            >
+              What Else LeaseShield Does
+            </motion.h2>
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto"
+            >
+              Applications, state-specific leases, compliance alerts, and more. All in one simple dashboard.
+            </motion.p>
           </motion.div>
 
-          {/* Hero Image - Full Width Below CTA */}
+          {/* Hero Image */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-            className="mb-10 max-w-2xl mx-auto"
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+            className="mb-8 max-w-2xl mx-auto"
           >
             <div className="rounded-2xl overflow-hidden shadow-xl border border-border">
               <img 
@@ -364,30 +485,18 @@ export default function Landing() {
             </div>
           </motion.div>
 
-          {/* Supporting text below screenshot */}
-          <motion.div
+          {/* Cost reminder */}
+          <motion.div 
             initial="hidden"
-            animate="visible"
-            variants={staggerContainer}
-            className="text-center"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 max-w-xl mx-auto text-center"
           >
-            <motion.p 
-              variants={fadeInUp}
-              className="text-sm text-muted-foreground mb-6"
-            >
-              7 days to test everything. No card required. Instant access.
-            </motion.p>
-            
-            {/* Cost Calculator */}
-            <motion.div 
-              variants={fadeInUp}
-              className="bg-amber-50 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 rounded-xl p-4 sm:p-6 mb-8 max-w-xl mx-auto"
-            >
-              <p className="text-sm sm:text-base text-foreground">
-                One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
-                LeaseShield App = <span className="font-bold">$120/year</span> insurance.
-              </p>
-            </motion.div>
+            <p className="text-sm sm:text-base text-foreground">
+              One bad eviction in Texas averages <span className="font-bold">$8,400</span> (court + lost rent + damages).<br/>
+              LeaseShield App = <span className="font-bold">$120/year</span> insurance.
+            </p>
           </motion.div>
         </div>
       </section>

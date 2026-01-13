@@ -379,25 +379,27 @@ export default function Screening() {
   const [location] = useLocation();
   const [trialExpired, setTrialExpired] = useState(false);
   
-  // Check if URL has hash for criminal helper
-  const hasHash = typeof window !== 'undefined' && window.location.hash === '#criminal-helper';
+  // Check if URL has hash for helper sections
+  const currentHash = typeof window !== 'undefined' ? window.location.hash : '';
   
-  // Scroll to criminal helper section on mount when hash is present
+  // Scroll to helper section on mount when hash is present
   useEffect(() => {
-    if (hasHash || window.location.hash === '#criminal-helper') {
-      const scrollToCriminal = () => {
-        const criminalSection = document.getElementById('criminal-helper');
-        if (criminalSection) {
-          criminalSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const hash = window.location.hash;
+    if (hash === '#criminal-helper' || hash === '#credit-helper') {
+      const scrollToSection = () => {
+        const sectionId = hash.replace('#', '');
+        const section = document.getElementById(sectionId);
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
           return true;
         }
         return false;
       };
       
       // Retry multiple times to handle page load timing
-      const timer1 = setTimeout(() => scrollToCriminal(), 200);
-      const timer2 = setTimeout(() => scrollToCriminal(), 500);
-      const timer3 = setTimeout(() => scrollToCriminal(), 1000);
+      const timer1 = setTimeout(() => scrollToSection(), 200);
+      const timer2 = setTimeout(() => scrollToSection(), 500);
+      const timer3 = setTimeout(() => scrollToSection(), 1000);
       
       return () => {
         clearTimeout(timer1);
@@ -405,7 +407,7 @@ export default function Screening() {
         clearTimeout(timer3);
       };
     }
-  }, [hasHash]);
+  }, [currentHash]);
   
   // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
@@ -695,7 +697,7 @@ export default function Screening() {
         </div>
 
         {/* AI Credit Report Helper - Direct Input */}
-        <div className="mb-8" data-section="credit-helper">
+        <div className="mb-8" id="credit-helper" data-section="credit-helper">
           <Card className="p-6 shadow-lg border-2 border-primary/20">
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
