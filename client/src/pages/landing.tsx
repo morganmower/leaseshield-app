@@ -233,7 +233,7 @@ export default function Landing() {
             <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-how-it-works">How It Works</a>
             <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-pricing">Pricing</a>
           </nav>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 ml-2 md:ml-4">
             <ThemeToggle />
             <Button
               variant="ghost"
