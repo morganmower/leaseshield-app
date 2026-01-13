@@ -328,30 +328,30 @@ export default function Landing() {
           >
             <motion.p 
               variants={fadeInUp}
-              className="text-center text-sm font-medium text-muted-foreground mb-6"
+              className="text-center text-base md:text-lg font-medium text-muted-foreground mb-6 mt-10 md:mt-12"
             >
-              Start Here
+              Start Here (Most People Choose the Left Option)
             </motion.p>
             
-            <div className="grid md:grid-cols-2 gap-4 sm:gap-6">
+            <div className="grid md:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6">
               {/* Card 1: Explain Report - Primary/Dominant */}
               <motion.div variants={fadeInUp}>
                 <Card 
-                  className="p-6 border-2 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer transition-all hover:border-emerald-500 hover:shadow-lg h-full"
+                  className="p-7 border-2 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 cursor-pointer transition-all hover:border-emerald-600 hover:shadow-xl h-full"
                   onClick={() => window.location.href = "/screening/explain"}
                   data-testid="card-explain-report"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-emerald-500 p-3 flex-shrink-0">
-                      <Search className="h-6 w-6 text-white" />
+                    <div className="rounded-xl bg-emerald-500 p-3.5 flex-shrink-0">
+                      <Search className="h-7 w-7 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-foreground mb-2">Explain My Screening Report</h3>
-                      <p className="text-sm text-muted-foreground">
+                      <h3 className="font-semibold text-lg md:text-xl text-foreground mb-2">Explain My Screening Report</h3>
+                      <p className="text-sm md:text-base text-muted-foreground">
                         Connect or upload your existing report → Get a plain-English breakdown with compliance flags.
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-1" />
+                    <ArrowRight className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-1" />
                   </div>
                 </Card>
               </motion.div>
