@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale } from "lucide-react";
+import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -400,7 +400,7 @@ export default function Landing() {
           >
             <motion.h2 
               variants={fadeInUp}
-              className="text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground"
+              className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground"
             >
               What would you like help with right now?
             </motion.h2>
@@ -618,7 +618,7 @@ export default function Landing() {
             <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-400 mb-3">
               Built By Professionals
             </div>
-            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white" data-testid="text-trust-signal">
+            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white" data-testid="text-trust-signal">
               Decades of Real Screening Experience
             </h3>
           </motion.div>
@@ -679,7 +679,7 @@ export default function Landing() {
             <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400 mb-3">
               Not a Replacement — A Complement
             </div>
-            <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
+            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
               Works Alongside Your Apartment Association
             </h3>
           </motion.div>
@@ -763,7 +763,7 @@ export default function Landing() {
             <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400">
               Dashboard Preview
             </div>
-            <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground">
+            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground">
               See Everything in One Place
             </h2>
             <p className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground max-w-2xl mx-auto">
