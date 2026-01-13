@@ -1,0 +1,188 @@
+What You Need to Place into Replit (Exact Implementation Plan)
+Step 1: Create the Dashboard Preview Page
+File: client/src/pages/dashboard-preview.tsx
+Paste exactly this (adjusted for your likely Tailwind tokens — using ink-900/ink-700/panel-50/brand-600 style; change if your config differs):
+tsximport { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { motion } from "framer-motion";
+import {
+  ShieldCheck,
+  FileText,
+  Bell,
+  UserPlus,
+  Search,
+  ArrowRight,
+} from "lucide-react";
+
+export default function DashboardPreview() {
+  return (
+    <div className="min-h-screen bg-white">
+      <div className="mx-auto max-w-6xl px-6 py-10">
+        {/* Header */}
+        <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+          <div>
+            <div className="text-sm font-semibold tracking-wide text-ink-700">
+              DASHBOARD PREVIEW
+            </div>
+            <h1 className="mt-2 text-3xl font-semibold text-ink-900 md:text-4xl">
+              Your Protection Center
+            </h1>
+            <p className="mt-3 max-w-2xl text-base text-ink-700">
+              Everything in one place: report explanations, templates, compliance alerts, and
+              applications — organized for fast decisions.
+            </p>
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <Button variant="outline" className="gap-2">
+              <Search className="h-4 w-4" />
+              Explain a Report
+            </Button>
+            <Button className="gap-2 bg-brand-600 hover:bg-brand-700">
+              Start Free Trial <ArrowRight className="h-4 w-4" />
+            </Button>
+          </div>
+        </div>
+
+        {/* Layout */}
+        <div className="mt-10 grid gap-6 lg:grid-cols-[260px_1fr]">
+          {/* Sidebar */}
+          <Card className="h-fit border border-ink-100 bg-panel-50 p-4">
+            <div className="text-sm font-semibold text-ink-900">LeaseShield</div>
+            <div className="mt-4 grid gap-2 text-sm">
+              <div className="rounded-lg bg-brand-50 px-3 py-2 font-medium text-brand-800">
+                Screening Decoder
+              </div>
+              <div className="rounded-lg px-3 py-2 text-ink-700 hover:bg-panel-100">
+                Templates
+              </div>
+              <div className="rounded-lg px-3 py-2 text-ink-700 hover:bg-panel-100">
+                Compliance Alerts
+              </div>
+              <div className="rounded-lg px-3 py-2 text-ink-700 hover:bg-panel-100">
+                Notices & Letters
+              </div>
+              <div className="rounded-lg px-3 py-2 text-ink-700 hover:bg-panel-100">
+                Rent Ledger
+              </div>
+            </div>
+            <div className="mt-4 rounded-lg border border-ink-100 bg-panel-50 p-3 text-xs text-ink-700">
+              Tip: Most landlords start by explaining a screening report — then generate the right
+              state forms.
+            </div>
+          </Card>
+
+          {/* Main Content - Top Cards */}
+          <div className="grid gap-6">
+            <div className="grid gap-6 md:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.35 }}
+              >
+                <Card className="border border-ink-100 bg-white p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-brand-600" />
+                        <h3 className="text-lg font-semibold text-ink-900">
+                          Decode Screening Reports
+                        </h3>
+                      </div>
+                      <p className="mt-2 text-sm text-ink-700">
+                        Plain-English explanations + risk flags + compliant next steps.
+                      </p>
+                    </div>
+                    <Badge className="bg-brand-50 text-brand-800 hover:bg-brand-100">
+                      Most used
+                    </Badge>
+                  </div>
+                  <Button variant="link" className="mt-4 px-0 text-brand-600">
+                    Open →
+                  </Button>
+                </Card>
+              </motion.div>
+
+              {/* Repeat similar for other cards - Templates, Compliance Alerts, Application + Screening */}
+              {/* ... paste the remaining card blocks here, replacing tokens as above ... */}
+            </div>
+
+            {/* Final CTA */}
+            <div className="rounded-2xl border border-ink-100 bg-panel-50 p-6">
+              <div className="flex flex-col items-start justify-between gap-4 md:flex-row md:items-center">
+                <div>
+                  <div className="text-sm font-semibold text-ink-900">
+                    Ready to use the real thing?
+                  </div>
+                  <div className="mt-1 text-sm text-ink-700">
+                    Start a 7-day trial. No credit card required.
+                  </div>
+                </div>
+                <Button className="gap-2 bg-brand-600 hover:bg-brand-700">
+                  Start Free Trial <ArrowRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+
+            <div className="text-xs text-ink-500">
+              Preview page only (no account required). You can later gate this route behind auth.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+Notes on this file:
+
+Tokens adjusted to ink-900/ink-700/panel-50/brand-600 style.
+Fill in the remaining card blocks (Templates, Alerts, Applications) by copying the pattern from the Decode card.
+Buttons use bg-brand-600 — change if your primary is different.
+
+Step 2: Update Routing (App.tsx)
+File: client/src/App.tsx
+Add this import:
+tsximport DashboardPreview from "@/pages/dashboard-preview";
+Add the route (Wouter syntax):
+tsx<Route path="/dashboard" component={DashboardPreview} />
+Step 3: Replace Landing Page (landing.tsx)
+File: client/src/pages/landing.tsx
+Backup your current file first!
+Then replace the entire content with the ChatGPT code, but apply these token fixes:
+
+Replace text-ink → text-ink-900
+text-ink/70 → text-ink-700
+bg-panel → bg-panel-50
+border-ink/10 → border-ink-100
+bg-brand → bg-brand-600
+text-brand → text-brand-600
+
+Also fix the incomplete association section in the paste — complete it as:
+tsx{/* Association Complement Block */}
+<section className="border-b border-ink-100">
+  <div className="mx-auto max-w-6xl px-6 py-14">
+    <h2 className="text-3xl font-semibold text-ink-900 md:text-4xl">
+      Complements Your Apartment Association
+    </h2>
+    <p className="mt-3 max-w-3xl text-base text-ink-700">
+      Associations provide education, advocacy, and community. LeaseShield handles the day-to-day execution: report decoding, compliant documents, and workflow tools they don't cover.
+    </p>
+  </div>
+</section>
+Preserve & Integrate Existing Sections:
+After the new content (hero → quick help → features → workflow → built-by → association), add your current pricing, state coverage, and "problems" sections at the bottom. Wrap them in similar <section className="border-b border-ink-100"> for consistency.
+Step 4: Questions to Ask Replit to Ensure Alignment
+Copy-paste these exactly into Replit chat:
+
+"What is our primary brand accent color in tailwind.config.ts? (e.g., brand-600 hex value, is it teal, blue, green?) I need to confirm so buttons and highlights match the current site."
+"Can you show me the current values for ink-900, ink-700, panel-50, and any border colors (like ink-100 or gray-200) in tailwind.config.ts or global CSS?"
+"Do we have reusable components already defined for MiniCard, ActionCard, FeatureCard, StepCard, and ValueCard? If yes, share their file paths/imports. If not, create simple versions based on Shadcn Card + icon + title/desc."
+"Does our site use Wouter routing? Confirm the syntax for adding a new route: is it <Route path="/dashboard" component={DashboardPreview} /> or element={<DashboardPreview />}?"
+"After updating landing.tsx and adding dashboard-preview.tsx, does dark mode still work? If the new code is light-only (bg-white), should we add dark: variants now or keep light for preview?"
+"Test /dashboard — is it loading publicly without login? Does it look consistent with the current site colors and fonts?"
+"After replacing landing.tsx, check mobile view: do the hero grid, action cards, and sections stack cleanly? Fix any overflow or spacing issues."
+"Run the app and confirm no Tailwind errors from token mismatches (e.g., bg-brand vs bg-brand-600)."
+
+Once Replit answers these, you can finalize tweaks. This plan keeps everything aligned — deploy to staging first, test thoroughly, then live.
+If you need me to generate the full merged landing.tsx (with your preserved sections + token fixes), paste your current file contents (or key parts), and I'll output the complete updated version. You're almost there — this will make the site feel premium and effortless!

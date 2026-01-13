@@ -1,0 +1,190 @@
+Perfect — your palette is clean and exactly what we should use. Below is the authoritative class-name standard for LeaseShield going forward, plus exact replacements you can hand to Replit so it doesn’t “guess” shades you don’t have.
+
+The only colors we will use (based on your config)
+Brand (green)
+
+
+Primary CTA / highlights: bg-brand-500
+
+
+Hover: hover:bg-brand-600
+
+
+Darker accents (rare): text-brand-700
+
+
+Light background wash: bg-brand-50
+
+
+Light border: border-brand-200
+
+
+Ink (text)
+
+
+Headings: text-ink-900
+
+
+Body: text-ink-700
+
+
+Muted/supporting: text-ink-500
+
+
+Panel (surface)
+
+
+Section alt background: bg-panel-50
+
+
+Small surface blocks: bg-panel-100
+
+
+Borders (important because you don’t have ink-100/ink-300)
+Use Tailwind slate borders instead of inventing ink shades:
+
+
+Standard border: border-slate-200
+
+
+Dark mode border: dark:border-slate-800
+
+
+This is totally fine even with your token system, and avoids adding missing ink shades.
+
+Dark mode standard (do this everywhere)
+
+
+Page background: bg-white dark:bg-slate-950
+
+
+Cards: bg-white dark:bg-slate-950
+
+
+Panel areas: bg-panel-50 dark:bg-slate-900
+
+
+Headings: text-ink-900 dark:text-white
+
+
+Body: text-ink-700 dark:text-slate-300
+
+
+Muted: text-ink-500 dark:text-slate-400
+
+
+Borders: border-slate-200 dark:border-slate-800
+
+
+
+Replit “Find → Replace” list (copy/paste for them)
+Replace these (from my earlier drafts or any mismatched code)
+Text
+
+
+text-ink → text-ink-900
+
+
+text-ink/70 → text-ink-700
+
+
+text-ink/60 → text-ink-500
+
+
+text-ink/50 → text-ink-500
+
+
+Backgrounds
+
+
+bg-brand-600 → bg-brand-500
+
+
+hover:bg-brand-700 → hover:bg-brand-600
+
+
+bg-panel → bg-panel-50
+
+
+bg-panel/50 or bg-panel-100/… → use bg-panel-100 (no opacity variants)
+
+
+Borders
+
+
+border-ink/10 → border-slate-200 dark:border-slate-800
+
+
+border-ink-100 → border-slate-200 dark:border-slate-800
+
+
+border-ink-500/20 → border-slate-200 dark:border-slate-800
+
+
+Brand accents
+
+
+text-brand → text-brand-700
+
+
+bg-brand/10 → bg-brand-50
+
+
+border-brand-600/30 → border-brand-200 dark:border-brand-700/40
+
+
+
+Section title sizing fix (this addresses your “looks legal / cheap” complaint)
+For every subtitle/kicker block that looks tiny (“Beyond screening”, “Simple workflow”, “Built by professionals”, “Designed to complement…”):
+Use this exact pattern:
+Kicker (optional)
+<div className="text-xs font-semibold tracking-[0.18em] text-ink-500">
+  KICKER TEXT
+</div>
+
+Title
+<h2 className="mt-2 text-3xl font-extrabold tracking-tight text-ink-900 dark:text-white md:text-4xl">
+  Section title here
+</h2>
+
+Body
+<p className="mt-3 text-base text-ink-700 dark:text-slate-300">
+  One sentence. No legal tone.
+</p>
+
+This alone makes the page feel 10x more “SaaS” and 0x “fine print”.
+
+CTA button standard (do not deviate)
+Primary button:
+className="bg-brand-500 hover:bg-brand-600 text-white"
+
+Secondary outline:
+className="border-slate-300 dark:border-slate-700"
+
+
+Illinois + 15 states (single source of truth)
+Create ONE array (landing + footer) and reuse count:
+const STATES = [
+  "Utah","Texas","North Dakota","South Dakota","North Carolina","Ohio","Michigan",
+  "Idaho","Wyoming","California","Virginia","Nevada","Arizona","Florida","Illinois"
+];
+
+Anywhere you show “states covered”, display:
+{STATES.length}
+
+That will always be 15.
+
+One critical design call (prevents “cheap”)
+If you want the page to feel premium, do NOT use tiny centered single-line sections for:
+
+
+“Built by professionals…”
+
+
+“Designed to complement association…”
+
+
+Instead, make them real blocks (title + 2–3 value cards), or move them into FAQ.
+Tiny centered lines read like disclaimers. That’s why it feels legal.
+
+If you want, paste your current landing.tsx (or just the sections you hate: Beyond Screening / Simple Workflow / Built By / Association) and I’ll rewrite only those sections with the exact classes above so you can drop them in without changing the rest.
