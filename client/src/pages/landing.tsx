@@ -222,11 +222,11 @@ export default function Landing() {
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo variant="horizontal" size="lg" />
           </Link>
-          <nav className="hidden md:flex items-center gap-6">
-            <a href="#hero" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-home">Home</a>
-            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-features">Features</a>
-            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-how-it-works">How It Works</a>
-            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-pricing">Pricing</a>
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6">
+            <a href="#hero" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-home">Home</a>
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-features">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-how-it-works">How It Works</a>
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-pricing">Pricing</a>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
