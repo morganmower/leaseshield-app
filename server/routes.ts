@@ -2370,7 +2370,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(500).json({ message: "Property not found. Please select a valid property or leave it blank." });
       }
       console.error("❌ Error details:", error?.message, error?.code);
-      res.status(500).json({ message: error?.message || "Failed to create entry" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -6027,7 +6027,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error: any) {
       console.error("Error requesting screening:", error?.message || error);
       console.error("Stack:", error?.stack);
-      res.status(500).json({ message: error?.message || "Failed to request screening" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -6069,7 +6069,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.redirect('https://secure.westernverify.com/report_lookup.cfm');
     } catch (error: any) {
       console.error("Error redirecting to report:", error);
-      res.status(500).json({ message: error?.message || "Failed to redirect to report" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -6146,7 +6146,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.json({ success: true, message: "Invitation resent successfully" });
     } catch (error: any) {
       console.error("Error resending invitation:", error);
-      res.status(500).json({ message: error?.message || "Failed to resend invitation" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -6207,7 +6207,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.json({ success: true, message: "Person removed successfully" });
     } catch (error: any) {
       console.error("Error deleting person:", error);
-      res.status(500).json({ message: error?.message || "Failed to delete person" });
+      res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });
 
@@ -6237,7 +6237,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.json({ success: result.success, error: result.error });
     } catch (error: any) {
       console.error("Error verifying credentials:", error);
-      res.status(500).json({ success: false, error: error.message || "Failed to verify credentials" });
+      res.status(500).json({ success: false, error: "Something went wrong. Please try again." });
     }
   });
 
