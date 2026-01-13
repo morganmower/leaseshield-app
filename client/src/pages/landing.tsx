@@ -1526,7 +1526,7 @@ export default function Landing() {
           >
             {/* Monthly Card */}
             <Card className="p-6 sm:p-8 border-2 border-brand-200 shadow-lg flex flex-col">
-              <div className="text-center mb-6">
+              <div className="text-center mb-6 min-h-[180px] flex flex-col justify-end">
                 <div className="flex items-center justify-center gap-2 mb-2 h-6">
                   <Award className="h-5 w-5 sm:h-6 sm:w-6 text-brand-600" />
                   <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
@@ -1599,7 +1599,7 @@ export default function Landing() {
               <div className="absolute top-0 right-0 bg-success text-success-foreground px-4 py-1 text-xs font-semibold rounded-bl-lg">
                 SAVE $20
               </div>
-              <div className="text-center mb-6">
+              <div className="text-center mb-6 min-h-[180px] flex flex-col justify-end">
                 <div className="flex items-center justify-center gap-2 mb-2 h-6">
                   <Award className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
                   <Badge className="bg-success text-success-foreground text-xs">Best Value</Badge>
