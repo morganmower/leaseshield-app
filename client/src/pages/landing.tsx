@@ -556,7 +556,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-8"
           >
-            <p className="text-sm text-muted-foreground italic">
+            <p className="text-base text-[#6B7280] dark:text-muted-foreground">
               Actual LeaseShield dashboard
             </p>
           </motion.div>
