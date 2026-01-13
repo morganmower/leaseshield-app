@@ -1,0 +1,287 @@
+Token inconsistency (you’re mixing primary with brand, and raw hex with tokens)
+
+Too many visual systems competing (brand-green + primary-blue + success-green + destructive-red + slate + amber + cyan + violet)
+
+Typography hierarchy is not standardized (kickers/subtitles vary by section; some are tiny, some are uppercase, some are colored, some are muted)
+
+A few hard bugs (you’re using text-ink-600 and bg-brand-950 which do not exist in your config)
+
+Below is a final, copy/paste set of edits for Replit. No guessing.
+
+A) Critical bugs to fix (these cause “off” colors + inconsistency)
+1) You are using text-ink-600 (doesn’t exist)
+
+Search in this file and replace:
+
+text-ink-600 → text-ink-500 (muted text)
+
+If you intended body text, use text-ink-700
+
+✅ Example in your hero mini sidebar:
+
+- <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Templates</div>
++ <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Templates</div>
+
+2) You are using bg-brand-950 (doesn’t exist)
+
+Replace:
+
+dark:bg-brand-950/30 or dark:bg-brand-950/20 → dark:bg-brand-800/20
+
+✅ Example:
+
+- className="bg-brand-50 dark:bg-brand-950/30 ..."
++ className="bg-brand-50 dark:bg-brand-800/20 ..."
+
+3) Your “Preview Dashboard” CTA uses bg-brand-600 hover:bg-brand-700
+
+Your standard everywhere else is brand-500/600. Make it consistent:
+
+bg-brand-600 hover:bg-brand-700 → bg-brand-500 hover:bg-brand-600
+
+✅ In the dashboard preview section:
+
+- className="... bg-brand-600 hover:bg-brand-700 ..."
++ className="... bg-brand-500 hover:bg-brand-600 ..."
+
+B) The real “cheap” problem: too many color systems
+
+Right now you use:
+
+primary (shadcn)
+
+brand (your green)
+
+success (shadcn green)
+
+destructive (red)
+
+plus amber/cyan/violet/rose gradients
+
+That reads like a template/theme demo.
+
+Fix: choose ONE accent system = your brand
+Rule:
+
+All positive “success” UI uses brand (NOT text-success)
+
+Use destructive red only for warnings/pain sections
+
+Global replacements (safe and improves polish)
+
+Search & replace these patterns:
+
+text-primary → text-brand-600
+
+bg-primary/5 → bg-brand-50
+
+border-primary/20 → border-brand-200
+
+bg-primary buttons → bg-brand-500 hover:bg-brand-600
+
+text-success → text-brand-600
+
+bg-success badges → replace with bg-brand-500 or bg-brand-50 text-brand-700
+
+Keep destructive only in the “Problems / Pain” sections.
+
+This will instantly make the site feel like a unified product.
+
+C) Standardize subtitles (“kickers”) everywhere so they don’t look like legal disclaimers
+
+You’re already close in some sections. The key is: same size, same tracking, same spacing, same tone.
+
+Use this exact kicker style in every section header:
+<p className="text-[13px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400">
+  Kicker text
+</p>
+
+
+Then the title:
+
+<h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-white">
+  Section Title
+</h2>
+
+
+Then body:
+
+<p className="mt-4 text-lg text-ink-700 dark:text-slate-300 max-w-2xl mx-auto">
+  One sentence supporting line
+</p>
+
+Apply this to these sections you called out:
+
+“This Is More Than a Decoder”
+
+“How LeaseShield Works”
+
+“Built By Professionals”
+
+“Not a Replacement — A Complement”
+
+“Dashboard Preview”
+
+Right now some are text-[15px], some text-[13px], some brand-colored, some hex. Standardizing = premium.
+
+D) Remove raw hex colors (these are making it feel inconsistent)
+
+You have multiple hardcoded hexes like:
+
+text-[#475569]
+
+text-[#0F172A]
+
+Replace them with your tokens:
+
+text-[#0F172A] → text-ink-900 dark:text-white
+
+text-[#475569] → text-ink-700 dark:text-slate-300
+
+kicker hex → text-ink-500 dark:text-slate-400
+
+This matters a lot. Raw hex feels “theme pasted” even if it looks correct.
+
+E) Fix your stats bar (it literally says 14 states while you have 15)
+
+In Stats Bar:
+
+- <div className="text-2xl ...">14</div>
++ <div className="text-2xl ...">{STATES.length}</div>
+
+
+Also change label:
+
+“States Covered” → “States Supported” (sounds more confident)
+
+F) Specific section-level upgrades (high impact, low effort)
+1) “Start here” cards: make them feel more premium
+
+Right now they’re good, but the secondary card feels flat.
+
+Add this to both cards:
+
+hover:-translate-y-0.5
+
+transition-all duration-200
+
+ring-1 ring-transparent hover:ring-brand-200 dark:hover:ring-brand-800
+
+Example on primary:
+
+- className="group rounded-2xl border ... shadow-soft hover:shadow-lift transition ..."
++ className="group rounded-2xl border ... shadow-soft hover:shadow-lift hover:-translate-y-0.5 transition-all duration-200 ring-1 ring-transparent hover:ring-brand-200 dark:hover:ring-brand-800 ..."
+
+2) “Trust strip” is strong — but unify it with brand tokens
+
+You did this well already. One tweak:
+
+Replace bg-ink-900 dark:bg-slate-900 with:
+
+bg-ink-900 dark:bg-slate-950 (deeper = premium)
+
+And ensure the kicker uses the standardized kicker style (above).
+
+3) Dashboard Preview: remove the “random blue primary button”
+
+You currently have a bg-brand-600 hover:bg-brand-700 button (wrong) AND other areas use primary.
+
+Make all CTAs in preview use:
+
+bg-brand-500 hover:bg-brand-600 text-white
+
+4) Features grid: reduce rainbow
+
+This section looks like a marketplace of tools (because every card is a different color family).
+
+Recommended change (premium):
+
+Keep the icon background color subtle and consistent:
+
+use bg-brand-50 for all
+
+icon color either text-brand-600 or text-ink-900 depending on seriousness
+
+Example on a card:
+
+- <div className="rounded-lg bg-gradient-to-br from-amber-500/20 ...">
++ <div className="rounded-lg bg-brand-50 w-12 h-12 flex items-center justify-center ...">
+
+
+If you really want variety: only vary icon (not the whole gradient bubble).
+
+This single change makes the page feel like Stripe/Webflow instead of “template gallery”.
+
+G) Copy tweaks to remove “legal fine print vibe”
+
+Anywhere you say:
+
+“Built with legal professionals in mind”
+Change to:
+
+“Built for real-world compliance”
+
+Anywhere you say:
+
+“Not legal advice” repeatedly in big sections
+Keep it once in footer/disclaimer and in chat header (good).
+The rest should be confidence language, not lawyer language.
+
+Replace this:
+
+“Built with legal professionals in mind”
+
+With:
+
+“Designed to keep you compliant”
+
+H) Replit-ready instruction block (send this exactly)
+✅ Replit Task: Landing Page Polish Pass (No Guessing)
+
+Fix invalid Tailwind classes:
+
+Replace text-ink-600 → text-ink-500
+
+Replace dark:bg-brand-950/xx → dark:bg-brand-800/20
+
+Replace any bg-brand-600 hover:bg-brand-700 CTA → bg-brand-500 hover:bg-brand-600
+
+Remove hardcoded hex colors:
+
+text-[#0F172A] → text-ink-900 dark:text-white
+
+text-[#475569] → text-ink-700 dark:text-slate-300
+
+Standardize all section kickers/subtitles:
+
+Use: text-[13px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400
+
+Ensure consistent spacing: mb-3 and then title mt-3
+
+Unify accent system:
+
+Replace primary usage in landing CTAs with brand:
+
+text-primary → text-brand-600
+
+bg-primary/5 → bg-brand-50
+
+border-primary/20 → border-brand-200
+
+Replace text-success with text-brand-600 in non-error contexts
+
+Fix stats bar:
+
+Change “14 States Covered” to {STATES.length}
+
+Tone polish:
+
+Replace “Built with legal professionals in mind” → “Designed to keep you compliant”
+
+Optional (recommended): reduce rainbow in Features Grid:
+
+Make all icon bubbles bg-brand-50 and icons text-brand-600
+
+The one question I don’t need to ask (I’ll assume)
+
+You want LeaseShield’s visual identity to be emerald/ink/panel (not a multi-color app). Everything above aligns to that.
