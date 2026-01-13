@@ -212,7 +212,7 @@ export default function Dashboard() {
                 <div className="flex-1">
                   <h3 className="font-semibold text-lg text-foreground mb-1">Explain a Screening Report</h3>
                   <p className="text-sm text-muted-foreground">
-                    Credit, Criminal, Eviction — plain English explanations
+                    Credit, Criminal, Eviction: plain English explanations
                   </p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-1" />

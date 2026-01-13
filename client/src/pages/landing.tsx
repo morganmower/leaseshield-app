@@ -278,7 +278,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
             >
-              LeaseShield explains credit, criminal, and eviction reports in plain English — flags compliance risks and helps you take compliant next steps.
+              LeaseShield explains credit, criminal, and eviction reports in plain English. It flags compliance risks and helps you take compliant next steps.
             </motion.p>
 
             {/* Primary CTA */}

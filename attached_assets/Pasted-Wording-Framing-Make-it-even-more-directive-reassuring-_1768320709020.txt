@@ -1,0 +1,28 @@
+Wording & Framing (Make it even more directive/reassuring)
+Current prompt: "Describe any part of the report you're unsure about..." is good but slightly passive.
+Suggested tweak (replace or add above input):
+"Paste or type any confusing part of the credit report (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400') — I'll explain what it means in plain English and flag any risks."
+Button text: "Get AI Explanation" → Change to "Explain This in Plain English" or "Decode This Report Now" — more action-oriented and benefit-focused.
+Quick buttons ("Charge-off?", etc.): Make them larger/bolder, and consider making them auto-fill the input when clicked (e.g., clicking "Charge-off?" pre-populates "What does charge-off mean and should I be worried?").
+
+Styling & Visual Polish (Boost Confidence & "Wow")
+The teal/green accents are clean and match the site, but add more visual cues for beginners:
+Bigger input box with a speech bubble icon or chat-style border to signal "just talk to me like a friend."
+Highlight the quick buttons as tappable cards (rounded, shadow, hover effect) instead of plain text links.
+Privacy box: Keep the yellow triangle, but add a small lock icon for extra trust.
+
+Header "Understand Your Credit Report in Plain English" — Great, but add a small icon (e.g., book/lightbulb) to make it pop more.
+Overall: Ensure high contrast (text readable on light backgrounds) and larger fonts/buttons for older users.
+
+Architecture / Flow (Minor Enhancements)
+The "Jump to" buttons are perfect—consider adding a third card for "Eviction History" if separate (currently bundled with Criminal).
+Quick-start buttons: If possible, make them interactive (clicking auto-fills the input box with a sample prompt) — this eliminates typing hesitation.
+Add a subtle "Example" link or popover next to the input for more help without clutter.
+If this is part of a dashboard, add a back button or breadcrumb ("Back to Screening Toolkit") for navigation safety.
+
+
+Final Verdict
+Yes — it's intuitive enough that 80–90% of your landlords will figure it out quickly, especially with the examples and quick jumps. The architecture is logical (disclaimers first → helpers → input → button), wording is plain and helpful, and styling is clean/professional without overwhelming.
+But with these small changes (more directive prompts, action-oriented button, auto-fill quick starts, slight visual pops), it becomes truly effortless—users go from "Hmm..." to "This is easy!" in seconds. This fits your site's overall simple, trustworthy vibe (white/teal, minimal clutter) and complements the landing page focus on report decoding.
+Start with the button text + quick-button auto-fill (biggest wins, low effort). Test with a couple real landlords: Time how long until they submit a prompt.
+If you upload screenshots of the full rendered view (or after tweaks), I can give more precise visual feedback. Or if you want paste-ready copy updates for the interface, just say! This feature is already a standout—great job.

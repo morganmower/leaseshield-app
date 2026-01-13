@@ -28,6 +28,7 @@ import {
   Users,
   Info,
   MessageSquare,
+  Lock,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
@@ -708,7 +709,7 @@ export default function Screening() {
                   Understand Your Credit Report in Plain English
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Describe any part of the report you're unsure about — LeaseShield will explain what it means and flag compliance risks.
+                  Paste or type any confusing part of the report. LeaseShield will explain what it means and flag compliance risks.
                 </p>
               </div>
             </div>
@@ -716,8 +717,8 @@ export default function Screening() {
             <div className="space-y-4">
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-foreground flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, account numbers, or names of people. Just describe what you see.</span>
+                  <Lock className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, account numbers, or names. Just describe what you see.</span>
                 </p>
               </div>
 
@@ -804,7 +805,7 @@ export default function Screening() {
                 data-testid="button-get-credit-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isExplaining ? 'Analyzing...' : 'Explain What This Means'}
+                {isExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
               </Button>
 
               {isExplaining && (
@@ -878,7 +879,7 @@ export default function Screening() {
                   Understand Criminal & Eviction Records in Plain English
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Describe what you see on the report — LeaseShield will explain what it means and flag Fair Housing compliance risks.
+                  Describe what you see on the report. LeaseShield will explain what it means and flag Fair Housing compliance risks.
                 </p>
               </div>
             </div>
@@ -886,8 +887,8 @@ export default function Screening() {
             <div className="space-y-4">
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-foreground flex items-start gap-2">
-                  <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
-                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, case numbers, or names of people. Just describe the charges or records.</span>
+                  <Lock className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
+                  <span><strong>Privacy:</strong> Do NOT enter Social Security numbers, case numbers, or names. Just describe the charges or records.</span>
                 </p>
               </div>
 
@@ -974,7 +975,7 @@ export default function Screening() {
                 data-testid="button-get-criminal-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isCriminalExplaining ? 'Analyzing...' : 'Explain What This Means'}
+                {isCriminalExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
               </Button>
 
               {isCriminalExplaining && (
