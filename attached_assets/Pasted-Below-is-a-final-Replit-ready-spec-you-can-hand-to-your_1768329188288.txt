@@ -1,0 +1,392 @@
+Below is a final, Replit-ready spec you can hand to your dev (or paste in yourself). It includes:
+
+Design tokens (colors, fonts, shadows, radii)
+
+Global layout rules (spacing + section hierarchy)
+
+Exact rewrites + exact UI structure for:
+
+Hero
+
+Start Here
+
+“Actual LeaseShield dashboard” (your weak spot)
+
+How It Works
+
+Trust / Association
+
+Pain sections
+
+Paste-ready Tailwind component snippets (React-friendly)
+
+0) THE PROBLEM WITH “ACTUAL LEASESHIELD DASHBOARD”
+
+Right now it reads like: “four quiet cards on a white background.”
+It needs to feel like: “this is the app — I can picture myself using it.”
+
+So we’ll change it to a Dashboard Preview Section with:
+
+A browser frame (makes it feel real)
+
+A left sidebar (so it looks like software)
+
+A main area with 4 strong “app modules” (bigger, clearer)
+
+A single CTA: “See the Dashboard” / “Start Free Trial”
+
+No new features. Just presentation.
+
+1) DESIGN TOKENS (COPY THESE INTO YOUR TAILWIND THEME)
+Tailwind config additions (recommended)
+
+In tailwind.config.js add:
+
+theme: {
+  extend: {
+    fontFamily: {
+      sans: ['Inter', 'system-ui', 'Segoe UI', 'sans-serif'],
+    },
+    colors: {
+      brand: {
+        50:  '#ECFDF5',   // mint wash
+        100: '#D1FAE5',
+        200: '#A7F3D0',
+        300: '#6EE7B7',
+        400: '#34D399',
+        500: '#10B981',   // primary green
+        600: '#059669',   // primary hover
+        700: '#047857',
+        800: '#065F46',
+      },
+      ink: {
+        900: '#0F172A', // slate-900
+        700: '#334155', // slate-700
+        500: '#64748B', // slate-500
+      },
+      panel: {
+        50: '#F8FAFC',  // slate-50 background
+        100:'#F1F5F9',  // slate-100
+      }
+    },
+    boxShadow: {
+      soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+      lift: '0 16px 50px rgba(15, 23, 42, 0.12)',
+      ring: '0 0 0 6px rgba(16, 185, 129, 0.18)',
+    },
+    borderRadius: {
+      xl2: '1.25rem', // 20px
+    },
+  }
+}
+
+Global typography rules (must)
+
+Headings: text-ink-900 font-semibold/700
+
+Body: text-ink-700
+
+Muted: text-ink-500
+
+Section labels (if used): never smaller than 13px and must look intentional.
+
+2) GLOBAL SPACING + SECTION HIERARCHY (THIS FIXES “CHEAP”)
+
+All major sections use:
+
+py-20 md:py-28
+
+Container: max-w-6xl mx-auto px-6
+
+Section titles
+
+H2: text-4xl md:text-5xl font-bold tracking-tight
+
+Subtitle: text-lg md:text-xl text-ink-500 mt-4 max-w-2xl mx-auto
+
+Never use tiny all-caps above headings unless it’s stylized:
+
+If you keep them: text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700
+
+3) LANDING PAGE — FINAL STRUCTURE (IN ORDER)
+Section order (final)
+
+Hero (report confusion)
+
+Start Here (two cards) – make it BIG and premium
+
+Dashboard Preview (new upgraded “Actual LeaseShield dashboard”)
+
+How It Works (3-step cards, not tiny list)
+
+Built by pros (trust strip)
+
+Apartment association complement (comparison cards)
+
+What else LeaseShield does (feature grid)
+
+“Without LeaseShield” pain section
+
+Comparison table
+
+Pricing + CTA
+
+4) EXACT COPY (PASTE THIS)
+HERO
+
+H1: Have a Screening Report You Don’t Understand?
+Sub: LeaseShield explains credit, criminal, and eviction reports in plain English — flags compliance risks and helps you take safe next steps.
+Primary CTA: Explain My Screening Report
+Secondary CTA: Start Free 7-Day Trial
+Support line: Works with Western Verify and other providers. Instant access. No credit card required.
+
+START HERE
+
+Title: What would you like help with right now?
+Sub: Most landlords start by explaining an existing screening report.
+
+Card 1 (Primary): Explain My Screening Report
+Body: Connect or upload your report → get a plain-English breakdown with risk flags.
+
+Card 2 (Secondary): New Tenant Application + Screening
+Body: Send an application link → run screening via Western Verify → full compliant workflow.
+
+DASHBOARD PREVIEW (replace “Actual LeaseShield dashboard”)
+
+Label: Dashboard Preview
+Title: See Everything in One Place
+Sub: Decode reports, generate documents, and stay compliant — without bouncing between tabs.
+
+Button: Preview the Dashboard (routes to login/trial)
+
+5) PASTE-READY COMPONENTS (REACT + TAILWIND)
+A) START HERE (bigger, premium, not tiny)
+
+Use this exact block where your “Start Here” currently is:
+
+<section className="py-20 md:py-28 bg-white">
+  <div className="max-w-6xl mx-auto px-6 text-center">
+    <h2 className="text-4xl md:text-5xl font-bold tracking-tight text-ink-900">
+      What would you like help with right now?
+    </h2>
+    <p className="mt-4 text-lg md:text-xl text-ink-500">
+      Most landlords start by explaining an existing screening report.
+    </p>
+
+    <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
+      {/* Primary */}
+      <a href="/screening/explain"
+        className="group rounded-2xl border border-brand-200 bg-brand-50 p-8 text-left shadow-soft hover:shadow-lift transition">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-soft">
+            {/* icon */}
+            <span className="text-lg">🔍</span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xl md:text-2xl font-semibold text-ink-900">
+                Explain My Screening Report
+              </h3>
+              <span className="text-brand-700 font-semibold group-hover:translate-x-1 transition">→</span>
+            </div>
+            <p className="mt-2 text-ink-700">
+              Connect or upload your report → get a plain-English breakdown with risk flags.
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft">
+              Explain My Screening Report <span className="opacity-90">→</span>
+            </div>
+          </div>
+        </div>
+      </a>
+
+      {/* Secondary */}
+      <a href="/applications"
+        className="group rounded-2xl border border-slate-200 bg-white p-8 text-left shadow-soft hover:shadow-lift transition">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 rounded-xl bg-slate-100 flex items-center justify-center text-ink-700">
+            <span className="text-lg">🧾</span>
+          </div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between gap-3">
+              <h3 className="text-xl md:text-2xl font-semibold text-ink-900">
+                New Tenant Application + Screening
+              </h3>
+              <span className="text-ink-500 group-hover:translate-x-1 transition">→</span>
+            </div>
+            <p className="mt-2 text-ink-700">
+              Send an application link → run screening via Western Verify → full compliant workflow.
+            </p>
+            <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-5 py-3 text-ink-900 font-semibold">
+              Start an Application <span className="text-ink-500">→</span>
+            </div>
+          </div>
+        </div>
+      </a>
+    </div>
+  </div>
+</section>
+
+
+Why this fixes “cheap”:
+
+Larger type, thicker shadows, real CTA buttons inside cards
+
+Primary card has a clear “premium” highlight
+
+The whole section has presence
+
+B) DASHBOARD PREVIEW (THIS FIXES YOUR WEAK SECTION)
+
+Replace your “Actual LeaseShield dashboard” cards with this:
+
+<section className="py-20 md:py-28 bg-panel-50">
+  <div className="max-w-6xl mx-auto px-6">
+    <div className="text-center">
+      <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700">
+        Dashboard Preview
+      </div>
+      <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-ink-900">
+        See Everything in One Place
+      </h2>
+      <p className="mt-4 text-lg md:text-xl text-ink-500 max-w-2xl mx-auto">
+        Decode reports, generate documents, and stay compliant — without bouncing between tabs.
+      </p>
+    </div>
+
+    {/* Browser Frame */}
+    <div className="mt-12 rounded-2xl bg-white shadow-lift border border-slate-200 overflow-hidden">
+      {/* Top bar */}
+      <div className="flex items-center gap-2 px-4 py-3 bg-panel-100 border-b border-slate-200">
+        <div className="flex gap-2">
+          <span className="h-3 w-3 rounded-full bg-red-400" />
+          <span className="h-3 w-3 rounded-full bg-yellow-400" />
+          <span className="h-3 w-3 rounded-full bg-green-400" />
+        </div>
+        <div className="ml-4 text-sm text-ink-500 truncate">
+          leaseshieldapp.com/dashboard
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+        {/* Sidebar */}
+        <div className="bg-white border-r border-slate-200 p-5">
+          <div className="text-sm font-semibold text-ink-900">LeaseShield</div>
+          <div className="mt-4 space-y-2 text-sm">
+            {[
+              "Screening Decoder",
+              "Templates",
+              "Compliance Alerts",
+              "Notices & Letters",
+              "Rent Ledger",
+            ].map((item, i) => (
+              <div key={i} className={`rounded-xl px-3 py-2 ${i===0 ? "bg-brand-50 text-brand-800 font-semibold" : "text-ink-700 hover:bg-panel-50"}`}>
+                {item}
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Main */}
+        <div className="p-6 md:p-8">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <div className="text-sm text-ink-500">Welcome back</div>
+              <div className="text-2xl md:text-3xl font-bold text-ink-900">Your Protection Center</div>
+            </div>
+            <a href="/signup" className="hidden md:inline-flex rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft hover:bg-brand-700 transition">
+              Preview the Dashboard →
+            </a>
+          </div>
+
+          {/* Modules */}
+          <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {[
+              { title: "Decode Screening Reports", desc: "Plain-English explanations + risk flags.", tag: "Most used", accent: "bg-brand-50 border-brand-200" },
+              { title: "State-Specific Templates", desc: "Leases, notices, letters — kept current.", tag: "238+ docs", accent: "bg-white border-slate-200" },
+              { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: "bg-white border-slate-200" },
+              { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: "bg-white border-slate-200" },
+            ].map((m, i) => (
+              <div key={i} className={`rounded-2xl border ${m.accent} p-6 shadow-soft`}>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-lg md:text-xl font-semibold text-ink-900">{m.title}</h3>
+                  <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 text-ink-700">
+                    {m.tag}
+                  </span>
+                </div>
+                <p className="mt-2 text-ink-700">{m.desc}</p>
+                <div className="mt-4 text-sm font-semibold text-brand-700">
+                  Open →
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="mt-8 text-center">
+            <a href="/signup" className="inline-flex rounded-xl bg-brand-600 px-6 py-4 text-white font-semibold shadow-soft hover:bg-brand-700 transition">
+              Start Free 7-Day Trial →
+            </a>
+            <div className="mt-3 text-sm text-ink-500">
+              Instant access. No credit card required.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+This single change will dramatically increase “wow” because it looks like a real app, not marketing cards.
+
+6) FIX THE “SMALL LEGAL LOOKING” SECTIONS (SIMPLE WORKFLOW + TRUST)
+A) “SIMPLE WORKFLOW” label
+
+Either delete it OR style it like this everywhere:
+
+Use the same class for all mini labels:
+
+<div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700">
+
+B) “Built by professionals”
+
+Make it a full “trust strip” with background and icons (not tiny centered text).
+
+7) QUICK NOTES ON YOUR CURRENT SCREENSHOTS (WHAT ELSE TO CHANGE)
+1) Too many section labels / they’re inconsistent
+
+Use one consistent style or remove them.
+
+2) Too much plain white between sections
+
+Alternate backgrounds: bg-white then bg-panel-50
+
+3) Your green is strong; your text contrast is weak
+
+Ensure body paragraphs use text-ink-700, not a light gray.
+
+4) Your “Start Here” was small earlier — now it should be BIG
+
+The snippet above fixes that.
+
+8) WHAT TO TELL REPLIT (COPY/PASTE TASK LIST)
+
+Replit TODOs:
+
+Add Tailwind theme tokens (brand/ink/panel + shadows + radius)
+
+Update global typography rules (headings slate-900, body slate-700)
+
+Replace “Start Here” section with the provided premium card section
+
+Replace “Actual LeaseShield dashboard” with the Dashboard Preview browser-frame component
+
+Standardize or remove all micro-label subtitles (“Beyond Screening”, “Simple Workflow”, etc.)
+
+Alternate section backgrounds to create visual rhythm: white → slate-50 → white → slate-50
+
+Increase section spacing: py-20 md:py-28 everywhere
+
+If you want ONE fastest win today:
+
+Implement the Dashboard Preview browser frame.
+That’s the biggest “wow” lift with the least risk, and it fixes exactly what you called “weak.”

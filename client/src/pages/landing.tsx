@@ -322,84 +322,100 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* PRIMARY HERO: Decision Section */}
-      <section className="py-20 md:py-24 bg-gradient-to-b from-[#F9FAFB] to-white dark:from-muted/20 dark:to-background">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* START HERE: Premium Decision Cards */}
+      <section className="py-20 md:py-28 bg-white dark:bg-background">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
+            className="text-center"
           >
-            {/* Section Header */}
-            <motion.div variants={fadeInUp} className="text-center mb-12">
-              <h2 className="text-3xl md:text-[40px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-3">
-                What would you like help with right now?
-              </h2>
-              <p className="text-lg text-[#475569] dark:text-muted-foreground font-medium">
-                Most landlords start here.
-              </p>
-            </motion.div>
-            
-            <div className="grid md:grid-cols-[1.2fr_0.8fr] gap-8 items-stretch">
-              {/* Card 1: Explain Report - PRIMARY DOMINANT */}
-              <motion.div variants={fadeInUp}>
-                <div 
-                  className="p-8 md:p-10 rounded-2xl bg-[#ECFDF5] dark:bg-emerald-950/30 cursor-pointer transition-shadow hover:shadow-2xl min-h-[420px] md:min-h-[460px] flex flex-col"
-                  style={{ boxShadow: '0 12px 40px rgba(16, 185, 129, 0.18)' }}
-                  onClick={() => window.location.href = "/screening/explain"}
-                  data-testid="card-explain-report"
-                >
-                  <div className="w-14 h-14 rounded-2xl bg-[#10B981] flex items-center justify-center flex-shrink-0 mb-6">
-                    <Search className="h-7 w-7 text-white" />
-                  </div>
-                  <h3 className="font-bold text-[22px] md:text-2xl text-[#065F46] dark:text-emerald-300 mb-3">
-                    Explain My Screening Report
-                  </h3>
-                  <p className="text-base md:text-[17px] leading-relaxed text-[#374151] dark:text-muted-foreground mb-6 flex-grow">
-                    Paste or upload any credit, criminal, or eviction report. Get a plain-English breakdown with compliance risk flags — instantly.
-                  </p>
-                  <div className="mt-auto">
-                    <Button
-                      size="lg"
-                      className="bg-[#10B981] hover:bg-[#059669] text-white font-semibold rounded-xl h-14 px-8 text-base w-full md:w-auto"
-                      data-testid="button-explain-card"
-                    >
-                      Explain My Screening Report
-                      <ArrowRight className="ml-2 h-5 w-5" />
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
+            <motion.h2 
+              variants={fadeInUp}
+              className="text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground"
+            >
+              What would you like help with right now?
+            </motion.h2>
+            <motion.p 
+              variants={fadeInUp}
+              className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground"
+            >
+              Most landlords start by explaining an existing screening report.
+            </motion.p>
 
-              {/* Card 2: New Application - Secondary */}
-              <motion.div variants={fadeInUp}>
-                <div 
-                  className="p-6 md:p-8 rounded-2xl bg-white dark:bg-card border border-[#E5E7EB] dark:border-border cursor-pointer transition-all hover:shadow-lg min-h-[420px] md:min-h-[460px] flex flex-col relative"
-                  style={{ boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}
-                  onClick={() => window.location.href = "/properties"}
-                  data-testid="card-new-application"
-                >
-                  <ArrowRight className="absolute top-6 right-6 h-5 w-5 text-[#9CA3AF] dark:text-muted-foreground" />
-                  <div className="w-11 h-11 rounded-xl bg-[#F3F4F6] dark:bg-muted flex items-center justify-center flex-shrink-0 mb-5">
-                    <UserPlus className="h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
+            <motion.div 
+              variants={staggerContainer}
+              className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8"
+            >
+              {/* Primary Card */}
+              <motion.a 
+                variants={fadeInUp}
+                href="/screening/explain"
+                className="group rounded-2xl border border-brand-200 dark:border-emerald-800 bg-brand-50 dark:bg-emerald-950/30 p-8 text-left shadow-soft hover:shadow-lift transition"
+                data-testid="card-explain-report"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-soft flex-shrink-0">
+                    <Search className="h-6 w-6" />
                   </div>
-                  <h3 className="font-semibold text-lg md:text-xl text-[#111827] dark:text-foreground mb-3 pr-8">
-                    New Tenant Application + Screening
-                  </h3>
-                  <p className="text-[15px] md:text-base leading-relaxed text-[#64748B] dark:text-muted-foreground">
-                    Send an application link and run screening through Western Verify as part of a full compliant workflow.
-                  </p>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
+                        Explain My Screening Report
+                      </h3>
+                      <span className="text-brand-700 dark:text-emerald-400 font-semibold group-hover:translate-x-1 transition">
+                        <ArrowRight className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground">
+                      Connect or upload your report → get a plain-English breakdown with risk flags.
+                    </p>
+                    <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft">
+                      Explain My Screening Report <ArrowRight className="h-4 w-4 opacity-90" />
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
-            </div>
+              </motion.a>
+
+              {/* Secondary Card */}
+              <motion.a 
+                variants={fadeInUp}
+                href="/properties"
+                className="group rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card p-8 text-left shadow-soft hover:shadow-lift transition"
+                data-testid="card-new-application"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-muted flex items-center justify-center text-ink-700 dark:text-muted-foreground flex-shrink-0">
+                    <UserPlus className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
+                        New Tenant Application + Screening
+                      </h3>
+                      <span className="text-ink-500 dark:text-muted-foreground group-hover:translate-x-1 transition">
+                        <ArrowRight className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground">
+                      Send an application link → run screening via Western Verify → full compliant workflow.
+                    </p>
+                    <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card px-5 py-3 text-ink-900 dark:text-foreground font-semibold">
+                      Start an Application <ArrowRight className="h-4 w-4 text-ink-500" />
+                    </div>
+                  </div>
+                </div>
+              </motion.a>
+            </motion.div>
           </motion.div>
         </div>
       </section>
 
       {/* Transition Section: Complete Protection System */}
-      <section className="py-16 md:py-20 bg-white dark:bg-background border-t">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 md:py-28 bg-panel-50 dark:bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -445,8 +461,8 @@ export default function Landing() {
       </section>
 
       {/* How It Works - Horizontal Step Cards */}
-      <section id="how-it-works" className="py-20 sm:py-24 bg-[#F8FAFC] dark:bg-muted/20 scroll-mt-24">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section id="how-it-works" className="py-20 md:py-28 bg-white dark:bg-background scroll-mt-24">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -523,18 +539,21 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Trust Band with Icons */}
-      <section className="py-14 bg-white dark:bg-background border-y">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* Trust Strip - Full Width with Background */}
+      <section className="py-16 md:py-20 bg-ink-900 dark:bg-slate-900">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={staggerContainer}
+            variants={fadeInUp}
             className="text-center mb-10"
           >
-            <h3 className="text-2xl sm:text-[26px] font-semibold text-[#0F172A] dark:text-foreground" data-testid="text-trust-signal">
-              Built by Screening & Compliance Professionals
+            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-400 mb-3">
+              Built By Professionals
+            </div>
+            <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white" data-testid="text-trust-signal">
+              Decades of Real Screening Experience
             </h3>
           </motion.div>
           <motion.div
@@ -542,30 +561,39 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid sm:grid-cols-3 gap-6 md:gap-10"
+            className="grid sm:grid-cols-3 gap-8 md:gap-12"
           >
-            <motion.div variants={fadeInUp} className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
-                <Shield className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <Shield className="h-8 w-8 text-brand-400" />
               </div>
-              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
-                Decades of screening experience
+              <p className="text-lg font-semibold text-white mb-1">
+                Industry Veterans
+              </p>
+              <p className="text-sm text-slate-400">
+                Decades of hands-on screening experience
               </p>
             </motion.div>
-            <motion.div variants={fadeInUp} className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
-                <Scale className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <Scale className="h-8 w-8 text-brand-400" />
               </div>
-              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
-                Built with compliance professionals
+              <p className="text-lg font-semibold text-white mb-1">
+                Compliance-First
+              </p>
+              <p className="text-sm text-slate-400">
+                Built with legal professionals in mind
               </p>
             </motion.div>
-            <motion.div variants={fadeInUp} className="flex items-center gap-4">
-              <div className="w-12 h-12 rounded-xl bg-[#F1F5F9] dark:bg-muted flex items-center justify-center flex-shrink-0">
-                <CheckCircle2 className="h-6 w-6 text-[#475569] dark:text-slate-400" />
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-8 w-8 text-brand-400" />
               </div>
-              <p className="text-[15px] text-[#475569] dark:text-muted-foreground font-medium">
-                Designed for real landlord decisions
+              <p className="text-lg font-semibold text-white mb-1">
+                Real Decisions
+              </p>
+              <p className="text-sm text-slate-400">
+                Designed for actual landlord workflows
               </p>
             </motion.div>
           </motion.div>
@@ -573,8 +601,8 @@ export default function Landing() {
       </section>
 
       {/* Association Comparison Section */}
-      <section className="py-16 sm:py-20 bg-[#F8FAFC] dark:bg-muted/20">
-        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="py-20 md:py-28 bg-white dark:bg-background">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -582,11 +610,11 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
+            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-emerald-400 mb-3">
               Not a Replacement — A Complement
-            </p>
-            <h3 className="text-xl sm:text-2xl md:text-[28px] font-semibold text-[#0F172A] dark:text-foreground" data-testid="text-association-complement">
-              Designed to Work Alongside Your Apartment Association
+            </div>
+            <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
+              Works Alongside Your Apartment Association
             </h3>
           </motion.div>
           
@@ -595,25 +623,25 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid md:grid-cols-2 gap-6 md:gap-8 max-w-4xl mx-auto mb-10"
+            className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-10"
           >
             {/* Associations Column */}
             <motion.div variants={fadeInUp}>
-              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border h-full">
-                <h4 className="font-bold text-lg text-[#0F172A] dark:text-foreground mb-5">
+              <div className="bg-panel-50 dark:bg-muted/30 rounded-2xl p-8 border border-slate-200 dark:border-border h-full shadow-soft">
+                <h4 className="font-bold text-xl text-ink-900 dark:text-foreground mb-6">
                   Apartment Associations
                 </h4>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
-                    Education & training
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    Education & training seminars
                   </li>
-                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
-                    Industry advocacy
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    Industry advocacy & lobbying
                   </li>
-                  <li className="flex items-center gap-3 text-[15px] text-[#475569] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-[#94A3B8]" />
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
                     Annual template packets
                   </li>
                 </ul>
@@ -622,22 +650,22 @@ export default function Landing() {
             
             {/* LeaseShield Column */}
             <motion.div variants={fadeInUp}>
-              <div className="bg-emerald-50 dark:bg-emerald-950/20 rounded-2xl p-6 md:p-8 border border-emerald-200 dark:border-emerald-800 h-full">
-                <h4 className="font-bold text-lg text-emerald-700 dark:text-emerald-300 mb-5">
+              <div className="bg-brand-50 dark:bg-emerald-950/20 rounded-2xl p-8 border border-brand-200 dark:border-emerald-800 h-full shadow-soft">
+                <h4 className="font-bold text-xl text-brand-800 dark:text-emerald-300 mb-6">
                   LeaseShield
                 </h4>
-                <ul className="space-y-3">
-                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Day-to-day decisions
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Day-to-day screening decisions
                   </li>
-                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Screening interpretation
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Plain-English report interpretation
                   </li>
-                  <li className="flex items-center gap-3 text-[15px] text-[#374151] dark:text-muted-foreground">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                    Live compliance tools
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Live compliance tools & alerts
                   </li>
                 </ul>
               </div>
@@ -649,106 +677,130 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center text-base sm:text-[17px] text-[#64748B] dark:text-muted-foreground/80 italic max-w-[640px] mx-auto"
+            className="text-center text-lg text-ink-500 dark:text-muted-foreground/80 italic max-w-[640px] mx-auto"
           >
             Most landlords use both — and that's exactly how LeaseShield was designed.
           </motion.p>
         </div>
       </section>
 
-      {/* Dashboard Preview / Sneak Peek */}
-      <section className="py-12 md:py-16 bg-background" data-testid="section-preview">
-        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+      {/* DASHBOARD PREVIEW - Browser Frame Mockup */}
+      <section className="py-20 md:py-28 bg-panel-50 dark:bg-muted/20" data-testid="section-preview">
+        <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mb-8"
+            className="text-center"
           >
-            <p className="text-base text-[#6B7280] dark:text-muted-foreground">
-              Actual LeaseShield dashboard
+            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-emerald-400">
+              Dashboard Preview
+            </div>
+            <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground">
+              See Everything in One Place
+            </h2>
+            <p className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground max-w-2xl mx-auto">
+              Decode reports, generate documents, and stay compliant — without bouncing between tabs.
             </p>
           </motion.div>
 
+          {/* Browser Frame */}
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6"
+            variants={fadeInUp}
+            className="mt-12 rounded-2xl bg-white dark:bg-card shadow-lift border border-slate-200 dark:border-border overflow-hidden"
           >
-            {/* AI Tools Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-primary/20 to-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Sparkles className="h-6 w-6 text-primary" />
-                </div>
-                <h3 className="font-semibold text-foreground mb-2">AI Protection Center</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Credit report decoder, screening guidance, and 24/7 AI assistant
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Credit Decoder</Badge>
-                  <Badge variant="secondary" className="text-xs">AI Chat</Badge>
-                </div>
-              </Card>
-            </motion.div>
+            {/* Browser Top Bar */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-panel-100 dark:bg-muted border-b border-slate-200 dark:border-border">
+              <div className="flex gap-2">
+                <span className="h-3 w-3 rounded-full bg-red-400" />
+                <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                <span className="h-3 w-3 rounded-full bg-green-400" />
+              </div>
+              <div className="ml-4 text-sm text-ink-500 dark:text-muted-foreground truncate">
+                leaseshieldapp.com/dashboard
+              </div>
+            </div>
 
-            {/* Templates Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <FileText className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+              {/* Sidebar */}
+              <div className="bg-white dark:bg-card border-r border-slate-200 dark:border-border p-5 hidden md:block">
+                <div className="text-sm font-semibold text-ink-900 dark:text-foreground">LeaseShield</div>
+                <div className="mt-4 space-y-2 text-sm">
+                  {[
+                    { name: "Screening Decoder", active: true },
+                    { name: "Templates", active: false },
+                    { name: "Compliance Alerts", active: false },
+                    { name: "Notices & Letters", active: false },
+                    { name: "Rent Ledger", active: false },
+                  ].map((item, i) => (
+                    <div 
+                      key={i} 
+                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-emerald-950/30 text-brand-800 dark:text-emerald-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
+                    >
+                      {item.name}
+                    </div>
+                  ))}
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">{templateCount}+ Legal Templates</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  State-specific lease agreements, notices, and compliance forms
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">UT</Badge>
-                  <Badge variant="secondary" className="text-xs">TX</Badge>
-                  <Badge variant="secondary" className="text-xs">NC</Badge>
-                  <Badge variant="secondary" className="text-xs">+11 more</Badge>
-                </div>
-              </Card>
-            </motion.div>
+              </div>
 
-            {/* Compliance Updates Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+              {/* Main Content */}
+              <div className="p-6 md:p-8">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <div className="text-sm text-ink-500 dark:text-muted-foreground">Welcome back</div>
+                    <div className="text-2xl md:text-3xl font-bold text-ink-900 dark:text-foreground">Your Protection Center</div>
+                  </div>
+                  <a 
+                    href="/signup" 
+                    className="hidden md:inline-flex rounded-xl bg-brand-600 hover:bg-brand-700 px-5 py-3 text-white font-semibold shadow-soft transition"
+                    data-testid="button-preview-dashboard"
+                  >
+                    Preview the Dashboard →
+                  </a>
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Compliance Alerts</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Real-time law changes with plain-English explanations
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Law Alerts</Badge>
-                  <Badge variant="secondary" className="text-xs">Updates</Badge>
-                </div>
-              </Card>
-            </motion.div>
 
-            {/* Screening Tools Preview */}
-            <motion.div variants={fadeInUp}>
-              <Card className="p-5 h-full border-2 border-transparent bg-card">
-                <div className="rounded-xl bg-gradient-to-br from-purple-500/20 to-purple-500/10 w-12 h-12 flex items-center justify-center mb-4">
-                  <Search className="h-6 w-6 text-purple-600 dark:text-purple-400" />
+                {/* Dashboard Modules */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { title: "Decode Screening Reports", desc: "Plain-English explanations + risk flags.", tag: "Most used", accent: true },
+                    { title: "State-Specific Templates", desc: `${templateCount}+ leases, notices, letters — kept current.`, tag: `${templateCount}+ docs`, accent: false },
+                    { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
+                    { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
+                  ].map((m, i) => (
+                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-emerald-950/20 border-brand-200 dark:border-emerald-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <h3 className="text-lg md:text-xl font-semibold text-ink-900 dark:text-foreground">{m.title}</h3>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 dark:bg-muted text-ink-700 dark:text-muted-foreground whitespace-nowrap">
+                          {m.tag}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-ink-700 dark:text-muted-foreground">{m.desc}</p>
+                      <div className="mt-4 text-sm font-semibold text-brand-700 dark:text-emerald-400">
+                        Open →
+                      </div>
+                    </div>
+                  ))}
                 </div>
-                <h3 className="font-semibold text-foreground mb-2">Screening Toolkit</h3>
-                <p className="text-sm text-muted-foreground mb-3">
-                  Application workflows and Western Verify integration
-                </p>
-                <div className="flex flex-wrap gap-1">
-                  <Badge variant="secondary" className="text-xs">Applications</Badge>
-                  <Badge variant="secondary" className="text-xs">Screening</Badge>
+
+                <div className="mt-8 text-center">
+                  <a 
+                    href="/signup" 
+                    className="inline-flex rounded-xl bg-brand-600 hover:bg-brand-700 px-6 py-4 text-white font-semibold shadow-soft transition"
+                    data-testid="button-dashboard-trial"
+                  >
+                    Start Free 7-Day Trial →
+                  </a>
+                  <div className="mt-3 text-sm text-ink-500 dark:text-muted-foreground">
+                    Instant access. No credit card required.
+                  </div>
                 </div>
-              </Card>
-            </motion.div>
+              </div>
+            </div>
           </motion.div>
-
         </div>
       </section>
 
