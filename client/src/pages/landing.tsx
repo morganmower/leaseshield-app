@@ -1,4 +1,4 @@
-import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale } from "lucide-react";
+import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -354,31 +354,46 @@ export default function Landing() {
                     <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Notices</div>
                   </div>
                   
-                  {/* Main Content Preview */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <ShieldCheck className="h-5 w-5 text-brand-500" />
-                        <span className="font-semibold text-ink-900 dark:text-white text-sm sm:text-base">Decode Screening Reports</span>
+                  {/* Main Content Preview - Decoder Input Interface */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-brand-100 dark:bg-brand-800/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="h-5 w-5 text-brand-600 dark:text-brand-400" />
                       </div>
-                      <Badge className="bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 text-xs">Most used</Badge>
+                      <div>
+                        <h3 className="font-semibold text-ink-900 dark:text-white text-sm sm:text-base">
+                          Understand Your Credit Report
+                        </h3>
+                        <p className="text-[11px] text-ink-500 dark:text-slate-400">
+                          Clear explanations and compliance risk flags
+                        </p>
+                      </div>
                     </div>
-                    <p className="text-xs sm:text-sm text-ink-500 dark:text-slate-400">
-                      Plain-English explanations + risk flags + compliant next steps
-                    </p>
-                    <div className="grid grid-cols-3 gap-2 pt-2">
-                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
-                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{STATES.length}</div>
-                        <div className="text-[10px] text-ink-500 dark:text-slate-400">States</div>
-                      </div>
-                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
-                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">238+</div>
-                        <div className="text-[10px] text-ink-500 dark:text-slate-400">Templates</div>
-                      </div>
-                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
-                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">24h</div>
-                        <div className="text-[10px] text-ink-500 dark:text-slate-400">Updates</div>
-                      </div>
+                    
+                    {/* Quick-start pills */}
+                    <div className="flex flex-wrap gap-2">
+                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                        Charge-off?
+                      </span>
+                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                        Low score?
+                      </span>
+                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                        Collections?
+                      </span>
+                    </div>
+                    
+                    {/* Textarea mockup */}
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-panel-50 dark:bg-slate-800 p-3">
+                      <p className="text-xs text-ink-400 dark:text-slate-500 italic">
+                        "Applicant has 3 collections totaling $2,400..."
+                      </p>
+                    </div>
+                    
+                    {/* CTA Button mockup */}
+                    <div className="rounded-lg bg-brand-500 text-white text-center py-2.5 text-sm font-medium flex items-center justify-center gap-2">
+                      <Lightbulb className="h-4 w-4" />
+                      Explain This in Plain English
                     </div>
                   </div>
                 </div>
