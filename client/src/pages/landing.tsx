@@ -2267,7 +2267,7 @@ export default function Landing() {
                 <li>South Dakota, North Carolina, Ohio</li>
                 <li>Michigan, Idaho, Wyoming</li>
                 <li>California, Virginia, Nevada</li>
-                <li>Arizona, Florida</li>
+                <li>Arizona, Florida, Illinois</li>
               </ul>
             </div>
             <div>
