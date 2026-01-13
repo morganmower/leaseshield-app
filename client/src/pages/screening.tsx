@@ -59,6 +59,7 @@ function parseNewDecoderFormat(text: string): ParsedDecoder | null {
     { pattern: /\*\*CONSISTENCY CHECK\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'consistency', title: 'Consistency Check (Fair Housing)', icon: 'check' as const, alwaysVisible: false },
     { pattern: /\*\*DOCUMENTATION HELPER\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'documentation', title: 'Documentation Helper', icon: 'copy' as const, alwaysVisible: false },
     { pattern: /\*\*OPTIONAL FOLLOW-UP QUESTIONS\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'questions', title: 'Optional Follow-Up Questions', icon: 'questions' as const, alwaysVisible: false },
+    { pattern: /\*\*WHAT LANDLORDS OFTEN CONSIDER NEXT\*\*\s*\n([\s\S]*?)(?=\n\*\*|$)/i, id: 'next-steps', title: 'What Landlords Often Consider Next', icon: 'check' as const, alwaysVisible: true },
   ];
   
   const alwaysVisible: DecoderSection[] = [];
