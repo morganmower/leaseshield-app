@@ -1542,24 +1542,28 @@ export default function Landing() {
                 <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
               </div>
 
-              <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
-                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+              <ul className="space-y-3 mb-6 sm:mb-8 flex-1">
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Screening report decoder</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
-                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                <li className="flex items-center gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
+                  <span className="text-sm sm:text-base">Rental applications with screening</span>
                 </li>
-                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                <li className="flex items-center gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
-                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                <li className="flex items-center gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
-                <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
+                <li className="flex items-center gap-2 sm:gap-3">
                   <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
