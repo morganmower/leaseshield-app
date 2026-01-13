@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CreditCard, Scale, FileWarning } from "lucide-react";
+import { ArrowLeft, CreditCard, Scale } from "lucide-react";
 import { Link } from "wouter";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -32,7 +32,7 @@ export default function ScreeningExplain() {
           </p>
         </div>
 
-        {/* Three big buttons */}
+        {/* Two report options */}
         <div className="space-y-4">
           <Card 
             className="p-6 cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg"
@@ -55,39 +55,26 @@ export default function ScreeningExplain() {
           <Card 
             className="p-6 cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg"
             onClick={() => window.location.href = "/screening#criminal-helper"}
-            data-testid="button-criminal-report"
+            data-testid="button-criminal-eviction-report"
           >
             <div className="flex items-center gap-4">
               <div className="rounded-xl bg-amber-100 dark:bg-amber-950/30 p-4 flex-shrink-0">
                 <Scale className="h-8 w-8 text-amber-600 dark:text-amber-400" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg text-foreground mb-1">Criminal Report</h3>
+                <h3 className="font-semibold text-lg text-foreground mb-1">Criminal & Eviction Report</h3>
                 <p className="text-sm text-muted-foreground">
-                  Interpret criminal records with Fair Housing compliance in mind
-                </p>
-              </div>
-            </div>
-          </Card>
-
-          <Card 
-            className="p-6 cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg"
-            onClick={() => window.location.href = "/screening#criminal-helper"}
-            data-testid="button-eviction-report"
-          >
-            <div className="flex items-center gap-4">
-              <div className="rounded-xl bg-red-100 dark:bg-red-950/30 p-4 flex-shrink-0">
-                <FileWarning className="h-8 w-8 text-red-600 dark:text-red-400" />
-              </div>
-              <div className="flex-1">
-                <h3 className="font-semibold text-lg text-foreground mb-1">Eviction History</h3>
-                <p className="text-sm text-muted-foreground">
-                  Evaluate prior evictions and understand what they mean
+                  Interpret criminal records and eviction history with Fair Housing compliance
                 </p>
               </div>
             </div>
           </Card>
         </div>
+
+        {/* Hint */}
+        <p className="text-center text-sm text-muted-foreground mt-6">
+          Most landlords start with the credit report they just ran.
+        </p>
 
         {/* Back link */}
         <div className="mt-10 text-center">
