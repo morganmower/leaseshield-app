@@ -729,32 +729,32 @@ export default function Screening() {
               <div className="flex flex-wrap gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => { setUserQuestion("What does a charge-off mean and should I be worried?"); document.getElementById('credit-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setUserQuestion("What does a charge-off mean and should I be worried?"); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-chargeoff"
                 >
                   Charge-off?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setUserQuestion("Credit score is low - is this risky?"); document.getElementById('credit-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setUserQuestion("Credit score is low - is this risky?"); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-lowscore"
                 >
                   Low score?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setUserQuestion("Applicant has late payments on the report - what should I ask?"); document.getElementById('credit-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setUserQuestion("Applicant has late payments on the report - what should I ask?"); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-latepayments"
                 >
                   Late payments?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setUserQuestion("High credit card balances near limits - what does this tell me?"); document.getElementById('credit-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setUserQuestion("High credit card balances near limits - what does this tell me?"); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-highbalances"
                 >
                   High balances?
@@ -902,32 +902,32 @@ export default function Screening() {
               <div className="flex flex-wrap gap-3">
                 <Button 
                   variant="outline" 
-                  onClick={() => { setCriminalUserQuestion("Applicant has a misdemeanor from years ago - can I consider this?"); document.getElementById('criminal-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setCriminalUserQuestion("Applicant has a misdemeanor from years ago - can I consider this?"); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-misdemeanor"
                 >
                   Misdemeanor?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setCriminalUserQuestion("Applicant has an eviction on record - what should I ask?"); document.getElementById('criminal-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setCriminalUserQuestion("Applicant has an eviction on record - what should I ask?"); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-eviction"
                 >
                   Eviction?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setCriminalUserQuestion("What questions should I ask about a DUI conviction?"); document.getElementById('criminal-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setCriminalUserQuestion("What questions should I ask about a DUI conviction?"); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-dui"
                 >
                   DUI?
                 </Button>
                 <Button 
                   variant="outline" 
-                  onClick={() => { setCriminalUserQuestion("Multiple old charges on record - what's my liability?"); document.getElementById('criminal-helper-input')?.focus(); }}
-                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20"
+                  onClick={() => { setCriminalUserQuestion("Multiple old charges on record - what's my liability?"); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
+                  className="rounded-full shadow-sm px-5 bg-primary/5 border-primary/20 hover:bg-primary/10 hover:border-primary/40"
                   data-testid="chip-oldcharges"
                 >
                   Old charges?
