@@ -1749,16 +1749,16 @@ export default function Landing() {
             className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-12"
           >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full">
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-lg text-foreground font-medium mb-6 italic">
+                <p className="text-lg text-foreground font-medium mb-6 italic flex-1">
                   "I will recommend LeaseShield to every independent landlord I know. It will save them thousands and untold headaches with the entire tenancy process."
                 </p>
-                <div className="flex items-center">
+                <div className="flex items-center mt-auto">
                   <div>
                     <p className="font-semibold text-foreground">Brian Henderson</p>
                     <p className="text-sm text-muted-foreground">Property Owner, Utah</p>
@@ -1768,16 +1768,16 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full">
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full flex flex-col">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-lg text-foreground font-medium mb-6 italic">
+                <p className="text-lg text-foreground font-medium mb-6 italic flex-1">
                   "LeaseShield simplified everything. I used to dread dealing with lease paperwork, but now I feel confident and protected."
                 </p>
-                <div className="flex items-center">
+                <div className="flex items-center mt-auto">
                   <div>
                     <p className="font-semibold text-foreground">Marcie Seeling</p>
                     <p className="text-sm text-muted-foreground">Property Owner, Texas</p>
