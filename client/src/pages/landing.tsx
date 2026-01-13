@@ -320,10 +320,70 @@ export default function Landing() {
             
             <motion.p 
               variants={fadeInUp}
-              className="text-sm text-muted-foreground"
+              className="text-sm text-muted-foreground mb-10"
             >
               Works with Western Verify and other providers. Instant access. No credit card needed.
             </motion.p>
+
+            {/* Dashboard Preview Card */}
+            <motion.div 
+              variants={fadeInUp}
+              className="relative mx-auto max-w-3xl"
+            >
+              <div className="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-brand-500/10 to-brand-500/20 rounded-3xl blur-xl" />
+              <div className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-2xl">
+                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-amber-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 text-center">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">dashboard.leaseshieldapp.com</span>
+                  </div>
+                </div>
+                
+                <div className="grid md:grid-cols-[180px_1fr] gap-4">
+                  {/* Mini Sidebar */}
+                  <div className="hidden md:block space-y-2 text-sm">
+                    <div className="rounded-lg bg-brand-50 dark:bg-brand-800/20 px-3 py-2 font-medium text-brand-700 dark:text-brand-300">
+                      Screening Decoder
+                    </div>
+                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Templates</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Compliance</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Notices</div>
+                  </div>
+                  
+                  {/* Main Content Preview */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <ShieldCheck className="h-5 w-5 text-brand-500" />
+                        <span className="font-semibold text-ink-900 dark:text-white text-sm sm:text-base">Decode Screening Reports</span>
+                      </div>
+                      <Badge className="bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 text-xs">Most used</Badge>
+                    </div>
+                    <p className="text-xs sm:text-sm text-ink-600 dark:text-slate-400">
+                      Plain-English explanations + risk flags + compliant next steps
+                    </p>
+                    <div className="grid grid-cols-3 gap-2 pt-2">
+                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
+                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{STATES.length}</div>
+                        <div className="text-[10px] text-ink-600 dark:text-slate-400">States</div>
+                      </div>
+                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
+                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">238+</div>
+                        <div className="text-[10px] text-ink-600 dark:text-slate-400">Templates</div>
+                      </div>
+                      <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
+                        <div className="text-lg font-bold text-brand-600 dark:text-brand-400">24h</div>
+                        <div className="text-[10px] text-ink-600 dark:text-slate-400">Updates</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
           </motion.div>
         </div>
       </section>
