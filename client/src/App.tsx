@@ -64,6 +64,7 @@ import Apply from "@/pages/apply";
 import PropertyDetail from "@/pages/property-detail";
 import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
 import ScreeningExplain from "@/pages/screening-explain";
+import DashboardPreview from "@/pages/dashboard-preview";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -107,6 +108,8 @@ function Router() {
         <Route path="/subscribe" component={Subscribe} />
         <Route path="/logos" component={LogoPicker} />
         <Route path="/logo-colors" component={LogoColors} />
+        {/* Public dashboard preview */}
+        <Route path="/dashboard-preview" component={DashboardPreview} />
         {/* Unified decoder entry - accessible without login */}
         <Route path="/screening/explain" component={ScreeningExplain} />
         {/* Public application form */}
