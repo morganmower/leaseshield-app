@@ -776,13 +776,13 @@ export default function Landing() {
             className="text-center"
           >
             <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400">
-              Dashboard Preview
+              Everything Included
             </div>
             <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground">
-              See Everything in One Place
+              Everything Included in Your Protection Center
             </h2>
             <p className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground max-w-2xl mx-auto">
-              Decode reports, generate documents, and stay compliant — without bouncing between tabs.
+              Start with report decoding. Expand into documents, alerts, and applications as needed.
             </p>
           </motion.div>
 
