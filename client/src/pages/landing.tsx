@@ -353,14 +353,14 @@ export default function Landing() {
               <motion.a 
                 variants={fadeInUp}
                 href="/screening/explain"
-                className="group rounded-2xl border border-brand-200 dark:border-emerald-800 bg-brand-50 dark:bg-emerald-950/30 p-8 text-left shadow-soft hover:shadow-lift transition"
+                className="group rounded-2xl border border-brand-200 dark:border-emerald-800 bg-brand-50 dark:bg-emerald-950/30 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
                 data-testid="card-explain-report"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 flex-1">
                   <div className="h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-soft flex-shrink-0">
                     <Search className="h-6 w-6" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 flex flex-col">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
                         Explain My Screening Report
@@ -369,13 +369,13 @@ export default function Landing() {
                         <ArrowRight className="h-5 w-5" />
                       </span>
                     </div>
-                    <p className="mt-2 text-ink-700 dark:text-muted-foreground">
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">
                       Connect or upload your report → get a plain-English breakdown with risk flags.
                     </p>
-                    <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft">
-                      Explain My Screening Report <ArrowRight className="h-4 w-4 opacity-90" />
-                    </div>
                   </div>
+                </div>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft">
+                  Explain My Screening Report <ArrowRight className="h-4 w-4 opacity-90" />
                 </div>
               </motion.a>
 
@@ -383,14 +383,14 @@ export default function Landing() {
               <motion.a 
                 variants={fadeInUp}
                 href="/properties"
-                className="group rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card p-8 text-left shadow-soft hover:shadow-lift transition"
+                className="group rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
                 data-testid="card-new-application"
               >
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-4 flex-1">
                   <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-muted flex items-center justify-center text-ink-700 dark:text-muted-foreground flex-shrink-0">
                     <UserPlus className="h-6 w-6" />
                   </div>
-                  <div className="flex-1">
+                  <div className="flex-1 flex flex-col">
                     <div className="flex items-center justify-between gap-3">
                       <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
                         New Tenant Application + Screening
@@ -399,13 +399,13 @@ export default function Landing() {
                         <ArrowRight className="h-5 w-5" />
                       </span>
                     </div>
-                    <p className="mt-2 text-ink-700 dark:text-muted-foreground">
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">
                       Send an application link → run screening via Western Verify → full compliant workflow.
                     </p>
-                    <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card px-5 py-3 text-ink-900 dark:text-foreground font-semibold">
-                      Start an Application <ArrowRight className="h-4 w-4 text-ink-500" />
-                    </div>
                   </div>
+                </div>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card px-5 py-3 text-ink-900 dark:text-foreground font-semibold">
+                  Start an Application <ArrowRight className="h-4 w-4 text-ink-500" />
                 </div>
               </motion.a>
             </motion.div>
