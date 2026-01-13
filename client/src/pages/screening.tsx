@@ -703,18 +703,14 @@ export default function Screening() {
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-display font-semibold text-foreground">
-                  Credit Report AI Helper
+                  Understand Your Credit Report in Plain English
                 </h2>
-              <p className="text-sm text-muted-foreground">
-                  Describe what you see or type a term - get instant explanation
+                <p className="text-sm text-muted-foreground">
+                  Describe any part of the report you're unsure about — LeaseShield will explain what it means and flag compliance risks.
                 </p>
               </div>
-              <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
-                <Lightbulb className="h-3 w-3 mr-1" />
-                AI
-              </Badge>
             </div>
             
             <div className="space-y-4">
@@ -725,19 +721,75 @@ export default function Screening() {
                 </p>
               </div>
 
+              {/* Quick-start chips */}
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setUserQuestion("What does a charge-off mean and should I be worried?")}
+                  data-testid="chip-chargeoff"
+                >
+                  Charge-off?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setUserQuestion("Credit score is low - is this risky?")}
+                  data-testid="chip-lowscore"
+                >
+                  Low score?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setUserQuestion("Applicant has late payments on the report - what should I ask?")}
+                  data-testid="chip-latepayments"
+                >
+                  Late payments?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setUserQuestion("High credit card balances near limits - what does this tell me?")}
+                  data-testid="chip-highbalances"
+                >
+                  High balances?
+                </Button>
+              </div>
+
               <div className="bg-muted/30 rounded-lg p-3 text-sm">
-                <p className="text-foreground font-medium mb-2">Try asking:</p>
-                <ul className="text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>"What does charge-off mean and should I be worried?"</li>
-                  <li>"Applicant has 3 collections totaling $2,400 - what questions should I ask?"</li>
-                  <li>"Credit score is 580 with 2 late payments - is this risky?"</li>
-                  <li>"High credit card balances near limits - what does this tell me?"</li>
+                <p className="text-foreground font-medium mb-2">Or try one of these:</p>
+                <ul className="text-muted-foreground space-y-1">
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setUserQuestion("What does charge-off mean and should I be worried?")}
+                  >
+                    • "What does charge-off mean and should I be worried?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setUserQuestion("Applicant has 3 collections totaling $2,400 - what questions should I ask?")}
+                  >
+                    • "Applicant has 3 collections totaling $2,400 - what questions should I ask?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setUserQuestion("Credit score is 580 with 2 late payments - is this risky?")}
+                  >
+                    • "Credit score is 580 with 2 late payments - is this risky?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setUserQuestion("High credit card balances near limits - what does this tell me?")}
+                  >
+                    • "High credit card balances near limits - what does this tell me?"
+                  </li>
                 </ul>
               </div>
 
               <Textarea
                 id="credit-helper-input"
-                placeholder="Example: 'Applicant has a charge-off from 2022 - what should I ask them?'"
+                placeholder="Type or paste anything confusing from the report here (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400')."
                 value={userQuestion}
                 onChange={(e) => setUserQuestion(e.target.value)}
                 className="min-h-[100px] text-base"
@@ -752,7 +804,7 @@ export default function Screening() {
                 data-testid="button-get-credit-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isExplaining ? 'Analyzing...' : 'Get AI Explanation'}
+                {isExplaining ? 'Analyzing...' : 'Explain What This Means'}
               </Button>
 
               {isExplaining && (
@@ -819,20 +871,16 @@ export default function Screening() {
           <Card className="p-6 shadow-lg border-2 border-primary/20">
             <div className="flex items-center gap-3 mb-4">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                <AlertTriangle className="h-6 w-6 text-primary" />
+                <Scale className="h-6 w-6 text-primary" />
               </div>
-              <div>
+              <div className="flex-1">
                 <h2 className="text-xl font-display font-semibold text-foreground">
-                  Criminal & Eviction AI Helper
+                  Understand Criminal & Eviction Records in Plain English
                 </h2>
-              <p className="text-sm text-muted-foreground">
-                  Describe what you see or type a term - get Fair Housing guidance
+                <p className="text-sm text-muted-foreground">
+                  Describe what you see on the report — LeaseShield will explain what it means and flag Fair Housing compliance risks.
                 </p>
               </div>
-              <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
-                <Lightbulb className="h-3 w-3 mr-1" />
-                AI
-              </Badge>
             </div>
             
             <div className="space-y-4">
@@ -843,22 +891,78 @@ export default function Screening() {
                 </p>
               </div>
 
+              {/* Quick-start chips */}
+              <div className="flex flex-wrap gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCriminalUserQuestion("Applicant has a misdemeanor from years ago - can I consider this?")}
+                  data-testid="chip-misdemeanor"
+                >
+                  Misdemeanor?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCriminalUserQuestion("Applicant has an eviction on record - what should I ask?")}
+                  data-testid="chip-eviction"
+                >
+                  Eviction?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCriminalUserQuestion("What questions should I ask about a DUI conviction?")}
+                  data-testid="chip-dui"
+                >
+                  DUI?
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setCriminalUserQuestion("Multiple old charges on record - what's my liability?")}
+                  data-testid="chip-oldcharges"
+                >
+                  Old charges?
+                </Button>
+              </div>
+
               <div className="bg-muted/30 rounded-lg p-3 text-sm">
-                <p className="text-foreground font-medium mb-2">Try asking:</p>
-                <ul className="text-muted-foreground space-y-1 ml-4 list-disc">
-                  <li>"Applicant has a misdemeanor theft from 5 years ago - can I ask about it?"</li>
-                  <li>"What questions should I ask about a DUI conviction?"</li>
-                  <li>"Eviction filed in 2021 but dismissed - should I be concerned?"</li>
-                  <li>"Multiple drug charges from 8 years ago - what's my liability if I rent to them?"</li>
+                <p className="text-foreground font-medium mb-2">Or try one of these:</p>
+                <ul className="text-muted-foreground space-y-1">
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setCriminalUserQuestion("Applicant has a misdemeanor theft from 5 years ago - can I ask about it?")}
+                  >
+                    • "Applicant has a misdemeanor theft from 5 years ago - can I ask about it?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setCriminalUserQuestion("What questions should I ask about a DUI conviction?")}
+                  >
+                    • "What questions should I ask about a DUI conviction?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setCriminalUserQuestion("Eviction filed in 2021 but dismissed - should I be concerned?")}
+                  >
+                    • "Eviction filed in 2021 but dismissed - should I be concerned?"
+                  </li>
+                  <li 
+                    className="cursor-pointer hover:text-foreground transition-colors pl-4 py-0.5 -ml-2 rounded hover:bg-muted/50"
+                    onClick={() => setCriminalUserQuestion("Multiple drug charges from 8 years ago - what's my liability if I rent to them?")}
+                  >
+                    • "Multiple drug charges from 8 years ago - what's my liability if I rent to them?"
+                  </li>
                 </ul>
               </div>
 
               <Textarea
                 id="criminal-helper-input"
-                placeholder="Example: 'Applicant has an eviction from 2022 - what should I ask them?'"
+                placeholder="Type or paste anything confusing from the report here (e.g., 'Misdemeanor theft from 2019' or 'Eviction filed but dismissed')."
                 value={criminalUserQuestion}
                 onChange={(e) => setCriminalUserQuestion(e.target.value)}
-                className="min-h-[120px] text-base"
+                className="min-h-[100px] text-base"
                 data-testid="textarea-criminal-question"
               />
 
@@ -870,7 +974,7 @@ export default function Screening() {
                 data-testid="button-get-criminal-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isCriminalExplaining ? 'Analyzing...' : 'Get AI Explanation'}
+                {isCriminalExplaining ? 'Analyzing...' : 'Explain What This Means'}
               </Button>
 
               {isCriminalExplaining && (
