@@ -1329,7 +1329,7 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 border-destructive/30 bg-destructive/5">
+              <Card className="p-6 border-destructive/30 bg-destructive/5 h-full">
                 <div className="flex items-start gap-4">
                   <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
                     <AlertCircle className="h-6 w-6 text-destructive" />
