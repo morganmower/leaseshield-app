@@ -867,14 +867,14 @@ export default function Landing() {
                     { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
                     { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
                   ].map((m, i) => (
-                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-800/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
+                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-800/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft flex flex-col h-full`}>
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <h3 className="text-lg md:text-xl font-semibold text-ink-900 dark:text-foreground">{m.title}</h3>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 dark:bg-muted text-ink-700 dark:text-muted-foreground whitespace-nowrap">
                           {m.tag}
                         </span>
                       </div>
-                      <p className="mt-2 text-ink-700 dark:text-muted-foreground">{m.desc}</p>
+                      <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">{m.desc}</p>
                       <div className="mt-4 text-sm font-semibold text-brand-700 dark:text-brand-400">
                         Open →
                       </div>
