@@ -333,9 +333,15 @@ export default function Landing() {
           >
             <motion.p 
               variants={fadeInUp}
-              className="text-center text-base md:text-lg font-medium text-muted-foreground mb-6 mt-10 md:mt-12"
+              className="text-center text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2"
             >
-              Start Here (Most People Choose the Left Option)
+              Start Here
+            </motion.p>
+            <motion.p 
+              variants={fadeInUp}
+              className="text-center text-sm text-muted-foreground/80 mb-6"
+            >
+              Most people choose the left option
             </motion.p>
             
             <div className="grid md:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6">
@@ -468,7 +474,7 @@ export default function Landing() {
             variants={staggerContainer}
             className="text-center mb-10"
           >
-            <motion.p variants={fadeInUp} className="text-sm font-medium text-muted-foreground mb-2">
+            <motion.p variants={fadeInUp} className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2">
               Beyond Screening
             </motion.p>
             <motion.h2 
@@ -529,12 +535,15 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center"
           >
-            <p className="text-sm font-semibold text-muted-foreground mb-2">
-              A simple workflow to protect you from common landlord mistakes
+            <p className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2">
+              Simple Workflow
             </p>
-            <h2 className="font-display text-lg sm:text-xl font-semibold text-foreground mb-6">
+            <h2 className="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2">
               How It Works
             </h2>
+            <p className="text-sm text-muted-foreground/80 mb-6">
+              A simple workflow to protect you from common landlord mistakes
+            </p>
             <ol className="space-y-5 text-left max-w-xl mx-auto">
               <li className="flex items-start gap-3">
                 <span className="font-bold text-primary flex-shrink-0">1.</span>
