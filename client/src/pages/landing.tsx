@@ -269,7 +269,7 @@ export default function Landing() {
 
       {/* NEW: Screening-First Hero Section */}
       <section id="hero" className="relative pt-12 pb-8 md:pt-16 md:pb-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-brand-500/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-background to-brand-500/5 pointer-events-none" />
         
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
@@ -349,9 +349,9 @@ export default function Landing() {
                     <div className="rounded-lg bg-brand-50 dark:bg-brand-800/20 px-3 py-2 font-medium text-brand-700 dark:text-brand-300">
                       Screening Decoder
                     </div>
-                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Templates</div>
-                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Compliance</div>
-                    <div className="rounded-lg px-3 py-2 text-ink-600 dark:text-slate-400">Notices</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Templates</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Compliance</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Notices</div>
                   </div>
                   
                   {/* Main Content Preview */}
@@ -363,21 +363,21 @@ export default function Landing() {
                       </div>
                       <Badge className="bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 text-xs">Most used</Badge>
                     </div>
-                    <p className="text-xs sm:text-sm text-ink-600 dark:text-slate-400">
+                    <p className="text-xs sm:text-sm text-ink-500 dark:text-slate-400">
                       Plain-English explanations + risk flags + compliant next steps
                     </p>
                     <div className="grid grid-cols-3 gap-2 pt-2">
                       <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
                         <div className="text-lg font-bold text-brand-600 dark:text-brand-400">{STATES.length}</div>
-                        <div className="text-[10px] text-ink-600 dark:text-slate-400">States</div>
+                        <div className="text-[10px] text-ink-500 dark:text-slate-400">States</div>
                       </div>
                       <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
                         <div className="text-lg font-bold text-brand-600 dark:text-brand-400">238+</div>
-                        <div className="text-[10px] text-ink-600 dark:text-slate-400">Templates</div>
+                        <div className="text-[10px] text-ink-500 dark:text-slate-400">Templates</div>
                       </div>
                       <div className="rounded-lg bg-panel-50 dark:bg-slate-800 p-2 text-center">
                         <div className="text-lg font-bold text-brand-600 dark:text-brand-400">24h</div>
-                        <div className="text-[10px] text-ink-600 dark:text-slate-400">Updates</div>
+                        <div className="text-[10px] text-ink-500 dark:text-slate-400">Updates</div>
                       </div>
                     </div>
                   </div>
@@ -419,7 +419,7 @@ export default function Landing() {
               <motion.a 
                 variants={fadeInUp}
                 href="/screening/explain"
-                className="group rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950/30 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
+                className="group rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-800/20 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
                 data-testid="card-explain-report"
               >
                 <div className="flex items-start gap-4 flex-1">
@@ -491,13 +491,13 @@ export default function Landing() {
           >
             {/* Left: Text Content */}
             <motion.div variants={fadeInUp} className="order-2 md:order-1">
-              <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-4">
+              <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400 mb-4">
                 This Is More Than a Decoder
               </p>
-              <h2 className="font-display text-2xl sm:text-[32px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-4">
+              <h2 className="font-display text-2xl sm:text-[32px] md:text-[36px] font-bold text-ink-900 dark:text-white leading-tight mb-4">
                 LeaseShield Is a Complete Landlord Protection System
               </h2>
-              <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground mb-6 leading-relaxed">
+              <p className="text-base sm:text-[17px] text-ink-700 dark:text-slate-300 mb-6 leading-relaxed">
                 Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more — all in one connected dashboard.
               </p>
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 inline-block">
@@ -536,13 +536,13 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-16"
           >
-            <p className="text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
+            <p className="text-[15px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400 mb-3">
               How LeaseShield Works
             </p>
-            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-5">
+            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-ink-900 dark:text-white leading-tight mb-5">
               A Simple Workflow That Protects You
             </h2>
-            <p className="text-[17px] sm:text-lg text-[#475569] dark:text-muted-foreground max-w-[640px] mx-auto">
+            <p className="text-[17px] sm:text-lg text-ink-700 dark:text-slate-300 max-w-[640px] mx-auto">
               From application to screening to compliant documents — all connected.
             </p>
           </motion.div>
@@ -559,14 +559,14 @@ export default function Landing() {
             
             {/* Step 1 */}
             <motion.div variants={fadeInUp} className="relative">
-              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
                 <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">1</span>
                 </div>
-                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
                   Screen Tenants
                 </h3>
-                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
                   Send applicants a link to apply and run screening via Western Verify.
                 </p>
               </div>
@@ -574,14 +574,14 @@ export default function Landing() {
             
             {/* Step 2 */}
             <motion.div variants={fadeInUp} className="relative">
-              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
                 <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">2</span>
                 </div>
-                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
                   Decode Reports
                 </h3>
-                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
                   AI explains results in plain English and flags compliance risks.
                 </p>
               </div>
@@ -589,14 +589,14 @@ export default function Landing() {
             
             {/* Step 3 */}
             <motion.div variants={fadeInUp} className="relative">
-              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
                 <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">3</span>
                 </div>
-                <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
                   Build Documents
                 </h3>
-                <p className="text-[15px] text-[#475569] dark:text-muted-foreground leading-relaxed">
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
                   Generate state-specific leases, notices, and forms. Always current.
                 </p>
               </div>
@@ -606,7 +606,7 @@ export default function Landing() {
       </section>
 
       {/* Trust Strip - Full Width with Background */}
-      <section className="py-16 md:py-20 bg-ink-900 dark:bg-slate-900">
+      <section className="py-16 md:py-20 bg-ink-900 dark:bg-slate-950">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
             initial="hidden"
@@ -615,7 +615,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-10"
           >
-            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-400 mb-3">
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-400 mb-3">
               Built By Professionals
             </div>
             <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white" data-testid="text-trust-signal">
@@ -648,7 +648,7 @@ export default function Landing() {
                 Compliance-First
               </p>
               <p className="text-sm text-slate-400">
-                Built with legal professionals in mind
+                Designed to keep you compliant
               </p>
             </motion.div>
             <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
@@ -676,7 +676,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400 mb-3">
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400 mb-3">
               Not a Replacement — A Complement
             </div>
             <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
@@ -716,7 +716,7 @@ export default function Landing() {
             
             {/* LeaseShield Column */}
             <motion.div variants={fadeInUp}>
-              <div className="bg-brand-50 dark:bg-brand-950/20 rounded-2xl p-8 border border-brand-200 dark:border-brand-800 h-full shadow-soft">
+              <div className="bg-brand-50 dark:bg-brand-800/20 rounded-2xl p-8 border border-brand-200 dark:border-brand-800 h-full shadow-soft">
                 <h4 className="font-bold text-xl text-brand-800 dark:text-brand-300 mb-6">
                   LeaseShield
                 </h4>
@@ -760,7 +760,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center"
           >
-            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400">
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400">
               Dashboard Preview
             </div>
             <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground">
@@ -805,7 +805,7 @@ export default function Landing() {
                   ].map((item, i) => (
                     <div 
                       key={i} 
-                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-brand-950/30 text-brand-800 dark:text-brand-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
+                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-brand-800/20 text-brand-800 dark:text-brand-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
                     >
                       {item.name}
                     </div>
@@ -822,7 +822,7 @@ export default function Landing() {
                   </div>
                   <a 
                     href="/signup" 
-                    className="hidden md:inline-flex rounded-xl bg-brand-600 hover:bg-brand-700 px-5 py-3 text-white font-semibold shadow-soft transition"
+                    className="hidden md:inline-flex rounded-xl bg-brand-500 hover:bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft transition"
                     data-testid="button-preview-dashboard"
                   >
                     Preview the Dashboard →
@@ -837,7 +837,7 @@ export default function Landing() {
                     { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
                     { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
                   ].map((m, i) => (
-                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-950/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
+                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-800/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <h3 className="text-lg md:text-xl font-semibold text-ink-900 dark:text-foreground">{m.title}</h3>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 dark:bg-muted text-ink-700 dark:text-muted-foreground whitespace-nowrap">
@@ -855,7 +855,7 @@ export default function Landing() {
                 <div className="mt-8 text-center">
                   <a 
                     href="/signup" 
-                    className="inline-flex rounded-xl bg-brand-600 hover:bg-brand-700 px-6 py-4 text-white font-semibold shadow-soft transition"
+                    className="inline-flex rounded-xl bg-brand-500 hover:bg-brand-600 px-6 py-4 text-white font-semibold shadow-soft transition"
                     data-testid="button-dashboard-trial"
                   >
                     Start Free 7-Day Trial →
@@ -953,7 +953,7 @@ export default function Landing() {
           >
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success" />
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600" />
                 <div className="text-2xl sm:text-3xl font-bold text-foreground">100%</div>
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">State Compliant</div>
@@ -966,7 +966,7 @@ export default function Landing() {
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
               <button
-                className="text-xs mt-1 text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                className="text-xs mt-1 text-brand-600 hover:underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => setShowTemplatePreview(true)}
                 data-testid="button-preview-template"
               >
@@ -975,10 +975,10 @@ export default function Landing() {
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">14</div>
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{STATES.length}</div>
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">States Covered</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">States Supported</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -1047,10 +1047,10 @@ export default function Landing() {
           >
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-amber-600 dark:text-amber-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Leases & Notices</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1058,15 +1058,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Residential lease agreements</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>3-day, late rent & violation notices</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Move-in/move-out checklists</span>
                     </li>
                   </ul>
@@ -1076,10 +1076,10 @@ export default function Landing() {
 
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-primary/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <Shield className="h-5 w-5 md:h-6 md:w-6 text-primary" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Shield className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1087,15 +1087,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Adverse action letter templates</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Monthly legal updates (impact-only)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>"Screen legally" compliance checklist</span>
                     </li>
                   </ul>
@@ -1105,10 +1105,10 @@ export default function Landing() {
 
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <Search className="h-5 w-5 md:h-6 md:w-6 text-cyan-600 dark:text-cyan-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Search className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1116,15 +1116,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Credit report decoder (what matters)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Fair housing screening checklist</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Background check guidance</span>
                     </li>
                   </ul>
@@ -1134,10 +1134,10 @@ export default function Landing() {
 
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <Building2 className="h-5 w-5 md:h-6 md:w-6 text-violet-600 dark:text-violet-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Building2 className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Landlord Toolkit Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1145,15 +1145,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Centralized document library</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Organize by state & property</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Quick access to all templates</span>
                     </li>
                   </ul>
@@ -1163,10 +1163,10 @@ export default function Landing() {
 
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-rose-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-rose-500/20 to-rose-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-rose-600 dark:text-rose-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Communications</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1174,15 +1174,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Pre-written notice templates</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Customizable merge fields</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Copy & download quickly</span>
                     </li>
                   </ul>
@@ -1194,8 +1194,8 @@ export default function Landing() {
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-brand-500/20 to-brand-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-brand-600 dark:text-brand-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Ledger</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1203,15 +1203,15 @@ export default function Landing() {
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Excel/CSV download template</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>In-app tracking table</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Payment status at a glance</span>
                     </li>
                   </ul>
@@ -1351,10 +1351,10 @@ export default function Landing() {
                       <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm"></th>
                       <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">DIY Templates</th>
                       <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">Local Attorney</th>
-                      <th className="text-center p-2 sm:p-4 font-semibold bg-primary/5">
+                      <th className="text-center p-2 sm:p-4 font-semibold bg-brand-50">
                         <div className="flex flex-col items-center gap-1">
                           <Badge className="mb-1 text-xs">Best Value</Badge>
-                          <span className="text-primary text-xs sm:text-sm">LeaseShield</span>
+                          <span className="text-brand-600 text-xs sm:text-sm">LeaseShield</span>
                         </div>
                       </th>
                     </tr>
@@ -1364,8 +1364,8 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Cost</td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <span className="font-bold text-primary text-xs sm:text-sm">$10/month</span>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <span className="font-bold text-brand-600 text-xs sm:text-sm">$10/month</span>
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1374,10 +1374,10 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1386,10 +1386,10 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1398,8 +1398,8 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Pay each time</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1408,20 +1408,20 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Extra fees</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">24/7 Access</td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -1432,8 +1432,8 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr>
@@ -1444,8 +1444,8 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <span className="font-semibold text-success text-xs sm:text-sm">Monthly alerts</span>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <span className="font-semibold text-brand-600 text-xs sm:text-sm">Monthly alerts</span>
                       </td>
                     </tr>
                   </tbody>
@@ -1483,10 +1483,10 @@ export default function Landing() {
             className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
           >
             {/* Monthly Card */}
-            <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg flex flex-col">
+            <Card className="p-6 sm:p-8 border-2 border-brand-200 shadow-lg flex flex-col">
               <div className="text-center mb-6">
                 <div className="flex items-center justify-center gap-2 mb-2 h-6">
-                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-brand-600" />
                   <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
                 </div>
                 <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Monthly</h3>
@@ -1494,7 +1494,7 @@ export default function Landing() {
                   <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-primary font-medium mt-3">
+                <p className="text-xs sm:text-sm text-brand-600 font-medium mt-3">
                   Introductory pricing • Lock in this rate today
                 </p>
                 <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
@@ -1502,23 +1502,23 @@ export default function Landing() {
 
               <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
@@ -1541,7 +1541,7 @@ export default function Landing() {
                   localStorage.setItem('billingPeriod', 'monthly');
                   window.location.href = "/signup?payNow=true";
                 }}
-                className="text-xs text-primary hover:underline mt-2"
+                className="text-xs text-brand-600 hover:underline mt-2"
                 data-testid="link-pay-now-monthly"
               >
                 Skip trial - Pay now
@@ -1573,23 +1573,23 @@ export default function Landing() {
 
               <ul className="space-y-4 mb-6 sm:mb-8 flex-1">
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Rental applications with tenant screening</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
                 <li className="flex items-center gap-2 sm:gap-3 min-h-[28px]">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success flex-shrink-0" />
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
                   <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
@@ -1612,7 +1612,7 @@ export default function Landing() {
                   localStorage.setItem('billingPeriod', 'yearly');
                   window.location.href = "/signup?payNow=true";
                 }}
-                className="text-xs text-primary hover:underline mt-2"
+                className="text-xs text-brand-600 hover:underline mt-2"
                 data-testid="link-pay-now-annual"
               >
                 Skip trial - Pay now
@@ -1644,28 +1644,28 @@ export default function Landing() {
             </h3>
             <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
               <div className="flex gap-3">
-                <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                <Clock className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Save Hours Each Month</p>
                   <p className="text-base text-muted-foreground">No more Googling forms or waiting on lawyer consultations</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Shield className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
+                <Shield className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Avoid Costly Mistakes</p>
                   <p className="text-base text-muted-foreground">One compliance error costs thousands. We keep you protected</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <CheckCircle2 className="h-6 w-6 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Screen Tenants Confidently</p>
                   <p className="text-base text-muted-foreground">Simple credit reports and fair housing guidance. No legal risks</p>
                 </div>
               </div>
               <div className="flex gap-3">
-                <Sparkles className="h-6 w-6 text-primary flex-shrink-0 mt-0.5" />
+                <Sparkles className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-semibold text-foreground text-base mb-1">Stay Current Automatically</p>
                   <p className="text-base text-muted-foreground">Monthly updates alert you when your state's laws change</p>
@@ -1699,7 +1699,7 @@ export default function Landing() {
             className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-12"
           >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent h-full">
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
@@ -1718,7 +1718,7 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 sm:p-8 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent h-full">
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full">
                 <div className="flex gap-1 mb-4">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
@@ -1746,11 +1746,11 @@ export default function Landing() {
             className="flex flex-wrap justify-center gap-4 sm:gap-6"
           >
             <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-4 py-3">
-              <CheckCircle2 className="h-5 w-5 text-success" />
+              <CheckCircle2 className="h-5 w-5 text-brand-600" />
               <span className="font-medium text-foreground">7-Day Free Trial</span>
             </div>
-            <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
-              <Shield className="h-5 w-5 text-primary" />
+            <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-lg px-4 py-3">
+              <Shield className="h-5 w-5 text-brand-600" />
               <span className="font-medium text-foreground">{STATES.length} States Covered</span>
             </div>
             <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
@@ -1928,14 +1928,14 @@ export default function Landing() {
               return (
                 <div key={key} className="border-b pb-6 last:border-b-0">
                   <div className="flex items-start gap-3 mb-4">
-                    <IconComponent className="h-7 w-7 text-primary mt-1 flex-shrink-0" />
+                    <IconComponent className="h-7 w-7 text-brand-600 mt-1 flex-shrink-0" />
                     <div>
                       <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
                       <p className="text-muted-foreground mb-4">{feature.description}</p>
                       <ul className="space-y-2">
                         {feature.details.map((detail, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm">
-                            <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{detail}</span>
                           </li>
                         ))}
@@ -1951,15 +1951,15 @@ export default function Landing() {
             <div className="text-center space-y-4">
               <div className="grid sm:grid-cols-3 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">{templateCount}+</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">{templateCount}+</div>
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">{STATES.length}</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">{STATES.length}</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">$10</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">$10</div>
                   <div className="text-sm text-muted-foreground">Per Month</div>
                 </div>
               </div>
@@ -1992,7 +1992,7 @@ export default function Landing() {
                 <div className="flex items-center gap-3 mb-2">
                   {(() => {
                     const IconComponent = featureDetails[selectedFeature].icon;
-                    return <IconComponent className="h-8 w-8 text-primary" />;
+                    return <IconComponent className="h-8 w-8 text-brand-600" />;
                   })()}
                   <DialogTitle className="text-2xl">{featureDetails[selectedFeature].title}</DialogTitle>
                 </div>
@@ -2005,7 +2005,7 @@ export default function Landing() {
                 <ul className="space-y-3">
                   {featureDetails[selectedFeature].details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">{detail}</span>
                     </li>
                   ))}
@@ -2045,49 +2045,49 @@ export default function Landing() {
           <div className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">{templateCount}+ State-Specific Templates</p>
                   <p className="text-sm text-muted-foreground">Download as PDF or fill online</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Live Compliance Monitoring</p>
                   <p className="text-sm text-muted-foreground">Instant alerts when laws change</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Before/After Guidance</p>
                   <p className="text-sm text-muted-foreground">Clear explanations of legal changes</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Tenant Screening Toolkit</p>
                   <p className="text-sm text-muted-foreground">Red flags and best practices</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Fair Housing Compliance</p>
                   <p className="text-sm text-muted-foreground">Avoid $10,000+ in federal fines</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">24/7 Access to All Resources</p>
                   <p className="text-sm text-muted-foreground">Your complete landlord toolkit</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">7-Day Free Trial</p>
                   <p className="text-sm text-muted-foreground">No credit card required</p>
@@ -2117,7 +2117,7 @@ export default function Landing() {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-display flex items-center gap-2">
-              <FileText className="h-6 w-6 text-primary" />
+              <FileText className="h-6 w-6 text-brand-600" />
               Utah Residential Lease Agreement - Preview
             </DialogTitle>
             <DialogDescription>
@@ -2193,8 +2193,8 @@ export default function Landing() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 bg-brand-50 border border-brand-200 rounded-lg p-4">
+                <Shield className="h-5 w-5 text-brand-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 text-sm">
                   <p className="font-semibold text-foreground mb-1">What You Get:</p>
                   <ul className="space-y-1 text-muted-foreground">
@@ -2299,7 +2299,7 @@ export default function Landing() {
               transition={{ duration: 0.2 }}
               className="mb-4"
             >
-              <Card className="w-[380px] h-[500px] flex flex-col shadow-2xl border-primary/20">
+              <Card className="w-[380px] h-[500px] flex flex-col shadow-2xl border-brand-200">
                 {/* Chat Header */}
                 <div className="bg-primary text-primary-foreground rounded-t-lg">
                   <div className="flex items-center justify-between p-4">
