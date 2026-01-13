@@ -289,7 +289,7 @@ export default function Landing() {
               variants={fadeInUp}
               className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
             >
-              LeaseShield explains it in plain English — flags risks, shows safe next steps.
+              LeaseShield explains it in plain English. Flags risks, shows safe next steps.
             </motion.p>
 
             {/* Primary CTA */}
@@ -525,7 +525,7 @@ export default function Landing() {
                 LeaseShield Is a Complete Landlord Protection System
               </h2>
               <p className="text-base sm:text-[17px] text-ink-700 dark:text-slate-300 mb-6 leading-relaxed">
-                Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more — all in one connected dashboard.
+                Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more. All in one connected dashboard.
               </p>
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 inline-block">
                 <p className="text-sm sm:text-base text-foreground">
@@ -570,7 +570,7 @@ export default function Landing() {
               A Simple Workflow That Protects You
             </h2>
             <p className="text-[17px] sm:text-lg text-ink-700 dark:text-slate-300 max-w-[640px] mx-auto">
-              From application to screening to compliant documents — all connected.
+              From application to screening to compliant documents. All connected.
             </p>
           </motion.div>
           
@@ -704,7 +704,7 @@ export default function Landing() {
             className="text-center mb-12"
           >
             <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400 mb-3">
-              Not a Replacement — A Complement
+              Not a Replacement. A Complement
             </div>
             <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
               Works Alongside Your Apartment Association
@@ -772,7 +772,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center text-lg text-ink-500 dark:text-muted-foreground/80 italic max-w-[640px] mx-auto"
           >
-            Most landlords use both — and that's exactly how LeaseShield was designed.
+            Most landlords use both, and that's exactly how LeaseShield was designed.
           </motion.p>
         </div>
       </section>
@@ -797,7 +797,7 @@ export default function Landing() {
               Start with report decoding. Expand into documents, alerts, and applications as needed.
             </p>
             <p className="mt-6 text-sm text-ink-400 dark:text-muted-foreground/80">
-              A preview of what you'll see after signing up — everything in one simple dashboard.
+              A preview of what you'll see after signing up. Everything in one simple dashboard.
             </p>
           </motion.div>
 
@@ -863,7 +863,7 @@ export default function Landing() {
                 <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
                   {[
                     { title: "Decode Screening Reports", desc: "Plain-English explanations + risk flags.", tag: "Most used", accent: true },
-                    { title: "State-Specific Templates", desc: `${templateCount}+ leases, notices, letters — kept current.`, tag: `${templateCount}+ docs`, accent: false },
+                    { title: "State-Specific Templates", desc: `${templateCount}+ leases, notices, letters, kept current.`, tag: `${templateCount}+ docs`, accent: false },
                     { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
                     { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
                   ].map((m, i) => (
