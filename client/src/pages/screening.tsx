@@ -700,7 +700,7 @@ export default function Screening() {
         {/* AI Credit Report Helper - Direct Input */}
         <div className="mb-8" id="credit-helper" data-section="credit-helper">
           <Card className="p-6 shadow-lg border-2 border-primary/20">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
@@ -717,7 +717,7 @@ export default function Screening() {
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-foreground flex items-start gap-2">
                   <Lock className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -725,36 +725,36 @@ export default function Screening() {
                 </p>
               </div>
 
-              {/* Quick-start chips */}
-              <div className="flex flex-wrap gap-2">
+              {/* Quick-start chips - pill-shaped */}
+              <div className="flex flex-wrap gap-3">
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setUserQuestion("What does a charge-off mean and should I be worried?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-chargeoff"
                 >
                   Charge-off?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setUserQuestion("Credit score is low - is this risky?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-lowscore"
                 >
                   Low score?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setUserQuestion("Applicant has late payments on the report - what should I ask?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-latepayments"
                 >
                   Late payments?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setUserQuestion("High credit card balances near limits - what does this tell me?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-highbalances"
                 >
                   High balances?
@@ -796,7 +796,7 @@ export default function Screening() {
                 placeholder="Type or paste anything confusing from the report here (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400')."
                 value={userQuestion}
                 onChange={(e) => setUserQuestion(e.target.value)}
-                className="min-h-[100px] text-base"
+                className="min-h-[120px] text-base shadow-sm"
                 data-testid="textarea-credit-question"
               />
 
@@ -873,7 +873,7 @@ export default function Screening() {
         {/* AI Criminal/Eviction Helper - Direct Input */}
         <div className="mb-8" id="criminal-helper" data-section="criminal-helper">
           <Card className="p-6 shadow-lg border-2 border-primary/20">
-            <div className="flex items-center gap-3 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <Scale className="h-6 w-6 text-primary" />
               </div>
@@ -890,7 +890,7 @@ export default function Screening() {
               </div>
             </div>
             
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
                 <p className="text-sm text-foreground flex items-start gap-2">
                   <Lock className="h-4 w-4 text-amber-600 mt-0.5 flex-shrink-0" />
@@ -898,36 +898,36 @@ export default function Screening() {
                 </p>
               </div>
 
-              {/* Quick-start chips */}
-              <div className="flex flex-wrap gap-2">
+              {/* Quick-start chips - pill-shaped */}
+              <div className="flex flex-wrap gap-3">
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setCriminalUserQuestion("Applicant has a misdemeanor from years ago - can I consider this?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-misdemeanor"
                 >
                   Misdemeanor?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setCriminalUserQuestion("Applicant has an eviction on record - what should I ask?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-eviction"
                 >
                   Eviction?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setCriminalUserQuestion("What questions should I ask about a DUI conviction?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-dui"
                 >
                   DUI?
                 </Button>
                 <Button 
                   variant="outline" 
-                  size="sm" 
                   onClick={() => setCriminalUserQuestion("Multiple old charges on record - what's my liability?")}
+                  className="rounded-full shadow-sm px-5"
                   data-testid="chip-oldcharges"
                 >
                   Old charges?
@@ -969,7 +969,7 @@ export default function Screening() {
                 placeholder="Type or paste anything confusing from the report here (e.g., 'Misdemeanor theft from 2019' or 'Eviction filed but dismissed')."
                 value={criminalUserQuestion}
                 onChange={(e) => setCriminalUserQuestion(e.target.value)}
-                className="min-h-[100px] text-base"
+                className="min-h-[120px] text-base shadow-sm"
                 data-testid="textarea-criminal-question"
               />
 
