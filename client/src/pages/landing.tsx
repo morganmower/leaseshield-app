@@ -322,8 +322,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* NEW: Two-Card "Start Here" Section */}
-      <section className="py-10 md:py-14 bg-muted/30 border-y">
+      {/* Decision Section - Premium Two-Card Layout */}
+      <section className="py-16 bg-[#F9FAFB] dark:bg-muted/20">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
@@ -331,134 +331,75 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={staggerContainer}
           >
-            <motion.p 
-              variants={fadeInUp}
-              className="text-center text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2"
-            >
-              Start Here
-            </motion.p>
-            <motion.p 
-              variants={fadeInUp}
-              className="text-center text-sm text-muted-foreground/80 mb-6"
-            >
-              Most people choose the left option
-            </motion.p>
+            {/* Section Header */}
+            <motion.div variants={fadeInUp} className="text-center mb-10">
+              <h2 className="text-2xl md:text-[32px] font-bold text-[#111827] dark:text-foreground leading-tight mb-2">
+                What would you like help with right now?
+              </h2>
+              <p className="text-base text-[#6B7280] dark:text-muted-foreground">
+                Most landlords start by explaining an existing screening report.
+              </p>
+            </motion.div>
             
-            <div className="grid md:grid-cols-[1.15fr_0.85fr] gap-4 sm:gap-6">
-              {/* Card 1: Explain Report - Primary/Dominant */}
+            <div className="grid md:grid-cols-2 gap-8">
+              {/* Card 1: Explain Report - Primary Path */}
               <motion.div variants={fadeInUp}>
-                <Card 
-                  className="p-7 border-2 border-emerald-500 bg-emerald-50/70 dark:bg-emerald-950/30 cursor-pointer transition-all hover:border-emerald-600 hover:shadow-xl h-full"
+                <div 
+                  className="p-6 rounded-xl bg-[#ECFDF5] dark:bg-emerald-950/30 cursor-pointer transition-all hover:shadow-xl h-full flex flex-col"
+                  style={{ boxShadow: '0 10px 30px rgba(16, 185, 129, 0.15)' }}
                   onClick={() => window.location.href = "/screening/explain"}
                   data-testid="card-explain-report"
                 >
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-emerald-500 p-3.5 flex-shrink-0">
-                      <Search className="h-7 w-7 text-white" />
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className="w-12 h-12 rounded-xl bg-[#10B981] flex items-center justify-center flex-shrink-0">
+                      <Search className="h-6 w-6 text-white" />
                     </div>
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg md:text-xl text-foreground mb-2">Explain My Screening Report</h3>
-                      <p className="text-sm md:text-base text-muted-foreground">
-                        Connect or upload your existing report → Get a plain-English breakdown with compliance flags.
+                      <h3 className="font-semibold text-xl text-[#065F46] dark:text-emerald-300 mb-2">
+                        Explain My Screening Report
+                      </h3>
+                      <p className="text-[15px] leading-relaxed text-[#374151] dark:text-muted-foreground">
+                        Plain-English explanations of credit, criminal, or eviction reports with compliance risk flags.
                       </p>
                     </div>
-                    <ArrowRight className="h-6 w-6 text-emerald-600 flex-shrink-0 mt-1" />
                   </div>
-                </Card>
+                  <div className="mt-auto pt-4">
+                    <Button
+                      size="lg"
+                      className="bg-[#10B981] hover:bg-[#059669] text-white font-semibold rounded-xl h-12 px-6"
+                      data-testid="button-explain-card"
+                    >
+                      Explain My Screening Report
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </div>
+                </div>
               </motion.div>
 
-              {/* Card 2: New Application - Secondary */}
+              {/* Card 2: New Application - Secondary Path */}
               <motion.div variants={fadeInUp}>
-                <Card 
-                  className="p-6 border cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg h-full"
+                <div 
+                  className="p-6 rounded-xl bg-white dark:bg-card border border-[#E5E7EB] dark:border-border cursor-pointer transition-all hover:shadow-lg h-full relative"
+                  style={{ boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}
                   onClick={() => window.location.href = "/properties"}
                   data-testid="card-new-application"
                 >
+                  <ArrowRight className="absolute top-6 right-6 h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
                   <div className="flex items-start gap-4">
-                    <div className="rounded-xl bg-muted p-3 flex-shrink-0">
-                      <UserPlus className="h-6 w-6 text-muted-foreground" />
+                    <div className="w-10 h-10 rounded-xl bg-[#F3F4F6] dark:bg-muted flex items-center justify-center flex-shrink-0">
+                      <UserPlus className="h-5 w-5 text-[#6B7280] dark:text-muted-foreground" />
                     </div>
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-lg text-foreground mb-2">New Tenant Application + Screening</h3>
-                      <p className="text-sm text-muted-foreground">
-                        Send an application link → Run screening via Western Verify → Full compliant workflow.
+                    <div className="flex-1 pr-8">
+                      <h3 className="font-semibold text-lg text-[#111827] dark:text-foreground mb-2">
+                        New Tenant Application + Screening
+                      </h3>
+                      <p className="text-[15px] leading-relaxed text-[#374151] dark:text-muted-foreground">
+                        Send an application link and run screening through Western Verify as part of a full compliant workflow.
                       </p>
                     </div>
-                    <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
                   </div>
-                </Card>
+                </div>
               </motion.div>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* NEW: Simple Diagram - Visual Translation Flow */}
-      <section className="py-10 md:py-14">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center"
-          >
-            <div className="flex flex-col md:flex-row items-center justify-center gap-4 md:gap-6">
-              {/* Step 1 */}
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-2xl bg-red-100 dark:bg-red-950/30 border-2 border-red-200 dark:border-red-800 flex items-center justify-center mb-3">
-                  <FileText className="h-8 w-8 text-red-500" />
-                </div>
-                <p className="text-sm font-medium text-foreground">Confusing Report</p>
-                <p className="text-xs text-muted-foreground italic mt-1">"What does this mean?"</p>
-              </div>
-              
-              {/* Arrow */}
-              <div className="hidden md:block">
-                <ArrowRight className="h-8 w-8 text-muted-foreground/50" />
-              </div>
-              <div className="block md:hidden">
-                <ArrowRight className="h-6 w-6 text-muted-foreground/50 rotate-90" />
-              </div>
-              
-              {/* Step 2 */}
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-2xl bg-amber-100 dark:bg-amber-950/30 border-2 border-amber-200 dark:border-amber-800 flex items-center justify-center mb-3">
-                  <Lightbulb className="h-8 w-8 text-amber-500" />
-                </div>
-                <p className="text-sm font-medium text-foreground">Plain-English Explanation</p>
-                <p className="text-xs text-muted-foreground italic mt-1">"Watch out for this risk..."</p>
-              </div>
-              
-              {/* Arrow */}
-              <div className="hidden md:block">
-                <ArrowRight className="h-8 w-8 text-muted-foreground/50" />
-              </div>
-              <div className="block md:hidden">
-                <ArrowRight className="h-6 w-6 text-muted-foreground/50 rotate-90" />
-              </div>
-              
-              {/* Step 3 */}
-              <div className="flex flex-col items-center">
-                <div className="w-20 h-20 rounded-2xl bg-emerald-100 dark:bg-emerald-950/30 border-2 border-emerald-200 dark:border-emerald-800 flex items-center justify-center mb-3">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-500" />
-                </div>
-                <p className="text-sm font-medium text-foreground">Compliant Next Steps</p>
-                <p className="text-xs text-muted-foreground italic mt-1">"Here's what to consider..."</p>
-              </div>
-            </div>
-            
-            {/* Repeated CTA after diagram */}
-            <div className="mt-10">
-              <Button
-                size="lg"
-                onClick={() => window.location.href = "/screening/explain"}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8"
-                data-testid="button-diagram-cta"
-              >
-                <Search className="mr-2 h-5 w-5" />
-                Explain My Screening Report
-              </Button>
             </div>
           </motion.div>
         </div>
