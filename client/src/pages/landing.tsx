@@ -370,17 +370,29 @@ export default function Landing() {
                       </div>
                     </div>
                     
-                    {/* Quick-start pills */}
+                    {/* Quick-start pills - clickable with hover effects */}
                     <div className="flex flex-wrap gap-2">
-                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does charge-off mean and should I be worried?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-chargeoff"
+                      >
                         Charge-off?
-                      </span>
-                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does a low credit score mean for approving a tenant?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-lowscore"
+                      >
                         Low score?
-                      </span>
-                      <span className="rounded-full text-[11px] px-3 py-1.5 bg-brand-50 dark:bg-brand-800/20 text-brand-700 dark:text-brand-300 border border-brand-200 dark:border-brand-700">
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What do collections on a credit report mean?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-collections"
+                      >
                         Collections?
-                      </span>
+                      </button>
                     </div>
                     
                     {/* Textarea mockup */}

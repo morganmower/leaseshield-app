@@ -414,6 +414,23 @@ export default function Screening() {
   // Credit Report Helper state
   const [helperScreen, setHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
   const [userQuestion, setUserQuestion] = useState('');
+  
+  // Check for URL prompt parameter and pre-fill question
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const promptParam = urlParams.get('prompt');
+    if (promptParam) {
+      setUserQuestion(promptParam);
+      // Also scroll to credit helper section
+      setTimeout(() => {
+        const section = document.getElementById('credit-helper');
+        if (section) {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        document.getElementById('credit-helper-input')?.focus();
+      }, 500);
+    }
+  }, []);
   const [explanation, setExplanation] = useState('');
   const [isExplaining, setIsExplaining] = useState(false);
   const [creditUserState, setCreditUserState] = useState<string | null>(null);
