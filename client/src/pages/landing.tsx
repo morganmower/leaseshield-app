@@ -1391,6 +1391,14 @@ export default function Landing() {
                   </thead>
                   <tbody>
                     <tr className="border-b">
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Cost</td>
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
+                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <span className="font-bold text-brand-600 text-xs sm:text-sm">$10/month</span>
+                      </td>
+                    </tr>
+                    <tr className="border-b">
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Screening Report Decoder</td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
@@ -1400,14 +1408,6 @@ export default function Landing() {
                       </td>
                       <td className="p-2 sm:p-4 text-center bg-brand-50">
                         <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Cost</td>
-                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
-                      <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
-                      <td className="p-2 sm:p-4 text-center bg-brand-50">
-                        <span className="font-bold text-brand-600 text-xs sm:text-sm">$10/month</span>
                       </td>
                     </tr>
                     <tr className="border-b">
