@@ -21,6 +21,9 @@ export default function ScreeningExplain() {
       {/* Main Content */}
       <main className="container max-w-2xl mx-auto px-4 py-12 md:py-16">
         <div className="text-center mb-10">
+          <p className="text-sm text-muted-foreground mb-3">
+            You're reviewing this report in plain English.
+          </p>
           <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
             Explain a Screening Report
           </h1>

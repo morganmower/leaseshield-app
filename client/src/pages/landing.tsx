@@ -436,6 +436,19 @@ export default function Landing() {
                 <p className="text-xs text-muted-foreground italic mt-1">"Here's what to consider..."</p>
               </div>
             </div>
+            
+            {/* Repeated CTA after diagram */}
+            <div className="mt-10">
+              <Button
+                size="lg"
+                onClick={() => window.location.href = "/screening/explain"}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8"
+                data-testid="button-diagram-cta"
+              >
+                <Search className="mr-2 h-5 w-5" />
+                Explain My Screening Report
+              </Button>
+            </div>
           </motion.div>
         </div>
       </section>
