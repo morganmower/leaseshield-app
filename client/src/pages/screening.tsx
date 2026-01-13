@@ -634,7 +634,7 @@ export default function Screening() {
             <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
           </p>
           <p className="text-muted-foreground">
-            Paste any screening report below. LeaseShield explains what matters, what doesn't, and what to ask next.
+            Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
           </p>
         </div>
 
@@ -665,7 +665,7 @@ export default function Screening() {
                 <h3 className="font-semibold text-foreground">Credit Report Helper</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
-                Paste credit report sections or type terms like "charge-off" or "collection"
+                Describe what you see or type terms like "charge-off" or "collection"
               </p>
               <Button 
                 variant="outline" 
@@ -682,7 +682,7 @@ export default function Screening() {
                 <h3 className="font-semibold text-foreground">Criminal/Eviction Helper</h3>
               </div>
               <p className="text-sm text-muted-foreground mb-2">
-                Paste criminal charges or type terms like "misdemeanor" or "eviction"
+                Describe charges or type terms like "misdemeanor" or "eviction"
               </p>
               <Button 
                 variant="outline" 
@@ -707,8 +707,8 @@ export default function Screening() {
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Credit Report AI Helper
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Paste credit info or type a term - get instant explanation
+              <p className="text-sm text-muted-foreground">
+                  Describe what you see or type a term - get instant explanation
                 </p>
               </div>
               <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
@@ -825,8 +825,8 @@ export default function Screening() {
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Criminal & Eviction AI Helper
                 </h2>
-                <p className="text-sm text-muted-foreground">
-                  Paste charges or type a term - get Fair Housing guidance
+              <p className="text-sm text-muted-foreground">
+                  Describe what you see or type a term - get Fair Housing guidance
                 </p>
               </div>
               <Badge variant="secondary" className="ml-auto bg-primary/20 text-primary border-primary/30">
