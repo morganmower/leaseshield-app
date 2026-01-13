@@ -784,6 +784,9 @@ export default function Landing() {
             <p className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground max-w-2xl mx-auto">
               Start with report decoding. Expand into documents, alerts, and applications as needed.
             </p>
+            <p className="mt-6 text-sm text-ink-400 dark:text-muted-foreground/80">
+              A preview of what you'll see after signing up — everything in one simple dashboard.
+            </p>
           </motion.div>
 
           {/* Browser Frame */}
