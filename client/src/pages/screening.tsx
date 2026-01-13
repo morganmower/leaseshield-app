@@ -708,6 +708,9 @@ export default function Screening() {
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Understand Your Credit Report in Plain English
                 </h2>
+                <p className="text-xs text-muted-foreground font-medium mb-1">
+                  Clear explanations and compliance risk flags - fast.
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Paste or type any confusing part of the report. LeaseShield will explain what it means and flag compliance risks.
                 </p>
@@ -878,6 +881,9 @@ export default function Screening() {
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Understand Criminal & Eviction Records in Plain English
                 </h2>
+                <p className="text-xs text-muted-foreground font-medium mb-1">
+                  Clear explanations and Fair Housing risk flags - fast.
+                </p>
                 <p className="text-sm text-muted-foreground">
                   Describe what you see on the report. LeaseShield will explain what it means and flag Fair Housing compliance risks.
                 </p>
