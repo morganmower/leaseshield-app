@@ -187,6 +187,60 @@ export default function Dashboard() {
           </div>
         </div>
 
+        {/* What would you like to do first? - Primary orientation panel */}
+        <Card className="mb-8 p-6 bg-gradient-to-r from-muted/50 to-muted/30 border-2" data-testid="panel-start-here">
+          <div className="mb-4">
+            <h2 className="text-xl font-display font-semibold text-foreground mb-2">
+              What would you like to do first?
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              You make all final decisions. LeaseShield helps you interpret reports and flag compliance risks.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-4">
+            {/* Option 1: Explain Report - Primary/Dominant */}
+            <div 
+              className="p-5 rounded-lg border-2 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer transition-all hover:border-emerald-500 hover:shadow-lg"
+              onClick={() => window.location.href = "/screening/explain"}
+              data-testid="card-explain-report"
+            >
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl bg-emerald-500 p-3 flex-shrink-0">
+                  <Search className="h-6 w-6 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-foreground mb-1">Explain a Screening Report</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Credit, Criminal, Eviction — plain English explanations
+                  </p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-1" />
+              </div>
+            </div>
+
+            {/* Option 2: New Application - Secondary */}
+            <div 
+              className="p-5 rounded-lg border bg-background cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg"
+              onClick={() => window.location.href = "/rental-applications"}
+              data-testid="card-new-application"
+            >
+              <div className="flex items-start gap-4">
+                <div className="rounded-xl bg-muted p-3 flex-shrink-0">
+                  <Users className="h-6 w-6 text-muted-foreground" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg text-foreground mb-1">Start a New Application + Screening</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Send an application and connect screening
+                  </p>
+                </div>
+                <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
+              </div>
+            </div>
+          </div>
+        </Card>
+
         {/* Subscription Banner - for trial, incomplete, or no subscription */}
         {needsSubscription && user.subscriptionStatus !== 'active' && (
           <Card className="mb-8 p-4 bg-primary/10 border-primary/20">
