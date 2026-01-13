@@ -405,7 +405,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* DEMOTED: Original "What Else LeaseShield Does" Section */}
+      {/* Beyond Screening Section */}
       <section className="py-12 md:py-16 bg-muted/20 border-t">
         <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -415,18 +415,18 @@ export default function Landing() {
             variants={staggerContainer}
             className="text-center mb-10"
           >
-            <motion.p variants={fadeInUp} className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2">
+            <motion.p variants={fadeInUp} className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
               Beyond Screening
             </motion.p>
             <motion.h2 
               variants={fadeInUp}
-              className="font-display text-xl sm:text-2xl md:text-3xl font-semibold text-foreground mb-4"
+              className="font-display text-2xl sm:text-[28px] md:text-[32px] font-bold text-[#0F172A] dark:text-foreground mb-4"
             >
               What Else LeaseShield Does
             </motion.h2>
             <motion.p 
               variants={fadeInUp}
-              className="text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto"
+              className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground max-w-2xl mx-auto"
             >
               Applications, state-specific leases, compliance alerts, and more. All in one simple dashboard.
             </motion.p>
@@ -467,7 +467,7 @@ export default function Landing() {
       </section>
 
       {/* How It Works - Simple 3-step workflow */}
-      <section id="how-it-works" className="py-10 sm:py-12 bg-muted/30 border-y scroll-mt-24">
+      <section id="how-it-works" className="py-16 sm:py-20 bg-muted/30 border-y scroll-mt-24">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
@@ -476,46 +476,40 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center"
           >
-            <p className="text-xs sm:text-sm font-semibold tracking-wide uppercase text-muted-foreground mb-2">
-              Simple Workflow
+            <p className="text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
+              How LeaseShield Works
             </p>
-            <h2 className="font-display text-lg sm:text-xl md:text-2xl font-semibold text-foreground mb-2">
-              How It Works
+            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-[#0F172A] dark:text-foreground leading-tight mb-5">
+              A Simple Workflow That Protects You From Costly Mistakes
             </h2>
-            <p className="text-sm text-muted-foreground/80 mb-6">
-              A simple workflow to protect you from common landlord mistakes
+            <p className="text-[17px] sm:text-lg text-[#475569] dark:text-muted-foreground max-w-[720px] mx-auto mb-12">
+              From application to screening to compliant documents — all in one connected process.
             </p>
-            <ol className="space-y-5 text-left max-w-xl mx-auto">
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-primary flex-shrink-0">1.</span>
+            <ol className="space-y-8 sm:space-y-10 text-left max-w-xl mx-auto">
+              <li className="flex items-start gap-4">
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">1.</span>
                 <div>
-                  <span className="font-bold text-foreground">Collect Applications & Screen Tenants</span>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Collect Applications & Screen Tenants</span>
+                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
                     Send applicants a link to apply and run screening via trusted partner Western Verify.
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-2">
-                    LeaseShield connects to your screening provider for a seamless, compliant workflow.
                   </p>
                 </div>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-primary flex-shrink-0">2.</span>
+              <li className="flex items-start gap-4">
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">2.</span>
                 <div>
-                  <span className="font-bold text-foreground">Decode Reports Instantly</span>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Decode Reports Instantly</span>
+                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
                     AI guidance explains results in plain English and flags compliance risks.
                   </p>
                 </div>
               </li>
-              <li className="flex items-start gap-3">
-                <span className="font-bold text-primary flex-shrink-0">3.</span>
+              <li className="flex items-start gap-4">
+                <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400 flex-shrink-0 w-8">3.</span>
                 <div>
-                  <span className="font-bold text-foreground">Build Compliant Documents</span>
-                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
+                  <span className="font-semibold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground">Build Compliant Documents</span>
+                  <p className="text-base text-[#475569] dark:text-muted-foreground mt-2">
                     Generate state-specific leases, notices, and forms. Always up to date.
-                  </p>
-                  <p className="text-xs text-muted-foreground/60 mt-2">
-                    Documents update automatically as laws change. No manual tracking needed.
                   </p>
                 </div>
               </li>
@@ -524,27 +518,49 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Trust Signal */}
-      <div className="py-6 bg-muted/30 text-center">
-        <p className="text-sm text-muted-foreground" data-testid="text-trust-signal">
-          Built by professionals with decades of experience in tenant screening and compliance.
-        </p>
-      </div>
-
-      {/* Association Complement */}
-      <div className="py-8 bg-background text-center border-b">
-        <div className="container max-w-2xl mx-auto px-4">
-          <p className="text-sm text-muted-foreground" data-testid="text-association-complement">
-            <span className="font-medium text-foreground">Designed to complement your apartment association membership.</span>
-            <br className="hidden sm:block" />
-            <span className="sm:inline"> </span>
-            LeaseShield helps landlords understand screening results and manage compliance workflows.
-            <br className="hidden sm:block" />
-            <span className="sm:inline"> </span>
-            <span className="text-muted-foreground/80">Most landlords use both: associations for education and advocacy, LeaseShield for execution.</span>
-          </p>
+      {/* Trust Band */}
+      <section className="py-12 bg-[#F8FAFC] dark:bg-muted/20">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <h3 className="text-2xl sm:text-[26px] font-semibold text-[#0F172A] dark:text-foreground mb-3" data-testid="text-trust-signal">
+              Built by Screening & Compliance Professionals
+            </h3>
+            <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground max-w-[640px] mx-auto">
+              Decades of hands-on experience helping landlords interpret screening results and stay compliant.
+            </p>
+          </motion.div>
         </div>
-      </div>
+      </section>
+
+      {/* Association Complement Section */}
+      <section className="py-12 sm:py-16 bg-background border-b">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.08em] uppercase text-[#475569] dark:text-slate-400 mb-3">
+              Not a Replacement — A Complement
+            </p>
+            <h3 className="text-xl sm:text-2xl md:text-[28px] font-semibold text-[#0F172A] dark:text-foreground mb-4" data-testid="text-association-complement">
+              Designed to Work Alongside Your Apartment Association
+            </h3>
+            <p className="text-base sm:text-[17px] text-[#475569] dark:text-muted-foreground leading-relaxed max-w-[720px] mx-auto mb-4">
+              Associations provide education and advocacy. LeaseShield provides day-to-day execution — interpreting screening results, managing compliance workflows, and generating current documents.
+            </p>
+            <p className="text-base sm:text-[17px] text-[#64748B] dark:text-muted-foreground/80 italic max-w-[640px] mx-auto">
+              Most landlords use both — and that's exactly how LeaseShield was designed.
+            </p>
+          </motion.div>
+        </div>
+      </section>
 
       {/* Dashboard Preview / Sneak Peek */}
       <section className="py-12 md:py-16 bg-background" data-testid="section-preview">
