@@ -704,11 +704,11 @@ export default function Screening() {
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <CreditCard className="h-6 w-6 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Understand Your Credit Report in Plain English
                 </h2>
-                <p className="text-xs text-muted-foreground font-medium mb-1">
+                <p className="text-xs text-muted-foreground font-medium">
                   Clear explanations and compliance risk flags - fast.
                 </p>
                 <p className="text-sm text-muted-foreground">
@@ -877,11 +877,11 @@ export default function Screening() {
               <div className="rounded-lg bg-primary/20 dark:bg-primary/30 w-12 h-12 flex items-center justify-center flex-shrink-0">
                 <Scale className="h-6 w-6 text-primary" />
               </div>
-              <div className="flex-1">
+              <div className="flex-1 space-y-2">
                 <h2 className="text-xl font-display font-semibold text-foreground">
                   Understand Criminal & Eviction Records in Plain English
                 </h2>
-                <p className="text-xs text-muted-foreground font-medium mb-1">
+                <p className="text-xs text-muted-foreground font-medium">
                   Clear explanations and Fair Housing risk flags - fast.
                 </p>
                 <p className="text-sm text-muted-foreground">
