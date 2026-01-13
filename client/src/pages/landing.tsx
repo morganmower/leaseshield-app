@@ -282,14 +282,14 @@ export default function Landing() {
               variants={fadeInUp}
               className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-tight mb-4"
             >
-              Have a Screening Report You Don't Understand?
+              Confused by a Screening Report?
             </motion.h1>
             
             <motion.p 
               variants={fadeInUp}
               className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
             >
-              LeaseShield explains credit, criminal, and eviction reports in plain English. It flags compliance risks and helps you take compliant next steps.
+              LeaseShield explains it in plain English — flags risks, shows safe next steps.
             </motion.p>
 
             {/* Primary CTA */}
