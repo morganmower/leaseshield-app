@@ -34,6 +34,12 @@ import { useQuery } from "@tanstack/react-query";
 import { TrialValueMessage } from "@/components/trial-conversion-nudge";
 import { trackTrialStart } from "@/components/ab-test-wrapper";
 
+const STATES = [
+  "Utah", "Texas", "North Dakota", "South Dakota", "North Carolina",
+  "Ohio", "Michigan", "Idaho", "Wyoming", "California",
+  "Virginia", "Nevada", "Arizona", "Florida", "Illinois"
+] as const;
+
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
   visible: { opacity: 1, y: 0 }
@@ -250,7 +256,7 @@ export default function Landing() {
               }}
               data-testid="button-start-trial"
               size="lg"
-              className="bg-green-500 hover:bg-green-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
+              className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
               Start Trial
             </Button>
@@ -263,7 +269,7 @@ export default function Landing() {
 
       {/* NEW: Screening-First Hero Section */}
       <section id="hero" className="relative pt-12 pb-8 md:pt-16 md:pb-12 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-emerald-500/5 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-background to-brand-500/5 pointer-events-none" />
         
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           <motion.div
@@ -291,7 +297,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 onClick={() => window.location.href = "/screening/explain"}
-                className="bg-emerald-500 hover:bg-emerald-600 text-white text-lg px-8 py-4 min-h-[52px]"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]"
                 data-testid="button-explain-report"
               >
                 <Search className="mr-2 h-5 w-5" />
@@ -353,7 +359,7 @@ export default function Landing() {
               <motion.a 
                 variants={fadeInUp}
                 href="/screening/explain"
-                className="group rounded-2xl border border-brand-200 dark:border-emerald-800 bg-brand-50 dark:bg-emerald-950/30 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
+                className="group rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-950/30 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
                 data-testid="card-explain-report"
               >
                 <div className="flex items-start gap-4 flex-1">
@@ -365,7 +371,7 @@ export default function Landing() {
                       <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
                         Explain My Screening Report
                       </h3>
-                      <span className="text-brand-700 dark:text-emerald-400 font-semibold group-hover:translate-x-1 transition">
+                      <span className="text-brand-700 dark:text-brand-400 font-semibold group-hover:translate-x-1 transition">
                         <ArrowRight className="h-5 w-5" />
                       </span>
                     </div>
@@ -489,13 +495,13 @@ export default function Landing() {
             className="grid md:grid-cols-3 gap-6 md:gap-8 relative"
           >
             {/* Connector line (desktop only) */}
-            <div className="hidden md:block absolute top-14 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-emerald-300 via-emerald-400 to-emerald-300 dark:from-emerald-600 dark:via-emerald-500 dark:to-emerald-600" />
+            <div className="hidden md:block absolute top-14 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-brand-300 via-brand-400 to-brand-300 dark:from-brand-600 dark:via-brand-500 dark:to-brand-600" />
             
             {/* Step 1 */}
             <motion.div variants={fadeInUp} className="relative">
               <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">1</span>
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">1</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
                   Screen Tenants
@@ -509,8 +515,8 @@ export default function Landing() {
             {/* Step 2 */}
             <motion.div variants={fadeInUp} className="relative">
               <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">2</span>
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">2</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
                   Decode Reports
@@ -524,8 +530,8 @@ export default function Landing() {
             {/* Step 3 */}
             <motion.div variants={fadeInUp} className="relative">
               <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-[#E5E7EB] dark:border-border shadow-sm h-full">
-                <div className="w-12 h-12 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center mb-5 relative z-10">
-                  <span className="text-xl font-bold text-emerald-600 dark:text-emerald-400">3</span>
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">3</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-[#0F172A] dark:text-foreground mb-3">
                   Build Documents
@@ -610,7 +616,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-emerald-400 mb-3">
+            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400 mb-3">
               Not a Replacement — A Complement
             </div>
             <h3 className="text-3xl sm:text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
@@ -650,8 +656,8 @@ export default function Landing() {
             
             {/* LeaseShield Column */}
             <motion.div variants={fadeInUp}>
-              <div className="bg-brand-50 dark:bg-emerald-950/20 rounded-2xl p-8 border border-brand-200 dark:border-emerald-800 h-full shadow-soft">
-                <h4 className="font-bold text-xl text-brand-800 dark:text-emerald-300 mb-6">
+              <div className="bg-brand-50 dark:bg-brand-950/20 rounded-2xl p-8 border border-brand-200 dark:border-brand-800 h-full shadow-soft">
+                <h4 className="font-bold text-xl text-brand-800 dark:text-brand-300 mb-6">
                   LeaseShield
                 </h4>
                 <ul className="space-y-4">
@@ -694,7 +700,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center"
           >
-            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-emerald-400">
+            <div className="text-[13px] font-semibold tracking-[0.12em] uppercase text-brand-700 dark:text-brand-400">
               Dashboard Preview
             </div>
             <h2 className="mt-3 text-4xl md:text-5xl font-bold tracking-tight text-ink-900 dark:text-foreground">
@@ -739,7 +745,7 @@ export default function Landing() {
                   ].map((item, i) => (
                     <div 
                       key={i} 
-                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-emerald-950/30 text-brand-800 dark:text-emerald-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
+                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-brand-950/30 text-brand-800 dark:text-brand-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
                     >
                       {item.name}
                     </div>
@@ -771,7 +777,7 @@ export default function Landing() {
                     { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
                     { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
                   ].map((m, i) => (
-                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-emerald-950/20 border-brand-200 dark:border-emerald-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
+                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-950/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft`}>
                       <div className="flex items-start justify-between gap-3 flex-wrap">
                         <h3 className="text-lg md:text-xl font-semibold text-ink-900 dark:text-foreground">{m.title}</h3>
                         <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 dark:bg-muted text-ink-700 dark:text-muted-foreground whitespace-nowrap">
@@ -779,7 +785,7 @@ export default function Landing() {
                         </span>
                       </div>
                       <p className="mt-2 text-ink-700 dark:text-muted-foreground">{m.desc}</p>
-                      <div className="mt-4 text-sm font-semibold text-brand-700 dark:text-emerald-400">
+                      <div className="mt-4 text-sm font-semibold text-brand-700 dark:text-brand-400">
                         Open →
                       </div>
                     </div>
@@ -1126,10 +1132,10 @@ export default function Landing() {
 
             <motion.div variants={fadeInUp}>
               <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-emerald-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
-                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-emerald-600 dark:text-emerald-500" />
+                  <div className="rounded-lg bg-gradient-to-br from-brand-500/20 to-brand-600/10 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-brand-600 dark:text-brand-500" />
                   </div>
                   <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Ledger</h3>
                   <p className="text-muted-foreground mb-4">
@@ -1459,7 +1465,7 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px] mt-auto"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
                   trackTrialStart();
                   localStorage.setItem('billingPeriod', 'monthly');
@@ -1530,7 +1536,7 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px] mt-auto"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
                   trackTrialStart();
                   localStorage.setItem('billingPeriod', 'yearly');
@@ -1685,7 +1691,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-2 bg-primary/10 border border-primary/20 rounded-lg px-4 py-3">
               <Shield className="h-5 w-5 text-primary" />
-              <span className="font-medium text-foreground">15 States Covered</span>
+              <span className="font-medium text-foreground">{STATES.length} States Covered</span>
             </div>
             <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
               <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -1736,7 +1742,7 @@ export default function Landing() {
               <AccordionItem value="item-1">
                 <AccordionTrigger className="text-lg">What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent className="text-lg">
-                  We currently serve landlords in <strong>Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, and Florida</strong> with
+                  We currently serve landlords in <strong>{STATES.join(", ")}</strong> with
                   comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states. Let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
@@ -1797,7 +1803,7 @@ export default function Landing() {
                 trackTrialStart();
                 window.location.href = "/signup";
               }}
-              className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-4 min-h-[48px]"
+              className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[48px]"
               data-testid="button-value-prop-cta"
             >
               Start Your Free Trial
@@ -1830,7 +1836,7 @@ export default function Landing() {
                   window.location.href = "/signup";
                 }}
                 data-testid="button-final-cta"
-                className="bg-green-500 hover:bg-green-600 text-white text-xl px-10 py-6 min-h-[56px]"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
                 Lock In My Spot Before It's Gone
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -1852,7 +1858,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for all 15 supported states
+              Comprehensive landlord protection for all {STATES.length} supported states
             </DialogDescription>
           </DialogHeader>
           
@@ -1889,7 +1895,7 @@ export default function Landing() {
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">14</div>
+                  <div className="text-2xl font-bold text-primary mb-1">{STATES.length}</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
@@ -1899,7 +1905,7 @@ export default function Landing() {
               </div>
               <Button
                 size="lg"
-                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
                   trackTrialStart();
                   window.location.href = "/signup";
@@ -1948,7 +1954,7 @@ export default function Landing() {
               <div className="mt-6 pt-6 border-t">
                 <Button
                   size="lg"
-                  className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
+                  className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                   onClick={() => {
                     trackTrialStart();
                     window.location.href = "/signup";
@@ -2030,7 +2036,7 @@ export default function Landing() {
             </div>
             <div className="pt-4 border-t">
               <Button 
-                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]" 
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]" 
                 size="lg"
                 onClick={() => {
                   trackTrialStart();
@@ -2143,7 +2149,7 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="bg-green-500 hover:bg-green-600 text-white text-lg w-full min-h-[48px]"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
                   trackTrialStart();
                   setShowTemplatePreview(false);
