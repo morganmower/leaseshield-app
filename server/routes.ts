@@ -5888,6 +5888,278 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
+  // Download consent authorization PDF for a specific person
+  app.get('/api/rental/submissions/:id/person/:personId/consent-pdf', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get the person
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      const person = people.find(p => p.id === req.params.personId);
+      
+      if (!person) {
+        return res.status(404).json({ message: "Person not found" });
+      }
+
+      if (!person.fcraAuthorized) {
+        return res.status(400).json({ message: "This person has not authorized a background check" });
+      }
+
+      // Generate PDF using Puppeteer
+      const puppeteer = await import('puppeteer');
+      const browser = await puppeteer.default.launch({ 
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox']
+      });
+      const page = await browser.newPage();
+
+      const consentDate = person.fcraAuthorizedTimestamp 
+        ? new Date(person.fcraAuthorizedTimestamp).toLocaleString('en-US', {
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true,
+            timeZoneName: 'short'
+          })
+        : 'Unknown';
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            body {
+              font-family: 'Georgia', serif;
+              max-width: 800px;
+              margin: 0 auto;
+              padding: 40px;
+              line-height: 1.6;
+              color: #1a1a1a;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 2px solid #0d9488;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              color: #0d9488;
+              margin: 0 0 10px 0;
+              font-size: 24px;
+            }
+            .header h2 {
+              color: #374151;
+              margin: 0;
+              font-size: 18px;
+              font-weight: normal;
+            }
+            .section {
+              margin-bottom: 24px;
+            }
+            .section-title {
+              font-weight: bold;
+              color: #0d9488;
+              margin-bottom: 8px;
+              font-size: 14px;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 16px;
+              margin-bottom: 24px;
+            }
+            .info-item label {
+              display: block;
+              font-size: 11px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 4px;
+            }
+            .info-item span {
+              font-size: 14px;
+            }
+            .consent-box {
+              background: #f0fdfa;
+              border: 1px solid #99f6e4;
+              border-radius: 8px;
+              padding: 20px;
+              margin: 24px 0;
+            }
+            .consent-box h3 {
+              color: #0d9488;
+              margin: 0 0 12px 0;
+              font-size: 16px;
+            }
+            .consent-text {
+              font-size: 13px;
+              color: #374151;
+            }
+            .consent-text ul {
+              margin: 12px 0;
+              padding-left: 24px;
+            }
+            .consent-text li {
+              margin-bottom: 8px;
+            }
+            .authorization-stamp {
+              background: #dcfce7;
+              border: 2px solid #22c55e;
+              border-radius: 8px;
+              padding: 20px;
+              text-align: center;
+              margin: 24px 0;
+            }
+            .authorization-stamp .checkmark {
+              color: #22c55e;
+              font-size: 36px;
+              margin-bottom: 8px;
+            }
+            .authorization-stamp .status {
+              color: #166534;
+              font-weight: bold;
+              font-size: 18px;
+            }
+            .authorization-stamp .timestamp {
+              color: #374151;
+              font-size: 14px;
+              margin-top: 8px;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 20px;
+              border-top: 1px solid #e5e7eb;
+              font-size: 11px;
+              color: #6b7280;
+              text-align: center;
+            }
+            .disclaimer {
+              background: #fffbeb;
+              border: 1px solid #fcd34d;
+              border-radius: 6px;
+              padding: 12px;
+              font-size: 11px;
+              color: #92400e;
+              margin-top: 24px;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Background Check Authorization</h1>
+            <h2>Rental Application Consent Record</h2>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Applicant Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Full Name</label>
+                <span>${person.firstName} ${person.lastName}</span>
+              </div>
+              <div class="info-item">
+                <label>Email Address</label>
+                <span>${person.email}</span>
+              </div>
+              <div class="info-item">
+                <label>Role</label>
+                <span>${person.role === 'applicant' ? 'Primary Applicant' : person.role === 'coapplicant' ? 'Co-Applicant' : 'Guarantor'}</span>
+              </div>
+              <div class="info-item">
+                <label>Application Date</label>
+                <span>${new Date(person.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">Property Information</div>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Property</label>
+                <span>${property.name}</span>
+              </div>
+              <div class="info-item">
+                <label>Unit</label>
+                <span>${unit.unitLabel}</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="consent-box">
+            <h3>Disclosure Acknowledgment</h3>
+            <div class="consent-text">
+              <p>By submitting this rental application, the applicant acknowledged the following:</p>
+              <ul>
+                <li>A background screening may be requested in connection with the rental application</li>
+                <li>The screening authorization will be collected directly by Western Verify through its screening platform DigitalDelve</li>
+                <li>LeaseShield does not make rental decisions</li>
+                <li>The background screening report may include credit history, rental history, employment-related information, criminal records, and eviction records as permitted by law</li>
+              </ul>
+              <p>The applicant authorized the verification of the information provided, including background and credit screening where permitted by law.</p>
+            </div>
+          </div>
+
+          <div class="authorization-stamp">
+            <div class="checkmark">✓</div>
+            <div class="status">AUTHORIZED</div>
+            <div class="timestamp">Consent recorded: ${consentDate}</div>
+          </div>
+
+          <div class="disclaimer">
+            <strong>Important:</strong> This document serves as a record that the applicant acknowledged the background screening disclosure and authorized verification of their information during the rental application process. The actual background check authorization and consent are collected separately by Western Verify (DigitalDelve) in compliance with FCRA requirements.
+          </div>
+
+          <div class="footer">
+            <p>Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+            <p>Submission ID: ${submission.id}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({
+        format: 'Letter',
+        printBackground: true,
+        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+      });
+      
+      await browser.close();
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="consent-authorization-${person.firstName}-${person.lastName}.pdf"`);
+      res.send(pdfBuffer);
+    } catch (error) {
+      console.error("Error generating consent PDF:", error);
+      res.status(500).json({ message: "Failed to generate consent PDF" });
+    }
+  });
+
   // Request screening for a specific person in a submission (per-person model)
   app.post('/api/rental/submissions/:id/screening', isAuthenticated, requireAccess, async (req: any, res) => {
     try {

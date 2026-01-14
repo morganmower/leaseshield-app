@@ -100,6 +100,9 @@ interface SubmissionPerson {
   isCompleted: boolean;
   createdAt: string;
   updatedAt: string;
+  // Background check consent tracking (FCRA authorization captured on form submission)
+  fcraAuthorized: boolean;
+  fcraAuthorizedTimestamp: string | null;
 }
 
 interface SubmissionEvent {
@@ -1060,6 +1063,59 @@ Best regards`;
                             }
                             return null;
                           })()}
+                        </div>
+                      )}
+
+                      {/* Background Check Consent Status */}
+                      {person.isCompleted && (
+                        <div className="mt-3 pt-3 border-t">
+                          <div className="flex flex-wrap items-center justify-between gap-2">
+                            <div className="flex items-center gap-2">
+                              <FileText className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm">Background Check Authorization</span>
+                            </div>
+                            {person.fcraAuthorized ? (
+                              <div className="flex items-center gap-2">
+                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100">
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Authorized
+                                </Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {person.fcraAuthorizedTimestamp && formatDate(person.fcraAuthorizedTimestamp)}
+                                </span>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={async () => {
+                                    try {
+                                      const token = getAccessToken();
+                                      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/person/${person.id}/consent-pdf`, {
+                                        headers: token ? { Authorization: `Bearer ${token}` } : {},
+                                      });
+                                      if (!res.ok) throw new Error("Failed to download");
+                                      const blob = await res.blob();
+                                      const url = URL.createObjectURL(blob);
+                                      const a = document.createElement("a");
+                                      a.href = url;
+                                      a.download = `consent-authorization-${person.firstName}-${person.lastName}.pdf`;
+                                      a.click();
+                                      URL.revokeObjectURL(url);
+                                    } catch (error) {
+                                      toast({ title: "Download failed", variant: "destructive" });
+                                    }
+                                  }}
+                                  data-testid={`button-download-consent-${person.id}`}
+                                >
+                                  <Download className="h-4 w-4 mr-1" />
+                                  Download PDF
+                                </Button>
+                              </div>
+                            ) : (
+                              <Badge variant="secondary" className="text-muted-foreground">
+                                Not yet authorized
+                              </Badge>
+                            )}
+                          </div>
                         </div>
                       )}
 
