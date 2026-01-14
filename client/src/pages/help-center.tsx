@@ -58,7 +58,7 @@ export default function HelpCenter() {
         },
         {
           q: "What's included in my subscription?",
-          a: "Your subscription includes unlimited access to 37+ state-specific legal templates, compliance guidance cards, tenant screening resources, legal update notifications, and our credit report decoder toolkit. Everything you need to manage your rental properties with confidence."
+          a: "Your subscription includes unlimited access to 245+ state-specific legal templates, compliance guidance cards, tenant screening resources, legal update notifications, and our credit report decoder toolkit. Everything you need to manage your rental properties with confidence."
         },
         {
           q: "Can I cancel my subscription anytime?",

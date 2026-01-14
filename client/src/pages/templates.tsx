@@ -329,7 +329,7 @@ export default function Templates() {
               Subscribe to Access Templates
             </h2>
             <p className="text-muted-foreground mb-8">
-              Get access to 37+ state-specific legal templates, automated wizards, and expert guidance
+              Get access to 245+ state-specific legal templates, automated wizards, and expert guidance
             </p>
             <div className="flex gap-3 justify-center">
               <Button variant="outline" onClick={() => refetch()} data-testid="button-retry-templates">
@@ -872,7 +872,7 @@ export default function Templates() {
                   {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
                 </p>
                 <p>
-                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 37+ state-specific templates.
+                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 245+ state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>
