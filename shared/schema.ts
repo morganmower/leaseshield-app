@@ -45,7 +45,11 @@ export const users = pgTable("users", {
   hasCompletedOnboarding: boolean("has_completed_onboarding").default(false),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for common query patterns
+  index("idx_users_subscription_status").on(table.subscriptionStatus),
+  index("idx_users_preferred_state").on(table.preferredState),
+]);
 
 export type UpsertUser = typeof users.$inferInsert;
 export type User = typeof users.$inferSelect;
@@ -112,7 +116,12 @@ export const templates = pgTable("templates", {
   sortOrder: integer("sort_order").default(0),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for filtering templates by state and active status
+  index("idx_templates_state_id").on(table.stateId),
+  index("idx_templates_is_active").on(table.isActive),
+  index("idx_templates_category").on(table.category),
+]);
 
 export const templatesRelations = relations(templates, ({ one }) => ({
   state: one(states, {
@@ -141,7 +150,11 @@ export const complianceCards = pgTable("compliance_cards", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Index for filtering by state
+  index("idx_compliance_cards_state_id").on(table.stateId),
+  index("idx_compliance_cards_is_active").on(table.isActive),
+]);
 
 export const complianceCardsRelations = relations(complianceCards, ({ one }) => ({
   state: one(states, {
@@ -172,7 +185,12 @@ export const legalUpdates = pgTable("legal_updates", {
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for filtering by state and sorting by date
+  index("idx_legal_updates_state_id").on(table.stateId),
+  index("idx_legal_updates_created_at").on(table.createdAt),
+  index("idx_legal_updates_is_active").on(table.isActive),
+]);
 
 export const legalUpdatesRelations = relations(legalUpdates, ({ one }) => ({
   state: one(states, {
@@ -199,7 +217,12 @@ export const userNotifications = pgTable("user_notifications", {
   isRead: boolean("is_read").default(false),
   readAt: timestamp("read_at"),
   createdAt: timestamp("created_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for user notification queries
+  index("idx_user_notifications_user_id").on(table.userId),
+  index("idx_user_notifications_is_read").on(table.isRead),
+  index("idx_user_notifications_created_at").on(table.createdAt),
+]);
 
 export const userNotificationsRelations = relations(userNotifications, ({ one }) => ({
   user: one(users, {
@@ -357,7 +380,12 @@ export const legislativeMonitoring = pgTable("legislative_monitoring", {
   reviewNotes: text("review_notes"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Indexes for legislative monitoring queries
+  index("idx_legislative_monitoring_state_id").on(table.stateId),
+  index("idx_legislative_monitoring_is_reviewed").on(table.isReviewed),
+  index("idx_legislative_monitoring_relevance_level").on(table.relevanceLevel),
+]);
 
 export const insertLegislativeMonitoringSchema = createInsertSchema(legislativeMonitoring).omit({
   id: true,
@@ -469,7 +497,10 @@ export const properties = pgTable("properties", {
   notes: text("notes"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Index for user property queries
+  index("idx_properties_user_id").on(table.userId),
+]);
 
 export const propertiesRelations = relations(properties, ({ one, many }) => ({
   user: one(users, {
@@ -499,7 +530,10 @@ export const savedDocuments = pgTable("saved_documents", {
   formData: jsonb("form_data").notNull(), // Filled form data for regeneration
   stateCode: varchar("state_code", { length: 2 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (table) => [
+  // Index for user document queries
+  index("idx_saved_documents_user_id").on(table.userId),
+]);
 
 export const savedDocumentsRelations = relations(savedDocuments, ({ one }) => ({
   user: one(users, {

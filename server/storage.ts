@@ -51,6 +51,7 @@ import {
 import { db } from "./db";
 import { eq, and, desc, sql } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
+import { DB_LIMITS, CACHE_TTL } from "./constants";
 
 /**
  * Database error handler wrapper
@@ -80,7 +81,6 @@ export interface IStorage {
   // State operations
   getAllStates(): Promise<State[]>;
   getState(id: string): Promise<State | undefined>;
-  getStateById(id: string): Promise<State | undefined>;
   createState(state: InsertState): Promise<State>;
 
   // Template operations
@@ -103,7 +103,6 @@ export interface IStorage {
   getAllLegalUpdates(): Promise<LegalUpdate[]>;
   getRecentLegalUpdates(limit?: number): Promise<LegalUpdate[]>;
   getLegalUpdate(id: string): Promise<LegalUpdate | undefined>;
-  getLegalUpdateById(id: string): Promise<LegalUpdate | undefined>;
   createLegalUpdate(update: InsertLegalUpdate): Promise<LegalUpdate>;
   updateLegalUpdate(id: string, update: Partial<InsertLegalUpdate>): Promise<LegalUpdate>;
   deleteLegalUpdate(id: string): Promise<void>;
@@ -244,11 +243,13 @@ export class DatabaseStorage implements IStorage {
   async getAllActiveUsers(): Promise<User[]> {
     return await db.select().from(users).where(
       sql`${users.subscriptionStatus} IN ('active', 'trialing', 'incomplete')`
-    );
+    ).limit(DB_LIMITS.ACTIVE_USERS);
   }
 
   async getUsersByState(stateId: string): Promise<User[]> {
-    return await db.select().from(users).where(eq(users.preferredState, stateId));
+    return await db.select().from(users)
+      .where(eq(users.preferredState, stateId))
+      .limit(DB_LIMITS.USERS_BY_STATE);
   }
 
   // State operations
@@ -257,7 +258,7 @@ export class DatabaseStorage implements IStorage {
       // Use cache for states (rarely change)
       return stateCache.getOrSet('all-states', async () => {
         return await db.select().from(states).where(eq(states.isActive, true));
-      }, 3600); // Cache for 1 hour
+      }, CACHE_TTL.STATES);
     }, 'getAllStates');
   }
 
@@ -268,10 +269,6 @@ export class DatabaseStorage implements IStorage {
         return state;
       }, 3600); // Cache for 1 hour
     }, 'getState');
-  }
-
-  async getStateById(id: string): Promise<State | undefined> {
-    return this.getState(id);
   }
 
   async createState(stateData: InsertState): Promise<State> {
@@ -287,19 +284,20 @@ export class DatabaseStorage implements IStorage {
   async getAllTemplates(filters?: { stateId?: string; category?: string }): Promise<Template[]> {
     const conditions = [eq(templates.isActive, true)];
 
-    if (filters?.stateId && filters.stateId !== "all") {
+    if (filters?.stateId && filters.stateId !== "all" && filters.stateId.trim()) {
       conditions.push(eq(templates.stateId, filters.stateId));
     }
 
-    if (filters?.category && filters.category !== "all") {
+    if (filters?.category && filters.category !== "all" && filters.category.trim()) {
       conditions.push(eq(templates.category, filters.category as any));
     }
 
     return await db
       .select()
       .from(templates)
-      .where(and(...conditions))
-      .orderBy(templates.sortOrder, templates.title);
+      .where(conditions.length > 0 ? and(...conditions) : undefined)
+      .orderBy(templates.sortOrder, templates.title)
+      .limit(DB_LIMITS.TEMPLATES);
   }
 
   async getTemplate(id: string): Promise<Template | undefined> {
@@ -338,7 +336,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(complianceCards)
-      .orderBy(complianceCards.stateId, complianceCards.sortOrder, complianceCards.title);
+      .orderBy(complianceCards.stateId, complianceCards.sortOrder, complianceCards.title)
+      .limit(DB_LIMITS.COMPLIANCE_CARDS);
   }
 
   async getComplianceCard(id: string): Promise<ComplianceCard | undefined> {
@@ -377,7 +376,8 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(legalUpdates)
-      .orderBy(desc(legalUpdates.createdAt));
+      .orderBy(desc(legalUpdates.createdAt))
+      .limit(DB_LIMITS.LEGAL_UPDATES);
   }
 
   async getRecentLegalUpdates(limit: number = 10): Promise<LegalUpdate[]> {
@@ -392,10 +392,6 @@ export class DatabaseStorage implements IStorage {
   async getLegalUpdate(id: string): Promise<LegalUpdate | undefined> {
     const [update] = await db.select().from(legalUpdates).where(eq(legalUpdates.id, id));
     return update;
-  }
-
-  async getLegalUpdateById(id: string): Promise<LegalUpdate | undefined> {
-    return this.getLegalUpdate(id);
   }
 
   async createLegalUpdate(updateData: InsertLegalUpdate): Promise<LegalUpdate> {
@@ -587,7 +583,8 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(screeningContent)
       .where(eq(screeningContent.isActive, true))
-      .orderBy(screeningContent.sortOrder);
+      .orderBy(screeningContent.sortOrder)
+      .limit(DB_LIMITS.SCREENING_CONTENT);
   }
 
   async getScreeningContentBySlug(slug: string): Promise<ScreeningContent | undefined> {
@@ -606,7 +603,8 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(tenantIssueWorkflows)
       .where(eq(tenantIssueWorkflows.isActive, true))
-      .orderBy(tenantIssueWorkflows.sortOrder);
+      .orderBy(tenantIssueWorkflows.sortOrder)
+      .limit(DB_LIMITS.WORKFLOWS);
   }
 
   async getTenantIssueWorkflowBySlug(slug: string): Promise<TenantIssueWorkflow | undefined> {
@@ -622,26 +620,29 @@ export class DatabaseStorage implements IStorage {
   // Blog post operations
   async getAllBlogPosts(filters?: { stateId?: string; tag?: string; isPublished?: boolean }): Promise<BlogPost[]> {
     let query = db.select().from(blogPosts);
-    
+
     const conditions = [];
-    
+
     if (filters?.isPublished !== undefined) {
       conditions.push(eq(blogPosts.isPublished, filters.isPublished));
     }
-    
+
     if (filters?.stateId) {
       conditions.push(sql`${filters.stateId} = ANY(${blogPosts.stateIds})`);
     }
-    
+
     if (filters?.tag) {
       conditions.push(sql`${filters.tag} = ANY(${blogPosts.tags})`);
     }
-    
+
     if (conditions.length > 0) {
       query = query.where(and(...conditions)) as any;
     }
-    
-    return await query.orderBy(desc(blogPosts.publishedAt));
+
+    // Add limit to prevent loading too many blog posts
+    return await query
+      .orderBy(desc(blogPosts.publishedAt))
+      .limit(DB_LIMITS.BLOG_POSTS);
   }
 
   async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
@@ -722,7 +723,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Template review queue operations
-  async getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<TemplateReviewQueue[]> {
+  async getAllTemplateReviewQueue(filters?: { status?: string; templateId?: string }): Promise<any[]> {
     const conditions = [];
 
     if (filters?.status) {
@@ -733,11 +734,22 @@ export class DatabaseStorage implements IStorage {
       conditions.push(eq(templateReviewQueue.templateId, filters.templateId));
     }
 
-    return await db
-      .select()
+    // Use JOIN to avoid N+1 query - fetch template data in single query
+    const results = await db
+      .select({
+        review: templateReviewQueue,
+        template: templates,
+      })
       .from(templateReviewQueue)
+      .leftJoin(templates, eq(templateReviewQueue.templateId, templates.id))
       .where(conditions.length > 0 ? and(...conditions) : undefined)
       .orderBy(desc(templateReviewQueue.priority), desc(templateReviewQueue.createdAt));
+
+    // Transform results to include template data
+    return results.map(({ review, template }) => ({
+      ...review,
+      template,
+    }));
   }
 
   async createTemplateReviewQueue(reviewData: InsertTemplateReviewQueue): Promise<TemplateReviewQueue> {

@@ -3,6 +3,8 @@
  * For production, consider using APM tools like New Relic, DataDog, etc.
  */
 
+import { PERFORMANCE } from '../constants';
+
 interface PerformanceMetric {
   operation: string;
   duration: number;
@@ -12,7 +14,7 @@ interface PerformanceMetric {
 
 class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
-  private maxMetrics: number = 1000; // Keep last 1000 metrics
+  private maxMetrics: number = PERFORMANCE.MAX_METRICS_STORED;
 
   /**
    * Record a performance metric
@@ -30,8 +32,8 @@ class PerformanceMonitor {
       this.metrics.shift();
     }
 
-    // Log slow operations (> 1 second)
-    if (duration > 1000) {
+    // Log slow operations
+    if (duration > PERFORMANCE.SLOW_OPERATION_THRESHOLD_MS) {
       console.warn(`⚠️  Slow operation detected: ${operation} took ${duration}ms`, metadata);
     }
   }
@@ -73,11 +75,11 @@ class PerformanceMonitor {
     const durations = operationMetrics.map(m => m.duration).sort((a, b) => a - b);
     const count = durations.length;
     const sum = durations.reduce((a, b) => a + b, 0);
-    const avg = sum / count;
-    const min = durations[0];
-    const max = durations[count - 1];
+    const avg = count > 0 ? sum / count : 0;
+    const min = durations[0] || 0;
+    const max = durations[count - 1] || 0;
     const p95Index = Math.floor(count * 0.95);
-    const p95 = durations[p95Index];
+    const p95 = durations[p95Index] || 0;
 
     return { count, avg, min, max, p95 };
   }

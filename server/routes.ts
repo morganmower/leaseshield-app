@@ -242,9 +242,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       // Create portal session
+      // Get return URL safely
+      const domains = process.env.REPLIT_DOMAINS;
+      const returnUrl = domains && domains.trim()
+        ? `${domains.split(',')[0].trim()}/billing`
+        : 'http://localhost:5000/billing';
+
       const session = await stripe.billingPortal.sessions.create({
         customer: user.stripeCustomerId,
-        return_url: `${process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000'}/billing`,
+        return_url: returnUrl,
       });
 
       res.json({ url: session.url });
@@ -294,19 +300,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'customer.subscription.updated': {
           const subscription = event.data.object as Stripe.Subscription;
           const customerId = subscription.customer as string;
-          
+
+          if (!customerId) {
+            console.error('Webhook: Missing customer ID in subscription event');
+            break;
+          }
+
           // Find user by Stripe customer ID
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
             // Check if subscription is set to cancel at period end
-            const status = subscription.cancel_at_period_end 
-              ? 'cancel_at_period_end' 
+            const status = subscription.cancel_at_period_end
+              ? 'cancel_at_period_end'
               : subscription.status;
-            
+
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: status,
             });
             console.log(`Updated user ${userResults[0].id} subscription status to ${status}`);
+          } else {
+            console.warn(`Webhook: No user found for customer ID ${customerId}`);
           }
           break;
         }
@@ -314,13 +327,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'customer.subscription.deleted': {
           const subscription = event.data.object as Stripe.Subscription;
           const customerId = subscription.customer as string;
-          
+
+          if (!customerId) {
+            console.error('Webhook: Missing customer ID in subscription deleted event');
+            break;
+          }
+
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: 'canceled',
             });
             console.log(`Updated user ${userResults[0].id} subscription status to canceled`);
+          } else {
+            console.warn(`Webhook: No user found for customer ID ${customerId}`);
           }
           break;
         }
@@ -328,7 +348,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'invoice.payment_succeeded': {
           const invoice = event.data.object as Stripe.Invoice;
           const customerId = invoice.customer as string;
-          
+
+          if (!customerId) {
+            console.error('Webhook: Missing customer ID in payment succeeded event');
+            break;
+          }
+
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
             // Payment successful - update to active (Stripe will also send subscription.updated)
@@ -336,6 +361,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               subscriptionStatus: 'active',
             });
             console.log(`User ${userResults[0].id} payment succeeded - marked as active`);
+          } else {
+            console.warn(`Webhook: No user found for customer ID ${customerId}`);
           }
           break;
         }
@@ -343,13 +370,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         case 'invoice.payment_failed': {
           const invoice = event.data.object as Stripe.Invoice;
           const customerId = invoice.customer as string;
-          
+
+          if (!customerId) {
+            console.error('Webhook: Missing customer ID in payment failed event');
+            break;
+          }
+
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: 'past_due',
             });
             console.log(`User ${userResults[0].id} payment failed - marked as past_due`);
+          } else {
+            console.warn(`Webhook: No user found for customer ID ${customerId}`);
           }
           break;
         }
@@ -466,9 +500,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/properties/:id', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
       const property = await storage.getProperty(req.params.id, userId);
       if (!property) {
         return res.status(404).json({ message: "Property not found" });
@@ -579,10 +610,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/saved-documents', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      if (!userId) {
-        return res.status(401).json({ message: "Unauthorized" });
-      }
-      
       const { templateId, templateName, templateVersion, documentName, formData, stateCode, propertyId } = req.body;
       
       // Validate propertyId ownership if provided
@@ -1014,12 +1041,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { updateId } = req.params;
       
       // Get the legal update with state info
-      const update = await storage.getLegalUpdateById(updateId);
+      const update = await storage.getLegalUpdate(updateId);
       if (!update) {
         return res.status(404).json({ message: "Legal update not found" });
       }
       
-      const state = await storage.getStateById(update.stateId);
+      const state = await storage.getState(update.stateId);
       if (!state) {
         return res.status(404).json({ message: "State not found" });
       }
@@ -1089,18 +1116,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Admin - Get template review queue
   app.get("/api/admin/template-review-queue", isAuthenticated, async (req, res) => {
     try {
+      // Reviews now include template data via JOIN - no N+1 query
       const reviews = await storage.getAllTemplateReviewQueue({
         status: req.query.status as string | undefined,
       });
 
-      const enrichedReviews = await Promise.all(
-        reviews.map(async (review) => {
-          const template = await storage.getTemplate(review.templateId);
-          return { ...review, template };
-        })
-      );
-
-      res.json({ reviews: enrichedReviews, total: enrichedReviews.length });
+      res.json({ reviews, total: reviews.length });
     } catch (error: any) {
       res.status(500).json({ message: error.message });
     }
@@ -1389,7 +1410,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(403).json({ message: 'Admin access required' });
       }
 
-      const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
+      // Parse limit with validation
+      const limitParam = req.query.limit as string;
+      let limit = 10;
+      if (limitParam) {
+        const parsed = parseInt(limitParam, 10);
+        if (!isNaN(parsed) && parsed > 0 && parsed <= 100) {
+          limit = parsed;
+        }
+      }
       const runs = await storage.getRecentMonitoringRuns(limit);
       res.json(runs);
     } catch (error) {
@@ -1409,16 +1438,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('📋 Manually triggered legislative monitoring run by admin:', user.email);
-      
+
       // Run the monitoring service
-      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
-      const monitoringService = new LegislativeMonitoringService(storage);
-      const result = await monitoringService.runMonitoring();
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      await legislativeMonitoringService.runMonthlyMonitoring();
 
       res.json({
         success: true,
         message: 'Monitoring run completed',
-        result,
       });
     } catch (error) {
       console.error('Error running legislative monitoring:', error);
@@ -1442,15 +1469,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       console.log('🔄 Running scheduled legislative monitoring...');
-      
-      const LegislativeMonitoringService = (await import('./legislativeMonitoringService')).default;
-      const monitoringService = new LegislativeMonitoringService(storage);
-      const result = await monitoringService.runMonitoring();
+
+      const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+      await legislativeMonitoringService.runMonthlyMonitoring();
 
       console.log('✅ Scheduled monitoring completed');
       res.json({
         success: true,
-        result,
       });
     } catch (error) {
       console.error('❌ Cron monitoring failed:', error);

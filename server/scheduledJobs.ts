@@ -6,7 +6,7 @@ import { emailService } from "./emailService";
 import { db } from "./db";
 import { users } from "@shared/schema";
 import { and, eq, lt, gte, sql } from "drizzle-orm";
-import { runMonthlyLegislativeMonitoring } from "./legislativeMonitoring";
+import { legislativeMonitoringService } from "./legislativeMonitoringService";
 
 export class ScheduledJobs {
   private trialReminderInterval: NodeJS.Timeout | null = null;
@@ -173,7 +173,7 @@ export class ScheduledJobs {
       if (this.legislativeMonitoringLastRun) {
         const lastRunMonth = this.legislativeMonitoringLastRun.getMonth();
         const currentMonth = now.getMonth();
-        
+
         if (lastRunMonth === currentMonth) {
           console.log('  Legislative monitoring already ran this month');
           return;
@@ -181,9 +181,9 @@ export class ScheduledJobs {
       }
 
       console.log('🔍 Running monthly legislative monitoring...');
-      await runMonthlyLegislativeMonitoring();
+      await legislativeMonitoringService.runMonthlyMonitoring();
       this.legislativeMonitoringLastRun = now;
-      
+
     } catch (error) {
       console.error('❌ Error in legislative monitoring check:', error);
     }

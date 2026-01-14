@@ -17,16 +17,27 @@ export class EmailService {
   private async sendEmail(to: EmailRecipient, template: EmailTemplate): Promise<boolean> {
     // In production, this would call the actual email API (SendGrid, Postmark, etc.)
     // For MVP, we'll log the email details
+    if (!to.email || !to.email.trim()) {
+      console.error('Email Service: Invalid recipient email');
+      return false;
+    }
+
     console.log('📧 Email Service - Sending email:');
-    console.log(`  To: ${to.email} (${to.firstName} ${to.lastName})`);
+    console.log(`  To: ${to.email} (${to.firstName || ''} ${to.lastName || ''})`);
     console.log(`  Subject: ${template.subject}`);
-    console.log(`  Body Preview: ${template.textBody.substring(0, 100)}...`);
-    
+    const bodyPreview = template.textBody?.substring(0, 100) || '';
+    console.log(`  Body Preview: ${bodyPreview}...`);
+
     // Simulate successful send
     return true;
   }
 
   async sendTrialReminderEmail(user: EmailRecipient, trialEndsAt: Date): Promise<boolean> {
+    if (!trialEndsAt || isNaN(trialEndsAt.getTime())) {
+      console.error('Email Service: Invalid trial end date');
+      return false;
+    }
+
     const daysRemaining = Math.ceil((trialEndsAt.getTime() - Date.now()) / (1000 * 60 * 60 * 24));
     const firstName = user.firstName || 'there';
 

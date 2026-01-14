@@ -4,6 +4,7 @@
 import { legiscanService } from './legiscanService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
+import { LEGISLATIVE_MONITORING } from './constants';
 import type { InsertLegislativeMonitoring, InsertTemplateReviewQueue } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -64,7 +65,7 @@ export class LegislativeMonitoringService {
           // Process each bill
           const billKeys = Object.keys(searchResults.searchresult).filter(k => k !== 'summary');
 
-          for (const key of billKeys.slice(0, 10)) { // Limit to first 10 for MVP
+          for (const key of billKeys.slice(0, LEGISLATIVE_MONITORING.BILLS_PER_STATE_LIMIT)) {
             const billSummary = searchResults.searchresult[key];
 
             // Check if we've already processed this bill
@@ -89,7 +90,7 @@ export class LegislativeMonitoringService {
               continue;
             }
 
-            console.log(`  🔍 Analyzing ${bill.bill_number}: ${bill.title.substring(0, 60)}...`);
+            console.log(`  🔍 Analyzing ${bill.bill_number}: ${bill.title.substring(0, LEGISLATIVE_MONITORING.BILL_TITLE_PREVIEW_LENGTH)}...`);
 
             // Get bill text for deeper analysis (optional, can be slow)
             const billText = await legiscanService.getBillText(billSummary.bill_id);

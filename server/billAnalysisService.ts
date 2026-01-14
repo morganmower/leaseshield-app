@@ -79,7 +79,7 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
         temperature: 0.3, // Lower temperature for more consistent analysis
       });
 
-      const response = completion.choices[0].message.content;
+      const response = completion.choices[0]?.message?.content;
       if (!response) {
         throw new Error('No response from OpenAI');
       }
@@ -87,7 +87,10 @@ Be conservative - only mark as HIGH if templates definitely need updates.`;
       const parsed = JSON.parse(response);
 
       // Validate that mentioned template IDs actually exist
-      const validTemplateIds = parsed.affectedTemplateIds.filter((id: string) =>
+      const affectedTemplateIds = Array.isArray(parsed.affectedTemplateIds)
+        ? parsed.affectedTemplateIds
+        : [];
+      const validTemplateIds = affectedTemplateIds.filter((id: string) =>
         stateTemplates.some(t => t.id === id)
       );
 
