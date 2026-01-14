@@ -381,11 +381,20 @@ export default function DocumentWizard() {
         // Keep just the number - server template adds $ prefix
         acc[key] = value;
       } else if (field?.type === 'date' && value) {
-        acc[key] = new Date(value).toLocaleDateString('en-US', { 
-          year: 'numeric', 
-          month: 'long', 
-          day: 'numeric' 
-        });
+        try {
+          const date = new Date(value);
+          if (!isNaN(date.getTime())) {
+            acc[key] = date.toLocaleDateString('en-US', {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
+            });
+          } else {
+            acc[key] = value; // Keep original if invalid
+          }
+        } catch (e) {
+          acc[key] = value; // Keep original if parsing fails
+        }
       } else {
         acc[key] = value;
       }

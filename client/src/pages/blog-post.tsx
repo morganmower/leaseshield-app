@@ -36,7 +36,13 @@ export default function BlogPostPage() {
 
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "";
-    return new Date(date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    try {
+      const parsedDate = new Date(date);
+      if (isNaN(parsedDate.getTime())) return "";
+      return parsedDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    } catch (e) {
+      return "";
+    }
   };
 
   if (isLoading) {
