@@ -1,7 +1,28 @@
+// NOTE: DOCX generation must use `docx` library only.
+// HTML → DOCX conversion (html-to-docx) caused Word corruption issues.
+// PDF = delivery / legal / courts (uses Puppeteer)
+// DOCX = editable / customer convenience (uses docx library)
 import puppeteer from 'puppeteer';
+import { execSync } from 'child_process';
+import {
+  Document,
+  Packer,
+  Paragraph,
+  TextRun,
+  AlignmentType,
+} from 'docx';
+import { H1, H2, H3, P, SignatureLine, HR, Footer, getStateDisclosuresSync, getStateName } from './docxBuilder';
 
 interface FieldValue {
   [key: string]: string | number;
+}
+
+interface LandlordInfo {
+  businessName?: string | null;
+  phoneNumber?: string | null;
+  email?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
 }
 
 interface DocumentGenerationOptions {
@@ -11,6 +32,7 @@ interface DocumentGenerationOptions {
   stateId: string;
   version?: number;
   updatedAt?: Date;
+  landlordInfo?: LandlordInfo;
 }
 
 // HTML escape function to prevent XSS/injection attacks
@@ -25,34 +47,69 @@ function escapeHtml(unsafe: string): string {
 }
 
 export async function generateDocument(options: DocumentGenerationOptions): Promise<Buffer> {
-  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date() } = options;
+  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
 
   // Create HTML content with filled fields
-  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt);
+  const htmlContent = generateHTMLFromTemplate(templateTitle, templateContent, fieldValues, stateId, version, updatedAt, landlordInfo);
 
   // Launch headless browser
   // NOTE: Using system Chromium for stability in Replit environment.
   // Running in --no-sandbox mode for Replit environment compatibility.
   // Security is maintained through comprehensive HTML escaping of all user input.
   // All user input is HTML-escaped before rendering to prevent injection attacks.
+  
+  // Try to find Chromium executable dynamically
+  let chromiumPath = '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium';
+  try {
+    chromiumPath = execSync('which chromium').toString().trim();
+    console.log('📄 Using Chromium at:', chromiumPath);
+  } catch (e) {
+    console.log('📄 Falling back to default Chromium path');
+  }
+  
+  console.log('📄 Launching Chromium browser...');
+  const startTime = Date.now();
+  
   const browser = await puppeteer.launch({
     headless: true,
-    executablePath: '/nix/store/zi4f80l169xlmivz8vja8wlphq74qqk0-chromium-125.0.6422.141/bin/chromium',
+    executablePath: chromiumPath,
+    timeout: 30000, // 30 second timeout for browser launch
     args: [
       '--no-sandbox', // Required for Replit containerized environment
       '--disable-setuid-sandbox', // Required for Replit containerized environment
       '--disable-dev-shm-usage', // Required for containerized environments
       '--disable-gpu', // Not needed for PDF generation
       '--single-process', // More stable in containerized environments
-      '--no-zygote' // More stable in containerized environments
+      '--no-zygote', // More stable in containerized environments
+      '--disable-extensions',
+      '--disable-background-networking',
+      '--disable-default-apps',
+      '--disable-sync',
+      '--disable-translate',
+      '--mute-audio',
+      '--hide-scrollbars',
     ]
   });
+  
+  console.log(`📄 Browser launched in ${Date.now() - startTime}ms`);
 
   try {
     const page = await browser.newPage();
     
-    // Set content
-    await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+    // Set default timeouts for all operations
+    page.setDefaultTimeout(30000); // 30 second default timeout
+    page.setDefaultNavigationTimeout(15000); // 15 second navigation timeout
+    
+    // Set viewport for consistent rendering
+    await page.setViewport({ width: 816, height: 1056 }); // Letter size at 96 DPI
+    
+    // Set content with faster loading - no external resources to wait for
+    console.log('📄 Setting page content...');
+    await page.setContent(htmlContent, { 
+      waitUntil: 'domcontentloaded', // Faster than networkidle0 since we have no external resources
+    });
+    
+    console.log(`📄 Page content set in ${Date.now() - startTime}ms`);
 
     // Generate PDF with professional attorney-quality margins (1 inch standard)
     const pdfBuffer = await page.pdf({
@@ -63,12 +120,220 @@ export async function generateDocument(options: DocumentGenerationOptions): Prom
         right: '1in',
         bottom: '1in',
         left: '1in',
-      }
+      },
     });
+    
+    console.log(`📄 PDF generated successfully in ${Date.now() - startTime}ms`);
 
     return Buffer.from(pdfBuffer);
+  } catch (error) {
+    console.error('📄 Error generating PDF:', error);
+    throw error;
   } finally {
     await browser.close();
+    console.log(`📄 Browser closed. Total time: ${Date.now() - startTime}ms`);
+  }
+}
+
+export async function generateDocumentDOCX(options: DocumentGenerationOptions): Promise<Buffer> {
+  const { templateTitle, templateContent, fieldValues, stateId, version = 1, updatedAt = new Date(), landlordInfo } = options;
+  
+  console.log('📝 Generating DOCX document with docx library...');
+  const startTime = Date.now();
+  
+  const stateName = await getStateName(stateId);
+  const formattedDate = updatedAt.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const getField = (key: string, defaultValue: string = '[_____________]'): string => {
+    const value = fieldValues[key];
+    if (value === undefined || value === null || value === '') {
+      return defaultValue;
+    }
+    return String(value);
+  };
+
+  const children: Paragraph[] = [];
+
+  if (landlordInfo?.businessName) {
+    children.push(new Paragraph({
+      children: [new TextRun({ text: landlordInfo.businessName, bold: true, size: 28 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 80 },
+    }));
+  }
+
+  if (landlordInfo?.phoneNumber || landlordInfo?.email) {
+    const contactParts: string[] = [];
+    if (landlordInfo.phoneNumber) contactParts.push(landlordInfo.phoneNumber);
+    if (landlordInfo.email) contactParts.push(landlordInfo.email);
+    children.push(new Paragraph({
+      children: [new TextRun({ text: contactParts.join(' | '), size: 20 })],
+      alignment: AlignmentType.CENTER,
+      spacing: { after: 80 },
+    }));
+  }
+
+  children.push(H1(templateTitle.toUpperCase()));
+  children.push(P(`State: ${stateName}`, { italic: true, center: true }));
+  children.push(HR());
+
+  children.push(P(`Document Version: ${version}`, { bold: true }));
+  children.push(P(`Last Updated: ${formattedDate}`));
+  children.push(P(`Generated: ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`));
+  children.push(HR());
+
+  children.push(H2("1. TERM OF LEASE"));
+  children.push(P(`This Residential Lease Agreement ("Lease") is entered into as of ${getField('leaseStartDate', '[DATE]')} between the undersigned Landlord and Tenant(s) for the rental of the property located at ${getField('propertyAddress', '[ADDRESS]')}, ${getField('propertyCity', '[CITY]')}, ${stateId} ${getField('propertyZip', '[ZIP]')} ("Premises").`));
+  children.push(P(`1.1 Lease Term: This Lease shall commence on ${getField('leaseStartDate', '[START DATE]')} and shall terminate on ${getField('leaseEndDate', '[END DATE]')}, unless earlier terminated or extended pursuant to the terms herein.`));
+  children.push(P("1.2 Renewal Terms: Upon expiration of the initial term, this Lease shall convert to a month-to-month tenancy under the same terms and conditions until either party provides written notice of termination as required by applicable law."));
+
+  children.push(H2("2. PARTIES"));
+  children.push(P(`2.1 Landlord: ${getField('landlordName', '[LANDLORD NAME]')} ("Landlord") is the owner or authorized agent of the Premises and shall be responsible for all obligations of a landlord under applicable law.`));
+  children.push(P(`2.2 Tenant(s): ${getField('tenantName', '[TENANT NAME]')} ("Tenant") shall be the only occupant(s) of the Premises unless otherwise agreed in writing. Tenant represents that all information provided in the rental application is true and accurate.`));
+  children.push(P("2.3 Occupancy Limits: Total occupancy shall not exceed the maximum allowed by applicable housing codes. Unauthorized occupants may result in lease termination."));
+
+  children.push(H2("3. RENT"));
+  children.push(P(`3.1 Monthly Rent: Tenant agrees to pay Landlord the sum of $${getField('monthlyRent', '[AMOUNT]')} per month as rent for the Premises, due on the ${getField('rentDueDay', '1st')} day of each month.`));
+  children.push(P(`3.2 Late Fee: If rent is not received by the ${getField('lateFeeDays', '5th')} day of the month, Tenant shall pay a late fee of $${getField('lateFeeAmount', '[AMOUNT]')} as additional rent. This late fee is a reasonable estimate of administrative costs incurred due to late payment.`));
+  children.push(P("3.3 Payment Method: Rent shall be payable by check, money order, cashier's check, or electronic payment. Personal checks returned for insufficient funds shall incur a fee of $35 plus any bank charges."));
+  children.push(P("3.4 Prorated Rent: If Tenant takes possession on a date other than the first of the month, rent shall be prorated on a daily basis."));
+
+  children.push(H2("4. SECURITY DEPOSIT"));
+  children.push(P(`4.1 Deposit Amount: Upon execution of this Lease, Tenant shall pay a security deposit in the amount of $${getField('securityDeposit', '[AMOUNT]')} to be held by Landlord as security for the faithful performance of Tenant's obligations under this Lease.`));
+  children.push(P("4.2 Use of Deposit: The security deposit may be used for unpaid rent, cleaning, repairs for damages beyond normal wear and tear, and any other amounts owed under this Lease."));
+  children.push(P("4.3 Return of Deposit: The deposit, less any lawful deductions, shall be returned within the time period required by applicable law after Tenant vacates the Premises."));
+  children.push(P("4.4 Non-Refundable Fees: Any non-refundable fees shall be clearly identified in an addendum to this Lease."));
+
+  children.push(H2("5. UTILITIES AND SERVICES"));
+  children.push(P("5.1 Tenant Responsibilities: Unless otherwise agreed, Tenant shall be responsible for all utilities and services including electricity, gas, water, sewer, trash removal, internet, cable, and telephone."));
+  children.push(P("5.2 Landlord Responsibilities: Landlord shall be responsible for the following utilities: [SPECIFY OR NONE]."));
+  children.push(P("5.3 Utility Transfers: Tenant agrees to transfer utilities into Tenant's name within 3 days of move-in."));
+
+  children.push(H2("6. USE OF PREMISES"));
+  children.push(P("6.1 Residential Use Only: The Premises shall be used exclusively as a private residence for Tenant and approved occupants. No business, trade, or profession may be conducted on the Premises without prior written consent of Landlord."));
+  children.push(P("6.2 Illegal Activities: Tenant shall not use the Premises for any illegal purpose. Any illegal activity may result in immediate lease termination."));
+  children.push(P("6.3 Nuisance: Tenant shall not create or permit any nuisance on the Premises or interfere with the quiet enjoyment of other tenants or neighbors."));
+  children.push(P("6.4 Compliance: Tenant shall comply with all applicable laws, ordinances, and rules of any homeowners' or condominium association."));
+
+  children.push(H2("7. MAINTENANCE AND REPAIRS"));
+  children.push(P("7.1 Landlord Obligations: Landlord shall maintain the Premises in habitable condition, including structural repairs, plumbing, electrical, heating, and common areas."));
+  children.push(P("7.2 Tenant Obligations: Tenant shall maintain the Premises in clean and sanitary condition and promptly notify Landlord of any needed repairs within 48 hours of discovery."));
+  children.push(P("7.3 Damage by Tenant: Tenant shall be responsible for repairs of damages caused by Tenant, household members, or guests."));
+  children.push(P("7.4 Emergency Repairs: In case of emergency affecting health or safety, Tenant shall immediately notify Landlord and take reasonable steps to prevent further damage."));
+
+  children.push(H2("8. ALTERATIONS"));
+  children.push(P("8.1 No Alterations: Tenant shall not make any alterations, improvements, or additions to the Premises without prior written consent of Landlord."));
+  children.push(P("8.2 Approved Changes: Any approved alterations become the property of Landlord unless otherwise agreed in writing."));
+
+  children.push(H2("9. PETS"));
+  children.push(P(`9.1 Pet Policy: Pets are ${getField('petsAllowed', '[ALLOWED/NOT ALLOWED]')} on the Premises. Any approved pet requires a separate pet agreement and additional deposit.`));
+  children.push(P("9.2 Service Animals: This section does not apply to service animals or emotional support animals as required by law."));
+
+  children.push(H2("10. ENTRY BY LANDLORD"));
+  children.push(P("10.1 Right of Entry: Landlord may enter the Premises with reasonable notice for inspections, repairs, showings to prospective tenants or buyers, and emergencies."));
+  children.push(P("10.2 Notice Period: Except in emergencies, Landlord shall provide notice as required by applicable state law before entering."));
+
+  children.push(H2("11. INSURANCE"));
+  children.push(P("11.1 Renter's Insurance: Tenant is strongly encouraged to obtain renter's insurance covering personal property and liability. Landlord's insurance does not cover Tenant's personal property."));
+  children.push(P("11.2 Liability: Tenant assumes responsibility for damage or loss to personal property from any cause."));
+
+  children.push(H2("12. SUBLETTING AND ASSIGNMENT"));
+  children.push(P("12.1 Prohibition: Tenant shall not sublet the Premises or assign this Lease without prior written consent of Landlord."));
+  children.push(P("12.2 Short-term Rentals: Tenant shall not use the Premises for short-term vacation rentals (Airbnb, VRBO, etc.) without express written permission."));
+
+  children.push(H2("13. DEFAULT AND REMEDIES"));
+  children.push(P("13.1 Default by Tenant: Failure to pay rent, violation of lease terms, or illegal activity constitutes default under this Lease."));
+  children.push(P("13.2 Notice to Cure: Landlord shall provide notice as required by law before initiating eviction proceedings for curable defaults."));
+  children.push(P("13.3 Remedies: Upon default, Landlord may pursue all legal remedies including eviction, recovery of unpaid rent, damages, and attorney's fees."));
+  children.push(P("13.4 Acceleration: Upon default, all remaining rent for the lease term may become immediately due and payable."));
+
+  children.push(H2("14. TERMINATION"));
+  children.push(P("14.1 End of Term: This Lease terminates at the end of the lease term unless renewed in writing."));
+  children.push(P("14.2 Early Termination: Early termination may be permitted with payment of an early termination fee equal to two months' rent plus forfeiture of security deposit."));
+  children.push(P("14.3 Abandonment: If Tenant abandons the Premises, Landlord may retake possession and pursue all available remedies."));
+
+  children.push(H2("15. MOVE-OUT PROCEDURES"));
+  children.push(P("15.1 Notice Required: Tenant shall provide written notice of intent to vacate as required by applicable law."));
+  children.push(P("15.2 Condition: The Premises shall be returned in the same condition as received, normal wear and tear excepted."));
+  children.push(P("15.3 Cleaning: Tenant shall thoroughly clean the Premises including walls, floors, carpet, and appliances."));
+  children.push(P("15.4 Keys and Access: All keys, remotes, and access devices shall be returned upon vacating."));
+
+  children.push(H2("16. FAIR HOUSING"));
+  children.push(P("Landlord shall not discriminate against Tenant based on protected class status including race, color, religion, sex, national origin, disability, familial status, or sexual orientation, in accordance with the Fair Housing Act and state laws."));
+
+  children.push(H2("17. ENTIRE AGREEMENT"));
+  children.push(P("This Lease constitutes the entire agreement between Landlord and Tenant and supersedes all prior negotiations and agreements, whether written or oral. This Lease may be modified only by written amendment signed by both parties."));
+
+  children.push(H2("18. GOVERNING LAW"));
+  children.push(P(`This Lease shall be governed by and construed in accordance with the laws of the State of ${stateName}.`));
+
+  children.push(H2("19. DISPUTE RESOLUTION"));
+  children.push(P("Any disputes arising from this Lease shall be resolved in the appropriate court of competent jurisdiction in the county where the Premises is located."));
+
+  children.push(H2("20. SEVERABILITY"));
+  children.push(P("If any provision of this Lease is found to be invalid or unenforceable, all other provisions shall remain in full force and effect."));
+
+  children.push(H2("21. INDEMNIFICATION"));
+  children.push(P("21.1 Tenant agrees to indemnify and hold harmless Landlord from and against any claims, actions, damages, and expenses arising from Tenant's use of the Premises or breach of this Lease."));
+  children.push(P("21.2 Landlord's Limited Liability: Except as required by law, Landlord shall not be liable for injury or damage caused by theft, criminal activity, fire, water damage, or acts of God."));
+
+  children.push(H2("22. ATTORNEY'S FEES"));
+  children.push(P("In the event of any legal action arising out of this Lease, the prevailing party shall be entitled to recover reasonable attorneys' fees and court costs."));
+
+  children.push(H2("23. NOTICES"));
+  children.push(P("All notices required under this Lease shall be in writing and delivered personally, by certified mail, or by email with confirmed receipt."));
+
+  children.push(H2("24. ADDITIONAL PROVISIONS"));
+  children.push(P("24.1 Time is of the Essence: Time is of the essence with respect to all provisions of this Lease."));
+  children.push(P("24.2 Waiver: No waiver by Landlord of any breach shall be construed as a waiver of subsequent breaches."));
+  children.push(P("24.3 Joint and Several Liability: If multiple Tenants sign this Lease, each shall be jointly and severally liable."));
+  children.push(P("24.4 Binding Effect: This Lease is binding upon the parties and their heirs, executors, and successors."));
+
+  const stateDisclosures = getStateDisclosuresSync(stateId, stateName);
+  children.push(...stateDisclosures);
+
+  children.push(HR());
+
+  children.push(H2("SIGNATURES"));
+  children.push(P("By signing below, the parties acknowledge that they have read, understand, and agree to be bound by all terms of this Lease."));
+
+  children.push(P("LANDLORD:", { bold: true }));
+  children.push(SignatureLine("Signature"));
+  children.push(SignatureLine("Printed Name"));
+  children.push(SignatureLine("Date"));
+
+  children.push(P("TENANT:", { bold: true }));
+  children.push(SignatureLine("Signature"));
+  children.push(SignatureLine("Printed Name"));
+  children.push(SignatureLine("Date"));
+
+  children.push(Footer());
+
+  const doc = new Document({
+    sections: [
+      {
+        properties: {
+          page: {
+            margin: {
+              top: 1440,
+              right: 1440,
+              bottom: 1440,
+              left: 1440,
+            },
+          },
+        },
+        children,
+      },
+    ],
+  });
+
+  try {
+    const buffer = await Packer.toBuffer(doc);
+    console.log(`📝 DOCX generated successfully in ${Date.now() - startTime}ms (${buffer.length} bytes)`);
+    return Buffer.from(buffer);
+  } catch (error) {
+    console.error('📝 Error generating DOCX:', error);
+    throw error;
   }
 }
 
@@ -78,7 +343,8 @@ function generateHTMLFromTemplate(
   fieldValues: FieldValue,
   stateId: string,
   version: number = 1,
-  updatedAt: Date = new Date()
+  updatedAt: Date = new Date(),
+  landlordInfo?: LandlordInfo
 ): string {
   // SECURITY: For MVP, we ONLY use default template generation with fully escaped values.
   // templateContent should always be empty. If it's not empty, we ignore it to prevent injection.
@@ -151,6 +417,12 @@ function generateHTMLFromTemplate(
     .document-header .tagline {
       font-size: 10pt;
       font-style: italic;
+      color: #333;
+      margin-bottom: 8pt;
+    }
+    
+    .document-header .landlord-contact {
+      font-size: 10pt;
       color: #333;
       margin-bottom: 8pt;
     }
@@ -277,15 +549,22 @@ function generateHTMLFromTemplate(
 </head>
 <body>
   <div class="document-header">
-    <div class="firm-name">LEASESHIELD LEGAL DOCUMENTS</div>
-    <div class="tagline">Professional Landlord Protection Services</div>
+    ${landlordInfo?.businessName ? `<div class="firm-name">${escapeHtml(landlordInfo.businessName)}</div>` : ''}
+    ${landlordInfo?.phoneNumber || landlordInfo?.email ? `
+      <div class="landlord-contact">
+        ${landlordInfo.phoneNumber ? `<span>${escapeHtml(landlordInfo.phoneNumber)}</span>` : ''}
+        ${landlordInfo.phoneNumber && landlordInfo.email ? ' | ' : ''}
+        ${landlordInfo.email ? `<span>${escapeHtml(landlordInfo.email)}</span>` : ''}
+      </div>
+    ` : ''}
     <div class="state-info">State-Specific Legal Forms for ${safeStateId}</div>
   </div>
   
   ${contentWithVersion}
   
   <div class="footer">
-    This document was generated by LeaseShield App on ${new Date().toLocaleDateString()} | State: ${safeStateId}<br>
+    State: ${safeStateId} | Version ${version}<br>
+    <strong>Last Legal Review:</strong> ${new Date(updatedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}<br>
     For informational purposes only - Consult with a licensed attorney for legal advice
   </div>
 </body>
@@ -383,8 +662,29 @@ function getComprehensiveLeaseContent(stateId: string, fieldValues: FieldValue):
     <h2>23. SEVERABILITY</h2>
     <p>If any provision of this Lease is found to be invalid or unenforceable, all other provisions shall remain in full force and effect.</p>
 
-    <h2>24. LIABILITY WAIVER</h2>
-    <p>Tenant acknowledges that Landlord is not liable for any loss of personal property, injury, or damage, regardless of cause, except as required by law. Tenant assumes full responsibility for all personal safety and security of the Premises.</p>
+    <h2>24. INDEMNIFICATION AND HOLD HARMLESS</h2>
+    <p>24.1 Tenant Indemnification: Tenant agrees to indemnify, defend, and hold harmless Landlord, Landlord's agents, employees, and representatives from and against any and all claims, actions, damages, liability, cost, and expense, including but not limited to attorneys' fees and court costs, arising from or related to: (a) any breach of this Lease by Tenant; (b) any injury or death to any person or damage to any property occurring in or about the Premises resulting from the negligence or willful misconduct of Tenant, Tenant's guests, invitees, or occupants; (c) any nuisance made or suffered on the Premises by Tenant or persons under Tenant's control; (d) any failure by Tenant to comply with any law, statute, ordinance, or governmental requirement; (e) the use or occupancy of the Premises by Tenant or any persons under Tenant's control.</p>
+    <p>24.2 Landlord's Limited Liability: Except as otherwise required by applicable law, Landlord shall not be liable to Tenant or any third party for any injury, loss, or damage to persons or property caused by: (a) theft, vandalism, burglary, or criminal activity; (b) fire, smoke, water damage, flooding, or any act of God; (c) electrical failure, equipment malfunction, or utility interruption; (d) actions of other tenants, neighbors, or third parties; (e) any defect in or failure of locks, latches, or security devices; (f) condition of common areas, sidewalks, parking areas, or grounds, except to the extent caused by Landlord's gross negligence.</p>
+    <p>24.3 Waiver of Subrogation: Tenant releases Landlord from any claims for damage to Tenant's property or interruption of Tenant's business caused by any reason whatsoever, including negligent acts of Landlord (except for gross negligence or willful misconduct), and Tenant waives all rights of subrogation against Landlord.</p>
+    <p>24.4 Survival: This indemnification provision shall survive the termination of this Lease and shall not be limited by any insurance carried by either party.</p>
+
+    <h2>25. LIABILITY WAIVER AND ASSUMPTION OF RISK</h2>
+    <p>25.1 Tenant acknowledges that Landlord is not liable for any loss, theft, damage, or destruction of Tenant's personal property, regardless of cause, except as required by law. Tenant assumes full responsibility for personal safety and security of the Premises.</p>
+    <p>25.2 Tenant acknowledges that Landlord makes no representations or warranties regarding the safety or security of the Premises, neighborhood, or surrounding area. Tenant has independently investigated and is satisfied with the condition, safety, and suitability of the Premises.</p>
+    <p>25.3 Tenant releases and discharges Landlord from any and all liability for injury, death, or property damage arising from Tenant's use of the Premises, common areas, amenities, or any equipment or appliances provided, except to the extent caused by Landlord's gross negligence or willful misconduct.</p>
+
+    <h2>26. ATTORNEY'S FEES AND COSTS</h2>
+    <p>In the event of any legal action or proceeding arising out of or relating to this Lease, the prevailing party shall be entitled to recover from the non-prevailing party all reasonable attorneys' fees, court costs, expert witness fees, and other costs and expenses incurred in connection with such action or proceeding, including any appeals.</p>
+
+    <h2>27. NOTICES</h2>
+    <p>All notices required or permitted under this Lease shall be in writing and shall be deemed delivered when: (a) personally delivered; (b) sent by certified mail, return receipt requested, to the addresses set forth herein; (c) sent by overnight delivery service; or (d) sent by email with confirmed receipt. Landlord may post notices on the Premises if Tenant cannot be reached by other means.</p>
+
+    <h2>28. ADDITIONAL PROVISIONS</h2>
+    <p>28.1 Time is of the Essence: Time is of the essence with respect to all provisions of this Lease.</p>
+    <p>28.2 Waiver: No waiver by Landlord of any breach of this Lease shall be construed as a waiver of any subsequent breach. Landlord's acceptance of rent with knowledge of any breach shall not be deemed a waiver.</p>
+    <p>28.3 Joint and Several Liability: If more than one person signs this Lease as Tenant, each shall be jointly and severally liable for all obligations under this Lease.</p>
+    <p>28.4 Binding Effect: This Lease shall be binding upon and inure to the benefit of the parties and their respective heirs, executors, administrators, successors, and permitted assigns.</p>
+    <p>28.5 Headings: Section headings are for convenience only and shall not affect the interpretation of this Lease.</p>
   `;
 }
 
@@ -393,59 +693,217 @@ function getStateDisclosuresExpanded(stateId: string): string {
     UT: `
       <h2>19. UTAH STATE-SPECIFIC PROVISIONS</h2>
       <h3>19.1 Fair Housing Disclosure</h3>
-      <p>In accordance with the Utah Fair Housing Act (Utah Code § 34-42-1 et seq.), it is unlawful to refuse to rent, discriminate, or discriminate in advertising because of protected class status.</p>
-      <h3>19.2 Radon Gas Disclosure</h3>
-      <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings in Utah. Long-term exposure may pose health risks. Testing for radon is recommended. Information about radon is available from the Utah Department of Environmental Quality.</p>
-      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
-      <p>If the property was built before January 1, 1978, Landlord has disclosed all known information regarding lead-based paint and lead-based paint hazards. Tenant has been provided with the pamphlet "Protect Your Family from Lead in Your Home." Tenant acknowledges receipt of this disclosure.</p>
-      <h3>19.4 Security Deposit Laws (Utah Code § 34-42-1)</h3>
-      <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized accounting of any deductions.</p>
+      <p>In accordance with the Utah Fair Housing Act (Utah Code § 57-21-1 et seq.), it is unlawful to refuse to rent, discriminate, or discriminate in advertising because of race, color, religion, sex, national origin, familial status, source of income, or disability.</p>
+      <h3>19.2 Mold Prevention and Disclosure</h3>
+      <p>Pursuant to the Utah Fit Premises Act (Utah Code § 57-22-4), Landlord discloses that there is no known mold contamination on the Premises. Tenant agrees to maintain adequate ventilation and promptly report any water leaks or visible mold within 48 hours of discovery.</p>
+      <h3>19.3 Radon Gas Disclosure</h3>
+      <p>Radon is a naturally occurring radioactive gas that may accumulate in buildings. Long-term exposure may pose health risks. Testing is recommended.</p>
+      <h3>19.4 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
+      <p>If the property was built before January 1, 1978, Landlord has disclosed all known information regarding lead-based paint hazards.</p>
+      <h3>19.5 Security Deposit (Utah Code § 57-17-3)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized statement of any deductions. Security deposit may not exceed the equivalent of two months' rent.</p>
+      <h3>19.6 Entry Notice</h3>
+      <p>Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies.</p>
     `,
     TX: `
       <h2>19. TEXAS STATE-SPECIFIC PROVISIONS</h2>
       <h3>19.1 Fair Housing Compliance</h3>
-      <p>In accordance with the Texas Fair Housing Act and Texas Property Code § 92.001 et seq., it is unlawful to refuse to rent, negotiate, discriminate, or discriminate in advertising because of protected characteristics.</p>
-      <h3>19.2 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
-      <p>If built before January 1, 1978, Landlord certifies disclosure of all known lead-based paint and lead-based paint hazards. Tenant has received the EPA pamphlet and has had 10 days to conduct an inspection.</p>
-      <h3>19.3 Texas Property Code Compliance</h3>
-      <p>This Lease is governed by Texas Property Code Chapter 92 (Residential Tenancies). Tenant rights and Landlord duties are established in this statutory framework. Both parties acknowledge familiarity with these rights and duties.</p>
-      <h3>19.4 Security Deposit Handling (Texas Property Code § 92.103)</h3>
-      <p>Landlord shall return the security deposit or provide an itemized accounting within 30 days of lease termination.</p>
-      <h3>19.5 Mandatory Lease Language</h3>
-      <p>Tenant is advised that Section 92.001, Texas Property Code grants certain rights and responsibilities to both Tenant and Landlord.</p>
+      <p>In accordance with the Texas Fair Housing Act and Texas Property Code § 92.001 et seq., it is unlawful to discriminate based on race, color, religion, sex, national origin, familial status, or disability.</p>
+      <h3>19.2 Texas Property Code Compliance</h3>
+      <p>This Lease is governed by Texas Property Code Chapter 92. Landlord must repair conditions that materially affect health and safety within a reasonable time after receiving written notice.</p>
+      <h3>19.3 Security Deposit (Texas Property Code § 92.103-109)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized accounting. No statutory limit on security deposit amount.</p>
+      <h3>19.4 Late Fees (Texas Property Code § 92.019)</h3>
+      <p>Late fees cannot be charged until rent is at least one full day late. Late fees must be reasonable and specified in the lease.</p>
+      <h3>19.5 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord certifies disclosure of all known lead-based paint hazards.</p>
+      <h3>19.6 Entry Notice</h3>
+      <p>Texas law does not specify a minimum notice period, but reasonable notice is required except in emergencies.</p>
     `,
     ND: `
       <h2>19. NORTH DAKOTA STATE-SPECIFIC PROVISIONS</h2>
       <h3>19.1 Fair Housing Notice</h3>
-      <p>In accordance with North Dakota Fair Housing Act (N.D. Cent. Code § 14-02.4-01), it is unlawful to refuse to rent or discriminate because of protected status.</p>
-      <h3>19.2 Security Deposit Requirements (N.D. Cent. Code § 47-16-01)</h3>
-      <p>Landlord shall return the security deposit with interest within 30 days of lease termination. Deductions may only be made for damages beyond normal wear and tear, unpaid rent, or lease violations.</p>
-      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
-      <p>If the property was built before January 1, 1978, Landlord discloses all known lead-based paint conditions and hazards in writing.</p>
-      <h3>19.4 Right to Counsel</h3>
-      <p>Tenant has the right to be represented by an attorney in any legal proceedings regarding this lease or tenancy.</p>
-      <h3>19.5 Century Code Compliance</h3>
-      <p>This Lease complies with North Dakota Century Code Chapter 47-16 (Residential Tenancies).</p>
+      <p>In accordance with North Dakota Fair Housing Act (N.D. Cent. Code § 14-02.4-01), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, disability, age, or receipt of public assistance.</p>
+      <h3>19.2 Security Deposit (N.D. Cent. Code § 47-16-07.1)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination. Security deposit may not exceed one month's rent unless special conditions exist.</p>
+      <h3>19.3 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint conditions and hazards.</p>
+      <h3>19.4 Landlord Lien</h3>
+      <p>Pursuant to N.D. Cent. Code § 35-21, Landlord has a lien on Tenant's property for unpaid rent.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>Landlord shall provide reasonable notice before entering the Premises except in emergencies.</p>
     `,
     SD: `
       <h2>19. SOUTH DAKOTA STATE-SPECIFIC PROVISIONS</h2>
       <h3>19.1 Fair Housing Statement</h3>
-      <p>Fair housing is a right guaranteed by state law (S.D. Codified Law § 20-13-1). It is unlawful to discriminate in rental housing based on protected characteristics.</p>
-      <h3>19.2 Security Deposit Laws (S.D. Codified Law § 43-32-6)</h3>
-      <p>Landlord shall return the security deposit within 14 days of lease termination with an accounting of any deductions for damages, cleaning, or unpaid rent.</p>
-      <h3>19.3 Lead-Based Paint Disclosure (Pre-1978 Properties)</h3>
-      <p>For properties built before January 1, 1978, Landlord certifies disclosure of all known lead-based paint hazards and has provided the EPA pamphlet to Tenant.</p>
-      <h3>19.4 Codified Law Compliance</h3>
-      <p>This Lease complies with South Dakota Codified Law Chapter 43-32 (Residential Tenancies).</p>
-      <h3>19.5 Landlord Remedies</h3>
-      <p>Landlord has the right to pursue all available remedies under state law for breach of this Lease, including eviction, suit for damages, and collection of all related costs and fees.</p>
+      <p>In accordance with S.D. Codified Law § 20-13-1, discrimination is prohibited based on race, color, creed, religion, sex, ancestry, disability, familial status, or national origin.</p>
+      <h3>19.2 Security Deposit (S.D. Codified Law § 43-32-6.1)</h3>
+      <p>Landlord shall return the security deposit within 14 days of lease termination (or 45 days if tenancy is over one year) with an itemized statement. Security deposit may not exceed one month's rent.</p>
+      <h3>19.3 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord certifies disclosure of all known lead-based paint hazards.</p>
+      <h3>19.4 Entry Notice</h3>
+      <p>Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies.</p>
+    `,
+    AZ: `
+      <h2>19. ARIZONA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Arizona Residential Landlord and Tenant Act</h3>
+      <p>This Lease is governed by A.R.S. § 33-1301 et seq. (Arizona Residential Landlord and Tenant Act). Both parties acknowledge their rights and obligations under this Act.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Arizona Fair Housing Act (A.R.S. § 41-1491), discrimination is prohibited based on race, color, religion, sex, familial status, national origin, or disability.</p>
+      <h3>19.3 Security Deposit (A.R.S. § 33-1321)</h3>
+      <p>Security deposit may not exceed one and one-half months' rent. Landlord shall return the deposit within 14 business days after termination with an itemized statement of deductions.</p>
+      <h3>19.4 Pool/Spa Disclosure</h3>
+      <p>If the property has a pool or spa, Tenant acknowledges receiving information about pool safety and barrier requirements per A.R.S. § 36-1681.</p>
+      <h3>19.5 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.6 Entry Notice</h3>
+      <p>Landlord shall provide at least 48 hours' notice before entering the Premises for non-emergency purposes.</p>
+      <h3>19.7 Bed Bug Disclosure</h3>
+      <p>Landlord discloses any known bed bug infestations within the last year per A.R.S. § 33-1319.</p>
+    `,
+    CA: `
+      <h2>19. CALIFORNIA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 California Civil Code Compliance</h3>
+      <p>This Lease is governed by California Civil Code § 1940 et seq. Both parties acknowledge their rights under California tenant protection laws.</p>
+      <h3>19.2 Fair Housing (California Fair Employment and Housing Act)</h3>
+      <p>Discrimination is prohibited based on race, color, religion, sex, sexual orientation, gender identity, national origin, disability, familial status, source of income, or other protected characteristics.</p>
+      <h3>19.3 Security Deposit (Civil Code § 1950.5)</h3>
+      <p>Security deposit may not exceed two months' rent (three months for furnished units). Landlord shall return the deposit within 21 days of move-out with an itemized statement.</p>
+      <h3>19.4 Rent Control Notice</h3>
+      <p>If the property is subject to local rent control or the California Tenant Protection Act (AB 1482), Tenant has been notified of applicable rent increase limits and just cause eviction protections.</p>
+      <h3>19.5 Mold Disclosure (Health and Safety Code § 26147)</h3>
+      <p>Landlord discloses any known mold contamination that exceeds permissible exposure limits.</p>
+      <h3>19.6 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.7 Entry Notice</h3>
+      <p>Landlord shall provide at least 24 hours' written notice before entering the Premises except in emergencies.</p>
+      <h3>19.8 Pest Control Disclosure</h3>
+      <p>Landlord discloses any pest control treatments within the property as required by Civil Code § 1940.8.5.</p>
+    `,
+    FL: `
+      <h2>19. FLORIDA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Florida Residential Landlord and Tenant Act</h3>
+      <p>This Lease is governed by Florida Statutes Chapter 83 (Florida Residential Landlord and Tenant Act).</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Florida Fair Housing Act (F.S. § 760.20-760.37), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability.</p>
+      <h3>19.3 Security Deposit (F.S. § 83.49)</h3>
+      <p>Landlord shall hold the security deposit in a Florida banking institution. Within 30 days of receiving the deposit, Landlord shall notify Tenant in writing of where the deposit is held. Deposit shall be returned within 15-60 days after lease termination depending on claims.</p>
+      <h3>19.4 Radon Gas Disclosure (F.S. § 404.056)</h3>
+      <p>RADON GAS: Radon is a naturally occurring radioactive gas that, when accumulated in a building in sufficient quantities, may present health risks. Levels that reduce risk vary from building to building. Radon testing is encouraged.</p>
+      <h3>19.5 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.6 Entry Notice</h3>
+      <p>Landlord shall provide at least 12 hours' notice before entering the Premises except in emergencies.</p>
+    `,
+    ID: `
+      <h2>19. IDAHO STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Idaho Landlord Tenant Law</h3>
+      <p>This Lease is governed by Idaho Code Title 6, Chapter 3 and Title 55, Chapter 2. Both parties acknowledge their rights and obligations under Idaho law.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Idaho Fair Housing Act (Idaho Code § 67-5909), discrimination is prohibited based on race, color, religion, sex, national origin, or disability.</p>
+      <h3>19.3 Security Deposit (Idaho Code § 6-321)</h3>
+      <p>Landlord shall return the security deposit within 21 days of lease termination (or 30 days if lease specifies) with an itemized statement. No statutory limit on security deposit amount.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>Idaho law does not specify minimum notice, but reasonable notice is required except in emergencies.</p>
+    `,
+    MI: `
+      <h2>19. MICHIGAN STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Michigan Truth in Renting Act</h3>
+      <p>This Lease complies with the Michigan Truth in Renting Act (MCL 554.631 et seq.). Provisions that violate tenant rights under this Act are unenforceable.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Elliott-Larsen Civil Rights Act (MCL 37.2101), discrimination is prohibited based on religion, race, color, national origin, age, sex, familial status, or marital status.</p>
+      <h3>19.3 Security Deposit (MCL 554.602-616)</h3>
+      <p>Security deposit may not exceed one and one-half months' rent. Landlord shall return the deposit within 30 days of lease termination with an itemized statement. Deposit must be held in a regulated financial institution.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>Michigan law does not specify minimum notice, but reasonable notice is required except in emergencies.</p>
+      <h3>19.6 Inventory Checklist</h3>
+      <p>Landlord shall provide Tenant with an inventory checklist to document the condition of the Premises at move-in as required by MCL 554.608.</p>
+    `,
+    NC: `
+      <h2>19. NORTH CAROLINA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 North Carolina Residential Rental Agreements Act</h3>
+      <p>This Lease is governed by N.C. Gen. Stat. Chapter 42. Both parties acknowledge their rights and obligations under North Carolina law.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the North Carolina Fair Housing Act (N.C. Gen. Stat. § 41A-1), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability.</p>
+      <h3>19.3 Security Deposit (N.C. Gen. Stat. § 42-50-56)</h3>
+      <p>Security deposit may not exceed two months' rent. Landlord shall hold the deposit in a trust account and return it within 30 days of lease termination with an itemized statement. Landlord shall notify Tenant of the location of the deposit.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>North Carolina law does not specify minimum notice, but reasonable notice is required except in emergencies.</p>
+    `,
+    NV: `
+      <h2>19. NEVADA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Nevada Revised Statutes Compliance</h3>
+      <p>This Lease is governed by NRS Chapter 118A (Landlord and Tenant: Dwellings). Both parties acknowledge their rights and obligations under Nevada law.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Nevada Fair Housing Law (NRS 118.010-120), discrimination is prohibited based on race, religious creed, color, national origin, disability, ancestry, familial status, sex, sexual orientation, or gender identity.</p>
+      <h3>19.3 Security Deposit (NRS 118A.242)</h3>
+      <p>Security deposit may not exceed three months' rent. Landlord shall return the deposit within 30 days of lease termination with an itemized statement.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Entry Notice (NRS 118A.330)</h3>
+      <p>Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies.</p>
+      <h3>19.6 Foreclosure Disclosure</h3>
+      <p>Landlord must disclose if the property is subject to a notice of default, notice of sale, or pending foreclosure per NRS 118A.275.</p>
+    `,
+    OH: `
+      <h2>19. OHIO STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Ohio Landlord-Tenant Law</h3>
+      <p>This Lease is governed by Ohio Revised Code Chapter 5321 (Landlords and Tenants). Both parties acknowledge their rights and obligations under Ohio law.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Ohio Fair Housing Law (ORC 4112.02), discrimination is prohibited based on race, color, religion, sex, familial status, national origin, disability, ancestry, or military status.</p>
+      <h3>19.3 Security Deposit (ORC 5321.16)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination with an itemized statement. If Tenant fails to provide a forwarding address, Landlord must hold the deposit for the Tenant for a reasonable period. No statutory limit on deposit amount.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards. Ohio has additional lead disclosure requirements under ORC 3742.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies per ORC 5321.04.</p>
+    `,
+    VA: `
+      <h2>19. VIRGINIA STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Virginia Residential Landlord and Tenant Act</h3>
+      <p>This Lease is governed by Virginia Code § 55.1-1200 et seq. (Virginia Residential Landlord and Tenant Act). Both parties acknowledge their rights and obligations under this Act.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Virginia Fair Housing Law (Va. Code § 36-96.1), discrimination is prohibited based on race, color, religion, national origin, sex, elderliness, familial status, source of funds, sexual orientation, gender identity, military status, or disability.</p>
+      <h3>19.3 Security Deposit (Va. Code § 55.1-1226)</h3>
+      <p>Security deposit may not exceed two months' rent. Landlord shall return the deposit within 45 days of lease termination with an itemized statement.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Mold Disclosure</h3>
+      <p>Landlord shall disclose visible mold in areas readily accessible within the dwelling unit per Va. Code § 55.1-1215.</p>
+      <h3>19.6 Entry Notice</h3>
+      <p>Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies.</p>
+      <h3>19.7 Military Personnel Rights</h3>
+      <p>Members of the armed forces have additional termination rights under the federal Servicemembers Civil Relief Act and Virginia law.</p>
+    `,
+    WY: `
+      <h2>19. WYOMING STATE-SPECIFIC PROVISIONS</h2>
+      <h3>19.1 Wyoming Landlord Tenant Law</h3>
+      <p>This Lease is governed by Wyoming Statutes Title 1, Chapter 21 (Forcible Entry and Detainer) and Title 34 (Property). Both parties acknowledge their rights under Wyoming law.</p>
+      <h3>19.2 Fair Housing Compliance</h3>
+      <p>In accordance with the Wyoming Fair Housing Act (Wyo. Stat. § 40-26-101), discrimination is prohibited based on race, color, religion, sex, national origin, familial status, or disability.</p>
+      <h3>19.3 Security Deposit (Wyo. Stat. § 1-21-1207-1208)</h3>
+      <p>Landlord shall return the security deposit within 30 days of lease termination (or 15 days if no deductions) with an itemized statement. Deposit may not exceed the equivalent of two months' rent unless agreed.</p>
+      <h3>19.4 Lead-Based Paint Disclosure</h3>
+      <p>For properties built before 1978, Landlord discloses all known lead-based paint hazards.</p>
+      <h3>19.5 Entry Notice</h3>
+      <p>Wyoming law does not specify minimum notice, but reasonable notice is required except in emergencies.</p>
     `
   };
 
   return disclosures[stateId] || `
-    <h2>19. STANDARD DISCLOSURES</h2>
+    <h2>19. STANDARD STATE DISCLOSURES</h2>
     <h3>Fair Housing Notice</h3>
-    <p>This rental is offered without discrimination based on protected class status under applicable fair housing laws.</p>
+    <p>This rental is offered without discrimination based on protected class status under applicable federal and state fair housing laws.</p>
+    <h3>Lead-Based Paint Disclosure</h3>
+    <p>For properties built before 1978, Landlord has disclosed all known lead-based paint hazards.</p>
+    <h3>Security Deposit</h3>
+    <p>Security deposit shall be returned in accordance with applicable state law after lease termination with an itemized statement of any deductions.</p>
   `;
 }
 
@@ -533,29 +991,29 @@ function getRentalApplicationContent(fieldValues: FieldValue, stateId: string): 
     <h1>RENTAL APPLICATION</h1>
     
     <h2>1. APPLICANT INFORMATION</h2>
-    <p>Full Name: ${escapeHtml(String(fieldValues.tenantName) || '_____________________')} | Date of Birth: _____________</p>
-    <p>Social Security Number (last 4): _____________ | Email: ${escapeHtml(String(fieldValues.tenantEmail) || '_____________________')}</p>
-    <p>Phone: ${escapeHtml(String(fieldValues.tenantPhone) || '_____________________')} | Driver's License #: _____________________</p>
+    <p><strong>Full Name:</strong> ${escapeHtml(String(fieldValues.applicantName) || '_____________________')}</p>
+    <p><strong>Date of Birth:</strong> ${escapeHtml(String(fieldValues.applicantDOB) || '_____________________')}</p>
+    <p><strong>Social Security Number:</strong> ${escapeHtml(String(fieldValues.applicantSSN) || '_____________________')}</p>
+    <p><strong>Phone:</strong> ${escapeHtml(String(fieldValues.applicantPhone) || '_____________________')}</p>
+    <p><strong>Email:</strong> ${escapeHtml(String(fieldValues.applicantEmail) || '_____________________')}</p>
     
-    <h2>2. PROPERTY INFORMATION</h2>
-    <p>Address of Rental Property: ${escapeHtml(String(fieldValues.propertyAddress) || '_____________________')}</p>
-    <p>Desired Move-In Date: ${escapeHtml(String(fieldValues.leaseStartDate) || '_____________________')} | Lease Term: _____________</p>
+    <h2>2. CURRENT RESIDENCE</h2>
+    <p><strong>Current Address:</strong> ${escapeHtml(String(fieldValues.currentAddress) || '_____________________')}</p>
+    <p><strong>Current Landlord:</strong> ${escapeHtml(String(fieldValues.currentLandlord) || '_____________________')}</p>
+    <p><strong>Landlord Phone:</strong> ${escapeHtml(String(fieldValues.currentLandlordPhone) || '_____________________')}</p>
+    <p><strong>Time at Current Address:</strong> ${escapeHtml(String(fieldValues.monthsAtCurrentAddress) || '_____')} months</p>
     
     <h2>3. EMPLOYMENT INFORMATION</h2>
-    <p>Current Employer: _____________________ | Position: _____________________</p>
-    <p>Employment Duration: _____________________ | Monthly Gross Income: $_____________________</p>
-    <p>Work Phone: _____________________ | Supervisor Name: _____________________</p>
+    <p><strong>Current Employer:</strong> ${escapeHtml(String(fieldValues.employer) || '_____________________')}</p>
+    <p><strong>Job Title:</strong> ${escapeHtml(String(fieldValues.jobTitle) || '_____________________')}</p>
+    <p><strong>Employer Phone:</strong> ${escapeHtml(String(fieldValues.employerPhone) || '_____________________')}</p>
+    <p><strong>Monthly Gross Income:</strong> $${escapeHtml(String(fieldValues.monthlyIncome) || '_____________________')}</p>
     
-    <h2>4. RENTAL HISTORY</h2>
-    <p>Previous Address: _____________________ | Landlord/Property Manager: _____________________</p>
-    <p>Monthly Rent: $_____ | Reason for Moving: _____________________</p>
-    <p>Would your previous landlord recommend you as a tenant? ☐ Yes ☐ No ☐ Unknown</p>
+    <h2>4. EMERGENCY CONTACT</h2>
+    <p><strong>Emergency Contact Name:</strong> ${escapeHtml(String(fieldValues.emergencyContact) || '_____________________')}</p>
+    <p><strong>Emergency Contact Phone:</strong> ${escapeHtml(String(fieldValues.emergencyPhone) || '_____________________')}</p>
     
-    <h2>5. FINANCIAL REFERENCES</h2>
-    <p>Bank Name: _____________________ | Account Type: _____________________ | Approximate Balance: $_____________</p>
-    <p>Credit Card Issuer: _____________________ | Credit Limit: $_____________________ </p>
-    
-    <h2>6. BACKGROUND AUTHORIZATION AND ACKNOWLEDGMENTS</h2>
+    <h2>5. BACKGROUND AUTHORIZATION AND ACKNOWLEDGMENTS</h2>
     <p>I/We authorize Landlord to conduct a comprehensive background investigation including but not limited to credit report, criminal background check, eviction history, and tenant history verification. I/We understand that false or misleading information on this application may result in immediate denial or termination of tenancy.</p>
     <p>I/We certify that all information provided is true and accurate. I/We acknowledge receipt of the Fair Housing Notice and agree to comply with all lease terms and applicable laws.</p>
     ${getStateDisclosuresExpanded(stateId)}

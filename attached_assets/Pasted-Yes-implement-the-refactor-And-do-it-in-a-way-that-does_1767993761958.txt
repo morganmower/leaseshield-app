@@ -1,0 +1,183 @@
+Yes — implement the refactor. And do it in a way that doesn’t rely on “background” promises (those get lost on deploys/restarts) and always enforces the approval gate.
+
+Below is the exact shape I recommend. You can paste this into your route file with minimal edits.
+
+1) What /run should do now
+
+Default behavior: ingest + queue drafts/reviews only (safe)
+
+Optional: ?mode=publishApproved → publish only approved items
+
+Optional: ?mode=ingestOnly → just ingest
+
+Optional: ?mode=queueOnly → just queue from already-ingested items (if you split those)
+
+2) Add a mutex lock (prevents overlapping runs)
+
+If you already have Redis, use a Redis lock. If not, an in-process mutex is fine on a single instance. Here’s a simple in-process lock you can drop in today:
+
+// src/utils/jobLock.ts
+let locked = false;
+
+export async function withJobLock<T>(name: string, fn: () => Promise<T>): Promise<T> {
+  if (locked) {
+    const err: any = new Error(`${name} is already running`);
+    err.status = 409;
+    throw err;
+  }
+  locked = true;
+  try {
+    return await fn();
+  } finally {
+    locked = false;
+  }
+}
+
+
+If you run multiple server instances, switch this to Redis-based locking later.
+
+3) Refactor /run handler (orchestrator)
+
+This version:
+
+returns a real result (not “started in background”)
+
+keeps admin portal behavior deterministic
+
+still fast enough for an admin click (ingest should be incremental)
+
+app.post('/api/admin/legislative-monitoring/run', /* auth middleware */, async (req, res) => {
+  try {
+    const mode = String(req.query.mode || 'safe').toLowerCase();
+
+    const { withJobLock } = await import('./utils/jobLock');
+    const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+
+    const result = await withJobLock('legislative-monitoring', async () => {
+      if (mode === 'ingestonly') {
+        return await legislativeMonitoringService.ingestNow();
+      }
+
+      if (mode === 'publishapproved') {
+        // Optionally ingest first, but publish must only publish approved items.
+        const ingest = await legislativeMonitoringService.ingestNow();
+        const publish = await legislativeMonitoringService.publishApproved();
+        return { ingest, publish };
+      }
+
+      // Default safe: ingest + queue, no publishing
+      const ingest = await legislativeMonitoringService.ingestNow();
+      const queue = await legislativeMonitoringService.queueFromLatestIngest(); 
+      // or queueFromNewNormalizedUpdates(), etc.
+      return { ingest, queue, note: 'Queued for review (no publishing performed).' };
+    });
+
+    return res.json({ success: true, mode, result });
+  } catch (err: any) {
+    const status = err?.status || 500;
+    return res.status(status).json({ success: false, error: err?.message || 'Unknown error' });
+  }
+});
+
+Important: rename/replace the old runMonthlyMonitoring()
+
+Keep it around temporarily if you want, but don’t call it from routes or schedules anymore.
+
+If you keep it, put it behind a feature flag or mark it deprecated.
+
+4) Keep /ingest and /publish endpoints (debug + control)
+
+Same lock wrapper, but simpler:
+
+app.post('/api/admin/legislative-monitoring/ingest', /* auth */, async (req, res) => {
+  try {
+    const { withJobLock } = await import('./utils/jobLock');
+    const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+
+    const result = await withJobLock('legislative-monitoring', async () => {
+      return await legislativeMonitoringService.ingestNow();
+    });
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    res.status(err?.status || 500).json({ success: false, error: err?.message });
+  }
+});
+
+app.post('/api/admin/legislative-monitoring/publish', /* auth */, async (req, res) => {
+  try {
+    const { withJobLock } = await import('./utils/jobLock');
+    const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
+
+    const result = await withJobLock('legislative-monitoring', async () => {
+      // MUST enforce approval gate inside publishApproved()
+      return await legislativeMonitoringService.publishApproved();
+    });
+
+    res.json({ success: true, result });
+  } catch (err: any) {
+    res.status(err?.status || 500).json({ success: false, error: err?.message });
+  }
+});
+
+5) Service methods you need (minimum set)
+
+Inside legislativeMonitoringService:
+
+ingestNow()
+
+fetch sources
+
+store raw_updates
+
+normalize into normalized_updates
+
+return counts per source + totals
+
+queueFromLatestIngest() (or similar)
+
+find normalized_updates.status = 'new'
+
+map to templates
+
+insert template_review_queue rows (dedupe!)
+
+set updates to queued
+
+return queued template count + update ids
+
+publishApproved()
+
+select template_review_queue.status = 'approved' where not built for current batch
+
+regenerate DOCX/PDF
+
+mark builds
+
+mark updates published
+
+notify users
+
+return success/fail counts
+
+Never publish unapproved
+
+6) One more critical fix: stop saying “background”
+
+Your current handler returns “started in background” but actually doesn’t guarantee completion. For admin actions, synchronous responses are better.
+
+If you truly need background execution, implement a real queue (BullMQ, etc.) and return a jobId you can poll. But don’t do “fire-and-forget Promise” for compliance publishing.
+
+Bottom line
+
+Implement the refactor exactly as above:
+
+/run becomes orchestrator (safe default)
+
+lock prevents overlap
+
+/publish enforces approval gate
+
+old runMonthlyMonitoring() is no longer reachable from routes/schedules
+
+If you paste your existing legislativeMonitoringService method names (or file contents), I’ll map the exact calls so you don’t have to rename everything manually.

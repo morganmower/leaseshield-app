@@ -10,6 +10,16 @@ const STATE_NAMES: Record<string, string> = {
   TX: "Texas",
   ND: "North Dakota",
   SD: "South Dakota",
+  NC: "North Carolina",
+  OH: "Ohio",
+  MI: "Michigan",
+  ID: "Idaho",
+  WY: "Wyoming",
+  CA: "California",
+  VA: "Virginia",
+  NV: "Nevada",
+  AZ: "Arizona",
+  FL: "Florida",
 };
 
 export function StateBadge({ stateId, className }: StateBadgeProps) {

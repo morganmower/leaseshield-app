@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
+import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,54 +17,77 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { FileText, Download, Trash2, Search, Calendar, Building2 } from "lucide-react";
-import { queryClient } from "@/lib/queryClient";
-import type { SavedDocument, Property } from "@shared/schema";
+import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File, ChevronDown } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { queryClient, getAccessToken } from "@/lib/queryClient";
+import type { SavedDocument, RentalProperty, UploadedDocument } from "@shared/schema";
 import { format } from "date-fns";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function MyDocuments() {
   const { toast } = useToast();
+  const [, setLocation] = useLocation();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPropertyId, setSelectedPropertyId] = useState<string>("all");
   const [deleteDocId, setDeleteDocId] = useState<string | null>(null);
+  const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadDocumentName, setUploadDocumentName] = useState("");
+  const [uploadPropertyId, setUploadPropertyId] = useState<string>("none");
+  const [uploadDescription, setUploadDescription] = useState("");
+  const [deleteUploadedDocId, setDeleteUploadedDocId] = useState<string | null>(null);
+  const [editUploadedDoc, setEditUploadedDoc] = useState<UploadedDocument | null>(null);
+  const [editFileName, setEditFileName] = useState("");
+  const [editPropertyId, setEditPropertyId] = useState<string>("none");
+  const [editDescription, setEditDescription] = useState("");
 
   const { data: documents = [], isLoading } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],
   });
 
-  const { data: properties = [] } = useQuery<Property[]>({
-    queryKey: ['/api/properties'],
-    queryFn: async () => {
-      const response = await fetch('/api/properties', { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch properties');
-      return response.json();
-    },
+  const { data: uploadedDocuments = [] } = useQuery<UploadedDocument[]>({
+    queryKey: ['/api/uploaded-documents'],
+  });
+
+  const { data: properties = [] } = useQuery<RentalProperty[]>({
+    queryKey: ['/api/rental/properties'],
   });
 
   const downloadMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const response = await fetch(`/api/saved-documents/${id}/download`, {
+    mutationFn: async ({ id, format }: { id: string; format: 'pdf' | 'docx' }) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/saved-documents/${id}/download?format=${format}`, {
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to download document');
       }
-      return { blob: await response.blob(), id };
+      return { blob: await response.blob(), id, format };
     },
-    onSuccess: ({ blob, id }) => {
+    onSuccess: ({ blob, id, format }) => {
       const savedDoc = documents.find(d => d.id === id);
+      const extension = format === 'docx' ? 'docx' : 'pdf';
       const url = window.URL.createObjectURL(blob);
       const a = window.document.createElement('a');
       a.href = url;
-      a.download = `${savedDoc?.documentName || 'document'}.pdf`;
+      a.download = `${savedDoc?.documentName || 'document'}.${extension}`;
       window.document.body.appendChild(a);
       a.click();
       window.document.body.removeChild(a);
       window.URL.revokeObjectURL(url);
 
+      const formatLabel = format === 'docx' ? 'Word document' : 'PDF';
       toast({
         title: "Document Downloaded",
-        description: "Your PDF has been downloaded successfully.",
+        description: `Your ${formatLabel} has been downloaded successfully.`,
       });
     },
     onError: () => {
@@ -77,9 +101,11 @@ export default function MyDocuments() {
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
+      const token = getAccessToken();
       const response = await fetch(`/api/saved-documents/${id}`, {
         method: 'DELETE',
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
       });
       if (!response.ok) {
         throw new Error('Failed to delete document');
@@ -103,9 +129,171 @@ export default function MyDocuments() {
     },
   });
 
+  const uploadMutation = useMutation({
+    mutationFn: async ({ file, documentName, propertyId, description }: {
+      file: File;
+      documentName: string;
+      propertyId?: string;
+      description?: string;
+    }) => {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('fileName', documentName); // Custom name for the document
+      if (propertyId && propertyId !== 'none') {
+        formData.append('propertyId', propertyId);
+      }
+      if (description) {
+        formData.append('description', description);
+      }
+      
+      const token = getAccessToken();
+      const response = await fetch('/api/uploaded-documents', {
+        method: 'POST',
+        credentials: 'include',
+        body: formData,
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!response.ok) throw new Error('Failed to upload document');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      setIsUploadDialogOpen(false);
+      setUploadFile(null);
+      setUploadDocumentName("");
+      setUploadPropertyId("none");
+      setUploadDescription("");
+      toast({
+        title: "Document Uploaded",
+        description: "Your document has been uploaded successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Upload Failed",
+        description: error.message || "Failed to upload document. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const downloadUploadedMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/uploaded-documents/${id}/download`, {
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!response.ok) {
+        throw new Error('Failed to download document');
+      }
+      return { blob: await response.blob(), id };
+    },
+    onSuccess: ({ blob, id }) => {
+      const uploadedDoc = uploadedDocuments.find(d => d.id === id);
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement('a');
+      a.href = url;
+      a.download = uploadedDoc?.fileName || 'document';
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast({
+        title: "Document Downloaded",
+        description: "Your document has been downloaded successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Download Failed",
+        description: "Failed to download the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUploadedMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/uploaded-documents/${id}`, {
+        method: 'DELETE',
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      if (!response.ok) {
+        throw new Error('Failed to delete document');
+      }
+      return id;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      toast({
+        title: "Document Deleted",
+        description: "The document has been removed from your library.",
+      });
+      setDeleteUploadedDocId(null);
+    },
+    onError: () => {
+      toast({
+        title: "Delete Failed",
+        description: "Failed to delete the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateUploadedMutation = useMutation({
+    mutationFn: async ({ id, fileName, propertyId, description }: {
+      id: string;
+      fileName: string;
+      propertyId: string;
+      description: string;
+    }) => {
+      const token = getAccessToken();
+      const response = await fetch(`/api/uploaded-documents/${id}`, {
+        method: 'PATCH',
+        headers: { 
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
+        credentials: 'include',
+        body: JSON.stringify({ fileName, propertyId, description }),
+      });
+      if (!response.ok) throw new Error('Failed to update document');
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/uploaded-documents'] });
+      setEditUploadedDoc(null);
+      toast({
+        title: "Document Updated",
+        description: "Your document has been updated successfully.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Update Failed",
+        description: "Failed to update the document.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const filteredDocuments = documents.filter(doc => {
     const matchesSearch = doc.documentName.toLowerCase().includes(searchQuery.toLowerCase()) ||
       doc.templateName.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesProperty = selectedPropertyId === "all" ||
+      (selectedPropertyId === "none" && !doc.propertyId) ||
+      doc.propertyId === selectedPropertyId;
+    
+    return matchesSearch && matchesProperty;
+  });
+
+  const filteredUploadedDocuments = uploadedDocuments.filter(doc => {
+    const matchesSearch = doc.fileName.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesProperty = selectedPropertyId === "all" ||
       (selectedPropertyId === "none" && !doc.propertyId) ||
@@ -142,7 +330,7 @@ export default function MyDocuments() {
           </p>
         </div>
 
-        <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -179,23 +367,22 @@ export default function MyDocuments() {
               </Select>
             </div>
           )}
+
+          <Button
+            onClick={() => setIsUploadDialogOpen(true)}
+            data-testid="button-upload-document"
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            Upload Document
+          </Button>
         </div>
 
-        {filteredDocuments.length === 0 ? (
-          <Card>
-            <CardContent className="flex flex-col items-center justify-center py-16">
-              <FileText className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-xl font-semibold mb-2">No Documents Yet</h3>
-              <p className="text-muted-foreground text-center max-w-md mb-4">
-                {searchQuery
-                  ? "No documents match your search. Try a different search term."
-                  : "Generate documents using templates to start building your library."}
-              </p>
-            </CardContent>
-          </Card>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredDocuments.map((document) => (
+        {/* Generated Documents Section */}
+        {filteredDocuments.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Generated Documents</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredDocuments.map((document) => (
               <Card key={document.id} className="hover-elevate" data-testid={`card-document-${document.id}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
@@ -211,22 +398,60 @@ export default function MyDocuments() {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
-                    <Calendar className="h-4 w-4" />
-                    <span data-testid={`text-created-date-${document.id}`}>
-                      {format(new Date(document.createdAt), 'MMM d, yyyy')}
-                    </span>
+                  <div className="space-y-2 mb-4">
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Calendar className="h-4 w-4" />
+                      <span data-testid={`text-created-date-${document.id}`}>
+                        {document.createdAt ? format(new Date(document.createdAt), 'MMM d, yyyy') : 'Recently created'}
+                      </span>
+                    </div>
+                    {document.propertyId && (
+                      <div className="flex items-center gap-2">
+                        <Building2 className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground" data-testid={`text-property-${document.id}`}>
+                          {properties.find(p => p.id === document.propertyId)?.name || 'Unknown Property'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="flex gap-2">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button
+                          size="sm"
+                          disabled={downloadMutation.isPending}
+                          className="flex-1"
+                          data-testid={`button-download-${document.id}`}
+                        >
+                          <Download className="h-4 w-4 mr-2" />
+                          Download
+                          <ChevronDown className="h-4 w-4 ml-1" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem
+                          onClick={() => downloadMutation.mutate({ id: document.id, format: 'pdf' })}
+                          data-testid={`button-download-pdf-${document.id}`}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={() => downloadMutation.mutate({ id: document.id, format: 'docx' })}
+                          data-testid={`button-download-docx-${document.id}`}
+                        >
+                          <FileText className="h-4 w-4 mr-2" />
+                          Download Word
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <Button
                       size="sm"
-                      onClick={() => downloadMutation.mutate(document.id)}
-                      disabled={downloadMutation.isPending}
-                      className="flex-1"
-                      data-testid={`button-download-${document.id}`}
+                      variant="outline"
+                      onClick={() => setLocation(`/templates/${document.templateId}/fill/${document.id}`)}
+                      data-testid={`button-edit-${document.id}`}
                     >
-                      <Download className="h-4 w-4 mr-2" />
-                      Download
+                      <Edit className="h-4 w-4" />
                     </Button>
                     <Button
                       size="sm"
@@ -239,10 +464,250 @@ export default function MyDocuments() {
                   </div>
                 </CardContent>
               </Card>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
+        {/* Uploaded Documents Section */}
+        {filteredUploadedDocuments.length > 0 && (
+          <div className="mb-8">
+            <h2 className="text-2xl font-bold text-foreground mb-4">Uploaded Documents</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredUploadedDocuments.map((document) => (
+                <Card key={document.id} className="hover-elevate" data-testid={`card-uploaded-document-${document.id}`}>
+                  <CardHeader>
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-lg line-clamp-2" data-testid={`text-uploaded-document-name-${document.id}`}>
+                          {document.fileName}
+                        </CardTitle>
+                        {document.description && (
+                          <CardDescription className="mt-1" data-testid={`text-uploaded-description-${document.id}`}>
+                            {document.description}
+                          </CardDescription>
+                        )}
+                      </div>
+                      <File className="h-8 w-8 text-primary flex-shrink-0" />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2 mb-4">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        <span data-testid={`text-uploaded-date-${document.id}`}>
+                          {document.createdAt ? format(new Date(document.createdAt), 'MMM d, yyyy') : 'Recently uploaded'}
+                        </span>
+                      </div>
+                      {document.propertyId && (
+                        <div className="flex items-center gap-2">
+                          <Building2 className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm text-muted-foreground" data-testid={`text-uploaded-property-${document.id}`}>
+                            {properties.find(p => p.id === document.propertyId)?.name || 'Unknown Property'}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex gap-2">
+                      <Button
+                        size="sm"
+                        onClick={() => downloadUploadedMutation.mutate(document.id)}
+                        disabled={downloadUploadedMutation.isPending}
+                        className="flex-1"
+                        data-testid={`button-download-uploaded-${document.id}`}
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Download
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setEditUploadedDoc(document);
+                          setEditFileName(document.fileName);
+                          setEditPropertyId(document.propertyId || "none");
+                          setEditDescription(document.description || "");
+                        }}
+                        data-testid={`button-edit-uploaded-${document.id}`}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setDeleteUploadedDocId(document.id)}
+                        data-testid={`button-delete-uploaded-${document.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Empty State */}
+        {filteredDocuments.length === 0 && filteredUploadedDocuments.length === 0 && (
+          <Card className="border-dashed">
+            <CardContent className="flex flex-col items-center justify-center py-16">
+              <FileText className="h-16 w-16 text-primary mb-6" />
+              <h3 className="text-2xl font-display font-semibold mb-3">
+                {searchQuery ? "No Documents Found" : "Need a Lease or Notice?"}
+              </h3>
+              <p className="text-muted-foreground text-center max-w-md mb-6">
+                {searchQuery
+                  ? "No documents match your search. Try a different search term."
+                  : "Browse state-specific leases and notices updated when legislation changes."}
+              </p>
+              {!searchQuery && (
+                <>
+                  <Button size="lg" onClick={() => setLocation('/templates')} data-testid="button-browse-leases-notices">
+                    Browse Leases & Notices
+                  </Button>
+                  <p className="text-xs text-muted-foreground mt-4">
+                    Documents are reviewed and updated as laws change.
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upload Dialog */}
+        <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
+          <DialogContent data-testid="dialog-upload-document">
+            <DialogHeader>
+              <DialogTitle>Upload Document</DialogTitle>
+              <DialogDescription>
+                Upload your own lease or other document. Accepted formats: PDF, DOC, DOCX (max 20MB).
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label>Select File *</Label>
+                <div 
+                  className="border-2 border-dashed border-primary/50 rounded-lg p-8 hover:border-primary hover:bg-primary/5 transition-colors cursor-pointer flex items-center justify-center"
+                  onClick={() => document.getElementById('file-upload')?.click()}
+                >
+                  <input
+                    id="file-upload"
+                    type="file"
+                    accept=".pdf,.doc,.docx,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+                    className="sr-only"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        if (file.size > 20 * 1024 * 1024) {
+                          toast({
+                            title: "File Too Large",
+                            description: "Please select a file smaller than 20MB.",
+                            variant: "destructive",
+                          });
+                          e.target.value = '';
+                          return;
+                        }
+                        setUploadFile(file);
+                        if (!uploadDocumentName) {
+                          setUploadDocumentName(file.name);
+                        }
+                      }
+                    }}
+                    data-testid="input-file-upload"
+                  />
+                  <Button type="button" data-testid="button-choose-file">
+                    Choose File
+                  </Button>
+                </div>
+                {uploadFile && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Selected: {uploadFile.name} ({(uploadFile.size / 1024 / 1024).toFixed(2)} MB)
+                  </p>
+                )}
+              </div>
+
+              <div className="grid gap-2">
+                <Label htmlFor="document-name">Document Name *</Label>
+                <Input
+                  id="document-name"
+                  placeholder="My Lease Agreement"
+                  value={uploadDocumentName}
+                  onChange={(e) => setUploadDocumentName(e.target.value)}
+                  data-testid="input-document-name"
+                  required
+                />
+                <p className="text-sm text-muted-foreground">Give this document a custom name</p>
+              </div>
+
+              {properties.length > 0 && (
+                <div className="grid gap-2">
+                  <Label htmlFor="upload-property-select">Property (Optional)</Label>
+                  <Select
+                    value={uploadPropertyId}
+                    onValueChange={setUploadPropertyId}
+                  >
+                    <SelectTrigger id="upload-property-select" data-testid="select-upload-property">
+                      <SelectValue placeholder="Select a property" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Property</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="upload-description">Description (Optional)</Label>
+                <Textarea
+                  id="upload-description"
+                  placeholder="Add notes about this document..."
+                  value={uploadDescription}
+                  onChange={(e) => setUploadDescription(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-upload-description"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setIsUploadDialogOpen(false);
+                  setUploadFile(null);
+                  setUploadDocumentName("");
+                  setUploadPropertyId("none");
+                  setUploadDescription("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (uploadFile && uploadDocumentName.trim()) {
+                    uploadMutation.mutate({
+                      file: uploadFile,
+                      documentName: uploadDocumentName.trim(),
+                      propertyId: uploadPropertyId !== "none" ? uploadPropertyId : undefined,
+                      description: uploadDescription || undefined,
+                    });
+                  }
+                }} 
+                disabled={!uploadFile || !uploadDocumentName.trim() || uploadMutation.isPending}
+                data-testid="button-confirm-upload"
+              >
+                {uploadMutation.isPending ? "Uploading..." : "Upload"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Generated Document Dialog */}
         <AlertDialog open={!!deleteDocId} onOpenChange={(open) => !open && setDeleteDocId(null)}>
           <AlertDialogContent data-testid="dialog-confirm-delete">
             <AlertDialogHeader>
@@ -262,6 +727,108 @@ export default function MyDocuments() {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {/* Delete Uploaded Document Dialog */}
+        <AlertDialog open={!!deleteUploadedDocId} onOpenChange={(open) => !open && setDeleteUploadedDocId(null)}>
+          <AlertDialogContent data-testid="dialog-confirm-delete-uploaded">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Delete Uploaded Document?</AlertDialogTitle>
+              <AlertDialogDescription>
+                This will permanently delete this uploaded document from your library. This action cannot be undone.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel data-testid="button-cancel-delete-uploaded">Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={() => deleteUploadedDocId && deleteUploadedMutation.mutate(deleteUploadedDocId)}
+                data-testid="button-confirm-delete-uploaded"
+              >
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Edit Uploaded Document Dialog */}
+        <Dialog open={!!editUploadedDoc} onOpenChange={(open) => !open && setEditUploadedDoc(null)}>
+          <DialogContent data-testid="dialog-edit-uploaded-document">
+            <DialogHeader>
+              <DialogTitle>Edit Document</DialogTitle>
+              <DialogDescription>
+                Update the document name, property assignment, or description.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+              <div className="grid gap-2">
+                <Label htmlFor="edit-document-name">Document Name *</Label>
+                <Input
+                  id="edit-document-name"
+                  value={editFileName}
+                  onChange={(e) => setEditFileName(e.target.value)}
+                  data-testid="input-edit-document-name"
+                />
+              </div>
+
+              {properties.length > 0 && (
+                <div className="grid gap-2">
+                  <Label htmlFor="edit-property-select">Property</Label>
+                  <Select
+                    value={editPropertyId}
+                    onValueChange={setEditPropertyId}
+                  >
+                    <SelectTrigger id="edit-property-select" data-testid="select-edit-property">
+                      <SelectValue placeholder="Select a property" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">No Property</SelectItem>
+                      {properties.map((property) => (
+                        <SelectItem key={property.id} value={property.id}>
+                          {property.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+
+              <div className="grid gap-2">
+                <Label htmlFor="edit-description">Description</Label>
+                <Textarea
+                  id="edit-description"
+                  placeholder="Add notes about this document..."
+                  value={editDescription}
+                  onChange={(e) => setEditDescription(e.target.value)}
+                  rows={3}
+                  data-testid="textarea-edit-description"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button 
+                variant="outline" 
+                onClick={() => setEditUploadedDoc(null)}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (editUploadedDoc && editFileName.trim()) {
+                    updateUploadedMutation.mutate({
+                      id: editUploadedDoc.id,
+                      fileName: editFileName.trim(),
+                      propertyId: editPropertyId,
+                      description: editDescription,
+                    });
+                  }
+                }} 
+                disabled={!editFileName.trim() || updateUploadedMutation.isPending}
+                data-testid="button-save-edit"
+              >
+                {updateUploadedMutation.isPending ? "Saving..." : "Save Changes"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

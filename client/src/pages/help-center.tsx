@@ -19,7 +19,7 @@ export default function HelpCenter() {
   const handleQuickLinkClick = (href: string) => {
     // If not authenticated and trying to access protected routes, redirect to login
     if (!isAuthenticated && (href === '/templates' || href === '/compliance' || href === '/screening')) {
-      window.location.href = '/api/login';
+      window.location.href = '/login';
     } else {
       setLocation(href);
     }
@@ -28,24 +28,23 @@ export default function HelpCenter() {
   const faqs = [
     {
       category: "Account Access",
-      icon: Logo,
-      iconSize: 24,
+      icon: Shield,
       questions: [
         {
           q: "How do I log in to my account?",
-          a: "LeaseShield App uses Replit authentication for secure access. Simply click the 'Log In' or 'Start Free Trial' button, and you'll be redirected to sign in with your Replit account. If you don't have a Replit account yet, you can create one for free."
+          a: "Click the 'Log In' button on the homepage and enter your email address and password. If you signed up during the free trial, use the same email and password you created when registering."
         },
         {
           q: "I forgot my password. How do I reset it?",
-          a: "Since LeaseShield App uses Replit authentication, password management is handled by Replit. To reset your Replit account password, visit replit.com and click 'Forgot Password' on the login page. If you're having trouble accessing your Replit account, contact Replit support at https://replit.com/support for assistance."
+          a: "Click the 'Forgot Password' link on the login page and enter your email address. We'll send you a password reset link that's valid for 1 hour. Check your spam folder if you don't see the email within a few minutes."
         },
         {
           q: "Can't remember which email I used to sign up?",
-          a: "Your LeaseShield App account is connected to your Replit account. Try logging in with any email addresses you typically use. If you're still having trouble, check your email inbox for past messages from LeaseShield App (sent from support@leaseshieldapp.com) or Replit to identify the correct email address."
+          a: "Check your email inbox for past messages from LeaseShield App (sent from support@leaseshieldapp.com) to identify the correct email address. If you're still having trouble, contact our support team and we'll help you locate your account."
         },
         {
           q: "What if I can't access my account?",
-          a: "If you're unable to access your account, first try resetting your Replit password at replit.com. If that doesn't work, contact our support team at support@leaseshieldapp.com with the email address you believe is associated with your account, and we'll help you regain access."
+          a: "First, try using the 'Forgot Password' feature to reset your password. If that doesn't work, contact our support team at support@leaseshieldapp.com with the email address you believe is associated with your account, and we'll help you regain access."
         }
       ]
     },
@@ -55,7 +54,7 @@ export default function HelpCenter() {
       questions: [
         {
           q: "How do I access legal templates?",
-          a: "After subscribing, navigate to the Templates section from your dashboard. Select your state (UT, TX, ND, or SD), choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization."
+          a: "After subscribing, navigate to the Templates section from your dashboard. Select your state from our 15 supported states, choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization."
         },
         {
           q: "What's included in my subscription?",
@@ -73,7 +72,7 @@ export default function HelpCenter() {
       questions: [
         {
           q: "Are these templates legally valid?",
-          a: "All our templates are reviewed by attorneys familiar with landlord-tenant law in UT, TX, ND, and SD. However, they are provided for educational purposes. We recommend reviewing them with your own attorney for your specific situation."
+          a: "All our templates are reviewed by attorneys familiar with landlord-tenant law in our supported states. However, they are provided for educational purposes. We recommend reviewing them with your own attorney for your specific situation."
         },
         {
           q: "How often are templates updated?",
@@ -132,34 +131,33 @@ export default function HelpCenter() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <a href="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo iconSize={32} />
-            <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield App
-            </span>
-          </a>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-login"
-            >
-              Log In
-            </Button>
-            <Button
-              variant="ghost"
-              onClick={() => window.location.href = "/"}
-              data-testid="button-back-home"
-            >
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Home
-            </Button>
+      {/* Header - only show for non-authenticated users */}
+      {!isAuthenticated && (
+        <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+          <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
+            <a href="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
+              <Logo variant="horizontal" size="md" />
+            </a>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = "/login"}
+                data-testid="button-login"
+              >
+                Log In
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => window.location.href = "/"}
+                data-testid="button-back-home"
+              >
+                <ArrowLeft className="mr-2 h-4 w-4" />
+                Back to Home
+              </Button>
+            </div>
           </div>
-        </div>
-      </header>
+        </header>
+      )}
 
       {/* Hero Section */}
       <div className="bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 border-b">
@@ -221,11 +219,7 @@ export default function HelpCenter() {
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-3">
-                    {section.iconSize ? (
-                      <section.icon iconSize={section.iconSize} />
-                    ) : (
-                      <section.icon className="h-6 w-6 text-primary" />
-                    )}
+                    <section.icon className="h-6 w-6 text-primary" />
                     {section.category}
                   </CardTitle>
                 </CardHeader>

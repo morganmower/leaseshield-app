@@ -1,0 +1,200 @@
+Here’s a safe way to add new legislative APIs without breaking anything: treat every new source as a plug-in adapter that outputs the same normalized shape, then run it through the same dedupe → AI review queue → publish → versioning → notifications pipeline you already have.
+
+If you implement the “adapter contract” + a couple guardrails, adding a 5th/6th source becomes boring and safe.
+
+The core rule
+
+No source is allowed to talk directly to templates, versions, notifications, or document generation.
+A source is only allowed to produce NormalizedItems. Everything else stays unchanged.
+
+So your pipeline becomes:
+
+[Source Adapter(s)] → normalize → dedupe → store raw + normalized → queue for AI → review queue → publish → templateVersions → notify → docs
+
+1) Create a Source Adapter contract
+
+Add a small interface in something like server/legislation/sources/types.ts:
+
+export type SourceId =
+  | "legiscan"
+  | "pluralPolicy"
+  | "federalRegister"
+  | "courtListener"
+  | "NEW_SOURCE"; // add here later
+
+export type NormalizedItemType = "bill" | "regulation" | "case";
+
+export type NormalizedLegislationItem = {
+  source: SourceId;
+  sourceKey: string;           // unique ID from that source (bill_id, doc number, case id, etc.)
+  type: NormalizedItemType;
+  jurisdiction: {
+    country: "US";
+    state?: string;            // "UT", "CA"
+    locality?: string;         // optional if you add counties/cities later
+  };
+  title: string;
+  summary?: string;
+  status?: string;             // introduced, passed, signed, effective, etc.
+  introducedDate?: string;     // ISO
+  effectiveDate?: string;      // ISO
+  updatedAt?: string;          // ISO from source if possible
+  url?: string;
+
+  // For AI + auditability
+  raw: unknown;                // original payload (store it)
+  text?: string;               // if source provides full text or extracted text
+};
+
+
+And the adapter interface:
+
+export type SourceFetchParams = {
+  states: string[];            // ["UT","ID"]
+  since?: string;              // ISO date for incremental runs
+};
+
+export interface LegislationSourceAdapter {
+  id: SourceId;
+  fetch(params: SourceFetchParams): Promise<NormalizedLegislationItem[]>;
+}
+
+
+Why this matters: once every source returns the same NormalizedLegislationItem, the rest of your system never changes when you add sources.
+
+2) Add a “Source Registry” so adding sources is one line
+import { LegislationSourceAdapter } from "./types";
+import { legiscanAdapter } from "./legiscanAdapter";
+import { pluralPolicyAdapter } from "./pluralPolicyAdapter";
+// ...
+
+export const SOURCE_REGISTRY: LegislationSourceAdapter[] = [
+  legiscanAdapter,
+  pluralPolicyAdapter,
+  // ...
+];
+
+
+When you add a new API, you create newSourceAdapter.ts and add it to the registry. Nothing else.
+
+3) Dedupe safely across sources (critical)
+
+You will get duplicates: the same bill might appear in LegiScan and OpenStates, etc.
+
+You need two identifiers:
+
+A) Stable per-source uniqueness
+
+Use (source, sourceKey) — always unique.
+
+B) Cross-source dedupe key (best-effort)
+
+Generate a computed key like:
+
+For state bills: STATE + billNumber + sessionYear (ex: UT-HB0123-2026)
+
+For federal: FR + documentNumber
+
+For cases: court + docketNumber
+
+Put that in normalized items as crossRefKey?: string.
+
+Then your storage can:
+
+keep all raw items (for audit)
+
+link them to a single “canonical” record per crossRefKey
+
+This prevents multiple AI reviews for the same law.
+
+4) Guardrails so sources cannot break monitoring runs
+A) Isolation per source
+
+When running monitoring:
+
+Run each source in its own try/catch
+
+Store failures, don’t fail the entire run
+
+Continue with other sources
+
+B) Rate-limit and circuit-break
+
+You already know Plural Policy is rate limited. Put rate limiting inside the adapter so it can’t DOS your pipeline.
+
+C) “Schema validation” at the boundary
+
+Validate normalized items before inserting them. If a source returns junk, you drop it (and log).
+
+If you’re not using Zod yet, this is a perfect place.
+
+5) Keep the rest of your pipeline unchanged
+
+Once normalized items are in your DB, your existing steps remain the same:
+
+billAnalysisService consumes normalized items
+
+writes into templateReviewQueue
+
+admin approves
+
+createTemplateVersion
+
+notifications
+
+documentGenerator renders from the published template version
+
+This is what keeps your system stable.
+
+6) How to add a new legislation API in practice
+
+The safe add path is:
+
+Create server/<newSource>Service.ts (low-level fetcher)
+
+Create server/legislation/sources/<newSource>Adapter.ts (maps raw → normalized)
+
+Register adapter in SOURCE_REGISTRY
+
+Add 3 tests (see below)
+
+That’s it.
+
+7) The 3 tests that prevent breaking everything
+Test 1: Adapter returns valid normalized items
+
+no empty title
+
+has source + sourceKey
+
+jurisdiction is correct
+
+Test 2: Monitoring run continues if source fails
+
+simulate one adapter throwing
+
+ensure others still write results
+
+Test 3: Dedupe works
+
+send 2 items from 2 sources with same crossRefKey
+
+ensure only one AI review entry is created
+
+These tests let you add new sources without fear.
+
+8) What additional sources to add (high value, low risk)
+
+Given what you want (state + national + housing related), good additions usually are:
+
+OpenStates v3 (you already have via Plural Policy)
+
+State legislature RSS/feeds (many states have bill action feeds)
+
+GovInfo / Congress.gov (federal bills; not just Federal Register rules)
+
+HUD / CFPB / DOJ updates feeds (regulations + guidance)
+
+State housing agency bulletins (often where landlord-tenant compliance updates show up)
+
+(We should pick sources where you can reliably extract bill IDs / doc numbers for dedupe.)

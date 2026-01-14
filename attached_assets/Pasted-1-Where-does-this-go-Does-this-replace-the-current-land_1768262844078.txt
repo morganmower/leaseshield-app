@@ -1,0 +1,161 @@
+1️⃣ Where does this go?
+Does this replace the current landing page hero, or live elsewhere?
+✅ Answer: Yes — this replaces the current public landing page hero.
+
+Not post-login. Not buried. Not a separate page.
+
+Why:
+
+70–90% of your traffic arrives with a screening report problem
+
+This is the first 2–4 seconds clarity moment
+
+You are fixing the front door, not adding a new room
+
+What happens to the current hero?
+
+It doesn’t disappear — it gets demoted.
+
+Structure recommendation:
+
+[NEW Screening-first Hero]
+[Two-card “Start Here”]
+[Simple Diagram]
+—————————————
+[Existing hero content reframed as “What else LeaseShield does”]
+[How It Works]
+[Association differentiation]
+[Trust signal]
+
+
+Think of this as:
+
+New Hero = “Why you’re here”
+
+Old Hero = “What else you get”
+
+This preserves all your work and fixes the entry problem.
+
+2️⃣ “Explain My Screening Report” CTA — where does it go?
+
+This is critical.
+
+❌ What it should NOT do
+
+❌ Not dump them on a generic dashboard
+
+❌ Not make them choose “credit vs criminal vs eviction” immediately
+
+❌ Not feel like they clicked the wrong thing
+
+✅ Correct destination (best option)
+
+A unified “Explain a Screening Report” entry screen
+(even if it’s just a thin wrapper over existing tools)
+
+Minimum viable version (no overbuild):
+
+Route them to one page that does 3 things:
+
+Page title:
+
+Explain a Screening Report
+
+Then immediately asks ONE question:
+
+What would you like help understanding?
+
+Options (big buttons):
+
+Credit Report
+
+Criminal Report
+
+Eviction History
+
+Each option routes to your existing decoder pages.
+
+This preserves your current architecture but removes confusion.
+
+⚠️ Why not send them directly to Credit Decoder?
+
+Because they don’t know that’s what they need yet.
+
+Remember your rule:
+
+If a 6th grader has to think, you lost them.
+
+This small “choice gate” builds confidence.
+
+3️⃣ Two-card section — where does “Upload or connect” go?
+✅ Answer: Do NOT create a new upload system yet.
+
+That’s overbuilding.
+
+Instead:
+
+Card 1 (“Explain My Screening Report”) routes to:
+
+➡️ The unified decoder entry screen (described above)
+
+From there:
+
+“Upload” uses your existing upload logic
+
+“Connect” uses Western Verify integration
+
+You reuse everything you already built
+
+The label is doing the work — not a new feature.
+
+Card 2 (“New Application + Screening”) routes to:
+
+➡️ Your existing application flow
+
+No changes needed here other than:
+
+Clear expectation
+
+Secondary visual weight
+
+🧠 Big Picture Architecture (This Is the Key Insight)
+
+You are NOT building new functionality.
+
+You are building a confidence ramp.
+
+Here’s the mental flow now:
+
+Before (current):
+
+“Here’s a platform. Figure out where you belong.”
+
+After (new):
+
+“You’re here to understand a report → click this → we’ll guide you.”
+
+That’s the difference between:
+
+Impressive software
+
+Relief-driven product
+
+📍 Summary (Very Clear Answers)
+Question	Answer
+Replace landing page hero?	✅ Yes — this becomes the new public hero
+Is this post-login only?	❌ No — this fixes the front door
+“Explain My Report” CTA destination	✅ New unified decoder entry screen
+Direct to credit/criminal decoder?	❌ Not directly
+New upload system needed?	❌ No
+Two-card section routing	✅ Card 1 → decoder entry, Card 2 → application
+🚦My Strong Recommendation for Implementation Order
+
+Replace hero + CTAs (no backend changes)
+
+Add two-card section (routing only)
+
+Add simple diagram (purely visual)
+
+Add unified decoder entry screen (light frontend work)
+
+Do not build anything else yet.

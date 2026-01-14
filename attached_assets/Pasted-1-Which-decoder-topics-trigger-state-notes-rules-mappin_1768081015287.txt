@@ -1,0 +1,248 @@
+1) Which decoder topics trigger state notes (rules + mapping)
+Rule: State notes only appear when BOTH are true
+
+user.preferredState (or selected state override) is set AND
+
+The topic is in the state-sensitive trigger list below AND
+
+We have a vetted state snippet for that topic/state
+
+If no snippet exists → don’t show the “State-Specific Notes” accordion at all.
+
+Trigger taxonomy (by decoder)
+A) Credit Decoder — Trigger Topics
+
+Only add state notes for items where state law commonly differs:
+
+security_deposit_limits (caps, timing, itemization rules)
+
+application_fees (caps, receipts, refund rules)
+
+source_of_income (SOI protections)
+
+late_fees_rules (caps/requirements in some states/cities)
+
+adverse_action_state_addons (rare; only if you truly have them vetted)
+
+Do NOT add state notes for generic credit definitions (charge-off, collections, utilization) unless tied to deposits/fees.
+
+B) Criminal/Eviction Decoder — Trigger Topics
+
+State notes are most valuable here:
+
+fair_chance_housing / “ban-the-box for housing”
+
+criminal_lookback_limits (if state/city restricts consideration)
+
+arrest_vs_conviction_rules (if state guidance adds constraints)
+
+individualized_assessment_requirement
+
+eviction_record_sealing / “restricted access or use”
+
+eviction_filing_vs_judgment (if state law meaningfully distinguishes)
+
+local_overrides_present (NYC, Chicago, etc. → show “Local rules may apply”)
+
+C) Output placement rules
+
+State notes only appear in a collapsible accordion labeled:
+“State-Specific Notes (IL)”
+
+The “always-visible” section stays universal.
+
+Suggested implementation schema
+
+Create a state note registry keyed by (decoder, topic, state):
+
+type Decoder = "credit" | "criminal_eviction";
+type Topic =
+  | "security_deposit_limits"
+  | "application_fees"
+  | "source_of_income"
+  | "late_fees_rules"
+  | "fair_chance_housing"
+  | "individualized_assessment"
+  | "eviction_record_sealing"
+  | "local_overrides_present";
+
+STATE_NOTES[decoder][topic][stateCode] = {
+  title: "State-Specific Notes (Illinois)",
+  bullets: string[],
+  lastReviewed: "2026-01-10",
+  sources: string[] // optional internal, not shown to end user
+}
+
+2) Example state-specific snippets (CA, IL, TX, NY)
+
+Important: These are written to be non-legal-advice, neutral, and safe. They are phrased as “notes” and avoid telling users what to do.
+
+A) CALIFORNIA (CA)
+Credit → security_deposit_limits
+
+State-Specific Notes (California)
+
+California places limits on how much a landlord may collect as a security deposit, and the limits can depend on the unit type and circumstances.
+
+Security deposit return timelines and itemization requirements are regulated.
+
+If you use deposit amounts as part of your screening process, apply the same approach consistently to all applicants.
+
+Criminal/Eviction → local_overrides_present
+
+State-Specific Notes (California)
+
+Some California cities and counties have additional tenant protections that may affect screening and eviction practices.
+
+If the property is in a major metro area, consider whether local ordinances apply in addition to state law.
+
+B) ILLINOIS (IL)
+Criminal/Eviction → fair_chance_housing
+
+State-Specific Notes (Illinois)
+
+Illinois has fair housing protections that can affect how criminal history is considered in housing decisions.
+
+Best practice is to rely on consistent written criteria and evaluate records based on factors like outcome and recency rather than using blanket rules.
+
+In some areas (including Chicago), additional local ordinances may apply.
+
+Criminal/Eviction → local_overrides_present
+
+State-Specific Notes (Illinois)
+
+Chicago and some other local jurisdictions may have additional tenant protections that impact screening and leasing workflows.
+
+If your property is within a city with local ordinances, confirm whether local rules add requirements beyond state law.
+
+Credit → application_fees
+
+State-Specific Notes (Illinois)
+
+Application fee rules can vary by local jurisdiction.
+
+If you charge fees, keep the process consistent and document your fee policy in writing before screening.
+
+C) TEXAS (TX)
+Eviction → eviction_filing_vs_judgment
+
+State-Specific Notes (Texas)
+
+Eviction records can reflect different stages of a case (filing, judgment, or possession).
+
+When evaluating eviction history, outcomes and recency are typically more informative than the presence of a filing alone.
+
+Apply the same rental-history standards to all applicants.
+
+Credit → security_deposit_limits
+
+State-Specific Notes (Texas)
+
+Security deposit handling is regulated by state law, including rules about return timing and deductions.
+
+If you adjust deposit practices based on screening outcomes, document your approach and apply it consistently.
+
+D) NEW YORK (NY)
+Criminal/Eviction → local_overrides_present
+
+State-Specific Notes (New York)
+
+New York has significant local variation (especially New York City) that can affect screening and tenant protections.
+
+If your property is in NYC or another large municipality, local rules may add requirements beyond state law.
+
+Eviction → eviction_record_sealing
+
+State-Specific Notes (New York)
+
+Access to and use of eviction records may be restricted in some situations, and local practices can vary.
+
+If you rely on eviction history, ensure your criteria focus on verifiable outcomes and are applied consistently.
+
+Credit → source_of_income
+
+State-Specific Notes (New York)
+
+Some New York jurisdictions have strong source-of-income protections.
+
+Screening criteria should be applied consistently and should not treat lawful sources of income differently.
+
+Note: These are “safe snippets.” If you want them to be more precise, we should lock a vetted research/source workflow per state/topic before tightening language.
+
+3) Exact prompt structure so AI never oversteps state law language
+Goals
+
+The model must never say “you should deny/approve”
+
+State law content must be bounded, optional, and neutral
+
+State notes must only appear when a vetted snippet exists
+
+Output must be consistent (same headings every time)
+
+System-style instruction template (for your decoder)
+
+Use this as the “decoder guardrails” prompt (prepend to every user query):
+
+You are LeaseShield Decoder. Your job is to explain screening report items in plain English.
+You must NOT make approval/denial decisions or tell the user what to do.
+You must NOT recommend specific actions like "deny," "approve," "charge more," or "require a cosigner."
+You may describe common screening approaches used by landlords in a neutral, descriptive way (no "should").
+
+Compliance:
+- Emphasize consistent written criteria and equal application across applicants.
+- Do not mention protected classes or infer anything about the applicant beyond the reported item.
+- If adverse action is mentioned, keep it general and informational.
+
+State law notes:
+- Only include state-specific notes if a vetted snippet is provided in STATE_NOTES for the user's state.
+- State notes must appear ONLY inside a collapsible section titled "State-Specific Notes (STATE_NAME)".
+- If no vetted snippet exists, omit the state notes section entirely.
+- State notes must be phrased as general informational notes, not legal advice, and must avoid absolute legal claims.
+
+Formatting:
+Return output strictly in this structure:
+1) What This Means (3-4 sentences max)
+2) How This Is Commonly Evaluated (bullets; weighting factors only)
+3) What This Does NOT Automatically Mean (bullets)
+4) [Accordion] Common Screening Approaches Used by Landlords (bullets)
+5) [Accordion] Consistency Check (checklist bullets)
+6) [Accordion] Documentation Helper (copy-paste neutral language)
+7) [Accordion] Optional Follow-Up Questions (numbered)
+8) Footer: one-line legal boundary statement (muted tone)
+
+If the user asks for a decision, respond: "I can’t make the decision for you, but I can help you apply your written criteria consistently."
+
+Runtime prompt payload (recommended)
+
+When calling the model, pass structured context:
+
+{
+  "decoder": "criminal_eviction",
+  "topic": "fair_chance_housing",
+  "userQuestion": "...",
+  "state": {
+    "code": "IL",
+    "name": "Illinois",
+    "preferredStateSource": "profile"
+  },
+  "stateNotes": {
+    "enabled": true,
+    "snippet": {
+      "title": "State-Specific Notes (Illinois)",
+      "bullets": ["...", "..."]
+    }
+  }
+}
+
+Hard rule
+
+If stateNotes.snippet is missing → do not render the state notes accordion.
+
+Copy for the UI (so users understand state is automatic)
+
+At the bottom, muted:
+
+State-specific notes shown for: Illinois · Change in Settings
+
+And only show that line if state notes actually appeared.

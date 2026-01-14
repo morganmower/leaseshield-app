@@ -1,0 +1,258 @@
+Perfect — I’m going to give you a very concrete, designer-level spec you can hand straight to Replit (or implement yourself) without interpretation. This will fix the “cheap / SaaS-template” feel and make the section feel intentional, premium, and confident, consistent with the rest of LeaseShield.
+
+I’ll break this into (A) structure, (B) colors, (C) typography, and (D) exact layout rules.
+
+A. SECTION STRUCTURE (WHAT GOES WHERE)
+1️⃣ Full-width “Decision Section” wrapper
+
+This is critical.
+
+Purpose:
+Visually signal: “You’re now making a choice.”
+
+Wrapper styles
+
+Background: #F9FAFB (very light neutral gray)
+
+Padding top/bottom: 64px
+
+Padding left/right: same as rest of page
+
+Max width: same container as hero
+
+This immediately gives weight and separation.
+
+2️⃣ Section header (replace “START HERE” entirely)
+Header block (centered)
+What would you like help with right now?
+Most landlords start by explaining an existing screening report.
+
+
+Why this works
+
+Human
+
+Confident
+
+No shouting
+
+No marketing fluff
+
+3️⃣ Two-card decision row
+
+Grid: 2 columns desktop, stacked mobile
+
+Gap between cards: 32px
+
+The left card is the hero. The right card is clearly secondary.
+
+B. COLOR SCHEME (EXACT VALUES)
+
+You already have a strong brand palette — we’re just using it correctly.
+
+LEFT CARD (PRIMARY PATH)
+
+This should feel safe, premium, and obvious.
+
+Background
+
+#ECFDF5 (very soft green tint)
+
+Border
+
+None (important — borders feel cheap here)
+
+Shadow
+
+0 10px 30px rgba(16, 185, 129, 0.15)
+
+(Matches Tailwind emerald family)
+
+Creates depth without harsh contrast
+
+Accent color
+
+Primary green: #10B981
+
+Icon background: #10B981
+
+Icon color: #FFFFFF
+
+RIGHT CARD (SECONDARY PATH)
+
+This should feel available but quieter.
+
+Background
+
+#FFFFFF
+
+Border
+
+1px solid #E5E7EB (light gray)
+
+Shadow
+
+0 4px 12px rgba(0,0,0,0.05)
+
+Accent color
+
+Neutral slate/gray
+
+Icon background: #F3F4F6
+
+Icon color: #6B7280
+
+CTA BUTTON (INSIDE LEFT CARD)
+
+This is important: the CTA lives inside the left card, not below.
+
+Background: #10B981
+
+Text: #FFFFFF
+
+Hover: #059669
+
+Border radius: 12px
+
+Height: 48px
+
+Font weight: 600
+
+C. TYPOGRAPHY (FONTS & SIZES)
+
+Use whatever font family you already have site-wide (likely Inter or similar).
+Do not introduce new fonts.
+
+Section header text
+Main header
+
+Font size: 32px
+
+Font weight: 700
+
+Color: #111827
+
+Line height: 1.2
+
+Subheader
+
+Font size: 16px
+
+Font weight: 400
+
+Color: #6B7280
+
+Margin top: 8px
+
+Card titles
+Left card title
+
+Font size: 20px
+
+Font weight: 600
+
+Color: #065F46 (dark green)
+
+Right card title
+
+Font size: 18px
+
+Font weight: 600
+
+Color: #111827
+
+Card body text
+
+Font size: 15px
+
+Line height: 1.5
+
+Color: #374151
+
+Keep this short. No arrows. No workflows.
+
+D. EXACT CARD CONTENT (COPY + PLACEMENT)
+LEFT CARD (PRIMARY)
+Icon
+
+Size: 48px x 48px
+
+Rounded: 12px
+
+Green background
+
+Simple magnifying glass icon (solid)
+
+Title
+Explain My Screening Report
+
+Description (one sentence)
+Plain-English explanations of credit, criminal, or eviction reports — with compliance risk flags.
+
+CTA (inside card, bottom-left)
+
+Button text:
+
+Explain My Screening Report →
+
+
+Do NOT add secondary links.
+
+RIGHT CARD (SECONDARY)
+Icon
+
+Size: 40px x 40px
+
+Light gray background
+
+User + document icon
+
+Title
+New Tenant Application + Screening
+
+Description
+Send an application link and run screening through Western Verify as part of a full compliant workflow.
+
+
+No CTA button here — just arrow icon in top-right corner.
+
+E. WHAT TO REMOVE (IMPORTANT)
+
+To avoid the “cheap” feel:
+
+❌ Remove:
+
+Diagram with pastel icons
+
+Thin arrows
+
+“START HERE” eyebrow text
+
+Any text saying “Most people choose…” inside cards
+
+Borders on the primary card
+
+F. WHY THIS WILL FEEL PREMIUM
+
+This approach works because:
+
+You’re using depth, not borders
+
+You’re using contrast, not clutter
+
+You’re letting one path dominate visually
+
+You’re aligning with the calm, confident tone of the decoder UI
+
+You’re avoiding SaaS-template clichés
+
+The user experience becomes:
+
+“Oh — this is clearly what I’m supposed to do.”
+
+FINAL INSTRUCTION (IMPORTANT)
+
+Implement exactly this, then stop.
+
+Do not tweak spacing endlessly afterward.
+Do not add more explanation.

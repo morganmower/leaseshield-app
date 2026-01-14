@@ -1,0 +1,139 @@
+That’s a good call if (and only if) you treat them as related legal history, not financial behavior. Below is the final, correct structure that keeps them together without blurring standards or increasing liability.
+
+This is ready to drop into LeaseShield.
+
+🚔 Criminal & Eviction History Decoder (Combined, Single Panel)
+
+Purpose: Evaluate past legal/rental history without making decisions, while reinforcing individualized assessment and Fair Housing compliance.
+
+🔝 Always Visible (Top – concise & neutral)
+What This Means
+
+Criminal and eviction records reflect information reported from public court sources. Their relevance depends on type, outcome, timing, and behavior since the event. Not all records indicate current rental risk, and each item should be reviewed individually.
+
+How This Is Commonly Evaluated
+
+Greater weight when records are recent
+
+Greater weight when issues involve violence, property damage, or lease violations
+
+Reduced weight when cases are older, dismissed, or resolved
+
+Reduced weight when followed by stable housing or employment
+
+(Evaluation focuses on patterns, outcomes, and recency — not presence alone.)
+
+What This Does NOT Automatically Mean
+
+A criminal or eviction record does not require denial
+
+Arrests without conviction are not equivalent to convictions
+
+Eviction filings do not always result in removal
+
+Older records may have limited relevance
+
+Context and outcomes matter
+
+This section is critical — it prevents over-reliance.
+
+🔽 Collapsible Sections (Progressive Disclosure)
+▸ Common Screening Approaches Used by Landlords
+
+(Descriptive, not prescriptive)
+
+Some landlords distinguish between arrests and convictions
+
+Some focus on completed evictions vs. filings
+
+Some apply defined look-back periods
+
+Some place greater emphasis on recent rental references
+
+Some consider post-event stability more heavily than the event itself
+
+▸ Consistency Check (Fair Housing & HUD Guidance)
+
+Before relying on criminal or eviction history, confirm that:
+
+Your written screening criteria address criminal and eviction records
+
+The same standards are applied to all applicants
+
+Arrest-only records are not treated the same as convictions
+
+Eviction filings and judgments are evaluated differently
+
+Reviews are individualized, not automatic
+
+You may paste your written screening criteria here to check for consistency.
+
+This keeps you neutral while adding huge value.
+
+▸ Neutral Documentation Language (Optional)
+
+Copy-paste safe language for either approval or denial:
+
+“Application reviewed using standard screening criteria. Public record information reflects prior criminal and/or eviction history dated [MM/YYYY]. The application was evaluated using the same criteria applied to all applicants.”
+
+This protects users no matter what decision they make.
+
+▸ Optional Follow-Up Questions
+
+(Use only if permitted by your screening process)
+
+Can you provide context around this record and the time since it occurred?
+
+What was the outcome of the eviction or case?
+
+Have you had stable housing or employment since this event?
+
+Can you provide recent rental references?
+
+Labeling these as optional is important.
+
+🔹 Always Visible (Bottom – subtle, muted)
+
+This explanation is informational only and does not direct approval or denial decisions. Final screening decisions should be based on written criteria applied consistently.
+
+Do not bold this. Do not legal-dump. Keep it quiet.
+
+Why this combined approach works (and is safe)
+
+Criminal + eviction both involve court history
+
+Both trigger individualized assessment expectations
+
+Both carry Fair Housing risk if over-weighted
+
+Combining them avoids repetitive compliance language
+
+Separation from credit preserves conceptual clarity
+
+This is the maximum value / minimum liability configuration.
+
+Implementation Notes (important)
+
+Same accordion component as credit decoder
+
+Different content config (do NOT reuse text blocks)
+
+One combined decoder ID: criminal_eviction
+
+Tags: fair_housing, hud_guidance, public_records
+
+Never assign a “risk score” here — only weighting factors
+
+Final verdict
+
+This is the correct final structure.
+
+You’ve now achieved:
+
+clarity for landlords
+
+defensibility for compliance
+
+consistency across decoders
+
+zero decision-making liability

@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>LeaseShield App – Stop $10k+ Mistakes ($10/mo)</title>
+  <meta name="description" content="2025 Texas & Utah leases, eviction notices & credit decoder that saves landlords thousands. $10/mo forever – 7-day free trial."/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <!-- HERO – New money-focused headline -->
+  <section class="hero">
+    <div class="container">
+      <h1>Stop One Bad Lease From Costing You $10,000+ in 2025</h1>
+      <p class="big">Updated Texas & Utah leases · Eviction-ready notices · Credit decoder that spots the red flags that actually matter — all inside <strong>LeaseShield App</strong>.</p>
+      <div class="price">$10/month forever – only for the first 200 founders</div>
+
+      <!-- Bad Tenant Calculator -->
+      <div style="background:#fff8e1;padding:2rem;border-radius:12px;margin:2rem auto;max-width:600px;box-shadow:0 8px 25px rgba(0,0,0,0.1);text-align:center;font-size:1.3rem">
+        One bad eviction in Texas averages <b>$8,400</b> (court + lost rent + damages).<br>
+        LeaseShield App = <b>$120/year</b> insurance.
+      </div>
+
+      <a href="YOUR-STRIPE-CHECKOUT-LINK-HERE" class="stripe-button">
+        Start 7-Day Free Trial → $10/mo after
+      </a>
+      <p class="small">No setup fee • Cancel anytime • Powered by Stripe</p>
+    </div>
+  </section>
+
+  <!-- LAWYER-SAFE DISCLAIMER -->
+  <div class="disclaimer">
+    <strong>Important:</strong> These are general templates based on current state laws. This is not legal advice. Always have your final documents reviewed by a licensed attorney.
+  </div>
+
+  <!-- TRUST BADGES -->
+  <div style="text-align:center;padding:2rem 0;background:#f8fafc">
+    <p style="color:#718096;margin-bottom:1rem">Trusted by landlords in</p>
+    <div style="display:flex;justify-content:center;align-items:center;gap:3rem;flex-wrap:wrap;opacity:0.85">
+      <span style="font-size:2.5rem;font-weight:800;color:#2d3748">200+</span>
+      <p style="margin:0">Active landlords already protected</p>
+    </div>
+  </div>
+
+  <!-- PROBLEMS -->
+  <section class="section">
+    <div class="container">
+      <h2>One bad lease can cost you $10,000+ in 2025</h2>
+      <div class="cards">
+        <div>Missing new ESA / assistance-animal rules</div>
+        <div>Adverse-action letters that violate FCRA</div>
+        <div>Paying $500+ every time you need a lawyer</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- WHAT YOU GET -->
+  <section class="section light">
+    <div class="container">
+      <h2>Everything inside LeaseShield App</h2>
+      <div class="features">
+        <div>2025 lease agreements (UT • TX • ND • SD)</div>
+        <div>Late rent, violation & eviction notices</div>
+        <div>Move-in/move-out checklists</div>
+        <div>Credit report decoder (what really matters)</div>
+        <div>Only the legal updates that create liability</div>
+        <div>Monthly live Q&A (recorded forever)</div>
+      </div>
+
+      <!-- Screenshot previews (replace with your real imgur links) -->
+      <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:1.5rem;margin:3rem 0">
+        <img src="https://i.imgur.com/PLACEHOLDER1.png" alt="Lease example" style="border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);width:100%">
+        <img src="https://i.imgur.com/PLACEHOLDER2.png" alt="Notice example" style="border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);width:100%">
+        <img src="https://i.imgur.com/PLACEHOLDER3.png" alt="Credit decoder" style="border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);width:100%">
+      </div>
+
+      <center>
+        <p class="urgent">Price jumps to $15 forever in a few days</p>
+        <a href="YOUR-STRIPE-CHECKOUT-LINK-HERE" class="stripe-button large">
+          Yes – Lock In $10/mo Forever
+        </a>
+      </center>
+    </div>
+  </section>
+
+  <!-- SOCIAL PROOF – Money-saved testimonial -->
+  <section class="section">
+    <div class="container center">
+      <p class="quote">"The credit decoder alone saved me from renting to someone with four hidden evictions. That’s $12k I didn’t lose."</p>
+      <p><strong>— Derek M., 34 units in Austin</strong></p>
+    </div>
+  </section>
+
+  <!-- FINAL SCARCITY + GUARANTEE -->
+  <div style="background:#fef5e7;padding:3.5rem;border-radius:16px;margin:3rem auto;max-width:900px;text-align:center">
+    <p class="urgent" style="font-size:2.2rem">Only 43 founders spots left at $10/mo forever<br>(price increases to $15 next week)</p>
+    <a href="YOUR-STRIPE-CHECKOUT-LINK-HERE" class="stripe-button large" style="font-size:1.9rem;padding:26px 52px">
+      Lock In My Spot Before It’s Gone
+    </a>
+    <p style="margin-top:1.8rem;font-weight:600;font-size:1.2rem">
+      7-day free trial • Instant access • Cancel anytime • Full refund if it’s not worth 10× the price
+    </p>
+  </div>
+
+  <!-- FOOTER -->
+  <footer>
+    © 2025 LeaseShield App • Built by Western Verify • hello@leaseshieldapp.com
+  </footer>
+</body>
+</html>

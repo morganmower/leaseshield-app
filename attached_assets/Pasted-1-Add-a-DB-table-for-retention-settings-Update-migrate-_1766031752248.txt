@@ -1,0 +1,318 @@
+1) Add a DB table for retention settings
+Update migrate.js (add this table)
+
+Add this near the bottom of your migrations:
+
+// Retention settings (per property; unit overrides can be added later)
+await run(`
+  CREATE TABLE IF NOT EXISTS retention_settings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    property_id INTEGER NOT NULL UNIQUE,
+
+    denied_uploads_days INTEGER NOT NULL DEFAULT 730,
+    denied_bank_statements_days INTEGER NOT NULL DEFAULT 120,
+
+    approved_uploads_days INTEGER NOT NULL DEFAULT 2555,
+    approved_bank_statements_days INTEGER NOT NULL DEFAULT 730,
+
+    created_at TEXT DEFAULT (datetime('now')),
+    updated_at TEXT DEFAULT (datetime('now')),
+
+    FOREIGN KEY(property_id) REFERENCES properties(id)
+  )
+`);
+
+
+Then run:
+
+node migrate.js
+
+2) Seed default retention settings per property
+Update seed.js (after creating the property)
+
+Add this right after you insert the property row:
+
+await run(
+  `INSERT OR IGNORE INTO retention_settings
+   (property_id, denied_uploads_days, denied_bank_statements_days, approved_uploads_days, approved_bank_statements_days)
+   VALUES (?, 730, 120, 2555, 730)`,
+  [prop.lastID]
+);
+
+3) Admin endpoints + simple UI page
+Add to server.js
+A) API: Get retention settings
+app.get("/api/properties/:id/retention", async (req, res) => {
+  const propertyId = Number(req.params.id);
+  const row = await get(`SELECT * FROM retention_settings WHERE property_id = ?`, [propertyId]);
+  if (!row) return res.status(404).json({ error: "Retention settings not found" });
+  res.json(row);
+});
+
+B) API: Update retention settings
+app.put("/api/properties/:id/retention", async (req, res) => {
+  const propertyId = Number(req.params.id);
+  const {
+    denied_uploads_days,
+    denied_bank_statements_days,
+    approved_uploads_days,
+    approved_bank_statements_days
+  } = req.body;
+
+  // basic validation
+  const nums = [
+    denied_uploads_days,
+    denied_bank_statements_days,
+    approved_uploads_days,
+    approved_bank_statements_days
+  ].map((v) => Number(v));
+
+  if (nums.some((n) => !Number.isFinite(n) || n < 0 || n > 36500)) {
+    return res.status(400).json({ error: "Invalid retention values" });
+  }
+
+  await run(
+    `INSERT INTO retention_settings
+     (property_id, denied_uploads_days, denied_bank_statements_days, approved_uploads_days, approved_bank_statements_days, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(property_id) DO UPDATE SET
+       denied_uploads_days=excluded.denied_uploads_days,
+       denied_bank_statements_days=excluded.denied_bank_statements_days,
+       approved_uploads_days=excluded.approved_uploads_days,
+       approved_bank_statements_days=excluded.approved_bank_statements_days,
+       updated_at=excluded.updated_at`,
+    [propertyId, nums[0], nums[1], nums[2], nums[3], nowIso()]
+  );
+
+  res.json({ ok: true });
+});
+
+C) Demo admin page: edit retention (structured + readable)
+app.get("/demo/admin/property/:id/retention", async (req, res) => {
+  const propertyId = Number(req.params.id);
+
+  const prop = await get(`SELECT * FROM properties WHERE id = ?`, [propertyId]);
+  if (!prop) return res.status(404).send("Property not found");
+
+  const settings =
+    (await get(`SELECT * FROM retention_settings WHERE property_id = ?`, [propertyId])) || {
+      denied_uploads_days: 730,
+      denied_bank_statements_days: 120,
+      approved_uploads_days: 2555,
+      approved_bank_statements_days: 730
+    };
+
+  res.setHeader("Content-Type", "text/html");
+  res.end(`
+    <h2>Retention Settings — ${escapeHtml(prop.name)} (Property #${prop.id})</h2>
+    <p><a href="/demo/admin">← back</a> | <a href="/demo/admin/property/${prop.id}">Cover Page</a></p>
+
+    <form method="post" action="/demo/admin/property/${prop.id}/retention/save">
+      <h3>Denied / Withdrawn</h3>
+      <label>General uploads retention (days)</label><br/>
+      <input name="denied_uploads_days" style="width:200px" value="${escapeHtml(settings.denied_uploads_days)}"/><br/><br/>
+
+      <label>Bank statements retention (days)</label><br/>
+      <input name="denied_bank_statements_days" style="width:200px" value="${escapeHtml(settings.denied_bank_statements_days)}"/><br/><br/>
+
+      <h3>Approved</h3>
+      <label>General uploads retention (days)</label><br/>
+      <input name="approved_uploads_days" style="width:200px" value="${escapeHtml(settings.approved_uploads_days)}"/><br/><br/>
+
+      <label>Bank statements retention (days)</label><br/>
+      <input name="approved_bank_statements_days" style="width:200px" value="${escapeHtml(settings.approved_bank_statements_days)}"/><br/><br/>
+
+      <p style="max-width:750px;">
+        <b>Note:</b> LeaseShield stores documents to support the application workflow and recordkeeping.
+        These settings control automatic deletion of uploaded files after the specified time.
+      </p>
+
+      <button type="submit">Save Retention Settings</button>
+    </form>
+  `);
+});
+
+app.post("/demo/admin/property/:id/retention/save", express.urlencoded({ extended: true }), async (req, res) => {
+  const propertyId = Number(req.params.id);
+
+  const nums = {
+    denied_uploads_days: Number(req.body.denied_uploads_days),
+    denied_bank_statements_days: Number(req.body.denied_bank_statements_days),
+    approved_uploads_days: Number(req.body.approved_uploads_days),
+    approved_bank_statements_days: Number(req.body.approved_bank_statements_days)
+  };
+
+  if (Object.values(nums).some((n) => !Number.isFinite(n) || n < 0 || n > 36500)) {
+    return res.status(400).send("Invalid retention values");
+  }
+
+  await run(
+    `INSERT INTO retention_settings
+     (property_id, denied_uploads_days, denied_bank_statements_days, approved_uploads_days, approved_bank_statements_days, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?)
+     ON CONFLICT(property_id) DO UPDATE SET
+       denied_uploads_days=excluded.denied_uploads_days,
+       denied_bank_statements_days=excluded.denied_bank_statements_days,
+       approved_uploads_days=excluded.approved_uploads_days,
+       approved_bank_statements_days=excluded.approved_bank_statements_days,
+       updated_at=excluded.updated_at`,
+    [propertyId, nums.denied_uploads_days, nums.denied_bank_statements_days, nums.approved_uploads_days, nums.approved_bank_statements_days, nowIso()]
+  );
+
+  res.redirect(`/demo/admin/property/${propertyId}/retention`);
+});
+
+D) Link it from your admin list
+
+In /demo/admin output, add a retention link next to property edit:
+
+<li>#${p.id} ${escapeHtml(p.name)}
+ — <a href="/demo/admin/property/${p.id}">edit cover page</a>
+ — <a href="/demo/admin/property/${p.id}/retention">retention</a>
+</li>
+
+4) Update cleanup job to use per-property settings
+Replace your cleanup.js with this (property-aware)
+const fs = require("fs");
+const path = require("path");
+const { all, run } = require("./db");
+
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function isoDaysAgo(days) {
+  const d = new Date();
+  d.setDate(d.getDate() - days);
+  return d.toISOString();
+}
+
+function safeUnlink(filePath) {
+  try {
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+  } catch (e) {
+    console.warn("Failed to delete file:", filePath, e.message || e);
+  }
+}
+
+function clampDays(n, fallback) {
+  if (!Number.isFinite(n) || n < 0 || n > 36500) return fallback;
+  return n;
+}
+
+function retentionDaysFor({ submissionStatus, fileType, retentionRow }) {
+  const status = String(submissionStatus || "").toLowerCase();
+  const isBank = fileType === "bank_statements";
+
+  // defaults if a property has no row (shouldn’t happen if seeded, but safe)
+  const defaults = {
+    denied_uploads_days: 730,
+    denied_bank_statements_days: 120,
+    approved_uploads_days: 2555,
+    approved_bank_statements_days: 730
+  };
+
+  const r = retentionRow || defaults;
+
+  const deniedUploads = clampDays(Number(r.denied_uploads_days), defaults.denied_uploads_days);
+  const deniedBank = clampDays(Number(r.denied_bank_statements_days), defaults.denied_bank_statements_days);
+  const approvedUploads = clampDays(Number(r.approved_uploads_days), defaults.approved_uploads_days);
+  const approvedBank = clampDays(Number(r.approved_bank_statements_days), defaults.approved_bank_statements_days);
+
+  if (status === "approved") return isBank ? approvedBank : approvedUploads;
+
+  // Treat denied/withdrawn/started/submitted/etc as “denied_or_withdrawn retention” for MVP
+  return isBank ? deniedBank : deniedUploads;
+}
+
+async function runCleanup() {
+  const started = Date.now();
+
+  // Pull uploads + submission status + property id
+  const files = await all(`
+    SELECT
+      sf.id as file_id,
+      sf.stored_path,
+      sf.file_type,
+      sf.created_at as file_created_at,
+      s.status as submission_status,
+      p.id as property_id
+    FROM submission_files sf
+    JOIN submission_people sp ON sp.id = sf.submission_person_id
+    JOIN submissions s ON s.id = sp.submission_id
+    JOIN application_links al ON al.id = s.application_link_id
+    JOIN units u ON u.id = al.unit_id
+    JOIN properties p ON p.id = u.property_id
+  `);
+
+  // Load all retention settings rows into a map
+  const retentionRows = await all(`SELECT * FROM retention_settings`);
+  const retentionMap = new Map(retentionRows.map((r) => [r.property_id, r]));
+
+  let deleted = 0;
+
+  for (const f of files) {
+    const retentionRow = retentionMap.get(f.property_id);
+    const keepDays = retentionDaysFor({
+      submissionStatus: f.submission_status,
+      fileType: f.file_type,
+      retentionRow
+    });
+
+    const cutoffIso = isoDaysAgo(keepDays);
+
+    // Compare timestamps. SQLite default datetime('now') returns "YYYY-MM-DD HH:MM:SS"
+    // ISO has "T". So we normalize by converting the DB string to Date.
+    const fileDate = f.file_created_at ? new Date(f.file_created_at.replace(" ", "T") + "Z") : null;
+    if (!fileDate || Number.isNaN(fileDate.getTime())) continue;
+
+    const cutoffDate = new Date(cutoffIso);
+    if (fileDate < cutoffDate) {
+      const diskPath = path.join(__dirname, f.stored_path.replace(/^\/+/, ""));
+      safeUnlink(diskPath);
+      await run(`DELETE FROM submission_files WHERE id = ?`, [f.file_id]);
+      deleted++;
+    }
+  }
+
+  const elapsedMs = Date.now() - started;
+  console.log(`[CLEANUP] ${nowIso()} scanned=${files.length} deleted=${deleted} in ${elapsedMs}ms`);
+  return { scanned: files.length, deleted, elapsedMs };
+}
+
+module.exports = { runCleanup };
+
+5) Turn on the daily job (if not already)
+
+In server.js (near bottom):
+
+const { runCleanup } = require("./cleanup");
+
+runCleanup().catch((e) => console.error("[CLEANUP] startup error:", e));
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+setInterval(() => {
+  runCleanup().catch((e) => console.error("[CLEANUP] interval error:", e));
+}, ONE_DAY_MS);
+
+
+Optional manual trigger:
+
+app.post("/admin/run-cleanup", async (req, res) => {
+  try {
+    const result = await runCleanup();
+    res.json({ ok: true, result });
+  } catch (e) {
+    res.status(500).json({ ok: false, error: String(e.message || e) });
+  }
+});
+
+Where you’ll see it in the admin
+
+/demo/admin
+
+Click retention next to your property
+
+Adjust values
+
+Cleanup respects those values automatically

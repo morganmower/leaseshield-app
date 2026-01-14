@@ -1,80 +1,54 @@
-import { Shield, Home } from "lucide-react";
+import logoHorizontal from "@/assets/logo-horizontal.png";
+import logoStacked from "@/assets/logo-stacked.png";
 
 interface LogoProps {
   className?: string;
-  iconSize?: number;
+  variant?: 'horizontal' | 'stacked' | 'icon-only';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
 }
 
-export function Logo({ className = "", iconSize = 24 }: LogoProps) {
+export function Logo({ className = "", variant = 'horizontal', size }: LogoProps) {
+  const sizeClasses = {
+    sm: variant === 'stacked' ? 'h-20' : 'h-9',
+    md: variant === 'stacked' ? 'h-28' : 'h-14',
+    lg: variant === 'stacked' ? 'h-36' : 'h-20',
+    xl: variant === 'stacked' ? 'h-48' : 'h-36',
+  };
+
+  const hasCustomSize = className.includes('w-') || className.includes('h-');
+  const appliedSizeClass = hasCustomSize ? '' : sizeClasses[size || 'md'];
+
+  if (variant === 'stacked') {
+    return (
+      <img 
+        src={logoStacked} 
+        alt="LeaseShield App - Landlord Protection" 
+        className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain dark:brightness-0 dark:invert ${className}`}
+      />
+    );
+  }
+
   return (
-    <div className={`relative ${className}`} style={{ width: iconSize * 1.6, height: iconSize * 1.1 }}>
-      {/* Stronger glow effect background */}
-      <div 
-        className="absolute rounded-full blur-lg opacity-50"
-        style={{
-          width: iconSize * 1.4,
-          height: iconSize * 1.4,
-          left: '15%',
-          top: '-15%',
-          background: 'radial-gradient(circle, hsl(var(--primary)) 0%, transparent 65%)',
-        }}
-      />
-      
-      {/* House icon with amber/gold gradient */}
-      <Home 
-        className="absolute" 
-        style={{ 
-          width: iconSize * 0.92, 
-          height: iconSize * 0.92,
-          left: '0%',
-          top: '8%',
-          stroke: 'url(#houseGradient)',
-          strokeWidth: 2.3,
-          fill: 'none',
-          filter: 'drop-shadow(0 3px 5px rgb(0 0 0 / 0.2))'
-        }} 
-      />
-      
-      {/* Bold, masculine shield with darker, stronger colors */}
-      <Shield 
-        className="absolute" 
-        style={{ 
-          width: iconSize * 1, 
-          height: iconSize * 1,
-          right: '-2%',
-          top: '3%',
-          stroke: 'url(#shieldGradient)',
-          strokeWidth: 2.5,
-          fill: 'url(#shieldFill)',
-          filter: 'drop-shadow(0 4px 8px rgb(0 0 0 / 0.3))',
-          strokeLinecap: 'square',
-          strokeLinejoin: 'miter'
-        }} 
-      />
-      
-      {/* SVG Gradients */}
-      <svg width="0" height="0" style={{ position: 'absolute' }}>
-        <defs>
-          {/* House gradient - warm amber/gold tones for contrast */}
-          <linearGradient id="houseGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: '#f59e0b', stopOpacity: 0.85 }} />
-            <stop offset="100%" style={{ stopColor: '#d97706', stopOpacity: 0.7 }} />
-          </linearGradient>
-          
-          {/* Shield gradient - bold, darker, more masculine */}
-          <linearGradient id="shieldGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary) / 1)', stopOpacity: 1 }} />
-            <stop offset="50%" style={{ stopColor: 'hsl(var(--primary) / 0.95)', stopOpacity: 1 }} />
-            <stop offset="100%" style={{ stopColor: 'hsl(var(--primary) / 0.85)', stopOpacity: 1 }} />
-          </linearGradient>
-          
-          {/* Shield fill - stronger, more opaque */}
-          <linearGradient id="shieldFill" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.25 }} />
-            <stop offset="100%" style={{ stopColor: 'hsl(var(--primary))', stopOpacity: 0.1 }} />
-          </linearGradient>
-        </defs>
-      </svg>
-    </div>
+    <img 
+      src={logoHorizontal} 
+      alt="LeaseShield App - Landlord Protection" 
+      className={`${appliedSizeClass} ${hasCustomSize ? '' : 'w-auto'} object-contain dark:brightness-0 dark:invert ${className}`}
+    />
+  );
+}
+
+interface LogoIconProps {
+  className?: string;
+  size?: number;
+}
+
+export function LogoIcon({ className = "", size = 32 }: LogoIconProps) {
+  return (
+    <img 
+      src={logoStacked} 
+      alt="LeaseShield" 
+      className={`object-contain object-top dark:brightness-0 dark:invert ${className}`}
+      style={{ width: size, height: size, objectPosition: 'center top' }}
+    />
   );
 }

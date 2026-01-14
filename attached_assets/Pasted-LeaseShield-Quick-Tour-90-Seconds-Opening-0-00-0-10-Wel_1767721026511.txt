@@ -1,0 +1,142 @@
+LeaseShield – Quick Tour (90 Seconds)
+Opening (0:00–0:10)
+
+Welcome to LeaseShield.
+This is a quick overview of how the system works and how most landlords use it.
+
+What LeaseShield Is (0:10–0:25)
+
+LeaseShield is the control center for your rental workflow.
+It helps you collect applications, understand screening results, and use the right documents when laws change.
+
+LeaseShield manages the workflow. Western Verify performs the screening.
+
+Properties (0:25–0:40)
+
+Everything starts with a property.
+Properties organize your applications, screening, and documents by location.
+
+Once a property is added, you can send applications and access state-specific leases and notices.
+
+Applications & Screening (0:40–1:00)
+
+When you create an application, LeaseShield generates a single link for the applicant.
+
+The applicant completes the application and authorization.
+Screening runs through Western Verify, and LeaseShield tracks the status in one place.
+
+Screening Decoder (1:00–1:15)
+
+After screening is complete, you can use the Screening Decoder.
+
+Paste or upload the report, and LeaseShield explains what matters, what doesn’t, and what to ask next — helping prevent misinterpretation.
+
+Documents & Close (1:15–1:30)
+
+When it’s time to act, LeaseShield provides state-specific leases and notices updated as legislation changes.
+
+If you’re not sure where to begin, start by adding a property or creating your first application.
+
+That’s LeaseShield.
+
+How to Turn This Into a Video (Exactly)
+Tool
+
+Loom (recommended) or any screen recorder
+
+No music
+
+No fancy editing
+
+Webcam optional (screen-only is fine)
+
+Video Setup (Important)
+
+Length: 75–90 seconds (do not exceed 90)
+
+Screen: Dashboard only (no tabs, no scrolling chaos)
+
+Cursor: Slow, deliberate movements
+
+Zoom: Default (no zoom effects)
+
+What to Show On Screen (While Reading Script)
+0:00–0:10
+
+Dashboard
+
+“Start Here” section visible
+
+0:10–0:25
+
+Hover over:
+
+Applications
+
+Decoder
+
+Documents
+(no clicking yet)
+
+0:25–0:40
+
+Click Properties
+
+Briefly show “Add Property” or property list
+
+0:40–1:00
+
+Click Applications
+
+Show “Create Application Link”
+
+Do not actually create one
+
+1:00–1:15
+
+Click Screening Decoder
+
+Show empty state or example input
+
+1:15–1:30
+
+Click Leases & Notices
+
+End back on Dashboard
+
+Title for the Video
+
+How LeaseShield Works (90 seconds)
+
+Where to Use This Video
+
+Highly recommended placements:
+
+Top-right “Quick Tour (2 min)” link
+
+Dashboard empty state
+
+Landing page (below hero)
+
+Western Verify onboarding emails
+
+What NOT to Do
+
+❌ Don’t say “AI” repeatedly
+❌ Don’t explain every feature
+❌ Don’t oversell legal protection
+❌ Don’t go longer than 90 seconds
+
+Clarity beats completeness.
+
+Final Advice
+
+Record this once, ship it, and don’t keep re-recording unless something materially changes.
+
+This video will:
+
+Reduce support questions
+
+Increase activation
+
+Help skeptical landlords “get it” quickly

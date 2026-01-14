@@ -1,0 +1,41 @@
+Prioritized by impact—get the full page live first, then refine.Priority
+Issue on Live Site
+Exact Fix (Replit + DNS Steps)
+Expected Lift
+Critical (Do Now)
+Domain shows only title + dashes—no full content
+1. In Replit: Confirm "Run" is active → Copy preview URL (e.g., leaseshield-app.mower4.repl.co).
+2. Registrar DNS: Add/update CNAME record: www → [your Replit preview URL] (TTL 300s).
+3. Test propagation: Use whatsmydns.net → Search www.leaseshieldapp.com (global check).
+4. Clear browser cache (Ctrl+Shift+R) + test incognito. Wait 5–60 min.
+Blank → 60–80% conversion
+Critical
+No CTAs or Stripe integration visible
+Deploys automatically once DNS points. Verify: Preview URL clicks to Stripe? If yes, live site will too.
++150% signups
+High
+No value hooks (headlines, calc, badges)
+Already in Replit HTML—DNS fix loads them. If stuck, force-refresh Replit deploy (stop/start Run).
++40% engagement
+High
+Missing screenshots/previews
+Upload 3 real mocks (lease form, notice, decoder) to imgur.com → Replace placeholders in Replit: <img src="https://i.imgur.com/[your-link].png"> (3 spots).
++25% trust
+Medium
+Unstyled/minimal layout on mobile/desktop
+Replit CSS fixes it—ensure style.css is saved and linked (<link rel="stylesheet" href="style.css" />).
+Mobile bounce -50%
+Medium
+Weak meta/SEO (no keywords)
+Add to Replit <head>: <meta name="keywords" content="utah landlord lease, texas eviction notice 2025, credit report decoder">.
++10–15% organic traffic
+Low
+No analytics or favicon
+<head> add: <link rel="icon" href="https://i.imgur.com/simple-shield.png"> + GA script (free ID).
+Track + pro polish
+
+5-Minute Action PlanDNS Double-Check: Registrar → DNS → Confirm CNAME is set correctly (no typos in Replit URL). If using Cloudflare/others, purge cache.
+Replit Refresh: Save files → Run → Visit preview → All good? Share screenshot here.
+Test Blast: Email 1 test lead: "New page live—thoughts? [Preview URL]" → Switch to domain once propagated.
+If Stuck: Reply with registrar name (e.g., GoDaddy) + screenshot of DNS settings—I'll walk through exact clicks.
+

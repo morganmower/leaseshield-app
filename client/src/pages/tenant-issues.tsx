@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { getAccessToken } from "@/lib/queryClient";
 import {
   Dialog,
   DialogContent,
@@ -39,7 +40,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Late rent notice", "Payment plan agreement", "Pay or quit notice"],
+    templates: ["Late Rent Notice", "3-Day Pay or Quit Notice"],
     steps: [
       "Review your lease agreement for late fee policies and grace periods",
       "Send a friendly reminder if within grace period",
@@ -59,7 +60,7 @@ const workflows = [
     color: "from-blue-500 to-blue-600",
     iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
     iconColor: "text-blue-600 dark:text-blue-500",
-    templates: ["Violation notice", "Cure or quit notice", "Incident documentation"],
+    templates: ["5-Day Lease Violation Notice"],
     steps: [
       "Document the specific violation with photos, dates, and details",
       "Review lease terms to confirm violation",
@@ -79,7 +80,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Damage documentation form", "Repair cost estimate", "Deposit deduction letter"],
+    templates: ["Move-Out Inspection Checklist"],
     steps: [
       "Document damage with photos and detailed description",
       "Determine if damage exceeds normal wear and tear",
@@ -99,7 +100,7 @@ const workflows = [
     color: "from-cyan-500 to-teal-600",
     iconBg: "bg-gradient-to-br from-cyan-500/10 to-teal-600/10",
     iconColor: "text-cyan-600 dark:text-cyan-500",
-    templates: ["ESA verification request", "ESA acceptance letter", "Pet policy addendum"],
+    templates: ["Residential Lease Agreement"],
     steps: [
       "Receive request for emotional support animal accommodation",
       "Request verification from healthcare provider",
@@ -119,7 +120,7 @@ const workflows = [
     color: "from-amber-500 to-orange-600",
     iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
     iconColor: "text-amber-600 dark:text-amber-500",
-    templates: ["Rent increase notice", "Lease renewal with increase", "Month-to-month notice"],
+    templates: ["Month-to-Month Rental Agreement"],
     steps: [
       "Research local rent control laws and limitations",
       "Verify required notice period (typically 30-60 days)",
@@ -139,7 +140,7 @@ const workflows = [
     color: "from-blue-500 to-blue-600",
     iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
     iconColor: "text-blue-600 dark:text-blue-500",
-    templates: ["Non-renewal notice", "Move-out checklist", "Security deposit return"],
+    templates: ["Move-Out Inspection Checklist", "Move-In Checklist"],
     steps: [
       "Review lease end date and notice requirements",
       "Send non-renewal notice within required timeframe",
@@ -160,19 +161,27 @@ export default function TenantIssues() {
   const [showWorkflowDialog, setShowWorkflowDialog] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
 
-  const isPayingMember = user?.subscriptionStatus === 'active' || user?.isAdmin === true;
-  const isTrialing = user?.subscriptionStatus === 'trialing';
-
   // Fetch all templates to match workflow template names
-  const { data: allTemplates } = useQuery<Template[]>({
+  const { data: allTemplates, error: templatesError } = useQuery<Template[]>({
     queryKey: ["/api/templates"],
     enabled: isAuthenticated,
     queryFn: async () => {
-      const response = await fetch('/api/templates', { credentials: 'include' });
+      const token = getAccessToken();
+      const response = await fetch('/api/templates', { 
+        credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
       if (!response.ok) throw new Error('Failed to fetch templates');
       return response.json();
     },
   });
+
+  const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
+  const hasActiveSubscription = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end';
+  const hasActiveTrial = user?.subscriptionStatus === 'trialing' && !trialExpired;
+  const isAdmin = user?.isAdmin === true;
+  const hasAccess = hasActiveSubscription || hasActiveTrial || isAdmin;
+  const isTrialing = user?.subscriptionStatus === 'trialing';
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -182,7 +191,7 @@ export default function TenantIssues() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
@@ -194,7 +203,7 @@ export default function TenantIssues() {
   };
 
   const handleTemplateDownload = async (templateName: string) => {
-    if (!isPayingMember) {
+    if (!hasAccess) {
       setShowUpgradeDialog(true);
       return;
     }
@@ -215,27 +224,61 @@ export default function TenantIssues() {
     }
 
     try {
-      const response = await fetch(`/api/templates/${template.id}/download`, {
+      toast({
+        title: 'Download Started',
+        description: 'Your template is being downloaded...',
+      });
+
+      // Fetch template details to get field definitions
+      const token = getAccessToken();
+      const templateResponse = await fetch(`/api/templates/${template.id}`, {
         credentials: 'include',
+        headers: token ? { 'Authorization': `Bearer ${token}` } : {}
+      });
+      
+      if (!templateResponse.ok) {
+        throw new Error('Failed to fetch template details');
+      }
+      
+      const templateData = await templateResponse.json();
+      const fillableData = templateData.fillableFormData as { fields?: Array<{ id: string; label: string }> };
+      
+      // Create blank field values with underscores for manual filling
+      const blankFieldValues: Record<string, string> = {};
+      if (fillableData?.fields) {
+        fillableData.fields.forEach(field => {
+          blankFieldValues[field.id] = '___________________________';
+        });
+      }
+
+      // Generate blank template with placeholder values
+      const response = await fetch('/api/documents/generate', {
+        method: 'POST',
+        credentials: 'include',
+        body: JSON.stringify({ templateId: template.id, fieldValues: blankFieldValues }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+        },
       });
 
       if (!response.ok) {
-        throw new Error('Download failed');
+        throw new Error('Failed to generate document');
       }
 
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `${template.title}.docx`;
+      a.download = `${template.title.replace(/[^a-z0-9]/gi, '_')}.pdf`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
       toast({
-        title: "Download Started",
-        description: `${template.title} is downloading...`,
+        title: 'Download Complete',
+        description: 'Your template has been downloaded successfully.',
       });
     } catch (error) {
       toast({
@@ -283,7 +326,28 @@ export default function TenantIssues() {
           </div>
         </div>
 
-        {/* Workflows Grid */}
+        {/* Subscription CTA if user doesn't have active subscription or templates error */}
+        {!hasAccess && (
+          <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
+            <div className="text-center">
+              <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-foreground mb-2">
+                Subscribe to receive updates
+              </h3>
+              <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                Get access to step-by-step tenant issue workflows, templates, and state-specific guidance
+              </p>
+              <Link to="/subscribe">
+                <Button size="lg" data-testid="button-subscribe-tenant-issues">
+                  Subscribe Now
+                </Button>
+              </Link>
+            </div>
+          </Card>
+        )}
+
+        {/* Workflows Grid - only shown to paying members */}
+        {hasAccess && (
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {workflows.map((workflow) => {
             const Icon = workflow.icon;
@@ -344,6 +408,7 @@ export default function TenantIssues() {
             );
           })}
         </div>
+        )}
 
         {/* Help Section */}
         <Card className="mt-12 p-8 bg-muted/30">
@@ -355,7 +420,11 @@ export default function TenantIssues() {
               Every landlord situation is unique. These workflows provide general guidance, but
               for complex legal matters, consider consulting with an attorney in your state.
             </p>
-            <Button variant="outline" data-testid="button-contact-support">
+            <Button 
+              variant="outline" 
+              data-testid="button-contact-support"
+              onClick={() => setLocation('/contact')}
+            >
               Contact Support
             </Button>
           </div>
@@ -420,7 +489,7 @@ export default function TenantIssues() {
                             <FileText className="h-4 w-4 text-muted-foreground" />
                             <span className="text-foreground">{template}</span>
                           </div>
-                          {isPayingMember ? (
+                          {hasAccess ? (
                             <Download className="h-4 w-4 text-muted-foreground" />
                           ) : (
                             <Lock className="h-4 w-4 text-muted-foreground" />
@@ -429,7 +498,7 @@ export default function TenantIssues() {
                       ))}
                     </div>
                     <p className="text-xs text-muted-foreground mt-3">
-                      {isPayingMember 
+                      {hasAccess 
                         ? "Click any template to download instantly"
                         : "Upgrade to access and download templates"}
                     </p>
@@ -446,7 +515,10 @@ export default function TenantIssues() {
                     Close
                   </Button>
                   <Button
-                    onClick={() => setLocation('/templates')}
+                    onClick={() => {
+                      setShowWorkflowDialog(false);
+                      setTimeout(() => setLocation('/templates'), 100);
+                    }}
                     className="flex-1"
                     data-testid="button-view-templates"
                   >
@@ -473,7 +545,7 @@ export default function TenantIssues() {
                   {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
                 </p>
                 <p>
-                  Upgrade now for just <strong>$12/month</strong> to access our complete library of 37+ state-specific templates.
+                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 37+ state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>

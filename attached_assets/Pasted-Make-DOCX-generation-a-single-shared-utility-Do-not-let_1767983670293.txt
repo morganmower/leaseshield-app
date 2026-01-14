@@ -1,0 +1,86 @@
+Make DOCX generation a single, shared utility
+
+Do not let multiple ad-hoc implementations creep back in.
+
+// src/documents/generateDocx.ts
+export async function generateDocx(input: DocxInput): Promise<Buffer> {
+  // only docx library lives here
+}
+
+
+Then ban html-to-docx from the repo (remove dependency).
+
+2. Keep PDFs on HTML/Puppeteer — that’s fine
+
+Your architecture is now ideal:
+
+Format	Engine	Reason
+PDF	Puppeteer	Pixel-perfect, legal delivery
+DOCX	docx	Editable, structurally valid
+
+This is exactly how serious doc systems do it.
+
+3. Future-proof your legislation updates (this now becomes easy)
+
+Because DOCX is structured, you can now:
+
+Insert/remove clauses safely
+
+Version clauses cleanly
+
+Guarantee past documents remain reproducible
+
+Add state-specific sections without regex / HTML hacks
+
+Example pattern (worth doing next):
+
+type Clause = {
+  id: string;
+  state: string;
+  effectiveFrom: Date;
+  text: string;
+  heading?: string;
+};
+
+
+Your generator just maps clauses → paragraphs.
+
+4. Add one regression test (highly recommended)
+
+This prevents any future regression.
+
+it("generates a Word-openable DOCX", async () => {
+  const buf = await generateDocx(sampleInput);
+
+  expect(buf.slice(0, 2).toString()).toBe("PK");
+
+  const zip = await JSZip.loadAsync(buf);
+  expect(zip.file("word/document.xml")).toBeTruthy();
+});
+
+
+That test alone would’ve caught the html-to-docx corruption instantly.
+
+Strategic note (important for LeaseShield)
+
+This change also:
+
+Improves trust with property managers (“these docs just work”)
+
+Reduces support tickets
+
+Makes your legislation engine defensible (harder for competitors to replicate cleanly)
+
+Positions LeaseShield as a compliance system, not a template scraper
+
+Most apps never make this jump — they stay stuck fighting Word errors forever.
+
+What I’d do next (in order)
+
+Migrate applications + checklists to docx
+
+Normalize clause storage (if not already)
+
+Add a clause diff/version view internally (nice later)
+
+Optional: keep HTML only as a preview, not as a source of truth

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>LeaseShield App – Credit Report Helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    /* Simple, large, easy-to-read styling */
+
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f5f5f5;
+      margin: 0;
+      padding: 0;
+      color: #222;
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 5px;
+    }
+
+    h2 {
+      font-size: 22px;
+      margin-top: 10px;
+    }
+
+    p {
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background-color: #ffffff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+    }
+
+    .button-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    button {
+      font-size: 16px;
+      padding: 10px 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      background-color: #1a73e8;
+      color: white;
+    }
+
+    button.secondary {
+      background-color: #6c757d;
+    }
+
+    button:disabled {
+      background-color: #cccccc;
+      cursor: default;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .sample-image {
+      max-width: 100%;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin: 10px 0;
+    }
+
+    .highlight-list li {
+      margin-bottom: 8px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      font-size: 16px;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      box-sizing: border-box;
+    }
+
+    .note {
+      font-size: 14px;
+      color: #555;
+    }
+
+    .alert {
+      font-size: 14px;
+      color: #b00020;
+      font-weight: bold;
+    }
+
+    .answer-box {
+      background-color: #f0f7ff;
+      border-left: 4px solid #1a73e8;
+      padding: 10px;
+      border-radius: 4px;
+      margin-top: 10px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 22px;
+      }
+      h2 {
+        font-size: 18px;
+      }
+      button {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>LeaseShield App – Credit Report Helper</h1>
+      <p>Simple explanations to help you understand common credit report terms.</p>
+    </header>
+
+    <!-- HOME SCREEN -->
+    <div id="screen-home" class="card">
+      <h2>How this tool works</h2>
+      <p>
+        This tool is here to <strong>teach you what common credit terms mean.</strong><br />
+        We do <strong>not</strong> store or review your full credit report.
+      </p>
+      <p>Please choose one of these options:</p>
+
+      <div class="button-row">
+        <button onclick="showScreen('learn')">
+          Learn How to Read a Credit Report
+        </button>
+        <button onclick="showScreen('ask')">
+          Ask a Question About My Report
+        </button>
+      </div>
+
+      <p class="note" style="margin-top:15px;">
+        For your privacy, please <strong>do not upload</strong> your actual report here and
+        <strong>do not type</strong> your Social Security number or full account numbers.
+      </p>
+    </div>
+
+    <!-- LEARN SCREEN -->
+    <div id="screen-learn" class="card hidden">
+      <h2>Learn How to Read a Credit Report</h2>
+      <p>
+        You are looking at a <strong>sample credit report with fake information.</strong><br />
+        This is just to show you what things look like and what the words mean.
+      </p>
+
+      <!-- SAMPLE IMAGE PLACEHOLDER -->
+      <!-- Replace "sample-report.png" with your own image path in Replit -->
+      <img src="sample-report.png" alt="Sample credit report (fake data)" class="sample-image" />
+
+      <p><strong>Common Parts of a Credit Report:</strong></p>
+      <ul class="highlight-list">
+        <li><strong>Credit Score</strong> – A number that summarizes how risky you are as a borrower. Higher is better.</li>
+        <li><strong>Payment History</strong> – Shows if bills were paid on time or late.</li>
+        <li><strong>Collections</strong> – Accounts that were not paid and sent to a collection agency.</li>
+        <li><strong>Charge-off</strong> – A debt the lender has given up collecting, but it can still hurt your credit.</li>
+        <li><strong>Utilization</strong> – How much of your credit limit you are using (for example, using $500 of a $1,000 limit is 50%).</li>
+        <li><strong>Inquiries</strong> – Who has checked your credit recently (for example, a bank or car dealer).</li>
+      </ul>
+
+      <p class="note">
+        Tip: When looking at your own report, you can match these words and use this page to remember what they mean.
+      </p>
+
+      <div class="button-row">
+        <button class="secondary" onclick="showScreen('home')">Back to Home</button>
+      </div>
+    </div>
+
+    <!-- ASK SCREEN -->
+    <div id="screen-ask" class="card hidden">
+      <h2>Ask a Question About Your Own Report</h2>
+      <p>
+        1. Look at your credit report on your screen or on paper.<br />
+        2. If you see a word or phrase you don’t understand (for example:
+        <em>“charge-off”</em>, <em>“collection account”</em>, <em>“30 days late”</em>, or <em>“utilization”</em>),
+        type just that word or phrase in the box below.<br />
+        3. Click <strong>Get Explanation</strong>.
+      </p>
+
+      <p class="alert">
+        For your safety, please do <u>not</u> type:
+        Social Security numbers, full account numbers, or exact dollar amounts.
+      </p>
+
+      <textarea id="user-question" placeholder="Type a word or phrase from your report here..."></textarea>
+
+      <div class="button-row" style="margin-top:10px;">
+        <button onclick="handleExplain()">Get Explanation</button>
+        <button class="secondary" onclick="showScreen('home')">Back to Home</button>
+      </div>
+
+      <div id="answer-box" class="answer-box hidden">
+        <strong>Here’s what that usually means:</strong>
+        <p id="answer-text"></p>
+        <p class="note">
+          This information is for general education only. It is not legal or financial advice.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Simple screen switching
+    function showScreen(screen) {
+      document.getElementById('screen-home').classList.add('hidden');
+      document.getElementById('screen-learn').classList.add('hidden');
+      document.getElementById('screen-ask').classList.add('hidden');
+
+      if (screen === 'home') {
+        document.getElementById('screen-home').classList.remove('hidden');
+      } else if (screen === 'learn') {
+        document.getElementById('screen-learn').classList.remove('hidden');
+      } else if (screen === 'ask') {
+        document.getElementById('screen-ask').classList.remove('hidden');
+      }
+    }
+
+    // Very simple front-end explanations (no AI yet)
+    function handleExplain() {
+      const input = (document.getElementById('user-question').value || '').trim().toLowerCase();
+      const answerBox = document.getElementById('answer-box');
+      const answerText = document.getElementById('answer-text');
+
+      if (!input) {
+        answerText.textContent = 'Please type a word or phrase from your report first.';
+        answerBox.classList.remove('hidden');
+        return;
+      }
+
+      let explanation = '';
+
+      if (input.includes('charge-off') || input.includes('charge off')) {
+        explanation = 'A charge-off is a debt that the lender has decided it is unlikely to collect. The account may be closed, but it can still appear on your credit report and hurt your score.';
+      } else if (input.includes('collection')) {
+        explanation = 'A collection is a bill that was not paid and has been sent to a collection agency. It usually means the account was seriously past due.';
+      } else if (input.includes('utilization') || input.includes('utilisation')) {
+        explanation = 'Utilization is how much of your available credit you are using. For example, if you have a $1,000 limit and owe $500, your utilization is 50%. Lower utilization is generally better.';
+      } else if (input.includes('inquiry') || input.includes('inquiries') || input.includes('enquiry')) {
+        explanation = 'An inquiry is a record that someone checked your credit report. For example, a bank might make an inquiry when you apply for a loan or credit card.';
+      } else if (input.includes('30 days late') || input.includes('60 days late') || input.includes('90 days late')) {
+        explanation = 'This means a payment was not received by the due date and was late by that many days. More days late usually has a bigger negative impact on your credit.';
+      } else if (input.includes('delinquent') || input.includes('delinquency')) {
+        explanation = 'Delinquent means a payment was missed or not made on time. A delinquent account is past due.';
+      } else if (input.includes('past due')) {
+        explanation = 'Past due means the payment should have been made already but has not been paid yet.';
+      } else if (input.includes('default')) {
+        explanation = 'Default means a serious failure to repay a debt as agreed, often after several missed payments.';
+      } else {
+        // Generic fallback explanation
+        explanation = 'This looks like a specific term from your credit report. In general, check whether it refers to: (1) a type of account (loan or card), (2) a status (paid, late, collection), or (3) a number (balance, limit, or date). If you are unsure, you may want to speak with a financial professional for personal advice.';
+      }
+
+      answerText.textContent = explanation;
+      answerBox.classList.remove('hidden');
+    }
+
+    // Start at home screen
+    showScreen('home');
+  </script>
+</body>
+</html>

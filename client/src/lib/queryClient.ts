@@ -42,20 +42,84 @@ async function throwIfResNotOk(res: Response) {
 }
 
 /**
- * Make an API request with proper error handling
+ * Get the stored access token
+ */
+export function getAccessToken(): string | null {
+  return localStorage.getItem("accessToken");
+}
+
+/**
+ * Set the access token in storage
+ */
+export function setAccessToken(token: string | null): void {
+  if (token) {
+    localStorage.setItem("accessToken", token);
+  } else {
+    localStorage.removeItem("accessToken");
+  }
+}
+
+/**
+ * Attempt to refresh the access token using the refresh token cookie
+ */
+async function refreshAccessToken(): Promise<string | null> {
+  try {
+    const res = await fetch("/api/auth/refresh", {
+      method: "POST",
+      credentials: "include",
+    });
+    
+    if (res.ok) {
+      const data = await res.json();
+      if (data.accessToken) {
+        setAccessToken(data.accessToken);
+        return data.accessToken;
+      }
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Make an API request with proper error handling and JWT token
  */
 export async function apiRequest(
   method: string,
   url: string,
   data?: unknown | undefined,
 ): Promise<Response> {
-  try {
-    const res = await fetch(url, {
+  const makeRequest = async (token: string | null) => {
+    const headers: Record<string, string> = {};
+    if (data) {
+      headers["Content-Type"] = "application/json";
+    }
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    
+    return fetch(url, {
       method,
-      headers: data ? { "Content-Type": "application/json" } : {},
+      headers,
       body: data ? JSON.stringify(data) : undefined,
       credentials: "include",
     });
+  };
+
+  try {
+    let token = getAccessToken();
+    let res = await makeRequest(token);
+
+    // If unauthorized and we have a refresh token, try to refresh (skip only for login/logout/signup/refresh)
+    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh"];
+    const shouldSkipRefresh = skipRefreshEndpoints.some(e => url.includes(e));
+    if (res.status === 401 && !shouldSkipRefresh) {
+      const newToken = await refreshAccessToken();
+      if (newToken) {
+        res = await makeRequest(newToken);
+      }
+    }
 
     await throwIfResNotOk(res);
     return res;
@@ -81,9 +145,43 @@ export const getQueryFn: <T>(options: {
 }) => QueryFunction<T> =
   ({ on401: unauthorizedBehavior }) =>
   async ({ queryKey }) => {
-    const res = await fetch(queryKey.join("/") as string, {
-      credentials: "include",
-    });
+    const makeRequest = async (token: string | null) => {
+      const headers: Record<string, string> = {};
+      if (token) {
+        headers["Authorization"] = `Bearer ${token}`;
+      }
+      
+      return fetch(queryKey.join("/") as string, {
+        credentials: "include",
+        headers,
+      });
+    };
+
+    let token = getAccessToken();
+    let res = await makeRequest(token);
+
+    // If unauthorized, try to refresh token (skip only for login/logout/signup/refresh endpoints)
+    const endpoint = queryKey[0]?.toString() || "";
+    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh"];
+    const shouldSkipRefresh = skipRefreshEndpoints.some(e => endpoint.includes(e));
+    if (res.status === 401 && !shouldSkipRefresh) {
+      try {
+        const refreshRes = await fetch("/api/auth/refresh", {
+          method: "POST",
+          credentials: "include",
+        });
+        
+        if (refreshRes.ok) {
+          const data = await refreshRes.json();
+          if (data.accessToken) {
+            setAccessToken(data.accessToken);
+            res = await makeRequest(data.accessToken);
+          }
+        }
+      } catch {
+        // Refresh failed, continue with original response
+      }
+    }
 
     if (unauthorizedBehavior === "returnNull" && res.status === 401) {
       return null;

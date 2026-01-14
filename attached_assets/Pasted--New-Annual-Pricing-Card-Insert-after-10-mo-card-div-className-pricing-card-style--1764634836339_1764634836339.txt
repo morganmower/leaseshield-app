@@ -1,0 +1,49 @@
+{/* New Annual Pricing Card - Insert after $10/mo card */}
+<div className="pricing-card" style={{
+  border: '1px solid #e0e0e0',
+  borderRadius: '12px',
+  padding: '24px',
+  margin: '16px auto',
+  maxWidth: '360px',
+  textAlign: 'center',
+  boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+  backgroundColor: '#fff'
+}}>
+  <h3 style={{margin: '0 0 12px', fontSize: '1.25rem', color: '#1a1a1a'}}>
+    LeaseShield App - Annual
+  </h3>
+  <div style={{fontSize: '2rem', fontWeight: 'bold', color: '#3182ce', margin: '8px 0'}}>
+    $100<span style={{fontSize: '0.6em', color: '#666'}}>/year</span>
+  </div>
+  <p style={{fontSize: '0.9rem', color: '#666', margin: '12px 0'}}>
+    <s>$120</s> billed annually • <strong>Save $20</strong> (17% off)
+  </p>
+  <ul style={{textAlign: 'left', fontSize: '0.9rem', color: '#444', margin: '16px 0', paddingLeft: '20px', listStyleType: 'none'}}>
+    <li style={{marginBottom: '4px'}}><span style={{color: '#10b981', marginRight: '8px'}}>✓</span>26+ state-specific templates</li>
+    <li style={{marginBottom: '4px'}}><span style={{color: '#10b981', marginRight: '8px'}}>✓</span>Real-time compliance updates</li>
+    <li style={{marginBottom: '4px'}}><span style={{color: '#10b981', marginRight: '8px'}}>✓</span>Tenant screening toolkit</li>
+    <li style={{marginBottom: '4px'}}><span style={{color: '#10b981', marginRight: '8px'}}>✓</span>Email alerts for law changes</li>
+    <li style={{marginBottom: '4px'}}><span style={{color: '#10b981', marginRight: '8px'}}>✓</span>Cancel anytime</li>
+  </ul>
+  <a 
+    href="YOUR-ANNUAL-STRIPE-LINK-HERE" 
+    style={{
+      display: 'inline-block',
+      backgroundColor: '#3182ce',
+      color: 'white',
+      padding: '12px 24px',
+      borderRadius: '6px',
+      fontWeight: '600',
+      textDecoration: 'none',
+      cursor: 'pointer',
+      marginTop: '8px'
+    }}
+    onMouseOver={(e) => e.target.style.backgroundColor = '#2c5282'}
+    onMouseOut={(e) => e.target.style.backgroundColor = '#3182ce'}
+  >
+    Start Free Trial - Save $20
+  </a>
+  <p style={{fontSize: '0.8rem', color: '#718096', marginTop: '16px'}}>
+    7-day free trial • No credit card required • 73% of annual users stay 2+ years
+  </p>
+</div>

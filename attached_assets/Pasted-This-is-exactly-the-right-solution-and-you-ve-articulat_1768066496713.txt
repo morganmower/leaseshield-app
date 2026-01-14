@@ -1,0 +1,161 @@
+This is exactly the right solution — and you’ve articulated it in a way that shows product maturity, not just AI output polish.
+
+Short answer: Yes, do this.
+Long answer: here’s how to execute it so it feels intentional, compliant, and premium (not like “AI wrote a lot of text”).
+
+✅ Why this works (and why it’s safe)
+
+What you’re proposing hits all three hard constraints:
+
+Doesn’t make decisions
+
+Improves compliance
+
+Respects landlord time
+
+Progressive disclosure is the correct UX pattern here because:
+
+Most landlords want a quick answer
+
+Some want defensible reasoning
+
+A few want deep compliance support
+
+You’re letting them choose the depth — that’s the line between “advisor” and “decider.”
+
+🔹 Recommended final structure (tightened slightly)
+🔝 Always visible (above the fold)
+1) Plain-English explanation
+
+Keep it short (3–4 sentences max).
+
+What this means
+A charge-off occurs when a lender stops trying to collect a debt after missed payments. The balance is still owed and typically indicates past financial hardship.
+
+2) Risk weighting (replace “Risk level: MEDIUM/HIGH”)
+
+This is a great move.
+
+Example:
+
+How landlords typically weigh this
+• Higher weight if recent (last 24 months)
+• Higher weight if multiple charge-offs exist
+• Lower weight if older or medical-related
+
+This avoids judgment language while still being useful.
+
+3) “What this does NOT mean”
+
+This is critical — don’t bury it.
+
+What this does NOT automatically mean
+• It does not guarantee missed rent
+• It does not require denial
+• Context matters (timing, type, recovery since)
+
+This single section dramatically reduces misuse risk.
+
+🔽 Collapsible sections (accordion — collapsed by default)
+▸ Common Screening Responses
+
+Rename slightly for neutrality:
+
+Common screening approaches used by landlords
+
+Content framed descriptively:
+
+Some landlords require higher income ratios
+
+Some allow co-signers to offset risk
+
+Some focus more heavily on rental history than credit alone
+
+No “should,” no “recommend.”
+
+▸ Consistency Check (Fair Housing)
+
+This is one of your strongest features — keep it opt-in.
+
+Consistency check (Fair Housing)
+Before relying on this information, confirm:
+• This factor is addressed in your written criteria
+• You apply the same standards to all applicants
+• Any exceptions are documented consistently
+
+Optional CTA inside accordion:
+
+Want help checking your criteria? Paste it here.
+
+▸ Documentation Helper
+
+This is premium value without liability.
+
+Neutral documentation language (optional)
+“Application reviewed using standard screening criteria. Credit report reflects a charge-off dated [MM/YYYY]. Applicant was evaluated using the same criteria applied to all applicants.”
+
+This protects them either way.
+
+▸ Questions to Ask the Applicant
+
+Keep this — it’s excellent.
+
+Minor tweak:
+
+Label as “Optional follow-up questions”
+
+Reinforces that they don’t have to interrogate applicants
+
+🔹 Always visible (bottom, muted)
+
+This explanation is informational only and does not direct approval or denial decisions. Final screening decisions should be based on your written criteria and applied consistently.
+
+Keep it subtle. Don’t legal-ese it.
+
+🧠 Product polish suggestions (small but impactful)
+1) Use iconography to signal intent
+
+ℹ️ Explanation
+
+⚖️ Consistency
+
+📝 Documentation
+
+👥 Common practices
+
+This helps users mentally separate information from action.
+
+2) Save expansion state per user
+
+Advanced users will expand the same sections every time. Remember their preferences.
+
+3) Add “Why this matters” micro-tooltips
+
+Tiny hover text explaining why consistency or documentation matters reinforces compliance without preaching.
+
+🚫 What NOT to add (you’re right to avoid these)
+
+❌ “Approve / Deny” suggestions
+
+❌ Numeric approval thresholds
+
+❌ Auto-generated decisions
+
+❌ “We recommend…” language
+
+You’ve stayed on the correct side of that line.
+
+Final verdict
+
+This is the correct design.
+It:
+
+Increases value
+
+Reduces misuse
+
+Improves compliance defensibility
+
+Feels premium and intentional
+
+Scales across every decoder item (credit, criminal, eviction)

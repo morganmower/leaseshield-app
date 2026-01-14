@@ -1,0 +1,192 @@
+Exact tooltip copy for each dashboard card (short, safe, landlord-appropriate)
+
+Pressure-test of your empty states through a skeptical landlord lens (what they think, what reassures them, and why your copy passes)
+
+No fluff, no SaaS jargon.
+
+PART 1: Exact Tooltip Copy (Use Verbatim)
+Rules these follow (important)
+
+One sentence max
+
+Explains why, not how
+
+No legal promises
+
+Calm, compliance-first tone
+
+Works on hover or tap (mobile)
+
+🏠 Properties Card — Tooltip
+
+Tooltip text:
+Properties organize applications, screening, and documents by location.
+
+Why this works:
+It answers the “why do I have to do this?” objection without friction.
+
+📝 Applications / Screening Card — Tooltip
+
+Tooltip text:
+Send one link to the applicant. Screening runs through Western Verify.
+
+Why this works:
+
+Clarifies roles instantly
+
+Reinforces integration without overexplaining
+
+Eliminates “who’s doing what?” confusion
+
+🧠 Screening Decoder Card — Tooltip
+
+Tooltip text:
+Prevents misinterpretation of screening reports.
+
+Why this works:
+This reframes the decoder as risk prevention, not convenience or AI novelty.
+
+📄 Leases & Notices Card — Tooltip
+
+Tooltip text:
+State-specific documents updated when legislation changes.
+
+Why this works:
+It creates ongoing value without fear-mongering.
+
+⚖️ Legislation Updates (if separate card) — Tooltip
+
+Tooltip text:
+See when documents change due to new laws.
+
+Why this works:
+This reassures landlords they’re not missing something important.
+
+⚙️ Settings / Integration Card — Tooltip (if visible)
+
+Tooltip text:
+Configure how LeaseShield works with Western Verify.
+
+Why this works:
+Keeps power users comfortable without overwhelming new users.
+
+PART 2: Pressure-Test Against a Skeptical Landlord Persona
+
+Let’s pressure-test your empty states against a realistic persona.
+
+The Persona (Very Common)
+
+“I’ve been a landlord for 15–20 years.
+I already have leases.
+I already run background checks.
+I don’t want another system telling me how to do my job.”
+
+This person is:
+
+Skeptical
+
+Risk-aware
+
+Time-constrained
+
+Not impressed by tech
+
+Empty State: NO PROPERTIES
+Their internal thought:
+
+“Why do I need to add a property? I just want to screen someone.”
+
+Your copy says:
+
+Add your first property to send applications, route screening through Western Verify, and access state-specific leases and notices.
+
+Why this passes the test
+
+✔ Explains purpose, not requirement
+✔ Ties property directly to value
+✔ Doesn’t sound like software bureaucracy
+
+Result: Resistance drops.
+
+Empty State: NO APPLICATIONS
+Their internal thought:
+
+“I already have my own process. Why would I use this?”
+
+Your copy says:
+
+Send one link to the applicant. LeaseShield tracks the process while screening runs through Western Verify.
+
+Why this passes
+
+✔ Mentally compares favorably to email + PDFs
+✔ Emphasizes control and tracking
+✔ Doesn’t replace Western Verify — complements it
+
+Result: Curiosity instead of dismissal.
+
+Empty State: NO DOCUMENTS USED
+Their internal thought:
+
+“My lease works fine. Why change it?”
+
+Your copy says:
+
+Browse state-specific leases and notices updated when legislation changes.
+
+Why this passes
+
+✔ No accusation (“your lease is bad”)
+✔ No fear (“you’re at risk”)
+✔ Softly introduces change over time
+
+Result: Defensive walls stay down.
+
+Empty State: DECODER (No Report Yet)
+Their internal thought:
+
+“I know how to read a report.”
+
+Your copy says:
+
+Most landlords misinterpret at least one item on every screening report. This prevents that.
+
+Why this passes
+
+✔ Non-judgmental
+✔ Inclusive (“most landlords”)
+✔ Positions tool as a safety net
+
+Result: Even confident landlords try it “just to check.”
+
+Why This All Works Together
+
+What you’ve built now does three very important things for skeptical users:
+
+It never implies they’re doing something wrong
+
+It never overpromises legal outcomes
+
+It always frames LeaseShield as support, not replacement
+
+That is exactly how compliance tools should behave.
+
+Final Recommendation (Lock This In)
+
+You are at the point where:
+
+Tooltips = done
+
+Empty states = correct
+
+Tone = right for your market
+
+From here forward, feedback should come from:
+
+Real usage
+
+Support questions
+
+“I didn’t realize it did X” moments
+
+Not more hypothetical UX tweaks.

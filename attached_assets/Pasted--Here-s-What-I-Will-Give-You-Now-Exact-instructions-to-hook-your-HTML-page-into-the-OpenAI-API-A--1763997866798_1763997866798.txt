@@ -1,0 +1,178 @@
+✅ Here’s What I Will Give You Now
+
+Exact instructions to hook your HTML page into the OpenAI API
+
+A simple Node.js (Express) backend for Replit
+
+Updated HTML/JS code that sends the user’s word/phrase to your backend
+
+Automatic privacy-safe checks before sending anything to AI
+
+100% compliant with your “no CRA data” restriction
+
+This is the easiest version where:
+
+Frontend stays extremely simple
+
+Backend handles the AI request
+
+No sensitive information is ever stored
+
+The AI only receives a short phrase, not a PDF
+
+🟦 PART 1 — Replit Folder Layout (super simple)
+
+In your Replit project:
+
+index.html
+server.js
+package.json
+sample-report.png
+
+
+That’s it.
+
+🟩 PART 2 — server.js (Node + Express + OpenAI API)
+
+👉 Create this file in Replit called server.js:
+
+import express from "express";
+import OpenAI from "openai";
+import cors from "cors";
+
+const app = express();
+app.use(express.json());
+app.use(cors());
+
+// 1. Initialize your OpenAI API client
+const client = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
+});
+
+// 2. POST route the frontend will call
+app.post("/explain", async (req, res) => {
+  let term = (req.body.term || "").toLowerCase();
+
+  // 3. Basic safety filters (no SSNs, account numbers, etc.)
+  if (term.match(/\b\d{3}-\d{2}-\d{4}\b/) || term.includes("ssn")) {
+    return res.json({
+      explanation:
+        "For your safety, please do not enter Social Security numbers or personal identifiers."
+    });
+  }
+
+  if (/\d{8,}/.test(term)) {
+    return res.json({
+      explanation:
+        "This looks like an account or loan number. For privacy reasons, please enter only the WORD or PHRASE you'd like explained."
+    });
+  }
+
+  try {
+    // 4. Call OpenAI to explain the term
+    const response = await client.chat.completions.create({
+      model: "gpt-4o-mini",
+      messages: [
+        {
+          role: "system",
+          content:
+            "You are a simple, friendly assistant that explains credit report terms in very plain English. Keep explanations short. Do not give legal advice."
+        },
+        {
+          role: "user",
+          content: `Explain the credit report term: "${term}".`
+        }
+      ]
+    });
+
+    const explanation = response.choices[0].message.content;
+
+    res.json({ explanation });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      explanation: "Sorry, something went wrong. Please try again."
+    });
+  }
+});
+
+// Start server
+app.listen(3000, () => {
+  console.log("LeaseShield API running on port 3000");
+});
+
+🟨 PART 3 — package.json
+
+If Replit didn’t create one automatically, create this:
+
+{
+  "name": "leaseshield-helper",
+  "type": "module",
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5",
+    "openai": "latest"
+  }
+}
+
+
+Replit will install these automatically.
+
+🟧 PART 4 — Add Your OpenAI Key in Replit
+
+Go to Secrets (🔒 icon on left sidebar)
+
+Add:
+
+OPENAI_API_KEY = your-key-here
+
+🟥 PART 5 — Modify the HTML’s handleExplain() Function
+
+Replace the JavaScript handleExplain() in your index.html with this version:
+
+async function handleExplain() {
+  const input = (document.getElementById('user-question').value || '').trim();
+  const answerBox = document.getElementById('answer-box');
+  const answerText = document.getElementById('answer-text');
+
+  if (!input) {
+    answerText.textContent = 'Please type a word or phrase from your report first.';
+    answerBox.classList.remove('hidden');
+    return;
+  }
+
+  // Send the term to your backend
+  try {
+    const response = await fetch("https://<your-replit-url>.repl.co/explain", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ term: input })
+    });
+
+    const data = await response.json();
+    answerText.textContent = data.explanation || "No answer received.";
+    answerBox.classList.remove('hidden');
+
+  } catch (err) {
+    answerText.textContent = "Something went wrong. Please try again.";
+    answerBox.classList.remove('hidden');
+  }
+}
+
+
+📌 Replace <your-replit-url> with the actual public URL Replit gives you.
+
+You’ll find it after clicking Run.
+
+🟦 FINAL RESULT
+
+Your users can now:
+
+✔ See an example credit report
+✔ Click “Ask a Question”
+✔ Type only the word or phrase (e.g., “charge-off”)
+✔ Get a clear AI explanation
+✔ Without uploading ANY sensitive documents
+✔ And with automatic screening to prevent SSNs or personal data
+
+This is fully FCRA-safe, non-CRA compliant, and older-person friendly.

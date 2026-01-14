@@ -9,8 +9,35 @@ export default {
         lg: ".5625rem", /* 9px */
         md: ".375rem", /* 6px */
         sm: ".1875rem", /* 3px */
+        xl2: "1.25rem", /* 20px */
+      },
+      boxShadow: {
+        soft: '0 10px 30px rgba(15, 23, 42, 0.08)',
+        lift: '0 16px 50px rgba(15, 23, 42, 0.12)',
+        ring: '0 0 0 6px rgba(16, 185, 129, 0.18)',
       },
       colors: {
+        // LeaseShield brand colors
+        brand: {
+          50:  '#ECFDF5',   // mint wash
+          100: '#D1FAE5',
+          200: '#A7F3D0',
+          300: '#6EE7B7',
+          400: '#34D399',
+          500: '#10B981',   // primary green
+          600: '#059669',   // primary hover
+          700: '#047857',
+          800: '#065F46',
+        },
+        ink: {
+          900: '#0F172A', // slate-900
+          700: '#334155', // slate-700
+          500: '#64748B', // slate-500
+        },
+        panel: {
+          50: '#F8FAFC',  // slate-50 background
+          100:'#F1F5F9',  // slate-100
+        },
         // LeaseShield App color system: Slate gray + Blue accents
         background: "hsl(var(--background) / <alpha-value>)",
         foreground: "hsl(var(--foreground) / <alpha-value>)",

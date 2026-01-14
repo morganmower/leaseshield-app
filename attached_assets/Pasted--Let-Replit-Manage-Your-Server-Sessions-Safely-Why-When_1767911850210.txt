@@ -1,0 +1,63 @@
+ Let Replit Manage Your Server Sessions Safely
+Why?
+When people log in to your app, their session is what keeps them “logged in.” If this isn’t handled securely, people can stay logged in too long—or worse, someone else can pretend to be them.
+What to do:
+Replit helps you store session data in cookies. Ask Replit to:
+Use HTTP-only cookies (so they can’t be read from the browser)
+Set the Secure flag (so they’re only sent over HTTPS)
+Set a timeout (e.g., 7 days max)
+
+3. Protect Your Database (Even If It’s Just User Emails)
+Why?
+If you don’t handle database inputs properly, someone could trick your app into giving up all your data or breaking entirely (this is called SQL injection).
+What to do:
+Always ask Replit: “Can you make sure all my queries are parameterized and not raw string-based?”
+Don’t show detailed error messages to users—just show something friendly like “Something went wrong.”
+
+4. Safely Connect Tools Like Stripe, SendGrid, and OpenAI
+Why?
+These tools are powerful—but they also deal with payments, emails, and sensitive logic. If you accidentally expose your API keys, someone else could use them and cost you money (or worse).
+What to do:
+Store all API keys in your Secrets.
+Ask Replit to:
+Validate Stripe webhooks so only Stripe can send info to your app.
+Use input validation for AI prompts (so users can’t break or exploit your AI logic).
+Set up domain verification for email tools like SendGrid (so your emails don’t go to spam).
+
+5. Frontend Security Basics
+Why?
+Even your website’s public pages need protection—bad scripts or insecure forms can cause big problems.
+What to do:
+Ask Replit to:
+Add a Content Security Policy (CSP) to limit what can run in the browser.
+Use HTTPS for everything (Replit does this by default).
+Never use dangerouslySetInnerHTML in React unless you know exactly what you’re doing.
+
+6. Keep Logins and Passwords Safe
+Why?
+If someone can guess, steal, or reset a user’s password too easily, your platform becomes unsafe.
+What to do:
+Replit can help you:
+Hash passwords with bcrypt (so they aren’t stored as plain text)
+Use a password reset flow that expires quickly
+End sessions when users log out
+Check all inputs before saving them (to stop hackers)
+
+7. Let AI Help You Double Check Everything
+Why?
+AI is great at catching things you might miss—especially if you’re not a full-time developer.
+What to do:
+Ask ChatGPT or Replit’s AI:
+“Can you audit my login system for any security flaws?”
+“Can you show me best practices for using the Stripe API securely?”
+“Can you test this for XSS or other common attacks?”
+
+8. Keep Improving Over Time
+Why?
+Security isn’t a one-time thing. As your app grows, so do your risks.
+What to do:
+Update your packages (ask Replit: “Can you check if I have outdated or vulnerable packages?”)
+Plan to add:
+2FA (two-factor login)
+Rate limiting (to stop spam or brute-force attacks)
+Security headers (like CORS and HSTS)

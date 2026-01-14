@@ -1,0 +1,212 @@
+Yes — implement it DB-backed with an admin approval workflow, and keep the runtime model’s role limited to topic classification + plain-English explanation. Below is a Replit-ready plan you can hand off.
+
+1) Data model: state_notes (and optional local_notes)
+state_notes table (core)
+
+Fields:
+
+id UUID
+
+state_id varchar(2) FK → states.id
+
+decoder enum: credit | criminal_eviction
+
+topic varchar (controlled list)
+
+title text (e.g., State-Specific Notes (Illinois))
+
+bullets jsonb (array of strings)
+
+is_active boolean default true
+
+version int default 1
+
+status enum: draft | in_review | approved | archived
+
+last_reviewed_at timestamp (nullable)
+
+reviewed_by_user_id FK (nullable)
+
+source_links jsonb (optional, internal only)
+
+created_at, updated_at
+
+Unique constraint (prevents duplicates):
+
+UNIQUE(state_id, decoder, topic, version)
+Optionally also enforce only one approved “current” version:
+
+UNIQUE(state_id, decoder, topic) WHERE status='approved' AND is_active=true
+
+Optional: local_notes table (layering)
+
+Fields:
+
+id, state_id, city_code (or locality_id)
+
+decoder, topic, bullets
+
+status/version same pattern
+
+This can come later. Start with state-only; add local overlays when users ask.
+
+2) Topic registry: controlled list (no free-text)
+
+Create a single source of truth file:
+
+shared/decoderTopics.ts
+
+export const CREDIT_TOPICS = [
+  "security_deposit_limits",
+  "application_fees",
+  "source_of_income",
+  "late_fees_rules",
+] as const;
+
+export const CRIMINAL_EVICTION_TOPICS = [
+  "fair_chance_housing",
+  "individualized_assessment",
+  "eviction_record_sealing",
+  "local_overrides_present",
+  "eviction_filing_vs_judgment",
+] as const;
+
+
+This keeps the DB clean and prevents random topic strings.
+
+3) Admin workflow: reuse your existing review architecture
+
+You already have:
+
+review queues
+
+approval gates
+
+versioning patterns
+
+Mirror that:
+
+Admin can create/edit a note (draft)
+
+Submit for review
+
+Approve → becomes eligible for runtime use
+
+Archive old versions
+
+Rule: runtime only uses status='approved' AND is_active=true.
+
+4) API endpoints (minimal set)
+Public (used by decoder runtime)
+
+GET /api/state-notes?stateId=IL&decoder=criminal_eviction&topic=fair_chance_housing
+
+returns approved note or null
+
+Admin
+
+GET /api/admin/state-notes (filter by state/decoder/topic/status)
+
+POST /api/admin/state-notes (create draft)
+
+PUT /api/admin/state-notes/:id (edit draft)
+
+POST /api/admin/state-notes/:id/submit
+
+POST /api/admin/state-notes/:id/approve
+
+POST /api/admin/state-notes/:id/archive
+
+5) Decoder runtime flow (safe and deterministic)
+Step A: Determine state
+
+Use user.preferredState automatically
+
+Optional override later (dropdown), but not required now
+
+Step B: Classify topic (two-layer approach)
+
+Best practice: hybrid
+
+Keyword pre-check (fast + free)
+
+AI classification fallback (only if unclear)
+
+Keyword map example:
+
+contains "deposit" → security_deposit_limits
+
+contains "application fee" → application_fees
+
+contains "eviction" or "judgment" → eviction_filing_vs_judgment
+
+contains "ban the box" or "fair chance" → fair_chance_housing
+
+If keyword score < threshold:
+
+Call GPT to classify into the controlled topic list (and only return a topic id)
+
+Step C: Fetch vetted note from DB
+
+If exists → include accordion “State-Specific Notes (StateName)”
+
+If not → omit the section entirely (fail-safe)
+
+Step D: Generate the main explanation (model)
+
+The model must not invent law.
+
+The prompt should explicitly say:
+
+“Do not state any state-specific legal requirements. If state notes exist, they will be provided separately.”
+
+6) Prompt structure (final guardrails)
+Prompt segment you should always include
+You are LeaseShield Decoder.
+Do NOT provide legal advice or tell the user what to do.
+Do NOT recommend approve/deny or specific actions.
+Do NOT invent state laws or local ordinances.
+State-specific notes will be provided separately if available; do not generate them.
+
+Return output in this structure:
+1) What This Means (max 4 sentences)
+2) How This Is Commonly Evaluated (weighting factors bullets)
+3) What This Does NOT Automatically Mean (bullets)
+4) [Accordion] Common Screening Approaches Used by Landlords
+5) [Accordion] Consistency Check
+6) [Accordion] Documentation Helper
+7) [Accordion] Optional Follow-Up Questions
+8) One-line boundary footer
+
+
+Then your app UI inserts the DB snippet into the “State-Specific Notes” accordion (not the model).
+
+7) UI: Admin management screen (simple)
+
+Admin page:
+
+Filters: State / Decoder / Topic / Status
+
+Table list
+
+Edit drawer/modal for bullets + sources + last reviewed
+
+Approve/Archive buttons
+
+“Preview” mode showing exactly what users will see
+
+8) Shipping plan (fast path)
+
+Add state_notes table + constraints
+
+Build admin CRUD + approval
+
+Add topic classifier (keyword first, GPT fallback)
+
+Wire decoder to fetch approved note and render accordion
+
+Seed initial snippets for CA/IL/TX/NY (approved)
+
+Add verification script:
+
+“for each active state + topic, show missing snippets”

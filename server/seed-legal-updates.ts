@@ -1,5 +1,21 @@
 import { storage } from "./storage";
 
+// Template IDs for linking legal updates to affected templates
+// These are dynamically looked up, but we include common ones for reference
+const TEMPLATE_REFS = {
+  UT_LEASE: "63f3873a-034e-4354-b573-31097ed45de4",  // Utah Residential Lease Agreement
+  UT_MONTH_TO_MONTH: "88a93a73-6731-494d-a1b7-801c02508aed", // Month-to-Month Rental Agreement (UT)
+  TX_LEASE: "tx-residential-lease", // Will be looked up dynamically
+  ND_LEASE: "75dd5539-5c6c-4e5d-bf02-81f1aaf9081f", // North Dakota Residential Lease Agreement
+  SD_LEASE: "sd-residential-lease", // Will be looked up dynamically
+  CA_LEASE: "eeda2791-2237-4f26-b078-2ec3e80d2e16", // California Residential Lease Agreement
+  VA_LEASE: "va-residential-lease",
+  NV_LEASE: "f81e9bcb-6da2-423a-bd0e-b2a51db9cc6b", // Nevada Residential Lease Agreement
+  AZ_LEASE: "ee09de92-aa2d-46a6-a6df-c9f3a5179288", // Arizona Residential Lease Agreement
+  FL_LEASE: "26883f07-03ec-4dec-b9d3-a2ffbac7f634", // Florida Residential Lease Agreement
+  WY_LEASE: "wy-residential-lease",
+};
+
 // Comprehensive legal updates for all 4 launch states
 const legalUpdates = [
   // UTAH Legal Updates
@@ -12,6 +28,7 @@ const legalUpdates = [
     afterText: "Landlords MUST provide itemized deduction notice within 30 days of move-out or forfeit ALL deduction rights, including for documented damages.",
     effectiveDate: new Date("2024-01-01"),
     impactLevel: "high",
+    affectedTemplateIds: [TEMPLATE_REFS.UT_LEASE, TEMPLATE_REFS.UT_MONTH_TO_MONTH],
   },
   {
     stateId: "UT",
@@ -22,6 +39,7 @@ const legalUpdates = [
     afterText: "The Utah mold addendum is now mandatory for all residential leases, explaining tenant responsibilities for preventing moisture and reporting mold issues promptly.",
     effectiveDate: new Date("2023-07-01"),
     impactLevel: "high",
+    affectedTemplateIds: [TEMPLATE_REFS.UT_LEASE, TEMPLATE_REFS.UT_MONTH_TO_MONTH],
   },
   {
     stateId: "UT",
@@ -107,6 +125,180 @@ const legalUpdates = [
     beforeText: "Notice service methods were based on court interpretations and varied by county.",
     afterText: "Notices must be served via: (1) personal delivery with witness, (2) certified mail with return receipt, or (3) posting on main entrance AND mailing via first-class mail. Document everything.",
     effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+
+  // WYOMING Legal Updates
+  {
+    stateId: "WY",
+    title: "Methamphetamine Contamination Disclosure",
+    summary: "Wyoming now requires disclosure of any prior meth contamination in rental properties.",
+    whyItMatters: "Failure to disclose meth contamination history can expose you to significant liability and potential criminal charges.",
+    beforeText: "No specific requirement to disclose prior methamphetamine contamination.",
+    afterText: "Landlords must disclose in writing if property was previously used for meth production, even if remediated.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "WY",
+    title: "Security Deposit Return Clarification",
+    summary: "Wyoming clarified the 30-day deposit return timeline and itemization requirements.",
+    whyItMatters: "Clear understanding of deadlines prevents costly disputes and potential lawsuits over deposit handling.",
+    beforeText: "Return timeline was referenced in statute but procedures were not clearly outlined.",
+    afterText: "Landlords must return deposit OR provide written itemization within 30 days. Itemization must include specific damages and costs.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+
+  // CALIFORNIA Legal Updates
+  {
+    stateId: "CA",
+    title: "AB 1482 Tenant Protection Act Updates",
+    summary: "California expanded statewide rent cap and just cause eviction protections.",
+    whyItMatters: "Violating rent cap limits can result in tenant lawsuits and penalties. Understanding exemptions is critical.",
+    beforeText: "Rent caps and just cause protections applied to most multi-family and corporate-owned properties.",
+    afterText: "Rent increases capped at 5% + CPI (max 10%). Just cause required for tenants after 12 months. Exemptions narrowed for newer properties.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "CA",
+    title: "Security Deposit Limit Reduction",
+    summary: "California reduced security deposit limits for most landlords starting July 2024.",
+    whyItMatters: "Collecting deposits above the new limits exposes you to legal action and penalties.",
+    beforeText: "Maximum 2 months rent for unfurnished, 3 months for furnished properties.",
+    afterText: "For landlords with 4+ properties: Maximum 1 month rent regardless of furnished status. Small landlords (1-2 properties) retain prior limits until 2025.",
+    effectiveDate: new Date("2024-07-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "CA",
+    title: "Bed Bug Disclosure Requirements",
+    summary: "California requires written bed bug disclosure and informational materials at lease signing.",
+    whyItMatters: "Failure to provide required disclosures can void portions of your lease and expose you to liability.",
+    beforeText: "Bed bug disclosures were recommended but specific requirements varied.",
+    afterText: "Must provide written disclosure of known infestations AND bed bug informational materials to all new tenants.",
+    effectiveDate: new Date("2023-01-01"),
+    impactLevel: "medium",
+  },
+
+  // VIRGINIA Legal Updates
+  {
+    stateId: "VA",
+    title: "Move-In Inspection Report Mandate",
+    summary: "Virginia now requires landlords to provide written move-in inspection reports within 5 days.",
+    whyItMatters: "Missing this deadline weakens your ability to make security deposit deductions for pre-existing damage.",
+    beforeText: "Move-in inspections were recommended but not strictly mandated with specific timelines.",
+    afterText: "Written move-in inspection report must be provided to tenant within 5 days of occupancy. Tenant has 5 days to respond with objections.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "VA",
+    title: "45-Day Security Deposit Return",
+    summary: "Virginia codified the 45-day deposit return requirement with specific itemization standards.",
+    whyItMatters: "Late returns or improper itemization can result in losing your right to any deductions.",
+    beforeText: "Deposit return timelines existed but itemization requirements were less specific.",
+    afterText: "Return deposit within 45 days with itemized list. Must include actual costs for each deduction. Failure forfeits deduction rights.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+
+  // NEVADA Legal Updates
+  {
+    stateId: "NV",
+    title: "7-Day Pay or Quit Notice Process",
+    summary: "Nevada clarified that 7-day notices must be served through constable or sheriff.",
+    whyItMatters: "Improper service invalidates your eviction—potentially costing months of lost rent and restart fees.",
+    beforeText: "Notice service methods varied and landlords sometimes attempted personal service.",
+    afterText: "7-day pay or quit notices MUST be served through constable or sheriff. Self-service or mail service is not valid for this notice type.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "NV",
+    title: "Foreclosure Disclosure Requirement",
+    summary: "Nevada requires landlords to disclose if property is in foreclosure before lease signing.",
+    whyItMatters: "Failure to disclose can result in lease termination rights for tenants and potential fraud claims.",
+    beforeText: "Foreclosure disclosure requirements were limited to certain circumstances.",
+    afterText: "Landlords must provide written disclosure if property is in foreclosure proceedings before executing any new lease.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+
+  // ARIZONA Legal Updates
+  {
+    stateId: "AZ",
+    title: "14-Business-Day Deposit Return",
+    summary: "Arizona clarified the 14-business-day deposit return requirement under ARLTA.",
+    whyItMatters: "Missing this deadline forfeits your right to make deductions and can result in penalties.",
+    beforeText: "14-day timeline existed but calculation of business days was sometimes disputed.",
+    afterText: "Return deposit or provide itemized statement within 14 BUSINESS days (excludes weekends and holidays) of move-out and key return.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "AZ",
+    title: "Pool Safety Notice Requirements",
+    summary: "Arizona expanded pool safety disclosure requirements for rental properties.",
+    whyItMatters: "Properties with pools face additional liability—proper disclosures provide crucial protection.",
+    beforeText: "Pool safety notices were required but specific content was not mandated.",
+    afterText: "Must provide detailed pool safety notice per A.R.S. § 36-1681 including drowning prevention information and barrier requirements.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+
+  // FLORIDA Legal Updates
+  {
+    stateId: "FL",
+    title: "Radon Gas Disclosure Mandate",
+    summary: "Florida requires specific statutory radon disclosure language in all residential leases.",
+    whyItMatters: "Using non-compliant disclosure language can expose you to liability for tenant health claims.",
+    beforeText: "Radon disclosures were recommended but exact language requirements varied.",
+    afterText: "Must include EXACT statutory language from F.S. § 404.056 in every residential lease. Paraphrasing or omitting is not compliant.",
+    effectiveDate: new Date("2023-01-01"),
+    impactLevel: "medium",
+  },
+  {
+    stateId: "FL",
+    title: "Security Deposit Notice Timeline",
+    summary: "Florida clarified the 15/30-day deposit return framework with certified mail requirements.",
+    whyItMatters: "Improper notice procedure forfeits ALL deduction rights—even for legitimate damages.",
+    beforeText: "Return timelines existed but certified mail requirements were sometimes overlooked.",
+    afterText: "15 days if no deductions; 30 days if claiming deductions. Deduction notice MUST be sent via certified mail to preserve rights.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+
+  // ILLINOIS Legal Updates
+  {
+    stateId: "IL",
+    title: "Security Deposit Return Act Updates",
+    summary: "Illinois clarified the 30/45-day deposit return framework under the Security Deposit Return Act.",
+    whyItMatters: "Missing these deadlines results in forfeiting ALL deduction rights plus potential penalties of up to 2x the deposit amount.",
+    beforeText: "Return timelines existed but some landlords confused the two different timeframes.",
+    afterText: "30 days to return deposit with itemized deductions; 45 days if repairs needed and estimate provided. Must include receipts for all deductions over $25.",
+    effectiveDate: new Date("2024-01-01"),
+    impactLevel: "high",
+  },
+  {
+    stateId: "IL",
+    title: "Radon Disclosure Requirement",
+    summary: "Illinois requires landlords to provide the Illinois EPA radon disclosure to all residential tenants.",
+    whyItMatters: "Radon is a leading cause of lung cancer. Proper disclosure protects you from liability for health-related claims.",
+    beforeText: "Radon disclosures were recommended but enforcement was inconsistent.",
+    afterText: "Must provide Illinois EPA Radon Disclosure form before lease signing. Keep signed copy for your records.",
+    effectiveDate: new Date("2023-07-01"),
+    impactLevel: "medium",
+  },
+  {
+    stateId: "IL",
+    title: "Chicago RLTO Notice Requirements",
+    summary: "Chicago landlords must comply with stricter notice requirements under the Residential Landlord and Tenant Ordinance.",
+    whyItMatters: "Chicago properties have additional requirements beyond state law. Non-compliance can result in significant penalties.",
+    beforeText: "RLTO requirements were sometimes overlooked by landlords managing Chicago properties.",
+    afterText: "Chicago requires: 48-hour entry notice, security deposit receipt with bank info, RLTO summary attached to every lease. Fines up to $500 per violation.",
+    effectiveDate: new Date("2023-01-01"),
     impactLevel: "high",
   },
 ];

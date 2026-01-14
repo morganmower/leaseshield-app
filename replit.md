@@ -1,7 +1,22 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform ($12/month with 7-day free trial) designed for small and midsize landlords. Its primary purpose is to provide state-specific legal templates, compliance guidance, and tenant screening resources. The platform aims to be a "protective mentor," helping landlords safeguard their investments while ensuring compliance with legal regulations. Initial launch states include Utah, Texas, North Dakota, and South Dakota.
+LeaseShield App is a subscription-based SaaS platform for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect investments and ensure legal compliance. The platform currently supports 15 states (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL, IL).
+
+## Project Documentation
+
+### Key Documentation Files
+- **[README.md](./README.md)** — Business plan, mission statement, monetization strategy, competitive positioning, and feature overview. This is the foundational document explaining the project's purpose and goals.
+- **[progress.md](./progress.md)** — Detailed feature implementation checklist with checkbox tracking. Shows completed vs. pending features, organized by category. Use this to track development progress and identify remaining work.
+- **[replit.md](./replit.md)** (this file) — Technical architecture, system design decisions, and AI agent context. Maintains session memory and project state.
+- **[docs/ADDING_NEW_STATE.md](./docs/ADDING_NEW_STATE.md)** — Step-by-step guide for adding support for a new U.S. state, including database setup, templates, compliance cards, and verification.
+
+### Documentation Purposes
+| File | Purpose | When to Update |
+|------|---------|----------------|
+| README.md | Business context, goals, monetization | Major feature additions, business pivots |
+| progress.md | Feature tracking, implementation status | After completing features, sprint planning |
+| replit.md | Technical architecture, AI context | Architecture changes, new integrations |
 
 ## User Preferences
 Not specified.
@@ -9,72 +24,92 @@ Not specified.
 ## System Architecture
 
 ### UI/UX Decisions
-- **Color Scheme**: Primary blue (#2563eb) for trust, secondary slate gray (#475569) for stability, light gray background (#f8fafc).
-- **Typography**: Space Grotesk (headings), Inter (body) for a professional and readable aesthetic.
-- **Component Patterns**: Utilizes cards with subtle shadows, before/after comparison layouts, badge-based categorization, and icon-first navigation.
-- **Messaging**: "Protective mentor" tone integrated throughout the user experience.
+The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, matching the LeaseShield logo branding. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone.
+
+### Logo & Branding
+- **Primary Icon**: `client/src/assets/leaseshield-icon-v3.png` - House-shield-keyhole logo with transparent background. This is the master icon used on the dashboard and for favicon generation.
+- **Logo Files**: Horizontal logo at `client/src/assets/logo-horizontal.png`, stacked logo at `client/src/assets/logo-stacked.png`
+- **Logo Sizes**: sm (h-8), md (h-12), lg (h-16), xl (h-32) for horizontal variant
+- **Primary Color**: Teal/turquoise (HSL 168 76% 42%)
+- **Text Color**: Navy blue (HSL 215 35% 20%)
+- **Cache-busting**: Favicon/icon URLs use `?v=7` query parameter. Increment when assets change.
+- **CRITICAL - Vite Asset Caching**: When updating logo PNG files, always use a NEW filename (e.g., v2, v3) to force Vite to generate a new hash. Editing an existing file in-place will NOT update the cached asset.
 
 ### Technical Implementations
-- **Frontend**: React, TypeScript, TanStack Query, Wouter for routing, and Shadcn UI components.
-- **Backend**: Express.js server, PostgreSQL (via Neon) database, Drizzle ORM.
-- **Authentication**: Replit Auth with session management.
-- **Payments**: Stripe Subscriptions for payment processing, integrated with webhooks for subscription lifecycle management.
-- **Document Assembly Wizard**: Interactive multi-step forms with smart field validation, real-time validation, server-side PDF generation using Puppeteer, and comprehensive HTML escaping for security. PDFs feature professional attorney-quality styling including: professional letterhead header ("LEASESHIELD LEGAL DOCUMENTS"), Times New Roman typography with 1.8 line-height, enhanced 1-inch margins, formal signature blocks with bordered sections and "IN WITNESS WHEREOF" legal language, version info display, and comprehensive professional formatting that makes all documents appear as attorney-prepared legal documents.
-- **Legislative Monitoring**: Fully automated end-to-end system with monthly cron job integration via LegiScan API. Workflow: (1) LegiScan monitors state bills for UT, TX, ND, SD → (2) AI analyzes bills using GPT-4 to determine relevance and affected templates → (3) Auto-publishes template updates with versioning → (4) Users notified immediately via email → (5) Admin can review history optionally. Includes manual trigger button for testing. Protected cron endpoint (`/api/cron/legislative-monitoring`) with secret key verification.
-- **Template Review & Publishing**: Atomic auto-publishing system ensures template updates are transactional. Includes: versioning with auto-incrementing version numbers, complete history tracking, automatic approval and publishing, legislative bill flagging, and immediate user notifications via Resend. Updates are published automatically when AI detects relevant legislation, with full audit trail available to admin.
-- **Email Notifications**: Integration with a professional email service (e.g., Resend) for legal update and template update notifications.
+- **Frontend**: React, TypeScript, TanStack Query, Wouter, Shadcn UI.
+- **Backend**: Express.js, PostgreSQL (Neon), Drizzle ORM.
+- **Authentication**: Replit Auth with session handling.
+- **Payments**: Stripe Subscriptions with webhooks.
+- **Document Assembly Wizard**: Interactive multi-step forms, server-side PDF generation (Puppeteer) with professional styling, and robust HTML escaping.
+- **Document Generation Architecture**: 
+  - **PDF** (Puppeteer): Used for delivery, legal filings, and court submissions. HTML-to-PDF ensures pixel-perfect rendering.
+  - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
+  - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
+  - **State-specific content**: All 15 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
+- **Legislative Monitoring**: Safe two-job architecture with approval gates:
+  - **Data Sources (8 total)**: LegiScan API, Plural Policy API, Utah GLEN API, Federal Register API, eCFR API, Congress.gov API, HUD ONAP/PIH poller, CourtListener API
+  - **Safe Workflow**:
+    1. `ingestNow()` - Fetch and normalize updates from all sources (no publishing)
+    2. `queueFromLatestIngest()` - Create template review entries for admin approval (no publishing)
+    3. `publishApproved()` - Only publish items that admin has explicitly approved
+  - **Job Lock**: Single lock key "legislative-monitoring" prevents overlapping runs (`server/utils/jobLock.ts`)
+  - **Topic-Based Routing**: Updates tagged with topics route only to relevant templates; tribal updates isolated from landlord-tenant content
+  - **Scheduled Jobs**: Nightly ingest (daily at ~1:30am), Monthly queue (1st of month) - both use safe workflow with job lock
+  - **API Endpoints**: `/api/admin/legislative-monitoring/run?mode=queueOnly|ingestOnly|publishApproved` (default: queueOnly)
+  - **DEPRECATED**: `runMonthlyMonitoring()` throws error directing to safe methods
+- **Template Review & Publishing**: Approval-gated system with transactional updates, versioning, history tracking, admin review queue, legislative bill flagging, and user notifications via Resend.
+- **Email Notifications**: Integrated with Resend for legal and template update notifications.
+- **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
+- **State Notes Safety System**: Zero AI-generated state law content in decoders:
+  - **DB Schema**: `state_notes` table with versioning, approval workflow, 5-point checklist validation
+  - **Topic Registry**: Controlled topic lists in `shared/decoderTopics.ts` (credit: 5 topics, criminal_eviction: 7 topics)
+  - **Required Topics**: `REQUIRED_CRIMINAL_EVICTION_TOPICS` (fair_chance_housing, individualized_assessment, local_overrides_present), `REQUIRED_CREDIT_TOPICS` (source_of_income)
+  - **Fallback Logic**: `shouldTriggerStateLawFallback()` detects state-specific questions; shows fallback text when no approved snippet exists
+  - **Prompt Guardrails**: Decoders instructed to never generate state-specific content; state notes injected at runtime from DB
+  - **Admin Scripts**: `initStateNotes.ts` seeds draft placeholders, `verifyStateNotes.ts` checks required coverage
+  - **Readiness Flag**: `states.decoder_notes_ready` boolean tracks when required topics are approved
+- **AI Chat Assistant**: Integrated GPT-4o-mini chat widget (OpenAI) for instant help on landlord-tenant law and platform features.
+- **Multi-Property Management**: CRUD operations for properties, document association, and filtering.
+- **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming and optional property association.
+- **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements, statute citations, key requirements, and actionable steps.
 
 ### Feature Specifications
-- **Subscription Management**: 7-day free trial, $12/month subscription, Stripe Elements integration, webhook-driven lifecycle, and trial countdowns.
-- **Template Library**: State-specific legal documents categorized by use case and downloadable as PDF/DOCX.
-- **Compliance Cards**: State-specific before/after guidance with explanations and actionable next steps.
-- **Screening Toolkit**: Guides for credit reports, background checks, Fair Housing compliance, and CTAs for Western Verify integration.
+- **Subscription Management**: 7-day free trial, $10/month subscription via Stripe.
+- **Template Library**: State-specific legal documents (PDF/DOCX) categorized by use case, including form fields and state statute references.
+- **Compliance Cards**: Detailed state-specific guidance with legal authority, key requirements, and actionable steps.
+- **Screening Toolkit**: Guides for credit reports, background checks, and Fair Housing, with CTAs for Western Verify integration and AI helpers.
 - **Tenant Issue Workflows**: Step-by-step resolution guides with state-specific procedures and document templates.
-- **User Preferences**: Users can set their preferred state to filter content and personalize their experience.
-- **Multi-Property Management**: Complete property portfolio management system with CRUD operations (create, read, update, delete properties). Properties include name, address, city, state, zip code, units, property type, and notes. Document Wizard includes optional property selector for associating documents with properties. My Documents page includes property filter for organizing documents by property. Properties accessible via sidebar navigation.
+- **User Preferences**: Allows users to set a preferred state for personalized content.
+- **Admin Interfaces**: Legislative monitoring UI and resource management (CRUD for Templates, Compliance Cards, Legal Updates).
 
 ### System Design Choices
-- **Deployment**: Automated deployments via Replit on push.
-- **Database Schema**: Comprehensive schema including users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties (with property portfolio management), and savedDocuments (with propertyId linking to properties).
-- **API Endpoints**: Structured API for authentication, user management, subscriptions, templates, compliance, legal updates, legislative monitoring (admin-only: bills list, review queue, approve/reject, manual trigger), template review (versioning & publishing), notifications, analytics, and states. Cron endpoint for scheduled monitoring runs.
-- **Admin Legislative Monitoring UI**: Dedicated admin page (`/admin/legislative-monitoring`) with three tabs: (1) Published Updates - shows auto-published template updates with bill context and recommended changes for audit trail, (2) Pending Bills - displays unreviewed bills with AI analysis and affected templates, (3) History - tracks all published updates and reviewed bills. Includes manual "Run Monitoring Now" button for testing. All template updates are automatically published without requiring manual approval.
-- **Admin Resource Management**: All admin management pages (Templates, Compliance Cards, Legal Updates) now have complete CRUD operations with edit and delete functionality, allowing admins to manage all platform content directly through the UI.
+- **Deployment**: Automated deployments via Replit.
+- **Database Schema**: Comprehensive schema for users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties, savedDocuments, and uploadedDocuments.
+  - **Unique Constraints**: Templates use `(state_id, key, version)`, compliance cards use `(state_id, key)`, communication templates use `(state_id, template_type, key)` for upsert-safe seeding.
+  - **Canonical Keys**: All content tables have a `key` column (NOT NULL) for idempotent upserts. Keys are auto-generated using slug pattern: `{category}_{type}_{slugified_title}`.
+- **API Endpoints**: Structured API for all core functionalities.
+- **Template Alignment**: Templates include form fields and legal text that align with all compliance card requirements for each state.
+- **State Registry Architecture**:
+  - **Database-Driven**: States table is single source of truth. No hardcoded state lists in code.
+  - **Caching**: `getActiveStateIds()` from `server/states/getActiveStates.ts` with 5-minute TTL via memoizee.
+  - **API Endpoint**: Frontend uses `/api/states` with `useStates()` hook (1 hour staleTime).
+  - **Adding States**: See `docs/ADDING_NEW_STATE.md` for complete workflow.
+  - **Verification**: Run `npx tsx server/scripts/verifyStateSetup.ts [STATE]` to validate state content.
 
 ## External Dependencies
-- **PostgreSQL (Neon)**: Relational database for all application data.
-- **Stripe**: Payment gateway for subscription management, including Stripe Elements for UI and webhooks for server-side updates.
-- **Replit Auth**: Authentication service for user login and session management.
-- **LegiScan API**: Third-party service for legislative tracking and monitoring. Requires LEGISCAN_API_KEY environment variable.
-- **GPT-4 (OpenAI API via Replit AI Integration)**: Used for AI-powered relevance analysis of legislative bills. Uses AI_INTEGRATIONS_OPENAI_API_KEY and AI_INTEGRATIONS_OPENAI_BASE_URL environment variables.
-- **Puppeteer**: Used for server-side PDF generation from HTML templates.
-- **Western Verify LLC**: Integrated via Call-To-Actions (CTAs) within the screening toolkit for tenant screening services.
-- **Resend**: Email service for sending user notifications.
-
-## Automated Monthly Legislative Monitoring Setup
-
-### Using Replit Scheduled Deployments (Recommended)
-1. **Set Environment Variables:**
-   - Add `CRON_SECRET` to your Repl secrets (a secure random string)
-   - The `REPLIT_DOMAINS` variable is automatically set by Replit
-
-2. **Create Scheduled Deployment:**
-   - Click the "Publish" button in your Replit workspace
-   - Select "Scheduled" deployment type
-   - Configure the schedule:
-     - **Schedule:** `0 2 1 * *` (2:00 AM UTC on the 1st of every month)
-     - **Run command:** `tsx cron-legislative-monitoring.ts`
-     - **Timeout:** 5 minutes (should complete in under 2 minutes typically)
-   - Click "Deploy"
-
-3. **Verify Setup:**
-   - The scheduled deployment will run monthly automatically
-   - Check the deployment logs in the "Publish" panel to see execution results
-   - Alternatively, use admin UI "Run Monitoring Now" button for manual triggers anytime
-
-### Alternative: External Cron Service
-If not using Replit's scheduled deployments:
-1. Set `CRON_SECRET` environment variable to a secure random string
-2. Configure external cron service (e.g., cron-job.org, EasyCron) to POST to: `https://your-domain.com/api/cron/legislative-monitoring`
-3. Add header: `X-Cron-Secret: <your-cron-secret>`
-4. Schedule: Monthly (recommended: 1st of each month at 2:00 AM UTC)
-```
+- **PostgreSQL (Neon)**: Relational database.
+- **Stripe**: Payment gateway.
+- **Replit Auth**: User authentication.
+- **Legislative Source APIs (8 total)**:
+  - **LegiScan API**: State bill tracking (15 states)
+  - **Plural Policy API (Open States v3)**: Additional bill coverage (rate limited: 1 req/sec, 500 daily)
+  - **Utah GLEN API**: Utah-specific state legislation
+  - **Federal Register API**: HUD regulations via Data.gov
+  - **eCFR API**: Code of Federal Regulations changes (24 CFR Part 1000 for NAHASDA)
+  - **Congress.gov API**: Federal housing bills (optional, requires API key)
+  - **HUD ONAP/PIH Notices**: Page polling for tribal housing notices
+  - **CourtListener API**: Court case and legal precedent tracking
+- **GPT-4 (OpenAI API via Replit AI Integration)**: AI analysis.
+- **Puppeteer**: Server-side PDF generation.
+- **Western Verify LLC**: Tenant screening services (via CTAs).
+- **Resend**: Email notifications.

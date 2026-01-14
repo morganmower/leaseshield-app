@@ -1,0 +1,140 @@
+What’s production-ready (green)
+
+LegiScan adapter: requiring params.states (no fallback) is exactly right. This prevents silent drift.
+
+Upsert + unique constraints: your Drizzle onConflictDoUpdate target matches the DB constraint — perfect. Re-running seeds won’t duplicate.
+
+Disclosure registry file: using getStateName() + a registry map + generic default is the right direction.
+
+🔴 Two issues you should fix (or you’ll still feel the “add state pain”)
+1) docxBuilder.ts still has STATE_NAMES and a big switch
+
+You’ve got two disclosure systems now:
+
+docxBuilder.ts has:
+
+STATE_NAMES hardcoded
+
+getStateDisclosures() switch
+
+server/states/disclosures.ts has:
+
+registry-based disclosure builders
+
+DB name lookup
+
+That’s duplication and drift waiting to happen. The moment you add state #16, you’ll forget to update one of the two and ship inconsistent results.
+
+✅ Fix:
+
+Delete STATE_NAMES from docxBuilder.ts
+
+Delete the switch-based getStateDisclosures() from docxBuilder.ts
+
+Make docxBuilder.ts import and use getStateDisclosures() from server/states/disclosures.ts only.
+
+Replit task:
+
+Replace any reference to STATE_NAMES[stateId] with await getStateName(stateId) in the caller, or pass in stateName.
+
+If docxBuilder must remain sync, pass stateName into docxBuilder from the route/service that calls it.
+
+2) LegiScan adapter “errors.push + return {items, errors}” might not fail the run
+
+Right now if params.states is missing, you return an errors array but do not throw.
+
+Depending on your pipeline, that could mean:
+
+ingest continues and you silently miss all state bills
+
+monitoring “succeeds” with zero items
+
+✅ Fix:
+
+Either throw in the adapter (preferred)
+
+Or enforce “errors array is fatal” at the pipeline level.
+
+Preferred change:
+
+if (!params.states || params.states.length === 0) {
+  throw new Error("LegiScan requires params.states");
+}
+
+
+Then your pipeline catches and marks source run as failed/partial explicitly.
+
+🟡 Tighten-ups (small but worth it)
+A) Key generation: don’t generate keys from title going forward
+
+You said:
+
+generateTemplateKey(category, templateType, title)
+
+
+That’s deterministic, but titles change — which means keys can change later and you’ll create a “new” template instead of updating the old one.
+
+✅ Rule going forward:
+
+Keys should be explicit constants in the seed data, not derived.
+
+Use generation only as a fallback for legacy migration.
+
+Replit task:
+
+In seed files, define key explicitly per template record.
+
+Keep generateTemplateKey() only for migration/backfill or throw if key missing.
+
+B) Ensure upsert updates all relevant columns
+
+Your upsert set currently updates:
+
+title, description, category, templateType, sortOrder, updatedAt
+
+But your templates table includes:
+
+pdfUrl, fillableFormData, generationMode, versionNotes, lastUpdateReason, isActive
+
+If those are seeded, they should be included in the update set too, otherwise edits won’t apply.
+
+✅ Replit task:
+
+Add all seed-controlled columns to .set.
+
+C) keys are varchar(100)
+
+That’s fine, but ensure generateTemplateKey() never produces >100 chars or you’ll get truncation collisions.
+
+✅ Replit task:
+
+enforce max length + hash suffix for long strings.
+
+Final “✅ approved” criteria
+
+You’re approved once these are true:
+
+docxBuilder.ts no longer contains:
+
+STATE_NAMES
+
+a state switch for disclosures
+(only uses server/states/disclosures.ts)
+
+LegiScan missing states fails loudly (throw or fatal error propagation)
+
+Seeds define canonical keys explicitly (not from title) OR you enforce a rule: “seed record must supply key.”
+
+The exact message to send Replit (copy/paste)
+
+Tell Replit:
+
+Remove STATE_NAMES and switch disclosures from server/utils/docxBuilder.ts; make docxBuilder call server/states/disclosures.getStateDisclosures() only.
+
+In legiscanAdapter.fetch, throw if params.states is missing/empty (don’t just push to errors and return).
+
+Update seed-comprehensive.ts so template keys are explicit in seed records (no key derived from title for new content). Keep generator only for legacy fallback.
+
+Expand template upsert .set to include all seeded columns (pdfUrl, fillableFormData, generationMode, versionNotes, lastUpdateReason, isActive, etc.).
+
+Add max-length guard for key generation (100 chars) to prevent truncation collisions.

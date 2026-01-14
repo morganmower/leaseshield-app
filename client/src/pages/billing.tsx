@@ -7,18 +7,7 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { CreditCard, AlertTriangle } from "lucide-react";
+import { CreditCard, AlertTriangle, ArrowRight } from "lucide-react";
 
 export default function Billing() {
   const { toast } = useToast();
@@ -32,24 +21,24 @@ export default function Billing() {
         variant: "destructive",
       });
       setTimeout(() => {
-        window.location.href = "/api/login";
+        window.location.href = "/login";
       }, 500);
       return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const cancelSubscriptionMutation = useMutation({
+  const syncSubscriptionMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/cancel-subscription", {});
+      const res = await apiRequest("POST", "/api/sync-subscription", {});
+      return await res.json();
     },
-    onSuccess: (response: any) => {
+    onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/auth/user"] });
-      const cancelDate = response.cancelAt 
-        ? new Date(response.cancelAt * 1000).toLocaleDateString()
-        : 'the end of your billing period';
       toast({
-        title: "Subscription Cancelled",
-        description: `Your subscription will end on ${cancelDate}. You'll retain access until then.`,
+        title: "Subscription Synced",
+        description: data.status === 'active' 
+          ? "Your active subscription has been restored!" 
+          : `Status: ${data.status}`,
       });
     },
     onError: (error: Error) => {
@@ -60,13 +49,13 @@ export default function Billing() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
       toast({
         title: "Error",
-        description: "Failed to cancel subscription. Please try again or contact support.",
+        description: "Failed to sync subscription. Please try again.",
         variant: "destructive",
       });
     },
@@ -74,11 +63,13 @@ export default function Billing() {
 
   const managePaymentMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("POST", "/api/create-portal-session", {});
+      const res = await apiRequest("POST", "/api/create-portal-session", {});
+      return await res.json();
     },
-    onSuccess: (response: any) => {
-      if (response.url) {
-        window.location.href = response.url;
+    onSuccess: (data: any) => {
+      if (data.url) {
+        // Navigate in same tab so auth persists on return
+        window.location.href = data.url;
       }
     },
     onError: (error: Error) => {
@@ -89,7 +80,7 @@ export default function Billing() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -121,6 +112,29 @@ export default function Billing() {
       </div>
 
       <div className="space-y-6">
+        {/* Payment Failed Alert */}
+        {user.subscriptionStatus === 'past_due' && (
+          <Card className="p-6 border-red-500 bg-red-50 dark:bg-red-950/30">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-6 w-6 text-red-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-red-800 dark:text-red-200 mb-2">Payment Failed</h2>
+                <p className="text-sm text-red-700 dark:text-red-300 mb-4">
+                  We were unable to process your payment. Please update your payment method to continue using LeaseShield without interruption.
+                </p>
+                <Button 
+                  onClick={() => managePaymentMutation.mutate()}
+                  disabled={managePaymentMutation.isPending}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                  data-testid="button-fix-payment"
+                >
+                  {managePaymentMutation.isPending ? "Opening..." : "Update Payment Method"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* No Stripe Customer - Need to Subscribe */}
         {!user.stripeCustomerId && (user.subscriptionStatus === 'trialing' || user.subscriptionStatus === 'active') && (
           <Card className="p-6 border-primary/50 bg-primary/5">
@@ -137,117 +151,178 @@ export default function Billing() {
           </Card>
         )}
 
+        {/* Sync Subscription - for users who have a Stripe customer but wrong status */}
+        {user.stripeCustomerId && user.subscriptionStatus === 'trialing' && (
+          <Card className="p-6 border-blue-500 bg-blue-50 dark:bg-blue-950/30">
+            <div className="flex items-start gap-3">
+              <CreditCard className="h-6 w-6 text-blue-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1">
+                <h2 className="text-xl font-semibold text-blue-800 dark:text-blue-200 mb-2">Subscription Out of Sync?</h2>
+                <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
+                  If you've already paid but your subscription isn't showing as active, click below to sync your status from Stripe.
+                </p>
+                <Button 
+                  onClick={() => syncSubscriptionMutation.mutate()}
+                  disabled={syncSubscriptionMutation.isPending}
+                  data-testid="button-sync-subscription"
+                >
+                  {syncSubscriptionMutation.isPending ? "Syncing..." : "Sync Subscription Status"}
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+
         {/* Subscription Status */}
         <Card className="p-6">
           <h2 className="text-xl font-semibold text-foreground mb-6">Subscription Status</h2>
 
           <div className="space-y-4">
-            <div>
-              <Label className="text-sm font-medium text-foreground">Current Plan</Label>
-              <p className="text-muted-foreground mt-1 capitalize">
-                {user.subscriptionStatus === 'cancel_at_period_end' 
-                  ? 'Cancelling at period end' 
-                  : user.subscriptionStatus === 'active'
-                  ? 'LeaseShield App - $12/month'
-                  : user.subscriptionStatus === 'trialing'
-                  ? 'LeaseShield App - 7-Day Free Trial'
-                  : "No active subscription"}
-              </p>
-            </div>
+            {/* Active Subscriber */}
+            {user.subscriptionStatus === 'active' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">
+                    LeaseShield App - {(user as any).billingInterval === 'year' ? '$100/year' : '$10/month'}
+                  </p>
+                  <p className="text-xs text-green-600 mt-1">Active Subscriber</p>
+                </div>
+                {user.subscriptionEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Next Renewal</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
 
-            {user.trialEndsAt && user.subscriptionStatus === "trialing" && (
+            {/* Cancelling at period end */}
+            {user.subscriptionStatus === 'cancel_at_period_end' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">LeaseShield App - Cancelling</p>
+                  <p className="text-xs text-orange-600 mt-1">Access until period end</p>
+                </div>
+                {user.subscriptionEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Access Until</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.subscriptionEndsAt).toLocaleDateString('en-US', { 
+                        weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' 
+                      })}
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Trial User */}
+            {user.subscriptionStatus === 'trialing' && (
+              <>
+                <div>
+                  <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                  <p className="text-muted-foreground mt-1">LeaseShield App - Free Trial</p>
+                  <p className="text-xs text-blue-600 mt-1">Trial Period</p>
+                </div>
+                {user.trialEndsAt && (
+                  <div>
+                    <Label className="text-sm font-medium text-foreground">Trial Ends</Label>
+                    <p className="text-muted-foreground mt-1">
+                      {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
+                    </p>
+                  </div>
+                )}
+                {!user.stripeCustomerId && (
+                  <div className="pt-4 border-t">
+                    <Button 
+                      onClick={() => window.location.href = '/subscribe'}
+                      size="lg"
+                      className="w-full sm:w-auto"
+                      data-testid="button-upgrade-to-paid"
+                    >
+                      Upgrade to Paid - $10/month
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* Past Due */}
+            {user.subscriptionStatus === 'past_due' && (
               <div>
-                <Label className="text-sm font-medium text-foreground">
-                  Trial Ends
-                </Label>
-                <p className="text-muted-foreground mt-1">
-                  {new Date(user.trialEndsAt).toLocaleDateString()}
-                </p>
+                <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                <p className="text-muted-foreground mt-1">LeaseShield App - Payment Required</p>
+                <p className="text-xs text-red-600 mt-1">Payment Failed</p>
               </div>
             )}
 
-            {user.subscriptionStatus === 'cancel_at_period_end' && user.stripeCustomerId && (
-              <div className="p-4 bg-muted rounded-lg border">
-                <p className="text-sm text-muted-foreground">
-                  Your subscription has been cancelled and will end at the end of your billing period. 
-                  You'll retain access to all features until then.
-                </p>
+            {/* No subscription / other status */}
+            {!['active', 'cancel_at_period_end', 'trialing', 'past_due'].includes(user.subscriptionStatus || '') && (
+              <div>
+                <Label className="text-sm font-medium text-foreground">Current Plan</Label>
+                <p className="text-muted-foreground mt-1">No active subscription</p>
+                <div className="pt-4">
+                  <Button 
+                    onClick={() => window.location.href = '/subscribe'}
+                    size="lg"
+                    data-testid="button-subscribe"
+                  >
+                    Subscribe - $10/month
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             )}
           </div>
         </Card>
 
-        {/* Payment Method */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'cancel_at_period_end') && user.stripeCustomerId && (
+        {/* Manage Billing - Opens Stripe Portal */}
+        {user.stripeCustomerId && (
           <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Payment Method</h2>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Manage Billing</h2>
             
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Manage your payment method, view billing history, and update your card details.
-              </p>
-              
-              <Button 
-                variant="outline"
-                onClick={() => managePaymentMutation.mutate()}
-                disabled={managePaymentMutation.isPending}
-                data-testid="button-manage-payment"
-              >
-                {managePaymentMutation.isPending ? "Opening..." : "Manage Payment Method"}
-              </Button>
-            </div>
-          </Card>
-        )}
-
-        {/* Cancel Subscription */}
-        {(user.subscriptionStatus === 'active' || user.subscriptionStatus === 'trialing') && user.stripeSubscriptionId && (
-          <Card className="p-6">
-            <h2 className="text-xl font-semibold text-foreground mb-6">Cancel Subscription</h2>
+            <p className="text-sm text-muted-foreground mb-6">
+              Opens Stripe's secure billing center where you can:
+            </p>
             
-            <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">
-                Cancel your subscription at any time. You'll retain access to all features until the end of your billing period.
-              </p>
-
-              <AlertDialog>
-                <AlertDialogTrigger asChild>
-                  <Button 
-                    variant="destructive" 
-                    disabled={cancelSubscriptionMutation.isPending}
-                    data-testid="button-cancel-subscription"
-                  >
-                    {cancelSubscriptionMutation.isPending ? "Cancelling..." : "Cancel Subscription"}
-                  </Button>
-                </AlertDialogTrigger>
-                <AlertDialogContent>
-                  <AlertDialogHeader>
-                    <AlertDialogTitle className="flex items-center gap-2">
-                      <AlertTriangle className="h-5 w-5 text-destructive" />
-                      Cancel Subscription?
-                    </AlertDialogTitle>
-                    <AlertDialogDescription>
-                      Your subscription will be cancelled at the end of your current billing period. 
-                      You'll continue to have access to all features until then, and your card will 
-                      not be charged again.
-                      <br /><br />
-                      Are you sure you want to cancel?
-                    </AlertDialogDescription>
-                  </AlertDialogHeader>
-                  <AlertDialogFooter>
-                    <AlertDialogCancel data-testid="button-cancel-dialog">
-                      Keep Subscription
-                    </AlertDialogCancel>
-                    <AlertDialogAction
-                      onClick={() => cancelSubscriptionMutation.mutate()}
-                      className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                      data-testid="button-confirm-cancel"
-                    >
-                      Yes, Cancel Subscription
-                    </AlertDialogAction>
-                  </AlertDialogFooter>
-                </AlertDialogContent>
-              </AlertDialog>
-            </div>
+            <ul className="text-sm text-muted-foreground mb-6 space-y-2">
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Update or change your payment card
+              </li>
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                View all invoices and payment history
+              </li>
+              <li className="flex items-center gap-2">
+                <CreditCard className="h-4 w-4 text-primary" />
+                Cancel your subscription
+              </li>
+            </ul>
+            
+            <Button 
+              onClick={() => managePaymentMutation.mutate()}
+              disabled={managePaymentMutation.isPending}
+              size="lg"
+              data-testid="button-manage-billing"
+            >
+              {managePaymentMutation.isPending ? "Opening..." : "Open Billing Portal"}
+              <ArrowRight className="ml-2 h-4 w-4" />
+            </Button>
+            
+            <p className="text-xs text-muted-foreground mt-3">
+              You'll be redirected to Stripe's secure portal
+            </p>
           </Card>
         )}
       </div>

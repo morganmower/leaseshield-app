@@ -1,0 +1,85 @@
+Right now your bottleneck is clear: DB is already the source of truth (states table), but the frontend still uses scattered SUPPORTED_STATES constants. Fix that once, and adding states becomes mostly seed + templates + compliance content.
+
+The best way to make “add a state” easy every time
+1) Make the database the single source of truth for states
+
+You already have:
+
+states table with id, name, isActive ✅
+
+templates.stateId references states ✅
+
+Do this next:
+
+Create an API endpoint: GET /api/states?active=true
+
+Frontend replaces every SUPPORTED_STATES array with API results.
+
+Result: Adding IL is one DB insert and the UI automatically includes it.
+
+Bonus: enforce referential integrity on properties
+
+Right now properties.state and rentalProperties.state are plain varchar.
+Make them reference states.id (foreign key) so nobody stores Ill, Illinois, or IL .
+
+Illinois rollout checklist (the actual work you need to do)
+A) Add Illinois to the database
+
+Seed file
+Add:
+
+{ id: "IL", name: "Illinois", description: "..." }
+
+
+Run seed / migration.
+
+This makes IL available to the backend and any state-driven queries.
+
+B) Eliminate hardcoded state arrays in the frontend (big win)
+
+You said signup.tsx and “similar patterns exist in compliance/settings/etc.”
+
+Replace pattern:
+
+const SUPPORTED_STATES = [...]
+
+
+With:
+
+useStates() hook that calls /api/states?active=true
+
+Cache it (React Query or your existing fetch wrapper)
+
+Now every dropdown just uses the API and you never touch frontend code when adding states.
+
+C) Templates: create Illinois document set (minimum viable)
+
+For IL you’ll need at least:
+
+Leasing
+
+IL Lease (or IL addendum if you do “base lease + state addendum”)
+
+Move-in / move-out checklist (mostly universal + state notes)
+
+Notices
+
+Late rent notice (IL-specific timing/wording)
+
+Notice to cure/quit (if you support violations)
+
+Termination notice templates (month-to-month, etc.)
+
+Screening/compliance
+
+IL-specific disclosures you include in your flow (if any)
+
+Adverse action templates are federal-driven, but some state extras may apply
+
+Implementation note:
+You’ll be 10x faster long-term if you move to:
+
+Base template (generic) + state overlay blocks (IL deltas)
+instead of maintaining 50 fully separate state documents.
+
+If you’re not ready for overlays, do IL as separate templates now but structure your template content so overlaying is easy later.

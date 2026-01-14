@@ -1,0 +1,222 @@
+LeaseShield Logged-In Experience Changes (Exact Spec)
+Goal
+
+When someone logs in, they should instantly understand LeaseShield is:
+
+Application → Western Verify screening (integrated workflow)
+
+AI screening helpers/decoders
+
+Updated leases/notices tied to legislation
+
+And they should know what to click first.
+
+1) Dashboard: Add a “Hero” panel at the very top
+Placement
+
+First element on the dashboard page, before any cards or tools list.
+
+Content (exact text)
+
+Headline:
+Protect your rentals in 3 steps.
+
+Subheadline:
+Run applications through Western Verify, decode screening reports in plain English, and use updated state-specific leases & notices when legislation changes.
+
+3 Pill tags (small badges):
+
+Application → Western Verify Screening
+
+AI Screening Helpers
+
+Updated Leases & Notices
+
+Primary button (most prominent):
+
+Start an Application
+(links to your application workflow / create application / invite applicant)
+
+Secondary buttons:
+
+Use the Decoder
+
+Open Leases & Notices
+
+Small “tip” line under buttons:
+Tip: Most landlords misinterpret at least one item on every screening report. The decoder highlights what matters and what to ask next.
+
+Visual requirements
+
+Use your primary navy/brand color as the primary CTA
+
+Light background tint for the hero panel to “stand out” from the rest of the page
+
+This should be the strongest “pop” on the page without feeling salesy
+
+2) Dashboard: Add a “Start Here (Recommended)” section
+Placement
+
+Directly under the hero panel.
+
+Section title
+
+Start Here (Recommended)
+
+Subtitle
+
+If you do nothing else today, follow this flow.
+
+Step list (exact text)
+
+1) Collect an application + route screening through Western Verify
+One link to the applicant → authorization captured → screening runs → status updates inside LeaseShield.
+Buttons:
+
+Create Application Link
+
+View Application Status
+
+2) Review results using AI Screening Helpers (Credit/Criminal/Eviction)
+Paste/upload report text. Get plain-English explanations, risk flags, and the best follow-up questions.
+Button:
+
+Open Screening Decoder
+
+3) Use updated state-specific documents when you need to act
+Leases and notices updated as legislation changes — late rent, violations, non-renewal, and more.
+Button:
+
+Browse Leases & Notices
+
+Visual requirements
+
+Each step should have:
+
+a bold title
+
+1 short explanatory line
+
+a button
+
+Keep the whole section visible without scrolling too far (don’t let it get huge)
+
+3) Reorganize the tools on the dashboard into 3 “pillars”
+
+Right now, your tools likely appear as a flat list. Instead, group them as:
+
+Pillar A: Applications + Screening (Western Verify)
+
+Title: Applications + Western Verify Screening
+Description (exact):
+The easiest compliant flow: apply → authorize → screen → decide.
+
+Bullets:
+
+Applicant completes application
+
+Authorization captured
+
+Screening runs through Western Verify
+
+Status updates + reports ready
+
+Buttons:
+
+Create Application
+
+Integration Settings (if you have it)
+
+Pillar B: AI Screening Helpers
+
+Title: AI Screening Helpers
+Description (exact):
+Credit / Criminal / Eviction explained in plain English — with the best follow-up questions.
+
+Bullets:
+
+Key risk flags (and what they mean)
+
+Suggested questions to ask applicants
+
+Decision notes you can save
+
+Buttons:
+
+Open Decoder
+
+(Optional) View Example (if you have sample input)
+
+Pillar C: Updated Leases & Notices
+
+Title: Updated Leases & Notices
+Description (exact):
+State-specific templates updated when laws change.
+
+Bullets:
+
+Leases
+
+Late rent + violation notices
+
+Move-in / move-out checklists
+
+Adverse action letters (if you have them inside LeaseShield)
+
+Buttons:
+
+Browse Documents
+
+See Recent Updates
+
+4) Add “value microcopy” on each major page (1–2 lines)
+
+This is important: you already have the tools, but people need to feel the why.
+
+On the Decoder page, add at the top:
+
+Paste any screening report below. LeaseShield explains what matters, what doesn’t, and what to ask next.
+
+On the Documents page, add at the top:
+
+Leases and notices are updated when legislation changes. Choose your state to view the latest versions.
+
+On the Applications page, add at the top:
+
+Send one link to the applicant. LeaseShield routes screening through Western Verify and tracks each step.
+
+5) Add one trust line (subtle, not scary)
+
+Place in small text in the dashboard footer or near documents:
+
+Built for compliance-minded landlords. Always confirm local requirements with counsel.
+
+This increases trust without over-lawyering the UI.
+
+6) Labels to adjust to match landlord language (if applicable)
+
+Here are common label upgrades that reduce confusion:
+
+“Decoder” → Screening Decoder
+
+“Criminal Decoder” → Criminal Report Decoder
+
+“Credit Decoder” → Credit Report Decoder
+
+“Documents” → Leases & Notices
+
+“Updates” → Legislation Updates or Recent Document Updates
+
+“Integrations” → Western Verify Integration
+
+7) Visual hierarchy tweaks (do this even if nothing else changes)
+
+Primary action should always be Start an Application
+
+Secondary action: Use Decoder
+
+Third action: Documents
+
+Make the primary button a stronger color and larger than others
+
+Add icons only if they’re consistent and subtle (not required)

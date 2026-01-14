@@ -1,0 +1,171 @@
+Step-by-Step Review (with micro-tweaks)
+✅ STEP 1: Hero Reframe — Approved, paste-ready
+
+Your hero copy is excellent and intent-matched.
+
+As written:
+
+Headline:
+
+Have a Screening Report You Don’t Understand?
+
+Subheadline:
+
+LeaseShield explains credit, criminal, and eviction reports in plain English — flags compliance risks and helps you take safe next steps.
+
+Primary CTA:
+
+Explain My Screening Report
+
+Secondary CTA:
+
+Start Free 7-Day Trial (No Card Needed)
+
+Support line:
+
+Works with Western Verify and other providers. Instant access.
+
+✅ Why this works
+
+Speaks to pain, not product
+
+Removes fear (“don’t understand”)
+
+No CRA / decision liability
+
+Instantly answers why they’re here
+
+🔧 One optional micro-polish (not required)
+
+If you want slightly less “legal implication” and more reassurance:
+
+“…helps you take compliant next steps.”
+
+But your current version is already safe.
+
+✅ STEP 2: Two-Card “Start Here” Choice — This is the unlock
+
+This is the most important UX improvement you’re making.
+
+You are absolutely right:
+
+Most people should never have to read to know what to do.
+
+Card hierarchy is correct:
+
+Card 1 = dominant, green, bigger
+
+Card 2 = secondary, neutral
+
+Card copy (clean + safe)
+
+Card 1 – Primary
+Explain My Screening Report
+
+Upload or connect your existing report → Get a plain-English breakdown with compliance flags.
+
+✅ “breakdown” + “flags” = guidance, not decisions
+
+Card 2 – Secondary
+New Tenant Application + Screening
+
+Send an application link → Run screening via Western Verify → Full compliant workflow.
+
+✅ Correctly positions applications as optional/secondary
+
+🔧 One tiny wording tweak I recommend
+
+Change “Upload” to “Connect or upload” if that’s accurate — it feels lighter and less technical.
+
+✅ STEP 3: WOW Visual — Diagram over video is the right call (for now)
+
+You’re right to pause on video. Video feels “instructional” too early.
+
+Diagram is perfect because:
+
+It proves relief without teaching
+
+It’s visual, not cognitive
+
+It reinforces your role as translator, not decision-maker
+
+Your proposed flow is excellent, with one critical wording fix:
+Instead of:
+
+“Approve / Deny guidance”
+
+Use:
+
+“Understand your options”
+or
+“Compliant next steps”
+
+This avoids any implication that you recommend decisions.
+
+Final diagram language (safe + clear):
+Confusing Screening Report
+          ↓
+Plain-English Explanation
+(Red / Green compliance flags)
+          ↓
+Compliant Next Steps
+(Leases, notices, or actions you choose)
+
+
+Captions:
+
+“This means…”
+
+“Watch out for this risk…”
+
+“Here’s what to consider next…”
+
+This is exactly the WOW moment you want.
+
+The Most Important Strategic Insight (Big Picture)
+
+You finally articulated the real issue:
+
+“People don’t come here to learn LeaseShield — they come here to feel relief.”
+
+This redesign:
+
+Matches arrival intent
+
+Removes thinking
+
+Makes the site feel safe
+
+Lets people self-select without shame or confusion
+
+That’s why this works.
+
+My Final Recommendation (Very Clear)
+Do this in this order:
+
+Hero reframe + CTA rename (today)
+
+Two-card Start Here section (next)
+
+Simple diagram (third)
+
+Do NOT:
+
+Remove the full toolkit messaging
+
+Remove applications
+
+Remove compliance positioning
+
+You’re not shrinking the product — you’re lowering the first step.
+
+Confidence Check (The One Question That Matters)
+
+After these changes, ask yourself:
+
+“Could I text this link to a landlord with a screening report and feel zero anxiety?”
+
+If the answer is yes — you’ve nailed it.
+
+You’re absolutely on the right track.
+If you want next help, I can:

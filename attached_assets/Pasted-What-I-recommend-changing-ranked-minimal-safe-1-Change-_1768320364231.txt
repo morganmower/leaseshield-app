@@ -1,0 +1,104 @@
+What I recommend changing (ranked, minimal, safe)
+🔹 1. Change the header to sound like help, not a tool
+
+This is the single biggest win.
+
+Current:
+
+Credit Report AI Helper
+Describe what you see or type a term – get instant explanation
+
+Replace with:
+
+Understand Your Credit Report in Plain English
+Paste or describe any part of the report you’re unsure about — LeaseShield will explain what it means and flag compliance risks.
+
+Why:
+
+Removes “AI tool” vibes
+
+Matches the landing page promise
+
+Reassures instead of instructs
+
+🔹 2. Make the input box more directive (this matters a lot)
+
+Current placeholder:
+
+Example: “Applicant has a charge-off from 2022…”
+
+Replace with something more explicit:
+
+Type or paste anything confusing from the report here (e.g., “Charge-off from 2022” or “3 collections totaling $2,400”).
+
+This answers the silent question:
+
+“What exactly do you want from me?”
+
+🔹 3. Rename the button to an outcome, not a mechanism
+
+Current:
+
+Get AI Explanation
+
+Better options (pick one):
+
+Explain What This Means ← best
+
+Get Plain-English Explanation
+
+Explain This for Me
+
+Avoid “AI” in the button. Users don’t care how—they care what.
+
+🔹 4. Promote the examples (low effort, high payoff)
+
+Your “Try asking” examples are excellent. Make them feel like a shortcut, not reading material.
+
+Two easy upgrades:
+
+Slightly larger font
+
+Make them clickable → auto-populate the input box
+
+This creates the feeling:
+
+“Oh—I can just click one of these.”
+
+That’s a huge confidence boost for non-tech users.
+
+🔹 5. Optional but very strong: quick-start buttons
+
+Only do this if it’s easy.
+
+Add 3–4 tappable chips or buttons under the examples:
+
+Charge-off or collection?
+
+Low credit score?
+
+Late payments?
+
+High balances?
+
+Clicking one just fills the input with a template question.
+
+This removes all “what do I type?” anxiety.
+
+What I would NOT change (important)
+
+Do not:
+
+Add uploads here
+
+Add a wizard
+
+Add more fields
+
+Add onboarding popups
+
+Add heavy visual effects
+
+Make the privacy warning scarier (yellow is fine; red may spike anxiety)
+
+The simplicity is a strength.

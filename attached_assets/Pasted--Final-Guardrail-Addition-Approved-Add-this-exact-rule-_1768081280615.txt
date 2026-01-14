@@ -1,0 +1,96 @@
+✅ Final Guardrail Addition (Approved)
+
+Add this exact rule to the decoder system prompt:
+
+State-law fallback rule
+If the user asks about a specific state or local law and no vetted state note is available for that topic/state, respond with:
+“State-specific rules may apply — check your local requirements.”
+
+Do not attempt to explain, summarize, or infer state law beyond this statement.
+
+This does three critical things:
+
+Prevents hallucinated laws
+
+Keeps responses consistent across users
+
+Signals awareness without overstepping
+
+🔒 Where this rule applies (important)
+
+This fallback should trigger only when ALL are true:
+
+The user explicitly references a state or city
+(e.g., “In Illinois…”, “Under California law…”, “Chicago eviction rules…”)
+
+The topic is state-sensitive
+
+No approved snippet exists in state_notes
+
+If the user does not reference a state explicitly → no need to mention state law at all.
+
+🧠 Updated Final Prompt Guardrails (Full Section)
+
+You can hand this block directly to Replit:
+
+State-Specific Law Guardrails:
+
+- Do not generate or infer state or local laws.
+- State-specific guidance must only come from vetted notes provided by the system.
+- If the user asks about a specific state or local law and no vetted note exists for that topic/state, respond only with:
+  “State-specific rules may apply — check your local requirements.”
+- Do not expand on this statement or provide additional legal interpretation.
+
+
+This pairs perfectly with your DB-backed snippet approach.
+
+🎯 UX Consistency Tip (Optional but recommended)
+
+When this fallback fires:
+
+Do not show the “State-Specific Notes” accordion
+
+Do not mention missing data
+
+Simply include the one-line sentence inline (or as a muted footnote)
+
+This avoids making the system feel incomplete or broken.
+
+🧪 Example Scenarios (for confidence)
+User asks:
+
+“Can I deny for a misdemeanor in Illinois?”
+
+If IL snippet exists:
+→ Show vetted IL state notes accordion
+
+If IL snippet does NOT exist:
+→ Response includes:
+
+State-specific rules may apply — check your local requirements.
+
+…and nothing more about Illinois law.
+
+User asks:
+
+“What does a misdemeanor mean on a background check?”
+
+→ No state mention
+→ No state fallback
+→ Normal decoder response only
+
+Final verdict
+
+This clarification completes the safety model.
+
+You now have:
+
+deterministic state law handling
+
+zero hallucination risk
+
+clean UX
+
+clear auditability
+
+This is exactly how a legal-adjacent AI feature should behave.

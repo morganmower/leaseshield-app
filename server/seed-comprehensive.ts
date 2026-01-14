@@ -1,4 +1,6 @@
-import { storage } from "./storage";
+import { db } from "./db";
+import { templates } from "@shared/schema";
+import { generateTemplateKey } from "./utils/seedHelpers";
 
 // Comprehensive template library for all 4 launch states
 const comprehensiveTemplates = [
@@ -368,25 +370,804 @@ const comprehensiveTemplates = [
     version: 1,
     sortOrder: 31,
   },
+
+  // WYOMING - Leasing
+  {
+    title: "Wyoming Residential Lease Agreement",
+    description: "Professional lease with all Wyoming-required disclosures including meth contamination notice",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (WY)",
+    description: "Flexible rental agreement compliant with Wyoming termination requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 2,
+  },
+  // WYOMING - Screening
+  {
+    title: "Wyoming Rental Application",
+    description: "Fair Housing-compliant application for Wyoming landlords",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 10,
+  },
+  // WYOMING - Move In/Out
+  {
+    title: "Move-In Inspection Form (WY)",
+    description: "Property condition checklist for Wyoming rentals",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (WY)",
+    description: "Final walkthrough documentation for Wyoming properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (WY)",
+    description: "Wyoming's 30-day deduction itemization notice",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 22,
+  },
+  // WYOMING - Notices
+  {
+    title: "3-Day Notice to Pay or Quit (WY)",
+    description: "Wyoming's required notice for non-payment of rent",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "3-Day Lease Violation Notice (WY)",
+    description: "Notice to cure lease violations per Wyoming law",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // CALIFORNIA - Leasing
+  {
+    title: "California Residential Lease Agreement",
+    description: "Comprehensive lease with all California Civil Code disclosures including rent control notices",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (CA)",
+    description: "Flexible rental agreement with California tenant protection disclosures",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 2,
+  },
+  // CALIFORNIA - Screening
+  {
+    title: "California Rental Application",
+    description: "Fair Housing-compliant application meeting California requirements",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 10,
+  },
+  // CALIFORNIA - Move In/Out
+  {
+    title: "Move-In Inspection Form (CA)",
+    description: "Property condition checklist for California rentals",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (CA)",
+    description: "Final walkthrough documentation per California requirements",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (CA)",
+    description: "California's 21-day itemized deduction statement",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 22,
+  },
+  // CALIFORNIA - Notices
+  {
+    title: "3-Day Notice to Pay or Quit (CA)",
+    description: "California's required notice for non-payment of rent",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "3-Day Lease Violation Notice (CA)",
+    description: "Notice to cure lease violations per California Civil Code",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // VIRGINIA - Leasing
+  {
+    title: "Virginia Residential Lease Agreement",
+    description: "Professional lease with all Virginia Landlord Tenant Act disclosures",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (VA)",
+    description: "Flexible rental agreement compliant with Virginia requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 2,
+  },
+  // VIRGINIA - Screening
+  {
+    title: "Virginia Rental Application",
+    description: "Fair Housing-compliant application for Virginia landlords",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 10,
+  },
+  // VIRGINIA - Move In/Out
+  {
+    title: "Move-In Inspection Form (VA)",
+    description: "Virginia's required move-in inspection checklist",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (VA)",
+    description: "Final walkthrough documentation for Virginia properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (VA)",
+    description: "Virginia's 45-day deduction itemization notice",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 22,
+  },
+  // VIRGINIA - Notices
+  {
+    title: "5-Day Notice to Pay or Quit (VA)",
+    description: "Virginia's required notice for non-payment of rent",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "21-Day Lease Violation Notice (VA)",
+    description: "Notice to cure lease violations per Virginia law",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // NEVADA - Leasing
+  {
+    title: "Nevada Residential Lease Agreement",
+    description: "Professional lease with all Nevada NRS Chapter 118A disclosures",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (NV)",
+    description: "Flexible rental agreement compliant with Nevada requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 2,
+  },
+  // NEVADA - Screening
+  {
+    title: "Nevada Rental Application",
+    description: "Fair Housing-compliant application for Nevada landlords",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 10,
+  },
+  // NEVADA - Move In/Out
+  {
+    title: "Move-In Inspection Form (NV)",
+    description: "Nevada's required move-in condition checklist",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (NV)",
+    description: "Final walkthrough documentation for Nevada properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (NV)",
+    description: "Nevada's 30-day deduction itemization statement",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 22,
+  },
+  // NEVADA - Notices
+  {
+    title: "7-Day Notice to Pay or Quit (NV)",
+    description: "Nevada's required judicial notice for non-payment",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "5-Day Lease Violation Notice (NV)",
+    description: "Notice to cure lease violations per Nevada law",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // ARIZONA - Leasing
+  {
+    title: "Arizona Residential Lease Agreement",
+    description: "Professional lease with all Arizona ARLTA disclosures including pool safety",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (AZ)",
+    description: "Flexible rental agreement compliant with Arizona requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 2,
+  },
+  // ARIZONA - Screening
+  {
+    title: "Arizona Rental Application",
+    description: "Fair Housing-compliant application for Arizona landlords",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 10,
+  },
+  // ARIZONA - Move In/Out
+  {
+    title: "Move-In Inspection Form (AZ)",
+    description: "Arizona's required move-in condition checklist",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (AZ)",
+    description: "Final walkthrough documentation for Arizona properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (AZ)",
+    description: "Arizona's 14-business-day deduction statement",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 22,
+  },
+  // ARIZONA - Notices
+  {
+    title: "5-Day Notice to Pay or Quit (AZ)",
+    description: "Arizona's required notice for non-payment of rent",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "10-Day Lease Violation Notice (AZ)",
+    description: "Notice to cure lease violations per Arizona ARLTA",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // FLORIDA - Leasing
+  {
+    title: "Florida Residential Lease Agreement",
+    description: "Professional lease with all Florida Chapter 83 disclosures including radon notice",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (FL)",
+    description: "Flexible rental agreement compliant with Florida requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 2,
+  },
+  // FLORIDA - Screening
+  {
+    title: "Florida Rental Application",
+    description: "Fair Housing-compliant application for Florida landlords",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 10,
+  },
+  // FLORIDA - Move In/Out
+  {
+    title: "Move-In Inspection Form (FL)",
+    description: "Property condition checklist for Florida rentals",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (FL)",
+    description: "Final walkthrough documentation for Florida properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (FL)",
+    description: "Florida's 15/30-day deduction itemization notice",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 22,
+  },
+  // FLORIDA - Notices
+  {
+    title: "3-Day Notice to Pay or Vacate (FL)",
+    description: "Florida's required notice for non-payment of rent",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "7-Day Lease Violation Notice (FL)",
+    description: "Notice to cure lease violations per Florida Statutes",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // ILLINOIS - Leasing
+  {
+    title: "Illinois Residential Lease Agreement",
+    description: "Comprehensive lease with all Illinois disclosures including radon and security deposit notices",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 1,
+  },
+  {
+    title: "Month-to-Month Agreement (IL)",
+    description: "Flexible rental agreement compliant with Illinois requirements",
+    category: "leasing" as const,
+    templateType: "lease" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 2,
+  },
+  // ILLINOIS - Screening
+  {
+    title: "Illinois Rental Application",
+    description: "Fair Housing-compliant application meeting Illinois Human Rights Act requirements",
+    category: "screening" as const,
+    templateType: "application" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 10,
+  },
+  // ILLINOIS - Move In/Out
+  {
+    title: "Move-In Inspection Form (IL)",
+    description: "Property condition checklist for Illinois rentals",
+    category: "move_in_out" as const,
+    templateType: "move_in_checklist" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 20,
+  },
+  {
+    title: "Move-Out Inspection Form (IL)",
+    description: "Final walkthrough documentation for Illinois properties",
+    category: "move_in_out" as const,
+    templateType: "move_out_checklist" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 21,
+  },
+  {
+    title: "Security Deposit Itemization (IL)",
+    description: "Illinois 30/45-day itemized deduction statement per Security Deposit Return Act",
+    category: "move_in_out" as const,
+    templateType: "deposit_itemization" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 22,
+  },
+  // ILLINOIS - Notices
+  {
+    title: "5-Day Notice to Pay or Quit (IL)",
+    description: "Illinois required notice for non-payment of rent per Forcible Entry and Detainer Act",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "10-Day Lease Violation Notice (IL)",
+    description: "Notice to cure lease violations per Illinois law",
+    category: "notices" as const,
+    templateType: "lease_violation_notice" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 31,
+  },
+
+  // ADVERSE ACTION TEMPLATES - States Missing Them
+  {
+    title: "Adverse Action Notice (TX)",
+    description: "FCRA-compliant notice when denying applicant based on screening results",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "TX",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (ND)",
+    description: "Required notice when denying applicant based on credit or background check",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "ND",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (SD)",
+    description: "FCRA-compliant adverse action notice for South Dakota landlords",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "SD",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (NC)",
+    description: "Required notice when denying applicant based on screening results in North Carolina",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "NC",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (OH)",
+    description: "FCRA-compliant notice for Ohio landlords denying applications",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "OH",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (MI)",
+    description: "Required notice when denying applicant based on screening in Michigan",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "MI",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (ID)",
+    description: "FCRA-compliant adverse action notice for Idaho landlords",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "ID",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (WY)",
+    description: "Required notice when denying applicant based on screening results in Wyoming",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (CA)",
+    description: "FCRA-compliant notice for California landlords with additional state requirements",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (VA)",
+    description: "Required notice when denying applicant based on screening in Virginia",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (NV)",
+    description: "FCRA-compliant adverse action notice for Nevada landlords",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (AZ)",
+    description: "Required notice when denying applicant based on screening results in Arizona",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (FL)",
+    description: "FCRA-compliant notice for Florida landlords denying applications",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 12,
+  },
+  {
+    title: "Adverse Action Notice (IL)",
+    description: "Required notice when denying applicant based on screening in Illinois",
+    category: "screening" as const,
+    templateType: "adverse_action" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 12,
+  },
+
+  // EVICTION NOTICE TEMPLATES - States Missing Them
+  {
+    title: "3-Day Notice to Quit (WY)",
+    description: "Wyoming eviction notice for non-payment or lease violations",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "WY",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "3-Day Notice to Pay or Quit (CA)",
+    description: "California Civil Code compliant eviction notice for non-payment",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "CA",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "5-Day Pay or Quit Notice (VA)",
+    description: "Virginia-compliant eviction notice per Va. Code §55.1-1245",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "VA",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "5-Day Notice to Pay or Quit (NV)",
+    description: "Nevada NRS-compliant eviction notice for non-payment of rent",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "NV",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "5-Day Notice to Pay or Vacate (AZ)",
+    description: "Arizona Residential Landlord Tenant Act compliant eviction notice",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "AZ",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "3-Day Notice to Pay or Vacate (FL)",
+    description: "Florida Statutes compliant eviction notice for non-payment",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "FL",
+    version: 1,
+    sortOrder: 40,
+  },
+  {
+    title: "5-Day Notice to Quit (IL)",
+    description: "Illinois Forcible Entry and Detainer Act compliant eviction notice",
+    category: "evictions" as const,
+    templateType: "eviction_notice" as const,
+    stateId: "IL",
+    version: 1,
+    sortOrder: 40,
+  },
+
+  // LATE RENT NOTICE TEMPLATES - States Missing Them
+  {
+    title: "3-Day Notice to Pay Rent (OH)",
+    description: "Ohio Revised Code compliant notice demanding rent payment before eviction proceedings",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "OH",
+    version: 1,
+    sortOrder: 30,
+  },
+  {
+    title: "3-Day Notice to Pay Rent (ID)",
+    description: "Idaho Code compliant notice for non-payment of rent with proper service requirements",
+    category: "notices" as const,
+    templateType: "late_rent_notice" as const,
+    stateId: "ID",
+    version: 1,
+    sortOrder: 30,
+  },
 ];
 
 async function seedComprehensiveTemplates() {
   console.log(`🌱 Seeding ${comprehensiveTemplates.length} comprehensive templates...`);
   
-  let created = 0;
-  let skipped = 0;
+  let upserted = 0;
+  let errors = 0;
 
   for (const template of comprehensiveTemplates) {
+    // Prefer explicit key if provided; fallback to generated key for legacy migration
+    const key = (template as any).key || generateTemplateKey(template.category, template.templateType, template.title);
+    const version = template.version ?? 1;
     try {
-      await storage.createTemplate(template);
+      await db.insert(templates)
+        .values({
+          ...template,
+          key,
+          version,
+        })
+        .onConflictDoUpdate({
+          target: [templates.stateId, templates.key, templates.version],
+          set: {
+            title: template.title,
+            description: template.description,
+            category: template.category,
+            templateType: template.templateType,
+            sortOrder: template.sortOrder,
+            // Only update optional fields if explicitly provided in seed record
+            ...((template as any).pdfUrl !== undefined && { pdfUrl: (template as any).pdfUrl }),
+            ...((template as any).fillableFormData !== undefined && { fillableFormData: (template as any).fillableFormData }),
+            ...((template as any).generationMode !== undefined && { generationMode: (template as any).generationMode }),
+            ...((template as any).versionNotes !== undefined && { versionNotes: (template as any).versionNotes }),
+            ...((template as any).lastUpdateReason !== undefined && { lastUpdateReason: (template as any).lastUpdateReason }),
+            ...((template as any).isActive !== undefined && { isActive: (template as any).isActive }),
+            updatedAt: new Date(),
+          },
+        });
       console.log(`  ✓ ${template.title} (${template.stateId})`);
-      created++;
-    } catch (error) {
-      skipped++;
+      upserted++;
+    } catch (error: any) {
+      console.error(`  ✗ ${template.title}: ${error.message}`);
+      errors++;
     }
   }
 
-  console.log(`\n✅ Templates seeded: ${created} created, ${skipped} already existed`);
+  console.log(`\n✅ Templates seeded: ${upserted} upserted, ${errors} errors`);
 }
 
 // Run if executed directly

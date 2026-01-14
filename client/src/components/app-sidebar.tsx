@@ -12,7 +12,13 @@ import {
   LogOut,
   FolderOpen,
   Building2,
+  MessageCircle,
+  DollarSign,
+  Mail,
+  FileCheck2,
 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -24,6 +30,7 @@ import {
   SidebarMenuItem,
   SidebarHeader,
   SidebarFooter,
+  useSidebar,
 } from "@/components/ui/sidebar";
 import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
@@ -43,36 +50,67 @@ const mainItems = [
     title: "Dashboard",
     url: "/dashboard",
     icon: LayoutDashboard,
+    iconColor: "text-primary",
   },
   {
-    title: "Templates",
+    title: "Leases & Notices",
     url: "/templates",
     icon: FileText,
+    iconColor: "text-blue-500 dark:text-blue-400",
   },
   {
     title: "My Documents",
     url: "/my-documents",
     icon: FolderOpen,
+    iconColor: "text-amber-500 dark:text-amber-400",
   },
   {
     title: "Properties",
     url: "/properties",
     icon: Building2,
+    iconColor: "text-indigo-500 dark:text-indigo-400",
+  },
+  {
+    title: "Applications",
+    url: "/rental-submissions",
+    icon: FileCheck2,
+    iconColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
     title: "Compliance",
     url: "/compliance",
     icon: Shield,
+    iconColor: "text-primary",
   },
   {
-    title: "Screening",
+    title: "Screening Decoder",
     url: "/screening",
     icon: Search,
+    iconColor: "text-violet-500 dark:text-violet-400",
   },
   {
     title: "Tenant Issues",
     url: "/tenant-issues",
     icon: AlertCircle,
+    iconColor: "text-orange-500 dark:text-orange-400",
+  },
+  {
+    title: "Legislation Updates",
+    url: "/legal-updates",
+    icon: BookOpen,
+    iconColor: "text-cyan-500 dark:text-cyan-400",
+  },
+  {
+    title: "Communications",
+    url: "/communications",
+    icon: MessageCircle,
+    iconColor: "text-pink-500 dark:text-pink-400",
+  },
+  {
+    title: "Rent Ledger",
+    url: "/rent-ledger",
+    icon: DollarSign,
+    iconColor: "text-green-600 dark:text-green-400",
   },
 ];
 
@@ -81,6 +119,7 @@ const resourceItems = [
     title: "Help Center",
     url: "/help",
     icon: BookOpen,
+    iconColor: "text-sky-500 dark:text-sky-400",
   },
 ];
 
@@ -89,22 +128,50 @@ const accountItems = [
     title: "Admin",
     url: "/admin",
     icon: ShieldCheck,
+    iconColor: "text-red-500 dark:text-red-400",
   },
   {
     title: "Billing",
     url: "/billing",
     icon: CreditCard,
+    iconColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
     title: "Settings",
     url: "/settings",
     icon: Settings,
+    iconColor: "text-slate-500 dark:text-slate-400",
   },
 ];
 
 export function AppSidebar() {
   const [location] = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
+  const { setOpenMobile } = useSidebar();
+
+  const { data: unreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/messages/unread-count"],
+    refetchInterval: 30000,
+  });
+  const broadcastUnreadCount = unreadData?.count || 0;
+
+  const { data: directUnreadData } = useQuery<{ count: number }>({
+    queryKey: ["/api/messages/direct/unread-count"],
+    refetchInterval: 30000,
+  });
+  const directUnreadCount = directUnreadData?.count || 0;
+
+  const totalUnreadMessages = broadcastUnreadCount + directUnreadCount;
+
+  const { data: pendingAppsData } = useQuery<{ count: number }>({
+    queryKey: ["/api/rental/submissions/pending-count"],
+    refetchInterval: 30000,
+  });
+  const pendingAppsCount = pendingAppsData?.count || 0;
+
+  const handleNavClick = () => {
+    setOpenMobile(false);
+  };
 
   const getInitials = () => {
     if (user?.firstName && user?.lastName) {
@@ -118,16 +185,10 @@ export function AppSidebar() {
 
   return (
     <Sidebar>
-      <SidebarHeader className="p-6 border-b">
-        <Link href="/dashboard">
-          <div className="flex items-center gap-3 cursor-pointer hover-elevate rounded-lg p-3 -m-3 transition-all">
-            <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10">
-              <Logo iconSize={24} />
-            </div>
-            <div className="flex flex-col">
-              <span className="font-display text-lg font-bold">LeaseShield</span>
-              <span className="text-xs text-muted-foreground">Landlord Protection</span>
-            </div>
+      <SidebarHeader className="p-4 border-b">
+        <Link href="/dashboard" onClick={handleNavClick}>
+          <div className="flex items-center cursor-pointer hover-elevate rounded-lg p-2 -m-2 transition-all overflow-hidden">
+            <Logo variant="horizontal" className="h-56 -my-8" />
           </div>
         </Link>
       </SidebarHeader>
@@ -142,9 +203,18 @@ export function AppSidebar() {
               {mainItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-5 w-5" />
-                      <span className="font-medium">{item.title}</span>
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
+                      <item.icon className={`h-5 w-5 ${item.iconColor}`} />
+                      <span className="font-medium flex-1">{item.title}</span>
+                      {item.title === "Applications" && pendingAppsCount > 0 && (
+                        <Badge 
+                          variant="destructive" 
+                          className="ml-auto h-5 min-w-5 px-1.5 text-xs"
+                          data-testid="badge-pending-applications"
+                        >
+                          {pendingAppsCount > 9 ? "9+" : pendingAppsCount}
+                        </Badge>
+                      )}
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -164,8 +234,8 @@ export function AppSidebar() {
               {resourceItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
-                      <item.icon className="h-5 w-5" />
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
+                      <item.icon className={`h-5 w-5 ${item.iconColor}`} />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -183,11 +253,30 @@ export function AppSidebar() {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu className="gap-1">
-              {accountItems.map((item) => (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild isActive={location === "/messages"} className="h-10">
+                  <Link href="/messages" onClick={handleNavClick} data-testid="link-messages">
+                    <Mail className="h-5 w-5 text-blue-500 dark:text-blue-400" />
+                    <span className="font-medium flex-1">Messages</span>
+                    {totalUnreadMessages > 0 && (
+                      <Badge 
+                        variant="destructive" 
+                        className="ml-auto h-5 min-w-5 px-1.5 text-xs animate-pulse"
+                        data-testid="badge-unread-messages"
+                      >
+                        {totalUnreadMessages > 9 ? "9+" : totalUnreadMessages}
+                      </Badge>
+                    )}
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              {accountItems
+                .filter((item) => item.title !== "Admin" || user?.isAdmin)
+                .map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url} className="h-10">
-                    <Link href={item.url} data-testid={`link-${item.title.toLowerCase()}`}>
-                      <item.icon className="h-5 w-5" />
+                    <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase()}`}>
+                      <item.icon className={`h-5 w-5 ${item.iconColor || ''}`} />
                       <span className="font-medium">{item.title}</span>
                     </Link>
                   </SidebarMenuButton>
@@ -220,7 +309,7 @@ export function AppSidebar() {
                       : user?.email || "User"}
                   </span>
                   <span className="text-xs text-muted-foreground truncate w-full">
-                    {user?.subscriptionStatus === 'active' ? 'Pro Plan' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
+                    {user?.subscriptionStatus === 'active' ? 'Active Subscriber' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
                   </span>
                 </div>
               </div>
@@ -242,7 +331,10 @@ export function AppSidebar() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem
-              onClick={() => window.location.href = "/api/logout"}
+              onClick={() => {
+                logout();
+                window.location.href = "/";
+              }}
               data-testid="button-logout"
               className="text-destructive focus:text-destructive"
             >

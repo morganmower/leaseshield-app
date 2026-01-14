@@ -1,4 +1,4 @@
-import { Shield, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, Calculator, X, MessageCircle, Send, Minimize2, Building2 } from "lucide-react";
+import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale, CreditCard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -8,6 +8,8 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
+import westernVerifyLogo from "@assets/western_verify_logo_official.png";
+import leaseShieldIcon from "@assets/image_1765210101470.png";
 import {
   Accordion,
   AccordionContent,
@@ -21,9 +23,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { TrialValueMessage } from "@/components/trial-conversion-nudge";
+import { trackTrialStart } from "@/components/ab-test-wrapper";
+
+const STATES = [
+  "Utah", "Texas", "North Dakota", "South Dakota", "North Carolina",
+  "Ohio", "Michigan", "Idaho", "Wyoming", "California",
+  "Virginia", "Nevada", "Arizona", "Florida", "Illinois"
+] as const;
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -56,6 +71,7 @@ export default function Landing() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
 
@@ -72,6 +88,7 @@ export default function Landing() {
   useEffect(() => {
     scrollToBottom();
   }, [chatMessages]);
+
 
   const handleChatSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,7 +166,7 @@ export default function Landing() {
       icon: FileText,
       description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
-        "Residential lease agreements compliant with UT, TX, ND, and SD laws",
+        "Residential lease agreements compliant with all 15 supported state laws",
         "Rental application forms with fair housing compliance",
         "Move-in and move-out inspection checklists",
         "Lease addendums for pets, parking, utilities, and more",
@@ -162,10 +179,12 @@ export default function Landing() {
     compliance: {
       title: "Compliance Guidance",
       icon: Shield,
-      description: "Stay ahead of changing landlord-tenant laws with curated updates that only include what could create liability.",
+      description: "Stay ahead of changing landlord-tenant laws with AI-powered monitoring of both new legislation and court rulings, ensuring your templates are always compliant.",
       details: [
-        "Real-time monitoring of state legislature and court decisions",
-        "Email alerts when laws change in your selected state",
+        "Automated monthly monitoring of state legislatures for relevant bills",
+        "Court case law tracking through CourtListener to monitor landmark decisions",
+        "AI analysis determines which templates need updates based on bills and cases",
+        "Email alerts when laws or court decisions affect your templates",
         "Clear before/after comparisons showing what changed",
         "Impact-level ratings (high, medium, low) for each update",
         "Compliance cards summarizing current requirements",
@@ -210,118 +229,318 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-          <Link to="/" className="flex items-center gap-3 hover:opacity-80 transition-opacity" data-testid="link-home">
-            <Logo iconSize={32} />
-            <span className="font-display text-lg sm:text-2xl font-semibold text-foreground">
-              LeaseShield<span className="hidden sm:inline"> App</span>
-            </span>
+        <div className="container flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
+          <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
+            <Logo variant="horizontal" size="lg" />
           </Link>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <nav className="hidden md:flex items-center gap-4 lg:gap-6 ml-6 lg:ml-8">
+            <a href="#hero" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-home">Home</a>
+            <a href="#features" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-features">Features</a>
+            <a href="#how-it-works" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-how-it-works">How It Works</a>
+            <a href="#pricing" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors whitespace-nowrap" data-testid="nav-pricing">Pricing</a>
+          </nav>
+          <div className="flex items-center gap-2 sm:gap-3 ml-2 md:ml-4">
             <ThemeToggle />
             <Button
               variant="ghost"
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => window.location.href = "/login"}
               data-testid="button-login"
-              className="text-sm sm:text-base"
+              className="text-sm sm:text-base min-h-[48px]"
             >
               Log In
             </Button>
             <Button
-              onClick={() => window.location.href = "/api/login"}
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
               data-testid="button-start-trial"
-              className="text-sm sm:text-base px-3 sm:px-5"
+              size="lg"
+              className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
-              <span className="hidden xs:inline">Start </span>Trial
+              Start Trial
             </Button>
           </div>
         </div>
       </header>
 
-      {/* Hero Section */}
-      <section className="relative pt-12 pb-20 md:pt-16 md:pb-32 overflow-hidden">
-        {/* Gradient Background with amber/gold and blue */}
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-500/5 via-background to-primary/10 pointer-events-none" />
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-amber-400/10 to-transparent rounded-full blur-3xl pointer-events-none" />
+      {/* Trial Value Message Banner */}
+      <TrialValueMessage />
+
+      {/* NEW: Screening-First Hero Section */}
+      <section id="hero" className="relative pt-12 pb-8 md:pt-16 md:pb-12 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-background to-brand-500/5 pointer-events-none" />
         
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              initial="hidden"
-              animate="visible"
-              variants={staggerContainer}
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+          <motion.div
+            initial="hidden"
+            animate="visible"
+            variants={staggerContainer}
+            className="text-center"
+          >
+            <motion.h1 
+              variants={fadeInUp}
+              className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-tight mb-4"
             >
-              <motion.div variants={fadeInUp} className="mb-4 flex flex-wrap gap-2">
-                <Badge className="px-3 py-1 text-sm">
-                  <Star className="h-3 w-3 mr-1 fill-current" />
-                  Trusted by 500+ Landlords
-                </Badge>
-                <Badge variant="outline" className="px-3 py-1 text-sm border-success text-success">
-                  <BadgeCheck className="h-3 w-3 mr-1" />
-                  30-Day Money-Back Guarantee
-                </Badge>
-              </motion.div>
-              
-              <motion.h1 
-                variants={fadeInUp}
-                className="font-display text-2xl sm:text-3xl md:text-4xl lg:text-5xl xl:text-6xl font-semibold text-foreground leading-tight mb-6"
+              Confused by a Screening Report?
+            </motion.h1>
+            
+            <motion.p 
+              variants={fadeInUp}
+              className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
+            >
+              LeaseShield explains it in plain English. Flags risks, shows safe next steps.
+            </motion.p>
+
+            {/* Primary CTA */}
+            <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
+              <Button
+                size="lg"
+                onClick={() => window.location.href = "/screening/explain"}
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]"
+                data-testid="button-explain-report"
               >
-                Protect Your Rental Business from{" "}
-                <span className="bg-gradient-to-r from-amber-600 to-primary bg-clip-text text-transparent">Costly Legal Mistakes</span>
-              </motion.h1>
-              
-              <motion.p 
-                variants={fadeInUp}
-                className="text-sm sm:text-base md:text-lg text-muted-foreground mb-6 sm:mb-8 leading-relaxed"
+                <Search className="mr-2 h-5 w-5" />
+                Explain My Screening Report
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
+                className="text-lg px-6 py-4 min-h-[52px]"
+                data-testid="button-hero-trial"
               >
-                Professional legal templates, automated compliance alerts, tenant screening tools, 
-                and multi-property management — all in one platform built for small to midsize 
-                landlords.
-              </motion.p>
-              
-              <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 sm:gap-4 mb-6 sm:mb-8">
-                <Button
-                  size="lg"
-                  onClick={() => window.location.href = "/api/login"}
-                  data-testid="button-hero-trial"
-                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                >
-                  Get Your First Lease in 5 Minutes
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  data-testid="button-hero-learn"
-                  className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                  onClick={() => setShowBenefitsDialog(true)}
-                >
-                  Learn More
-                </Button>
-              </motion.div>
-              
-              <motion.div 
-                variants={fadeInUp}
-                className="flex flex-col xs:flex-row items-start xs:items-center gap-3 xs:gap-6 text-sm text-muted-foreground"
-              >
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                  <span>No credit card required</span>
+                Start Free 7-Day Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
+            
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm text-muted-foreground mb-10"
+            >
+              Works with Western Verify and other providers. Instant access. No credit card needed.
+            </motion.p>
+
+            {/* Dashboard Preview Card */}
+            <motion.div 
+              variants={fadeInUp}
+              className="relative mx-auto max-w-3xl"
+            >
+              <div className="absolute -inset-4 bg-gradient-to-r from-brand-500/20 via-brand-500/10 to-brand-500/20 rounded-3xl blur-xl" />
+              <div className="relative rounded-2xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 p-4 sm:p-6 shadow-2xl">
+                <div className="flex items-center gap-3 mb-4 pb-4 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex gap-1.5">
+                    <div className="w-3 h-3 rounded-full bg-red-400" />
+                    <div className="w-3 h-3 rounded-full bg-amber-400" />
+                    <div className="w-3 h-3 rounded-full bg-green-400" />
+                  </div>
+                  <div className="flex-1 text-center">
+                    <span className="text-xs text-slate-500 dark:text-slate-400">dashboard.leaseshieldapp.com</span>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-success flex-shrink-0" />
-                  <span>Cancel anytime</span>
+                
+                <div className="grid md:grid-cols-[180px_1fr] gap-4">
+                  {/* Mini Sidebar */}
+                  <div className="hidden md:block space-y-2 text-sm">
+                    <div className="rounded-lg bg-brand-50 dark:bg-brand-800/20 px-3 py-2 font-medium text-brand-700 dark:text-brand-300">
+                      Screening Decoder
+                    </div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Templates</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Compliance</div>
+                    <div className="rounded-lg px-3 py-2 text-ink-500 dark:text-slate-400">Notices</div>
+                  </div>
+                  
+                  {/* Main Content Preview - Decoder Input Interface */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-brand-100 dark:bg-brand-800/30 w-10 h-10 flex items-center justify-center flex-shrink-0">
+                        <CreditCard className="h-5 w-5 text-brand-600 dark:text-brand-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-ink-900 dark:text-white text-sm sm:text-base">
+                          Understand Your Credit Report
+                        </h3>
+                        <p className="text-[11px] text-ink-500 dark:text-slate-400">
+                          Clear explanations and compliance risk flags
+                        </p>
+                      </div>
+                    </div>
+                    
+                    {/* Quick-start pills - clickable with hover effects */}
+                    <div className="flex flex-wrap gap-2">
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does charge-off mean and should I be worried?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-chargeoff"
+                      >
+                        Charge-off?
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does a low credit score mean for approving a tenant?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-lowscore"
+                      >
+                        Low score?
+                      </button>
+                      <button 
+                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What do collections on a credit report mean?")}
+                        className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
+                        data-testid="pill-collections"
+                      >
+                        Collections?
+                      </button>
+                    </div>
+                    
+                    {/* Textarea mockup */}
+                    <div className="rounded-lg border border-slate-200 dark:border-slate-700 bg-panel-50 dark:bg-slate-800 p-3">
+                      <p className="text-xs text-ink-400 dark:text-slate-500 italic">
+                        "Applicant has 3 collections totaling $2,400..."
+                      </p>
+                    </div>
+                    
+                    {/* CTA Button mockup */}
+                    <div className="rounded-lg bg-brand-500 text-white text-center py-2.5 text-sm font-medium flex items-center justify-center gap-2">
+                      <Lightbulb className="h-4 w-4" />
+                      Explain This in Plain English
+                    </div>
+                  </div>
                 </div>
-              </motion.div>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* START HERE: Premium Decision Cards */}
+      <section className="py-20 md:py-28 bg-white dark:bg-background">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center"
+          >
+            <motion.h2 
+              variants={fadeInUp}
+              className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground"
+            >
+              What would you like help with right now?
+            </motion.h2>
+            <motion.p 
+              variants={fadeInUp}
+              className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground"
+            >
+              Most landlords start by explaining an existing screening report.
+            </motion.p>
+
+            <motion.div 
+              variants={staggerContainer}
+              className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8"
+            >
+              {/* Primary Card */}
+              <motion.a 
+                variants={fadeInUp}
+                href="/screening/explain"
+                className="group rounded-2xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-800/20 p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
+                data-testid="card-explain-report"
+              >
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="h-12 w-12 rounded-xl bg-brand-600 flex items-center justify-center text-white shadow-soft flex-shrink-0">
+                    <Search className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
+                        Explain My Screening Report
+                      </h3>
+                      <span className="text-brand-700 dark:text-brand-400 font-semibold group-hover:translate-x-1 transition">
+                        <ArrowRight className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">
+                      Connect or upload your report → get a plain-English breakdown with risk flags.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-xl bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft">
+                  Explain My Screening Report <ArrowRight className="h-4 w-4 opacity-90" />
+                </div>
+              </motion.a>
+
+              {/* Secondary Card */}
+              <motion.a 
+                variants={fadeInUp}
+                href="/properties"
+                className="group rounded-2xl border border-slate-200 dark:border-border bg-white dark:bg-card p-8 text-left shadow-soft hover:shadow-lift transition flex flex-col h-full"
+                data-testid="card-new-application"
+              >
+                <div className="flex items-start gap-4 flex-1">
+                  <div className="h-12 w-12 rounded-xl bg-slate-100 dark:bg-muted flex items-center justify-center text-ink-700 dark:text-muted-foreground flex-shrink-0">
+                    <UserPlus className="h-6 w-6" />
+                  </div>
+                  <div className="flex-1 flex flex-col">
+                    <div className="flex items-center justify-between gap-3">
+                      <h3 className="text-xl md:text-2xl font-semibold text-ink-900 dark:text-foreground">
+                        New Tenant Application + Screening
+                      </h3>
+                      <span className="text-ink-500 dark:text-muted-foreground group-hover:translate-x-1 transition">
+                        <ArrowRight className="h-5 w-5" />
+                      </span>
+                    </div>
+                    <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">
+                      Send an application link → run screening via Western Verify → full compliant workflow.
+                    </p>
+                  </div>
+                </div>
+                <div className="mt-6 inline-flex items-center gap-2 rounded-xl border border-slate-200 dark:border-border bg-white dark:bg-card px-5 py-3 text-ink-900 dark:text-foreground font-semibold">
+                  Start an Application <ArrowRight className="h-4 w-4 text-ink-500" />
+                </div>
+              </motion.a>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Transition Section: Complete Protection System */}
+      <section className="py-20 md:py-28 bg-panel-50 dark:bg-muted/20">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-10 md:gap-16 items-center"
+          >
+            {/* Left: Text Content */}
+            <motion.div variants={fadeInUp} className="order-2 md:order-1">
+              <p className="text-[14px] sm:text-[15px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400 mb-4">
+                This Is More Than a Decoder
+              </p>
+              <h2 className="font-display text-2xl sm:text-[32px] md:text-[36px] font-bold text-ink-900 dark:text-white leading-tight mb-4">
+                LeaseShield Is a Complete Landlord Protection System
+              </h2>
+              <p className="text-base sm:text-[17px] text-ink-700 dark:text-slate-300 mb-6 leading-relaxed">
+                Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more. All in one connected dashboard.
+              </p>
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 inline-block">
+                <p className="text-sm sm:text-base text-foreground">
+                  One bad eviction = <span className="font-bold">$8,400</span> average cost.<br/>
+                  LeaseShield = <span className="font-bold">$120/year</span> protection.
+                </p>
+              </div>
             </motion.div>
 
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative"
+            {/* Right: Hero Image */}
+            <motion.div 
+              variants={fadeInUp}
+              className="order-1 md:order-2"
             >
-              <div className="rounded-lg overflow-hidden shadow-xl border border-border">
+              <div className="rounded-2xl overflow-hidden shadow-2xl border border-border">
                 <img 
                   src={heroImage} 
                   alt="LeaseShield - Protect your rental investment with legal templates, compliance guidance, and tenant screening tools"
@@ -330,13 +549,431 @@ export default function Landing() {
                 />
               </div>
             </motion.div>
-          </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* How It Works - Horizontal Step Cards */}
+      <section id="how-it-works" className="py-20 md:py-28 bg-white dark:bg-background scroll-mt-24">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-16"
+          >
+            <p className="text-[15px] font-semibold tracking-[0.14em] uppercase text-ink-500 dark:text-slate-400 mb-3">
+              How LeaseShield Works
+            </p>
+            <h2 className="font-display text-2xl sm:text-[34px] md:text-[36px] font-bold text-ink-900 dark:text-white leading-tight mb-5">
+              A Simple Workflow That Protects You
+            </h2>
+            <p className="text-[17px] sm:text-lg text-ink-700 dark:text-slate-300 max-w-[640px] mx-auto">
+              From application to screening to compliant documents. All connected.
+            </p>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-6 md:gap-8 relative"
+          >
+            {/* Connector line (desktop only) */}
+            <div className="hidden md:block absolute top-14 left-[calc(16.67%+24px)] right-[calc(16.67%+24px)] h-0.5 bg-gradient-to-r from-brand-300 via-brand-400 to-brand-300 dark:from-brand-600 dark:via-brand-500 dark:to-brand-600" />
+            
+            {/* Step 1 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">1</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
+                  Screen Tenants
+                </h3>
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
+                  Send applicants a link to apply and run screening via Western Verify.
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Step 2 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">2</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
+                  Decode Reports
+                </h3>
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
+                  AI explains results in plain English and flags compliance risks.
+                </p>
+              </div>
+            </motion.div>
+            
+            {/* Step 3 */}
+            <motion.div variants={fadeInUp} className="relative">
+              <div className="bg-white dark:bg-card rounded-2xl p-6 md:p-8 border border-slate-200 dark:border-border shadow-sm h-full">
+                <div className="w-12 h-12 rounded-full bg-brand-100 dark:bg-brand-900/30 flex items-center justify-center mb-5 relative z-10">
+                  <span className="text-xl font-bold text-brand-600 dark:text-brand-400">3</span>
+                </div>
+                <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
+                  Build Documents
+                </h3>
+                <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
+                  Generate state-specific leases, notices, and forms. Always current.
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Trust Strip - Full Width with Background */}
+      <section className="py-16 md:py-20 bg-ink-900 dark:bg-slate-950">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-10"
+          >
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-400 mb-3">
+              Built By Professionals
+            </div>
+            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-white" data-testid="text-trust-signal">
+              Decades of Real Screening Experience
+            </h3>
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid sm:grid-cols-3 gap-8 md:gap-12"
+          >
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <Shield className="h-8 w-8 text-brand-400" />
+              </div>
+              <p className="text-lg font-semibold text-white mb-1">
+                Industry Veterans
+              </p>
+              <p className="text-sm text-slate-400">
+                Decades of hands-on screening experience
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <Scale className="h-8 w-8 text-brand-400" />
+              </div>
+              <p className="text-lg font-semibold text-white mb-1">
+                Compliance-First
+              </p>
+              <p className="text-sm text-slate-400">
+                Designed to keep you compliant
+              </p>
+            </motion.div>
+            <motion.div variants={fadeInUp} className="flex flex-col items-center text-center">
+              <div className="w-16 h-16 rounded-2xl bg-brand-500/20 flex items-center justify-center mb-4">
+                <CheckCircle2 className="h-8 w-8 text-brand-400" />
+              </div>
+              <p className="text-lg font-semibold text-white mb-1">
+                Real Decisions
+              </p>
+              <p className="text-sm text-slate-400">
+                Designed for actual landlord workflows
+              </p>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Association Comparison Section */}
+      <section className="py-20 md:py-28 bg-white dark:bg-background">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400 mb-3">
+              Not a Replacement. A Complement
+            </div>
+            <h3 className="text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground" data-testid="text-association-complement">
+              Works Alongside Your Apartment Association
+            </h3>
+          </motion.div>
+          
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto mb-10"
+          >
+            {/* Associations Column */}
+            <motion.div variants={fadeInUp}>
+              <div className="bg-panel-50 dark:bg-muted/30 rounded-2xl p-8 border border-slate-200 dark:border-border h-full shadow-soft">
+                <h4 className="font-bold text-xl text-ink-900 dark:text-foreground mb-6">
+                  Apartment Associations
+                </h4>
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    Education & training seminars
+                  </li>
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    Industry advocacy & lobbying
+                  </li>
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-slate-400" />
+                    Annual template packets
+                  </li>
+                </ul>
+              </div>
+            </motion.div>
+            
+            {/* LeaseShield Column */}
+            <motion.div variants={fadeInUp}>
+              <div className="bg-brand-50 dark:bg-brand-800/20 rounded-2xl p-8 border border-brand-200 dark:border-brand-800 h-full shadow-soft">
+                <h4 className="font-bold text-xl text-brand-800 dark:text-brand-300 mb-6">
+                  LeaseShield
+                </h4>
+                <ul className="space-y-4">
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Day-to-day screening decisions
+                  </li>
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Plain-English report interpretation
+                  </li>
+                  <li className="flex items-center gap-4 text-base text-ink-700 dark:text-muted-foreground">
+                    <div className="w-2.5 h-2.5 rounded-full bg-brand-500" />
+                    Live compliance tools & alerts
+                  </li>
+                </ul>
+              </div>
+            </motion.div>
+          </motion.div>
+          
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center text-lg text-ink-500 dark:text-muted-foreground/80 italic max-w-[640px] mx-auto"
+          >
+            Most landlords use both, and that's exactly how LeaseShield was designed.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* DASHBOARD PREVIEW - Browser Frame Mockup */}
+      <section className="py-20 md:py-28 bg-panel-50 dark:bg-muted/20" data-testid="section-preview">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center"
+          >
+            <div className="text-[13px] font-semibold tracking-[0.14em] uppercase text-brand-700 dark:text-brand-400">
+              Everything Included
+            </div>
+            <h2 className="mt-3 text-3xl md:text-4xl font-extrabold tracking-tight text-ink-900 dark:text-foreground">
+              Everything Included in Your Protection Center
+            </h2>
+            <p className="mt-4 text-lg md:text-xl text-ink-500 dark:text-muted-foreground max-w-2xl mx-auto">
+              Start with report decoding. Expand into documents, alerts, and applications as needed.
+            </p>
+            <p className="mt-6 text-sm text-ink-400 dark:text-muted-foreground/80">
+              A preview of what you'll see after signing up. Everything in one simple dashboard.
+            </p>
+          </motion.div>
+
+          {/* Browser Frame */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="mt-12 rounded-2xl bg-white dark:bg-card shadow-lift border border-slate-200 dark:border-border overflow-hidden"
+          >
+            {/* Browser Top Bar */}
+            <div className="flex items-center gap-2 px-4 py-3 bg-panel-100 dark:bg-muted border-b border-slate-200 dark:border-border">
+              <div className="flex gap-2">
+                <span className="h-3 w-3 rounded-full bg-red-400" />
+                <span className="h-3 w-3 rounded-full bg-yellow-400" />
+                <span className="h-3 w-3 rounded-full bg-green-400" />
+              </div>
+              <div className="ml-4 text-sm text-ink-500 dark:text-muted-foreground truncate">
+                leaseshieldapp.com/dashboard
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-[240px_1fr]">
+              {/* Sidebar */}
+              <div className="bg-white dark:bg-card border-r border-slate-200 dark:border-border p-5 hidden md:block">
+                <div className="text-sm font-semibold text-ink-900 dark:text-foreground">LeaseShield</div>
+                <div className="mt-4 space-y-2 text-sm">
+                  {[
+                    { name: "Screening Decoder", active: true },
+                    { name: "Templates", active: false },
+                    { name: "Compliance Alerts", active: false },
+                    { name: "Notices & Letters", active: false },
+                    { name: "Rent Ledger", active: false },
+                  ].map((item, i) => (
+                    <div 
+                      key={i} 
+                      className={`rounded-xl px-3 py-2 ${item.active ? "bg-brand-50 dark:bg-brand-800/20 text-brand-800 dark:text-brand-300 font-semibold" : "text-ink-700 dark:text-muted-foreground hover:bg-panel-50 dark:hover:bg-muted"}`}
+                    >
+                      {item.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Main Content */}
+              <div className="p-6 md:p-8">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                  <div>
+                    <div className="text-sm text-ink-500 dark:text-muted-foreground">Welcome back</div>
+                    <div className="text-2xl md:text-3xl font-bold text-ink-900 dark:text-foreground">Your Protection Center</div>
+                  </div>
+                  <a 
+                    href="/signup" 
+                    className="hidden md:inline-flex rounded-xl bg-brand-500 hover:bg-brand-600 px-5 py-3 text-white font-semibold shadow-soft transition"
+                    data-testid="button-preview-dashboard"
+                  >
+                    Preview the Dashboard →
+                  </a>
+                </div>
+
+                {/* Dashboard Modules */}
+                <div className="mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {[
+                    { title: "Decode Screening Reports", desc: "Plain-English explanations + risk flags.", tag: "Most used", accent: true },
+                    { title: "State-Specific Templates", desc: `${templateCount}+ leases, notices, letters, kept current.`, tag: `${templateCount}+ docs`, accent: false },
+                    { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
+                    { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
+                  ].map((m, i) => (
+                    <div key={i} className={`rounded-2xl border ${m.accent ? "bg-brand-50 dark:bg-brand-800/20 border-brand-200 dark:border-brand-800" : "bg-white dark:bg-card border-slate-200 dark:border-border"} p-6 shadow-soft flex flex-col h-full`}>
+                      <div className="flex items-start justify-between gap-3 flex-wrap">
+                        <h3 className="text-lg md:text-xl font-semibold text-ink-900 dark:text-foreground">{m.title}</h3>
+                        <span className="text-xs font-semibold px-3 py-1 rounded-full bg-panel-100 dark:bg-muted text-ink-700 dark:text-muted-foreground whitespace-nowrap">
+                          {m.tag}
+                        </span>
+                      </div>
+                      <p className="mt-2 text-ink-700 dark:text-muted-foreground flex-1">{m.desc}</p>
+                      <div className="mt-4 text-sm font-semibold text-brand-700 dark:text-brand-400">
+                        Open →
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="mt-8 text-center">
+                  <a 
+                    href="/signup" 
+                    className="inline-flex rounded-xl bg-brand-500 hover:bg-brand-600 px-6 py-4 text-white font-semibold shadow-soft transition"
+                    data-testid="button-dashboard-trial"
+                  >
+                    Start Free 7-Day Trial →
+                  </a>
+                  <div className="mt-3 text-sm text-ink-500 dark:text-muted-foreground">
+                    Instant access. No credit card required.
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Problems Section */}
+      <section className="py-16 sm:py-20 bg-background">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+              One Bad Lease Can Cost You $10,000+ in 2025
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-3xl mx-auto">
+              Most small landlords are still using free Google templates written years ago… and hoping 
+              they hold up in court. That's where things go sideways:
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-6 sm:gap-8"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <AlertCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  New ESA / Assistance-Animal Rules
+                </h3>
+                <p className="text-muted-foreground">
+                  Leases that ignore updated Fair Housing guidance can put you on the wrong side of HUD complaints. One violation can cost $16,000+ in fines.
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <XCircle className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  Adverse Action Mistakes
+                </h3>
+                <p className="text-muted-foreground">
+                  Using the wrong wording in your denial letters can trigger FCRA problems and angry applicants. Lawsuits start at $1,000 per violation.
+                </p>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full border-destructive/20 bg-destructive/5">
+                <div className="rounded-lg bg-destructive/10 w-12 h-12 flex items-center justify-center mb-4">
+                  <DollarSign className="h-6 w-6 text-destructive" />
+                </div>
+                <h3 className="font-semibold text-lg mb-3 text-foreground">
+                  $500 Every Time You Email Your Lawyer
+                </h3>
+                <p className="text-muted-foreground">
+                  Paying for one-off questions instead of using a consistent, attorney-vetted foundation. Small questions add up to thousands per year.
+                </p>
+              </Card>
+            </motion.div>
+          </motion.div>
         </div>
       </section>
 
       {/* Stats Bar */}
       <section className="py-8 sm:py-12 border-y bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -346,11 +983,11 @@ export default function Landing() {
           >
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600 dark:text-amber-500" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">500+</div>
+                <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">100%</div>
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">Active Landlords</div>
-              <Badge variant="outline" className="text-xs mt-2">+47 this week</Badge>
+              <div className="text-xs sm:text-sm text-muted-foreground">State Compliant</div>
+              <Badge variant="outline" className="text-xs mt-2">Updated Monthly</Badge>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -359,7 +996,7 @@ export default function Landing() {
               </div>
               <div className="text-xs sm:text-sm text-muted-foreground">Legal Templates</div>
               <button
-                className="text-xs mt-1 text-primary hover:underline cursor-pointer bg-transparent border-none p-0"
+                className="text-xs mt-1 text-brand-600 hover:underline cursor-pointer bg-transparent border-none p-0"
                 onClick={() => setShowTemplatePreview(true)}
                 data-testid="button-preview-template"
               >
@@ -368,10 +1005,10 @@ export default function Landing() {
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
-                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">4</div>
+                <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600" />
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">{STATES.length}</div>
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">States Covered</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">States Supported</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -384,9 +1021,38 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Partner Trust Section */}
+      <section className="py-12 sm:py-16 bg-muted/50 border-y">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex flex-col items-center justify-center gap-6 sm:gap-8"
+          >
+            <div className="text-center">
+              <p className="text-sm sm:text-base text-muted-foreground font-medium mb-2">Screening powered by</p>
+              <h3 className="font-display text-lg sm:text-xl font-semibold text-foreground">Trusted Partner Integration</h3>
+            </div>
+            <div className="flex items-center justify-center">
+              <img 
+                src={westernVerifyLogo} 
+                alt="Western Verify - Tenant screening partner" 
+                className="h-12 sm:h-14 object-contain"
+                data-testid="img-western-verify-logo"
+              />
+            </div>
+            <p className="text-sm text-muted-foreground max-w-md text-center">
+              Comprehensive tenant screening checks integrated directly into LeaseShield App for complete landlord protection.
+            </p>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Features Grid */}
       <section id="features" className="py-20 md:py-28">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div 
             initial="hidden"
             whileInView="visible"
@@ -394,7 +1060,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12 sm:mb-16"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Everything You Need to Operate Confidently
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -407,62 +1073,60 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={staggerContainer}
-            className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
+            className="grid md:grid-cols-2 lg:grid-cols-3 gap-5 md:gap-6 lg:gap-8"
           >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-amber-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">State-Specific Templates</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Leases & Notices</h3>
                   <p className="text-muted-foreground mb-4">
-                    Professional leases, applications, notices, and forms tailored to your state's
-                    exact requirements. Download as PDF or fill online.
+                    Stop guessing what your state requires. Get attorney-quality leases, notices, and checklists that keep you compliant and protect your investment.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Residential leases & applications</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Residential lease agreements</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>3-day, late rent & violation notices</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span>Move-in/move-out checklists</span>
                     </li>
-                    <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>All required notices by state</span>
-                    </li>
                   </ul>
                 </div>
               </Card>
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-primary/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Shield className="h-6 w-6 text-primary" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Shield className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Compliance Protection</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Compliance Tools</h3>
                   <p className="text-muted-foreground mb-4">
-                    Stay ahead of changing laws with curated updates that only include what could
-                    create liability. Clear before/after comparisons included.
+                    Stay legally compliant without hiring an attorney. Adverse action letters, compliance checklists, and monthly legal updates. Always protected when laws change.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Impact-only legal updates</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Adverse action letter templates</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Before/after comparisons</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Monthly legal updates (impact-only)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Email alerts for your state</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>"Screen legally" compliance checklist</span>
                     </li>
                   </ul>
                 </div>
@@ -470,38 +1134,28 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Search className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Screening Toolkit</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Credit & Screening Decoder</h3>
                   <p className="text-muted-foreground mb-4">
-                    Step-by-step guidance on tenant screening, red flags to watch for, and
-                    direct access to{" "}
-                    <a 
-                      href="https://www.westernverify.com" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="text-primary hover:underline font-medium"
-                    >
-                      Western Verify
-                    </a>{" "}
-                    for background checks.
+                    Confidently screen tenants without legal mistakes. Simple credit report explanations and fair housing guidance. No confusing jargon, no discrimination risks.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Screening best practices</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Credit report decoder (what matters)</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Red flag checklists</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Fair housing screening checklist</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Western Verify integration</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Background check guidance</span>
                     </li>
                   </ul>
                 </div>
@@ -509,137 +1163,88 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full hover-elevate transition-all relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-violet-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
                 <div className="relative">
-                  <div className="rounded-lg bg-gradient-to-br from-violet-500/20 to-violet-600/10 w-12 h-12 flex items-center justify-center mb-4">
-                    <Building2 className="h-6 w-6 text-violet-600 dark:text-violet-500" />
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <Building2 className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-xl font-semibold mb-3">Property Management</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Landlord Toolkit Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
-                    Organize multiple properties, associate documents with specific units, and 
-                    keep all your rental paperwork organized in one place.
+                    Everything in one place. Leases, notices, checklists, guides, and compliance resources. Organized by property for instant access.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Track unlimited properties</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Centralized document library</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Link documents to properties</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Organize by state & property</span>
                     </li>
                     <li className="flex items-start gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
-                      <span>Filter & organize by location</span>
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Quick access to all templates</span>
                     </li>
                   </ul>
                 </div>
               </Card>
             </motion.div>
-          </motion.div>
-        </div>
-      </section>
 
-      {/* Testimonials */}
-      <section className="py-20 md:py-28 bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-12"
-          >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Trusted by Landlords Nationwide
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              See how LeaseShield App is protecting rental businesses just like yours
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={staggerContainer}
-            className="grid md:grid-cols-3 gap-8"
-          >
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Saved $4,200 in attorney fees
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "The eviction template saved me $4,200 in attorney fees. My lawyer said the notice was 
-                  perfect and the judge accepted it without any issues. LeaseShield paid for itself 20 times over."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">SJ</span>
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <MessageCircle className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <div>
-                    <div className="font-medium text-sm">Sarah J.</div>
-                    <div className="text-xs text-muted-foreground">4 units in Salt Lake City, UT</div>
-                  </div>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Communications</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Pre-written, state-compliant tenant notices and messages. Track your communications with built-in templates for common scenarios.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Pre-written notice templates</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Customizable merge fields</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Copy & download quickly</span>
+                    </li>
+                  </ul>
                 </div>
               </Card>
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Avoided $8,500 lawsuit
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "LeaseShield's compliance alert about Texas security deposit changes saved me from an $8,500 
-                  lawsuit. My property manager didn't even know about the new law yet. Best $12/month I've ever spent."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">MC</span>
+              <Card className="p-4 md:p-5 lg:p-6 h-full hover-elevate transition-all relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-brand-500/10 to-transparent rounded-full -mr-16 -mt-16" />
+                <div className="relative">
+                  <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
+                    <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <div>
-                    <div className="font-medium text-sm">Michael C.</div>
-                    <div className="text-xs text-muted-foreground">12 units in Dallas, TX</div>
-                  </div>
-                </div>
-              </Card>
-            </motion.div>
-
-            <motion.div variants={fadeInUp}>
-              <Card className="p-6 h-full">
-                <div className="flex gap-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 fill-amber-500 text-amber-500" />
-                  ))}
-                </div>
-                <Badge variant="outline" className="mb-3 text-success border-success">
-                  Avoided nightmare tenant
-                </Badge>
-                <p className="text-muted-foreground mb-4">
-                  "The screening toolkit caught red flags I would have missed. Saved me from renting to someone 
-                  with 3 previous evictions. The templates are so clear even I can understand them!"
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <span className="text-sm font-semibold text-primary">RP</span>
-                  </div>
-                  <div>
-                    <div className="font-medium text-sm">Rachel P.</div>
-                    <div className="text-xs text-muted-foreground">6 units in Fargo, ND</div>
-                  </div>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Ledger</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Track rental payments and income simply. Excel template for quick setup or in-app tracking with payment status overview.
+                  </p>
+                  <ul className="space-y-2 text-sm">
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Excel/CSV download template</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>In-app tracking table</span>
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
+                      <span>Payment status at a glance</span>
+                    </li>
+                  </ul>
                 </div>
               </Card>
             </motion.div>
@@ -649,7 +1254,7 @@ export default function Landing() {
 
       {/* Pain Points - What Happens Without LeaseShield */}
       <section className="py-20 md:py-28">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
@@ -657,7 +1262,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               What Happens Without LeaseShield?
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -724,7 +1329,7 @@ export default function Landing() {
             </motion.div>
 
             <motion.div variants={fadeInUp}>
-              <Card className="p-6 border-destructive/30 bg-destructive/5">
+              <Card className="p-6 border-destructive/30 bg-destructive/5 h-full">
                 <div className="flex items-start gap-4">
                   <div className="rounded-full bg-destructive/10 p-3 flex-shrink-0">
                     <AlertCircle className="h-6 w-6 text-destructive" />
@@ -741,22 +1346,6 @@ export default function Landing() {
             </motion.div>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-12"
-          >
-            <div className="inline-block bg-success/10 border border-success/20 rounded-lg px-6 py-4">
-              <p className="text-lg font-semibold text-foreground mb-1">
-                LeaseShield App: Just $12/month
-              </p>
-              <p className="text-sm text-muted-foreground">
-                One mistake costs more than 2 years of LeaseShield
-              </p>
-            </div>
-          </motion.div>
         </div>
       </section>
 
@@ -770,7 +1359,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               How LeaseShield Compares
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
@@ -792,10 +1381,10 @@ export default function Landing() {
                       <th className="text-left p-2 sm:p-4 font-semibold text-xs sm:text-sm"></th>
                       <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">DIY Templates</th>
                       <th className="text-center p-2 sm:p-4 font-semibold text-muted-foreground text-xs sm:text-sm">Local Attorney</th>
-                      <th className="text-center p-2 sm:p-4 font-semibold bg-primary/5">
+                      <th className="text-center p-2 sm:p-4 font-semibold bg-brand-50">
                         <div className="flex flex-col items-center gap-1">
                           <Badge className="mb-1 text-xs">Best Value</Badge>
-                          <span className="text-primary text-xs sm:text-sm">LeaseShield</span>
+                          <span className="text-brand-600 text-xs sm:text-sm">LeaseShield</span>
                         </div>
                       </th>
                     </tr>
@@ -805,8 +1394,20 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Cost</td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Free (risky!)</td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">$300-500/hr</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <span className="font-bold text-primary text-xs sm:text-sm">$12/month</span>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <span className="font-bold text-brand-600 text-xs sm:text-sm">$10/month</span>
+                      </td>
+                    </tr>
+                    <tr className="border-b">
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Screening Report Decoder</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -815,10 +1416,10 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -827,10 +1428,10 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -839,8 +1440,8 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Pay each time</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
@@ -849,23 +1450,23 @@ export default function Landing() {
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center text-muted-foreground text-xs sm:text-sm">Extra fees</td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
                     <tr className="border-b">
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">24/7 Access</td>
                       <td className="p-2 sm:p-4 text-center">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
                       </td>
                     </tr>
-                    <tr>
+                    <tr className="border-b">
                       <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Compliance Alerts</td>
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
@@ -873,8 +1474,20 @@ export default function Landing() {
                       <td className="p-2 sm:p-4 text-center">
                         <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
                       </td>
-                      <td className="p-2 sm:p-4 text-center bg-primary/5">
-                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mx-auto" />
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 mx-auto" />
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 sm:p-4 font-medium text-xs sm:text-sm">Legal Updates</td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <span className="text-muted-foreground text-xs sm:text-sm">Assoc. PDFs (annual)</span>
+                      </td>
+                      <td className="p-2 sm:p-4 text-center">
+                        <X className="h-4 w-4 sm:h-5 sm:w-5 text-destructive mx-auto" />
+                      </td>
+                      <td className="p-2 sm:p-4 text-center bg-brand-50">
+                        <span className="font-semibold text-brand-600 text-xs sm:text-sm">Monthly alerts</span>
                       </td>
                     </tr>
                   </tbody>
@@ -883,125 +1496,6 @@ export default function Landing() {
             </Card>
           </motion.div>
 
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mt-8"
-          >
-            <Button
-              size="lg"
-              onClick={() => window.location.href = "/api/login"}
-              data-testid="button-comparison-trial"
-              className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-            >
-              <span className="hidden xs:inline">Start Free Trial - </span><span className="xs:hidden">Start Trial - </span>No Credit Card
-              <ArrowRight className="ml-2 h-4 w-4" />
-            </Button>
-          </motion.div>
-        </div>
-      </section>
-
-      {/* ROI Calculator */}
-      <section className="py-20 md:py-28">
-        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center mb-12"
-          >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Calculate Your Savings
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              See how much LeaseShield saves you in Year 1
-            </p>
-          </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-          >
-            <Card className="p-4 sm:p-6 md:p-8 bg-gradient-to-br from-primary/5 to-amber-500/5">
-              <div className="space-y-6">
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="rounded-full bg-primary/10 p-2 sm:p-3 flex-shrink-0">
-                    <Calculator className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">Without LeaseShield:</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Attorney (3 hrs):</span>
-                        <span className="font-semibold">$900</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Lease drafting:</span>
-                        <span className="font-semibold">$1,200</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Eviction docs:</span>
-                        <span className="font-semibold">$800</span>
-                      </div>
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">Compliance mistake:</span>
-                        <span className="font-semibold text-destructive">$5,000</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 sm:py-3 bg-destructive/10 rounded-lg px-3 sm:px-4">
-                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
-                        <span className="font-bold text-xl sm:text-2xl text-destructive">$7,900</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 sm:gap-4">
-                  <div className="rounded-full bg-success/10 p-2 sm:p-3 flex-shrink-0">
-                    <DollarSign className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-base sm:text-lg mb-3 sm:mb-4">With LeaseShield:</h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      <div className="flex justify-between items-center py-1.5 sm:py-2 border-b border-border/50 text-xs sm:text-sm">
-                        <span className="text-muted-foreground">12 months:</span>
-                        <span className="font-semibold">$144</span>
-                      </div>
-                      <div className="flex justify-between items-center py-2 sm:py-3 bg-success/10 rounded-lg px-3 sm:px-4">
-                        <span className="font-bold text-sm sm:text-lg">Total Cost:</span>
-                        <span className="font-bold text-xl sm:text-2xl text-success">$144</span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="pt-4 sm:pt-6 border-t-2 border-primary/20">
-                  <div className="text-center">
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-2">Your First-Year Savings:</p>
-                    <p className="text-3xl sm:text-4xl md:text-5xl font-bold bg-gradient-to-r from-success to-primary bg-clip-text text-transparent mb-3 sm:mb-4">
-                      $7,756
-                    </p>
-                    <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6">
-                      That's a <strong className="text-foreground">5,386% ROI</strong> in Year 1
-                    </p>
-                    <Button
-                      size="lg"
-                      onClick={() => window.location.href = "/api/login"}
-                      data-testid="button-roi-trial"
-                      className="text-sm sm:text-base px-4 sm:px-8 w-full sm:w-auto"
-                    >
-                      Start Saving Today - Free Trial
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </motion.div>
         </div>
       </section>
 
@@ -1015,11 +1509,11 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Simple, Transparent Pricing
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
-              Everything you need to protect your rental business
+              Stop wasting hours on forms. Stop losing sleep over compliance. Get everything a landlord actually needs, just once a month.
             </p>
           </motion.div>
 
@@ -1028,58 +1522,291 @@ export default function Landing() {
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
+            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
           >
-            <Card className="p-6 sm:p-8 border-2 border-primary/20 shadow-lg">
-              <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-2 mb-2">
-                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-primary" />
-                  <Badge variant="outline" className="text-xs sm:text-sm">Most Popular</Badge>
+            {/* Monthly Card */}
+            <Card className="p-6 sm:p-8 border-2 border-brand-200 shadow-lg flex flex-col">
+              <div className="text-center mb-6 h-[200px] flex flex-col justify-center">
+                <div className="flex items-center justify-center gap-2 mb-2 h-6">
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-brand-600" />
+                  <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
                 </div>
-                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">LeaseShield App</h3>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Monthly</h3>
                 <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$12</span>
+                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
                   <span className="text-base sm:text-lg text-muted-foreground">/month</span>
                 </div>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">7-day free trial • No credit card required</p>
+                <p className="text-xs sm:text-sm text-brand-600 font-medium mt-3">
+                  Introductory pricing • Lock in this rate today
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
               </div>
 
-              <ul className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">{templateCount}+ templates for UT, TX, ND, and SD</span>
+              <ul className="space-y-3 mb-6 sm:mb-8 flex-1">
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Screening report decoder</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Real-time legal compliance updates for your state</span>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Complete tenant screening toolkit & resources</span>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Rental applications with screening</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Step-by-step guidance for every document</span>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Email alerts when laws change in your state</span>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
                 </li>
-                <li className="flex items-start gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-success mt-0.5 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Cancel anytime, no questions asked</span>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
                 </li>
               </ul>
 
               <Button
                 size="lg"
-                className="w-full text-sm sm:text-base"
-                onClick={() => window.location.href = "/api/login"}
-                data-testid="button-pricing-trial"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
+                onClick={() => {
+                  trackTrialStart();
+                  localStorage.setItem('billingPeriod', 'monthly');
+                  window.location.href = "/signup";
+                }}
+                data-testid="button-pricing-monthly"
               >
-                Start Your Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', 'monthly');
+                  window.location.href = "/signup?payNow=true";
+                }}
+                className="text-xs text-brand-600 hover:underline mt-2"
+                data-testid="link-pay-now-monthly"
+              >
+                Skip trial - Pay now
+              </button>
             </Card>
+
+            {/* Annual Card - Best Value */}
+            <Card className="p-6 sm:p-8 border-2 border-success/40 shadow-lg relative overflow-hidden flex flex-col">
+              <div className="absolute top-0 right-0 bg-success text-success-foreground px-4 py-1 text-xs font-semibold rounded-bl-lg">
+                SAVE $20
+              </div>
+              <div className="text-center mb-6 h-[200px] flex flex-col justify-center">
+                <div className="flex items-center justify-center gap-2 mb-2 h-6">
+                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
+                  <Badge className="bg-success text-success-foreground text-xs">Best Value</Badge>
+                </div>
+                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Annual</h3>
+                <div className="flex items-baseline justify-center gap-2">
+                  <span className="text-4xl sm:text-5xl font-bold text-success">$100</span>
+                  <span className="text-base sm:text-lg text-muted-foreground">/year</span>
+                </div>
+                <p className="text-xs sm:text-sm text-success font-medium mt-3">
+                  Introductory pricing • Save $20 today
+                </p>
+                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
+                  <span className="line-through">$120</span> • Just $8.33/month
+                </p>
+              </div>
+
+              <ul className="space-y-3 mb-6 sm:mb-8 flex-1">
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Screening report decoder</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Rental applications with screening</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
+                </li>
+                <li className="flex items-center gap-2 sm:gap-3">
+                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
+                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
+                </li>
+              </ul>
+
+              <Button
+                size="lg"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
+                onClick={() => {
+                  trackTrialStart();
+                  localStorage.setItem('billingPeriod', 'yearly');
+                  window.location.href = "/signup";
+                }}
+                data-testid="button-pricing-annual"
+              >
+                Save $20 – Start Free Trial
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+              <button
+                onClick={() => {
+                  localStorage.setItem('billingPeriod', 'yearly');
+                  window.location.href = "/signup?payNow=true";
+                }}
+                className="text-xs text-brand-600 hover:underline mt-2"
+                data-testid="link-pay-now-annual"
+              >
+                Skip trial - Pay now
+              </button>
+            </Card>
+          </motion.div>
+
+          {/* Pricing Reinforcement */}
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center text-sm text-muted-foreground mt-6"
+          >
+            No contracts &bull; Cancel anytime &bull; No per-screening fees &bull; Works alongside your existing tools
+          </motion.p>
+
+          {/* Why LeaseShield Section */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="mt-16 sm:mt-20 pt-12 sm:pt-16 border-t"
+          >
+            <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-8 text-center">
+              Why LeaseShield Saves You Time, Risk & Stress
+            </h3>
+            <div className="grid sm:grid-cols-2 gap-4 sm:gap-6 max-w-2xl mx-auto">
+              <div className="flex gap-3">
+                <Clock className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-base mb-1">Save Hours Each Month</p>
+                  <p className="text-base text-muted-foreground">No more Googling forms or waiting on lawyer consultations</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Shield className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-base mb-1">Avoid Costly Mistakes</p>
+                  <p className="text-base text-muted-foreground">One compliance error costs thousands. We keep you protected</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <CheckCircle2 className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-base mb-1">Screen Tenants Confidently</p>
+                  <p className="text-base text-muted-foreground">Simple credit reports and fair housing guidance. No legal risks</p>
+                </div>
+              </div>
+              <div className="flex gap-3">
+                <Sparkles className="h-6 w-6 text-brand-600 flex-shrink-0 mt-0.5" />
+                <div>
+                  <p className="font-semibold text-foreground text-base mb-1">Stay Current Automatically</p>
+                  <p className="text-base text-muted-foreground">Monthly updates alert you when your state's laws change</p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="py-16 sm:py-20">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-12"
+          >
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+              What Landlords Are Saying
+            </h2>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-2 gap-6 sm:gap-8 mb-12"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full flex flex-col">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg text-foreground font-medium mb-6 italic flex-1">
+                  "I will recommend LeaseShield to every independent landlord I know. It will save them thousands and untold headaches with the entire tenancy process."
+                </p>
+                <div className="flex items-center mt-auto">
+                  <div>
+                    <p className="font-semibold text-foreground">Brian Henderson</p>
+                    <p className="text-sm text-muted-foreground">Property Owner, Utah</p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 sm:p-8 border-brand-200 bg-gradient-to-br from-brand-500/5 to-transparent h-full flex flex-col">
+                <div className="flex gap-1 mb-4">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-5 w-5 fill-amber-400 text-amber-400" />
+                  ))}
+                </div>
+                <p className="text-lg text-foreground font-medium mb-6 italic flex-1">
+                  "LeaseShield simplified everything. I used to dread dealing with lease paperwork, but now I feel confident and protected."
+                </p>
+                <div className="flex items-center mt-auto">
+                  <div>
+                    <p className="font-semibold text-foreground">Marcie Seeling</p>
+                    <p className="text-sm text-muted-foreground">Property Owner, Texas</p>
+                  </div>
+                </div>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          {/* Trust Badges */}
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="flex flex-wrap justify-center gap-4 sm:gap-6"
+          >
+            <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-4 py-3">
+              <CheckCircle2 className="h-5 w-5 text-brand-600" />
+              <span className="font-medium text-foreground">7-Day Free Trial</span>
+            </div>
+            <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-lg px-4 py-3">
+              <Shield className="h-5 w-5 text-brand-600" />
+              <span className="font-medium text-foreground">{STATES.length} States Covered</span>
+            </div>
+            <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
+              <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+              <span className="font-medium text-foreground">Attorney-Reviewed Templates</span>
+            </div>
           </motion.div>
         </div>
       </section>
@@ -1094,7 +1821,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center mb-12"
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
               Frequently Asked Questions
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
@@ -1109,47 +1836,52 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <Accordion type="single" collapsible className="w-full">
+              <AccordionItem value="item-cc">
+                <AccordionTrigger className="text-lg">Do I need a credit card for the free trial?</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  <strong>No!</strong> Your 7-day free trial starts immediately with just your email address. You'll
+                  only need to add payment information if you choose to continue after the trial ends. No strings attached.
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-legal">
+                <AccordionTrigger className="text-lg">Is this legal advice?</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  No, LeaseShield provides legal templates and guidance for informational purposes only. Our templates are attorney-reviewed and state-specific, but they are not a substitute for legal advice. We recommend consulting an attorney for specific legal questions about your situation.
+                </AccordionContent>
+              </AccordionItem>
               <AccordionItem value="item-1">
-                <AccordionTrigger>What states does LeaseShield App currently support?</AccordionTrigger>
-                <AccordionContent>
-                  We currently serve landlords in Utah, Texas, North Dakota, and South Dakota with
-                  comprehensive state-specific templates and compliance guidance. We're expanding to
-                  additional states soon—sign up to get notified when your state is added!
+                <AccordionTrigger className="text-lg">What states does LeaseShield App currently support?</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  We currently serve landlords in <strong>{STATES.join(", ")}</strong> with
+                  comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states. Let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
-                <AccordionTrigger>Are the templates state-specific and up to date?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Are the templates state-specific and up to date?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   Yes! Every template in our library is tailored to each state's specific laws and requirements.
                   We monitor state legislation and update templates whenever laws change to help you stay compliant.
                   However, these are general forms for informational purposes only and we recommend having them reviewed by your own attorney for your specific situation.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger>Can I cancel my subscription anytime?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">Can I cancel my subscription anytime?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   Absolutely. You can cancel your subscription at any time with no cancellation fees
                   or penalties. Your access will continue until the end of your current billing period.
                 </AccordionContent>
               </AccordionItem>
-              <AccordionItem value="item-4">
-                <AccordionTrigger>Do I need a credit card for the free trial?</AccordionTrigger>
-                <AccordionContent>
-                  No! Your 7-day free trial starts immediately with just your email address. You'll
-                  only need to add payment information if you choose to continue after the trial ends.
-                </AccordionContent>
-              </AccordionItem>
               <AccordionItem value="item-5">
-                <AccordionTrigger>How often are legal updates published?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">How often are legal updates published?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   We monitor state legislatures and courts continuously. When a law changes that could
                   affect your liability or requirements, we'll send you an email alert within 48 hours
                   along with clear before/after explanations and updated templates if needed.
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-6">
-                <AccordionTrigger>What if I have properties in multiple states?</AccordionTrigger>
-                <AccordionContent>
+                <AccordionTrigger className="text-lg">What if I have properties in multiple states?</AccordionTrigger>
+                <AccordionContent className="text-lg">
                   One subscription gives you access to all supported states. You can easily switch
                   between states in your dashboard to access the correct templates and compliance
                   information for each property.
@@ -1160,8 +1892,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 md:py-28 bg-gradient-to-br from-primary/10 to-primary/5">
+      {/* Value Proposition Section */}
+      <section className="py-16 sm:py-20 bg-muted/30">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial="hidden"
@@ -1169,35 +1901,62 @@ export default function Landing() {
             viewport={{ once: true }}
             variants={fadeInUp}
           >
-            <h2 className="font-display text-2xl sm:text-3xl md:text-4xl font-semibold text-foreground mb-4">
-              Stop Risking $5,000+ Mistakes
-            </h2>
-            <p className="text-base sm:text-lg text-muted-foreground mb-8 max-w-2xl mx-auto px-4">
-              Join 500+ landlords protecting their rental businesses with state-specific templates 
-              and compliance alerts. Get your first lease ready in 5 minutes.
+            <h3 className="font-display text-xl sm:text-2xl font-semibold text-foreground mb-4">
+              Stop paying $500+ every time you need a lawyer to review your lease.
+            </h3>
+            <p className="text-lg sm:text-xl text-muted-foreground mb-6">
+              LeaseShield App = <strong className="text-foreground">$10/month or $100/year (save $20)</strong> protection.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Button
+              size="lg"
+              onClick={() => {
+                trackTrialStart();
+                window.location.href = "/signup";
+              }}
+              className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[48px]"
+              data-testid="button-value-prop-cta"
+            >
+              Start Your Free Trial
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Scarcity & Final CTA */}
+      <section className="py-20 md:py-28 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+        <div className="container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+          >
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+              Only 43 Founders Spots Left at <strong>$10/mo or $100/year (save $20)</strong>
+            </h2>
+            <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto px-4">
+              Price increases to $15 next week
+            </p>
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
                 data-testid="button-final-cta"
-                className="text-base px-8"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
-                Get Your First Lease in 5 Minutes
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => setShowAllFeatures(true)}
-                data-testid="button-final-learn"
-                className="text-base px-8"
-              >
-                Learn More About Features
+                Lock In My Spot Before It's Gone
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
-            <p className="text-sm text-muted-foreground mt-6">
-              No credit card required • 7-day free trial • Cancel anytime
+            <p className="text-base text-muted-foreground">
+              7 days to test everything - no card required. Instant access to leases, decoder, and all tools.
+            </p>
+            <p className="text-xs text-muted-foreground/70 mt-3">
+              *Not legal advice. See disclaimer below.
             </p>
           </motion.div>
         </div>
@@ -1209,7 +1968,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for UT, TX, ND, and SD properties
+              Comprehensive landlord protection for all {STATES.length} supported states
             </DialogDescription>
           </DialogHeader>
           
@@ -1219,14 +1978,14 @@ export default function Landing() {
               return (
                 <div key={key} className="border-b pb-6 last:border-b-0">
                   <div className="flex items-start gap-3 mb-4">
-                    <IconComponent className="h-7 w-7 text-primary mt-1 flex-shrink-0" />
+                    <IconComponent className="h-7 w-7 text-brand-600 mt-1 flex-shrink-0" />
                     <div>
                       <h3 className="text-xl font-semibold text-foreground mb-2">{feature.title}</h3>
                       <p className="text-muted-foreground mb-4">{feature.description}</p>
                       <ul className="space-y-2">
                         {feature.details.map((detail, index) => (
                           <li key={index} className="flex items-start gap-2 text-sm">
-                            <CheckCircle2 className="h-4 w-4 text-success mt-0.5 flex-shrink-0" />
+                            <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
                             <span className="text-muted-foreground">{detail}</span>
                           </li>
                         ))}
@@ -1242,26 +2001,29 @@ export default function Landing() {
             <div className="text-center space-y-4">
               <div className="grid sm:grid-cols-3 gap-4 mb-6">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">{templateCount}+</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">{templateCount}+</div>
                   <div className="text-sm text-muted-foreground">Legal Templates</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">4</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">{STATES.length}</div>
                   <div className="text-sm text-muted-foreground">States Covered</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-primary mb-1">$12</div>
+                  <div className="text-2xl font-bold text-brand-600 mb-1">$10</div>
                   <div className="text-sm text-muted-foreground">Per Month</div>
                 </div>
               </div>
               <Button
                 size="lg"
-                className="w-full text-base"
-                onClick={() => window.location.href = "/api/login"}
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
+                onClick={() => {
+                  trackTrialStart();
+                  window.location.href = "/signup";
+                }}
                 data-testid="button-features-dialog-trial"
               >
                 Start Your 7-Day Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground">
                 No credit card required • Cancel anytime
@@ -1280,7 +2042,7 @@ export default function Landing() {
                 <div className="flex items-center gap-3 mb-2">
                   {(() => {
                     const IconComponent = featureDetails[selectedFeature].icon;
-                    return <IconComponent className="h-8 w-8 text-primary" />;
+                    return <IconComponent className="h-8 w-8 text-brand-600" />;
                   })()}
                   <DialogTitle className="text-2xl">{featureDetails[selectedFeature].title}</DialogTitle>
                 </div>
@@ -1293,7 +2055,7 @@ export default function Landing() {
                 <ul className="space-y-3">
                   {featureDetails[selectedFeature].details.map((detail, index) => (
                     <li key={index} className="flex items-start gap-3">
-                      <CheckCircle2 className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
+                      <CheckCircle2 className="h-5 w-5 text-brand-600 mt-0.5 flex-shrink-0" />
                       <span className="text-muted-foreground">{detail}</span>
                     </li>
                   ))}
@@ -1302,12 +2064,15 @@ export default function Landing() {
               <div className="mt-6 pt-6 border-t">
                 <Button
                   size="lg"
-                  className="w-full"
-                  onClick={() => window.location.href = "/api/login"}
+                  className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
+                  onClick={() => {
+                    trackTrialStart();
+                    window.location.href = "/signup";
+                  }}
                   data-testid="button-dialog-start-trial"
                 >
                   Start Your Free Trial
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <p className="text-sm text-muted-foreground text-center mt-3">
                   7-day free trial • No credit card required
@@ -1330,49 +2095,49 @@ export default function Landing() {
           <div className="space-y-4">
             <div className="space-y-3">
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">{templateCount}+ State-Specific Templates</p>
                   <p className="text-sm text-muted-foreground">Download as PDF or fill online</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Live Compliance Monitoring</p>
                   <p className="text-sm text-muted-foreground">Instant alerts when laws change</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Before/After Guidance</p>
                   <p className="text-sm text-muted-foreground">Clear explanations of legal changes</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Tenant Screening Toolkit</p>
                   <p className="text-sm text-muted-foreground">Red flags and best practices</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">Fair Housing Compliance</p>
                   <p className="text-sm text-muted-foreground">Avoid $10,000+ in federal fines</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">24/7 Access to All Resources</p>
                   <p className="text-sm text-muted-foreground">Your complete landlord toolkit</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
-                <CheckCircle2 className="h-5 w-5 text-success flex-shrink-0 mt-0.5" />
+                <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">7-Day Free Trial</p>
                   <p className="text-sm text-muted-foreground">No credit card required</p>
@@ -1381,15 +2146,16 @@ export default function Landing() {
             </div>
             <div className="pt-4 border-t">
               <Button 
-                className="w-full" 
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]" 
                 size="lg"
                 onClick={() => {
+                  trackTrialStart();
                   setShowBenefitsDialog(false);
-                  window.location.href = "/api/login";
+                  window.location.href = "/signup";
                 }}
               >
                 Start Your Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
           </div>
@@ -1401,7 +2167,7 @@ export default function Landing() {
         <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-display flex items-center gap-2">
-              <FileText className="h-6 w-6 text-primary" />
+              <FileText className="h-6 w-6 text-brand-600" />
               Utah Residential Lease Agreement - Preview
             </DialogTitle>
             <DialogDescription>
@@ -1477,8 +2243,8 @@ export default function Landing() {
             </div>
 
             <div className="mt-6 space-y-4">
-              <div className="flex items-start gap-3 bg-primary/5 border border-primary/20 rounded-lg p-4">
-                <Shield className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="flex items-start gap-3 bg-brand-50 border border-brand-200 rounded-lg p-4">
+                <Shield className="h-5 w-5 text-brand-600 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 text-sm">
                   <p className="font-semibold text-foreground mb-1">What You Get:</p>
                   <ul className="space-y-1 text-muted-foreground">
@@ -1493,32 +2259,44 @@ export default function Landing() {
 
               <Button
                 size="lg"
-                className="w-full"
+                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
+                  trackTrialStart();
                   setShowTemplatePreview(false);
-                  window.location.href = "/api/login";
+                  window.location.href = "/signup";
                 }}
                 data-testid="button-preview-trial"
               >
                 Get Your First Lease in 5 Minutes - Start Free Trial
-                <ArrowRight className="ml-2 h-4 w-4" />
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                No credit card required • 30-day money-back guarantee
+                No credit card required • 7-day free trial • Cancel anytime
               </p>
             </div>
           </div>
         </DialogContent>
       </Dialog>
 
+      {/* Lawyer-Safe Disclaimer */}
+      <section className="py-6 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-start gap-3">
+            <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-500 mt-0.5 flex-shrink-0" />
+            <p className="text-sm text-foreground">
+              The information and general templates provided are based on current state laws. They do not constitute legal advice and do not create an attorney-client relationship. Laws vary and can change by jurisdiction. You should have all final documents reviewed by a licensed attorney in your state.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t py-12 bg-muted/30">
-        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8 mb-8">
             <div>
-              <div className="flex items-center gap-3 mb-4">
-                <Logo iconSize={28} />
-                <span className="font-display font-semibold text-lg">LeaseShield App</span>
+              <div className="mb-4">
+                <Logo variant="horizontal" size="md" />
               </div>
               <p className="text-sm text-muted-foreground">
                 Your protective mentor for confident, risk-free property management.
@@ -1535,10 +2313,11 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">States</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Utah</li>
-                <li>Texas</li>
-                <li>North Dakota</li>
-                <li>South Dakota</li>
+                <li>Utah, Texas, North Dakota</li>
+                <li>South Dakota, North Carolina, Ohio</li>
+                <li>Michigan, Idaho, Wyoming</li>
+                <li>California, Virginia, Nevada</li>
+                <li>Arizona, Florida, Illinois</li>
               </ul>
             </div>
             <div>
@@ -1570,13 +2349,12 @@ export default function Landing() {
               transition={{ duration: 0.2 }}
               className="mb-4"
             >
-              <Card className="w-[380px] h-[500px] flex flex-col shadow-2xl border-primary/20">
+              <Card className="w-[380px] h-[500px] flex flex-col shadow-2xl border-brand-200">
                 {/* Chat Header */}
                 <div className="bg-primary text-primary-foreground rounded-t-lg">
                   <div className="flex items-center justify-between p-4">
                     <div className="flex items-center gap-2">
-                      <Logo iconSize={20} className="brightness-0 invert" />
-                      <span className="font-semibold">LeaseShield Assistant</span>
+                      <Logo variant="horizontal" size="sm" className="brightness-0 invert h-6" />
                     </div>
                     <Button
                       size="icon"
@@ -1666,26 +2444,17 @@ export default function Landing() {
         </AnimatePresence>
 
         {/* Chat Toggle Button */}
-        <div className="flex flex-col items-end gap-2">
-          {!chatOpen && (
-            <div className="bg-card border shadow-lg rounded-lg px-3 py-2 text-xs text-muted-foreground max-w-[200px]">
-              <AlertCircle className="h-3 w-3 inline mr-1" />
-              AI assistant • Info only, not legal advice
-            </div>
-          )}
+        {!chatOpen && (
           <Button
-            size="lg"
-            onClick={() => setChatOpen(!chatOpen)}
-            className="h-14 w-14 rounded-full shadow-2xl"
+            size="icon"
+            onClick={() => setChatOpen(true)}
+            className="h-10 w-10 rounded-full shadow-lg opacity-70 hover:opacity-100 transition-opacity"
             data-testid="button-toggle-chat"
+            title="AI Assistant (Info only, not legal advice)"
           >
-            {chatOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <MessageCircle className="h-6 w-6" />
-            )}
+            <MessageCircle className="h-4 w-4" />
           </Button>
-        </div>
+        )}
       </div>
     </div>
   );

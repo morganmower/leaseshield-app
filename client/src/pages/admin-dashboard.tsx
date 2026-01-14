@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, FileText, XCircle, Eye, History } from "lucide-react";
+import { AlertCircle, CheckCircle, Clock, FileText, XCircle, Eye, History, RotateCcw } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -126,6 +126,29 @@ export default function AdminDashboard() {
       setShowRejectDialog(false);
       setSelectedReview(null);
       resetForm();
+    },
+  });
+
+  const restoreVersionMutation = useMutation({
+    mutationFn: async ({ templateId, versionId }: { templateId: string; versionId: string }) => {
+      const res = await apiRequest("POST", `/api/templates/${templateId}/restore-version/${versionId}`);
+      return res.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/templates", selectedReview?.templateId, "versions"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/template-review-queue"] });
+      toast({
+        title: "Version Restored",
+        description: data.message,
+      });
+      setShowVersionHistory(false);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Restore Failed",
+        description: error.message,
+        variant: "destructive",
+      });
     },
   });
 
@@ -503,26 +526,51 @@ export default function AdminDashboard() {
           </DialogHeader>
 
           <div className="space-y-4 py-4">
-            {(versionData as any)?.versions?.map((version: TemplateVersion) => (
-              <div key={version.id} className="border rounded-lg p-4">
-                <div className="flex items-center justify-between mb-2">
-                  <h4 className="font-semibold">Version {version.versionNumber}.0</h4>
-                  <span className="text-sm text-muted-foreground">
-                    {new Date(version.createdAt).toLocaleDateString()}
-                  </span>
-                </div>
-                <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium">Changes: </span>
-                    <span className="text-muted-foreground">{version.versionNotes}</span>
+            {(versionData as any)?.versions?.map((version: TemplateVersion) => {
+              const isCurrentVersion = version.versionNumber === selectedReview?.template?.version;
+              return (
+                <div key={version.id} className="border rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold">Version {version.versionNumber}.0</h4>
+                      {isCurrentVersion && (
+                        <Badge variant="default">Current</Badge>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-muted-foreground">
+                        {new Date(version.createdAt).toLocaleDateString()}
+                      </span>
+                      {!isCurrentVersion && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => restoreVersionMutation.mutate({ 
+                            templateId: selectedReview?.templateId!, 
+                            versionId: version.id.toString() 
+                          })}
+                          disabled={restoreVersionMutation.isPending}
+                          data-testid={`button-restore-${version.id}`}
+                        >
+                          <RotateCcw className="h-4 w-4 mr-2" />
+                          Restore
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium">Reason: </span>
-                    <span className="text-muted-foreground">{version.lastUpdateReason}</span>
+                  <div className="space-y-2 text-sm">
+                    <div>
+                      <span className="font-medium">Changes: </span>
+                      <span className="text-muted-foreground">{version.versionNotes}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium">Reason: </span>
+                      <span className="text-muted-foreground">{version.lastUpdateReason}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <DialogFooter>

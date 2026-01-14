@@ -1,0 +1,136 @@
+1) State API + frontend usage (core of everything)
+
+Please paste:
+
+Backend
+
+The full route handler for:
+
+GET /api/states
+
+Any service/helper it calls
+
+Frontend
+
+useStates() hook
+
+One example component that used to have SUPPORTED_STATES and now uses the hook
+(signup or add-property is perfect)
+
+👉 This lets me verify:
+
+single source of truth
+
+caching
+
+no hidden hardcoding
+
+UI won’t break when you add state #16
+
+2) Legislative monitoring endpoints (safety-critical)
+
+Paste the full code for:
+
+/api/admin/legislative-monitoring/run
+
+/api/admin/legislative-monitoring/ingest
+
+/api/admin/legislative-monitoring/publish
+
+jobLock.ts
+
+👉 I’m checking for:
+
+approval gate enforcement
+
+lock correctness
+
+no accidental background publishing
+
+correct default behavior
+
+3) LegislativeMonitoringService methods
+
+Paste only these methods (not the whole file):
+
+ingestNow()
+
+queueFromLatestIngest()
+
+publishApproved()
+
+👉 I will verify:
+
+idempotency
+
+deduping
+
+approval-only publishing
+
+correct status transitions
+
+4) Database migrations related to states
+
+Paste:
+
+The migration that added:
+
+Illinois
+
+foreign keys on properties.state and rental_properties.state
+
+Any data-cleanup SQL you ran before adding FK constraints
+
+👉 This catches silent data corruption risks.
+
+🟡 NICE-TO-HAVE (if you want a deeper review)
+5) Template selection logic
+
+Paste:
+
+The API route that returns templates filtered by stateId
+
+Any fallback logic (if state has no templates)
+
+👉 I’ll check that IL can’t accidentally show UT docs.
+
+6) Application state handling
+
+Paste:
+
+Where application disclosures or fields branch by state
+
+👉 This ensures Illinois doesn’t miss required disclosures.
+
+🟢 OPTIONAL (fast sanity check)
+
+If pasting files is annoying, you can instead paste:
+
+A Replit tree screenshot of:
+
+server/
+
+shared/schema.ts
+
+client/src/hooks/
+
+AND results of repo search for:
+
+SUPPORTED_STATES
+
+"UT"
+
+"TX"
+
+I can infer a lot just from that.
+
+How to paste (fastest)
+
+You can paste in chunks like this:
+
+File: server/routes/states.ts
+
+// code here
+
+
+No formatting perfection needed.

@@ -1,0 +1,238 @@
+Below is a corrected, final, single copy-paste block that is safer and more deterministic for Replit.
+
+Key fixes vs your draft:
+
+Do NOT add new Tailwind tokens unless missing (you already have ink-900/700, panel-50, brand-600). Adding ink-100 as a flat key can break conventions and doesn’t match Tailwind’s usual palette nesting.
+
+Do NOT create a bunch of new components under components/ui/ (that folder is for shadcn primitives). Put landing helpers under components/landing/ or inline in landing.tsx to avoid import churn.
+
+Use your existing tokens for dark mode (don’t mix dark:bg-gray-900 unless your design system uses those).
+
+Route should be /dashboard-preview (public) and keep authenticated /dashboard untouched.
+
+Update states to 15 and add Illinois in one shared STATES array so you don’t miss spots.
+
+✅ FINAL “SEND THIS TO REPLIT” BLOCK (copy/paste)
+
+Please perform these steps exactly in order. Do not improvise styling or rename tokens.
+
+1) BACKUP FILES
+
+Duplicate client/src/pages/landing.tsx → client/src/pages/landing-old.tsx
+
+Duplicate client/src/App.tsx → client/src/App-old.tsx
+
+2) DO NOT ADD NEW TOKENS (unless they are truly missing)
+
+We already use these tokens:
+
+ink-900, ink-700, ink-500
+
+panel-50, panel-100
+
+brand-600, brand-700
+
+✅ If brand-700 is missing, add only this one:
+
+brand-700: "#047857"
+
+Do not add ink-100/ink-300 as flat keys unless your palette is already structured that way.
+
+3) CREATE A LANDING COMPONENTS FOLDER (not components/ui)
+
+Create folder:
+
+client/src/components/landing/
+
+Create these files:
+
+3A) client/src/components/landing/MiniCard.tsx
+import { Badge } from "@/components/ui/badge";
+
+export function MiniCard({
+  icon,
+  title,
+  desc,
+  tag,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  tag?: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-ink-500/20 bg-white p-4 shadow-soft dark:border-ink-500/30 dark:bg-slate-950">
+      <div className="flex items-start justify-between gap-3">
+        <div className="flex items-center gap-2">
+          <div className="rounded-xl bg-panel-50 p-2 dark:bg-slate-900">{icon}</div>
+          <div className="text-sm font-semibold text-ink-900 dark:text-white">{title}</div>
+        </div>
+        {tag ? (
+          <Badge className="bg-panel-100 text-ink-700 hover:bg-panel-100 dark:bg-slate-900 dark:text-slate-200">
+            {tag}
+          </Badge>
+        ) : null}
+      </div>
+      <p className="mt-2 text-sm text-ink-700 dark:text-slate-300">{desc}</p>
+    </div>
+  );
+}
+
+3B) client/src/components/landing/ActionCard.tsx
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { ArrowRight } from "lucide-react";
+
+export function ActionCard({
+  icon,
+  title,
+  desc,
+  cta,
+  href,
+  tone = "primary",
+}: {
+  icon: React.ReactNode;
+  title: string;
+  desc: string;
+  cta: string;
+  href: string;
+  tone?: "primary" | "secondary";
+}) {
+  const primary = tone === "primary";
+
+  return (
+    <Card
+      className={[
+        "border p-8 shadow-soft",
+        primary
+          ? "border-brand-600/30 bg-panel-50 dark:border-brand-600/30 dark:bg-slate-900"
+          : "border-ink-500/20 bg-white dark:border-ink-500/30 dark:bg-slate-950",
+      ].join(" ")}
+    >
+      <div className="flex items-start gap-4">
+        <div className="rounded-xl bg-panel-50 p-3 dark:bg-slate-900">{icon}</div>
+        <div className="flex-1">
+          <h3 className="text-xl font-semibold text-ink-900 dark:text-white">{title}</h3>
+          <p className="mt-2 text-sm text-ink-700 dark:text-slate-300">{desc}</p>
+
+          <Button
+            asChild
+            className={[
+              "mt-6 gap-2",
+              primary
+                ? "bg-brand-600 hover:bg-brand-700 text-white"
+                : "bg-white border border-ink-500/30 text-ink-900 hover:bg-panel-50 dark:bg-slate-950 dark:border-ink-500/30 dark:text-white dark:hover:bg-slate-900",
+            ].join(" ")}
+          >
+            <a href={href}>
+              {cta} <ArrowRight className="h-4 w-4" />
+            </a>
+          </Button>
+        </div>
+      </div>
+    </Card>
+  );
+}
+
+4) CREATE PUBLIC DASHBOARD PREVIEW PAGE
+
+Create file:
+
+client/src/pages/dashboard-preview.tsx
+
+Paste your existing DashboardPreview code (the one we already created earlier) but make sure the route is public and CTAs link to:
+
+Explain report → /screening/explain
+
+Trial → /signup
+
+(Keep authenticated /dashboard unchanged.)
+
+5) UPDATE ROUTING (App.tsx) — Wouter syntax
+
+In client/src/App.tsx, import:
+
+import DashboardPreview from "@/pages/dashboard-preview";
+
+
+Add route:
+
+<Route path="/dashboard-preview" component={DashboardPreview} />
+
+
+Do NOT replace your authenticated /dashboard route.
+
+6) REPLACE LANDING PAGE (landing.tsx) — AND KEEP IT SHORTER
+
+Replace the entire client/src/pages/landing.tsx with the landing file we created, BUT make these guaranteed edits:
+
+6A) Use a single source of truth for states
+
+At the top of landing.tsx, define:
+
+const STATES = [ ... , "Illinois" ];
+
+
+Then:
+
+Display state count using {STATES.length} (should show 15)
+
+In footer “States supported” include Illinois from the array
+
+6B) Remove these sections entirely (prevents “cheap / legal doc vibe”)
+
+Any scarcity/founder spots
+
+Duplicate “How it works” blocks (keep only 1)
+
+Any tiny-text “subtitle only” blocks (they read like disclaimers)
+
+6C) Keep these sections (but ensure headings are BIG and consistent)
+
+Pricing ($10/mo, $100/yr)
+
+Problems (risk cards)
+
+FAQ
+
+State coverage list (now 15 with IL)
+
+6D) Heading sizing rule (non-negotiable)
+
+All section titles must be:
+
+text-3xl md:text-4xl font-extrabold tracking-tight
+Kickers:
+
+text-xs font-semibold tracking-[0.18em]
+
+7) FINAL CHECKS
+
+/dashboard-preview loads without login
+
+Landing hero shows mini dashboard grid (right side) on desktop and stacks on mobile
+
+CTAs work:
+
+Explain → /screening/explain
+
+Trial → /signup
+
+Confirm state count shows 15
+
+Illinois is visible in footer/state list
+
+Dark mode does not invert badly (no gray-900 tokens used unless already in design system)
+
+After completion, respond: “All done” + list any TS/Tailwind errors if they appeared.
+Why this corrected block is safer
+
+It avoids Replit inventing a token system or scattering components into shadcn’s ui/ folder.
+
+It avoids mixing random gray-900 dark mode styles that don’t match your token approach.
+
+It ensures Illinois + 15 updates are impossible to miss because they come from one array.
+
+It reduces sections that create the “cheap/legal” feel.
+
+If you want, paste your current tailwind.config.ts extend.colors snippet (just that section) and I’ll adjust the class names to perfectly match your palette without adding any new keys.

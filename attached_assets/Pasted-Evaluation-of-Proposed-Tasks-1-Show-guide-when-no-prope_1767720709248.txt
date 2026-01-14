@@ -1,0 +1,150 @@
+Evaluation of Proposed Tasks
+1️⃣ Show guide when no properties exist
+
+Verdict: ✅ STRONG YES (highest priority)
+
+This is the single biggest activation lever you have.
+
+Why this matters
+
+A landlord with no properties:
+
+Can’t run applications
+
+Can’t use documents
+
+Can’t see value yet
+
+Without guidance, they stall.
+
+What the guide should say (exact copy)
+
+Headline:
+Get Started
+
+Body:
+Add your first property to send applications, route screening through Western Verify, and access state-specific documents.
+
+Primary button:
+Add Your First Property
+
+Secondary (optional):
+Why do I need a property?
+→ Explains: applications + documents are property-based
+
+Placement
+
+Center of the empty state
+
+Card style, not modal
+
+No pop-ups
+
+2️⃣ Show guide when no applications exist
+
+Verdict: ✅ YES (second priority)
+
+This helps users understand what LeaseShield is best at, not just what it stores.
+
+What the guide should say
+
+Headline:
+Start Your First Application
+
+Body:
+Send one link to the applicant. LeaseShield tracks the process while screening runs through Western Verify.
+
+Primary button:
+Create Application Link
+
+Secondary (optional):
+See how it works (2 min)
+
+Key point
+
+This reinforces:
+
+LeaseShield = control center
+
+Western Verify = screening engine
+
+3️⃣ Show guide when no documents exist
+
+Verdict: ⚠️ YES, but keep it lighter
+
+Documents are important, but they’re not always used immediately.
+
+What the guide should say
+
+Headline:
+Need a Lease or Notice?
+
+Body:
+Browse state-specific leases and notices updated when legislation changes.
+
+Primary button:
+Browse Leases & Notices
+
+Don’t
+
+Over-emphasize fear here
+
+Make it feel like a blocker
+
+4️⃣ Add helpful tips to dashboard cards
+
+Verdict: ✅ YES — this is polish done right
+
+This improves clarity without clutter.
+
+Rules for tips
+
+One sentence max
+
+Explains why, not how
+
+Appears under the card title or as a tooltip
+
+Recommended tip copy (use verbatim if you want)
+
+Applications card tip:
+Send one link. Screening runs through Western Verify.
+
+Decoder card tip:
+Prevents misinterpretation of screening reports.
+
+Documents card tip:
+Updated as laws change to reduce enforceability risk.
+
+Properties card tip (if shown):
+Properties organize applications and documents by location.
+
+Priority Order (Do This In Order)
+
+1️⃣ Empty state guide for No Properties
+2️⃣ Empty state guide for No Applications
+3️⃣ Dashboard card tips
+4️⃣ Empty state guide for No Documents
+
+If you only complete the first two, you’ll already see better activation.
+
+What NOT to Do
+
+❌ No forced tours
+❌ No pop-ups on login
+❌ No long explanations
+❌ No green “success” buttons everywhere
+
+Keep everything calm, optional, and landlord-respectful.
+
+Final Read
+
+These tasks align perfectly with where LeaseShield is right now:
+
+Product is solid
+
+Story is clear
+
+Now you’re removing friction
+
+This is maturity work, not feature creep.

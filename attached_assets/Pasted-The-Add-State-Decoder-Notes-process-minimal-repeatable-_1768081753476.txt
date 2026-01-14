@@ -1,0 +1,129 @@
+The “Add State → Decoder Notes” process (minimal, repeatable)
+1) When you add a new state (IL, etc.), do one additional step
+
+After you add the state row + templates/compliance/cards:
+
+✅ Create decoder state-notes coverage placeholders (drafts or “missing” entries)
+So admins see gaps immediately and can fill them later.
+
+You don’t need to write notes for every topic up front — just create the empty slots so nothing is forgotten.
+
+What Replit should implement (simple + not overbuilt)
+A) Add a “State Notes Seed” that runs on new state creation
+
+Option 1 (best minimal): A script you run when adding a state
+node scripts/initStateNotes.js IL
+
+It:
+
+reads the controlled topic list (credit + criminal_eviction)
+
+inserts draft records for that state/topic/decoder
+
+sets status='draft', bullets=[], is_active=false
+
+so they don’t show in production until approved
+
+Why this is best:
+
+zero auto-content
+
+zero legal risk
+
+it just ensures coverage tracking
+
+B) Add a Coverage rule: “Missing notes = nothing shows”
+
+You already do this:
+
+Only status='approved' AND is_active=true render in decoder
+
+Missing = omit accordion
+
+If user asks state law and note missing = fallback text
+
+That’s all you need.
+
+C) Minimum required topics per decoder (don’t do all topics)
+
+To avoid overbuild, define required topics for each decoder.
+
+Criminal/Eviction (required first)
+
+fair_chance_housing
+
+individualized_assessment
+
+local_overrides_present
+
+eviction_record_sealing (optional but nice)
+
+Credit (optional/phase 2)
+
+source_of_income
+
+security_deposit_limits
+
+application_fees
+
+Practical guidance:
+When you launch a new state, you only need the required criminal/eviction topics to deliver value and reduce risk.
+
+What the admin experience should look like (minimal UI)
+
+When a new state is added:
+
+Coverage dashboard shows it as red until at least the required topics are approved
+
+Admin can click “Create draft note” (or edit existing placeholder)
+
+Approve when ready
+
+No additional UI beyond what you already built.
+
+The exact “Add New State” checklist update (copy/paste)
+
+Add this to ADDING_NEW_STATE.md:
+
+Decoder Notes
+
+Run: initStateNotes <STATE>
+
+In Admin → State Notes Coverage, confirm required topics exist
+
+Add bullets + sources for required topics
+
+Submit → Approve
+
+Run verifyStateNotes <STATE> (optional)
+
+Smoke test: ask a state-law question and confirm:
+
+approved note appears
+
+missing note triggers fallback sentence
+
+Minimal scripts Replit should add (2 scripts only)
+1) initStateNotes(stateId)
+
+inserts draft placeholders for required topics
+
+does upsert so re-running is safe
+
+2) verifyStateNotes(stateId)
+
+outputs missing required topics
+
+returns non-zero exit code if missing (optional for CI)
+
+That’s it. No more systems.
+
+Bottom line
+
+To keep this from becoming overbuilt:
+
+✅ Don’t require notes for every topic
+✅ Don’t auto-generate legal text
+✅ Just ensure new states always have placeholders + coverage visibility
+✅ Approve only what you’ve vetted
+✅ The decoder automatically “picks it up” via DB lookup

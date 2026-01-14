@@ -1,0 +1,49 @@
+Focus on these—enhance attention/flow without overhaul. Paste into src/App.js; Run → Live.Hero Visual (Option A – Fast Icon, +15% Attention)
+Replace hero <div> with this (adds logo icon above CTA):jsx
+
+<div className="hero">
+  <h1>LeaseShield App - Landlord Protection Toolkit & Association Alternative</h1>
+  <p className="big">The Daily-Use Toolkit Your Association Doesn't Give You</p>
+  <img src="YOUR-LOGO-PNG-LINK" alt="LeaseShield Shield Icon" style={{height: '60px', margin: '1rem 0'}} />
+  <div className="price-box">$10/month or $100/year (save $20)</div>
+  <a href="YOUR-STRIPE-LINK" className="cta-button">Start 7-Day Free Trial – No Card Needed</a>
+</div>
+
+Why: Anchors eyes (icon → text → CTA); simplicity preserved.
+Features Icons (Guide Scan, +20% Flow)
+Wrap features grid in this (adds SVG icons to first 3 cards):jsx
+
+<div className="features-grid">
+  <div className="feature-card">
+    <svg style={{width: '2rem', marginBottom: '0.5rem', fill: '#10b981'}} viewBox="0 0 24 24">
+      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+    </svg>
+    <h3>State-Specific Leases & Notices</h3>
+    <p>Instant access to the exact forms required in your state (UT, TX, ND, SD). No outdated templates. No compliance risk.</p>
+  </div>
+  {/* Add similar SVG to next 2 cards: house for checklists, chart for decoder */}
+</div>
+
+Why: Icons create visual anchors (Z-pattern: icon → heading → text); keeps simplicity.
+FAQ Accordion (Mobile Simplicity, +40% Objection Handling)
+Replace FAQ list with this (expandable for flow):jsx
+
+const faqs = [
+  { q: "What states does LeaseShield App currently support?", a: "We currently serve landlords in Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, and Idaho. Let us know which state you'd like to see next!" },
+  { q: "Are the templates state-specific and up to date?", a: "Yes, all templates are updated monthly as laws change. We're working to expand to additional states—let us know which state you'd like to see next!" },
+  // Add your other 4 FAQs
+];
+
+// In your JSX:
+<div className="faq-section">
+  <h2>Frequently Asked Questions</h2>
+  {faqs.map((faq, index) => (
+    <div key={index} className="faq-item">
+      <button className="faq-question" onClick={() => toggleFaq(index)}>
+        {faq.q} <span>{openIndex === index ? '-' : '+'}</span>
+      </button>
+      {openIndex === index && <p className="faq-answer">{faq.a}</p>}
+    </div>
+  ))}
+</div>
+

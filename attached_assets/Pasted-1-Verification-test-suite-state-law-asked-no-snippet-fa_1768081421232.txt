@@ -1,0 +1,266 @@
+1) Verification test suite: “state law asked + no snippet → fallback fires”
+A. Add a pure function to test (make this easy to unit test)
+
+Create a small helper used by the decoder runtime:
+
+server/decoders/stateLawFallback.ts
+
+type Decoder = "credit" | "criminal_eviction";
+
+export function isStateSpecificQuestion(q: string): boolean {
+  const s = q.toLowerCase();
+
+  // Explicit state/city references (keep this list small; you can expand later)
+  const geoSignals = [
+    "california", "ca ",
+    "illinois", "il ",
+    "texas", "tx ",
+    "new york", "ny ",
+    "nyc", "chicago",
+    "state law", "local law", "ordinance", "under the law", "legal in"
+  ];
+
+  return geoSignals.some(sig => s.includes(sig));
+}
+
+export function shouldTriggerStateLawFallback(params: {
+  question: string;
+  stateCode?: string | null;
+  requestedStateOrLocalLaw: boolean; // derived from isStateSpecificQuestion
+  hasApprovedSnippet: boolean;
+}): boolean {
+  return !!params.requestedStateOrLocalLaw && !params.hasApprovedSnippet;
+}
+
+export const STATE_LAW_FALLBACK_TEXT =
+  "State-specific rules may apply — check your local requirements.";
+
+B. Unit tests (Jest/Vitest)
+
+server/decoders/stateLawFallback.test.ts
+
+import {
+  isStateSpecificQuestion,
+  shouldTriggerStateLawFallback,
+  STATE_LAW_FALLBACK_TEXT
+} from "./stateLawFallback";
+
+describe("state law fallback", () => {
+  test("detects explicit state law question", () => {
+    expect(isStateSpecificQuestion("Can I deny for this in Illinois?")).toBe(true);
+    expect(isStateSpecificQuestion("What does Chicago RLTO require?")).toBe(true);
+    expect(isStateSpecificQuestion("Under California law, can I charge more deposit?")).toBe(true);
+  });
+
+  test("does not trigger for generic questions", () => {
+    expect(isStateSpecificQuestion("What does a charge-off mean?")).toBe(false);
+    expect(isStateSpecificQuestion("What is an eviction filing?")).toBe(false);
+  });
+
+  test("fallback triggers when state-specific question AND no snippet", () => {
+    const fired = shouldTriggerStateLawFallback({
+      question: "In NY, can I deny for a misdemeanor?",
+      stateCode: "NY",
+      requestedStateOrLocalLaw: true,
+      hasApprovedSnippet: false,
+    });
+    expect(fired).toBe(true);
+  });
+
+  test("fallback does NOT trigger when snippet exists", () => {
+    const fired = shouldTriggerStateLawFallback({
+      question: "In IL, what are the fair chance rules?",
+      stateCode: "IL",
+      requestedStateOrLocalLaw: true,
+      hasApprovedSnippet: true,
+    });
+    expect(fired).toBe(false);
+  });
+
+  test("fallback text is exact", () => {
+    expect(STATE_LAW_FALLBACK_TEXT).toBe(
+      "State-specific rules may apply — check your local requirements."
+    );
+  });
+});
+
+C. Integration test (decoder response contains fallback, no state notes section)
+
+In your decoder service test, mock:
+
+getApprovedStateNote(...) returns null
+
+user question includes state (“Illinois”, “NYC”, etc.)
+
+Assertions:
+
+Response contains STATE_LAW_FALLBACK_TEXT
+
+Response does not include "State-Specific Notes ("
+
+2) Admin warnings when snippets are missing
+A. “Coverage dashboard” concept (simple, very effective)
+
+Add an admin page section: State Notes Coverage
+
+Filters:
+
+State (All / IL / CA / …)
+
+Decoder (credit / criminal_eviction)
+
+Topic (All / specific)
+
+Status (approved only / all)
+
+Display a table:
+
+Topic
+
+Approved snippet? (✅/❌)
+
+Last reviewed (date / blank)
+
+Version
+
+Actions (Create draft / View / Edit)
+
+B. Backend: Coverage endpoint
+
+GET /api/admin/state-notes/coverage
+
+Returns rows like:
+
+[
+  {
+    "decoder":"criminal_eviction",
+    "topic":"fair_chance_housing",
+    "stateId":"IL",
+    "hasApproved": true,
+    "lastReviewedAt":"2026-01-10"
+  },
+  {
+    "decoder":"criminal_eviction",
+    "topic":"eviction_record_sealing",
+    "stateId":"IL",
+    "hasApproved": false,
+    "lastReviewedAt":null
+  }
+]
+
+
+How to compute:
+
+Take the controlled topic lists (from shared/decoderTopics.ts)
+
+Cross product with active states (or only “top states” if you want)
+
+Left join approved notes
+
+C. In-admin warning banners (two levels)
+
+Level 1: Soft warning (yellow)
+Show when:
+
+state has < X% coverage
+
+or any “high risk topics” missing (see list below)
+
+Banner text:
+
+Missing state note coverage: Some state-specific topics are not approved yet. The decoder will fall back to the generic message for those questions.
+
+Level 2: Strong warning (red)
+Show when:
+
+user’s preferred state is active but has zero approved notes for criminal/eviction
+
+Banner text:
+
+No approved state notes for this state yet. State-specific questions will show the fallback message until notes are reviewed and approved.
+
+D. “High risk topics” list (missing these is more noticeable)
+
+Mark these as high risk in UI:
+
+criminal_eviction: fair_chance_housing, individualized_assessment, local_overrides_present
+
+credit: source_of_income, application_fees (optional), security_deposit_limits (optional)
+
+E. Auto-create draft CTA
+
+On missing row, show:
+
+“Create draft note” button (pre-fills title and topic/state)
+
+Drops admin directly into edit modal
+
+3) Legal review checklist for approving new state notes
+
+Use this as your internal approval rubric in the admin UI (checkboxes), and save it with the note when approved.
+
+A. Content accuracy & scope
+
+ The note only covers the specific topic (no extra legal areas)
+
+ Language is informational (no “must/required” unless verified)
+
+ No legal conclusions or “what you should do”
+
+ No city/county claims unless it’s explicitly a local note or clearly labeled
+
+B. Neutrality & non-decisional framing
+
+ No “approve/deny” guidance
+
+ No prescriptive actions (“require a co-signer”, “charge more deposit”)
+
+ Uses “may,” “can,” “some jurisdictions,” “consider whether local rules apply”
+
+ Reinforces consistent written criteria where relevant
+
+C. Fair Housing / compliance safety
+
+ Avoids mentioning protected classes or protected-group outcomes
+
+ No disparate impact-y blanket statements
+
+ For criminal topics, references individualized assessment concept (neutrally)
+
+ For eviction topics, distinguishes filing vs outcome where relevant
+
+D. Consistency with LeaseShield tone + structure
+
+ 2–4 bullets max (short and scannable)
+
+ Plain English, no legalese
+
+ Fits inside the “State-Specific Notes (State)” accordion cleanly
+
+ Includes “local variation” bullet when needed (NY, CA, IL major metros)
+
+E. Audit trail requirements
+
+ sources added (internal links or citations you store)
+
+ last_reviewed_at set
+
+ Reviewer recorded (reviewed_by_user_id)
+
+ Version incremented if changes modify meaning
+
+F. Approval gate
+
+ Marked approved
+
+ Previous approved version archived (if any)
+
+ Verified in Coverage dashboard (✅ now present)
+
+Hand-off summary for Replit
+
+Add stateLawFallback.ts + unit tests + integration assertion (“no snippet → fallback text appears; no state-notes accordion rendered”).
+
+Build admin “Coverage” endpoint + page with yellow/red warnings and “Create draft” CTA.
+
+Add approval checklist UI (checkboxes) + store audit fields on approve.

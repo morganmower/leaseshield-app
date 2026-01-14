@@ -1,0 +1,137 @@
+Final Audit: What’s Good (Lock These In)
+
+Based on how the site currently exists plus the changes you’re implementing:
+
+✅ Core message
+
+The product’s primary job is now crystal clear:
+
+“This helps me understand a screening report and stay compliant.”
+
+You are no longer leading with “platform,” “toolkit,” or “everything at once.”
+
+✅ Traffic alignment
+
+Western Verify traffic now lands on a page that matches their emotional state.
+
+No more dot-connecting while stressed.
+
+✅ Legal / CRA safety
+
+Language stays in:
+
+explains
+
+flags
+
+helps interpret
+
+No decision-making, recommendation, or approval language creeping in.
+
+✅ Association differentiation
+
+Clear “complements, doesn’t replace”
+
+Clear “you probably need both”
+
+Still inclusive of non-association landlords
+
+✅ Visual consistency
+
+No new design system
+
+No color drift
+
+Same LeaseShield brand, calmer and clearer
+
+All of that is solid. You’ve addressed the real problems.
+
+The ONLY Remaining Things to Double-Check (Small but Important)
+
+These are not “change the site” items — they’re final polish / guardrails.
+
+1️⃣ The first scroll must still show a clear action
+
+After the hero + cards:
+
+Make sure something clickable is still visible without scrolling too far:
+
+Either the cards
+
+Or a repeated “Explain My Screening Report” CTA
+
+Why this matters:
+Some users scroll instinctively when nervous. You don’t want them to lose the obvious path.
+
+➡️ If the CTA disappears too fast, repeat it once below the diagram.
+
+2️⃣ Decoder pages must not feel like a “tool switch”
+
+When someone clicks:
+
+Explain My Screening Report → Credit / Criminal / Eviction
+
+Make sure:
+
+The decoder page reassures them they’re in the right place
+
+Even a small header like:
+
+“You’re reviewing this report in plain English.”
+
+This avoids the feeling of:
+
+“Uh oh, did I just jump into something technical?”
+
+➡️ This is a one-line UX fix, not a rebuild.
+
+3️⃣ Remove any leftover “platform-first” phrasing above the fold
+
+Do a quick scan for phrases like:
+
+“All-in-one landlord platform”
+
+“Complete landlord toolkit”
+
+“Everything landlords need”
+
+Those phrases are fine below the fold, but above the fold they reintroduce thinking.
+
+➡️ Below the fold = okay
+➡️ Above the fold = avoid
+
+What I Would NOT Touch (Very Important)
+
+Do not:
+
+Rework pricing language right now
+
+Add testimonials yet
+
+Add more explanation text
+
+Add video demos yet
+
+Add comparisons or charts
+
+Those are later-stage optimizations. Right now, clarity > persuasion.
+
+Final Verdict (Very Clear)
+
+If you implement:
+
+The screening-first hero
+
+The two-card “Start Here”
+
+The simple diagram
+
+The unified decoder entry
+
+Then…
+
+✅ You have solved the main problem
+✅ You can confidently send cold traffic
+✅ You should stop changing the landing page
+
+At that point, the next improvements come from watching behavior, not guessing.

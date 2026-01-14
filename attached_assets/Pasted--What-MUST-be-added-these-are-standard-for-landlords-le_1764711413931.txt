@@ -1,0 +1,141 @@
+⚠️ What MUST be added (these are standard for landlords + legal)
+
+You’re missing:
+
+1. Category (Rent, Late Fee, Utility, Deposit, Other)
+
+If you don’t have this, landlords can’t separate rent vs late fees vs NSF fees.
+
+2. Description
+
+Landlords often have:
+
+“December Rent”
+
+“Late Fee – 5 days late”
+
+“Partial Payment”
+
+3. Payment Method
+
+Small landlords ALWAYS need this for documentation:
+
+Cash
+
+Check
+
+Zelle
+
+Venmo
+
+ACH
+
+Certified funds
+
+4. Reference # or Check #
+
+Extremely important if a tenant disputes payment.
+
+5. Effective Date (different from transaction date)
+
+Example:
+
+Effective Date: 12/01/2025 (rent due)
+
+Entry Date: 12/05/2025 (landlord entered payment)
+
+6. Notes
+
+Landlords constantly need to write:
+
+“Tenant paid partial due to financial hardship”
+
+“NSF—bank returned payment”
+
+“Late fee waived”
+
+7. Running Balance Should Calculate Automatically
+
+You’re doing this—but make sure it updates based on entry order, not “Month”.
+
+🔥 Recommended RENT LEDGER VERSION 2 (clean, simple, professional)
+
+Here is EXACTLY what your spreadsheet should look like (and what your app should generate):
+
+HEADER AREA (keep this — it’s good)
+RENT LEDGER REPORT
+Generated: 12/2/2025 2:34 PM
+Tenant: Morgan Mower
+Unit: (optional)
+Lease Period: 2025-01-01 to 2025-12-31
+
+📌 LEDGER TABLE (use these columns)
+Date	Effective Date	Type	Category	Description	Charge Amount	Payment Amount	Running Balance	Payment Method	Ref #	Notes
+12/1/2025	12/1/2025	Charge	Rent	December Rent	$1,500.00	$0.00	$1,500.00	—	—	—
+12/5/2025	12/1/2025	Payment	Rent	Payment for Dec Rent	$0.00	$1,500.00	$0.00	Zelle	TXN #9134	Paid in full
+📊 SUMMARY SECTION (you should change this)
+
+Your current summary is messy and missing useful totals.
+
+Use this instead:
+
+SUMMARY
+Total Rent Charged: $1,500.00
+Total Payments Received: $1,500.00
+Outstanding Balance: $0.00
+Status: Paid / Current
+
+
+Clean, clear, useful.
+
+🔥 WHAT I RECOMMEND YOU CHANGE RIGHT NOW (IMPORTANT)
+
+Here is your exact to-do list:
+
+1. Update your ledger columns to this:
+
+Date
+
+Effective Date
+
+Type
+
+Category
+
+Description
+
+Charge Amount
+
+Payment Amount
+
+Running Balance
+
+Payment Method
+
+Reference #
+
+Notes
+
+2. Remove “Month” — it’s confusing and unnecessary
+
+Everything should be based on effective date, not “month”.
+
+3. Fix the Summary section
+
+Use:
+
+Total Charges
+
+Total Payments
+
+Outstanding Balance
+
+Status
+
+4. Fix the duplicate rows in your example
+
+You currently show the same $1,500 twice — this will confuse landlords.
+
+5. Remove the random quotation marks ($1500.00")
+
+That looks like a formatting bug.

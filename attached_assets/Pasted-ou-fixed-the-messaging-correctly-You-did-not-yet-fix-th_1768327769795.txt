@@ -1,0 +1,316 @@
+ou fixed the messaging correctly.
+You did not yet fix the visual authority.
+
+Right now the page still feels:
+
+fragmented
+
+section-heavy
+
+visually flat
+
+too many “headline-like things” competing
+
+not enough hero moments anchoring the scroll
+
+Nothing is wrong — but nothing feels deliberate or premium yet.
+
+This is why your gut says “this looks cheap / legal / boring.”
+
+You’re right.
+
+CORE ISSUE (THE ROOT CAUSE)
+
+You currently have too many sections styled at the same visual weight.
+
+Your eye doesn’t know:
+
+what matters most
+
+where to pause
+
+where confidence lives
+
+Everything is centered, white, text-first, and evenly spaced.
+
+That creates a terms-and-conditions vibe, even with good copy.
+
+FIX THIS WITH A CLEAR VISUAL PYRAMID
+
+You need 4 visual tiers, not 12 “sections.”
+
+Visual Tier System (use this everywhere)
+Tier	Purpose	Size	Background
+Tier 1	Core action	Huge	White / gradient
+Tier 2	System explanation	Large	Light gray
+Tier 3	Trust & credibility	Medium	Soft contrast
+Tier 4	Supporting info	Small	White
+
+Right now everything is Tier 2–3.
+
+SECTION-BY-SECTION FIXES (VERY SPECIFIC)
+1️⃣ “What would you like help with right now?” (START HERE)
+What’s wrong
+
+Cards are too small
+
+No dominant focal point
+
+CTA looks optional
+
+Reads like a settings screen
+
+What to do
+Make this a PRIMARY HERO SECTION, not a sub-section
+
+Change layout to:
+
+Full-width container
+
+Light gradient background (very subtle)
+
+Cards at least 420–460px tall
+
+Left card visually dominant
+
+Exact visual changes
+
+Left card:
+
+Background: soft green tint
+
+Border: none
+
+Shadow: 0 12px 40px rgba(16,185,129,0.18)
+
+Icon size: 48–56px
+
+Title size: 22px
+
+CTA button INSIDE card (large)
+
+Right card:
+
+White background
+
+Subtle border
+
+Smaller shadow
+
+No button — arrow only
+
+Copy tweak (small but powerful)
+
+Replace:
+
+“Most landlords start by explaining an existing screening report.”
+
+With:
+
+“Most landlords start here.”
+
+Short. Confident. No hedging.
+
+2️⃣ “Beyond Screening” (THIS IS STILL WEAK)
+
+You are correct — this section still doesn’t work.
+
+Why
+
+The image is doing all the work
+
+The text above it feels disconnected
+
+“Beyond Screening” is too small and passive
+
+Fix: Turn this into a Transition Section
+
+This is not a feature section.
+It’s a bridge.
+
+Replace the structure with:
+
+Eyebrow
+
+THIS IS MORE THAN A DECODER
+
+
+Main headline
+
+LeaseShield Is a Complete Landlord Protection System
+
+
+Supporting line
+
+Screening interpretation is just the starting point.
+
+
+Then place the image beside the text (not below).
+
+Two-column layout:
+
+Left: text
+
+Right: image
+
+This gives the image context and authority.
+
+3️⃣ “How LeaseShield Works” (ALMOST THERE)
+
+This is much better — but still too flat.
+
+What’s wrong
+
+All steps look equal
+
+No visual rhythm
+
+Too text-heavy vertically
+
+Fix
+
+Turn this into horizontal step cards.
+
+Each step:
+
+Icon in circle
+
+Title bold
+
+One-line description
+
+Optional helper line smaller
+
+Add:
+
+A thin horizontal connector line
+
+More white space between steps
+
+This will remove the “instruction manual” feel.
+
+4️⃣ “Built by Screening & Compliance Professionals”
+This should NOT be a standalone section
+
+It feels floating and random.
+
+Fix: Merge it into a Trust Band
+
+Place it between How It Works and Association section.
+
+Style:
+
+Light gray background
+
+Icons (shield / scale / check)
+
+2–3 short credibility statements
+
+Example:
+
+Decades of screening experience
+
+Built alongside compliance professionals
+
+Designed for real landlord decisions
+
+This turns it from “legal copy” into confidence reinforcement.
+
+5️⃣ “Designed to Work Alongside Your Apartment Association”
+
+This copy is good.
+The placement is wrong.
+
+What’s wrong
+
+Feels like a disclaimer
+
+Too text-only
+
+Too late in the scroll
+
+Fix
+
+Make it a comparison explainer, not a statement.
+
+New layout
+
+Two-column comparison:
+
+Left
+
+Apartment Associations
+• Education
+• Advocacy
+• Annual templates
+
+
+Right
+
+LeaseShield
+• Day-to-day decisions
+• Screening interpretation
+• Live compliance tools
+
+
+Then your existing closing line underneath.
+
+This instantly answers the survey objection visually, not verbally.
+
+GLOBAL DESIGN CHANGES YOU SHOULD MAKE NOW
+Fonts
+
+Headings: Inter / 600–700
+
+Body: Inter / 400
+
+Eyebrows: Inter / 600 / letter-spaced
+
+Font sizing rules (do not break these)
+
+Hero headline: 44–52px
+
+Section headlines: 30–36px
+
+Card titles: 20–22px
+
+Body text: 16–18px
+
+Eyebrows: 13–15px
+
+Color usage
+
+Brand green: ONLY for actions & emphasis
+
+Dark blue: Headlines
+
+Gray: Supporting text
+
+Never put important messaging in light gray
+
+FINAL HONEST TAKE
+
+You were right to feel uncomfortable.
+
+The product story is now excellent.
+The visual story is still catching up.
+
+Once you:
+
+reduce the number of “sections”
+
+increase hierarchy contrast
+
+let key moments breathe
+
+stop centering everything
+
+This will feel:
+
+premium
+
+confident
+
+intentional
+
+worth paying for

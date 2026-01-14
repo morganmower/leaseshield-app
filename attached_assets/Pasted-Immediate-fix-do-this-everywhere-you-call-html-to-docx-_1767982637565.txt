@@ -1,0 +1,95 @@
+Immediate fix (do this everywhere you call html-to-docx)
+✅ Safe default (no footer options)
+const out = await htmlToDocx(html /*, docOptions?, htmlToDocxOptions? */);
+// no { footer: true, pageNumber: true } unless you supply real footer HTML
+
+
+If you already have a wrapper, make it impossible to pass those flags accidentally.
+
+If you DO want page numbers later: only enable with explicit footer HTML
+
+Your note is key: don’t set footer: true / pageNumber: true unless you provide footer content.
+
+Pattern:
+
+type DocxGenOptions = {
+  footerHtml?: string; // only if you have it
+};
+
+async function generateDocxFromHtml(html: string, opts?: DocxGenOptions) {
+  const hasFooter = Boolean(opts?.footerHtml?.trim());
+
+  const out = await htmlToDocx(
+    html,
+    undefined,
+    hasFooter
+      ? {
+          footer: true,
+          pageNumber: true,
+          // Depending on your html-to-docx version, footer content may be
+          // provided via document options or via HTML sections.
+          // If the library supports a footerHtml prop, pass it here.
+        }
+      : undefined
+  );
+
+  return Buffer.isBuffer(out) ? out : Buffer.from(out);
+}
+
+
+Important: different versions of html-to-docx handle footer content differently. The rule stays the same: no footer relationships unless the footer part exists.
+
+Add a regression guard (recommended)
+
+Even though you found the cause, add a check that fails loudly in dev/staging if DOCX is structurally invalid.
+
+Structural validation (relationships/parts exist)
+import JSZip from "jszip";
+
+export async function assertValidDocx(buf: Buffer) {
+  const zip = await JSZip.loadAsync(buf);
+
+  const required = ["[Content_Types].xml", "_rels/.rels", "word/document.xml"];
+  for (const f of required) {
+    if (!zip.file(f)) throw new Error(`DOCX missing required part: ${f}`);
+  }
+
+  // Optional extra check: if there are footer rels, footer parts must exist
+  const relsFile = zip.file("word/_rels/document.xml.rels");
+  if (relsFile) {
+    const relsXml = await relsFile.async("text");
+    const footerTargets = [...relsXml.matchAll(/Target="(footer\d+\.xml)"/g)].map(m => m[1]);
+    for (const ft of footerTargets) {
+      if (!zip.file(`word/${ft}`)) {
+        throw new Error(`DOCX references missing footer part: word/${ft}`);
+      }
+    }
+  }
+}
+
+
+Call await assertValidDocx(buf) right before sending in non-prod or behind a flag.
+
+Quick wins to keep (still worth it)
+
+Even with the footer fix, keep these:
+
+Content-Length + res.end(buffer)
+
+Disable compression for /api/download/* (if compression exists)
+
+Magic byte PK check (fast sanity)
+
+They’ll save you the next time a route falls through to HTML.
+
+Final “hardening” move
+
+Search your repo for:
+
+footer: true
+
+pageNumber: true
+
+Remove or gate them behind footerHtml.
+
+If you paste your current htmlToDocx(...) wrapper (or wherever it’s called), I’ll rewrite it into a single safe utility so the whole codebase can’t reintroduce this bug.

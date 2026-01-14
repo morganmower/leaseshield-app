@@ -1,0 +1,278 @@
+Love this feedback — and yes, your “one addition” is smart for auditability. Here’s the final “tell Replit” package with (1) the disclosure version tracking, (2) the small improvements you suggested (canonical keys in seeds, “throw if missing” in LegiScan), and (3) the exact implementation steps in the safest order.
+
+Copy/paste everything below into Replit as your execution plan.
+
+✅ REPLIT TASK LIST: Add State Registry + Idempotent Seeds + Audit Trail
+Phase A — Database migrations (safe order)
+A1) Add key columns (nullable first)
+ALTER TABLE templates ADD COLUMN IF NOT EXISTS key text;
+ALTER TABLE compliance_cards ADD COLUMN IF NOT EXISTS key text;
+ALTER TABLE communication_templates ADD COLUMN IF NOT EXISTS key text;
+
+A2) Add audit column to states: required_disclosure_version
+
+Purpose: track when state disclosures were last reviewed/updated.
+
+ALTER TABLE states
+ADD COLUMN IF NOT EXISTS required_disclosure_version integer DEFAULT 1;
+
+
+(Optional) add:
+
+ALTER TABLE states
+ADD COLUMN IF NOT EXISTS disclosures_last_reviewed_at timestamp;
+
+A3) Backfill keys (temporary migration backfill only)
+
+Use this only to get through the migration. Going forward, seeds must explicitly define canonical keys.
+
+UPDATE templates
+SET key = lower(regexp_replace(template_type::text || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+UPDATE compliance_cards
+SET key = lower(regexp_replace(category || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+UPDATE communication_templates
+SET key = lower(regexp_replace(template_type::text || '_' || title, '[^a-zA-Z0-9]+', '_', 'g'))
+WHERE key IS NULL;
+
+A4) Dedupe BEFORE adding constraints (keep newest by created_at)
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, key, COALESCE(version, 1)
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM templates
+)
+DELETE FROM templates
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, key
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM compliance_cards
+)
+DELETE FROM compliance_cards
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+WITH ranked AS (
+  SELECT id,
+         row_number() OVER (
+           PARTITION BY state_id, template_type, key
+           ORDER BY created_at DESC
+         ) AS rn
+  FROM communication_templates
+)
+DELETE FROM communication_templates
+WHERE id IN (SELECT id FROM ranked WHERE rn > 1);
+
+A5) Add unique constraints (the permanent fix)
+ALTER TABLE templates
+ADD CONSTRAINT templates_state_key_version_unique
+UNIQUE (state_id, key, version);
+
+ALTER TABLE compliance_cards
+ADD CONSTRAINT compliance_state_key_unique
+UNIQUE (state_id, key);
+
+ALTER TABLE communication_templates
+ADD CONSTRAINT comm_state_type_key_unique
+UNIQUE (state_id, template_type, key);
+
+A6) Make keys NOT NULL (after confirming backfill succeeded)
+ALTER TABLE templates ALTER COLUMN key SET NOT NULL;
+ALTER TABLE compliance_cards ALTER COLUMN key SET NOT NULL;
+ALTER TABLE communication_templates ALTER COLUMN key SET NOT NULL;
+
+Phase B — Code: remove hardcoded state lists + consolidate
+B1) Add DB-driven active state helper (cached)
+
+File: server/states/getActiveStates.ts
+
+import { db } from "../db";
+import { states } from "../../shared/schema";
+import { eq } from "drizzle-orm";
+
+let cache: { at: number; ids: string[] } | null = null;
+
+export async function getActiveStateIds(): Promise<string[]> {
+  const now = Date.now();
+  if (cache && now - cache.at < 5 * 60_000) return cache.ids;
+
+  const rows = await db.select({ id: states.id }).from(states).where(eq(states.isActive, true));
+  const ids = rows.map(r => r.id).sort();
+  cache = { at: now, ids };
+  return ids;
+}
+
+B2) Add DB-driven name helper
+
+File: server/states/getStateName.ts
+
+import { db } from "../db";
+import { states } from "../../shared/schema";
+import { eq } from "drizzle-orm";
+
+const nameCache = new Map<string, string>();
+
+export async function getStateName(stateId: string): Promise<string> {
+  const cached = nameCache.get(stateId);
+  if (cached) return cached;
+
+  const row = await db.select({ name: states.name }).from(states).where(eq(states.id, stateId)).limit(1);
+  const name = row[0]?.name ?? stateId;
+  nameCache.set(stateId, name);
+  return name;
+}
+
+B3) Replace docxBuilder.STATE_NAMES + move disclosures out of big switch
+
+New file: server/states/disclosures.ts
+
+import { Paragraph } from "docx";
+
+export function genericDisclosures(): Paragraph[] {
+  return []; // move your existing default paragraphs here
+}
+
+export const DISCLOSURES: Record<string, () => Paragraph[]> = {
+  IL: () => {
+    return []; // move IL paragraphs here
+  },
+  UT: () => [],
+  // ...other states
+};
+
+export function getStateDisclosures(stateId: string): Paragraph[] {
+  return (DISCLOSURES[stateId] ?? genericDisclosures)();
+}
+
+
+Update: server/utils/docxBuilder.ts
+
+Delete STATE_NAMES
+
+Replace your getStateDisclosures() switch with import from server/states/disclosures.ts
+
+Ensure state naming uses DB lookup (or is passed in from caller):
+
+if docxBuilder must remain sync, resolve stateName before calling it and pass it as param.
+
+B4) Fix LegiScan adapter hardcoded fallback list (NO silent defaults)
+
+File: server/legislation/sources/adapters/legiscanAdapter.ts
+
+Replace:
+
+const states = params.states || ['UT', ...];
+
+
+With (preferred):
+
+if (!params.states || params.states.length === 0) {
+  throw new Error("LegiScan adapter requires explicit states list");
+}
+const states = params.states;
+
+
+Or acceptable:
+
+import { getActiveStateIds } from "../../../states/getActiveStates";
+const states = params.states ?? await getActiveStateIds();
+
+B5) Fix seed-communications.ts hardcoded NEW_STATES + duplicate STATE_NAMES
+
+Remove NEW_STATES and STATE_NAMES
+
+Query active states from DB and seed per state
+
+Use upserts (Phase C)
+
+Phase C — Seeds: convert inserts → UPSERT with canonical keys
+C1) templates seeding
+
+Every template row must define a canonical key explicitly (no slugging in seed logic)
+
+Use:
+
+conflict: (state_id, key, version)
+
+C2) compliance_cards seeding
+
+Every card defines key
+
+conflict: (state_id, key)
+
+C3) communication_templates seeding
+
+Every template defines key
+
+conflict: (state_id, template_type, key) (keep this for safety)
+
+✅ After this, re-running any seed is safe forever.
+
+Phase D — Remove UT fallbacks everywhere
+
+Repo search and remove patterns:
+
+?? 'UT'
+
+|| 'UT'
+
+defaultState = 'UT'
+
+hardcoded "UT" in form defaults
+
+Replace with:
+
+require state explicitly, or
+
+derive from property/user preferred state, else 400 error
+
+Phase E — Verification script (must-have)
+
+File: server/scripts/verifyStateSetup.ts
+
+Checks:
+
+state exists + isActive
+
+state has required templates keys
+
+state has required compliance card keys
+
+state has required communication template keys
+
+disclosures version present (optional)
+
+confirm no duplicates (should be impossible now)
+
+Add CLI usage:
+
+node server/scripts/verifyStateSetup.js IL
+
+✅ Illinois-specific additions
+
+Ensure Illinois exists in states seed
+
+Add IL disclosures in DISCLOSURES.IL
+
+Ensure IL templates/compliance/communications seeds include canonical keys and upsert cleanly
+
+Run verification script for IL
+
+Final notes to Replit (non-negotiables)
+
+Do NOT use UNIQUE(title, state_id) as the real unique key (titles change).
+
+Do NOT leave any hardcoded state arrays in adapters or builders.
+
+Seeds must be pure upsert using canonical keys.
+
+No silent state defaults (especially UT).

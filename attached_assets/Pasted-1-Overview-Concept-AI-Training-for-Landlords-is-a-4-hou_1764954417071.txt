@@ -1,0 +1,357 @@
+1. Overview / Concept
+
+AI Training for Landlords is a 4-hour, live, hands-on workshop designed to teach small and midsize landlords how to confidently use AI tools to:
+
+Fill vacancies faster
+
+Create stronger marketing
+
+Understand credit reports
+
+Interpret new landlord/tenant laws
+
+Reduce overwhelm with practical workflows
+
+Use LeaseShield as the “easy button” for all of the above
+
+Program Structure
+
+Paid 4-hour live workshop — $200 per attendee
+
+Free 1-hour monthly onboarding session for LeaseShield subscribers
+
+This creates a clean funnel from free → paid → subscription retention.
+
+Survey Data Validation (42 Responses)
+
+21% want AI hotline or related support
+
+71% rated legal updates as a “must-have”
+
+64% rated notices/evictions as critical
+
+40% want credit report decoder + rent ledger tools
+
+38% high-intent buyers (8–10 likelihood of signup)
+
+Strong alignment with workshop deliverables
+
+2. Target Audience
+Primary Segments
+
+Small landlords (1–20 units) → 57% of survey
+
+Mid/large landlords (21+ units) → 43% of survey
+
+Western Verify clients (warm audience)
+
+Apartment associations seeking modern, AI-based education
+
+Geography
+
+Survey shows concentration in:
+
+Utah: 12%
+
+ND, SD, TX: each ~10%
+
+CA, FL, ID, NV, WY: outliers but notable
+
+Group Size Strategy
+
+Online workshops: 10–75 attendees
+
+Associations: 50–200+ attendees
+
+3. Core Problems Being Solved
+
+Landlords consistently struggle with:
+
+Filling vacancies quickly
+
+Writing or enhancing marketing materials
+
+Understanding credit reports + red flags
+
+Keeping up with new laws and compliance
+
+Choosing the right AI tools
+
+Feeling overwhelmed by tech
+
+Survey Alignment
+
+Legal updates (71%)
+
+Notices/evictions (64%)
+
+Checklists/process (52%)
+
+Credit decoder + ledger (40%)
+
+AI help for criminal screening (40%)
+
+Desire for clarity + simple workflows
+
+4. Proposed Solution
+
+A practical, easy-to-follow training that teaches:
+
+1. Marketing With AI
+
+ChatGPT vs Grok (when to use each)
+
+Cheap, effective AI tools for marketing
+
+Listing + photo enhancement workflows
+
+2. Screening + Credit Report Understanding
+
+How to talk to AI to interpret credit reports
+
+How to identify red flags
+
+Using LeaseShield’s Credit Report Decoder workflow
+
+3. Understanding New Laws Easily
+
+How to paste laws into AI
+
+Extracting actionable steps
+
+Staying compliant
+
+Using LeaseShield’s Legal Update Assistant
+
+4. Prompting Best Practices
+
+How to structure prompts
+
+Safe prompting for landlords
+
+Before/after examples
+
+5. LeaseShield Deep Integration
+
+Criminal screening guide (40%)
+
+Rent ledger workflow (40%)
+
+Notice templates & compliance helpers
+
+24/7 AI assistant for prompts (highly requested feature)
+
+5. Key Features of the Training
+
+4-hour live, practical workshop
+
+Free 1-hour monthly onboarding for subscribers
+
+Step-by-step guided exercises
+
+Live problem-solving with real landlord scenarios
+
+Workshop recording included for attendees
+
+Tools comparison: ChatGPT, Grok, photo tools, marketing tools
+
+Before/after use-case demos
+
+Strong integration of LeaseShield workflows
+
+Credit decoder demo
+
+Rent ledger optimization workflow
+
+Criminal screening guide overview
+
+Legal update workflows + liability alert examples
+
+6. Business Model
+Primary Revenue
+
+4-hour workshop: $200 per attendee
+
+Includes lifetime access to recording + prompt pack
+
+Secondary Offering
+
+Free 1-hour onboarding for LeaseShield subscribers
+
+Drives trial → paid conversion
+
+Revenue Streams
+
+Workshop sales
+
+Increased LeaseShield conversions
+
+Higher LeaseShield retention
+
+Association training fees
+
+Sponsorships from REI groups
+
+Survey-Informed Pricing Insights
+
+40% want <$10/mo features → workshop becomes premium upsell
+
+38% high-intent workshop buyers (8–10 likelihood)
+
+3% willing to pay $400+/yr → bundle annual LeaseShield with workshop
+
+7. Positioning & Value Proposition
+Positioning Statement
+
+“The practical AI workshop that finally makes marketing, screening, and understanding laws simple for small and midsize landlords — with LeaseShield as your automation partner.”
+
+Differentiators
+
+Simple, confidence-building instruction
+
+Hands-on workflows (not theory)
+
+Energetic, funny, engaging teaching style
+
+Only landlord AI workshop tied directly to a working SaaS
+
+Based on real landlord survey data
+
+Enhances, not replaces, apartment association value
+
+Uses Western Verify credibility
+
+Survey-Driven Enhancements
+
+Add “AI for 36-month credit history interpretation”
+
+Add “Association-friendly complement” messaging
+
+Add “liability alert workflows” to legal updates
+
+8. Course Structure (4 Hours)
+Hour 1 — AI Foundations & Prompt Basics
+
+ChatGPT vs Grok
+
+Prompting frameworks
+
+Cheap marketing tools overview
+
+Guided practice
+
+Hour 2 — AI for Marketing & Vacancies
+
+Listing generation
+
+Photo enhancement workflows
+
+AI scripts for inquiries
+
+Problem → Solution examples
+
+Hour 3 — Screening + Credit Reports With AI
+
+How AI interprets credit behavior
+
+Risk & red flags
+
+Criminal screening overview (40% survey request)
+
+LeaseShield Credit Decoder demo
+
+Guided exercises
+
+Hour 4 — Law Updates, Compliance, & Liability Alerts
+
+Using AI to interpret laws
+
+Extracting action steps
+
+Liability alerts (71% ranked)
+
+LeaseShield Legal Assistant demo
+
+Optional: Bookkeeping/ledger automation with AI (16% request)
+
+Live landlord problems solved on-screen
+
+9. Integration Into LeaseShield App
+Inside the App
+
+AI Training Days Tab
+
+Next workshop
+
+Registration
+
+Free 1-hour session dates
+
+Workshop recordings
+
+Resource downloads
+
+Dashboard Card
+
+“Next free AI session: DATE — Join Now”
+
+Onboarding Popup
+
+“New to LeaseShield? Join your free AI session.”
+
+Workflow Demos Inside Training
+
+Credit Decoder (40% request)
+
+Rent Ledger Tools (40% request)
+
+Criminal Screening Guide (40%)
+
+24/7 AI Prompt Assistant (21% request)
+
+10. Go-To-Market Plan
+Priority Order
+
+Western Verify clients (warm, trust-based)
+
+LeaseShield users / trials (conversion engine)
+
+Apartment associations (scale)
+
+Targeted regional outreach (UT, ND, SD, TX)
+
+Messaging
+
+“Finally understand credit reports with AI.”
+
+“Fill vacancies faster using modern tools.”
+
+“AI made simple for landlords — no tech skills required.”
+
+“Stop stressing about new laws — let AI decode them.”
+
+“Liability alerts and legal clarity in minutes.”
+
+Association Add-On
+
+“Free AI session for UAA members” (survey: 50% association mentions)
+
+11. Long-Term Scalability
+
+Quarterly advanced workshops
+
+CE-certified association sessions
+
+Multi-day virtual AI conference
+
+On-demand video library
+
+Private licensing to REI/association groups
+
+AI hotline / premium support tier
+
+Contractor list AI tool (survey request)
+
+36-month credit history analysis expansion
+
+Goal: $50k+/yr workshops + 30% LeaseShield uplift.

@@ -1,0 +1,108 @@
+✅ THE ONLY FEATURES YOU SHOULD PRIORITIZE (Based on Majority Demand)
+
+These are the items that multiple respondents mentioned OR that clearly scored the highest on your ranked-choice questions.
+
+Tier 1: Must-Build for MVP (Majority Wants These)
+
+These are the backbone of LeaseShield. If you shipped ONLY these, you would still have a killer paid product.
+
+1. State-Specific Leases + Notices (High demand across survey)
+
+Everyone ranked these high.
+These include:
+
+Lease agreement
+
+3-day notices
+
+Late rent notices
+
+Lease violation notices
+
+Move-in / move-out checklists
+
+💥 These are non-negotiable. Landlords expect them.
+
+2. Simple Compliance Tools (Very strong interest)
+
+Landlords strongly value:
+
+Adverse action letter templates
+
+A “steps to screen legally” checklist
+
+Required disclosures & handouts by state
+
+These reduce liability — HUGE value proposition.
+
+3. Credit Report Decoder / Screening Guide (Extremely common pain point)
+
+Multiple people commented about needing:
+
+Help understanding credit
+
+Help interpreting tenant screening results
+
+What matters and what doesn’t
+
+This is your superpower as Western Verify’s owner — massive advantage.
+
+4. Monthly Legal/Regulation Updates (Multiple requests)
+
+A few comments specifically said:
+
+“Send legal updates that create liability.”
+
+This becomes your sticky value — the reason people stay subscribed long-term.
+
+5. A Centralized “Landlord Toolkit” Dashboard (Implied need across survey)
+
+Landlords want everything in one easy place:
+
+Docs
+
+Letters
+
+Checklists
+
+Guides
+
+This doesn’t need to be complicated — even a clean menu structure is enough at MVP.
+
+🟡 Tier 2: High-Value, Moderately Requested (Build Next After MVP)
+
+These were requested by more than one person, but not the majority.
+
+6. Tenant Communication Templates
+
+Things like:
+
+Rent reminder messages
+
+Welcome letter templates
+
+Lease renewal wording
+
+Lightweight and easy to add.
+
+7. Maintenance / Repair Scheduling Guidance (moderate interest)
+
+People asked for:
+
+How to prioritize repairs
+
+How to manage maintenance
+
+Templates for notices
+
+Not a “portal” — just guides + templates for now.
+
+8. Rent Ledger Template / Basic Bookkeeping Help
+
+Some landlords struggle with:
+
+Tracking rent
+
+Tracking expenses
+
+BUT — this should remain simple PDF / spreadsheet templates early on.
