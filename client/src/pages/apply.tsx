@@ -2165,7 +2165,7 @@ export default function Apply() {
                 })}
 
                 {/* Authorization & Certification */}
-                <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-3">
+                <div className="bg-primary/5 border border-primary/20 p-4 rounded-lg space-y-4">
                   <p className="text-sm text-muted-foreground">
                     By submitting this application, you authorize the verification of the information provided, including background and credit screening where permitted by law.
                   </p>
@@ -2181,6 +2181,32 @@ export default function Apply() {
                       I authorize the landlord to verify the information provided.
                     </Label>
                   </div>
+                  
+                  {/* Typed Signature */}
+                  <div className="pt-3 border-t border-primary/10 space-y-3">
+                    <div className="space-y-1">
+                      <Label htmlFor="typedSignature" className="text-sm font-medium">
+                        Electronic Signature <span className="text-destructive">*</span>
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        Type your full legal name below to sign this application
+                      </p>
+                    </div>
+                    <Input
+                      id="typedSignature"
+                      placeholder="Type your full name"
+                      value={formData.typedSignature || ""}
+                      onChange={(e) => updateField("typedSignature", e.target.value)}
+                      className="font-serif italic text-lg"
+                      data-testid="input-typed-signature"
+                    />
+                    {formData.typedSignature && (
+                      <p className="text-xs text-muted-foreground flex items-center gap-2">
+                        <CheckCircle className="h-3 w-3 text-green-600" />
+                        Signed as: <span className="font-serif italic">{formData.typedSignature}</span>
+                      </p>
+                    )}
+                  </div>
                 </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
@@ -2193,6 +2219,7 @@ export default function Apply() {
                   disabled={
                     !formData.certifyAccurate || 
                     !formData.acknowledgeScreeningDisclosure || 
+                    !formData.typedSignature?.trim() ||
                     // Check all dynamic compliance rules that require acknowledgment/authorization
                     (linkData?.complianceRules?.some(rule => 
                       (rule.ruleType === 'acknowledgment' || rule.ruleType === 'authorization') && 

@@ -21,6 +21,7 @@ import multer from "multer";
 import path from "path";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
+import { execSync } from "child_process";
 
 // Stripe configuration - use STRIPE_SECRET_KEY for both test and live
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -5924,11 +5925,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "This person has not authorized a background check" });
       }
 
-      // Generate PDF using Puppeteer
+      // Generate PDF using Puppeteer with system Chromium
       const puppeteer = await import('puppeteer');
+      const chromiumPath = execSync('which chromium').toString().trim();
       const browser = await puppeteer.default.launch({ 
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
       });
       const page = await browser.newPage();
 
@@ -6128,6 +6131,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             <div class="checkmark">✓</div>
             <div class="status">AUTHORIZED</div>
             <div class="timestamp">Consent recorded: ${consentDate}</div>
+            ${(person.formJson as any)?.typedSignature ? `
+              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #86efac;">
+                <div style="font-size: 12px; color: #374151; margin-bottom: 8px;">Electronic Signature:</div>
+                <div style="font-family: 'Georgia', serif; font-style: italic; font-size: 20px; color: #166534;">${(person.formJson as any).typedSignature}</div>
+              </div>
+            ` : ''}
           </div>
 
           <div class="disclaimer">
