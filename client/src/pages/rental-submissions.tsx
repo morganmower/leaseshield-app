@@ -192,10 +192,16 @@ const roleLabels: Record<string, string> = {
 
 const fileTypeLabels: Record<string, string> = {
   id: "ID / Driver's License",
-  income: "Proof of Income",
+  paystub: "Pay Stub",
+  w2: "W-2 / Tax Document",
+  employment_letter: "Employment Verification Letter",
   bank: "Bank Statement",
   reference: "Reference Letter",
+  rental_history: "Rental History / Landlord Reference",
+  pet_doc: "Pet Documentation",
+  additional: "Additional Supporting Document",
   other: "Other Document",
+  income: "Proof of Income",
 };
 
 function formatFileSize(bytes: number): string {
@@ -221,7 +227,7 @@ export default function RentalSubmissions() {
   const [isUploadDialogOpen, setIsUploadDialogOpen] = useState(false);
   const [uploadPersonId, setUploadPersonId] = useState<string | null>(null);
   const [uploadFileType, setUploadFileType] = useState<string>("other");
-  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [deleteSubmissionId, setDeleteSubmissionId] = useState<string | null>(null);
 
   const { data: submissions, isLoading: isLoadingSubmissions } = useQuery<SubmissionSummary[]>({
@@ -496,31 +502,37 @@ Best regards`;
   });
 
   const uploadFileMutation = useMutation({
-    mutationFn: async ({ submissionId, personId, fileType, file }: { 
+    mutationFn: async ({ submissionId, personId, fileType, files }: { 
       submissionId: string; 
       personId: string;
       fileType: string;
-      file: File;
+      files: File[];
     }) => {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('personId', personId);
-      formData.append('fileType', fileType);
-      
       const token = getAccessToken();
-      const res = await fetch(`/api/rental/submissions/${submissionId}/files`, {
-        method: 'POST',
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-        body: formData,
-      });
-      if (!res.ok) throw new Error("Failed to upload file");
-      return res.json();
+      const results = [];
+      
+      for (const file of files) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('personId', personId);
+        formData.append('fileType', fileType);
+        
+        const res = await fetch(`/api/rental/submissions/${submissionId}/files`, {
+          method: 'POST',
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          body: formData,
+        });
+        if (!res.ok) throw new Error(`Failed to upload file: ${file.name}`);
+        results.push(await res.json());
+      }
+      return results;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions", selectedSubmission, "files"] });
-      toast({ title: "Success", description: "Document uploaded successfully." });
+      const count = variables.files.length;
+      toast({ title: "Success", description: `${count} document${count > 1 ? 's' : ''} uploaded successfully.` });
       setIsUploadDialogOpen(false);
-      setUploadFile(null);
+      setUploadFiles([]);
       setUploadPersonId(null);
       setUploadFileType("other");
     },
@@ -1648,9 +1660,9 @@ Best regards`;
         <Dialog open={isUploadDialogOpen} onOpenChange={setIsUploadDialogOpen}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Upload Document</DialogTitle>
+              <DialogTitle>Upload Documents</DialogTitle>
               <DialogDescription>
-                Add a document to this application. Select the person and document type.
+                Add one or more documents to this application. You can select multiple files at once (e.g., 3 pay stubs).
               </DialogDescription>
             </DialogHeader>
             <div className="space-y-4">
@@ -1683,21 +1695,27 @@ Best regards`;
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="id">ID / Driver's License</SelectItem>
-                    <SelectItem value="income">Proof of Income</SelectItem>
+                    <SelectItem value="paystub">Pay Stub</SelectItem>
+                    <SelectItem value="w2">W-2 / Tax Document</SelectItem>
+                    <SelectItem value="employment_letter">Employment Verification Letter</SelectItem>
                     <SelectItem value="bank">Bank Statement</SelectItem>
                     <SelectItem value="reference">Reference Letter</SelectItem>
+                    <SelectItem value="rental_history">Rental History / Landlord Reference</SelectItem>
+                    <SelectItem value="pet_doc">Pet Documentation</SelectItem>
+                    <SelectItem value="additional">Additional Supporting Document</SelectItem>
                     <SelectItem value="other">Other Document</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
               <div>
-                <Label className="text-sm font-medium">File</Label>
+                <Label className="text-sm font-medium">Files</Label>
                 <input
                   type="file"
                   accept=".pdf,.jpg,.jpeg,.png"
+                  multiple
                   onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setUploadFile(e.target.files[0]);
+                    if (e.target.files && e.target.files.length > 0) {
+                      setUploadFiles(Array.from(e.target.files));
                     }
                   }}
                   className="mt-1 block w-full text-sm text-muted-foreground
@@ -1710,8 +1728,21 @@ Best regards`;
                   data-testid="input-upload-file"
                 />
                 <p className="text-xs text-muted-foreground mt-1">
-                  Accepts PDF, JPG, or PNG files up to 10MB
+                  Accepts PDF, JPG, or PNG files up to 10MB each. Select multiple files at once.
                 </p>
+                {uploadFiles.length > 0 && (
+                  <div className="mt-2 p-2 bg-muted/50 rounded-md">
+                    <p className="text-xs font-medium mb-1">{uploadFiles.length} file{uploadFiles.length > 1 ? 's' : ''} selected:</p>
+                    <ul className="text-xs text-muted-foreground space-y-0.5">
+                      {uploadFiles.map((file, idx) => (
+                        <li key={idx} className="flex items-center gap-1">
+                          <FileText className="h-3 w-3" />
+                          {file.name} ({formatFileSize(file.size)})
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             </div>
             <DialogFooter>
@@ -1719,27 +1750,27 @@ Best regards`;
                 variant="outline" 
                 onClick={() => {
                   setIsUploadDialogOpen(false);
-                  setUploadFile(null);
+                  setUploadFiles([]);
                 }}
               >
                 Cancel
               </Button>
               <Button
                 onClick={() => {
-                  if (selectedSubmission && uploadPersonId && uploadFile) {
+                  if (selectedSubmission && uploadPersonId && uploadFiles.length > 0) {
                     uploadFileMutation.mutate({
                       submissionId: selectedSubmission,
                       personId: uploadPersonId,
                       fileType: uploadFileType,
-                      file: uploadFile,
+                      files: uploadFiles,
                     });
                   }
                 }}
-                disabled={!uploadPersonId || !uploadFile || uploadFileMutation.isPending}
+                disabled={!uploadPersonId || uploadFiles.length === 0 || uploadFileMutation.isPending}
                 data-testid="button-confirm-upload"
               >
                 {uploadFileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Upload
+                Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}
               </Button>
             </DialogFooter>
           </DialogContent>

@@ -127,10 +127,14 @@ interface UploadedFile {
 
 const getUploadTypes = (requirements?: DocumentRequirementsConfig) => [
   { id: "id", label: "Government-issued ID", required: true }, // Always required
-  { id: "income", label: "Proof of Income (paystubs, employment letter)", required: requirements?.income ?? false },
+  { id: "paystub", label: "Pay Stubs", required: requirements?.income ?? false },
+  { id: "w2", label: "W-2 / Tax Documents", required: false },
+  { id: "employment_letter", label: "Employment Verification Letter", required: false },
   { id: "bank", label: "Bank Statements", required: requirements?.bank ?? false },
   { id: "reference", label: "Reference Letters", required: requirements?.reference ?? false },
-  { id: "other", label: "Other Documents", required: false },
+  { id: "rental_history", label: "Rental History / Landlord Reference", required: false },
+  { id: "pet_doc", label: "Pet Documentation", required: false },
+  { id: "additional", label: "Additional Supporting Documents", required: false, description: "Any other documents that may help your application" },
 ];
 
 function UploadDocumentsStep({ personToken, onBack, onNext, documentRequirements }: { 
@@ -238,22 +242,32 @@ function UploadDocumentsStep({ personToken, onBack, onNext, documentRequirements
                   className="border rounded-lg p-4 space-y-3"
                   data-testid={`upload-section-${type.id}`}
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <Upload className="h-4 w-4 text-muted-foreground" />
-                      <span className="font-medium">{type.label}</span>
-                      {type.required && (
-                        <Badge variant="secondary" className="text-xs">Required</Badge>
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <Upload className="h-4 w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="font-medium">{type.label}</span>
+                        {type.required && (
+                          <Badge variant="secondary" className="text-xs">Required</Badge>
+                        )}
+                      </div>
+                      {'description' in type && type.description && (
+                        <p className="text-xs text-muted-foreground mt-1 ml-6">{type.description}</p>
                       )}
                     </div>
-                    <label className="cursor-pointer">
+                    <label className="cursor-pointer flex-shrink-0">
                       <input
                         type="file"
                         className="hidden"
                         accept=".pdf,.jpg,.jpeg,.png"
-                        onChange={(e) => {
-                          const file = e.target.files?.[0];
-                          if (file) uploadFile(file, type.id);
+                        multiple
+                        onChange={async (e) => {
+                          const selectedFiles = e.target.files;
+                          if (selectedFiles && selectedFiles.length > 0) {
+                            for (const file of Array.from(selectedFiles)) {
+                              await uploadFile(file, type.id);
+                            }
+                          }
                           e.target.value = "";
                         }}
                         disabled={isUploading}
