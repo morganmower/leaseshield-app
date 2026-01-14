@@ -21,6 +21,23 @@ LeaseShield App is a subscription-based SaaS platform for small and midsize land
 ## User Preferences
 Not specified.
 
+## Git & GitHub Workflow
+
+### Push Command
+```bash
+git push https://morganmower:$GITHUB_TOKEN@github.com/morganmower/leaseshield-app.git main
+```
+
+### When to Push
+- After completing a feature
+- At the end of each work session
+- Before starting major refactors
+
+### Workflow
+- **GitHub**: Source of truth for versioned code
+- **Replit**: Quick builds, testing, and deployment
+- **VS Code**: Deeper, faster, more controlled development
+
 ## System Architecture
 
 ### UI/UX Decisions
