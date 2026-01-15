@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { isAuthenticated, requireAccess, requireAdmin } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { eq } from "drizzle-orm";
@@ -4136,6 +4136,40 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         explanation: "Sorry, something went wrong. Please try again in a moment."
       });
     }
+  }));
+
+  // Screening decoder feedback endpoint - for learning system
+  app.post('/api/screening-feedback', isAuthenticated, asyncHandler(async (req, res) => {
+    // Validate with extended schema that includes decoderType/rating constraints
+    const feedbackSchema = insertScreeningFeedbackSchema.extend({
+      decoderType: z.enum(['credit', 'criminal_eviction']),
+      rating: z.enum(['helpful', 'not_helpful']),
+      questionText: z.string().min(1).max(500),
+      cautionLevel: z.enum(['low', 'medium', 'high']).nullable().optional(),
+      classifiedTopic: z.string().max(100).nullable().optional(),
+    });
+
+    const parseResult = feedbackSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ 
+        message: "Invalid feedback data",
+        errors: parseResult.error.flatten().fieldErrors 
+      });
+    }
+
+    const { decoderType, questionText, cautionLevel, classifiedTopic, rating } = parseResult.data;
+    const userId = (req as any).userId || null;
+
+    await db.insert(screeningFeedback).values({
+      userId,
+      decoderType,
+      questionText,
+      cautionLevel: cautionLevel || null,
+      classifiedTopic: classifiedTopic || null,
+      rating,
+    });
+
+    res.json({ success: true });
   }));
 
   // Chat assistant endpoint (public, for landing page)
