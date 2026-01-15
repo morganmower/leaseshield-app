@@ -177,208 +177,323 @@ export interface TopicFieldGuide {
   generalTip: string;
 }
 
+// Field guides based on actual Western Verify / TransUnion report format
 export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
   collections: {
     topic: 'collections',
     fields: [
       {
-        fieldName: 'Placed/Clsd or Date Opened',
-        whatItTells: 'When the account was sent to collections',
-        lookFor: 'Recent dates (last 12-24 months) indicate current financial stress; older dates may be less relevant'
+        fieldName: 'Placed/CLSD column',
+        whatItTells: 'When the account was placed in collections and when/if it closed',
+        lookFor: 'Recent "Placed" dates (last 12-24 months) indicate current financial stress; check if "CLSD" date exists showing resolution'
       },
       {
-        fieldName: 'Status',
-        whatItTells: 'Whether the collection is still active',
-        lookFor: '"Open", "Active", or "Unpaid" vs "Paid", "Settled", or "Closed"'
+        fieldName: '$PLCD/$BAL columns',
+        whatItTells: 'Original amount placed vs current balance',
+        lookFor: 'If $BAL is lower than $PLCD, payments were made; if $BAL equals $PLCD, no payments made'
       },
       {
-        fieldName: 'Balance/Amount',
-        whatItTells: 'Size of the debt',
-        lookFor: 'Larger balances ($500+) may indicate more significant issues; small balances might be oversight'
+        fieldName: 'Remarks column',
+        whatItTells: 'Current status of the collection',
+        lookFor: '"Placed for collection" (active) vs no remarks or "Paid" (resolved)'
       },
       {
-        fieldName: 'Creditor Type or Original Creditor',
-        whatItTells: 'What kind of debt it was',
-        lookFor: 'Medical/hospital collections often have different context than utility, telecom, or credit card debt'
+        fieldName: 'Creditor Name',
+        whatItTells: 'Who the original debt was with',
+        lookFor: 'Medical providers, utilities, phone carriers, or credit cards each have different context'
       }
     ],
-    generalTip: 'Look at the overall pattern: one old paid collection differs significantly from multiple recent open collections.'
+    generalTip: 'In the Collection Accounts table, pink/highlighted rows indicate active negative items. Check both the dates AND the balance—a $0 balance means it was paid.'
   },
   charge_off: {
     topic: 'charge_off',
     fields: [
       {
-        fieldName: 'Date Closed or Charge-Off Date',
-        whatItTells: 'When the creditor gave up on collecting',
-        lookFor: 'Recent charge-offs (last 2 years) are more concerning than older ones'
+        fieldName: 'Remarks column',
+        whatItTells: 'Shows "Profit and loss writeoff" when charged off',
+        lookFor: 'This phrase confirms the creditor gave up collecting; often combined with closed date'
       },
       {
-        fieldName: 'Balance',
-        whatItTells: 'Amount that was written off',
-        lookFor: 'Higher balances suggest larger financial difficulties'
+        fieldName: 'Opened/Clsd PD columns',
+        whatItTells: 'When account opened and when it was charged off',
+        lookFor: 'The "Clsd" date shows when the charge-off occurred—recent is more concerning'
       },
       {
-        fieldName: 'Account Type',
-        whatItTells: 'What type of credit was charged off',
-        lookFor: 'Credit cards vs auto loans vs other installment accounts'
+        fieldName: '$Bal column',
+        whatItTells: 'Outstanding balance at time of charge-off',
+        lookFor: 'Higher amounts indicate larger financial difficulties'
+      },
+      {
+        fieldName: 'Rating column (far right)',
+        whatItTells: 'Account rating code',
+        lookFor: 'Codes like "I9" or "O9" indicate serious derogatory status'
       }
     ],
-    generalTip: 'A charge-off means the creditor gave up, but it doesn\'t mean the debt disappeared—it may have been sold to collections.'
+    generalTip: 'Look for "Profit and loss writeoff" in Remarks. The Rating column shows severity—I9 is a charge-off. Check the Hist Status columns (30 60 90) for payment history leading up to it.'
   },
   late_payments: {
     topic: 'late_payments',
     fields: [
       {
-        fieldName: 'Payment History Grid',
-        whatItTells: 'Month-by-month payment status',
-        lookFor: '"30", "60", "90", "120" indicate days late; look for patterns vs one-time events'
+        fieldName: 'Hist Status columns (Date Mths 30 60 90)',
+        whatItTells: 'Payment history—how many months at each delinquency level',
+        lookFor: 'Numbers in the 30, 60, 90 columns show how many times payments were that many days late'
       },
       {
-        fieldName: 'Most Recent Late',
-        whatItTells: 'When the last late payment occurred',
-        lookFor: 'Recent lates are more concerning; older lates with current good history show improvement'
+        fieldName: '$Past Due column',
+        whatItTells: 'Current amount past due',
+        lookFor: '$0 means currently on time; any amount means currently behind'
       },
       {
-        fieldName: 'Account Status',
-        whatItTells: 'Current standing of the account',
-        lookFor: '"Current" or "Pays as Agreed" vs "Delinquent" or "Past Due"'
+        fieldName: 'Pmt Term column',
+        whatItTells: 'Monthly payment amount and term',
+        lookFor: 'Shows like "006MO" for 6-month term—helps understand payment obligations'
+      },
+      {
+        fieldName: 'Rating column',
+        whatItTells: 'Current account status code',
+        lookFor: 'I1 = current; I2-I4 = 30-90 days late; I5+ = serious delinquency'
       }
     ],
-    generalTip: 'One late payment from years ago differs from a pattern of recent 60-90 day lates.'
+    generalTip: 'The Hist Status columns are key—they show the pattern. One "1" in the 30 column is minor; multiple across 60/90 shows a pattern. Pink highlighting means current problems.'
   },
-  bankruptcy: {
-    topic: 'bankruptcy',
+  repossession: {
+    topic: 'repossession',
     fields: [
       {
-        fieldName: 'Chapter (7/11/13)',
-        whatItTells: 'Type of bankruptcy',
-        lookFor: 'Chapter 7 liquidates assets; Chapter 13 is a repayment plan'
+        fieldName: 'Remarks column',
+        whatItTells: 'Shows "Repossession" when vehicle was taken back',
+        lookFor: 'This confirms the vehicle was repossessed—usually after 90+ days late'
       },
       {
-        fieldName: 'Date Filed and Date Discharged',
-        whatItTells: 'Timeline of the bankruptcy',
-        lookFor: 'Discharged bankruptcies are complete; active ones may have ongoing obligations'
+        fieldName: 'Loan Type column',
+        whatItTells: 'Type of loan that was repossessed',
+        lookFor: '"Automobile" or "Auto Lease" indicates a vehicle repo'
       },
       {
-        fieldName: 'Status',
-        whatItTells: 'Whether it\'s resolved',
-        lookFor: '"Discharged" means complete; "Active" or "Open" means still in process'
+        fieldName: '$Bal column',
+        whatItTells: 'Deficiency balance after vehicle sale',
+        lookFor: 'High remaining balance means they may still owe after repo; $0 means settled'
+      },
+      {
+        fieldName: 'Opened/Clsd dates',
+        whatItTells: 'When the loan started and when repo occurred',
+        lookFor: 'Recent repos are more concerning; older repos with no other issues show recovery'
       }
     ],
-    generalTip: 'Bankruptcies stay on reports 7-10 years. Focus on what happened after—has credit behavior improved?'
+    generalTip: 'Look for "Repossession" in Remarks under Installment Accounts. Check if there\'s a remaining balance—many repos leave a deficiency the borrower still owes.'
   },
   credit_score: {
     topic: 'credit_score',
     fields: [
       {
-        fieldName: 'Score Number',
-        whatItTells: 'Overall creditworthiness summary',
-        lookFor: 'Compare to your written minimum threshold'
+        fieldName: 'Score Model line',
+        whatItTells: 'Score type and number (e.g., "VANTAGESCORE 4.0 +592")',
+        lookFor: 'Compare to your written minimum; scores below 550 are typically concerning'
       },
       {
-        fieldName: 'Score Factors or Reason Codes',
-        whatItTells: 'What\'s affecting the score',
-        lookFor: 'These tell you the "why" behind the number—look for patterns'
+        fieldName: 'Factor codes (numbered list)',
+        whatItTells: 'What\'s hurting/helping the score',
+        lookFor: 'Common factors: 68 = limited real estate history, 22 = few high-limit cards, 87 = too many collections, 07 = delinquencies'
+      },
+      {
+        fieldName: 'Scorecard number',
+        whatItTells: 'Risk category the person falls into',
+        lookFor: 'Lower scorecard numbers generally indicate lower risk profiles'
       }
     ],
-    generalTip: 'The score is a summary. The factors tell you the story. Don\'t stop at just the number.'
+    generalTip: 'The Scoring section shows both the number AND the factors. Factor 87 "Too many unpaid agency collections accounts" is a major red flag. Read the factor descriptions—they tell you exactly what\'s wrong.'
+  },
+  inquiries: {
+    topic: 'inquiries',
+    fields: [
+      {
+        fieldName: 'Inquiries section at end of report',
+        whatItTells: 'Who has pulled their credit recently',
+        lookFor: 'Many inquiries in short time may indicate desperation for credit; auto/mortgage shopping is normal'
+      },
+      {
+        fieldName: 'Date column',
+        whatItTells: 'When each inquiry was made',
+        lookFor: 'Recent clusters of inquiries may indicate current financial stress'
+      },
+      {
+        fieldName: 'Type Inq/Loan column',
+        whatItTells: 'What type of credit they were seeking',
+        lookFor: '"I" usually means installment (auto, personal); multiple types may indicate shopping around'
+      }
+    ],
+    generalTip: 'The Inquiries table shows who pulled credit. Many recent inquiries from lenders (not landlords) may indicate they\'re actively seeking credit—which could mean financial pressure.'
   },
   default: {
     topic: 'general',
     fields: [
       {
-        fieldName: 'Date/Timeline',
-        whatItTells: 'When the event occurred',
-        lookFor: 'Recent vs old events have different weight'
+        fieldName: 'Placed/CLSD and Opened/Clsd dates',
+        whatItTells: 'When issues started and if/when they were resolved',
+        lookFor: 'Recent dates (last 1-2 years) vs older dates; closed vs still open'
       },
       {
-        fieldName: 'Status',
-        whatItTells: 'Current standing',
-        lookFor: 'Open/active vs resolved/closed'
+        fieldName: '$Bal and $Past Due columns',
+        whatItTells: 'Current amounts owed',
+        lookFor: '$0 balance = resolved; high $Past Due = current problem'
       },
       {
-        fieldName: 'Balance/Amount',
-        whatItTells: 'Size of any outstanding obligation',
-        lookFor: 'Large outstanding amounts vs small or zero balances'
+        fieldName: 'Remarks column',
+        whatItTells: 'Plain-English status of each account',
+        lookFor: '"Placed for collection", "Profit and loss writeoff", "Repossession", "Closed" etc.'
+      },
+      {
+        fieldName: 'Pink/highlighted rows',
+        whatItTells: 'Accounts with current negative status',
+        lookFor: 'Highlighted rows in the tables indicate active problems vs resolved history'
       }
     ],
-    generalTip: 'Look for patterns, not just individual items. One issue differs from repeated behavior.'
+    generalTip: 'Read the Remarks column first—it tells you in plain English what happened. Then check dates and balances. Pink highlighting = current problem.'
   }
 };
 
+// Field guides based on actual Western Verify criminal report format
 export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
   criminal: {
     topic: 'criminal',
     fields: [
       {
-        fieldName: 'Charge/Offense Type',
-        whatItTells: 'Nature and severity of the alleged offense',
-        lookFor: 'Felony vs misdemeanor; violent vs non-violent; relevance to tenancy'
+        fieldName: 'COUNT sections (COUNT 1, COUNT 2, etc.)',
+        whatItTells: 'Each separate charge in the case',
+        lookFor: 'Multiple counts can indicate severity; each count has its own offense level and disposition'
       },
       {
-        fieldName: 'Disposition/Outcome',
+        fieldName: 'Offense Level field',
+        whatItTells: 'Severity classification',
+        lookFor: '"FELONY" is more serious than "MISDEMEANOR"—directly impacts your screening criteria'
+      },
+      {
+        fieldName: 'Disposition field',
         whatItTells: 'How the case was resolved',
-        lookFor: '"Convicted", "Guilty Plea" vs "Dismissed", "Not Guilty", "Nolle Pros", "Deferred"'
+        lookFor: '"GUILTY" = conviction; "DISMISSED", "NOT GUILTY", "DEFERRED" = no conviction'
       },
       {
-        fieldName: 'Date',
-        whatItTells: 'When this occurred',
-        lookFor: 'Recent cases vs older cases; time elapsed matters for rehabilitation evidence'
+        fieldName: 'Offense Date and Disposition Date',
+        whatItTells: 'When the offense occurred and when resolved',
+        lookFor: 'Calculate time elapsed—7+ years is often a relevant threshold; recent is more concerning'
       },
       {
-        fieldName: 'Sentence/Status',
-        whatItTells: 'Current obligations',
-        lookFor: 'Completed sentence vs active probation/parole'
+        fieldName: 'Sentence field',
+        whatItTells: 'What punishment was given',
+        lookFor: '"Jail X DAYS", "Prison X YEARS, SUSPENDED", "Probation X MONTHS"—shows severity and if they served time'
+      },
+      {
+        fieldName: 'Statute field',
+        whatItTells: 'The specific law violated',
+        lookFor: 'Statute numbers like "76-5-103(1)" identify the exact offense under state law'
       }
     ],
-    generalTip: 'Arrests are not convictions. Dismissed cases are not convictions. Focus on outcomes, not just charges filed.'
+    generalTip: 'Focus on Disposition first—"GUILTY" is a conviction, anything else is not. Then check Offense Level (felony vs misdemeanor) and calculate how long ago using the Disposition Date. "SUSPENDED" sentences mean prison time was given but not served.'
   },
   eviction: {
     topic: 'eviction',
     fields: [
       {
-        fieldName: 'Case Type',
-        whatItTells: 'What kind of eviction case',
-        lookFor: '"Unlawful Detainer", "Eviction", "Possession"—different names for similar proceedings'
+        fieldName: 'Case Type field',
+        whatItTells: 'What kind of civil case',
+        lookFor: '"Unlawful Detainer", "Eviction", "Forcible Entry" all mean eviction proceedings'
       },
       {
-        fieldName: 'Outcome/Judgment',
-        whatItTells: 'How the case was resolved',
-        lookFor: '"Judgment for Plaintiff" (landlord won) vs "Dismissed", "Settled", "Judgment for Defendant" (tenant won or case dropped)'
+        fieldName: 'Disposition/Judgment field',
+        whatItTells: 'How the case ended',
+        lookFor: '"Judgment for Plaintiff" = landlord won; "Dismissed", "Judgment for Defendant" = tenant won or case dropped'
       },
       {
-        fieldName: 'Date Filed and Date Resolved',
-        whatItTells: 'Timeline of the case',
-        lookFor: 'Recent filings are more concerning; older resolved cases may have context'
+        fieldName: 'File Date and Disposition Date',
+        whatItTells: 'Timeline of the eviction case',
+        lookFor: 'Recent filings (last 1-3 years) are more concerning; quick dismissals may indicate disputes not actual evictions'
       },
       {
-        fieldName: 'Money Judgment',
-        whatItTells: 'Whether rent/damages were owed',
-        lookFor: 'Cases with money judgments suggest actual unpaid rent vs technical disputes'
+        fieldName: 'Amount/Damages field',
+        whatItTells: 'Whether money was owed',
+        lookFor: 'Money judgments suggest unpaid rent; cases without money amounts may have been technical or disputed'
       }
     ],
-    generalTip: 'An eviction filing is not the same as being evicted. Many cases are dismissed or settled. Look at the outcome.'
+    generalTip: 'An eviction FILING is not the same as being evicted. Look at the Disposition—only "Judgment for Plaintiff" means the landlord won. Dismissed cases often mean the tenant paid or the landlord made errors.'
+  },
+  felony: {
+    topic: 'felony',
+    fields: [
+      {
+        fieldName: 'Offense Level: FELONY',
+        whatItTells: 'This is a serious crime',
+        lookFor: 'Felonies are more serious than misdemeanors—but still check disposition, nature, and time elapsed'
+      },
+      {
+        fieldName: 'Disposition field',
+        whatItTells: 'Whether there was a conviction',
+        lookFor: '"GUILTY" = convicted; anything else = not convicted (arrests are not convictions)'
+      },
+      {
+        fieldName: 'Sentence field',
+        whatItTells: 'Severity of punishment',
+        lookFor: 'Actual prison time vs "SUSPENDED" (given but not served) vs probation-only'
+      },
+      {
+        fieldName: 'Disposition Date',
+        whatItTells: 'When the case concluded',
+        lookFor: 'Calculate years elapsed—more time with no new offenses shows stability'
+      }
+    ],
+    generalTip: 'Felony = serious, but HUD guidance requires individualized assessment. Check: Was there a conviction? How long ago? Was it violent? Is the person on active probation/parole? What evidence of rehabilitation exists?'
+  },
+  misdemeanor: {
+    topic: 'misdemeanor',
+    fields: [
+      {
+        fieldName: 'Offense Level: MISDEMEANOR',
+        whatItTells: 'This is a less serious crime',
+        lookFor: 'Misdemeanors are generally minor offenses—context and pattern matter more'
+      },
+      {
+        fieldName: 'Disposition field',
+        whatItTells: 'Whether there was a conviction',
+        lookFor: '"GUILTY" = convicted; "DISMISSED" = no conviction'
+      },
+      {
+        fieldName: 'COUNT descriptions',
+        whatItTells: 'What the actual offense was',
+        lookFor: 'DUI, disorderly conduct, petty theft have different implications than assault'
+      },
+      {
+        fieldName: 'Sentence field',
+        whatItTells: 'Punishment given',
+        lookFor: 'Jail days (usually served), fines, probation—shows how seriously court treated it'
+      }
+    ],
+    generalTip: 'Single old misdemeanors are often routine. Focus on: Is it relevant to being a tenant? Is there a pattern of similar charges? Was it recent? Many landlords treat old misdemeanors as minor factors.'
   },
   default: {
     topic: 'general',
     fields: [
       {
-        fieldName: 'Type/Category',
-        whatItTells: 'Nature of the record',
-        lookFor: 'Severity and relevance to housing'
+        fieldName: 'Disposition field',
+        whatItTells: 'Whether there was a conviction or judgment',
+        lookFor: '"GUILTY" or "Judgment for Plaintiff" = adverse finding; "DISMISSED" = case dropped'
       },
       {
-        fieldName: 'Outcome/Disposition',
-        whatItTells: 'How it was resolved',
-        lookFor: 'Conviction/judgment vs dismissed/resolved'
+        fieldName: 'Offense Level field',
+        whatItTells: 'Severity of the charge',
+        lookFor: 'FELONY vs MISDEMEANOR—directly impacts how to weigh it'
       },
       {
-        fieldName: 'Date',
-        whatItTells: 'When it occurred',
-        lookFor: 'Recent vs older; pattern vs one-time'
+        fieldName: 'Dates (Offense Date, File Date, Disposition Date)',
+        whatItTells: 'Timeline of events',
+        lookFor: 'Calculate time elapsed; look for patterns of recent vs old isolated events'
+      },
+      {
+        fieldName: 'Sentence field',
+        whatItTells: 'What consequences were given',
+        lookFor: 'Jail/prison time, probation, fines—indicates how seriously the court treated the offense'
       }
     ],
-    generalTip: 'Focus on outcomes and patterns, not just the presence of records.'
+    generalTip: 'Always check Disposition first—only convictions/judgments should factor heavily. Then consider: How long ago? How serious? Is there a pattern? What does the Sentence tell you about severity?'
   }
 };
 
