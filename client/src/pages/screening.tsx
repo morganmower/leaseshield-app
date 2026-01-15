@@ -967,6 +967,20 @@ export default function Screening() {
                         <div><strong>Utilization:</strong> % of credit limit used - under 30% is ideal.</div>
                       </div>
                     </div>
+                    
+                    {/* Western Verify Report Column Headers */}
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="font-semibold text-foreground mb-3">Western Verify Report Fields:</p>
+                      <div className="grid gap-2 text-sm text-muted-foreground">
+                        <div><strong className="text-foreground">Placed/CLSD:</strong> When account was placed in collections and when/if closed</div>
+                        <div><strong className="text-foreground">$PLCD/$BAL:</strong> Original amount placed vs current balance owed</div>
+                        <div><strong className="text-foreground">Remarks:</strong> Status like "Placed for collection", "Profit and loss writeoff", "Repossession"</div>
+                        <div><strong className="text-foreground">Hist Status (30 60 90):</strong> How many months account was 30, 60, or 90 days late</div>
+                        <div><strong className="text-foreground">Rating (I1-I9):</strong> I1 = current, I9 = serious delinquency or charge-off</div>
+                        <div><strong className="text-foreground">$Past Due:</strong> Amount currently overdue ($0 = on time)</div>
+                        <div><strong className="text-foreground">Pink/highlighted rows:</strong> Accounts with active negative status</div>
+                      </div>
+                    </div>
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
@@ -1177,6 +1191,20 @@ export default function Screening() {
                       <div className="flex gap-2">
                         <CheckCircle className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
                         <div><strong>Evictions:</strong> Recent evictions (3 years) are more concerning than old ones.</div>
+                      </div>
+                    </div>
+                    
+                    {/* Western Verify Criminal Report Fields */}
+                    <div className="mt-4 pt-4 border-t">
+                      <p className="font-semibold text-foreground mb-3">Western Verify Report Fields:</p>
+                      <div className="grid gap-2 text-sm text-muted-foreground">
+                        <div><strong className="text-foreground">COUNT 1, COUNT 2, etc.:</strong> Each separate charge in the case</div>
+                        <div><strong className="text-foreground">Offense Level:</strong> FELONY (serious) or MISDEMEANOR (less serious)</div>
+                        <div><strong className="text-foreground">Disposition:</strong> GUILTY = conviction; DISMISSED = no conviction</div>
+                        <div><strong className="text-foreground">Offense Date:</strong> When the offense occurred</div>
+                        <div><strong className="text-foreground">Disposition Date:</strong> When the case was resolved (for calculating time elapsed)</div>
+                        <div><strong className="text-foreground">Sentence:</strong> Jail days, prison (SUSPENDED = given but not served), probation</div>
+                        <div><strong className="text-foreground">Statute:</strong> State law code like "76-5-103(1)" identifying the exact offense</div>
                       </div>
                     </div>
                   </AccordionContent>
