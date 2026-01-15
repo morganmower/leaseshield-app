@@ -354,6 +354,30 @@ export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).om
 export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
+// Screening decoder feedback for learning system
+export const screeningFeedback = pgTable("screening_feedback", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id"),
+  decoderType: varchar("decoder_type", { length: 50 }).notNull(), // 'credit' or 'criminal_eviction'
+  questionText: text("question_text").notNull(),
+  cautionLevel: varchar("caution_level", { length: 20 }), // 'low', 'medium', 'high'
+  classifiedTopic: varchar("classified_topic", { length: 100 }),
+  rating: varchar("rating", { length: 20 }).notNull(), // 'helpful' or 'not_helpful'
+  feedbackText: text("feedback_text"), // Optional user comment
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_screening_feedback_decoder_type").on(table.decoderType),
+  index("idx_screening_feedback_rating").on(table.rating),
+  index("idx_screening_feedback_created_at").on(table.createdAt),
+]);
+
+export const insertScreeningFeedbackSchema = createInsertSchema(screeningFeedback).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertScreeningFeedback = z.infer<typeof insertScreeningFeedbackSchema>;
+export type ScreeningFeedback = typeof screeningFeedback.$inferSelect;
+
 // Screening toolkit content
 export const screeningContent = pgTable("screening_content", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

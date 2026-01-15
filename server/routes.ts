@@ -3709,12 +3709,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Import state law helpers
+      // Import state law helpers and caution level detector
       const { classifyTopic } = await import('./decoders/topicClassifier');
       const { isStateSpecificQuestion, extractStateFromQuestion, shouldTriggerStateLawFallback, STATE_LAW_FALLBACK_TEXT } = await import('./decoders/stateLawFallback');
+      const { detectCautionLevel, getFieldGuide, formatFieldGuideForPrompt, getSafeFollowUps } = await import('./decoders/cautionLevelDetector');
 
       // Classify topic for potential state note lookup
       const topicMatch = await classifyTopic(trimmedTerm, 'credit', openai);
+      
+      // Detect caution level based on keywords in the question
+      const cautionResult = detectCautionLevel(trimmedTerm, 'credit');
+      
+      // Get field reference guide for this topic
+      const fieldGuide = getFieldGuide(topicMatch?.topic || null, 'credit');
+      const fieldGuideText = formatFieldGuideForPrompt(fieldGuide);
+      
+      // Get safe follow-up questions
+      const followUps = getSafeFollowUps('credit');
       
       // Check if question references state law or mentions specific state
       const asksAboutStateLaw = isStateSpecificQuestion(trimmedTerm);
@@ -3735,6 +3746,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         fallbackText = STATE_LAW_FALLBACK_TEXT;
       }
 
+      // Build tone guidance based on caution level
+      const toneInstruction = cautionResult.level === 'high' 
+        ? 'IMPORTANT: This appears to be a higher-risk situation based on the keywords detected. Be direct about potential concerns while remaining balanced. Include a clear caution note in "What This Does NOT Mean".'
+        : cautionResult.level === 'medium'
+        ? 'This appears to be a moderate concern. Be balanced - acknowledge the risk signal while providing context. Include appropriate caution in "What This Does NOT Mean".'
+        : 'This appears to be a routine inquiry. Provide helpful context while maintaining professional balance.';
+
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -3742,29 +3760,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
             role: "system",
             content: `You are a helpful assistant that explains credit report information to landlords reviewing tenant applications. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform.
 
+CAUTION LEVEL FOR THIS QUESTION: ${cautionResult.level.toUpperCase()}
+${toneInstruction}
+${cautionResult.triggers.length > 0 ? `Detected keywords: ${cautionResult.triggers.slice(0, 5).join(', ')}` : ''}
+
 STATE-SPECIFIC LAW GUARDRAILS:
 - Do NOT generate or infer state or local laws.
 - Do NOT include a "State-Specific Notes" section - state-specific guidance will be provided separately by the system.
 - If the user asks about a specific state or local law, do NOT attempt to explain it.
 - Focus only on explaining the credit item itself in general terms.
 
+${fieldGuideText}
+
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
 **WHAT THIS MEANS**
-[2-3 sentences in plain English explaining what this credit item is and why it appears on reports]
+[2-3 sentences in plain English explaining what this credit item is and why it appears on reports. Be specific about what landlords should look at on the report.]
+
+**WHERE TO LOOK ON YOUR REPORT**
+• [Reference the specific field name from the guide above and what to look for]
+• [Another field and what it tells you]
+• [Include the general tip about patterns]
 
 **HOW LANDLORDS TYPICALLY WEIGH THIS**
 Factors that increase weight:
 • [Factor that makes this more concerning - e.g., recency, amount, multiple occurrences]
-• [Another factor]
+• [Another factor - be specific about what to look for on the report]
 Factors that reduce weight:
 • [Factor that makes this less concerning - e.g., age, medical-related, evidence of recovery]
 • [Another factor]
 
 **WHAT THIS DOES NOT MEAN**
-• [Clarification to prevent over-reaction - e.g., "Does not automatically mean they will miss rent"]
+${cautionResult.level === 'high' ? `• CAUTION: ${cautionResult.toneGuidance}
+• This doesn't automatically require denial, but this pattern is a real risk flag—don't ignore it
+• [Specific clarification based on the credit item]
+• Apply your written criteria consistently to reduce fair-housing risk` : 
+cautionResult.level === 'medium' ? `• This is a real risk flag—don't ignore it, but context matters
+• [Clarification to prevent over-reaction while acknowledging the concern]
+• Apply your written criteria consistently to reduce fair-housing risk` :
+`• [Clarification to prevent over-reaction - e.g., "Does not automatically mean they will miss rent"]
 • [Another clarification - e.g., "Older items may have limited relevance"]
-• [Context note - e.g., "One-time hardship events differ from patterns"]
+• Apply your written criteria consistently`}
 
 **COMMON SCREENING APPROACHES**
 • Some landlords require higher income ratios when this appears
@@ -3822,7 +3858,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         await storage.trackEvent({
           userId,
           eventType: 'credit_helper_use',
-          eventData: { termLength: trimmedTerm.length },
+          eventData: { termLength: trimmedTerm.length, cautionLevel: cautionResult.level },
         });
       }
 
@@ -3833,6 +3869,12 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         stateNote: stateNote || null,
         fallbackText: fallbackText || null,
         classifiedTopic: topicMatch?.topic || null,
+        cautionLevel: cautionResult.level,
+        followUpQuestions: followUps.slice(0, 3).map(f => ({
+          question: f.question,
+          yesImplication: f.yesImplication,
+          noImplication: f.noImplication
+        })),
       });
     } catch (error) {
       console.error('Error explaining credit term:', error);
@@ -3921,12 +3963,23 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
     }
 
     try {
-      // Import state law helpers
+      // Import state law helpers and caution level detector
       const { classifyTopic } = await import('./decoders/topicClassifier');
       const { isStateSpecificQuestion, extractStateFromQuestion, shouldTriggerStateLawFallback, STATE_LAW_FALLBACK_TEXT } = await import('./decoders/stateLawFallback');
+      const { detectCautionLevel, getFieldGuide, formatFieldGuideForPrompt, getSafeFollowUps } = await import('./decoders/cautionLevelDetector');
 
       // Classify topic for potential state note lookup
       const topicMatch = await classifyTopic(trimmedTerm, 'criminal_eviction', openai);
+      
+      // Detect caution level based on keywords in the question
+      const cautionResult = detectCautionLevel(trimmedTerm, 'criminal_eviction');
+      
+      // Get field reference guide for this topic
+      const fieldGuide = getFieldGuide(topicMatch?.topic || null, 'criminal_eviction');
+      const fieldGuideText = formatFieldGuideForPrompt(fieldGuide);
+      
+      // Get safe follow-up questions
+      const followUps = getSafeFollowUps('criminal_eviction');
       
       // Check if question references state law or mentions specific state
       const asksAboutStateLaw = isStateSpecificQuestion(trimmedTerm);
@@ -3947,6 +4000,13 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         fallbackText = STATE_LAW_FALLBACK_TEXT;
       }
 
+      // Build tone guidance based on caution level
+      const toneInstruction = cautionResult.level === 'high' 
+        ? 'IMPORTANT: This appears to be a higher-risk situation based on the keywords detected (e.g., violent offense, recent record, multiple occurrences). Be direct about potential concerns while remaining balanced. Include a clear caution note in "What This Does NOT Mean". Emphasize individualized assessment is critical.'
+        : cautionResult.level === 'medium'
+        ? 'This appears to be a moderate concern. Be balanced - acknowledge the significance while providing context about outcomes and rehabilitation. Include appropriate caution in "What This Does NOT Mean".'
+        : 'This appears to be a routine inquiry. Provide helpful context while maintaining professional balance.';
+
       const completion = await openai.chat.completions.create({
         model: "gpt-4o-mini",
         messages: [
@@ -3954,31 +4014,49 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
             role: "system",
             content: `You are a helpful assistant that explains criminal background and eviction screening findings to landlords. You help them UNDERSTAND, not DECIDE. You never recommend approving or denying - you inform and emphasize individualized assessment.
 
+CAUTION LEVEL FOR THIS QUESTION: ${cautionResult.level.toUpperCase()}
+${toneInstruction}
+${cautionResult.triggers.length > 0 ? `Detected keywords: ${cautionResult.triggers.slice(0, 5).join(', ')}` : ''}
+
 STATE-SPECIFIC LAW GUARDRAILS:
 - Do NOT generate or infer state or local laws.
 - Do NOT include a "State-Specific Notes" section - state-specific guidance will be provided separately by the system.
 - If the user asks about a specific state or local law, do NOT attempt to explain it.
 - Focus only on explaining the criminal/eviction item itself in general terms.
 
+${fieldGuideText}
+
 REQUIRED RESPONSE STRUCTURE (use these exact headers):
 
 **WHAT THIS MEANS**
-[2-3 sentences explaining what this criminal/eviction record means. Note: Criminal and eviction records reflect information from public court sources. Their relevance depends on type, outcome, timing, and behavior since.]
+[2-3 sentences explaining what this criminal/eviction record means. Be specific about what landlords should look at on the record. Note: Criminal and eviction records reflect information from public court sources. Their relevance depends on type, outcome, timing, and behavior since.]
+
+**WHERE TO LOOK ON THE RECORD**
+• [Reference the specific field name from the guide above and what to look for]
+• [Another field and what it tells you]
+• [Include the general tip about outcomes vs filings]
 
 **HOW THIS IS COMMONLY EVALUATED**
 Factors that increase weight:
 • [Factor - e.g., record is recent, involves violence/property damage, multiple occurrences]
-• [Another factor]
+• [Another factor - be specific about what to look for on the record]
 Factors that reduce weight:
 • [Factor - e.g., record is older, was dismissed, followed by stable housing/employment]
 • [Another factor]
 
 **WHAT THIS DOES NOT MEAN**
-• A criminal or eviction record does not require denial
+${cautionResult.level === 'high' ? `• CAUTION: ${cautionResult.toneGuidance}
+• A criminal or eviction record does not automatically require denial, but this appears to be a significant concern—individualized assessment is critical
+• [Specific clarification based on the record type]
+• Apply your written criteria consistently and document your reasoning` : 
+cautionResult.level === 'medium' ? `• This is a real consideration—don't ignore it, but context and outcomes matter
+• A criminal or eviction record does not automatically require denial
+• [Specific clarification based on the record type]
+• Apply your written criteria consistently` :
+`• A criminal or eviction record does not require denial
 • [Specific clarification - e.g., "Arrests without conviction are not equivalent to convictions"]
-• [Another clarification - e.g., "Eviction filings do not always result in removal"]
 • Older records may have limited relevance
-• Context and outcomes matter
+• Apply your written criteria consistently`}
 
 **COMMON SCREENING APPROACHES**
 • Some landlords distinguish between arrests and convictions
@@ -3999,12 +4077,6 @@ Before relying on criminal or eviction history, confirm that:
 Neutral language (use whether approving or denying):
 "Application reviewed using standard screening criteria. Public record information reflects prior criminal and/or eviction history dated [MM/YYYY]. The application was evaluated using the same criteria applied to all applicants."
 
-**OPTIONAL FOLLOW-UP QUESTIONS**
-(Use only if permitted by your screening process)
-1. "[Question about context and time since]"
-2. "[Question about outcome or resolution]"
-3. "[Question about stable housing/employment since]"
-
 **WHAT LANDLORDS OFTEN CONSIDER NEXT**
 • Review your written screening criteria to confirm criminal/eviction records are addressed
 • Apply individualized assessment: nature, severity, time elapsed, and relevance to tenancy
@@ -4015,13 +4087,13 @@ CRITICAL RULES:
 - NEVER say "approve" or "deny" - you inform, landlords decide
 - Use "Some landlords..." phrasing - describe industry behavior, don't prescribe
 - Always emphasize individualized assessment per HUD 2016 guidance
-- Always include "What This Does NOT Mean" section to prevent over-reaction
+- Always include "What This Does NOT Mean" section with appropriate caution level
 - Always include Consistency Check - critical for Fair Housing compliance
 - NEVER suggest blanket bans - these violate Fair Housing
 - Be balanced - concerns AND context that reduces weight
 - NEVER generate state-specific legal content
 
-TONE: Calm, structured, and confidence-building. Help landlords feel informed and capable, not anxious. You are a knowledgeable colleague who explains things simply and reassures them that handling this correctly is straightforward. Avoid alarm language. Use phrases like "This is manageable" and "Many landlords approach this by..." Premium and legally sophisticated, but accessible. Focus on Fair Housing.`
+TONE: Calm, structured, and confidence-building. Help landlords feel informed and capable, not anxious. You are a knowledgeable colleague who explains things simply and reassures them that handling this correctly is straightforward. ${cautionResult.level === 'high' ? 'Be direct about serious concerns while remaining professional.' : 'Avoid alarm language.'} Use phrases like "This is manageable" and "Many landlords approach this by..." Premium and legally sophisticated, but accessible. Focus on Fair Housing.`
           },
           {
             role: "user",
@@ -4029,7 +4101,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
           }
         ],
         temperature: 0.7,
-        max_tokens: 1000,
+        max_tokens: 1200,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
@@ -4040,7 +4112,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         await storage.trackEvent({
           userId,
           eventType: 'criminal_helper_use',
-          eventData: { termLength: trimmedTerm.length },
+          eventData: { termLength: trimmedTerm.length, cautionLevel: cautionResult.level },
         });
       }
 
@@ -4051,6 +4123,12 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         stateNote: stateNote || null,
         fallbackText: fallbackText || null,
         classifiedTopic: topicMatch?.topic || null,
+        cautionLevel: cautionResult.level,
+        followUpQuestions: followUps.slice(0, 3).map(f => ({
+          question: f.question,
+          yesImplication: f.yesImplication,
+          noImplication: f.noImplication
+        })),
       });
     } catch (error) {
       console.error('Error explaining criminal/eviction term:', error);

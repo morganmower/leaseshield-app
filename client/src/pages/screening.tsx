@@ -437,6 +437,8 @@ export default function Screening() {
   const [creditUserStateName, setCreditUserStateName] = useState<string | null>(null);
   const [creditStateNote, setCreditStateNote] = useState<{ title: string; bullets: string[]; sourceLinks: string[] } | null>(null);
   const [creditFallbackText, setCreditFallbackText] = useState<string | null>(null);
+  const [creditCautionLevel, setCreditCautionLevel] = useState<'low' | 'medium' | 'high' | null>(null);
+  const [creditFollowUps, setCreditFollowUps] = useState<Array<{ question: string; yesImplication: string; noImplication: string }>>([]);
 
   // Criminal & Eviction Helper state
   const [criminalHelperScreen, setCriminalHelperScreen] = useState<'home' | 'learn' | 'ask'>('home');
@@ -447,6 +449,8 @@ export default function Screening() {
   const [criminalUserStateName, setCriminalUserStateName] = useState<string | null>(null);
   const [criminalStateNote, setCriminalStateNote] = useState<{ title: string; bullets: string[]; sourceLinks: string[] } | null>(null);
   const [criminalFallbackText, setCriminalFallbackText] = useState<string | null>(null);
+  const [criminalCautionLevel, setCriminalCautionLevel] = useState<'low' | 'medium' | 'high' | null>(null);
+  const [criminalFollowUps, setCriminalFollowUps] = useState<Array<{ question: string; yesImplication: string; noImplication: string }>>([]);
 
   const handleExplain = async () => {
     const input = userQuestion.trim();
@@ -502,6 +506,8 @@ export default function Screening() {
       setCreditUserStateName(data.userStateName || null);
       setCreditStateNote(data.stateNote || null);
       setCreditFallbackText(data.fallbackText || null);
+      setCreditCautionLevel(data.cautionLevel || null);
+      setCreditFollowUps(data.followUpQuestions || []);
     } catch (error) {
       console.error('Error getting explanation:', error);
       setExplanation('Something went wrong. Please try again in a moment.');
@@ -564,6 +570,8 @@ export default function Screening() {
       setCriminalUserStateName(data.userStateName || null);
       setCriminalStateNote(data.stateNote || null);
       setCriminalFallbackText(data.fallbackText || null);
+      setCriminalCautionLevel(data.cautionLevel || null);
+      setCriminalFollowUps(data.followUpQuestions || []);
     } catch (error) {
       console.error('Error getting criminal/eviction explanation:', error);
       setCriminalExplanation('Something went wrong. Please try again in a moment.');
@@ -849,6 +857,56 @@ export default function Screening() {
                 />
               )}
 
+              {/* Follow-up Questions */}
+              {!isExplaining && explanation && creditFollowUps.length > 0 && (
+                <div className="bg-muted/30 border rounded-lg p-4 mt-4">
+                  <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-primary" />
+                    Quick Follow-Up Questions
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    These yes/no questions can help you think through the context:
+                  </p>
+                  <div className="space-y-3">
+                    {creditFollowUps.map((followUp, index) => (
+                      <div key={index} className="bg-background rounded-lg p-3 border">
+                        <p className="text-sm font-medium text-foreground mb-2">{followUp.question}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1 text-xs"
+                            onClick={() => {
+                              toast({
+                                title: "If Yes",
+                                description: followUp.yesImplication,
+                              });
+                            }}
+                            data-testid={`button-followup-yes-${index}`}
+                          >
+                            Yes
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1 text-xs"
+                            onClick={() => {
+                              toast({
+                                title: "If No",
+                                description: followUp.noImplication,
+                              });
+                            }}
+                            data-testid={`button-followup-no-${index}`}
+                          >
+                            No
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {/* Collapsible Learn Section */}
               <Accordion type="single" collapsible className="mt-4">
                 <AccordionItem value="learn-credit" className="border rounded-lg">
@@ -1020,6 +1078,56 @@ export default function Screening() {
                   stateNote={criminalStateNote}
                   fallbackText={criminalFallbackText}
                 />
+              )}
+
+              {/* Follow-up Questions */}
+              {!isCriminalExplaining && criminalExplanation && criminalFollowUps.length > 0 && (
+                <div className="bg-muted/30 border rounded-lg p-4 mt-4">
+                  <h4 className="font-semibold text-foreground mb-3 flex items-center gap-2">
+                    <HelpCircle className="h-4 w-4 text-primary" />
+                    Quick Follow-Up Questions
+                  </h4>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    These yes/no questions can help you think through the context:
+                  </p>
+                  <div className="space-y-3">
+                    {criminalFollowUps.map((followUp, index) => (
+                      <div key={index} className="bg-background rounded-lg p-3 border">
+                        <p className="text-sm font-medium text-foreground mb-2">{followUp.question}</p>
+                        <div className="flex gap-2">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1 text-xs"
+                            onClick={() => {
+                              toast({
+                                title: "If Yes",
+                                description: followUp.yesImplication,
+                              });
+                            }}
+                            data-testid={`button-criminal-followup-yes-${index}`}
+                          >
+                            Yes
+                          </Button>
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1 text-xs"
+                            onClick={() => {
+                              toast({
+                                title: "If No",
+                                description: followUp.noImplication,
+                              });
+                            }}
+                            data-testid={`button-criminal-followup-no-${index}`}
+                          >
+                            No
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               )}
 
               {/* Collapsible Learn Section */}
