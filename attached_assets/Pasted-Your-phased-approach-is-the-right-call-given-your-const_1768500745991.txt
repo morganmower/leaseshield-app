@@ -1,0 +1,190 @@
+Your phased approach is the right call given your constraints (no report data, no SSNs, and you already have a topic classifier). I would not build the full 4-module architecture right now.
+
+Here’s how I’d tighten Phase 1 so you still get the “dynamic” feel without needing the report, RAG, or users pasting sensitive info.
+
+Yes — Phase 1 / 2 / 3 works (and matches your reality)
+Why this is the correct path
+
+You don’t have the tradeline data, so “signalExtractor” is fiction today.
+
+You can still be very helpful by telling landlords where to look and how to interpret what they see.
+
+Most of the value comes from:
+
+topic → tone
+
+topic → “where to look” guide
+
+topic → follow-up questions that don’t require entering sensitive numbers
+
+thumbs feedback → iterate prompts
+
+That gets you 80%+ now.
+
+The key: make the AI “dynamic” using only the user’s question
+
+Since you’ll never have the report, the AI needs to:
+
+infer what risk dimension the question implies (recency, count, severity, pattern)
+
+respond with:
+
+plain-English meaning
+
+how landlords weigh it
+
+“what it does NOT mean” that is risk-calibrated
+
+“where to look” without asking them to paste report content
+
+optional follow-ups that are yes/no or non-sensitive
+
+This is prompt-level, not architecture-level.
+
+Phase 1: Replit-ready implementation (simple changes)
+1) Add a “Caution Level” derived from keywords + topic
+
+You already have topicClassifier.ts. Add one light helper:
+
+Inputs: topic, questionText
+Outputs: cautionLevel = low | medium | high + triggers[]
+
+Example triggers:
+
+Collections: “3”, “multiple”, “recent”, “2024”, “2025”, “placed”, “open”, “unpaid”
+
+Criminal: “felony”, “violent”, “recent”, “weapon”, “domestic”
+
+Eviction: “UD”, “judgment”, “writ”, “recent”
+
+This is NOT “scoring their report.” It’s just calibrating tone based on what they asked.
+
+2) Build a “Field Reference Guide” per topic (static map)
+
+This is the magic that makes answers feel practical even with no data.
+
+Example (Collections topic):
+
+Where to look:
+
+Placed/Clsd (recency)
+
+Status (open vs paid/settled)
+
+Balance/Amount
+
+Creditor type (medical vs utility vs credit card, if shown)
+
+Do the same for bankruptcies, charge-offs, lates, utilization, evictions, etc.
+
+3) Replace “What This Does NOT Mean” with a tone-gated template
+
+Rule: It must always contain:
+
+1 line that prevents overreach (“doesn’t automatically mean X”)
+
+1 line that prevents false reassurance (“but if [trigger], treat as meaningful risk signal”)
+
+1 line about consistency/fair-housing (“apply written criteria consistently”)
+
+Tone gates:
+
+Low: more neutral
+
+Medium: “real risk flag—don’t ignore”
+
+High: “higher-risk indicator—slow down, verify, be consistent”
+
+4) Add thumbs 👍 👎 + store to DB
+
+Store:
+
+topic
+
+cautionLevel
+
+questionText
+
+responseText
+
+rating
+
+timestamp
+
+(optional) “internal notes” or “admin edited version”
+
+That gives you data for Phase 2.
+
+Privacy constraint: never ask for report contents
+
+Totally aligned. So your “follow-ups” need to be structured like:
+
+✅ Safe follow-ups (no SSN, no account numbers, no DOB):
+
+“Are the collection dates mostly within the last 12 months?” (Yes/No)
+
+“Do any collections show as open/unpaid?” (Yes/No)
+
+“Are any collections related to utilities?” (Yes/No/Not sure)
+
+“Is there anything else negative on the report besides these collections?” (Yes/No)
+
+“Is their income comfortably above your rent-to-income standard?” (Yes/No)
+
+🚫 Avoid:
+
+“Paste the tradeline”
+
+“Tell me the account names/numbers”
+
+“Upload the report”
+
+Anything that could include identifiers
+
+If you want, you can add a UI line:
+
+“Do not enter SSN, DOB, account numbers, or full report screenshots.”
+
+Phase 1: Updated “Collections” response behavior (example)
+
+User: “Applicant has 3 collections, all placed 2024–2025. What’s my risk?”
+
+Your generated answer should always include:
+
+Meaning: collections = unpaid debt → potential financial stress; recency matters
+
+Weight: 3 + recent = stronger signal
+
+Not mean (risk-calibrated): doesn’t guarantee missed rent, but this pattern is a real flag → slow down and verify
+
+Where to look: Placed/Clsd, status, balance, type
+
+Next considerations: confirm written criteria, compare to thresholds, document reasoning
+
+No report data needed.
+
+Phase 2: Curated example library (simple and powerful)
+
+I agree with your idea: don’t do full RAG yet.
+
+Do this instead:
+
+create a small examples/ library keyed by {topic, cautionLevel}
+
+include 2–4 “best responses” per bucket
+
+inject 1 example into the prompt based on the current bucket
+
+This gives you “learning” without latency or complexity.
+
+Phase 3: Only if you hit limits
+
+You only need full rubric / retrieval when:
+
+you start getting inconsistent outputs across similar questions
+
+you need stricter tone control for compliance reasons
+
+you want multi-turn “interview mode” that adapts deeply
+
+Until then, prompt + keyword caution + field guide + feedback is the move.
