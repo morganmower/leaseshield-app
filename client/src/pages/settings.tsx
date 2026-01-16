@@ -211,8 +211,8 @@ export default function Settings() {
         setScreeningUsername("");
         setScreeningPassword("");
         toast({
-          title: "Credentials Saved",
-          description: "Your Western Verify credentials have been securely saved.",
+          title: "Setup Complete!",
+          description: "Your Western Verify account is connected. You can now use tenant screening in your application process.",
         });
       } else {
         toast({

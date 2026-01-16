@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search } from "lucide-react";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search, UserCheck, Settings } from "lucide-react";
 import type { RentalProperty, RentalUnit, RentalApplicationLink, SavedDocument, UploadedDocument } from "@shared/schema";
 import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 
@@ -83,6 +83,11 @@ export default function Properties() {
   });
 
   const isTrialExpired = error !== null && (error as any)?.status === 403;
+
+  // Check if Western Verify credentials are configured
+  const { data: credentialsStatus, isFetched: credentialsFetched } = useQuery<{ configured: boolean }>({
+    queryKey: ["/api/screening-credentials"],
+  });
 
   const createMutation = useMutation({
     mutationFn: async ({ data, requiredDocumentTypes, autoScreening }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean }) => {
@@ -385,6 +390,29 @@ export default function Properties() {
               />
             ))}
           </div>
+        )}
+
+        {/* Optional: Tenant Screening Setup Card - only shows when credentials not configured */}
+        {credentialsFetched && !credentialsStatus?.configured && (
+          <Card className="mt-8 p-6 border-dashed bg-muted/30">
+            <div className="flex items-start gap-4">
+              <div className="rounded-lg bg-primary/10 p-3 flex-shrink-0">
+                <UserCheck className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-semibold text-lg mb-1">Want Tenant Screening?</h3>
+                <p className="text-muted-foreground text-sm mb-4">
+                  Connect your Western Verify account to run background checks, credit reports, and eviction history directly from your applications. This is optional.
+                </p>
+                <Link to="/settings">
+                  <Button variant="outline" size="sm" data-testid="button-setup-screening">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Set Up in Settings
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </Card>
         )}
 
         {/* Add Property Dialog */}
