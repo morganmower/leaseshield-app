@@ -1186,12 +1186,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
           
           const userResults = await db.select().from(users).where(eq(users.stripeCustomerId, customerId)).limit(1);
           if (userResults.length > 0) {
+            const user = userResults[0];
             // Payment successful - update to active and clear any payment failure state
-            await storage.updateUserStripeInfo(userResults[0].id, {
+            await storage.updateUserStripeInfo(user.id, {
               subscriptionStatus: 'active',
               paymentFailedAt: null, // Clear payment failed timestamp on successful payment
             });
-            console.log(`User ${userResults[0].id} payment succeeded - marked as active, cleared payment failed state`);
+            console.log(`User ${user.id} payment succeeded - marked as active, cleared payment failed state`);
+            
+            // Send admin notification email about the payment
+            const adminEmail = process.env.ADMIN_NOTIFICATION_EMAIL || 'mmower21@gmail.com';
+            try {
+              const { emailService } = await import('./emailService');
+              const amountPaid = invoice.amount_paid || invoice.total || 0;
+              
+              // Determine plan type from amount or billing interval
+              let planType = 'Subscription';
+              const billingInterval = (invoice.lines?.data?.[0] as any)?.plan?.interval;
+              if (billingInterval === 'year' || amountPaid >= 9900) {
+                planType = 'Annual ($100/year)';
+              } else if (billingInterval === 'month' || amountPaid >= 900) {
+                planType = 'Monthly ($10/month)';
+              }
+              
+              const customerName = user.firstName && user.lastName 
+                ? `${user.firstName} ${user.lastName}` 
+                : user.firstName || undefined;
+              
+              await emailService.sendAdminPaymentNotification(
+                adminEmail,
+                user.email || 'unknown',
+                amountPaid,
+                planType,
+                customerName
+              );
+              console.log(`💰 Admin payment notification sent to ${adminEmail} for ${user.email}`);
+            } catch (emailError) {
+              console.error('Failed to send admin payment notification:', emailError);
+            }
           }
           break;
         }

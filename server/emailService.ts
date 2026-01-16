@@ -1515,6 +1515,82 @@ The LeaseShield App Team
 
     return await this.sendEmail({ email: user.email, firstName: user.firstName }, template);
   }
+
+  async sendAdminPaymentNotification(
+    adminEmail: string,
+    customerEmail: string,
+    amountPaid: number,
+    planType: string,
+    customerName?: string
+  ): Promise<boolean> {
+    const formattedAmount = (amountPaid / 100).toFixed(2);
+    const displayName = customerName || customerEmail;
+    const timestamp = new Date().toLocaleString('en-US', { 
+      timeZone: 'America/Denver', 
+      dateStyle: 'full', 
+      timeStyle: 'short' 
+    });
+
+    const template: EmailTemplate = {
+      subject: `New Payment Received - $${formattedAmount} from ${displayName}`,
+      textBody: `New LeaseShield Payment Received!
+
+Customer: ${displayName}
+Email: ${customerEmail}
+Amount: $${formattedAmount}
+Plan: ${planType}
+Time: ${timestamp}
+
+View your Stripe dashboard for more details.
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .details-box { background: #f0fdfa; border-left: 4px solid #14b8a6; padding: 20px; margin: 20px 0; }
+    .amount { font-size: 32px; font-weight: bold; color: #14b8a6; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">New Payment Received</h1>
+    </div>
+    <div class="content">
+      <p style="text-align: center;">
+        <span class="amount">$${formattedAmount}</span>
+      </p>
+      
+      <div class="details-box">
+        <p style="margin-top: 0;"><strong>Customer:</strong> ${displayName}</p>
+        <p><strong>Email:</strong> ${customerEmail}</p>
+        <p><strong>Plan:</strong> ${planType}</p>
+        <p style="margin-bottom: 0;"><strong>Time:</strong> ${timestamp}</p>
+      </div>
+
+      <p style="text-align: center; color: #64748b; font-size: 14px;">
+        View your <a href="https://dashboard.stripe.com" style="color: #14b8a6;">Stripe Dashboard</a> for more details.
+      </p>
+
+      <div class="footer">
+        <p>LeaseShield App - Admin Notification</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: adminEmail }, template);
+  }
 }
 
 export const emailService = new EmailService();
