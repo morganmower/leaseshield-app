@@ -227,20 +227,9 @@ export default function Billing() {
               <>
                 <div>
                   <Label className="text-sm font-medium text-foreground">Current Plan</Label>
-                  <p className="text-muted-foreground mt-1">LeaseShield App - Free Trial</p>
-                  <p className="text-xs text-blue-600 mt-1">Trial Period</p>
+                  <p className="text-muted-foreground mt-1">LeaseShield App - Inactive</p>
+                  <p className="text-xs text-muted-foreground mt-1">Subscription required</p>
                 </div>
-                {user.trialEndsAt && (
-                  <div>
-                    <Label className="text-sm font-medium text-foreground">Trial Ends</Label>
-                    <p className="text-muted-foreground mt-1">
-                      {new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })}
-                    </p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {Math.max(0, Math.ceil((new Date(user.trialEndsAt).getTime() - Date.now()) / (1000 * 60 * 60 * 24)))} days remaining
-                    </p>
-                  </div>
-                )}
                 {!user.stripeCustomerId && (
                   <div className="pt-4 border-t">
                     <Button 

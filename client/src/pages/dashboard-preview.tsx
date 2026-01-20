@@ -37,7 +37,7 @@ export default function DashboardPreview() {
             </Button>
             <Button className="gap-2 bg-brand-500 hover:bg-brand-600" asChild>
               <a href="/signup">
-                Start Free Trial <ArrowRight className="h-4 w-4" />
+                Get Started <ArrowRight className="h-4 w-4" />
               </a>
             </Button>
           </div>
@@ -181,12 +181,12 @@ export default function DashboardPreview() {
                     Ready to use the real thing?
                   </div>
                   <div className="mt-1 text-sm text-ink-700 dark:text-slate-300">
-                    Start a 7-day trial. No credit card required.
+                    $10/month. Cancel anytime.
                   </div>
                 </div>
                 <Button className="gap-2 bg-brand-500 hover:bg-brand-600" asChild>
                   <a href="/signup">
-                    Start Free Trial <ArrowRight className="h-4 w-4" />
+                    Get Started <ArrowRight className="h-4 w-4" />
                   </a>
                 </Button>
               </div>

@@ -6,6 +6,7 @@ import { useLocation, Link } from "wouter";
 import { getAccessToken } from "@/lib/queryClient";
 import { useStates } from "@/hooks/useStates";
 import type { LegalUpdate } from "@shared/schema";
+import { useIsActivated, ActivationPrompt } from "@/components/activation-gate";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -72,9 +73,19 @@ export default function Templates() {
   const trialExpired = user?.subscriptionStatus === 'trialing' && user?.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
   const isPayingMember = (user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' || (user?.subscriptionStatus === 'trialing' && !trialExpired) || user?.isAdmin === true);
   const isTrialing = user?.subscriptionStatus === 'trialing';
+  const isActivated = useIsActivated();
+  const [showActivationPrompt, setShowActivationPrompt] = useState(false);
 
   const handleTemplateAction = async (action: 'download' | 'download-blank' | 'fill', templateId: string, format: 'pdf' | 'docx' = 'pdf') => {
+    if (!isActivated && action !== 'fill') {
+      setShowActivationPrompt(true);
+      return;
+    }
     if (action === 'fill') {
+      if (!isActivated) {
+        setLocation(`/subscribe`);
+        return;
+      }
       setLocation(`/templates/${templateId}/fill`);
     } else if (action === 'download-blank') {
       try {
@@ -501,6 +512,13 @@ export default function Templates() {
       </div>
 
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Activation Prompt */}
+        {showActivationPrompt && (
+          <div className="mb-6">
+            <ActivationPrompt featureName="download legal templates" inline />
+          </div>
+        )}
+        
         {/* Legal Disclaimer - More Compact */}
         <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg px-4 py-3">
           <div className="flex items-center gap-3">
@@ -868,11 +886,10 @@ export default function Templates() {
               </DialogTitle>
               <DialogDescription className="pt-4 space-y-3">
                 <p>
-                  Template downloads are available to paying members only.
-                  {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
+                  Template downloads are available to active members only.
                 </p>
                 <p>
-                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 245+ state-specific templates.
+                  Subscribe for just <strong>$10/month</strong> or <strong>$100/year</strong> (includes 2 months free) to access our complete library of 245+ state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>

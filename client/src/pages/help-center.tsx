@@ -32,7 +32,7 @@ export default function HelpCenter() {
       questions: [
         {
           q: "How do I log in to my account?",
-          a: "Click the 'Log In' button on the homepage and enter your email address and password. If you signed up during the free trial, use the same email and password you created when registering."
+          a: "Click the 'Log In' button on the homepage and enter your email address and password. Use the same email and password you created when registering."
         },
         {
           q: "I forgot my password. How do I reset it?",

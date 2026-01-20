@@ -541,11 +541,10 @@ export default function TenantIssues() {
               </DialogTitle>
               <DialogDescription className="pt-4 space-y-3">
                 <p>
-                  Template downloads are available to paying members only.
-                  {isTrialing && " Your free trial gives you access to all other features, but templates require a paid subscription."}
+                  Template downloads are available to active members only.
                 </p>
                 <p>
-                  Upgrade now for just <strong>$10/month</strong> or <strong>$100/year</strong> (save $20) to access our complete library of 245+ state-specific templates.
+                  Subscribe for just <strong>$10/month</strong> or <strong>$100/year</strong> (includes 2 months free) to access our complete library of 245+ state-specific templates.
                 </p>
               </DialogDescription>
             </DialogHeader>

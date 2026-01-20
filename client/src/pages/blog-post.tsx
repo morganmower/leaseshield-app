@@ -185,9 +185,9 @@ export default function BlogPostPage() {
             <Button
               size="lg"
               onClick={() => window.location.href = "/login"}
-              data-testid="button-start-trial"
+              data-testid="button-get-started"
             >
-              Start 7-Day Free Trial
+              Get Started
             </Button>
             <Link href="/blog">
               <Button size="lg" variant="outline">

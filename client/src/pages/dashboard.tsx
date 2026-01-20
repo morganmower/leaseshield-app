@@ -137,10 +137,10 @@ export default function Dashboard() {
             <Bell className="h-16 w-16 text-primary mx-auto mb-4" />
           </div>
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Trial Expired
+            Activate Your Account
           </h1>
           <p className="text-muted-foreground mb-8">
-            Your free trial has ended. Subscribe now to continue accessing all templates, compliance guidance, and AI tools.
+            Subscribe now to access all templates, compliance guidance, and AI tools.
           </p>
           <div className="flex flex-col gap-3">
             <Link to="/subscribe?period=monthly">
@@ -260,14 +260,10 @@ export default function Dashboard() {
                       return (
                         <>
                           <p className="font-medium text-foreground">
-                            {trialExpired ? (
-                              <>Your free trial has ended ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})</>
-                            ) : (
-                              <>Your free trial ends in {daysLeft} day{daysLeft !== 1 ? 's' : ''} ({new Date(user.trialEndsAt).toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' })})</>
-                            )}
+                            Account Inactive
                           </p>
                           <p className="text-sm text-muted-foreground mt-1">
-                            {trialExpired ? 'Subscribe now to regain access to all templates and compliance updates' : 'Subscribe now to continue accessing all templates and compliance updates'}
+                            Subscribe now to access all templates and compliance updates
                           </p>
                         </>
                       );
