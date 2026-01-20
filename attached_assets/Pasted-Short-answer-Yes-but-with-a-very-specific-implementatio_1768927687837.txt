@@ -1,0 +1,165 @@
+Short answer: Yes — but with a very specific implementation.
+If you do this wrong, you’ll kill trust. If you do it right, you’ll fix the exact problem you’re seeing.
+
+I’ll be very clear.
+
+The real issue (plain truth)
+
+Right now your flow is:
+
+Signup → Dashboard → “I’ll use this later” → Forget → Churn
+
+You already fixed the language problem.
+Now you need to fix the behavioral gap.
+
+People are still being allowed to:
+
+Set up an account
+
+Feel “done”
+
+Delay commitment
+
+Mentally disengage
+
+For an event-driven product, that’s fatal.
+
+The correct answer (not just “yes/no”)
+❌ Wrong approach (do NOT do this)
+
+Signup → Hard paywall → “Pay now or leave”
+
+That feels:
+
+SaaS-y
+
+Salesy
+
+Like bait-and-switch
+
+You’ll lose trust and good will.
+
+✅ Right approach (this is the move)
+Signup → Lightweight “Confirm & Activate” page → Dashboard
+
+Think of it as activation, not checkout.
+
+What the post-signup page SHOULD be
+Page purpose
+
+To answer one question only:
+
+“Do I want this active for when my next applicant shows up?”
+
+Not “do I want to explore this.”
+
+Exact recommended flow
+Step 1: User signs up
+
+(no trial language, as you already fixed)
+
+Step 2: Redirect to Activate LeaseShield page
+
+This page appears every time after signup.
+
+Step 3: Only after activation → Dashboard
+EXACT wording for the activation page (copy-paste ready)
+Page headline
+
+Activate LeaseShield
+
+Subheadline
+
+Keep it ready so you don’t have to guess when your next applicant comes up.
+
+Value bullets (short, calm)
+
+Explain credit, criminal, and eviction results clearly
+
+Keep decisions consistent and defensible
+
+Use it only when screening actually matters
+
+Price block (simple)
+
+$10/month
+Cancel anytime. No contracts.
+
+Small line under price:
+
+Most landlords only use it a few times per year.
+
+Primary button
+
+Activate for $10/month
+
+Secondary option (important)
+
+Below the button, small text link:
+
+Skip for now — go to dashboard
+
+This preserves trust and avoids hostage UX.
+
+Why this works psychologically
+
+You’re asking for a decision while intent is highest
+
+You’re framing payment as activation, not purchase
+
+You’re not blocking access entirely
+
+You’re aligning the product with its real usage pattern
+
+This fixes:
+
+“I’ll come back later”
+
+Trial forgetfulness
+
+Silent non-conversion
+
+What happens after this change (realistically)
+
+Expect:
+
+Fewer total signups
+
+Higher percentage of paid users
+
+Fewer “loved it but didn’t subscribe” conversations
+
+Cleaner signal on who actually values it
+
+That’s a good trade.
+
+One more important rule (do not miss this)
+
+If they click “Skip for now”:
+
+Do not nag them
+
+Do not auto-lock features
+
+Let them use the dashboard normally
+
+But…
+
+On the dashboard, add a subtle persistent reminder:
+
+LeaseShield is inactive — activate when you’re ready
+
+No popups. No modals. Calm confidence.
+
+Final recommendation (clear decision)
+
+✔️ Yes, redirect to a payment/activation page after signup
+✔️ Frame it as “Activate,” not “Pay”
+✔️ Allow skipping
+✔️ Do not let users feel “done” without making a decision
+
+This is the missing piece between:
+
+Fixing your messaging
+
+Fixing your conversion behavior
