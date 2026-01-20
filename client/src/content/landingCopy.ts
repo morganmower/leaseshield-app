@@ -5,7 +5,7 @@ export const landingCopy = {
   hero: {
     h1: "Confused by a Screening Report Right Now?",
     subheadline:
-      "LeaseShield explains credit, criminal, and eviction results in plain English — flags risks and shows safe next steps.",
+      "LeaseShield explains credit, criminal, and eviction results in plain English. Flags risks and shows safe next steps.",
     reassurance: "Only $10/month. Cancel anytime. No per-use fees.",
     primaryCta: "Explain My Screening Report",
     primaryCtaHref: "/signup",
@@ -21,7 +21,7 @@ export const landingCopy = {
       "When you want to document a consistent decision later",
     ],
     anchorLine:
-      "Most landlords don't use LeaseShield every day — they keep it active so they don't have to guess when it matters.",
+      "Most landlords don't use LeaseShield every day. They keep it active so they don't have to guess when it matters.",
   },
 
   howItWorks: {
@@ -46,7 +46,7 @@ export const landingCopy = {
     title: "Simple Protection at $10/Month",
     support: "Cancel anytime • No contracts • No per-screening fees",
     psychology:
-      "Most landlords only need it 2–4 times per year — that's $20–40 total for peace of mind.",
+      "Most landlords only need it 2-4 times per year. That's $20-40 total for peace of mind.",
     plans: [
       { label: "$10 / month", tag: "" },
       { label: "$100 / year", tag: "Best value" },
@@ -85,7 +85,7 @@ export const landingCopy = {
   faqs: [
     {
       q: "Do I need to use this every month?",
-      a: "No. Most landlords don't use LeaseShield every day — they keep it active so it's there when an applicant comes up.",
+      a: "No. Most landlords don't use LeaseShield every day. They keep it active so it's there when an applicant comes up.",
     },
     {
       q: "Does LeaseShield replace Western Verify screening?",
