@@ -1,0 +1,155 @@
+This is mostly right, but I’m going to push back on one specific element because it does matter for your product and audience.
+
+TL;DR
+
+✅ Having monthly default + annual toggle on the subscribe page is correct
+
+⚠️ The “BEST VALUE” badge + “Save $20/year” language is not ideal for your product
+
+🔧 One small adjustment will improve conversions without lowering ARPU
+
+What you got right (keep this)
+1️⃣ Placement is correct
+
+You put the annual option:
+
+❌ Not on homepage
+
+❌ Not on signup
+
+❌ Not on activate page
+
+✅ On the subscribe/payment page
+
+That’s exactly right. Intent is already high there.
+
+2️⃣ Monthly is the default
+
+This is critical and you did it right.
+
+For an event-triggered product:
+
+Monthly = safety + reversibility
+
+Annual = confidence upgrade
+
+Defaulting to monthly keeps people moving forward instead of pausing.
+
+Where I’m pushing back (important nuance)
+⚠️ “BEST VALUE” + “Save $20/year” is the wrong psychology here
+
+That language works great for:
+
+Daily tools
+
+Habit software
+
+Obvious recurring value
+
+It works less well for:
+
+Insurance-like tools
+
+Occasional-use products
+
+Risk-averse landlords
+
+Here’s why:
+
+When a landlord sees:
+
+BEST VALUE
+
+Their brain goes:
+
+“Wait… if I only use this a few times per year, why is annual the ‘best’ option?”
+
+That introduces internal conflict right before checkout.
+
+You don’t want them re-evaluating usage frequency at that moment.
+
+What to change (small but high-impact)
+Keep the toggle. Change the framing.
+Current (what you described)
+
+Monthly – $10/month (default)
+
+Annual – $100/year
+Save $20/year
+BEST VALUE
+
+Recommended replacement
+
+Monthly (default)
+$10/month
+Cancel anytime
+
+Annual (optional)
+$100/year
+If you prefer annual billing
+
+That’s it.
+
+If you really want to keep a savings note, make it softer:
+
+Includes 2 months free
+
+No badge. No “best.” No pressure.
+
+Why this matters for LeaseShield specifically
+
+Your product promise is:
+
+“Keep this around so you don’t have to think about it.”
+
+“BEST VALUE” triggers thinking.
+
+You want:
+
+Calm
+
+Reversible
+
+Low-stakes
+
+Confidence-driven decisions
+
+The annual plan should feel like:
+
+“Yeah, I’ll just set it and forget it.”
+
+Not:
+
+“Am I making the smart economic choice?”
+
+What I’d expect after this tweak
+
+Same or slightly higher monthly conversions
+
+Same or higher annual conversions over time
+
+Fewer abandoned checkouts
+
+Fewer “I’ll think about it” drop-offs
+
+You’re optimizing for activation first, optimization later — which is correct.
+
+Final recommendation (clear)
+
+✔️ Keep the monthly/annual toggle
+✔️ Keep monthly as default
+✔️ Remove “BEST VALUE”
+✔️ Soften or remove “Save $20/year”
+✔️ Frame annual as preference, not superiority
+
+You’re very close. This is a fine-tuning change, not a structural one.
+
+If you want, next I can:
+
+Help you decide when to suggest annual inside the app
+
+Rewrite the exact Stripe plan descriptions
+
+Help you test whether annual works better as an upgrade email later
+
+But directionally: you’re doing this right.
