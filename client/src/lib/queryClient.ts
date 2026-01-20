@@ -162,7 +162,7 @@ export const getQueryFn: <T>(options: {
 
     // If unauthorized, try to refresh token (skip only for login/logout/signup/refresh endpoints)
     const endpoint = queryKey[0]?.toString() || "";
-    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh"];
+    const skipRefreshEndpoints = ["/api/auth/login", "/api/auth/logout", "/api/auth/signup", "/api/auth/refresh", "/api/auth/user"];
     const shouldSkipRefresh = skipRefreshEndpoints.some(e => endpoint.includes(e));
     if (res.status === 401 && !shouldSkipRefresh) {
       try {
