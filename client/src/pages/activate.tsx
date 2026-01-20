@@ -15,7 +15,7 @@ const valuePoints = [
   },
   {
     icon: Shield,
-    text: "Use it only when screening actually matters",
+    text: "Keep it available for the moments that actually matter",
   },
 ];
 
@@ -91,13 +91,19 @@ export default function Activate() {
               Activate for $10/month
             </Button>
             
-            <button
-              onClick={handleSkip}
-              className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-2"
-              data-testid="button-skip-activation"
-            >
-              Skip for now — go to dashboard
-            </button>
+            <p className="text-xs text-muted-foreground text-center">
+              You can cancel anytime from your account settings.
+            </p>
+            
+            <div className="border-t border-border pt-3">
+              <button
+                onClick={handleSkip}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                data-testid="button-skip-activation"
+              >
+                Skip for now — go to dashboard
+              </button>
+            </div>
           </div>
         </CardContent>
       </Card>
