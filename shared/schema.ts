@@ -48,6 +48,8 @@ export const users = pgTable("users", {
   // Password reset
   passwordResetToken: varchar("password_reset_token"),
   passwordResetExpires: timestamp("password_reset_expires"),
+  // Cleanup email tracking (for one-time trial cohort cleanup)
+  cleanupEmailSentAt: timestamp("cleanup_email_sent_at"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
