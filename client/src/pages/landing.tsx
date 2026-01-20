@@ -1547,10 +1547,7 @@ export default function Landing() {
               $10/month - Cancel anytime - No contracts
             </p>
             <p className="text-base text-muted-foreground mb-8">
-              Annual option available if you prefer.{" "}
-              <Link href="/pricing" className="text-primary hover:underline" data-testid="link-pricing-details">
-                See details
-              </Link>
+              Annual option available if you prefer.
             </p>
             <Button
               size="lg"
