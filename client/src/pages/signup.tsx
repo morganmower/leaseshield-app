@@ -96,9 +96,9 @@ export default function Signup() {
       } else {
         toast({
           title: "Welcome to LeaseShield!",
-          description: "Your account is ready. Explore your landlord protection tools.",
+          description: "Your account is ready. Let's get you set up.",
         });
-        setLocation("/dashboard");
+        setLocation("/activate");
       }
     },
     onError: (error: Error) => {

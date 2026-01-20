@@ -65,6 +65,7 @@ import PropertyDetail from "@/pages/property-detail";
 import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
 import ScreeningExplain from "@/pages/screening-explain";
 import DashboardPreview from "@/pages/dashboard-preview";
+import Activate from "@/pages/activate";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -106,6 +107,7 @@ function Router() {
         <Route path="/blog" component={Blog} />
         <Route path="/blog/:slug" component={BlogPost} />
         <Route path="/subscribe" component={Subscribe} />
+        <Route path="/activate" component={Activate} />
         <Route path="/logos" component={LogoPicker} />
         <Route path="/logo-colors" component={LogoColors} />
         {/* Public dashboard preview */}
@@ -174,6 +176,7 @@ function Router() {
       <Route path="/rent-ledger" component={RentLedger} />
       <Route path="/legal-updates" component={LegalUpdatesPage} />
       <Route path="/subscribe" component={Subscribe} />
+      <Route path="/activate" component={Activate} />
       <Route path="/settings" component={Settings} />
       <Route path="/billing" component={Billing} />
       <Route path="/subscription" component={Billing} />

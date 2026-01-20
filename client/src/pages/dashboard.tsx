@@ -36,7 +36,7 @@ import { Link } from "wouter";
 import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { TrialConversionNudge } from "@/components/trial-conversion-nudge";
+import { TrialConversionNudge, ActivationReminder } from "@/components/trial-conversion-nudge";
 import leaseshieldIcon from "../assets/leaseshield-icon-v3.png";
 
 export default function Dashboard() {
@@ -309,6 +309,9 @@ export default function Dashboard() {
             </div>
           </Card>
         )}
+
+        {/* Activation Reminder for inactive users */}
+        <ActivationReminder />
 
         {/* Trial Conversion Nudge - Day 3-6 reminders */}
         <TrialConversionNudge />
