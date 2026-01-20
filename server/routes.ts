@@ -1150,18 +1150,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
             // Get billing interval and period end from subscription
             const billingInterval = subscription.items.data[0]?.plan?.interval || 'month';
             const periodEnd = (subscription as any).current_period_end;
-            const subscriptionEndsAt = periodEnd 
+            const currentPeriodEnd = periodEnd 
               ? new Date(periodEnd * 1000)
               : undefined;
             
             await storage.updateUserStripeInfo(userResults[0].id, {
               subscriptionStatus: status,
               billingInterval,
-              subscriptionEndsAt,
+              currentPeriodEnd,
+              // Only set subscriptionEndsAt if subscription is ending
+              subscriptionEndsAt: subscription.cancel_at_period_end ? currentPeriodEnd : undefined,
               // Clear payment failed timestamp if subscription is now active
               paymentFailedAt: status === 'active' ? null : undefined,
             });
-            console.log(`Updated user ${userResults[0].id} subscription: status=${status}, interval=${billingInterval}, ends=${subscriptionEndsAt?.toISOString()}`);
+            console.log(`Updated user ${userResults[0].id} subscription: status=${status}, interval=${billingInterval}, nextRenewal=${currentPeriodEnd?.toISOString()}`);
           }
           break;
         }

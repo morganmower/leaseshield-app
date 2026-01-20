@@ -40,6 +40,7 @@ interface User {
   lastName: string | null;
   subscriptionStatus: string | null;
   trialEndsAt: string | null;
+  currentPeriodEnd: string | null;
   subscriptionEndsAt: string | null;
   createdAt: string;
   isAdmin: boolean | null;
@@ -640,7 +641,7 @@ export default function AdminAnalyticsPage() {
                         <th className="text-left py-3 px-2 font-medium">Name</th>
                         <th className="text-left py-3 px-2 font-medium">Email</th>
                         <th className="text-left py-3 px-2 font-medium">Status</th>
-                        <th className="text-left py-3 px-2 font-medium">Subscription Ends</th>
+                        <th className="text-left py-3 px-2 font-medium">Next Renewal</th>
                         <th className="text-left py-3 px-2 font-medium">Joined</th>
                       </tr>
                     </thead>
@@ -679,10 +680,12 @@ export default function AdminAnalyticsPage() {
                               }
                             })()}
                           </td>
-                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-sub-ends-${user.id}`}>
-                            {user.subscriptionEndsAt
-                              ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
-                              : "—"}
+                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-next-renewal-${user.id}`}>
+                            {user.currentPeriodEnd
+                              ? format(new Date(user.currentPeriodEnd), "MMM d, yyyy")
+                              : user.subscriptionEndsAt
+                                ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
+                                : "—"}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
                             {format(new Date(user.createdAt), "MMM d, yyyy")}

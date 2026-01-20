@@ -30,6 +30,7 @@ export const users = pgTable("users", {
   subscriptionStatus: varchar("subscription_status"), // 'trialing', 'active', 'canceled', 'past_due'
   billingInterval: varchar("billing_interval"), // 'month' or 'year'
   trialEndsAt: timestamp("trial_ends_at"),
+  currentPeriodEnd: timestamp("current_period_end"), // Next renewal date from Stripe
   subscriptionEndsAt: timestamp("subscription_ends_at"),
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   renewalReminderSentAt: timestamp("renewal_reminder_sent_at"), // Track when we sent renewal reminder
