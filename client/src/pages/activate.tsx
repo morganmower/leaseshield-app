@@ -101,7 +101,7 @@ export default function Activate() {
                 className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
                 data-testid="button-skip-activation"
               >
-                Skip for now — go to dashboard
+                Skip for now - go to dashboard
               </button>
             </div>
           </div>
