@@ -1,0 +1,325 @@
+What to change on the website (exact placement + exact wording)
+A) Global rules (do these first)
+1) Replace every CTA that says “Start Free Trial”
+
+Replace with ONE of these (pick one and use consistently site-wide):
+
+Primary CTA text everywhere: Explain My Screening Report
+
+Secondary CTA text (if you need a second): Get Started
+
+Do not use “Free Trial” language anywhere on:
+
+Hero
+
+Pricing section
+
+Buttons
+
+Top navigation
+
+Footer
+
+2) Remove visible “7-day trial” mentions from homepage
+
+Do not mention trial duration, “no card required,” or “test everything.”
+
+3) Keep trial as a backdoor only
+
+If someone asks “can I try it first,” you can still offer it manually via support/sales. But it should not be advertised on the landing page.
+
+B) Landing page sections (exact copy)
+1) Top navigation (header)
+
+Primary nav button (top right):
+
+Button label: Explain My Screening Report
+
+Link: /signup (or wherever signup starts)
+
+Optional secondary link:
+
+Text: Log In
+
+Link: /login
+
+2) Hero (above the fold)
+
+Place this as your main hero block.
+
+Headline (H1)
+
+Confused by a Screening Report Right Now?
+
+Subheadline (1–2 lines)
+
+LeaseShield explains credit, criminal, and eviction results in plain English — flags risks and shows safe next steps.
+
+Price reassurance line (small text under subheadline)
+
+Only $10/month. Cancel anytime. No per-use fees.
+
+Primary CTA button
+
+Explain My Screening Report → links to /signup
+
+Trust/support line (tiny text under CTA)
+
+Works instantly with Western Verify and other providers.
+
+3) Insert a new section right after Hero: “When landlords use LeaseShield”
+
+This section is the behavioral fix. Put it immediately below the hero so people understand “when” it matters.
+
+Section title
+
+When landlords use LeaseShield
+
+Bullets (exact)
+
+When a credit score is borderline and you need clarity fast
+
+When collections, charge-offs, or past-due accounts show up
+
+When criminal or eviction results need context
+
+When you want to document a consistent decision later
+
+Closing line (bold or emphasized)
+
+Most landlords don’t use LeaseShield every day — they keep it active so they don’t have to guess when it matters.
+
+4) “How it works” (3 steps)
+
+Put this below the “When landlords use it” section.
+
+Section title
+
+How it works
+
+Step 1
+
+Title: Start an application
+Body: Send a simple online application link with ID and paystub uploads.
+
+Step 2
+
+Title: Run screening with one click
+Body: Applicants authorize screening and you send the order directly to Western Verify.
+
+Step 3
+
+Title: Understand results and decide confidently
+Body: Get plain-English explanations and next steps, plus support for adverse-action documentation.
+
+(Keep it simple. No buzzwords.)
+
+5) Pricing section (rewrite)
+
+This should come after “How it works.”
+
+Pricing header
+
+Simple Protection at $10/Month
+
+Pricing support line
+
+Cancel anytime • No contracts • No per-screening fees
+
+Add this line under pricing (important)
+
+Most landlords only need it 2–4 times per year — that’s $20–40 total for peace of mind.
+
+Show plans (exact labels)
+
+$10 / month
+
+$100 / year (add a small tag like Best value)
+
+Pricing CTA button
+
+Get Started → /signup
+
+Do not mention “trial” anywhere in pricing.
+
+6) Feature grouping (reorder + rename)
+
+If you have a features section, group them like this (in this order):
+
+Group 1 title
+
+Understand reports when you screen
+
+Plain-English credit explanations
+
+Criminal and eviction context
+
+Clear next steps for rental decisions
+
+Group 2 title
+
+Streamline the workflow
+
+Online applications with document uploads
+
+Send screening directly to Western Verify
+
+Everything organized in one place
+
+Group 3 title
+
+Protect your decision
+
+Consistency prompts to reduce risk
+
+Documentation support for adverse action
+
+Keep a simple audit trail
+
+7) FAQ section (add or replace)
+
+Put this near the bottom.
+
+FAQ 1
+
+Q: Do I need to use this every month?
+A: No. Most landlords don’t use LeaseShield every day — they keep it active so it’s there when an applicant comes up.
+
+FAQ 2
+
+Q: Does LeaseShield replace Western Verify screening?
+A: No. Western Verify provides the screening reports. LeaseShield helps you collect applications, send screening, and interpret results clearly.
+
+FAQ 3
+
+Q: Can I cancel anytime?
+A: Yes. You can cancel anytime. No contracts.
+
+FAQ 4 (optional but helpful)
+
+Q: What if I only have a few units?
+A: That’s common. LeaseShield is built for small and midsize landlords who want clarity and consistency when screening.
+
+C) Replit implementation package (copy/paste)
+
+If your landing page is React, the cleanest way is to centralize copy so you don’t miss a “Free Trial” button somewhere.
+
+Create a file like: src/content/landingCopy.ts
+
+export const landingCopy = {
+  navCta: "Explain My Screening Report",
+  navCtaHref: "/signup",
+
+  hero: {
+    h1: "Confused by a Screening Report Right Now?",
+    subheadline:
+      "LeaseShield explains credit, criminal, and eviction results in plain English — flags risks and shows safe next steps.",
+    reassurance: "Only $10/month. Cancel anytime. No per-use fees.",
+    primaryCta: "Explain My Screening Report",
+    primaryCtaHref: "/signup",
+    support: "Works instantly with Western Verify and other providers.",
+  },
+
+  whenUsed: {
+    title: "When landlords use LeaseShield",
+    bullets: [
+      "When a credit score is borderline and you need clarity fast",
+      "When collections, charge-offs, or past-due accounts show up",
+      "When criminal or eviction results need context",
+      "When you want to document a consistent decision later",
+    ],
+    anchorLine:
+      "Most landlords don’t use LeaseShield every day — they keep it active so they don’t have to guess when it matters.",
+  },
+
+  howItWorks: {
+    title: "How it works",
+    steps: [
+      {
+        title: "Start an application",
+        body: "Send a simple online application link with ID and paystub uploads.",
+      },
+      {
+        title: "Run screening with one click",
+        body: "Applicants authorize screening and you send the order directly to Western Verify.",
+      },
+      {
+        title: "Understand results and decide confidently",
+        body: "Get plain-English explanations and next steps, plus support for adverse-action documentation.",
+      },
+    ],
+  },
+
+  pricing: {
+    title: "Simple Protection at $10/Month",
+    support: "Cancel anytime • No contracts • No per-screening fees",
+    psychology:
+      "Most landlords only need it 2–4 times per year — that’s $20–40 total for peace of mind.",
+    plans: [
+      { label: "$10 / month", tag: "" },
+      { label: "$100 / year", tag: "Best value" },
+    ],
+    cta: "Get Started",
+    ctaHref: "/signup",
+  },
+
+  features: [
+    {
+      title: "Understand reports when you screen",
+      bullets: [
+        "Plain-English credit explanations",
+        "Criminal and eviction context",
+        "Clear next steps for rental decisions",
+      ],
+    },
+    {
+      title: "Streamline the workflow",
+      bullets: [
+        "Online applications with document uploads",
+        "Send screening directly to Western Verify",
+        "Everything organized in one place",
+      ],
+    },
+    {
+      title: "Protect your decision",
+      bullets: [
+        "Consistency prompts to reduce risk",
+        "Documentation support for adverse action",
+        "Keep a simple audit trail",
+      ],
+    },
+  ],
+
+  faqs: [
+    {
+      q: "Do I need to use this every month?",
+      a: "No. Most landlords don’t use LeaseShield every day — they keep it active so it’s there when an applicant comes up.",
+    },
+    {
+      q: "Does LeaseShield replace Western Verify screening?",
+      a: "No. Western Verify provides the screening reports. LeaseShield helps you collect applications, send screening, and interpret results clearly.",
+    },
+    { q: "Can I cancel anytime?", a: "Yes. You can cancel anytime. No contracts." },
+    {
+      q: "What if I only have a few units?",
+      a: "That’s common. LeaseShield is built for small and midsize landlords who want clarity and consistency when screening.",
+    },
+  ],
+};
+
+
+Then in your landing page component, replace hardcoded strings with landingCopy.* and ensure every button label matches the new CTA rules.
+
+D) Final checklist to give Replit (so nothing gets missed)
+
+Hero: Replace headline/subheadline/reassurance/CTA with the exact hero copy above
+
+Add section right below hero: “When landlords use LeaseShield” + anchor line
+
+Pricing: Replace pricing header/support line, add the 2–4 times/year line, remove trial text
+
+CTAs site-wide: Replace all “Start Free Trial” → Explain My Screening Report or Get Started
+
+FAQ: Add the 4 FAQs above (at least the first 3)
+
+Remove all visible trial mentions from homepage and pricing
