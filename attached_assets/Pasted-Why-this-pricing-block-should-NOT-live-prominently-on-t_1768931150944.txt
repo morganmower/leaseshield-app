@@ -1,0 +1,117 @@
+Why this pricing block should NOT live prominently on the homepage
+
+Your homepage’s primary job is not to sell a plan.
+It is to answer one question:
+
+“Can this help me right now with a screening decision?”
+
+Right now, this section pulls the visitor into:
+
+Plan comparison
+
+Savings math
+
+“Best value” evaluation
+
+Commitment thinking
+
+That’s too early for your product.
+
+You already learned this lesson with trials.
+This is the same issue in a different costume.
+
+The core problem with this section (objectively)
+1️⃣ It reintroduces decision friction
+
+Landlords seeing this think:
+
+“Monthly vs annual?”
+
+“How often will I use this?”
+
+“Is this worth committing to?”
+
+That thinking delays action, which is deadly for an event-triggered product.
+
+2️⃣ “Best Value” + “Save $20” conflicts with your positioning
+
+Your positioning is:
+
+Use it only when it matters.
+
+But this block says:
+
+Optimize your subscription choice.
+
+Those two messages fight each other.
+
+You just removed this language from the activation flow for good reason — it shouldn’t live loudly on the homepage either.
+
+3️⃣ Homepage ≠ Checkout
+
+This pricing layout is checkout-grade UI:
+
+Feature checklists
+
+Savings math
+
+Value badges
+
+Dual CTAs
+
+That belongs after intent is established, not before.
+
+What you SHOULD do instead (best practice for your product)
+✅ Keep pricing accessible, but not dominant
+
+Here’s the correct structure:
+
+Recommended homepage structure (high-level)
+1️⃣ Hero (primary)
+
+Pain-first headline
+
+“Explain My Screening Report” CTA
+
+No pricing math
+
+No plan comparison
+
+2️⃣ How it helps (secondary)
+
+Decoder
+
+Applications → screening
+
+Compliance protection
+
+3️⃣ Simple reassurance pricing (light touch)
+
+Instead of the full pricing cards, use one calm block:
+
+Simple pricing
+$10/month • Cancel anytime • No contracts
+Annual option available if you prefer.
+
+That’s it.
+No cards. No badges. No savings math.
+
+4️⃣ Dedicated Pricing page
+
+👉 This full pricing comparison belongs on /pricing only.
+
+People who want details will click it.
+People who don’t won’t be forced to decide early.
+
+What to do with this exact block (concrete instructions)
+❌ Remove from homepage
+
+Do not show this full two-card pricing section on the homepage.
+
+✅ Keep it on:
+
+/pricing
+
+Payment / subscribe page
+
+Maybe a footer link
