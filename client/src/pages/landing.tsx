@@ -1530,165 +1530,43 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
+      {/* Pricing - Simple Reassurance */}
       <section id="pricing" className="py-20 md:py-28">
-        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center mb-12"
+            className="text-center"
           >
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              {landingCopy.pricing.title}
+              Simple Pricing
             </h2>
-            <p className="text-base sm:text-lg text-muted-foreground px-4">
-              {landingCopy.pricing.support}
+            <p className="text-xl sm:text-2xl text-foreground font-semibold mb-2">
+              $10/month - Cancel anytime - No contracts
+            </p>
+            <p className="text-base text-muted-foreground mb-8">
+              Annual option available if you prefer.{" "}
+              <Link href="/pricing" className="text-primary hover:underline" data-testid="link-pricing-details">
+                See details
+              </Link>
+            </p>
+            <Button
+              size="lg"
+              className="bg-brand-500 hover:bg-brand-600 text-white text-lg min-h-[48px] px-8"
+              onClick={() => {
+                window.location.href = "/signup";
+              }}
+              data-testid="button-pricing-get-started"
+            >
+              Get Started
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
+            <p className="text-sm text-muted-foreground mt-6 italic">
+              {landingCopy.pricing.psychology}
             </p>
           </motion.div>
-
-          <motion.div
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="grid md:grid-cols-2 gap-6 max-w-4xl mx-auto"
-          >
-            {/* Monthly Card */}
-            <Card className="p-6 sm:p-8 border-2 border-brand-200 shadow-lg flex flex-col">
-              <div className="text-center mb-6 h-[200px] flex flex-col justify-center">
-                <div className="flex items-center justify-center gap-2 mb-2 h-6">
-                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-brand-600" />
-                  <Badge variant="outline" className="text-xs sm:text-sm">Standard</Badge>
-                </div>
-                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Monthly</h3>
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-foreground">$10</span>
-                  <span className="text-base sm:text-lg text-muted-foreground">/month</span>
-                </div>
-                <p className="text-xs sm:text-sm text-brand-600 font-medium mt-3">
-                  Introductory pricing • Lock in this rate today
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">Cancel anytime</p>
-              </div>
-
-              <ul className="space-y-3 mb-6 sm:mb-8 flex-1">
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Screening report decoder</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Rental applications with screening</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
-                </li>
-              </ul>
-
-              <Button
-                size="lg"
-                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
-                onClick={() => {
-                  localStorage.setItem('billingPeriod', 'monthly');
-                  window.location.href = "/signup";
-                }}
-                data-testid="button-pricing-monthly"
-              >
-                Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Card>
-
-            {/* Annual Card - Best Value */}
-            <Card className="p-6 sm:p-8 border-2 border-success/40 shadow-lg relative overflow-hidden flex flex-col">
-              <div className="absolute top-0 right-0 bg-success text-success-foreground px-4 py-1 text-xs font-semibold rounded-bl-lg">
-                SAVE $20
-              </div>
-              <div className="text-center mb-6 h-[200px] flex flex-col justify-center">
-                <div className="flex items-center justify-center gap-2 mb-2 h-6">
-                  <Award className="h-5 w-5 sm:h-6 sm:w-6 text-success" />
-                  <Badge className="bg-success text-success-foreground text-xs">Best Value</Badge>
-                </div>
-                <h3 className="font-display text-xl sm:text-2xl font-semibold mb-2">Annual</h3>
-                <div className="flex items-baseline justify-center gap-2">
-                  <span className="text-4xl sm:text-5xl font-bold text-success">$100</span>
-                  <span className="text-base sm:text-lg text-muted-foreground">/year</span>
-                </div>
-                <p className="text-xs sm:text-sm text-success font-medium mt-3">
-                  Introductory pricing • Save $20 today
-                </p>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-2">
-                  <span className="line-through">$120</span> • Just $8.33/month
-                </p>
-              </div>
-
-              <ul className="space-y-3 mb-6 sm:mb-8 flex-1">
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Screening report decoder</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">State-specific leases & legal notices</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Rental applications with screening</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Move-in / move-out checklists</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Adverse action letter templates</span>
-                </li>
-                <li className="flex items-center gap-2 sm:gap-3">
-                  <CheckCircle2 className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600 flex-shrink-0" />
-                  <span className="text-sm sm:text-base">Monthly legal & regulation updates</span>
-                </li>
-              </ul>
-
-              <Button
-                size="lg"
-                className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
-                onClick={() => {
-                  localStorage.setItem('billingPeriod', 'yearly');
-                  window.location.href = "/signup";
-                }}
-                data-testid="button-pricing-annual"
-              >
-                Save $20 – Get Started
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Card>
-          </motion.div>
-
-          {/* Psychology Line */}
-          <motion.p
-            initial="hidden"
-            whileInView="visible"
-            viewport={{ once: true }}
-            variants={fadeInUp}
-            className="text-center text-base text-muted-foreground mt-8 italic"
-          >
-            {landingCopy.pricing.psychology}
-          </motion.p>
 
           {/* Why LeaseShield Section */}
           <motion.div

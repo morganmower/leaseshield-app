@@ -43,14 +43,10 @@ export const landingCopy = {
   },
 
   pricing: {
-    title: "Simple Protection at $10/Month",
-    support: "Cancel anytime • No contracts • No per-screening fees",
+    title: "Simple Pricing",
+    support: "$10/month - Cancel anytime - No contracts",
     psychology:
       "Most landlords only need it 2-4 times per year. That's $20-40 total for peace of mind.",
-    plans: [
-      { label: "$10 / month", tag: "" },
-      { label: "$100 / year", tag: "Best value" },
-    ],
     cta: "Get Started",
     ctaHref: "/signup",
   },
