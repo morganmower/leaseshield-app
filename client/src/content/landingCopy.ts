@@ -46,7 +46,7 @@ export const landingCopy = {
     title: "Simple Pricing",
     support: "$10/month - Cancel anytime - No contracts",
     psychology:
-      "Most landlords only need it 2-4 times per year. That's $20-40 total for peace of mind.",
+      "Most landlords only face these decisions a few times per year. LeaseShield is there when they do.",
     cta: "Get Started",
     ctaHref: "/signup",
   },
