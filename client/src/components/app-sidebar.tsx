@@ -309,7 +309,7 @@ export function AppSidebar() {
                       : user?.email || "User"}
                   </span>
                   <span className="text-xs text-muted-foreground truncate w-full">
-                    {user?.subscriptionStatus === 'active' ? 'Active Subscriber' : user?.subscriptionStatus === 'trialing' ? 'Free Trial' : 'Free'}
+                    {user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'cancel_at_period_end' ? 'Active' : 'Inactive'}
                   </span>
                 </div>
               </div>

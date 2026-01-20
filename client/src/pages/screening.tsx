@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getAccessToken, apiRequest } from "@/lib/queryClient";
+import { useIsActivated, ActivationPrompt } from "@/components/activation-gate";
 import {
   Accordion,
   AccordionContent,
@@ -456,7 +457,16 @@ export default function Screening() {
   const [criminalClassifiedTopic, setCriminalClassifiedTopic] = useState<string | null>(null);
   const [criminalFeedbackSubmitted, setCriminalFeedbackSubmitted] = useState<'helpful' | 'not_helpful' | null>(null);
 
+  const isActivated = useIsActivated();
+  const [showCreditActivationPrompt, setShowCreditActivationPrompt] = useState(false);
+  const [showCriminalActivationPrompt, setShowCriminalActivationPrompt] = useState(false);
+
   const handleExplain = async () => {
+    if (!isActivated) {
+      setShowCreditActivationPrompt(true);
+      return;
+    }
+    
     const input = userQuestion.trim();
     
     if (!input) {
@@ -522,6 +532,11 @@ export default function Screening() {
   };
 
   const handleCriminalExplain = async () => {
+    if (!isActivated) {
+      setShowCriminalActivationPrompt(true);
+      return;
+    }
+    
     const input = criminalUserQuestion.trim();
     
     if (!input) {
@@ -876,6 +891,10 @@ export default function Screening() {
                 {isExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
               </Button>
 
+              {showCreditActivationPrompt && (
+                <ActivationPrompt featureName="use the Credit Report Decoder" inline />
+              )}
+
               {isExplaining && (
                 <div className="bg-muted/50 border border-muted rounded-lg p-4">
                   <div className="flex items-center gap-2">
@@ -1101,6 +1120,10 @@ export default function Screening() {
                 <Lightbulb className="mr-2 h-4 w-4" />
                 {isCriminalExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
               </Button>
+
+              {showCriminalActivationPrompt && (
+                <ActivationPrompt featureName="use the Criminal/Eviction Decoder" inline />
+              )}
 
               {isCriminalExplaining && (
                 <div className="bg-muted/50 border border-muted rounded-lg p-4">

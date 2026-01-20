@@ -1,0 +1,224 @@
+What your current logic is doing (plain English)
+
+Right now the flow is:
+
+User logs in
+
+They land on Activate LeaseShield
+
+BUT:
+
+Left nav is fully clickable
+
+They can access Screening Decoder
+
+They can explore features
+
+The activation screen disappears
+
+Result:
+
+“I got what I needed without deciding.”
+
+That is exactly the same behavioral bug you just fixed everywhere else — it’s just reappearing one layer deeper.
+
+The core principle you need to enforce
+
+Users should be able to explore the product, but not resolve the core job without activating.
+
+For LeaseShield, the core job is:
+
+Explaining screening results
+
+Making defensible decisions
+
+Running the real workflow (applications → screening → decision)
+
+If they can do that for free, you’re training the wrong behavior.
+
+What guardrails you SHOULD add (this is the correct balance)
+✅ Rule #1: Exploration allowed
+
+Users should be able to:
+
+See the dashboard shell
+
+Click around
+
+Understand what’s available
+
+Feel oriented
+
+This builds trust.
+
+🚫 Rule #2: Core actions require activation
+
+Users should not be able to:
+
+Run the Screening Decoder
+
+Submit an application
+
+Generate explanations
+
+Create documents
+
+Use compliance tools
+
+Those are activation-gated actions.
+
+The correct UX pattern (industry-standard)
+When NOT activated:
+
+Left nav items remain visible
+…but clicking a core feature does one of these:
+
+Option A (best): Inline activation prompt
+
+They stay on the page, but see:
+
+🔒 Activate LeaseShield to use this feature
+Keep it ready so you don’t have to guess when your next applicant comes up.
+
+Activate for $10/month
+Cancel anytime.
+
+This is the best UX. Calm, contextual, no blocking.
+
+Option B (acceptable): Redirect back to /activate
+
+If they click a gated feature:
+
+Redirect to /activate
+
+Preserve the message:
+“This feature requires activation.”
+
+Less elegant, but effective.
+
+What you should NOT do
+
+🚫 Do not:
+
+Hard-lock the entire app
+
+Hide the left nav
+
+Throw modals constantly
+
+Allow full decoder usage “just this once”
+
+Let them paste screening data and get output
+
+Those all either:
+
+Kill trust
+
+Or kill conversion
+
+Very important nuance (this will help conversion)
+Let them see empty states
+
+For example, if they click Screening Decoder:
+
+Show:
+
+The input box
+
+Example questions
+
+Sample placeholders
+
+But when they click “Get Explanation”:
+
+👉 Block and show activation prompt.
+
+This does two things:
+
+Shows exactly what they’ll get
+
+Forces the decision at the moment of value
+
+That’s the highest-converting pattern.
+
+What’s happening today (and why it’s dangerous)
+
+Right now, a user can:
+
+Skip activation
+
+Click Screening Decoder
+
+Get real value
+
+Leave satisfied
+
+Never pay
+
+That’s not generosity — that’s leakage.
+
+You’re not being “nice,” you’re removing the reason to activate.
+
+Exact changes I recommend (clear list)
+1. Add an isActive check
+
+Every core action should check:
+
+if (!user.isActive) → block + prompt activation
+
+
+Core actions include:
+
+Run decoder
+
+Submit application
+
+Generate documents
+
+Use compliance tools
+
+2. Allow navigation, block execution
+
+Nav stays clickable
+
+Pages load
+
+Actions are gated
+
+This preserves trust and clarity.
+
+3. Make activation sticky until resolved
+
+If a user skips activation:
+
+Show a subtle banner:
+
+LeaseShield is inactive — activate when you want it ready
+
+Not dismissible forever. Calm reminder.
+
+Final answer to your question
+
+“Is this how it’s supposed to work?”
+
+No — not fully.
+
+✔️ Users should be able to skip activation
+❌ Users should not be able to complete the core job without activating
+
+Add execution guardrails, not access walls.
+
+Bottom line
+
+You’ve designed the right activation screen.
+Now you need to protect the value behind it.
+
+Once you add these guardrails:
+
+Activation rates will go up
+
+Free riders disappear
+
+The product feels more intentional
+
+Your pricing finally makes sense behaviorally
