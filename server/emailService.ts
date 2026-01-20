@@ -1591,6 +1591,277 @@ View your Stripe dashboard for more details.
 
     return await this.sendEmail({ email: adminEmail }, template);
   }
+
+  // =========================================================================
+  // NEW LIFECYCLE EMAILS (3-email strategy: signup, 3-day nudge, close loop)
+  // =========================================================================
+
+  /**
+   * Email #1: Sent immediately after signup
+   * Sets expectations, no pressure, framing email
+   */
+  async sendSignupWelcomeEmail(user: EmailRecipient): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+
+    const template: EmailTemplate = {
+      subject: 'Welcome to LeaseShield',
+      textBody: `Hi ${firstName},
+
+Welcome to LeaseShield. I'm Morgan, and I built this because landlords like us shouldn't have to figure out legal compliance alone.
+
+Most landlords only face these decisions a few times per year. LeaseShield is there when you do.
+
+Here's what's inside:
+- State-specific legal templates that actually match your state's laws
+- Compliance guidance that tells you what matters and why
+- A screening decoder that helps you understand credit reports and background checks
+- Step-by-step workflows for handling tenant issues the right way
+
+Take your time exploring. When you're ready to use the tools, you can activate your account for $10/month or $100/year.
+
+No rush. No pressure. Just real tools for real landlords.
+
+Best,
+Morgan
+
+P.S. If you have questions, just reply to this email. I read every one.
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .feature-list { background: #f0fdfa; padding: 20px; border-left: 4px solid #14b8a6; margin: 20px 0; border-radius: 0 6px 6px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+    .signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Welcome to LeaseShield</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <p>I'm Morgan, and I built this because landlords like us shouldn't have to figure out legal compliance alone.</p>
+
+      <p style="font-size: 17px; color: #475569;"><em>Most landlords only face these decisions a few times per year. LeaseShield is there when you do.</em></p>
+
+      <div class="feature-list">
+        <p style="margin-top: 0;"><strong>Here's what's inside:</strong></p>
+        <ul style="margin-bottom: 0;">
+          <li>State-specific legal templates that actually match your state's laws</li>
+          <li>Compliance guidance that tells you what matters and why</li>
+          <li>A screening decoder that helps you understand credit reports and background checks</li>
+          <li>Step-by-step workflows for handling tenant issues the right way</li>
+        </ul>
+      </div>
+
+      <p>Take your time exploring. When you're ready to use the tools, you can activate your account for <strong>$10/month</strong> or <strong>$100/year</strong>.</p>
+
+      <p>No rush. No pressure. Just real tools for real landlords.</p>
+
+      <center>
+        <a href="${this.getBaseUrl()}/dashboard" class="cta-button">
+          Explore LeaseShield
+        </a>
+      </center>
+
+      <div class="signature">
+        <p style="margin-bottom: 5px;">Best,<br><strong>Morgan</strong></p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 10px;">P.S. If you have questions, just reply to this email. I read every one.</p>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
+  /**
+   * Email #2: Sent 3 days after signup IF user has NOT subscribed
+   * Gentle nudge, value reminder, still no pressure
+   */
+  async sendThreeDayNudgeEmail(user: EmailRecipient): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+
+    const template: EmailTemplate = {
+      subject: 'How can LeaseShield help you?',
+      textBody: `Hi ${firstName},
+
+Just checking in. I noticed you signed up a few days ago and wanted to see if there's anything I can help with.
+
+Maybe you're dealing with:
+- A lease that needs updating for your state
+- A tenant situation you're not sure how to handle
+- Background check results that don't quite make sense
+
+If any of that sounds familiar, LeaseShield was built for exactly those moments.
+
+You can browse everything for free. When you need to download a document or run the screening decoder, that's when you'd activate for $10/month.
+
+If you have questions about whether LeaseShield is right for your situation, just hit reply. I'm happy to help.
+
+Best,
+Morgan
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #475569 0%, #334155 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .situation-list { background: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+    .signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">How can LeaseShield help?</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <p>Just checking in. I noticed you signed up a few days ago and wanted to see if there's anything I can help with.</p>
+
+      <div class="situation-list">
+        <p style="margin-top: 0;"><strong>Maybe you're dealing with:</strong></p>
+        <ul style="margin-bottom: 0;">
+          <li>A lease that needs updating for your state</li>
+          <li>A tenant situation you're not sure how to handle</li>
+          <li>Background check results that don't quite make sense</li>
+        </ul>
+      </div>
+
+      <p>If any of that sounds familiar, LeaseShield was built for exactly those moments.</p>
+
+      <p>You can browse everything for free. When you need to download a document or run the screening decoder, that's when you'd activate for <strong>$10/month</strong>.</p>
+
+      <center>
+        <a href="${this.getBaseUrl()}/templates" class="cta-button">
+          Browse Templates
+        </a>
+      </center>
+
+      <div class="signature">
+        <p style="margin-bottom: 5px;">Best,<br><strong>Morgan</strong></p>
+        <p style="font-size: 13px; color: #64748b; margin-top: 10px;">If you have questions about whether LeaseShield is right for your situation, just hit reply. I'm happy to help.</p>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
+
+  /**
+   * Email #3: Sent 10-14 days after signup IF user has NOT subscribed
+   * Close the loop, then silence. Respectful goodbye.
+   */
+  async sendCloseTheLoopEmail(user: EmailRecipient): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+
+    const template: EmailTemplate = {
+      subject: 'Still here if you need us',
+      textBody: `Hi ${firstName},
+
+This is my last email unless you activate your account.
+
+I know not everyone needs LeaseShield right now, and that's okay. Landlord needs come in waves. A lease renewal. A tricky tenant situation. A background check that doesn't make sense.
+
+When those moments come, we'll be here.
+
+If you'd like to activate now, it's $10/month or $100/year. If not, no hard feelings. Your account stays active so you can come back anytime.
+
+Thanks for giving LeaseShield a look.
+
+Best,
+Morgan
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.7; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #64748b 0%, #475569 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+    .signature { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e2e8f0; }
+    .highlight-box { background: #f0fdfa; padding: 20px; border-radius: 8px; margin: 20px 0; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin: 0;">Still here if you need us</h1>
+    </div>
+    <div class="content">
+      <p>Hi ${firstName},</p>
+      
+      <p>This is my last email unless you activate your account.</p>
+
+      <p>I know not everyone needs LeaseShield right now, and that's okay. Landlord needs come in waves. A lease renewal. A tricky tenant situation. A background check that doesn't make sense.</p>
+
+      <p><strong>When those moments come, we'll be here.</strong></p>
+
+      <div class="highlight-box">
+        <p style="margin: 0;"><strong>$10/month</strong> or <strong>$100/year</strong></p>
+        <a href="${this.getBaseUrl()}/subscribe" class="cta-button" style="margin-top: 15px; margin-bottom: 0;">
+          Activate Now
+        </a>
+      </div>
+
+      <p style="color: #64748b;">If not, no hard feelings. Your account stays active so you can come back anytime.</p>
+
+      <div class="signature">
+        <p style="margin-bottom: 5px;">Thanks for giving LeaseShield a look.</p>
+        <p style="margin-bottom: 5px;">Best,<br><strong>Morgan</strong></p>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>&copy; ${new Date().getFullYear()} LeaseShield App. All rights reserved.</p>
+    </div>
+  </div>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
 }
 
 export const emailService = new EmailService();
