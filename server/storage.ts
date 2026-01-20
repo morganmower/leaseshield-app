@@ -227,6 +227,7 @@ export interface IStorage {
   trackEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent>;
   getUserTrialReminderEvent(userId: string): Promise<AnalyticsEvent | undefined>;
   getUserTrialExpiredEvent(userId: string): Promise<AnalyticsEvent | undefined>;
+  getAnalyticsEventByUserAndType(userId: string, eventType: string): Promise<AnalyticsEvent | undefined>;
   getAnalyticsSummary(): Promise<any>;
   getDetailedEngagementEvents(filters?: { eventType?: string; limit?: number; month?: number; year?: number }): Promise<Array<{
     id: string;
@@ -886,6 +887,20 @@ export class DatabaseStorage implements IStorage {
         and(
           eq(analyticsEvents.userId, userId),
           eq(analyticsEvents.eventType, 'trial_expired_email_sent')
+        )
+      )
+      .limit(1);
+    return event;
+  }
+
+  async getAnalyticsEventByUserAndType(userId: string, eventType: string): Promise<AnalyticsEvent | undefined> {
+    const [event] = await db
+      .select()
+      .from(analyticsEvents)
+      .where(
+        and(
+          eq(analyticsEvents.userId, userId),
+          eq(analyticsEvents.eventType, eventType)
         )
       )
       .limit(1);

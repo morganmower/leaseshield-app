@@ -97,6 +97,15 @@ router.post('/signup', async (req: Request, res: Response) => {
 
     res.cookie('refreshToken', refreshTokenValue, getCookieOptions(req));
 
+    // Send lifecycle Email #1: Signup welcome email (async, non-blocking)
+    if (newUser.email) {
+      emailService.sendSignupWelcomeEmail({
+        email: newUser.email,
+        firstName: newUser.firstName || undefined,
+        lastName: newUser.lastName || undefined,
+      }).catch(err => console.error('Failed to send signup welcome email:', err));
+    }
+
     return res.status(201).json({
       message: 'Account created successfully',
       accessToken,

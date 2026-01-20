@@ -6,7 +6,7 @@ import { emailService } from "./emailService";
 import { db } from "./db";
 import * as schema from "@shared/schema";
 import { users, analyticsEvents } from "@shared/schema";
-import { and, eq, lt, gte, sql } from "drizzle-orm";
+import { and, eq, lt, gte, sql, not } from "drizzle-orm";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
 // Note: Legislative monitoring methods now imported dynamically via legislativeMonitoringService
@@ -123,6 +123,138 @@ export class ScheduledJobs {
   private databaseBackupInterval: NodeJS.Timeout | null = null;
   private nightlyIngestInterval: NodeJS.Timeout | null = null;
   private monthlyPublishInterval: NodeJS.Timeout | null = null;
+  private lifecycleEmailsInterval: NodeJS.Timeout | null = null;
+
+  // =========================================================================
+  // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
+  // Email #1: Immediate (sent in authRoutes.ts on signup)
+  // Email #2: 3 days after signup if NOT subscribed
+  // Email #3: 10-14 days after signup if NOT subscribed, then silence
+  // =========================================================================
+
+  /**
+   * Send lifecycle emails based on signup date (not trial countdown)
+   * Runs every 6 hours to catch users at the right time
+   */
+  async processLifecycleEmails(): Promise<void> {
+    try {
+      console.log('📧 Processing lifecycle emails...');
+
+      const now = new Date();
+      
+      // Email #2: 3-day nudge (users who signed up 3 days ago, not subscribed)
+      await this.sendThreeDayNudgeEmails(now);
+      
+      // Email #3: Close the loop (users who signed up 12 days ago, not subscribed)
+      await this.sendCloseTheLoopEmails(now);
+
+      console.log('✅ Lifecycle emails processed');
+    } catch (error) {
+      console.error('❌ Error processing lifecycle emails:', error);
+    }
+  }
+
+  private async sendThreeDayNudgeEmails(now: Date): Promise<void> {
+    // Find users who signed up 3 days ago (between 72-78 hours ago) and are NOT active subscribers
+    const threeDaysAgo = new Date(now.getTime() - 72 * 60 * 60 * 1000);
+    const threeDaysAndSixHoursAgo = new Date(now.getTime() - 78 * 60 * 60 * 1000);
+
+    const eligibleUsers = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          // Signed up in the right window
+          gte(users.createdAt, threeDaysAndSixHoursAgo),
+          lt(users.createdAt, threeDaysAgo),
+          // Not an active subscriber
+          not(eq(users.subscriptionStatus, 'active'))
+        )
+      );
+
+    console.log(`  Found ${eligibleUsers.length} users for 3-day nudge email`);
+
+    for (const user of eligibleUsers) {
+      if (!user.email) continue;
+
+      // Check if we already sent this email
+      const existingEvent = await storage.getAnalyticsEventByUserAndType(
+        user.id,
+        'lifecycle_email_3day_sent'
+      );
+
+      if (existingEvent) {
+        console.log(`  Skipping ${user.email} - 3-day nudge already sent`);
+        continue;
+      }
+
+      // Send the email
+      console.log(`  Sending 3-day nudge to ${user.email}...`);
+      await emailService.sendThreeDayNudgeEmail({
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      });
+
+      // Track that we sent it
+      await storage.trackEvent({
+        userId: user.id,
+        eventType: 'lifecycle_email_3day_sent',
+        eventData: { sentAt: now.toISOString() },
+      });
+    }
+  }
+
+  private async sendCloseTheLoopEmails(now: Date): Promise<void> {
+    // Find users who signed up 12 days ago (between 12 and 12.25 days ago) and are NOT active subscribers
+    const twelveDaysAgo = new Date(now.getTime() - 12 * 24 * 60 * 60 * 1000);
+    const twelveDaysAndSixHoursAgo = new Date(now.getTime() - (12 * 24 + 6) * 60 * 60 * 1000);
+
+    const eligibleUsers = await db
+      .select()
+      .from(users)
+      .where(
+        and(
+          // Signed up in the right window
+          gte(users.createdAt, twelveDaysAndSixHoursAgo),
+          lt(users.createdAt, twelveDaysAgo),
+          // Not an active subscriber
+          not(eq(users.subscriptionStatus, 'active'))
+        )
+      );
+
+    console.log(`  Found ${eligibleUsers.length} users for close-the-loop email`);
+
+    for (const user of eligibleUsers) {
+      if (!user.email) continue;
+
+      // Check if we already sent this email
+      const existingEvent = await storage.getAnalyticsEventByUserAndType(
+        user.id,
+        'lifecycle_email_closeloop_sent'
+      );
+
+      if (existingEvent) {
+        console.log(`  Skipping ${user.email} - close-the-loop already sent`);
+        continue;
+      }
+
+      // Send the email
+      console.log(`  Sending close-the-loop email to ${user.email}...`);
+      await emailService.sendCloseTheLoopEmail({
+        email: user.email,
+        firstName: user.firstName || undefined,
+        lastName: user.lastName || undefined,
+      });
+
+      // Track that we sent it
+      await storage.trackEvent({
+        userId: user.id,
+        eventType: 'lifecycle_email_closeloop_sent',
+        eventData: { sentAt: now.toISOString() },
+      });
+    }
+  }
   // Check for trials ending soon and send reminder emails (2 days before)
   async checkTrialReminders(): Promise<void> {
     try {
@@ -967,6 +1099,13 @@ Manage preferences: ${baseUrl}/settings
     // See: Email #1 (signup), Email #2 (3-day), Email #3 (10-14 day close the loop)
     // Old trial-based emails are no longer sent
 
+    // NEW: Process lifecycle emails every 6 hours (3-day nudge, 12-day close the loop)
+    this.lifecycleEmailsInterval = setInterval(
+      () => this.processLifecycleEmails(),
+      6 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.processLifecycleEmails(), 2 * 60 * 1000);
+
     // Check for legislative monitoring daily
     this.legislativeMonitoringInterval = setInterval(
       () => this.checkLegislativeMonitoring(),
@@ -1044,6 +1183,11 @@ Manage preferences: ${baseUrl}/settings
     if (this.trialExpirationEnrollmentInterval) {
       clearInterval(this.trialExpirationEnrollmentInterval);
       this.trialExpirationEnrollmentInterval = null;
+    }
+
+    if (this.lifecycleEmailsInterval) {
+      clearInterval(this.lifecycleEmailsInterval);
+      this.lifecycleEmailsInterval = null;
     }
 
     if (this.legislativeMonitoringInterval) {
