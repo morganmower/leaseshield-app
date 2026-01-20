@@ -962,26 +962,10 @@ Manage preferences: ${baseUrl}/settings
     // Set up email sequences on startup
     await setupEmailSequences();
 
-    // Check for trial reminders every 6 hours
-    this.trialReminderInterval = setInterval(
-      () => this.checkTrialReminders(),
-      6 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.checkTrialReminders(), 60 * 1000);
-
-    // Check for trial expiry every 6 hours
-    this.trialExpiryInterval = setInterval(
-      () => this.checkTrialExpiry(),
-      6 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.checkTrialExpiry(), 90 * 1000);
-
-    // Check for trial expiration enrollments every 6 hours
-    this.trialExpirationEnrollmentInterval = setInterval(
-      () => this.checkTrialExpirationEnrollments(),
-      6 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.checkTrialExpirationEnrollments(), 2 * 60 * 1000);
+    // DISABLED: Trial reminder/expiration emails removed per new email strategy
+    // The new lifecycle uses 3 simple emails based on signup date, not trial countdown
+    // See: Email #1 (signup), Email #2 (3-day), Email #3 (10-14 day close the loop)
+    // Old trial-based emails are no longer sent
 
     // Check for legislative monitoring daily
     this.legislativeMonitoringInterval = setInterval(
