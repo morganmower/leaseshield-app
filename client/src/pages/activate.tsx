@@ -1,4 +1,4 @@
-import { Link, useLocation } from "wouter";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Shield, FileText, Scale } from "lucide-react";
@@ -20,14 +20,12 @@ const valuePoints = [
 ];
 
 export default function Activate() {
-  const [, setLocation] = useLocation();
-
   const handleActivate = () => {
-    setLocation("/subscribe");
+    window.location.href = "/subscribe";
   };
 
   const handleSkip = () => {
-    setLocation("/dashboard");
+    window.location.href = "/dashboard";
   };
 
   return (
