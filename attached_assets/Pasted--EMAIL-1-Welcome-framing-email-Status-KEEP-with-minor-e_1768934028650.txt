@@ -1,0 +1,158 @@
+✅ EMAIL #1 (Welcome / framing email)
+
+Status: KEEP — with minor edits
+
+What works
+
+Calm tone
+
+Founder voice
+
+Correct positioning (“there when you do”)
+
+No urgency
+
+What needs fixing
+
+❌ Mentions $10/month or $100/year too early
+
+❌ “Take your time exploring” encourages browsing instead of readiness
+
+You don’t want exploration. You want preparedness.
+
+✅ Corrected version (USE THIS)
+Hi {{FirstName}},
+
+I’m Morgan, and I built LeaseShield because landlords shouldn’t have to figure out screening decisions and compliance alone.
+
+Most landlords only face these decisions a few times per year.
+LeaseShield is there when they do.
+
+Inside, you’ll find:
+• State-specific legal templates that match your state’s laws
+• Compliance guidance that explains what matters and why
+• A screening decoder that helps make sense of reports
+• Clear workflows for handling tenant issues the right way
+
+You don’t need to use this every day.
+It’s here for the moments that matter.
+
+— Morgan
+
+
+❌ No pricing
+❌ No “activate now”
+❌ No CTA button
+
+This email’s job is mental framing only.
+
+⚠️ EMAIL #2 (3-day follow-up)
+
+Status: REWRITE
+
+What’s wrong
+
+“Just checking in” (classic SaaS chasing)
+
+“You can browse everything for free” → encourages free usage
+
+Mentions activation when they hit a wall (feels transactional)
+
+This subtly trains:
+
+“I’ll only pay when forced.”
+
+That hurts long-term behavior.
+
+✅ Corrected version (USE THIS)
+Hi {{FirstName}},
+
+Quick note.
+
+Most landlords don’t think about tools like LeaseShield until a screening report raises questions.
+That’s exactly when it tends to click.
+
+If you want it ready before the next applicant shows up, you can activate anytime from your account.
+If not, no rush — it’s there when you need it.
+
+— Morgan
+
+
+That’s it.
+No buttons.
+No pricing.
+No feature list.
+
+❌ EMAIL #3 (Final / last email)
+
+Status: DELETE ENTIRELY
+
+This email breaks multiple rules you already agreed to:
+
+Why it must go
+
+❌ “This is my last email unless…” = pressure
+
+❌ Reintroduces urgency
+
+❌ Sounds like a breakup email
+
+❌ Anchors to activation as an obligation
+
+Even though it’s polite, it creates avoidance, not conversion.
+
+For an event-driven product, this email is net negative.
+
+🛑 Do not send it. Ever.
+
+Silence is more powerful here.
+
+The correct final lifecycle (clean and restrained)
+
+You only need two emails, not three.
+
+✅ Email 1: Immediate framing
+
+(sent right after signup)
+
+✅ Email 2: One calm nudge
+
+(sent ~3 days later if not subscribed)
+
+❌ No final email
+
+After that → silence
+
+When the next applicant shows up, they’ll remember you.
+
+What to do RIGHT NOW (clear actions)
+In Replit
+
+❌ Disable Email #3 completely
+
+🔁 Replace Email #1 and #2 content with the corrected versions above
+
+✅ Ensure Email #2 only sends if subscription_status !== active
+
+For past users
+
+Do not resend these
+
+Use the separate cleanup email we already finalized
+
+One guiding rule (write this down)
+
+If an email would make a landlord feel pressured instead of prepared, don’t send it.
+
+You’re building something that earns trust over time.
+Your product now reflects that — your emails must too.
+
+If you want next, I can:
+
+Rewrite the in-app locked feature copy
+
+Audit Stripe receipt language
+
+Help you decide when (if ever) to suggest annual upgrades
+
+But for now: trim this down, not up.

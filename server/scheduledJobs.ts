@@ -134,7 +134,8 @@ export class ScheduledJobs {
 
   /**
    * Send lifecycle emails based on signup date (not trial countdown)
-   * Runs every 6 hours to catch users at the right time
+   * Only 2 emails: Welcome (immediate) + 3-day nudge
+   * Then silence - no Email #3 (per restraint-based email strategy)
    */
   async processLifecycleEmails(): Promise<void> {
     try {
@@ -145,8 +146,8 @@ export class ScheduledJobs {
       // Email #2: 3-day nudge (users who signed up 3 days ago, not subscribed)
       await this.sendThreeDayNudgeEmails(now);
       
-      // Email #3: Close the loop (users who signed up 12 days ago, not subscribed)
-      await this.sendCloseTheLoopEmails(now);
+      // Email #3: DISABLED - silence is more powerful than a "last email" message
+      // await this.sendCloseTheLoopEmails(now);
 
       console.log('✅ Lifecycle emails processed');
     } catch (error) {
