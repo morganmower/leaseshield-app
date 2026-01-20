@@ -42,39 +42,20 @@ export default function RefundPolicy() {
 
         <Card>
           <CardContent className="p-6 sm:p-8 space-y-8">
-            {/* Free Trial */}
-            <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">7-Day Free Trial</h2>
-              <div className="space-y-3 text-muted-foreground leading-relaxed">
-                <p>
-                  New users receive a <strong>7-day free trial</strong> with full access to all LeaseShield App 
-                  features, including:
-                </p>
-                <ul className="list-disc list-inside space-y-2 ml-4">
-                  <li>Unlimited access to all state-specific legal templates</li>
-                  <li>Compliance cards and legal updates for your state</li>
-                  <li>Tenant screening resources and checklists</li>
-                  <li>Step-by-step tenant issue workflows</li>
-                </ul>
-                <p>
-                  <strong>No payment required</strong> during the trial period. You will not be charged unless 
-                  you subscribe after the trial ends.
-                </p>
-                <p>
-                  Your trial begins when you create your account and ends 7 days later. A countdown timer on 
-                  your dashboard shows your remaining trial days.
-                </p>
-              </div>
-            </section>
-
             {/* Subscription Billing */}
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">Subscription Billing</h2>
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p>
-                  After your free trial ends, continued access to LeaseShield App requires a paid subscription 
-                  of <strong>$10/month</strong>.
+                  Access to LeaseShield App requires a paid subscription 
+                  of <strong>$10/month</strong> or <strong>$100/year</strong> (includes 2 months free). Your subscription includes:
                 </p>
+                <ul className="list-disc list-inside space-y-2 ml-4">
+                  <li>Unlimited access to all state-specific legal templates</li>
+                  <li>Compliance cards and legal updates for your state</li>
+                  <li>Tenant screening resources and AI-powered decoder tools</li>
+                  <li>Step-by-step tenant issue workflows</li>
+                </ul>
                 <p>
                   <strong>Auto-Renewal:</strong> Subscriptions automatically renew on a monthly basis unless 
                   canceled before the renewal date.
@@ -133,13 +114,12 @@ export default function RefundPolicy() {
                   All subscription fees are non-refundable.
                 </p>
                 <p>
-                  We provide a <strong>7-day free trial</strong> specifically to allow you to fully evaluate 
-                  LeaseShield App before committing to a paid subscription. This trial gives you complete access 
-                  to all features without any financial obligation.
+                  We encourage you to review our features and documentation before subscribing. 
+                  Your subscription is billed monthly and can be canceled at any time with no penalties.
                 </p>
                 <p>
-                  Because of this generous trial period, we do not offer refunds for subscription fees once they 
-                  have been charged.
+                  Because subscriptions can be canceled at any time with no penalties, we do not offer refunds for 
+                  subscription fees once they have been charged.
                 </p>
                 <p>
                   <strong>Exceptions:</strong> We may consider refunds on a case-by-case basis for:
@@ -166,9 +146,9 @@ export default function RefundPolicy() {
             <section>
               <h2 className="text-xl font-semibold text-foreground mb-3">Downloaded Materials</h2>
               <p className="text-muted-foreground leading-relaxed">
-                Any templates or materials you download during your active subscription (including during your 
-                free trial) remain yours to use even after cancellation or subscription expiration. You do not 
-                need to return or delete downloaded materials.
+                Any templates or materials you download during your active subscription remain yours to use 
+                even after cancellation or subscription expiration. You do not need to return or delete 
+                downloaded materials.
               </p>
             </section>
 

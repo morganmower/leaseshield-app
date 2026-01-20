@@ -98,11 +98,8 @@ export default function Terms() {
               <h2 className="text-xl font-semibold text-foreground mb-3">3. Subscription Terms</h2>
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p>
-                  <strong>Free Trial:</strong> New users receive a 7-day free trial with full access to all features.
-                </p>
-                <p>
-                  <strong>Paid Subscription:</strong> After the trial period, continued access requires a paid 
-                  subscription at $10/month (pricing subject to change with notice).
+                  <strong>Subscription:</strong> Access to LeaseShield App requires a paid subscription at $10/month 
+                  or $100/year (pricing subject to change with notice). Cancel anytime with no penalties.
                 </p>
                 <p>
                   <strong>Auto-Renewal:</strong> Subscriptions automatically renew monthly unless canceled before 

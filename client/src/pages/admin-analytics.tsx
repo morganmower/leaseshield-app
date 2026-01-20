@@ -569,14 +569,14 @@ export default function AdminAnalyticsPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>Users on Free Trial</CardTitle>
+            <CardTitle>Inactive Users</CardTitle>
             <CardDescription>
-              Users currently testing the platform (trialing status)
+              Users who have not yet activated their subscription
             </CardDescription>
           </CardHeader>
           <CardContent>
             {usersLoading ? (
-              <p className="text-muted-foreground">Loading trial users...</p>
+              <p className="text-muted-foreground">Loading inactive users...</p>
             ) : users ? (
               (() => {
                 const trialingUsers = users.filter(u => 
