@@ -1,20 +1,17 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
 import type { User } from "@shared/schema";
-import { ApiError, apiRequest, setAccessToken } from "@/lib/queryClient";
+import { ApiError, apiRequest, setAccessToken, getQueryFn } from "@/lib/queryClient";
 
 export function useAuth() {
   const queryClient = useQueryClient();
   
   const { data: user, isLoading, error } = useQuery<User | null>({
     queryKey: ["/api/auth/user"],
-    retry: (failureCount, error) => {
-      if (error instanceof ApiError && error.status === 401) {
-        return false;
-      }
-      return failureCount < 2;
-    },
-    retryDelay: 1000,
+    queryFn: getQueryFn({ on401: "returnNull" }),
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes - prevents repeated fetches
+    gcTime: 10 * 60 * 1000, // 10 minutes cache
   });
 
   const logoutMutation = useMutation({
