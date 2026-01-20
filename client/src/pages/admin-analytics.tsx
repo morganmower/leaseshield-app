@@ -15,15 +15,14 @@ interface AnalyticsSummary {
   subscriptions: {
     total: number;
     active: number;
-    trialing: number;
-    expiredTrials: number;
+    inactive: number;
     canceled: number;
     mrr: number;
   };
   conversion: {
-    trialConversionRate: number;
-    totalTrials: number;
-    convertedTrials: number;
+    activationRate: number;
+    totalUsers: number;
+    activatedUsers: number;
   };
   usage: {
     totalDownloads: number;
@@ -186,22 +185,22 @@ export default function AdminAnalyticsPage() {
                 {analytics?.subscriptions.total || 0}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {analytics?.subscriptions.trialing || 0} in trial
+                {analytics?.subscriptions.active || 0} active
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Trial Conversion Rate</CardTitle>
+              <CardTitle className="text-sm font-medium">Activation Rate</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold" data-testid="text-conversion-rate">
-                {formatPercent(analytics?.conversion.trialConversionRate || 0)}
+                {formatPercent(analytics?.conversion.activationRate || 0)}
               </div>
               <p className="text-xs text-muted-foreground mt-1">
-                {analytics?.conversion.convertedTrials || 0} of {analytics?.conversion.totalTrials || 0} trials converted
+                {analytics?.conversion.activatedUsers || 0} of {analytics?.conversion.totalUsers || 0} users activated
               </p>
             </CardContent>
           </Card>
@@ -234,8 +233,7 @@ export default function AdminAnalyticsPage() {
                   <Pie
                     data={[
                       { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
-                      { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
-                      { name: 'Expired Trials', value: analytics?.subscriptions.expiredTrials || 0, color: '#f97316' },
+                      { name: 'Inactive', value: analytics?.subscriptions.inactive || 0, color: '#6b7280' },
                       { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
                     ]}
                     cx="50%"
@@ -248,8 +246,7 @@ export default function AdminAnalyticsPage() {
                   >
                     {[
                       { name: 'Active', value: analytics?.subscriptions.active || 0, color: '#22c55e' },
-                      { name: 'Trialing', value: analytics?.subscriptions.trialing || 0, color: '#3b82f6' },
-                      { name: 'Expired Trials', value: analytics?.subscriptions.expiredTrials || 0, color: '#f97316' },
+                      { name: 'Inactive', value: analytics?.subscriptions.inactive || 0, color: '#6b7280' },
                       { name: 'Canceled', value: analytics?.subscriptions.canceled || 0, color: '#ef4444' },
                     ].map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
@@ -271,20 +268,11 @@ export default function AdminAnalyticsPage() {
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-blue-500"></div>
-                    Trialing
+                    <div className="w-3 h-3 rounded-full bg-gray-500"></div>
+                    Inactive
                   </span>
-                  <span className="font-bold" data-testid="text-trialing-count">
-                    {analytics?.subscriptions.trialing || 0}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full bg-orange-500"></div>
-                    Expired Trials
-                  </span>
-                  <span className="font-bold" data-testid="text-expired-trials-count">
-                    {analytics?.subscriptions.expiredTrials || 0}
+                  <span className="font-bold" data-testid="text-inactive-count">
+                    {analytics?.subscriptions.inactive || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -579,27 +567,26 @@ export default function AdminAnalyticsPage() {
               <p className="text-muted-foreground">Loading inactive users...</p>
             ) : users ? (
               (() => {
-                const trialingUsers = users.filter(u => 
-                  u.subscriptionStatus === "trialing" && 
-                  (!u.trialEndsAt || new Date(u.trialEndsAt) >= new Date())
+                const inactiveUsers = users.filter(u => 
+                  u.subscriptionStatus !== "active"
                 );
-                return trialingUsers.length > 0 ? (
+                return inactiveUsers.length > 0 ? (
                   <div className="overflow-x-auto">
-                    <table className="w-full text-sm" data-testid="table-trialing-users">
+                    <table className="w-full text-sm" data-testid="table-inactive-users">
                       <thead>
                         <tr className="border-b">
                           <th className="text-left py-3 px-2 font-medium">Name</th>
                           <th className="text-left py-3 px-2 font-medium">Email</th>
-                          <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
+                          <th className="text-left py-3 px-2 font-medium">Status</th>
                           <th className="text-left py-3 px-2 font-medium">Joined</th>
                         </tr>
                       </thead>
                       <tbody>
-                        {trialingUsers.map((user) => (
+                        {inactiveUsers.map((user) => (
                           <tr
                             key={user.id}
                             className="border-b hover-elevate"
-                            data-testid={`row-trialing-user-${user.id}`}
+                            data-testid={`row-inactive-user-${user.id}`}
                           >
                             <td className="py-3 px-2" data-testid={`text-name-${user.id}`}>
                               {user.firstName && user.lastName
@@ -609,10 +596,8 @@ export default function AdminAnalyticsPage() {
                             <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
                               {user.email || "—"}
                             </td>
-                            <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
-                              {user.trialEndsAt
-                                ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
-                                : "—"}
+                            <td className="py-3 px-2">
+                              <Badge variant="secondary">Inactive</Badge>
                             </td>
                             <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
                               {format(new Date(user.createdAt), "MMM d, yyyy")}
@@ -624,13 +609,13 @@ export default function AdminAnalyticsPage() {
                   </div>
                 ) : (
                   <p className="text-center py-8 text-muted-foreground">
-                    No users on trial at the moment
+                    No inactive users at the moment
                   </p>
                 );
               })()
             ) : (
               <p className="text-center py-8 text-destructive">
-                Failed to load trial users
+                Failed to load users
               </p>
             )}
           </CardContent>
@@ -655,7 +640,6 @@ export default function AdminAnalyticsPage() {
                         <th className="text-left py-3 px-2 font-medium">Name</th>
                         <th className="text-left py-3 px-2 font-medium">Email</th>
                         <th className="text-left py-3 px-2 font-medium">Status</th>
-                        <th className="text-left py-3 px-2 font-medium">Trial Ends</th>
                         <th className="text-left py-3 px-2 font-medium">Subscription Ends</th>
                         <th className="text-left py-3 px-2 font-medium">Joined</th>
                       </tr>
@@ -684,30 +668,16 @@ export default function AdminAnalyticsPage() {
                           </td>
                           <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
                             {(() => {
-                              const isTrialExpired = user.subscriptionStatus === 'trialing' && 
-                                user.trialEndsAt && new Date(user.trialEndsAt) < new Date();
-                              
-                              if (isTrialExpired) {
-                                return <Badge variant="destructive">Trial Expired</Badge>;
-                              } else if (user.subscriptionStatus === 'active') {
+                              if (user.subscriptionStatus === 'active') {
                                 return <Badge variant="default">Active</Badge>;
-                              } else if (user.subscriptionStatus === 'trialing') {
-                                return <Badge variant="secondary">Trialing</Badge>;
                               } else if (user.subscriptionStatus === 'canceled' || user.subscriptionStatus === 'cancel_at_period_end') {
                                 return <Badge variant="outline">Canceled</Badge>;
                               } else if (user.subscriptionStatus === 'past_due') {
                                 return <Badge variant="destructive">Past Due</Badge>;
-                              } else if (user.subscriptionStatus) {
-                                return <Badge variant="outline">{user.subscriptionStatus}</Badge>;
                               } else {
-                                return <Badge variant="outline">No subscription</Badge>;
+                                return <Badge variant="secondary">Inactive</Badge>;
                               }
                             })()}
-                          </td>
-                          <td className="py-3 px-2 text-muted-foreground" data-testid={`text-trial-ends-${user.id}`}>
-                            {user.trialEndsAt
-                              ? format(new Date(user.trialEndsAt), "MMM d, yyyy")
-                              : "—"}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-sub-ends-${user.id}`}>
                             {user.subscriptionEndsAt

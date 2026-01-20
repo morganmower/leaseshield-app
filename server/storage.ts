@@ -144,7 +144,7 @@ import {
   type InsertStateNote,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray } from "drizzle-orm";
+import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray, ne } from "drizzle-orm";
 import { stateCache, templateCache, complianceCache } from "./utils/cache";
 
 /**
@@ -914,25 +914,14 @@ export class DatabaseStorage implements IStorage {
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(eq(users.subscriptionStatus, 'active'));
-    // Count only ACTIVE trials (not expired)
-    const trialing = await db
+    // Count inactive users (not active subscribers)
+    const inactive = await db
       .select({ count: sql<number>`count(*)` })
       .from(users)
       .where(
-        and(
-          eq(users.subscriptionStatus, 'trialing'),
-          sql`(${users.trialEndsAt} IS NULL OR ${users.trialEndsAt} >= NOW())`
-        )
-      );
-    
-    // Count expired trials separately
-    const expiredTrials = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(users)
-      .where(
-        and(
-          eq(users.subscriptionStatus, 'trialing'),
-          sql`${users.trialEndsAt} < NOW()`
+        or(
+          isNull(users.subscriptionStatus),
+          ne(users.subscriptionStatus, 'active')
         )
       );
     const canceled = await db
@@ -1031,23 +1020,22 @@ export class DatabaseStorage implements IStorage {
     const totalUsersCount = Number(totalUsers[0]?.count || 0);
     const avgDownloadsPerUser = totalUsersCount > 0 ? totalDownloads / totalUsersCount : 0;
 
-    // Total subscribers = active + trialing (people who have actually subscribed or are in trial)
-    const trialingCount = Number(trialing[0]?.count || 0);
-    const totalSubscribers = activeCount + trialingCount;
+    // Total users
+    const inactiveCount = Number(inactive[0]?.count || 0);
+    const totalUsersAll = activeCount + inactiveCount;
     
     return {
       subscriptions: {
-        total: totalSubscribers,
+        total: totalUsersAll,
         active: activeCount,
-        trialing: trialingCount,
-        expiredTrials: Number(expiredTrials[0]?.count || 0),
+        inactive: inactiveCount,
         canceled: Number(canceled[0]?.count || 0),
         mrr,
       },
       conversion: {
-        trialConversionRate,
-        totalTrials: totalTrialsCount,
-        convertedTrials: convertedCount,
+        activationRate: totalUsersAll > 0 ? activeCount / totalUsersAll : 0,
+        totalUsers: totalUsersAll,
+        activatedUsers: activeCount,
       },
       usage: {
         totalDownloads,
