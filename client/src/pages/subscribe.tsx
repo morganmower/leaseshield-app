@@ -196,14 +196,9 @@ export default function Subscribe() {
   const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly');
   const [isLoadingSetup, setIsLoadingSetup] = useState(false);
 
-  useEffect(() => {
-    const saved = localStorage.getItem('billingPeriod') as 'monthly' | 'yearly' | null;
-    setBillingPeriod(saved || 'monthly');
-  }, []);
 
   const handleBillingPeriodChange = (period: 'monthly' | 'yearly') => {
     setBillingPeriod(period);
-    localStorage.setItem('billingPeriod', period);
   };
 
   useEffect(() => {
