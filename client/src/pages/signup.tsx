@@ -96,7 +96,7 @@ export default function Signup() {
       } else {
         toast({
           title: "Welcome to LeaseShield!",
-          description: "Your 7-day free trial has started. Explore your landlord protection tools.",
+          description: "Your account is ready. Explore your landlord protection tools.",
         });
         setLocation("/dashboard");
       }
@@ -130,13 +130,14 @@ export default function Signup() {
           </div>
           <div>
             <CardTitle className="text-2xl font-semibold" data-testid="text-signup-title">
-              {isPayNow ? "Create Your Account" : "Start Your Free Trial"}
+              Be Ready for Your Next Applicant
             </CardTitle>
             <CardDescription data-testid="text-signup-description">
-              {isPayNow 
-                ? "Create your account, then complete payment to get started immediately"
-                : "Get 7 days of full access to all landlord protection tools"}
+              Understand screening results clearly and keep everything in one place.
             </CardDescription>
+            <p className="text-xs text-muted-foreground mt-2">
+              $10/month • Cancel anytime • Most landlords use it only when an applicant comes up
+            </p>
           </div>
         </CardHeader>
         <CardContent>
@@ -340,16 +341,17 @@ export default function Signup() {
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Creating account...
                   </>
-                ) : isPayNow ? (
-                  "Continue to Payment"
                 ) : (
-                  "Start Free Trial"
+                  "Create My Account"
                 )}
               </Button>
             </form>
           </Form>
         </CardContent>
         <CardFooter className="flex flex-col space-y-4">
+          <p className="text-xs text-muted-foreground text-center">
+            You can cancel anytime from your account settings.
+          </p>
           <div className="text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link 
@@ -360,33 +362,6 @@ export default function Signup() {
               Sign in
             </Link>
           </div>
-          {!isPayNow && (
-            <div className="flex flex-col items-center gap-2">
-              <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
-                <Shield className="h-3 w-3" />
-                <span>No credit card required for trial</span>
-              </div>
-              <Link 
-                href="/signup?payNow=true" 
-                className="text-sm text-primary font-medium hover:underline"
-                data-testid="link-skip-trial"
-              >
-                Skip trial - Pay now
-              </Link>
-            </div>
-          )}
-          {isPayNow && (
-            <div className="text-center text-xs text-muted-foreground">
-              Want to try before you pay?{" "}
-              <Link 
-                href="/signup" 
-                className="text-primary hover:underline"
-                data-testid="link-try-trial"
-              >
-                Start free trial instead
-              </Link>
-            </div>
-          )}
         </CardFooter>
       </Card>
     </div>

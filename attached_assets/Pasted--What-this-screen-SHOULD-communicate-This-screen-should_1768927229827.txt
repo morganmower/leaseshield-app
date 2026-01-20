@@ -1,0 +1,146 @@
+🧠 What this screen SHOULD communicate
+
+This screen should say:
+
+“You’re setting this up so you’re ready when an applicant shows up.”
+
+Not:
+
+“You’re trying something for 7 days.”
+
+✅ EXACT changes you need to make (copy-paste ready)
+🔁 1. Replace the headline
+
+Current:
+
+Start Your Free Trial
+
+Replace with (pick ONE):
+
+Set Up LeaseShield
+or
+Be Ready for Your Next Applicant
+
+My recommendation: Be Ready for Your Next Applicant
+
+🔁 2. Replace the subheadline
+
+Current:
+
+Get 7 days of full access to all landlord protection tools
+
+Replace with:
+
+Get plain-English explanations of screening reports and a clean workflow for applications, screening, and decisions.
+
+Or shorter:
+
+Understand screening results clearly and keep everything in one place.
+
+🔁 3. REMOVE all visible “7 day” language on this screen
+
+Completely remove:
+
+“7 days”
+
+“full access”
+
+“trial”
+
+If you still technically run a trial on the backend, that’s fine — do not surface it here.
+
+🔁 4. Add reassurance text (this is critical)
+
+Add a small line under the subheadline:
+
+$10/month • Cancel anytime • Most landlords use it only when an applicant comes up
+
+This single line fixes:
+
+Price anxiety
+
+“I won’t use it monthly” objection
+
+Commitment hesitation
+
+🔁 5. Change the button text
+
+Current button:
+
+Start Free Trial
+
+Replace with:
+
+Create My Account
+
+or
+
+Continue
+
+or
+
+Get Started
+
+Best option here: Create My Account
+
+🔁 6. Add ONE optional micro-note below the button
+
+Small, gray text:
+
+You can cancel anytime from your account settings.
+
+That’s it. Nothing else.
+
+🧱 What the final screen should communicate (emotionally)
+
+After changes, the user should think:
+
+“This is something I keep on hand, not something I test.”
+
+That aligns perfectly with:
+
+How you sell it on calls
+
+How landlords actually use it
+
+Your pricing
+
+Your churn problem
+
+🧪 Why this change matters more than homepage copy
+
+Even if you fix the homepage…
+
+👉 This screen overrides everything.
+
+This is the moment of commitment.
+
+Right now, this screen:
+
+Undermines urgency
+
+Encourages delay
+
+Conflicts with your verbal pitch
+
+Reinforces “temporary usage”
+
+Fixing this screen alone will immediately improve conversion.
+
+📋 Replit task list (send this exactly)
+
+Signup Page Changes
+
+Change headline from “Start Your Free Trial” → “Be Ready for Your Next Applicant”
+
+Remove all visible “7 day” and “trial” language
+
+Add reassurance line under headline:
+“$10/month • Cancel anytime • Most landlords use it only when an applicant comes up”
+
+Change CTA button text from “Start Free Trial” → “Create My Account”
+
+Add small note under button:
+“You can cancel anytime from your account settings.”
+
+Backend trial logic can remain, but do not surface it in UI.
