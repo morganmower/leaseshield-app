@@ -1,0 +1,113 @@
+1️⃣ “Activated” = subscribed?
+
+Yes. 100% yes.
+
+For Email #2 and Email #3, the condition should be:
+
+Send ONLY if subscription status is NOT active
+
+Do not base these on:
+
+Feature usage
+
+Page views
+
+Time spent
+
+Partial actions
+
+Why:
+
+Feature usage ≠ commitment
+
+You already learned that people can get value and still not commit
+
+Subscription status is the only clean signal that matters here
+
+So your logic is:
+
+user.subscription_status !== 'active' → eligible
+
+user.subscription_status === 'active' → suppress all activation nudges
+
+Clean. Binary. Correct.
+
+2️⃣ Cleanup email for former trial users
+
+Do NOT build an admin button for this.
+Send it manually / externally (Apollo, Gmail, whatever you already use).
+
+Why you should NOT productize this:
+
+This is a one-time correction, not a recurring workflow
+
+You don’t want this to become a permanent lever
+
+Admin buttons create the temptation to overuse it later
+
+This is a founder-led reset, not an app feature.
+
+Recommended approach:
+
+Export list of:
+
+Former trial users
+
+subscription_status !== active
+
+Send one email
+
+Mark internally as “cleanup sent”
+
+Never repeat
+
+After this, everything should be automated forward-looking only.
+
+3️⃣ In-app banner wording
+
+Your proposed copy is excellent.
+Yes — use it exactly as written.
+
+“LeaseShield is inactive. Activate when you want it ready for your next applicant.”
+
+Why this is correct:
+
+“Inactive” is factual, not shaming
+
+“Activate” matches the rest of the system language
+
+“Ready” reinforces preparedness, not urgency
+
+“Next applicant” anchors to a real-world event
+
+One optional micro-tweak (purely optional)
+
+If you want it slightly warmer:
+
+LeaseShield is inactive — activate when you want it ready for your next applicant.
+
+The em dash reads a little more human, but both are fine.
+
+Final confirmation checklist (so you can move on)
+
+✔️ “Activated” = paid subscription active
+✔️ Email #2 and #3 trigger ONLY if not subscribed
+✔️ Ignore feature usage for lifecycle emails
+✔️ Cleanup email = manual, one-time, not in-app
+✔️ In-app banner wording = approved as-is
+
+Big picture (important)
+
+At this point, you have:
+
+Correct language
+
+Correct timing
+
+Correct guardrails
+
+Correct restraint
+
+The remaining work is execution + patience, not more tweaking.
+
+You’re now operating this like a calm, confident product — not a SaaS begging for attention.

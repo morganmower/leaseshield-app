@@ -1,0 +1,183 @@
+First: the principle (this matters)
+
+Do not “remind” people in a way that feels like chasing.
+Do re-anchor them to the moment of value.
+
+LeaseShield is:
+
+Event-triggered
+
+Trust-based
+
+Low urgency until suddenly very urgent
+
+So your emails should feel like:
+
+“This is here when it matters.”
+
+Not:
+
+“Hey don’t forget us.”
+
+The correct lifecycle (going forward)
+
+You only need 3 automated emails total + 1 manual play.
+
+That’s it.
+
+🧩 PART 1: New signups going forward (automation)
+Email #1 — Immediately after signup
+
+Purpose: Frame the product correctly (not features)
+
+Subject: LeaseShield is ready when you need it
+
+Body:
+
+Hi {{FirstName}},
+
+Your LeaseShield account is set up.
+
+You don’t need to use it every day — it’s there for the moments that matter:
+• When a screening report raises questions
+• When you want to stay consistent and defensible
+• When you’d rather not guess
+
+If you have an applicant coming up, start with the Screening Decoder.
+That’s where most landlords see the value immediately.
+
+— Morgan
+
+
+No CTA button. No pricing. Calm.
+
+Email #2 — 3 days later (only if NOT activated)
+
+Purpose: Nudge toward activation without pressure
+
+Subject: When screening gets tricky
+
+Body:
+
+Hi {{FirstName}},
+
+Quick note.
+
+Most landlords don’t think about screening tools until a report raises questions.
+That’s exactly when LeaseShield earns its keep.
+
+If you want it ready before the next applicant shows up, you can activate anytime from your account.
+
+No rush either way — just wanted to make sure you saw where the value usually clicks.
+
+— Morgan
+
+
+That’s it.
+
+Email #3 — 10–14 days later (final touch)
+
+Purpose: Close the loop respectfully
+
+Subject: Closing the loop
+
+Body:
+
+Hi {{FirstName}},
+
+I’ll leave you alone after this.
+
+LeaseShield is built for landlords who already run real screenings and want clarity when decisions matter.
+If that’s useful down the road, your account will be waiting.
+
+Either way, appreciate you checking it out.
+
+— Morgan
+
+
+After this: silence.
+No drip. No nurture. No marketing spam.
+
+This restraint actually increases long-term conversion.
+
+🧩 PART 2: What to do with former trial users (right now)
+
+This is a one-time cleanup email, not ongoing.
+
+Who gets it:
+
+People who trialed
+
+Liked the product
+
+Did not activate
+
+Are currently inactive
+
+Send one email only.
+
+Subject: When the next applicant comes up
+
+Body (very important — send exactly this tone):
+
+Hi {{FirstName}},
+
+You tried LeaseShield earlier, so I wanted to close the loop properly.
+
+Most landlords don’t need tools like this every month — they need them when a screening report raises questions.
+That’s why we rebuilt the flow so LeaseShield can simply stay ready in the background.
+
+If you have an applicant coming up and want clarity without guessing, you can activate anytime from your account.
+
+If not, no worries at all — just wanted to make sure you knew it’s there.
+
+— Morgan
+
+
+No links.
+No pricing.
+No CTA button.
+
+This email works because it:
+
+Respects autonomy
+
+Reframes usage
+
+Removes guilt
+
+Keeps the door open
+
+🧠 PART 3: What NOT to do (important)
+
+Do not:
+
+Send weekly reminders
+
+Send “your trial expired” emails
+
+Offer discounts
+
+Add urgency
+
+Ask “any questions?” repeatedly
+
+Those all signal insecurity and reduce trust.
+
+🧩 PART 4: The long-term compounding play (quiet but powerful)
+
+Add one in-app reminder only, not email:
+
+For inactive users, a subtle banner:
+
+LeaseShield is inactive — activate when you want it ready for your next applicant.
+
+That’s it.
+
+The moment they have an applicant, they’ll remember.
+
+Final operating rule (write this down)
+
+We only email when we’re re-anchoring to a real screening moment — never to “check in.”
+
+If you follow that rule, LeaseShield will convert slower but cleaner, and churn will stay low.

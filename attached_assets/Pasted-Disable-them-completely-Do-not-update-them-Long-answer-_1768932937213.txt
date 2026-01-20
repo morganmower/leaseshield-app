@@ -1,0 +1,113 @@
+Disable them completely. Do not “update” them.
+
+Long answer (and this matters):
+
+Why trial-expiration emails must die entirely
+
+Trial expiration emails are built on the wrong psychological premise for your product.
+
+They assume:
+
+A daily-use habit
+
+A ticking clock
+
+Missed opportunity urgency
+
+LeaseShield is the opposite:
+
+Event-triggered
+
+Calm, readiness-based
+
+Used when a decision arises
+
+If you “update the copy” but keep the trigger, you still send the wrong signal:
+
+“You missed your chance.”
+
+That message:
+
+Creates guilt
+
+Triggers avoidance
+
+Lowers future conversion
+
+Makes people less likely to return when they actually need you
+
+Even a perfectly written expiration email would still be strategically wrong.
+
+What to do instead (clean break)
+✅ Step 1: Disable all trial expiration automations
+
+No “trial ending soon”
+
+No “trial expired”
+
+No countdown language anywhere
+
+No reminders tied to time passing
+
+This is not a copy problem. It’s a trigger problem.
+
+✅ Step 2: Replace with the 3-email lifecycle you already approved
+
+You already have the correct system:
+
+Immediate framing email (ready when it matters)
+
+3-day calm nudge (activation reminder)
+
+10–14 day close-the-loop email (then silence)
+
+That’s it.
+
+Why this will increase conversions (counterintuitive but true)
+
+Landlords do not respond well to:
+
+SaaS urgency
+
+Artificial deadlines
+
+“You’re missing out” messaging
+
+They respond to:
+
+Trust
+
+Relevance
+
+Memory jogs tied to real events
+
+When the next applicant shows up, they’ll think:
+
+“Oh yeah — LeaseShield.”
+
+Not:
+
+“Ugh, another SaaS email.”
+
+One nuance (important)
+
+You can still send an email if an event happens.
+
+Examples of good triggers:
+
+They open the Screening Decoder but don’t run it
+
+They start an application but don’t finish
+
+They paste data but hit an activation wall
+
+Those are behavior-based nudges, not time-based pressure.
+
+Final instruction (clear and firm)
+
+✔️ Disable trial expiration emails entirely
+❌ Do not reword or soften them
+✔️ Replace with calm, event-anchored lifecycle emails
+✔️ Let silence work in your favor
+
+This is a maturity move. Most founders never make it because it feels uncomfortable. But it’s exactly right for your product.
