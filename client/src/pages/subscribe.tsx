@@ -326,7 +326,6 @@ export default function Subscribe() {
             data-testid="button-billing-yearly"
           >
             Annual - $100/year
-            <Badge variant="default" className="ml-2 text-xs bg-success">Save $20</Badge>
           </Button>
         </div>
 
@@ -339,12 +338,6 @@ export default function Subscribe() {
             <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-primary/10 to-transparent rounded-full -mr-12 -mt-12" />
             
             <div className="relative">
-              <div className="flex items-center gap-2 mb-4">
-                <Badge variant="default" className="bg-primary">
-                  {billingPeriod === 'yearly' ? 'BEST VALUE' : 'POPULAR'}
-                </Badge>
-              </div>
-              
               <div className="mb-6">
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-4xl font-display font-bold text-foreground">
@@ -355,13 +348,8 @@ export default function Subscribe() {
                   </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  {billingPeriod === 'yearly' ? 'Just $8.33/month billed annually' : 'Cancel anytime'}
+                  {billingPeriod === 'yearly' ? 'Includes 2 months free' : 'Cancel anytime'}
                 </p>
-                {billingPeriod === 'yearly' && (
-                  <Badge variant="outline" className="mt-2 text-success border-success">
-                    Save $20/year
-                  </Badge>
-                )}
               </div>
 
               <ul className="space-y-3">
