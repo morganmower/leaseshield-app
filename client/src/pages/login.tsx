@@ -177,12 +177,12 @@ export default function Login() {
               className="text-primary font-medium hover:underline"
               data-testid="link-signup"
             >
-              Start your free trial
+              Create an account
             </Link>
           </div>
           <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Shield className="h-3 w-3" />
-            <span>Protected by industry-standard encryption</span>
+            <span>$10/month - Cancel anytime</span>
           </div>
         </CardFooter>
       </Card>

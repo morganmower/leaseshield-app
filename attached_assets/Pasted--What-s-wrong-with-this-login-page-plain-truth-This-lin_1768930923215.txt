@@ -1,0 +1,126 @@
+🚨 What’s wrong with this login page (plain truth)
+
+This line at the bottom:
+
+“Don’t have an account? Start your free trial”
+
+is now out of alignment with:
+
+Your new signup framing
+
+Your activation flow
+
+Your pricing psychology
+
+The behavior you’re trying to change
+
+Even worse, it’s appearing at a high-intent moment (login), where users are already oriented toward action.
+
+Why this matters more than it seems
+
+When someone sees “free trial” here, it:
+
+Reintroduces trial thinking
+
+Signals “temporary” again
+
+Conflicts with “Activate LeaseShield”
+
+Trains users to delay commitment
+
+Creates inconsistency across the product
+
+Consistency matters a lot for trust and conversion.
+
+Right now, your product says:
+
+Signup page: Be ready for your next applicant
+
+Activation page: Activate LeaseShield
+
+Login page: Start your free trial
+
+That’s three different mental models. We want one.
+
+✅ What this page should communicate instead
+
+This page should reinforce:
+
+“LeaseShield is a tool you set up and keep ready.”
+
+Not:
+
+“LeaseShield is something you try.”
+
+✅ EXACT changes to make (copy-paste ready)
+🔁 1. Replace the bottom CTA text
+
+Current:
+
+Don’t have an account? Start your free trial
+
+Replace with (best option):
+
+Don’t have an account? Create an account
+
+Alternate acceptable options:
+
+Get started
+
+Set up your account
+
+But Create an account is the cleanest.
+
+🔁 2. (Optional but recommended) Tighten the subheadline
+
+Current:
+
+Sign in to access your landlord protection tools
+
+This is fine, but slightly generic.
+
+Recommended replacement:
+
+Sign in to manage applications, screening, and decisions in one place
+
+This reinforces why they’re here.
+
+🔁 3. (Optional) Add a subtle reassurance line at the bottom
+
+Below the button or near the footer, small gray text:
+
+$10/month • Cancel anytime
+
+This quietly reinforces the low-risk nature without selling.
+
+🚫 What NOT to do on this page
+
+Do not:
+
+Mention trials
+
+Mention annual pricing
+
+Add marketing copy
+
+Add testimonials
+
+Add feature lists
+
+This page’s job is access, not persuasion.
+
+📋 Replit task list (exact)
+
+Send this verbatim:
+
+Login Page Updates
+
+Change “Don’t have an account? Start your free trial” → “Don’t have an account? Create an account”
+
+(Optional) Update subheadline to:
+“Sign in to manage applications, screening, and decisions in one place.”
+
+(Optional) Add small footer reassurance:
+“$10/month • Cancel anytime.”
+
+Do not add any trial language to this page.
