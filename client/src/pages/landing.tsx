@@ -32,7 +32,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrialValueMessage } from "@/components/trial-conversion-nudge";
-import { trackTrialStart } from "@/components/ab-test-wrapper";
+import { landingCopy } from "@/content/landingCopy";
 
 const STATES = [
   "Utah", "Texas", "North Dakota", "South Dakota", "North Carolina",
@@ -250,15 +250,12 @@ export default function Landing() {
               Log In
             </Button>
             <Button
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
+              onClick={() => window.location.href = "/signup"}
               data-testid="button-start-trial"
               size="lg"
               className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
-              Start Trial
+              Explain My Screening Report
             </Button>
           </div>
         </div>
@@ -282,14 +279,14 @@ export default function Landing() {
               variants={fadeInUp}
               className="font-display text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground leading-tight mb-4"
             >
-              Confused by a Screening Report?
+              {landingCopy.hero.h1}
             </motion.h1>
             
             <motion.p 
               variants={fadeInUp}
               className="text-base sm:text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed max-w-2xl mx-auto"
             >
-              LeaseShield explains it in plain English. Flags risks, shows safe next steps.
+              {landingCopy.hero.subheadline}
             </motion.p>
 
             {/* Primary CTA */}
@@ -301,28 +298,21 @@ export default function Landing() {
                 data-testid="button-explain-report"
               >
                 <Search className="mr-2 h-5 w-5" />
-                Explain My Screening Report
-              </Button>
-              <Button
-                size="lg"
-                variant="outline"
-                onClick={() => {
-                  trackTrialStart();
-                  window.location.href = "/signup";
-                }}
-                className="text-lg px-6 py-4 min-h-[52px]"
-                data-testid="button-hero-trial"
-              >
-                Start Free 7-Day Trial
-                <ArrowRight className="ml-2 h-5 w-5" />
+                {landingCopy.hero.primaryCta}
               </Button>
             </motion.div>
             
             <motion.p 
               variants={fadeInUp}
-              className="text-sm text-muted-foreground mb-10"
+              className="text-sm text-muted-foreground mb-2"
             >
-              Works with Western Verify and other providers. Instant access. No credit card needed.
+              {landingCopy.hero.support}
+            </motion.p>
+            <motion.p 
+              variants={fadeInUp}
+              className="text-sm text-muted-foreground font-medium mb-10"
+            >
+              {landingCopy.hero.reassurance}
             </motion.p>
 
             {/* Dashboard Preview Card */}
@@ -411,6 +401,47 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* When landlords use LeaseShield */}
+      <section className="py-12 md:py-16 bg-panel-50 dark:bg-muted/20">
+        <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center"
+          >
+            <motion.h2 
+              variants={fadeInUp}
+              className="text-2xl md:text-3xl font-bold tracking-tight text-ink-900 dark:text-foreground mb-8"
+            >
+              {landingCopy.whenUsed.title}
+            </motion.h2>
+            <motion.ul 
+              variants={staggerContainer}
+              className="space-y-4 text-left max-w-xl mx-auto mb-8"
+            >
+              {landingCopy.whenUsed.bullets.map((bullet, index) => (
+                <motion.li 
+                  key={index}
+                  variants={fadeInUp}
+                  className="flex items-start gap-3"
+                >
+                  <CheckCircle2 className="h-5 w-5 text-brand-600 mt-0.5 flex-shrink-0" />
+                  <span className="text-base text-ink-700 dark:text-muted-foreground">{bullet}</span>
+                </motion.li>
+              ))}
+            </motion.ul>
+            <motion.p 
+              variants={fadeInUp}
+              className="text-base md:text-lg font-semibold text-ink-900 dark:text-foreground italic"
+            >
+              {landingCopy.whenUsed.anchorLine}
+            </motion.p>
           </motion.div>
         </div>
       </section>
@@ -591,10 +622,10 @@ export default function Landing() {
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">1</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
-                  Screen Tenants
+                  {landingCopy.howItWorks.steps[0].title}
                 </h3>
                 <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
-                  Send applicants a link to apply and run screening via Western Verify.
+                  {landingCopy.howItWorks.steps[0].body}
                 </p>
               </div>
             </motion.div>
@@ -606,10 +637,10 @@ export default function Landing() {
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">2</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
-                  Decode Reports
+                  {landingCopy.howItWorks.steps[1].title}
                 </h3>
                 <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
-                  AI explains results in plain English and flags compliance risks.
+                  {landingCopy.howItWorks.steps[1].body}
                 </p>
               </div>
             </motion.div>
@@ -621,10 +652,10 @@ export default function Landing() {
                   <span className="text-xl font-bold text-brand-600 dark:text-brand-400">3</span>
                 </div>
                 <h3 className="font-bold text-lg sm:text-[19px] text-ink-900 dark:text-white mb-3">
-                  Build Documents
+                  {landingCopy.howItWorks.steps[2].title}
                 </h3>
                 <p className="text-[15px] text-ink-700 dark:text-slate-300 leading-relaxed">
-                  Generate state-specific leases, notices, and forms. Always current.
+                  {landingCopy.howItWorks.steps[2].body}
                 </p>
               </div>
             </motion.div>
@@ -888,7 +919,7 @@ export default function Landing() {
                     className="inline-flex rounded-xl bg-brand-500 hover:bg-brand-600 px-6 py-4 text-white font-semibold shadow-soft transition"
                     data-testid="button-dashboard-trial"
                   >
-                    Start Free 7-Day Trial →
+                    Get Started
                   </a>
                   <div className="mt-3 text-sm text-ink-500 dark:text-muted-foreground">
                     Instant access. No credit card required.
@@ -1510,10 +1541,10 @@ export default function Landing() {
             className="text-center mb-12"
           >
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              Simple, Transparent Pricing
+              {landingCopy.pricing.title}
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground px-4">
-              Stop wasting hours on forms. Stop losing sleep over compliance. Get everything a landlord actually needs, just once a month.
+              {landingCopy.pricing.support}
             </p>
           </motion.div>
 
@@ -1573,25 +1604,14 @@ export default function Landing() {
                 size="lg"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
-                  trackTrialStart();
                   localStorage.setItem('billingPeriod', 'monthly');
                   window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-monthly"
               >
-                Start Free Trial
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <button
-                onClick={() => {
-                  localStorage.setItem('billingPeriod', 'monthly');
-                  window.location.href = "/signup?payNow=true";
-                }}
-                className="text-xs text-brand-600 hover:underline mt-2"
-                data-testid="link-pay-now-monthly"
-              >
-                Skip trial - Pay now
-              </button>
             </Card>
 
             {/* Annual Card - Best Value */}
@@ -1648,37 +1668,26 @@ export default function Landing() {
                 size="lg"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px] mt-auto"
                 onClick={() => {
-                  trackTrialStart();
                   localStorage.setItem('billingPeriod', 'yearly');
                   window.location.href = "/signup";
                 }}
                 data-testid="button-pricing-annual"
               >
-                Save $20 – Start Free Trial
+                Save $20 – Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-              <button
-                onClick={() => {
-                  localStorage.setItem('billingPeriod', 'yearly');
-                  window.location.href = "/signup?payNow=true";
-                }}
-                className="text-xs text-brand-600 hover:underline mt-2"
-                data-testid="link-pay-now-annual"
-              >
-                Skip trial - Pay now
-              </button>
             </Card>
           </motion.div>
 
-          {/* Pricing Reinforcement */}
+          {/* Psychology Line */}
           <motion.p
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={fadeInUp}
-            className="text-center text-sm text-muted-foreground mt-6"
+            className="text-center text-base text-muted-foreground mt-8 italic"
           >
-            No contracts &bull; Cancel anytime &bull; No per-screening fees &bull; Works alongside your existing tools
+            {landingCopy.pricing.psychology}
           </motion.p>
 
           {/* Why LeaseShield Section */}
@@ -1797,7 +1806,7 @@ export default function Landing() {
           >
             <div className="flex items-center gap-2 bg-success/10 border border-success/20 rounded-lg px-4 py-3">
               <CheckCircle2 className="h-5 w-5 text-brand-600" />
-              <span className="font-medium text-foreground">7-Day Free Trial</span>
+              <span className="font-medium text-foreground">Only $10/month</span>
             </div>
             <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-lg px-4 py-3">
               <Shield className="h-5 w-5 text-brand-600" />
@@ -1836,11 +1845,16 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <Accordion type="single" collapsible className="w-full">
-              <AccordionItem value="item-cc">
-                <AccordionTrigger className="text-lg">Do I need a credit card for the free trial?</AccordionTrigger>
+              <AccordionItem value="item-usage">
+                <AccordionTrigger className="text-lg">{landingCopy.faqs[0].q}</AccordionTrigger>
                 <AccordionContent className="text-lg">
-                  <strong>No!</strong> Your 7-day free trial starts immediately with just your email address. You'll
-                  only need to add payment information if you choose to continue after the trial ends. No strings attached.
+                  {landingCopy.faqs[0].a}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-wv">
+                <AccordionTrigger className="text-lg">{landingCopy.faqs[1].q}</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  {landingCopy.faqs[1].a}
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-legal">
@@ -1865,10 +1879,15 @@ export default function Landing() {
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-3">
-                <AccordionTrigger className="text-lg">Can I cancel my subscription anytime?</AccordionTrigger>
+                <AccordionTrigger className="text-lg">{landingCopy.faqs[2].q}</AccordionTrigger>
                 <AccordionContent className="text-lg">
-                  Absolutely. You can cancel your subscription at any time with no cancellation fees
-                  or penalties. Your access will continue until the end of your current billing period.
+                  {landingCopy.faqs[2].a}
+                </AccordionContent>
+              </AccordionItem>
+              <AccordionItem value="item-units">
+                <AccordionTrigger className="text-lg">{landingCopy.faqs[3].q}</AccordionTrigger>
+                <AccordionContent className="text-lg">
+                  {landingCopy.faqs[3].a}
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-5">
@@ -1909,14 +1928,11 @@ export default function Landing() {
             </p>
             <Button
               size="lg"
-              onClick={() => {
-                trackTrialStart();
-                window.location.href = "/signup";
-              }}
+              onClick={() => window.location.href = "/signup"}
               className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[48px]"
               data-testid="button-value-prop-cta"
             >
-              Start Your Free Trial
+              Get Started
               <ArrowRight className="ml-2 h-5 w-5" />
             </Button>
           </motion.div>
@@ -1941,10 +1957,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
-                onClick={() => {
-                  trackTrialStart();
-                  window.location.href = "/signup";
-                }}
+                onClick={() => window.location.href = "/signup"}
                 data-testid="button-final-cta"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
@@ -1953,7 +1966,7 @@ export default function Landing() {
               </Button>
             </div>
             <p className="text-base text-muted-foreground">
-              7 days to test everything - no card required. Instant access to leases, decoder, and all tools.
+              Only $10/month. Instant access to leases, decoder, and all tools.
             </p>
             <p className="text-xs text-muted-foreground/70 mt-3">
               *Not legal advice. See disclaimer below.
@@ -2016,17 +2029,14 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
-                onClick={() => {
-                  trackTrialStart();
-                  window.location.href = "/signup";
-                }}
+                onClick={() => window.location.href = "/signup"}
                 data-testid="button-features-dialog-trial"
               >
-                Start Your 7-Day Free Trial
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground">
-                No credit card required • Cancel anytime
+                Only $10/month • Cancel anytime
               </p>
             </div>
           </div>
@@ -2065,17 +2075,14 @@ export default function Landing() {
                 <Button
                   size="lg"
                   className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
-                  onClick={() => {
-                    trackTrialStart();
-                    window.location.href = "/signup";
-                  }}
+                  onClick={() => window.location.href = "/signup"}
                   data-testid="button-dialog-start-trial"
                 >
-                  Start Your Free Trial
+                  Get Started
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <p className="text-sm text-muted-foreground text-center mt-3">
-                  7-day free trial • No credit card required
+                  Only $10/month • Cancel anytime
                 </p>
               </div>
             </>
@@ -2139,8 +2146,8 @@ export default function Landing() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">7-Day Free Trial</p>
-                  <p className="text-sm text-muted-foreground">No credit card required</p>
+                  <p className="font-medium text-foreground">Simple Pricing</p>
+                  <p className="text-sm text-muted-foreground">Only $10/month • Cancel anytime</p>
                 </div>
               </div>
             </div>
@@ -2149,12 +2156,11 @@ export default function Landing() {
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]" 
                 size="lg"
                 onClick={() => {
-                  trackTrialStart();
                   setShowBenefitsDialog(false);
                   window.location.href = "/signup";
                 }}
               >
-                Start Your Free Trial
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
@@ -2261,17 +2267,16 @@ export default function Landing() {
                 size="lg"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
-                  trackTrialStart();
                   setShowTemplatePreview(false);
                   window.location.href = "/signup";
                 }}
                 data-testid="button-preview-trial"
               >
-                Get Your First Lease in 5 Minutes - Start Free Trial
+                Get Your First Lease in 5 Minutes - Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
               <p className="text-sm text-muted-foreground text-center">
-                No credit card required • 7-day free trial • Cancel anytime
+                Only $10/month • Cancel anytime • No contracts
               </p>
             </div>
           </div>
