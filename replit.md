@@ -19,7 +19,16 @@ LeaseShield App is a subscription-based SaaS platform for small and midsize land
 | replit.md | Technical architecture, AI context | Architecture changes, new integrations |
 
 ## User Preferences
-Not specified.
+- **No free trial language**: Users are either "Active" (subscribed) or "Inactive" (not subscribed)
+- **Monthly billing default**: Subscribe page defaults to monthly ($10/month), annual framed as "Includes 2 months free"
+- **Core brand sentence**: "Most landlords only face these decisions a few times per year. LeaseShield is there when they do."
+
+## Email Strategy (Restraint-Based)
+Only 2 automated lifecycle emails, then silence:
+- **Email #1** (immediate on signup): Pure framing, founder voice (Morgan), no pricing, no CTA
+- **Email #2** (3 days if not subscribed): Calm nudge with "Quick note" subject, permission to wait
+- **No Email #3**: Silence is more powerful than a "last email" message
+- **Guiding rule**: If an email would make a landlord feel pressured instead of prepared, don't send it
 
 ## Git & GitHub Workflow
 
