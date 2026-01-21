@@ -5375,7 +5375,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.post('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, propertyTermsJson } = req.body;
       
       if (!name) {
         return res.status(400).json({ message: "Property name is required" });
@@ -5394,6 +5394,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         defaultFieldSchemaJson: defaultFieldSchemaJson || defaultFieldSchemaTemplate,
         requiredDocumentTypes: requiredDocumentTypes || null,
         autoScreening: autoScreening ?? false,
+        propertyTermsJson: propertyTermsJson || null,
       });
 
       res.status(201).json(property);

@@ -101,7 +101,7 @@ export default function Properties() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ data, requiredDocumentTypes, autoScreening }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean }) => {
+    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, propertyTermsJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson?: PropertyTermsType }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -110,7 +110,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -299,7 +299,7 @@ export default function Properties() {
     if (editingProperty) {
       updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms });
     } else {
-      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening });
+      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms });
     }
   };
 
@@ -597,6 +597,83 @@ export default function Properties() {
                   onCheckedChange={setAutoScreening}
                   data-testid="switch-add-auto-screening"
                 />
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Property Terms & Fees</Label>
+                <p className="text-xs text-muted-foreground">
+                  These details will be shown to applicants before they apply
+                </p>
+                
+                <div className="grid grid-cols-2 gap-4 pt-2">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-monthlyRent" className="text-sm">Monthly Rent</Label>
+                    <Input
+                      id="add-monthlyRent"
+                      placeholder="e.g., $1,500"
+                      value={propertyTerms.monthlyRent || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, monthlyRent: e.target.value }))}
+                      data-testid="input-add-monthly-rent"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-applicationFee" className="text-sm">Application Fee</Label>
+                    <Input
+                      id="add-applicationFee"
+                      placeholder="e.g., $50 per adult"
+                      value={propertyTerms.applicationFee || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, applicationFee: e.target.value }))}
+                      data-testid="input-add-application-fee"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-securityDeposit" className="text-sm">Security Deposit</Label>
+                    <Input
+                      id="add-securityDeposit"
+                      placeholder="e.g., $1,500"
+                      value={propertyTerms.securityDeposit || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, securityDeposit: e.target.value }))}
+                      data-testid="input-add-security-deposit"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-adminFee" className="text-sm">Admin / Initiation Fee</Label>
+                    <Input
+                      id="add-adminFee"
+                      placeholder="e.g., $150"
+                      value={propertyTerms.adminFee || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, adminFee: e.target.value }))}
+                      data-testid="input-add-admin-fee"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="add-leaseDeadline" className="text-sm">Lease Signing Deadline (hours)</Label>
+                    <Input
+                      id="add-leaseDeadline"
+                      type="number"
+                      placeholder="e.g., 48"
+                      value={propertyTerms.leaseSignDeadlineHours || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, leaseSignDeadlineHours: e.target.value ? parseInt(e.target.value) : undefined }))}
+                      data-testid="input-add-lease-deadline"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="add-additionalNotes" className="text-sm">Additional Notes</Label>
+                    <Input
+                      id="add-additionalNotes"
+                      placeholder="Any other terms"
+                      value={propertyTerms.additionalNotes || ""}
+                      onChange={(e) => setPropertyTerms(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                      data-testid="input-add-additional-notes"
+                    />
+                  </div>
+                </div>
               </div>
             </div>
             <DialogFooter>
