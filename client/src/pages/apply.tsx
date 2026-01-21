@@ -824,12 +824,9 @@ export default function Apply() {
                   </div>
                 )}
 
-                {/* Single Acknowledgment Checkbox (below terms box) */}
+                {/* Single Acknowledgment Checkbox (below terms box with visual divider) */}
                 {hasDisplayableTerms(linkData.propertyTerms) && (
-                  <>
-                    {linkData.coverPage?.footerNote && (
-                      <p className="text-sm text-muted-foreground">{linkData.coverPage.footerNote}</p>
-                    )}
+                  <div className="border-t pt-4 mt-2 space-y-2">
                     <div className="flex items-start gap-3">
                       <Checkbox
                         id="acknowledgeTerms"
@@ -844,28 +841,8 @@ export default function Apply() {
                         I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this rental.
                       </Label>
                     </div>
-                  </>
-                )}
-                
-                {/* If no terms but has footer note, still show acknowledgment for footer note content */}
-                {!hasDisplayableTerms(linkData.propertyTerms) && linkData.coverPage?.footerNote && (
-                  <>
-                    <p className="text-sm text-muted-foreground">{linkData.coverPage.footerNote}</p>
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id="acknowledge"
-                        checked={hasAcknowledged}
-                        onCheckedChange={(checked) => {
-                          setHasAcknowledged(!!checked);
-                          setHasAcknowledgedTerms(!!checked);
-                        }}
-                        data-testid="checkbox-acknowledge"
-                      />
-                      <Label htmlFor="acknowledge" className="text-sm cursor-pointer">
-                        I understand and acknowledge the requirements above.
-                      </Label>
-                    </div>
-                  </>
+                    <p className="text-xs text-muted-foreground ml-7">This acknowledgment is required before starting the application.</p>
+                  </div>
                 )}
 
                 {/* Section 3: Additional Requirements & Policies (collapsible) */}
