@@ -11,7 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
+import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig, type PropertyTerms, DEFAULT_PROPERTY_TERMS } from "@shared/schema";
 import {
   Dialog,
   DialogContent,
@@ -98,6 +98,11 @@ export default function RentalApplications() {
 
   const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
   const [autoScreening, setAutoScreening] = useState(false);
+
+  // Property terms dialog state
+  const [isPropertyTermsOpen, setIsPropertyTermsOpen] = useState(false);
+  const [propertyTermsPropertyId, setPropertyTermsPropertyId] = useState<string | null>(null);
+  const [propertyTerms, setPropertyTerms] = useState<PropertyTerms>(DEFAULT_PROPERTY_TERMS);
 
   const { data: properties = [], isLoading, error, refetch } = useQuery<RentalProperty[]>({
     queryKey: ["/api/rental/properties"],
@@ -187,7 +192,7 @@ export default function RentalApplications() {
   });
 
   const createUnitMutation = useMutation({
-    mutationFn: async ({ propertyId, data, createLink }: { propertyId: string; data: typeof unitForm; createLink?: boolean }) => {
+    mutationFn: async ({ propertyId, data, createLink, propertyTerms }: { propertyId: string; data: typeof unitForm; createLink?: boolean; propertyTerms?: PropertyTerms }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${propertyId}/units`, {
         method: "POST",
@@ -196,7 +201,7 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, createLink }),
+        body: JSON.stringify({ ...data, createLink, propertyTerms }),
       });
       if (!response.ok) throw new Error("Failed to create unit");
       return response.json();
@@ -244,11 +249,27 @@ export default function RentalApplications() {
     setCreateLinkAfterUnit(!!createLinkImmediately);
     
     if (createLinkImmediately) {
-      // Create a default unit and link immediately without showing dialog
-      createUnitMutation.mutate({ propertyId, data: { unitLabel: "" }, createLink: true });
+      // Show property terms dialog before creating link
+      setPropertyTermsPropertyId(propertyId);
+      setPropertyTerms(DEFAULT_PROPERTY_TERMS);
+      setIsPropertyTermsOpen(true);
     } else {
       setIsAddUnitOpen(true);
     }
+  };
+
+  const handleCreateLinkWithTerms = () => {
+    if (!propertyTermsPropertyId) return;
+    // Create a default unit and link with property terms
+    createUnitMutation.mutate({ 
+      propertyId: propertyTermsPropertyId, 
+      data: { unitLabel: "" }, 
+      createLink: true,
+      propertyTerms 
+    });
+    setIsPropertyTermsOpen(false);
+    setPropertyTermsPropertyId(null);
+    setPropertyTerms(DEFAULT_PROPERTY_TERMS);
   };
 
   const filteredProperties = properties.filter(
@@ -682,6 +703,96 @@ export default function RentalApplications() {
                 data-testid="button-submit-rental-unit"
               >
                 {createUnitMutation.isPending ? "Adding..." : "Add Unit"}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Property Terms Dialog */}
+        <Dialog open={isPropertyTermsOpen} onOpenChange={setIsPropertyTermsOpen}>
+          <DialogContent className="sm:max-w-[500px]">
+            <DialogHeader>
+              <DialogTitle>Property Terms</DialogTitle>
+              <DialogDescription>
+                These details will be shown to applicants before they apply. Leave blank or enter "N/A" for items that don't apply.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="monthlyRent">Monthly Rent</Label>
+                <Input
+                  id="monthlyRent"
+                  placeholder="e.g., $1,500 or N/A"
+                  value={propertyTerms.monthlyRent || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, monthlyRent: e.target.value }))}
+                  data-testid="input-property-terms-rent"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="applicationFee">Application Fee</Label>
+                <Input
+                  id="applicationFee"
+                  placeholder="e.g., $50 per adult or N/A"
+                  value={propertyTerms.applicationFee || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, applicationFee: e.target.value }))}
+                  data-testid="input-property-terms-app-fee"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="securityDeposit">Security Deposit</Label>
+                <Input
+                  id="securityDeposit"
+                  placeholder="e.g., $1,500 (refundable) or N/A"
+                  value={propertyTerms.securityDeposit || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, securityDeposit: e.target.value }))}
+                  data-testid="input-property-terms-deposit"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="adminFee">Admin / Lease Initiation Fee</Label>
+                <Input
+                  id="adminFee"
+                  placeholder="e.g., $150 (non-refundable) or N/A"
+                  value={propertyTerms.adminFee || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, adminFee: e.target.value }))}
+                  data-testid="input-property-terms-admin-fee"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="leaseSignDeadlineHours">Lease Signing Deadline (hours after approval)</Label>
+                <Input
+                  id="leaseSignDeadlineHours"
+                  type="number"
+                  placeholder="e.g., 48"
+                  value={propertyTerms.leaseSignDeadlineHours || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, leaseSignDeadlineHours: e.target.value ? parseInt(e.target.value) : undefined }))}
+                  data-testid="input-property-terms-deadline"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Common: 24-72 hours. Leave blank if not applicable.
+                </p>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="additionalNotes">Additional Notes</Label>
+                <Input
+                  id="additionalNotes"
+                  placeholder="Any other terms or notes"
+                  value={propertyTerms.additionalNotes || ""}
+                  onChange={(e) => setPropertyTerms(prev => ({ ...prev, additionalNotes: e.target.value }))}
+                  data-testid="input-property-terms-notes"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsPropertyTermsOpen(false)}>
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreateLinkWithTerms}
+                disabled={createUnitMutation.isPending}
+                data-testid="button-create-link-with-terms"
+              >
+                {createUnitMutation.isPending ? "Creating..." : "Create Application Link"}
               </Button>
             </DialogFooter>
           </DialogContent>
