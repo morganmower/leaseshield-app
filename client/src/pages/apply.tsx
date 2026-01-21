@@ -45,6 +45,7 @@ import {
   Plus,
   Car,
   X,
+  DollarSign,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -93,6 +94,14 @@ interface ApplicationLinkData {
   };
   documentRequirements?: DocumentRequirementsConfig;
   complianceRules?: ComplianceRule[]; // Dynamic compliance rules from database
+  propertyTerms?: {
+    monthlyRent?: string;
+    applicationFee?: string;
+    securityDeposit?: string;
+    adminFee?: string;
+    leaseSignDeadlineHours?: number;
+    additionalNotes?: string;
+  };
 }
 
 interface PersonData {
@@ -380,6 +389,7 @@ export default function Apply() {
   
   const [currentStep, setCurrentStep] = useState(0);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
+  const [hasAcknowledgedTerms, setHasAcknowledgedTerms] = useState(false);
   const [personToken, setPersonToken] = useState<string | null>(() => {
     // For invite flows, the URL token IS the person token
     if (isInviteFlow) return token;
@@ -725,6 +735,64 @@ export default function Apply() {
                   </div>
                 ))}
 
+                {/* Property Terms Section */}
+                {linkData.propertyTerms && Object.values(linkData.propertyTerms).some(v => v) && (
+                  <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
+                    <h3 className="font-semibold flex items-center gap-2">
+                      <DollarSign className="h-4 w-4 text-primary" />
+                      Property Terms & Fees
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+                      {linkData.propertyTerms.monthlyRent && (
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Monthly Rent:</span>
+                          <span className="font-medium">{linkData.propertyTerms.monthlyRent}</span>
+                        </div>
+                      )}
+                      {linkData.propertyTerms.applicationFee && (
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Application Fee:</span>
+                          <span className="font-medium">{linkData.propertyTerms.applicationFee}</span>
+                        </div>
+                      )}
+                      {linkData.propertyTerms.securityDeposit && (
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Security Deposit:</span>
+                          <span className="font-medium">{linkData.propertyTerms.securityDeposit}</span>
+                        </div>
+                      )}
+                      {linkData.propertyTerms.adminFee && (
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Admin/Lease Fee:</span>
+                          <span className="font-medium">{linkData.propertyTerms.adminFee}</span>
+                        </div>
+                      )}
+                      {linkData.propertyTerms.leaseSignDeadlineHours && (
+                        <div className="flex justify-between border-b pb-2">
+                          <span className="text-muted-foreground">Lease Signing Deadline:</span>
+                          <span className="font-medium">{linkData.propertyTerms.leaseSignDeadlineHours} hours after approval</span>
+                        </div>
+                      )}
+                    </div>
+                    {linkData.propertyTerms.additionalNotes && (
+                      <p className="text-sm text-muted-foreground italic mt-2">{linkData.propertyTerms.additionalNotes}</p>
+                    )}
+                    <div className="bg-background p-3 rounded-lg border mt-3">
+                      <div className="flex items-start gap-3">
+                        <Checkbox
+                          id="acknowledgeTerms"
+                          checked={hasAcknowledgedTerms}
+                          onCheckedChange={(checked) => setHasAcknowledgedTerms(!!checked)}
+                          data-testid="checkbox-acknowledge-terms"
+                        />
+                        <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
+                          I have reviewed and acknowledge the rent, fees, deposits, and key rental terms above.
+                        </Label>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
                 {linkData.coverPage?.footerNote && (
                   <div className="bg-muted/50 p-4 rounded-lg">
                     <div className="flex items-start gap-3">
@@ -742,7 +810,7 @@ export default function Apply() {
                 )}
 
                 {/* Start form */}
-                {!personToken && hasAcknowledged && (
+                {!personToken && hasAcknowledged && (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v) || hasAcknowledgedTerms) && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="font-semibold">Get Started</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -783,7 +851,7 @@ export default function Apply() {
                       firstName: formData.firstName,
                       lastName: formData.lastName,
                     })}
-                    disabled={!hasAcknowledged || !formData.email || !formData.firstName || !formData.lastName || startMutation.isPending}
+                    disabled={!hasAcknowledged || (linkData.propertyTerms && Object.values(linkData.propertyTerms).some(v => v) && !hasAcknowledgedTerms) || !formData.email || !formData.firstName || !formData.lastName || startMutation.isPending}
                     data-testid="button-start-application"
                   >
                     {startMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
