@@ -155,7 +155,14 @@ const isNA = (value: string | number | undefined): boolean => {
 };
 
 // Check if property terms have any displayable values (excluding N/A entries)
-const hasDisplayableTerms = (terms?: LinkData["propertyTerms"]): boolean => {
+const hasDisplayableTerms = (terms?: {
+  monthlyRent?: string;
+  applicationFee?: string;
+  securityDeposit?: string;
+  adminFee?: string;
+  leaseSignDeadlineHours?: number;
+  additionalNotes?: string;
+}): boolean => {
   if (!terms) return false;
   return !isNA(terms.monthlyRent) || 
          !isNA(terms.applicationFee) || 
