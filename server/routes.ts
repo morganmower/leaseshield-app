@@ -5679,8 +5679,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Generate public token
       const publicToken = randomUUID().replace(/-/g, '');
 
-      // Get property terms from request body (optional)
-      const propertyTerms = req.body.propertyTerms || {};
+      // Get property terms from property (fall back to request body for backwards compatibility)
+      const propertyTerms = property.propertyTermsJson || req.body.propertyTerms || {};
 
       const link = await storage.createRentalApplicationLink({
         unitId: req.params.unitId,
