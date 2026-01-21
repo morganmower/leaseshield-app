@@ -146,6 +146,25 @@ const getUploadTypes = (requirements?: DocumentRequirementsConfig) => [
   { id: "additional", label: "Additional Supporting Documents", required: false, description: "Any other documents that may help your application" },
 ];
 
+// Helper to check if a property term value is effectively "N/A" (should be hidden from applicants)
+const isNA = (value: string | number | undefined): boolean => {
+  if (value === undefined || value === null || value === "") return true;
+  if (typeof value === "number") return false;
+  const normalized = value.trim().toLowerCase();
+  return normalized === "n/a" || normalized === "na";
+};
+
+// Check if property terms have any displayable values (excluding N/A entries)
+const hasDisplayableTerms = (terms?: LinkData["propertyTerms"]): boolean => {
+  if (!terms) return false;
+  return !isNA(terms.monthlyRent) || 
+         !isNA(terms.applicationFee) || 
+         !isNA(terms.securityDeposit) || 
+         !isNA(terms.adminFee) || 
+         !isNA(terms.leaseSignDeadlineHours) || 
+         !isNA(terms.additionalNotes);
+};
+
 function UploadDocumentsStep({ personToken, onBack, onNext, documentRequirements }: { 
   personToken: string; 
   onBack: () => void; 
@@ -454,7 +473,7 @@ export default function Apply() {
       if (!linkData.coverPage?.footerNote) {
         setHasAcknowledged(true);
       }
-      if (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v)) {
+      if (!hasDisplayableTerms(linkData.propertyTerms)) {
         setHasAcknowledgedTerms(true);
       }
     }
@@ -474,7 +493,7 @@ export default function Apply() {
   // Start application mutation
   const startMutation = useMutation({
     mutationFn: async (data: { email: string; firstName: string; lastName: string }) => {
-      const hasTerms = linkData?.propertyTerms && Object.values(linkData.propertyTerms).some(v => v);
+      const hasTerms = hasDisplayableTerms(linkData?.propertyTerms);
       const res = await fetch(`/api/apply/${token}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -649,7 +668,7 @@ export default function Apply() {
     setCurrentStep(0);
     // Reset acknowledgment states, but auto-ack if no footer note or no terms
     setHasAcknowledged(!linkData?.coverPage?.footerNote);
-    setHasAcknowledgedTerms(!linkData?.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v));
+    setHasAcknowledgedTerms(!hasDisplayableTerms(linkData?.propertyTerms));
   };
 
   if (personData?.isCompleted) {
@@ -754,46 +773,46 @@ export default function Apply() {
                 ))}
 
                 {/* Property Terms Section */}
-                {linkData.propertyTerms && Object.values(linkData.propertyTerms).some(v => v) && (
+                {hasDisplayableTerms(linkData.propertyTerms) && (
                   <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
                     <h3 className="font-semibold flex items-center gap-2">
                       <DollarSign className="h-4 w-4 text-primary" />
                       Property Terms & Fees
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
-                      {linkData.propertyTerms.monthlyRent && (
+                      {!isNA(linkData.propertyTerms?.monthlyRent) && (
                         <div className="flex justify-between border-b pb-2">
                           <span className="text-muted-foreground">Monthly Rent:</span>
-                          <span className="font-medium">{linkData.propertyTerms.monthlyRent}</span>
+                          <span className="font-medium">{linkData.propertyTerms?.monthlyRent}</span>
                         </div>
                       )}
-                      {linkData.propertyTerms.applicationFee && (
+                      {!isNA(linkData.propertyTerms?.applicationFee) && (
                         <div className="flex justify-between border-b pb-2">
                           <span className="text-muted-foreground">Application Fee:</span>
-                          <span className="font-medium">{linkData.propertyTerms.applicationFee}</span>
+                          <span className="font-medium">{linkData.propertyTerms?.applicationFee}</span>
                         </div>
                       )}
-                      {linkData.propertyTerms.securityDeposit && (
+                      {!isNA(linkData.propertyTerms?.securityDeposit) && (
                         <div className="flex justify-between border-b pb-2">
                           <span className="text-muted-foreground">Security Deposit:</span>
-                          <span className="font-medium">{linkData.propertyTerms.securityDeposit}</span>
+                          <span className="font-medium">{linkData.propertyTerms?.securityDeposit}</span>
                         </div>
                       )}
-                      {linkData.propertyTerms.adminFee && (
+                      {!isNA(linkData.propertyTerms?.adminFee) && (
                         <div className="flex justify-between border-b pb-2">
                           <span className="text-muted-foreground">Admin/Lease Fee:</span>
-                          <span className="font-medium">{linkData.propertyTerms.adminFee}</span>
+                          <span className="font-medium">{linkData.propertyTerms?.adminFee}</span>
                         </div>
                       )}
-                      {linkData.propertyTerms.leaseSignDeadlineHours && (
+                      {!isNA(linkData.propertyTerms?.leaseSignDeadlineHours) && (
                         <div className="flex justify-between border-b pb-2">
                           <span className="text-muted-foreground">Lease Signing Deadline:</span>
-                          <span className="font-medium">{linkData.propertyTerms.leaseSignDeadlineHours} hours after approval</span>
+                          <span className="font-medium">{linkData.propertyTerms?.leaseSignDeadlineHours} hours after approval</span>
                         </div>
                       )}
                     </div>
-                    {linkData.propertyTerms.additionalNotes && (
-                      <p className="text-sm text-muted-foreground italic mt-2">{linkData.propertyTerms.additionalNotes}</p>
+                    {!isNA(linkData.propertyTerms?.additionalNotes) && (
+                      <p className="text-sm text-muted-foreground italic mt-2">{linkData.propertyTerms?.additionalNotes}</p>
                     )}
                     <div className="bg-background p-3 rounded-lg border mt-3">
                       <div className="flex items-start gap-3">
@@ -828,7 +847,7 @@ export default function Apply() {
                 )}
 
                 {/* Start form */}
-                {!personToken && hasAcknowledged && (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v) || hasAcknowledgedTerms) && (
+                {!personToken && hasAcknowledged && (!hasDisplayableTerms(linkData.propertyTerms) || hasAcknowledgedTerms) && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="font-semibold">Get Started</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -869,7 +888,7 @@ export default function Apply() {
                       firstName: formData.firstName,
                       lastName: formData.lastName,
                     })}
-                    disabled={!hasAcknowledged || (linkData.propertyTerms && Object.values(linkData.propertyTerms).some(v => v) && !hasAcknowledgedTerms) || !formData.email || !formData.firstName || !formData.lastName || startMutation.isPending}
+                    disabled={!hasAcknowledged || (hasDisplayableTerms(linkData.propertyTerms) && !hasAcknowledgedTerms) || !formData.email || !formData.firstName || !formData.lastName || startMutation.isPending}
                     data-testid="button-start-application"
                   >
                     {startMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
