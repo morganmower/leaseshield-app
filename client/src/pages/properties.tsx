@@ -127,7 +127,7 @@ export default function Properties() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson?: PropertyTermsType; fieldSchemaOverrideJson?: any }) => {
+    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, propertyTermsJson, defaultFieldSchemaJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -136,7 +136,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideEnabled: true, fieldSchemaOverrideJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, defaultFieldSchemaJson }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -153,7 +153,7 @@ export default function Properties() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTermsType; fieldSchemaOverrideJson?: any }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson, defaultFieldSchemaJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -162,7 +162,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideEnabled: true, fieldSchemaOverrideJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, defaultFieldSchemaJson }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -268,8 +268,8 @@ export default function Properties() {
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening((property as any).autoScreening ?? false);
     setPropertyTerms((property as any).propertyTermsJson || DEFAULT_PROPERTY_TERMS);
-    // Load field schema settings from property override
-    const override = (property as any).fieldSchemaOverrideJson;
+    // Load field schema settings from property's default field schema
+    const override = (property as any).defaultFieldSchemaJson;
     if (override?.fields) {
       setFieldSettings({
         desiredMoveInDate: override.fields.desiredMoveInDate?.visibility || "optional",
@@ -337,8 +337,8 @@ export default function Properties() {
 
   // Build the field schema override, merging with existing settings if editing
   const buildFieldSchemaOverride = () => {
-    // Get existing override from property being edited
-    const existingOverride = editingProperty ? (editingProperty as any).fieldSchemaOverrideJson : null;
+    // Get existing default field schema from property being edited
+    const existingOverride = editingProperty ? (editingProperty as any).defaultFieldSchemaJson : null;
     
     // Start with existing or default structure
     const base = existingOverride || {
@@ -394,12 +394,12 @@ export default function Properties() {
       return;
     }
 
-    const fieldSchemaOverrideJson = buildFieldSchemaOverride();
+    const defaultFieldSchemaJson = buildFieldSchemaOverride();
 
     if (editingProperty) {
-      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, fieldSchemaOverrideJson });
+      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
     } else {
-      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, fieldSchemaOverrideJson });
+      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
     }
   };
 
