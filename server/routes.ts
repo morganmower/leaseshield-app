@@ -5487,8 +5487,18 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         const activeLink = existingLinks.find(l => l.isActive);
         
         if (activeLink) {
-          // Return the existing link instead of creating a duplicate
-          return res.status(200).json({ unit, link: activeLink, unitCreated: false, reused: true });
+          // Update the existing link with latest property terms, then return it
+          const currentSchema = activeLink.mergedSchemaJson as any || {};
+          const updatedPropertyTerms = property.propertyTermsJson || {};
+          const updatedCoverPage = property.defaultCoverPageJson || currentSchema.coverPage;
+          const updatedMergedSchema = {
+            ...currentSchema,
+            coverPage: updatedCoverPage,
+            propertyTerms: updatedPropertyTerms,
+            propertyName: property.name,
+          };
+          await storage.updateRentalApplicationLink(activeLink.id, { mergedSchemaJson: updatedMergedSchema });
+          return res.status(200).json({ unit, link: { ...activeLink, mergedSchemaJson: updatedMergedSchema }, unitCreated: false, reused: true });
         }
       } else {
         // Create a default unit silently (user doesn't need to see it)
@@ -5662,11 +5672,22 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      // Check if this unit already has an active link - reuse it instead of creating duplicates
+      // Check if this unit already has an active link - update and reuse it with latest property terms
       const existingLinks = await storage.getRentalApplicationLinksByUnitId(req.params.unitId);
       const activeLink = existingLinks.find(l => l.isActive);
       if (activeLink) {
-        return res.status(200).json(activeLink);
+        // Update the existing link with latest property terms from the property
+        const currentSchema = activeLink.mergedSchemaJson as any || {};
+        const updatedPropertyTerms = property.propertyTermsJson || {};
+        const updatedCoverPage = property.defaultCoverPageJson || currentSchema.coverPage;
+        const updatedMergedSchema = {
+          ...currentSchema,
+          coverPage: updatedCoverPage,
+          propertyTerms: updatedPropertyTerms,
+          propertyName: property.name,
+        };
+        await storage.updateRentalApplicationLink(activeLink.id, { mergedSchemaJson: updatedMergedSchema });
+        return res.status(200).json({ ...activeLink, mergedSchemaJson: updatedMergedSchema });
       }
 
       // Merge schemas: unit overrides or property defaults

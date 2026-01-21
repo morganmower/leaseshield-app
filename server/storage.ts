@@ -401,6 +401,7 @@ export interface IStorage {
   getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined>;
   getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined>;
   createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
+  updateRentalApplicationLink(id: string, data: Partial<InsertRentalApplicationLink>): Promise<RentalApplicationLink | null>;
   deactivateRentalApplicationLink(id: string): Promise<boolean>;
   getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig>;
 
@@ -2129,6 +2130,13 @@ export class DatabaseStorage implements IStorage {
       const [newLink] = await db.insert(rentalApplicationLinks).values(link).returning();
       return newLink;
     }, 'createRentalApplicationLink');
+  }
+
+  async updateRentalApplicationLink(id: string, data: Partial<InsertRentalApplicationLink>): Promise<RentalApplicationLink | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalApplicationLinks).set(data).where(eq(rentalApplicationLinks.id, id)).returning();
+      return updated || null;
+    }, 'updateRentalApplicationLink');
   }
 
   async deactivateRentalApplicationLink(id: string): Promise<boolean> {
