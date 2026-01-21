@@ -8027,13 +8027,20 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Get the property state via unit -> property chain
+      // Get the property state and current field schema via unit -> property chain
       let propertyState: string | null = null;
+      let currentFieldSchema: any = (link.mergedSchemaJson as any)?.fieldSchema;
       if (link.unitId) {
         const unit = await storage.getRentalUnit(link.unitId);
         if (unit?.propertyId) {
           const property = await storage.getRentalPropertyById(unit.propertyId);
           propertyState = property?.state || null;
+          // Use fresh field schema from property (allows landlord to update settings without creating new links)
+          if (unit.fieldSchemaOverrideEnabled && unit.fieldSchemaOverrideJson) {
+            currentFieldSchema = unit.fieldSchemaOverrideJson;
+          } else if (property?.defaultFieldSchemaJson) {
+            currentFieldSchema = property.defaultFieldSchemaJson;
+          }
         }
       }
 
@@ -8048,7 +8055,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
-        fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        fieldSchema: currentFieldSchema,
         propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
         documentRequirements,
         propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
@@ -8080,13 +8087,20 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Get the property state via unit -> property chain
+      // Get the property state and current field schema via unit -> property chain
       let propertyState: string | null = null;
+      let currentFieldSchema: any = (link.mergedSchemaJson as any)?.fieldSchema;
       if (link.unitId) {
         const unit = await storage.getRentalUnit(link.unitId);
         if (unit?.propertyId) {
           const property = await storage.getRentalPropertyById(unit.propertyId);
           propertyState = property?.state || null;
+          // Use fresh field schema from property (allows landlord to update settings without creating new links)
+          if (unit.fieldSchemaOverrideEnabled && unit.fieldSchemaOverrideJson) {
+            currentFieldSchema = unit.fieldSchemaOverrideJson;
+          } else if (property?.defaultFieldSchemaJson) {
+            currentFieldSchema = property.defaultFieldSchemaJson;
+          }
         }
       }
 
@@ -8101,7 +8115,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
-        fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        fieldSchema: currentFieldSchema,
         propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
         documentRequirements,
         propertyState,
