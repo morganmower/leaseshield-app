@@ -6531,6 +6531,84 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         }
       };
 
+      // Generate terms & policies section from cover page
+      const generateTermsPoliciesSection = (link: any) => {
+        const merged = link.mergedSchemaJson as any;
+        const propertyTerms = merged?.propertyTerms || {};
+        const coverPage = merged?.coverPage || {};
+        const sections = coverPage?.sections || [];
+        
+        // Check if there's anything to show
+        const hasPropertyTerms = propertyTerms.monthlyRent || propertyTerms.applicationFee || 
+          propertyTerms.securityDeposit || propertyTerms.adminFee || propertyTerms.additionalNotes;
+        const hasSections = sections.length > 0;
+        
+        if (!hasPropertyTerms && !hasSections) {
+          return '';
+        }
+        
+        let html = `<div class="terms-section">`;
+        
+        // Property Terms (rent, fees, deposits)
+        if (hasPropertyTerms) {
+          html += `
+            <div class="property-terms">
+              <h3>Property Terms &amp; Fees</h3>
+              <div class="terms-grid">
+                ${propertyTerms.monthlyRent ? `<div class="term-item"><label>Monthly Rent</label><span>${escapeHtml(propertyTerms.monthlyRent)}</span></div>` : ''}
+                ${propertyTerms.applicationFee ? `<div class="term-item"><label>Application Fee</label><span>${escapeHtml(propertyTerms.applicationFee)}</span></div>` : ''}
+                ${propertyTerms.securityDeposit ? `<div class="term-item"><label>Security Deposit</label><span>${escapeHtml(propertyTerms.securityDeposit)}</span></div>` : ''}
+                ${propertyTerms.adminFee ? `<div class="term-item"><label>Admin/Move-in Fee</label><span>${escapeHtml(propertyTerms.adminFee)}</span></div>` : ''}
+                ${propertyTerms.leaseSignDeadlineHours ? `<div class="term-item"><label>Lease Signing Deadline</label><span>${propertyTerms.leaseSignDeadlineHours} hours after approval</span></div>` : ''}
+              </div>
+              ${propertyTerms.additionalNotes ? `<div class="additional-notes"><label>Additional Notes</label><p>${escapeHtml(propertyTerms.additionalNotes)}</p></div>` : ''}
+            </div>
+          `;
+        }
+        
+        // Cover Page Policies
+        if (hasSections) {
+          html += `
+            <div class="policies-section">
+              <h3>Application Requirements &amp; Policies</h3>
+              ${sections.map((section: any) => `
+                <div class="policy-item">
+                  <strong>${escapeHtml(section.heading || '')}</strong>
+                  <p>${escapeHtml(section.body || '')}</p>
+                </div>
+              `).join('')}
+            </div>
+          `;
+        }
+        
+        html += `</div>`;
+        return html;
+      };
+
+      // Generate acknowledgment record section
+      const generateAcknowledgmentSection = (personList: any[]) => {
+        const acknowledgedPeople = personList.filter(p => p.propertyTermsAcknowledgedAt);
+        
+        if (acknowledgedPeople.length === 0) {
+          return '';
+        }
+        
+        return `
+          <div class="acknowledgment-section">
+            <h3>Acknowledgment Record</h3>
+            <p class="ack-intro">The following individuals acknowledged the property terms, fees, and application requirements shown above:</p>
+            <div class="ack-list">
+              ${acknowledgedPeople.map(person => `
+                <div class="ack-item">
+                  <span class="checkmark">&#10003;</span>
+                  <span><strong>${escapeHtml(person.firstName)} ${escapeHtml(person.lastName)}</strong> (${roleLabel(person.role)}) acknowledged on ${formatDate(person.propertyTermsAcknowledgedAt)}</span>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+      };
+
       // Generate person sections
       const generatePersonSection = (person: any, index: number) => {
         const formData = person.formJson || {};
@@ -6944,6 +7022,122 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               font-size: 10px;
               color: #9ca3af;
             }
+            .terms-section {
+              margin-bottom: 28px;
+              padding: 16px;
+              background: #f8fafc;
+              border: 1px solid #e2e8f0;
+              border-radius: 8px;
+            }
+            .property-terms h3, .policies-section h3 {
+              color: #0d9488;
+              font-size: 14px;
+              margin: 0 0 12px 0;
+              padding-bottom: 6px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .terms-grid {
+              display: grid;
+              grid-template-columns: repeat(2, 1fr);
+              gap: 10px;
+              margin-bottom: 12px;
+            }
+            .term-item {
+              padding: 8px;
+              background: white;
+              border-radius: 4px;
+              border: 1px solid #e5e7eb;
+            }
+            .term-item label {
+              display: block;
+              font-size: 10px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 2px;
+            }
+            .term-item span {
+              font-size: 13px;
+              font-weight: 500;
+              color: #1a1a1a;
+            }
+            .additional-notes {
+              margin-top: 8px;
+              padding: 10px;
+              background: white;
+              border-radius: 4px;
+              border: 1px solid #e5e7eb;
+            }
+            .additional-notes label {
+              display: block;
+              font-size: 10px;
+              color: #6b7280;
+              text-transform: uppercase;
+              margin-bottom: 4px;
+            }
+            .additional-notes p {
+              margin: 0;
+              font-size: 12px;
+              color: #1a1a1a;
+            }
+            .policies-section {
+              margin-top: 16px;
+            }
+            .policy-item {
+              margin-bottom: 10px;
+              padding: 8px 10px;
+              background: white;
+              border-radius: 4px;
+              border-left: 3px solid #0d9488;
+            }
+            .policy-item strong {
+              display: block;
+              font-size: 12px;
+              color: #374151;
+              margin-bottom: 3px;
+            }
+            .policy-item p {
+              margin: 0;
+              font-size: 11px;
+              color: #6b7280;
+              line-height: 1.4;
+            }
+            .acknowledgment-section {
+              margin-top: 32px;
+              padding: 16px;
+              background: #f0fdf4;
+              border: 1px solid #bbf7d0;
+              border-radius: 8px;
+            }
+            .acknowledgment-section h3 {
+              color: #166534;
+              font-size: 14px;
+              margin: 0 0 8px 0;
+            }
+            .ack-intro {
+              font-size: 11px;
+              color: #374151;
+              margin: 0 0 12px 0;
+            }
+            .ack-list {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            }
+            .ack-item {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 8px 12px;
+              background: white;
+              border-radius: 4px;
+              font-size: 12px;
+            }
+            .ack-item .checkmark {
+              color: #22c55e;
+              font-size: 16px;
+              font-weight: bold;
+            }
             .page-break {
               page-break-before: always;
             }
@@ -6977,6 +7171,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             </div>
           </div>
 
+          ${generateTermsPoliciesSection(appLink)}
+
           ${people.map((person, index) => generatePersonSection(person, index)).join('')}
 
           ${decision ? `
@@ -6986,6 +7182,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             ${decision.notes ? `<p><strong>Notes:</strong> ${escapeHtml(decision.notes)}</p>` : ''}
           </div>
           ` : ''}
+
+          ${generateAcknowledgmentSection(people)}
 
           <div class="footer">
             <p>Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
