@@ -124,7 +124,7 @@ class HudOnapAdapter implements LegislationSourceAdapter {
   type = "page_poll" as const;
   defaultPollInterval = 1440;
   
-  private pihNoticesUrl = 'https://www.hud.gov/program_offices/public_indian_housing/publications/notices';
+  private pihNoticesUrl = 'https://www.hud.gov/hudclips/notices/pih';
   private onapUrl = 'https://www.hud.gov/program_offices/public_indian_housing/ih';
 
   async isAvailable(): Promise<boolean> {
@@ -133,34 +133,63 @@ class HudOnapAdapter implements LegislationSourceAdapter {
 
   private async fetchPihNotices(): Promise<HudNotice[]> {
     const notices: HudNotice[] = [];
+    const seenIds = new Set<string>();
     
     try {
-      const response = await fetch(this.pihNoticesUrl);
-      if (!response.ok) return notices;
+      console.log(`   Fetching PIH notices from: ${this.pihNoticesUrl}`);
+      const response = await fetch(this.pihNoticesUrl, {
+        headers: {
+          'User-Agent': 'LeaseShield Legislative Monitor/1.0',
+          'Accept': 'text/html,application/xhtml+xml',
+        },
+      });
+      if (!response.ok) {
+        console.log(`   PIH fetch failed: ${response.status}`);
+        return notices;
+      }
       
       const html = await response.text();
+      console.log(`   Received ${html.length} bytes of HTML`);
       
-      const linkRegex = /href="([^"]*PIH[^"]*\.pdf)"/gi;
-      const titleRegex = /PIH\s*[\d-]+/gi;
+      const linkWithTitleRegex = /<a[^>]*href="([^"]*(?:PIH|pih)[^"]*\.pdf)"[^>]*>([^<]+)<\/a>/gi;
       
       let match;
       const year = new Date().getFullYear();
+      const lastYear = year - 1;
       
-      while ((match = linkRegex.exec(html)) !== null) {
-        const pdfUrl = match[1];
-        const id = pdfUrl.match(/PIH[\d-]+/i)?.[0] || `pih-${Date.now()}`;
+      while ((match = linkWithTitleRegex.exec(html)) !== null) {
+        const pdfPath = match[1];
+        const linkText = match[2].trim();
         
-        if (pdfUrl.includes(year.toString()) || pdfUrl.includes((year - 1).toString())) {
+        const idMatch = pdfPath.match(/PIH[-_]?(\d{4})[-_]?(\d+)/i);
+        if (!idMatch) continue;
+        
+        const noticeYear = parseInt(idMatch[1]);
+        const noticeNum = idMatch[2];
+        const id = `PIH-${noticeYear}-${noticeNum}`;
+        
+        if (seenIds.has(id)) continue;
+        seenIds.add(id);
+        
+        if (noticeYear >= lastYear) {
+          const pdfUrl = pdfPath.startsWith('http') ? pdfPath : `https://www.hud.gov${pdfPath}`;
+          
+          const title = linkText.length > 5 
+            ? `PIH ${id}: ${linkText}` 
+            : `PIH Notice ${id}`;
+          
           notices.push({
             id,
-            title: `PIH Notice ${id}`,
-            date: new Date().toISOString().split('T')[0],
+            title,
+            date: `${noticeYear}-01-01`,
             url: this.pihNoticesUrl,
-            pdfUrl: pdfUrl.startsWith('http') ? pdfUrl : `https://www.hud.gov${pdfUrl}`,
+            pdfUrl,
             type: 'pih',
           });
         }
       }
+      
+      console.log(`   Found ${notices.length} unique PIH notices from ${lastYear}-${year}`);
       
     } catch (error) {
       console.error('Error fetching PIH notices:', error);

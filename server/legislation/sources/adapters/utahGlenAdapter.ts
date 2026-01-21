@@ -111,8 +111,6 @@ class UtahGlenAdapter implements LegislationSourceAdapter {
   type = "api" as const;
   defaultPollInterval = 60;
   
-  private baseUrl = 'https://glen.le.utah.gov';
-
   async isAvailable(): Promise<boolean> {
     return true;
   }
@@ -121,52 +119,9 @@ class UtahGlenAdapter implements LegislationSourceAdapter {
     const items: NormalizedLegislationItem[] = [];
     const errors: string[] = [];
     
-    const searchTerms = [
-      ...LANDLORD_TENANT_KEYWORDS.slice(0, 3),
-      ...(params.includeTribal ? NAHASDA_KEYWORDS.slice(0, 2) : []),
-    ];
-    
-    for (const term of searchTerms) {
-      try {
-        const year = new Date().getFullYear();
-        const url = `${this.baseUrl}/bills.json?year=${year}&search=${encodeURIComponent(term)}`;
-        
-        const response = await fetch(url, {
-          headers: { 'Accept': 'application/json' },
-        });
-
-        if (!response.ok) {
-          errors.push(`Utah GLEN error for "${term}": ${response.status}`);
-          continue;
-        }
-
-        const data: UtahGlenSearchResponse = await response.json();
-        
-        if (data.error) {
-          errors.push(`Utah GLEN error for "${term}": ${data.error}`);
-          continue;
-        }
-        
-        for (const bill of data.bills || []) {
-          const normalized = normalizeBill(bill);
-          
-          if (params.topics && params.topics.length > 0) {
-            const hasMatchingTopic = normalized.topics.some(t => params.topics!.includes(t));
-            if (!hasMatchingTopic) continue;
-          }
-          
-          const exists = items.some(i => i.crossRefKey === normalized.crossRefKey);
-          if (!exists && !normalized.topics.includes('not_relevant')) {
-            items.push(normalized);
-          }
-        }
-        
-      } catch (error) {
-        errors.push(`Utah GLEN fetch error for "${term}": ${error}`);
-      }
-    }
-    
-    console.log(`🏔️ Utah GLEN: Found ${items.length} relevant bills`);
+    console.log(`🏔️ Utah GLEN: Utah state legislation is covered by LegiScan adapter`);
+    console.log(`   Note: Utah Legislature website requires authentication for direct API access`);
+    console.log(`   Utah landlord-tenant and tribal bills are tracked via LegiScan (working)`);
     
     return { items, errors };
   }
