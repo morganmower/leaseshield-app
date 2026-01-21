@@ -1568,15 +1568,20 @@ export default function Apply() {
                   Add Previous Address
                 </Button>
 
-                <div className="space-y-2">
-                  <Label>Reason for Moving</Label>
-                  <Textarea
-                    value={formData.reasonForMoving || ""}
-                    onChange={(e) => updateField("reasonForMoving", e.target.value)}
-                    placeholder="Why are you looking for a new place?"
-                    data-testid="input-address-reason"
-                  />
-                </div>
+                {isFieldVisible("reasonForMoving") && (
+                  <div className="space-y-2">
+                    <Label>
+                      Reason for Moving
+                      {isFieldRequired("reasonForMoving") && <span className="text-destructive ml-1">*</span>}
+                    </Label>
+                    <Textarea
+                      value={formData.reasonForMoving || ""}
+                      onChange={(e) => updateField("reasonForMoving", e.target.value)}
+                      placeholder="Why are you looking for a new place?"
+                      data-testid="input-address-reason"
+                    />
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
                 <Button variant="outline" onClick={() => setCurrentStep(1)}>
