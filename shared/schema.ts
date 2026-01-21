@@ -1649,11 +1649,23 @@ export const defaultFieldSchemaTemplate = {
     rentalHistory: { visibility: "optional" },
     vehicles: { visibility: "optional" },
     pets: { visibility: "optional" },
-    emergencyContact: { visibility: "optional" }
+    emergencyContact: { visibility: "optional" },
+    // New toggleable fields
+    desiredMoveInDate: { visibility: "optional" },
+    numberOfOccupants: { visibility: "optional" },
+    personalReferences: { visibility: "optional" },
+    housingVoucher: { visibility: "hidden" }, // Source of income protection in some states - hidden by default
+    referralSource: { visibility: "optional" },
+    // Mandatory toggle options for existing fields (track if landlord requires these)
+    currentLandlordContact: { visibility: "optional" },
+    employerPhone: { visibility: "optional" },
+    monthlyIncome: { visibility: "required" },
+    reasonForMoving: { visibility: "optional" }
   },
   historyRules: {
     minAddressYears: 2,
-    minEmploymentYears: 2
+    minEmploymentYears: 2,
+    minPreviousRentals: 2 // For rental history section
   },
   uploads: {
     govId: { required: true, label: "Government ID" },

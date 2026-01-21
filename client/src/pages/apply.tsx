@@ -994,18 +994,95 @@ export default function Apply() {
                   </div>
                 )}
 
-                <div className="space-y-2">
-                  <Label>Desired Move-in Date *</Label>
-                  <Input
-                    type="date"
-                    value={formData.desiredMoveInDate || ""}
-                    onChange={(e) => updateField("desiredMoveInDate", e.target.value)}
-                    data-testid="input-desired-movein"
-                  />
-                  <p className="text-xs text-muted-foreground">When would you like to move into this property?</p>
-                </div>
+                {isFieldVisible("desiredMoveInDate") && (
+                  <div className="space-y-2">
+                    <Label>Desired Move-in Date {isFieldRequired("desiredMoveInDate") && "*"}</Label>
+                    <Input
+                      type="date"
+                      value={formData.desiredMoveInDate || ""}
+                      onChange={(e) => updateField("desiredMoveInDate", e.target.value)}
+                      data-testid="input-desired-movein"
+                    />
+                    <p className="text-xs text-muted-foreground">When would you like to move into this property?</p>
+                  </div>
+                )}
+
+                {/* Housing Voucher Question - only show if enabled (respects source of income protections) */}
+                {isFieldVisible("housingVoucher") && (
+                  <div className="space-y-2">
+                    <Label>Do you have a housing voucher (Section 8, VASH, or similar)? {isFieldRequired("housingVoucher") && "*"}</Label>
+                    <div className="flex gap-4">
+                      <Button
+                        type="button"
+                        variant={formData.hasHousingVoucher === true ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => updateField("hasHousingVoucher", true)}
+                        data-testid="button-voucher-yes"
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={formData.hasHousingVoucher === false ? "default" : "outline"}
+                        size="sm"
+                        onClick={() => updateField("hasHousingVoucher", false)}
+                        data-testid="button-voucher-no"
+                      >
+                        No
+                      </Button>
+                    </div>
+                    {formData.hasHousingVoucher === true && (
+                      <div className="space-y-2 mt-2">
+                        <Label>Voucher Type</Label>
+                        <Input
+                          value={formData.voucherType || ""}
+                          onChange={(e) => updateField("voucherType", e.target.value)}
+                          placeholder="e.g., Section 8, VASH, HCV"
+                          data-testid="input-voucher-type"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Referral Source */}
+                {isFieldVisible("referralSource") && (
+                  <div className="space-y-2">
+                    <Label>How did you hear about this property? {isFieldRequired("referralSource") && "*"}</Label>
+                    <Select
+                      value={formData.referralSource || ""}
+                      onValueChange={(value) => updateField("referralSource", value)}
+                    >
+                      <SelectTrigger data-testid="select-referral-source">
+                        <SelectValue placeholder="Select an option" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="zillow">Zillow</SelectItem>
+                        <SelectItem value="apartments_com">Apartments.com</SelectItem>
+                        <SelectItem value="facebook">Facebook Marketplace</SelectItem>
+                        <SelectItem value="craigslist">Craigslist</SelectItem>
+                        <SelectItem value="drive_by">Drove by / Sign</SelectItem>
+                        <SelectItem value="friend_family">Friend or Family</SelectItem>
+                        <SelectItem value="current_tenant">Current Tenant</SelectItem>
+                        <SelectItem value="property_website">Property Website</SelectItem>
+                        <SelectItem value="google">Google Search</SelectItem>
+                        <SelectItem value="other">Other</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    {formData.referralSource === "other" && (
+                      <Input
+                        value={formData.referralSourceOther || ""}
+                        onChange={(e) => updateField("referralSourceOther", e.target.value)}
+                        placeholder="Please specify"
+                        className="mt-2"
+                        data-testid="input-referral-other"
+                      />
+                    )}
+                  </div>
+                )}
 
                 {/* Occupants Section */}
+                {isFieldVisible("numberOfOccupants") && (
                 <div className="pt-4 border-t space-y-4">
                   <div>
                     <h3 className="font-semibold">Additional Occupants</h3>
@@ -1015,7 +1092,7 @@ export default function Apply() {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>Will anyone else be living with you?</Label>
+                    <Label>Will anyone else be living with you? {isFieldRequired("numberOfOccupants") && "*"}</Label>
                     <div className="flex gap-4">
                       <Button
                         type="button"
@@ -1128,6 +1205,117 @@ export default function Apply() {
                     </div>
                   )}
                 </div>
+                )}
+
+                {/* Personal References Section */}
+                {isFieldVisible("personalReferences") && (
+                  <div className="pt-4 border-t space-y-4">
+                    <div>
+                      <h3 className="font-semibold">Personal References {isFieldRequired("personalReferences") && "*"}</h3>
+                      <p className="text-sm text-muted-foreground">
+                        Please provide 1-2 personal references who are not landlords or employers
+                      </p>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {(formData.personalReferences || [{ name: "", relationship: "", phone: "", email: "" }]).map((ref: any, idx: number) => (
+                        <div key={idx} className="border rounded-lg p-3 space-y-3">
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Reference {idx + 1}</span>
+                            {idx > 0 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  const updated = [...(formData.personalReferences || [])];
+                                  updated.splice(idx, 1);
+                                  updateField("personalReferences", updated);
+                                }}
+                                data-testid={`button-remove-reference-${idx}`}
+                              >
+                                <X className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Full Name *</Label>
+                              <Input
+                                value={ref.name || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.personalReferences || [])];
+                                  updated[idx] = { ...updated[idx], name: e.target.value };
+                                  updateField("personalReferences", updated);
+                                }}
+                                placeholder="Jane Smith"
+                                data-testid={`input-ref-name-${idx}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Relationship *</Label>
+                              <Input
+                                value={ref.relationship || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.personalReferences || [])];
+                                  updated[idx] = { ...updated[idx], relationship: e.target.value };
+                                  updateField("personalReferences", updated);
+                                }}
+                                placeholder="Friend, Coworker, etc."
+                                data-testid={`input-ref-relationship-${idx}`}
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-1">
+                              <Label className="text-xs">Phone</Label>
+                              <Input
+                                type="tel"
+                                value={ref.phone || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.personalReferences || [])];
+                                  updated[idx] = { ...updated[idx], phone: e.target.value };
+                                  updateField("personalReferences", updated);
+                                }}
+                                placeholder="(555) 123-4567"
+                                data-testid={`input-ref-phone-${idx}`}
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <Label className="text-xs">Email</Label>
+                              <Input
+                                type="email"
+                                value={ref.email || ""}
+                                onChange={(e) => {
+                                  const updated = [...(formData.personalReferences || [])];
+                                  updated[idx] = { ...updated[idx], email: e.target.value };
+                                  updateField("personalReferences", updated);
+                                }}
+                                placeholder="jane@example.com"
+                                data-testid={`input-ref-email-${idx}`}
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {(formData.personalReferences || []).length < 2 && (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => {
+                            const updated = [...(formData.personalReferences || [{ name: "", relationship: "", phone: "", email: "" }]), { name: "", relationship: "", phone: "", email: "" }];
+                            updateField("personalReferences", updated);
+                          }}
+                          data-testid="button-add-reference"
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add Another Reference
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
                 <Button variant="outline" onClick={() => setCurrentStep(0)}>

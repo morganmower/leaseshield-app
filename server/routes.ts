@@ -6645,8 +6645,41 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                   <span>${escapeHtml(formData.driversLicense)}</span>
                 </div>
                 ` : ''}
+                ${formData.desiredMoveInDate ? `
+                <div class="info-item">
+                  <label>Desired Move-in</label>
+                  <span>${formatDate(formData.desiredMoveInDate)}</span>
+                </div>
+                ` : ''}
+                ${formData.hasHousingVoucher !== undefined ? `
+                <div class="info-item">
+                  <label>Housing Voucher</label>
+                  <span>${formData.hasHousingVoucher ? `Yes${formData.voucherType ? ` - ${escapeHtml(formData.voucherType)}` : ''}` : 'No'}</span>
+                </div>
+                ` : ''}
+                ${formData.referralSource ? `
+                <div class="info-item">
+                  <label>Referral Source</label>
+                  <span>${escapeHtml(formData.referralSource === 'other' ? formData.referralSourceOther || 'Other' : formData.referralSource.replace(/_/g, ' '))}</span>
+                </div>
+                ` : ''}
               </div>
             </div>
+
+            ${formData.occupants && Array.isArray(formData.occupants) && formData.occupants.length > 0 ? `
+            <div class="info-section">
+              <h3>Additional Occupants</h3>
+              <div class="occupants-list">
+                ${formData.occupants.map((occ: any, idx: number) => `
+                  <div class="occupant-item">
+                    <strong>${escapeHtml(occ.name || 'Occupant ' + (idx + 1))}</strong>
+                    ${occ.relationship ? ` - ${escapeHtml(occ.relationship)}` : ''}
+                    ${occ.age ? ` (Age: ${escapeHtml(occ.age)})` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+            ` : ''}
 
             ${formData.currentAddress ? `
             <div class="info-section">
@@ -6756,6 +6789,24 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                   <span>${escapeHtml(formData.emergencyContactRelationship)}</span>
                 </div>
                 ` : ''}
+              </div>
+            </div>
+            ` : ''}
+
+            ${formData.personalReferences && Array.isArray(formData.personalReferences) && formData.personalReferences.length > 0 ? `
+            <div class="info-section">
+              <h3>Personal References</h3>
+              <div class="references-list">
+                ${formData.personalReferences.map((ref: any, idx: number) => `
+                  <div class="reference-item">
+                    <strong>${escapeHtml(ref.name || 'Reference ' + (idx + 1))}</strong>
+                    ${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}
+                    <div class="reference-contact">
+                      ${ref.phone ? `<span>Phone: ${escapeHtml(ref.phone)}</span>` : ''}
+                      ${ref.email ? `<span>Email: ${escapeHtml(ref.email)}</span>` : ''}
+                    </div>
+                  </div>
+                `).join('')}
               </div>
             </div>
             ` : ''}
@@ -7016,6 +7067,24 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             .pets-list li, .vehicles-list li {
               font-size: 12px;
               margin-bottom: 4px;
+            }
+            .occupants-list, .references-list {
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+            }
+            .occupant-item, .reference-item {
+              padding: 8px 12px;
+              background: #f9fafb;
+              border-radius: 4px;
+              font-size: 12px;
+            }
+            .reference-contact {
+              display: flex;
+              gap: 16px;
+              margin-top: 4px;
+              font-size: 11px;
+              color: #6b7280;
             }
             .decision-box {
               margin-top: 32px;
