@@ -224,6 +224,7 @@ export default function Properties() {
     setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening(false);
     setPropertyTerms(DEFAULT_PROPERTY_TERMS);
+    setEditingProperty(null);
   };
 
   const handleEdit = (property: RentalProperty) => {
@@ -366,7 +367,7 @@ export default function Properties() {
               data-testid="input-search-properties"
             />
           </div>
-          <Button onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-property">
+          <Button onClick={() => { resetForm(); setEditingProperty(null); setIsAddDialogOpen(true); }} data-testid="button-add-property">
             <Plus className="h-4 w-4 mr-2" />
             Add Property
           </Button>
@@ -380,7 +381,7 @@ export default function Properties() {
               <p className="text-muted-foreground mb-6">
                 Add your first property to send applications, route screening through Western Verify, and access state-specific leases and notices.
               </p>
-              <Button size="lg" onClick={() => { resetForm(); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
+              <Button size="lg" onClick={() => { resetForm(); setEditingProperty(null); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
                 <Plus className="h-4 w-4 mr-2" />
                 Add Your First Property
               </Button>
@@ -690,7 +691,7 @@ export default function Properties() {
         </Dialog>
 
         {/* Edit Property Dialog */}
-        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <Dialog open={isEditDialogOpen} onOpenChange={(open) => { setIsEditDialogOpen(open); if (!open) setEditingProperty(null); }}>
           <DialogContent className="sm:max-w-[600px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Edit Property</DialogTitle>
