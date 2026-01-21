@@ -5508,8 +5508,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const coverPage = property.defaultCoverPageJson;
       const fieldSchema = property.defaultFieldSchemaJson;
       
-      // Get property terms from request body (optional)
-      const propertyTerms = req.body.propertyTerms || {};
+      // Get property terms from the property's stored data
+      const propertyTerms = property.propertyTermsJson || {};
 
       const link = await storage.createRentalApplicationLink({
         unitId: unit.id,
@@ -5554,7 +5554,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         // Compute merged schema from property defaults (unit has no overrides yet)
         const coverPage = property.defaultCoverPageJson;
         const fieldSchema = property.defaultFieldSchemaJson;
-        const propertyTerms = req.body.propertyTerms || {};
+        const propertyTerms = property.propertyTermsJson || {};
         
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
