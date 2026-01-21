@@ -34,10 +34,22 @@ export function useAuth() {
     logoutMutation.mutate();
   }, [logoutMutation]);
 
+  // Check if user has an active subscription (active or trialing)
+  const isSubscriptionActive = user?.subscriptionStatus === 'active' || user?.subscriptionStatus === 'trialing';
+  
+  // Check if trial has expired
+  const isTrialExpired = user?.subscriptionStatus === 'trialing' && 
+    user?.trialEndsAt && new Date(user.trialEndsAt) < new Date();
+  
+  // User needs to activate (subscribe) if they have no active subscription
+  const needsActivation = !!user && !isSubscriptionActive;
+
   return {
     user,
     isLoading,
     isAuthenticated: !!user,
+    isSubscriptionActive: isSubscriptionActive && !isTrialExpired,
+    needsActivation: needsActivation || isTrialExpired,
     error: error instanceof ApiError ? error : null,
     logout,
     isLoggingOut: logoutMutation.isPending,

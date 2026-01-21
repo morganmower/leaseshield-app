@@ -15,6 +15,7 @@ import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ChatWidget } from "@/components/chat-widget";
 import { PaymentFailedBanner } from "@/components/payment-failed-banner";
+import { SubscriptionGate } from "@/components/subscription-gate";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
@@ -262,7 +263,9 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
             </div>
           </header>
           <PaymentFailedBanner />
-          <main className="flex-1 overflow-y-auto">{children}</main>
+          <SubscriptionGate>
+            <main className="flex-1 overflow-y-auto">{children}</main>
+          </SubscriptionGate>
         </div>
         <ChatWidget />
       </div>

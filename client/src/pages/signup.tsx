@@ -101,7 +101,16 @@ export default function Signup() {
         setLocation("/activate");
       }
     },
-    onError: (error: Error) => {
+    onError: (error: any) => {
+      // Check if this is an "email exists" error - guide them to login
+      if (error.code === 'EMAIL_EXISTS' || error.message?.includes('already registered')) {
+        toast({
+          title: "Account Already Exists",
+          description: "This email is already registered. Redirecting you to login...",
+        });
+        setTimeout(() => setLocation("/login"), 2000);
+        return;
+      }
       toast({
         title: "Signup failed",
         description: error.message || "Could not create your account. Please try again.",
