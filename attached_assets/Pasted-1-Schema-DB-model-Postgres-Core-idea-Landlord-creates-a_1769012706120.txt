@@ -1,0 +1,286 @@
+1) Schema / DB model (Postgres)
+Core idea
+
+Landlord creates a Property Terms Snapshot (versioned).
+
+When they “send an application,” you attach the snapshot_id.
+
+Applicant sees the snapshot and must acknowledge it before submitting.
+
+Tables
+-- Landlords / accounts (simplified)
+create table landlords (
+  id uuid primary key default gen_random_uuid(),
+  org_name text,
+  contact_name text,
+  contact_email text,
+  contact_phone text,
+  created_at timestamptz not null default now()
+);
+
+-- Properties
+create table properties (
+  id uuid primary key default gen_random_uuid(),
+  landlord_id uuid not null references landlords(id) on delete cascade,
+  nickname text,
+  address_line1 text not null,
+  address_line2 text,
+  city text not null,
+  state char(2) not null,
+  zip text not null,
+  created_at timestamptz not null default now()
+);
+
+-- The "terms" are versioned and immutable once used by an application
+create type fee_refundability as enum ('refundable', 'non_refundable', 'unknown');
+create type deposit_due_timing as enum ('upon_approval', 'prior_to_move_in', 'at_lease_signing', 'not_required');
+
+create table property_terms_snapshots (
+  id uuid primary key default gen_random_uuid(),
+  property_id uuid not null references properties(id) on delete cascade,
+
+  -- Financials
+  monthly_rent_cents integer not null check (monthly_rent_cents >= 0),
+
+  application_fee_cents integer check (application_fee_cents >= 0),
+  application_fee_per_adult boolean not null default true,
+  application_fee_nonrefundable boolean not null default true,
+
+  screening_fee_note text, -- e.g., "Additional screening fees may apply for aliases/prior names" (keep short)
+
+  security_deposit_cents integer check (security_deposit_cents >= 0),
+  security_deposit_refundability fee_refundability not null default 'refundable',
+  security_deposit_due_timing deposit_due_timing not null default 'prior_to_move_in',
+
+  lease_initiation_fee_cents integer check (lease_initiation_fee_cents >= 0),
+  lease_initiation_fee_refundability fee_refundability not null default 'non_refundable',
+
+  -- Process / timelines
+  lease_sign_deadline_hours integer check (lease_sign_deadline_hours is null or lease_sign_deadline_hours between 1 and 168),
+  review_order_policy text not null default 'Applications are reviewed in the order received and evaluated based on the owner’s written rental criteria.',
+  criteria_available_to_applicants boolean not null default true,
+
+  -- Fair housing / screening disclosures
+  fair_housing_statement text not null,
+  individualized_criminal_review_statement text not null,
+
+  -- Compliance metadata
+  state_law_profile char(2) not null,      -- copied from property.state at creation time
+  effective_at timestamptz not null default now(),
+  created_by uuid,                         -- optional: user id if you have users table
+  created_at timestamptz not null default now(),
+
+  -- guard: snapshots shouldn't change after use; enforce in app logic
+  is_locked boolean not null default false
+);
+
+create index on property_terms_snapshots(property_id, created_at desc);
+
+-- Applications (the "send application" entity)
+create type application_status as enum ('draft', 'sent', 'started', 'submitted', 'withdrawn', 'approved', 'denied');
+
+create table applications (
+  id uuid primary key default gen_random_uuid(),
+  property_id uuid not null references properties(id) on delete restrict,
+  landlord_id uuid not null references landlords(id) on delete restrict,
+
+  terms_snapshot_id uuid not null references property_terms_snapshots(id) on delete restrict,
+
+  status application_status not null default 'sent',
+  applicant_email text,
+  applicant_phone text,
+
+  sent_at timestamptz,
+  started_at timestamptz,
+  submitted_at timestamptz,
+
+  created_at timestamptz not null default now()
+);
+
+create index on applications(landlord_id, created_at desc);
+create index on applications(property_id, created_at desc);
+create index on applications(terms_snapshot_id);
+
+-- Applicant acknowledgments (must exist before submitted)
+create table application_acknowledgments (
+  id uuid primary key default gen_random_uuid(),
+  application_id uuid not null references applications(id) on delete cascade,
+
+  acknowledged_terms_snapshot_id uuid not null references property_terms_snapshots(id) on delete restrict,
+  acknowledged_at timestamptz not null default now(),
+
+  -- evidence / audit
+  ip_address inet,
+  user_agent text,
+
+  -- applicant-facing "I acknowledge" checkbox versioning
+  acknowledgment_text text not null,
+
+  unique (application_id) -- one canonical ack record
+);
+
+-- Optional: store "rental criteria" documents separately, attach to property, and reference from snapshot
+create table rental_criteria_docs (
+  id uuid primary key default gen_random_uuid(),
+  property_id uuid not null references properties(id) on delete cascade,
+  title text not null default 'Rental Criteria',
+  content text not null, -- or store a file reference
+  version integer not null default 1,
+  created_at timestamptz not null default now()
+);
+
+-- Optional: compliance rules engine per state (lets you enforce caps/requirements without hardcoding)
+create table state_compliance_rules (
+  state char(2) primary key,
+  rules_json jsonb not null,
+  updated_at timestamptz not null default now()
+);
+
+App-layer constraints you should enforce
+
+When creating an application, lock the snapshot (is_locked = true) so landlord edits create a new snapshot instead.
+
+Block applications.submitted_at unless application_acknowledgments exists and acknowledged_terms_snapshot_id = terms_snapshot_id.
+
+2) Exact UI copy (Landlord vs Applicant)
+Landlord screen: “Property Terms (Shown to Applicants)”
+
+Header: Property Terms
+Subheader: These details appear to applicants before they submit. Keep them accurate and consistent.
+
+Fields + helper text
+
+Monthly Rent
+Helper: Enter the rent amount applicants should expect to pay each month.
+
+Application Fee (per adult)
+Helper: This fee is typically non-refundable and helps cover screening costs.
+
+Security Deposit
+Helper: Set the deposit amount and when it is due.
+
+Lease Initiation / Admin Fee
+Helper: If you charge an admin or lease initiation fee, list it separately from the deposit.
+
+Lease Signing Deadline
+Helper: After approval, how long does the applicant have to sign? (Common: 24–72 hours)
+
+Review Policy
+Default text (editable): Applications are reviewed in the order received and evaluated based on the owner’s written rental criteria.
+
+Rental Criteria Availability (toggle)
+Label: Allow applicants to request a copy of rental criteria before applying
+Helper: Recommended for transparency and consistency.
+
+Primary CTA button: Save & Preview Applicant View
+Secondary CTA: Save
+
+Inline warning (state-aware)
+
+UT: “Utah requires upfront written disclosure of rent, fees, screening criteria, availability, and refund process before collecting any application fee or other payment.”
+
+CA: “California limits application screening fees and security deposit amounts. Make sure your numbers comply.”
+
+TX: “Texas distinguishes application/admin fees from security deposits. Avoid calling any part of a security deposit ‘non-refundable.’”
+
+Applicant screen: “Property & Terms Summary”
+
+Header: Before you apply
+Subheader: Please review the rent, fees, and key terms for this rental.
+
+Sections
+
+Property
+Address: {address}
+
+Monthly Rent
+{monthly_rent}
+
+Fees & Deposits
+
+Application Fee (per adult): {application_fee} (Non-refundable)
+
+Security Deposit: {security_deposit} (Refund policy: {refundability})
+
+Lease Initiation / Admin Fee: {lease_fee} (Non-refundable)
+
+Notes: {screening_fee_note} (only show if present)
+
+Approval Timeline
+
+Lease signing deadline after approval: {X} hours
+
+Funds due before occupancy: Deposits and first month’s rent must be paid prior to move-in (unless stated otherwise).
+
+How applications are reviewed
+{review_order_policy}
+
+Fair Housing Notice
+{fair_housing_statement}
+
+Criminal history notice
+{individualized_criminal_review_statement}
+
+Checkbox (required)
+
+Label: I acknowledge that I have reviewed the rent, fees, deposits, and key rental terms above.
+
+Buttons
+
+Primary: Continue to Application
+
+Secondary: Download / Print Summary (optional)
+
+3) State-specific landmines (UT, TX, CA)
+Utah (biggest “gotcha” for your exact feature)
+
+Landmine: Utah requires written disclosures before accepting an application fee or any other payment from a prospective renter, including a good-faith estimate of rent/fees and screening criteria. Build your flow so the applicant sees disclosures before any paywall.
+
+What to enforce in-product (UT):
+
+If property.state = 'UT' and application_fee_cents > 0, require:
+
+Monthly rent
+
+Itemized fixed fees (you can start with the ones you collect; expand later)
+
+Screening criteria summary (even a basic checklist)
+
+Refund / recovery process for monies paid
+
+Block “Pay application fee” until applicant has viewed the summary + checked acknowledgment.
+
+Texas
+
+Landmine: Texas treats an “application fee” as nonrefundable screening-cost money, and you should avoid labeling any portion of a security deposit as nonrefundable.
+
+What to enforce in-product (TX):
+
+If state='TX' then:
+
+If user marks security_deposit_refundability = 'non_refundable', show hard error:
+“In Texas, security deposits are generally refundable. If you charge a non-refundable amount, list it as a separate fee, not part of the deposit.”
+
+Keep “Application Fee” and “Admin/Lease Fee” as separate line items from “Security Deposit”.
+
+California
+
+Landmine #1: application screening fee cap & rules
+California limits application screening fees (statute sets a dollar cap, adjustable by CPI) and recent rules require certain conditions for charging screening fees.
+
+Landmine #2: security deposit limits (AB 12 effective July 1, 2024)
+California generally caps security deposits at one month’s rent, with a narrow exception for small landlords under specific conditions.
+
+What to enforce in-product (CA):
+
+Add a ca_security_deposit_cap_cents validator:
+
+Default cap = monthly_rent_cents
+
+If landlord qualifies for the small-landlord exception, allow up to 2x (you’ll need an attestation toggle + fields)
+
+Add a ca_application_fee_cap validator:
+
+Cap per applicant (store the cap value in state_compliance_rules.rules_json so you can update annually)
+
+If user enters amounts over cap: block save and show “Fix required to comply.”
