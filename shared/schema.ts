@@ -1147,6 +1147,19 @@ export const DEFAULT_DOCUMENT_REQUIREMENTS: DocumentRequirementsConfig = {
   reference: false,
 };
 
+// Property Terms - rent, fees, deposits shown to applicants before applying
+export type PropertyTerms = {
+  monthlyRent?: string;          // e.g. "$1,500" or "N/A"
+  applicationFee?: string;       // e.g. "$50 per adult" or "N/A"
+  securityDeposit?: string;      // e.g. "$1,500 (refundable)" or "N/A"
+  adminFee?: string;             // e.g. "$150 (non-refundable)" or "N/A"
+  leaseSignDeadlineHours?: number; // e.g. 48 (hours after approval to sign)
+  additionalNotes?: string;      // Any other terms/notes
+};
+
+// Default empty property terms
+export const DEFAULT_PROPERTY_TERMS: PropertyTerms = {};
+
 // Rental Properties - properties with cover page + field schema defaults
 export const rentalProperties = pgTable("rental_properties", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
@@ -1308,6 +1321,8 @@ export const rentalSubmissionPeople = pgTable("rental_submission_people", {
   // FCRA authorization (all states)
   fcraAuthorized: boolean("fcra_authorized").default(false),
   fcraAuthorizedTimestamp: timestamp("fcra_authorized_timestamp"),
+  // Property terms acknowledgment
+  propertyTermsAcknowledgedAt: timestamp("property_terms_acknowledged_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

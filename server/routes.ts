@@ -5506,10 +5506,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const coverPage = property.defaultCoverPageJson;
       const fieldSchema = property.defaultFieldSchemaJson;
       
+      // Get property terms from request body (optional)
+      const propertyTerms = req.body.propertyTerms || {};
+
       const link = await storage.createRentalApplicationLink({
         unitId: unit.id,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "" },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
         isActive: true,
         expiresAt: null,
       });
@@ -5549,11 +5552,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         // Compute merged schema from property defaults (unit has no overrides yet)
         const coverPage = property.defaultCoverPageJson;
         const fieldSchema = property.defaultFieldSchemaJson;
+        const propertyTerms = req.body.propertyTerms || {};
         
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
           publicToken,
-          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "" },
+          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
           isActive: true,
           expiresAt: null,
         });
@@ -5674,10 +5678,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Generate public token
       const publicToken = randomUUID().replace(/-/g, '');
 
+      // Get property terms from request body (optional)
+      const propertyTerms = req.body.propertyTerms || {};
+
       const link = await storage.createRentalApplicationLink({
         unitId: req.params.unitId,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms },
         isActive: true,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
       });
@@ -7675,6 +7682,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
         documentRequirements,
         propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
         complianceRules, // Dynamic compliance rules from database
@@ -7727,6 +7735,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: (link.mergedSchemaJson as any)?.fieldSchema,
+        propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
         documentRequirements,
         propertyState,
         complianceRules,
