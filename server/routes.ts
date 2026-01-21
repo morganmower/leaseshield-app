@@ -6462,7 +6462,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       // Get all people for this submission
       const people = await storage.getRentalSubmissionPeople(submission.id);
-      const decision = await storage.getSubmissionDecision(submission.id);
+      const decision = await storage.getRentalDecision(submission.id);
 
       // Helper functions
       const escapeHtml = (str: string | null | undefined): string => {

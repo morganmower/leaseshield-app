@@ -646,6 +646,32 @@ Best regards`;
     window.print();
   };
 
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+
+  const handleDownloadApplication = async () => {
+    if (!selectedSubmission) return;
+    setIsDownloadingPdf(true);
+    try {
+      const token = getAccessToken();
+      const res = await fetch(`/api/rental/submissions/${selectedSubmission}/application-pdf`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Failed to download application");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `rental-application.pdf`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast({ title: "Download Complete", description: "Application PDF downloaded successfully." });
+    } catch (error) {
+      toast({ title: "Download Failed", description: "Could not generate the application PDF. Please try again.", variant: "destructive" });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
       month: "short",
@@ -691,14 +717,29 @@ Best regards`;
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Applications
           </Button>
-          <Button
-            variant="outline"
-            onClick={handlePrint}
-            data-testid="button-print-application"
-          >
-            <Printer className="mr-2 h-4 w-4" />
-            Print Application
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={handleDownloadApplication}
+              disabled={isDownloadingPdf}
+              data-testid="button-download-application"
+            >
+              {isDownloadingPdf ? (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 h-4 w-4" />
+              )}
+              {isDownloadingPdf ? "Generating..." : "Download PDF"}
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handlePrint}
+              data-testid="button-print-application"
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Print
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-6">
