@@ -172,7 +172,7 @@ export default function Properties() {
       setIsEditDialogOpen(false);
       setEditingProperty(null);
       resetForm();
-      toast({ title: "Property Updated", description: "Your property has been updated successfully." });
+      toast({ title: "Property Updated", description: "Your changes have been saved. Existing application links will show the new settings." });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to update property. Please try again.", variant: "destructive" });

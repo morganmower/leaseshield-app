@@ -446,6 +446,10 @@ export default function Apply() {
   });
 
   // Fetch application link data for direct link flow
+  // Always fetch fresh data so landlord field setting changes apply immediately
+  // - staleTime: 0 = always refetch on mount
+  // - refetchOnWindowFocus = refetch when switching tabs (landlords testing forms)
+  // - refetchInterval = poll every 30s for live updates
   const linkToken = isInviteFlow ? null : token;
   const { data: directLinkData, isLoading: isLoadingDirectLink, error: directLinkError } = useQuery<ApplicationLinkData>({
     queryKey: ["/api/apply", linkToken],
@@ -458,6 +462,10 @@ export default function Apply() {
       return res.json();
     },
     enabled: !!linkToken && !isInviteFlow,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 
   // Fetch application link data for invite flow (using applicationLinkId from person data)
@@ -473,6 +481,10 @@ export default function Apply() {
       return res.json();
     },
     enabled: isInviteFlow && !!inviteAppLinkId,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    refetchInterval: 30000,
   });
 
   // Use the appropriate link data based on flow type
