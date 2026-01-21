@@ -62,7 +62,11 @@ router.post('/signup', async (req: Request, res: Response) => {
 
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existingUser.length > 0) {
-      return res.status(400).json({ message: 'Email already registered' });
+      return res.status(400).json({ 
+        message: 'This email is already registered. Please log in instead.',
+        code: 'EMAIL_EXISTS',
+        action: 'login'
+      });
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
