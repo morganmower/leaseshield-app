@@ -480,17 +480,7 @@ export default function Apply() {
   const isLoadingLink = isInviteFlow ? (isLoadingPerson || isLoadingInviteLink) : isLoadingDirectLink;
   const linkError = isInviteFlow ? inviteLinkError : directLinkError;
 
-  // Auto-acknowledge when nothing to acknowledge (no terms AND no footer note)
-  useEffect(() => {
-    if (linkData) {
-      const noTerms = !hasDisplayableTerms(linkData.propertyTerms);
-      const noFooterNote = !linkData.coverPage?.footerNote;
-      if (noTerms && noFooterNote) {
-        setHasAcknowledgedTerms(true);
-        setHasAcknowledged(true);
-      }
-    }
-  }, [linkData]);
+  // No auto-acknowledge - user must always check the acknowledgment box
 
   // Initialize form data from saved data
   useEffect(() => {
@@ -679,12 +669,9 @@ export default function Apply() {
     setPersonToken(null);
     setFormData({});
     setCurrentStep(0);
-    // Reset acknowledgment states - auto-ack if nothing to acknowledge
-    const noTerms = !hasDisplayableTerms(linkData?.propertyTerms);
-    const noFooterNote = !linkData?.coverPage?.footerNote;
-    const autoAck = noTerms && noFooterNote;
-    setHasAcknowledgedTerms(autoAck);
-    setHasAcknowledged(autoAck);
+    // Reset acknowledgment states - user must always acknowledge
+    setHasAcknowledgedTerms(false);
+    setHasAcknowledged(false);
   };
 
   if (personData?.isCompleted) {
@@ -824,26 +811,26 @@ export default function Apply() {
                   </div>
                 )}
 
-                {/* Single Acknowledgment Checkbox (below terms box with visual divider) */}
-                {hasDisplayableTerms(linkData.propertyTerms) && (
-                  <div className="border-t pt-4 mt-2 space-y-2">
-                    <div className="flex items-start gap-3">
-                      <Checkbox
-                        id="acknowledgeTerms"
-                        checked={hasAcknowledgedTerms}
-                        onCheckedChange={(checked) => {
-                          setHasAcknowledgedTerms(!!checked);
-                          setHasAcknowledged(!!checked);
-                        }}
-                        data-testid="checkbox-acknowledge-terms"
-                      />
-                      <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
-                        I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this rental.
-                      </Label>
-                    </div>
-                    <p className="text-xs text-muted-foreground ml-7">This acknowledgment is required before starting the application.</p>
+                {/* Single Acknowledgment Checkbox (always shown) */}
+                <div className="border-t pt-4 mt-2 space-y-2">
+                  <div className="flex items-start gap-3">
+                    <Checkbox
+                      id="acknowledgeTerms"
+                      checked={hasAcknowledgedTerms}
+                      onCheckedChange={(checked) => {
+                        setHasAcknowledgedTerms(!!checked);
+                        setHasAcknowledged(!!checked);
+                      }}
+                      data-testid="checkbox-acknowledge-terms"
+                    />
+                    <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
+                      {hasDisplayableTerms(linkData.propertyTerms) 
+                        ? "I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this rental."
+                        : "I have reviewed and acknowledge the application requirements and policies above."}
+                    </Label>
                   </div>
-                )}
+                  <p className="text-xs text-muted-foreground ml-7">This acknowledgment is required before starting the application.</p>
+                </div>
 
                 {/* Section 3: Additional Requirements & Policies (collapsible) */}
                 {linkData.coverPage?.sections && linkData.coverPage.sections.length > 0 && (
