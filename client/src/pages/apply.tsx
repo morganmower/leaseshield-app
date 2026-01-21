@@ -26,6 +26,12 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion";
+import {
   Building2,
   CheckCircle,
   AlertCircle,
@@ -474,14 +480,14 @@ export default function Apply() {
   const isLoadingLink = isInviteFlow ? (isLoadingPerson || isLoadingInviteLink) : isLoadingDirectLink;
   const linkError = isInviteFlow ? inviteLinkError : directLinkError;
 
-  // Auto-acknowledge when no footer note or no property terms exist
+  // Auto-acknowledge when nothing to acknowledge (no terms AND no footer note)
   useEffect(() => {
     if (linkData) {
-      if (!linkData.coverPage?.footerNote) {
-        setHasAcknowledged(true);
-      }
-      if (!hasDisplayableTerms(linkData.propertyTerms)) {
+      const noTerms = !hasDisplayableTerms(linkData.propertyTerms);
+      const noFooterNote = !linkData.coverPage?.footerNote;
+      if (noTerms && noFooterNote) {
         setHasAcknowledgedTerms(true);
+        setHasAcknowledged(true);
       }
     }
   }, [linkData]);
@@ -673,9 +679,12 @@ export default function Apply() {
     setPersonToken(null);
     setFormData({});
     setCurrentStep(0);
-    // Reset acknowledgment states, but auto-ack if no footer note or no terms
-    setHasAcknowledged(!linkData?.coverPage?.footerNote);
-    setHasAcknowledgedTerms(!hasDisplayableTerms(linkData?.propertyTerms));
+    // Reset acknowledgment states - auto-ack if nothing to acknowledge
+    const noTerms = !hasDisplayableTerms(linkData?.propertyTerms);
+    const noFooterNote = !linkData?.coverPage?.footerNote;
+    const autoAck = noTerms && noFooterNote;
+    setHasAcknowledgedTerms(autoAck);
+    setHasAcknowledged(autoAck);
   };
 
   if (personData?.isCompleted) {
@@ -763,28 +772,19 @@ export default function Apply() {
           {currentStep === 0 && (
             <>
               <CardHeader className="text-center border-b pb-6">
+                {/* Section 1: Before You Apply - Short intro */}
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 text-sm text-muted-foreground">
-                  This application collects basic information needed to evaluate your rental request. All applications are reviewed using the same screening criteria.
+                  This application collects information needed to evaluate your rental request. All applications are reviewed using the same screening criteria and in the order received.
                 </div>
-                <CardTitle className="text-2xl">{linkData.coverPage?.title || "Application Requirements"}</CardTitle>
-                <CardDescription className="text-base mt-2">
-                  {linkData.coverPage?.intro}
-                </CardDescription>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
-                {linkData.coverPage?.sections?.map((section) => (
-                  <div key={section.id} className="border-b pb-4 last:border-0">
-                    <h3 className="font-semibold mb-1">{section.heading}</h3>
-                    <p className="text-sm text-muted-foreground">{section.body}</p>
-                  </div>
-                ))}
-
-                {/* Property Terms Section */}
+                {/* Section 2: Property-Specific Terms (centerpiece) */}
                 {hasDisplayableTerms(linkData.propertyTerms) && (
                   <div className="border rounded-lg p-4 bg-muted/30 space-y-3">
-                    <h3 className="font-semibold flex items-center gap-2">
-                      <DollarSign className="h-4 w-4 text-primary" />
-                      Property Terms & Fees
+                    <p className="text-sm text-muted-foreground">These are the specific terms for this rental. Please review carefully.</p>
+                    <h3 className="font-semibold flex items-center gap-2 text-lg">
+                      <DollarSign className="h-5 w-5 text-primary" />
+                      This Rental's Terms & Fees
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
                       {!isNA(linkData.propertyTerms?.monthlyRent) && (
@@ -813,7 +813,7 @@ export default function Apply() {
                       )}
                       {!isNA(linkData.propertyTerms?.leaseSignDeadlineHours) && (
                         <div className="flex justify-between border-b pb-2">
-                          <span className="text-muted-foreground">Lease Signing Deadline:</span>
+                          <span className="text-muted-foreground">Lease Must Be Signed Within:</span>
                           <span className="font-medium">{linkData.propertyTerms?.leaseSignDeadlineHours} hours after approval</span>
                         </div>
                       )}
@@ -821,40 +821,76 @@ export default function Apply() {
                     {!isNA(linkData.propertyTerms?.additionalNotes) && (
                       <p className="text-sm text-muted-foreground italic mt-2">{linkData.propertyTerms?.additionalNotes}</p>
                     )}
-                    <div className="bg-background p-3 rounded-lg border mt-3">
-                      <div className="flex items-start gap-3">
-                        <Checkbox
-                          id="acknowledgeTerms"
-                          checked={hasAcknowledgedTerms}
-                          onCheckedChange={(checked) => setHasAcknowledgedTerms(!!checked)}
-                          data-testid="checkbox-acknowledge-terms"
-                        />
-                        <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
-                          I have reviewed and acknowledge the rent, fees, deposits, and key rental terms above.
-                        </Label>
-                      </div>
-                    </div>
                   </div>
                 )}
 
-                {linkData.coverPage?.footerNote && (
-                  <div className="bg-muted/50 p-4 rounded-lg">
+                {/* Single Acknowledgment Checkbox (below terms box) */}
+                {hasDisplayableTerms(linkData.propertyTerms) && (
+                  <>
+                    {linkData.coverPage?.footerNote && (
+                      <p className="text-sm text-muted-foreground">{linkData.coverPage.footerNote}</p>
+                    )}
+                    <div className="flex items-start gap-3">
+                      <Checkbox
+                        id="acknowledgeTerms"
+                        checked={hasAcknowledgedTerms}
+                        onCheckedChange={(checked) => {
+                          setHasAcknowledgedTerms(!!checked);
+                          setHasAcknowledged(!!checked);
+                        }}
+                        data-testid="checkbox-acknowledge-terms"
+                      />
+                      <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
+                        I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this property.
+                      </Label>
+                    </div>
+                  </>
+                )}
+                
+                {/* If no terms but has footer note, still show acknowledgment for footer note content */}
+                {!hasDisplayableTerms(linkData.propertyTerms) && linkData.coverPage?.footerNote && (
+                  <>
+                    <p className="text-sm text-muted-foreground">{linkData.coverPage.footerNote}</p>
                     <div className="flex items-start gap-3">
                       <Checkbox
                         id="acknowledge"
                         checked={hasAcknowledged}
-                        onCheckedChange={(checked) => setHasAcknowledged(!!checked)}
+                        onCheckedChange={(checked) => {
+                          setHasAcknowledged(!!checked);
+                          setHasAcknowledgedTerms(!!checked);
+                        }}
                         data-testid="checkbox-acknowledge"
                       />
                       <Label htmlFor="acknowledge" className="text-sm cursor-pointer">
-                        {linkData.coverPage.footerNote}
+                        I understand and acknowledge the requirements above.
                       </Label>
                     </div>
-                  </div>
+                  </>
                 )}
 
-                {/* Start form */}
-                {!personToken && hasAcknowledged && (!hasDisplayableTerms(linkData.propertyTerms) || hasAcknowledgedTerms) && (
+                {/* Section 3: Additional Requirements & Policies (collapsible) */}
+                {linkData.coverPage?.sections && linkData.coverPage.sections.length > 0 && (
+                  <Accordion type="single" collapsible defaultValue="policies">
+                    <AccordionItem value="policies" className="border rounded-lg">
+                      <AccordionTrigger className="px-4 hover:no-underline">
+                        <span className="font-semibold">Additional Requirements & Policies</span>
+                      </AccordionTrigger>
+                      <AccordionContent className="px-4 pb-4">
+                        <div className="space-y-4">
+                          {linkData.coverPage.sections.map((section) => (
+                            <div key={section.id} className="border-b pb-3 last:border-0 last:pb-0">
+                              <h4 className="font-medium text-sm mb-1">{section.heading}</h4>
+                              <p className="text-sm text-muted-foreground">{section.body}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </AccordionContent>
+                    </AccordionItem>
+                  </Accordion>
+                )}
+
+                {/* Start form - shows when acknowledged (both terms and footer note, if applicable) */}
+                {!personToken && hasAcknowledged && hasAcknowledgedTerms && (
                   <div className="space-y-4 pt-4 border-t">
                     <h3 className="font-semibold">Get Started</h3>
                     <div className="grid grid-cols-2 gap-4">
@@ -895,7 +931,14 @@ export default function Apply() {
                       firstName: formData.firstName,
                       lastName: formData.lastName,
                     })}
-                    disabled={!hasAcknowledged || (hasDisplayableTerms(linkData.propertyTerms) && !hasAcknowledgedTerms) || !formData.email || !formData.firstName || !formData.lastName || startMutation.isPending}
+                    disabled={
+                      !hasAcknowledged || 
+                      !hasAcknowledgedTerms ||
+                      !formData.email || 
+                      !formData.firstName || 
+                      !formData.lastName || 
+                      startMutation.isPending
+                    }
                     data-testid="button-start-application"
                   >
                     {startMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
