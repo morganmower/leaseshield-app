@@ -6197,12 +6197,26 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const browser = await puppeteer.default.launch({ 
         headless: true,
         executablePath: chromiumPath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+        timeout: 30000,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--single-process',
+          '--no-zygote',
+          '--disable-extensions',
+          '--disable-background-networking',
+        ]
       });
-      const page = await browser.newPage();
+      
+      let pdfBuffer: Buffer;
+      try {
+        const page = await browser.newPage();
+        page.setDefaultTimeout(30000);
 
-      const consentDate = person.fcraAuthorizedTimestamp 
-        ? new Date(person.fcraAuthorizedTimestamp).toLocaleString('en-US', {
+        const consentDate = person.fcraAuthorizedTimestamp 
+          ? new Date(person.fcraAuthorizedTimestamp).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
@@ -6417,14 +6431,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         </html>
       `;
 
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({
-        format: 'Letter',
-        printBackground: true,
-        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
-      });
-      
-      await browser.close();
+        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+        const pdfData = await page.pdf({
+          format: 'Letter',
+          printBackground: true,
+          margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+        });
+        
+        pdfBuffer = Buffer.from(pdfData);
+      } finally {
+        await browser.close();
+      }
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="consent-authorization-${person.firstName}-${person.lastName}.pdf"`);
@@ -6948,18 +6965,35 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const browser = await puppeteer.default.launch({ 
         headless: true,
         executablePath: chromiumPath,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
-      });
-      const page = await browser.newPage();
-
-      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
-      const pdfBuffer = await page.pdf({
-        format: 'Letter',
-        printBackground: true,
-        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+        timeout: 30000,
+        args: [
+          '--no-sandbox',
+          '--disable-setuid-sandbox',
+          '--disable-dev-shm-usage',
+          '--disable-gpu',
+          '--single-process',
+          '--no-zygote',
+          '--disable-extensions',
+          '--disable-background-networking',
+        ]
       });
       
-      await browser.close();
+      let pdfBuffer: Buffer;
+      try {
+        const page = await browser.newPage();
+        page.setDefaultTimeout(30000);
+
+        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
+        const pdfData = await page.pdf({
+          format: 'Letter',
+          printBackground: true,
+          margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+        });
+        
+        pdfBuffer = Buffer.from(pdfData);
+      } finally {
+        await browser.close();
+      }
 
       const fileName = primaryApplicant 
         ? `rental-application-${primaryApplicant.firstName}-${primaryApplicant.lastName}.pdf`
