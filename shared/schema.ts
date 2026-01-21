@@ -1175,6 +1175,7 @@ export const rentalProperties = pgTable("rental_properties", {
   defaultFieldSchemaJson: jsonb("default_field_schema_json").notNull(), // Field visibility toggles
   requiredDocumentTypes: jsonb("required_document_types").$type<DocumentRequirementsConfig>(), // Which documents are required
   autoScreening: boolean("auto_screening").default(false).notNull(), // Automatically request screening on submission
+  propertyTermsJson: jsonb("property_terms_json").$type<PropertyTerms>(), // Rent, fees, deposits, deadlines
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

@@ -11,6 +11,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
+import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig, type PropertyTerms, DEFAULT_PROPERTY_TERMS } from "@shared/schema";
 import {
   Dialog,
@@ -52,6 +53,7 @@ import {
   ChevronRight,
   AlertCircle,
   ClipboardList,
+  DollarSign,
 } from "lucide-react";
 import type { RentalProperty, RentalUnit, RentalApplicationLink } from "@shared/schema";
 
@@ -142,7 +144,7 @@ export default function RentalApplications() {
   });
 
   const updatePropertyMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTerms }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -151,7 +153,7 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -240,6 +242,7 @@ export default function RentalApplications() {
     });
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening((property as any).autoScreening ?? false);
+    setPropertyTerms((property as any).propertyTermsJson || DEFAULT_PROPERTY_TERMS);
     setIsEditPropertyOpen(true);
   };
 
@@ -626,6 +629,83 @@ export default function RentalApplications() {
                   data-testid="switch-auto-screening"
                 />
               </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Property Terms & Fees
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Set rent, fees, and deposit information that applicants will see before starting their application
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-monthlyRent" className="text-xs">Monthly Rent</Label>
+                    <Input
+                      id="edit-monthlyRent"
+                      placeholder="e.g. $1,500"
+                      value={propertyTerms.monthlyRent || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, monthlyRent: e.target.value })}
+                      data-testid="input-edit-monthly-rent"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-applicationFee" className="text-xs">Application Fee</Label>
+                    <Input
+                      id="edit-applicationFee"
+                      placeholder="e.g. $50 per adult"
+                      value={propertyTerms.applicationFee || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, applicationFee: e.target.value })}
+                      data-testid="input-edit-application-fee"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-securityDeposit" className="text-xs">Security Deposit</Label>
+                    <Input
+                      id="edit-securityDeposit"
+                      placeholder="e.g. $1,500"
+                      value={propertyTerms.securityDeposit || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, securityDeposit: e.target.value })}
+                      data-testid="input-edit-security-deposit"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="edit-adminFee" className="text-xs">Admin/Lease Fee</Label>
+                    <Input
+                      id="edit-adminFee"
+                      placeholder="e.g. $150"
+                      value={propertyTerms.adminFee || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, adminFee: e.target.value })}
+                      data-testid="input-edit-admin-fee"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-leaseDeadline" className="text-xs">Lease Signing Deadline (hours after approval)</Label>
+                  <Input
+                    id="edit-leaseDeadline"
+                    type="number"
+                    placeholder="e.g. 48"
+                    value={propertyTerms.leaseSignDeadlineHours || ""}
+                    onChange={(e) => setPropertyTerms({ ...propertyTerms, leaseSignDeadlineHours: e.target.value ? parseInt(e.target.value) : undefined })}
+                    data-testid="input-edit-lease-deadline"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="edit-additionalNotes" className="text-xs">Additional Notes</Label>
+                  <Textarea
+                    id="edit-additionalNotes"
+                    placeholder="Any other terms or notes for applicants..."
+                    value={propertyTerms.additionalNotes || ""}
+                    onChange={(e) => setPropertyTerms({ ...propertyTerms, additionalNotes: e.target.value })}
+                    className="h-20"
+                    data-testid="input-edit-additional-notes"
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditPropertyOpen(false)}>
@@ -634,7 +714,7 @@ export default function RentalApplications() {
               <Button
                 onClick={() =>
                   editingProperty &&
-                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements, autoScreening })
+                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms })
                 }
                 disabled={!propertyForm.name || updatePropertyMutation.isPending}
                 data-testid="button-update-rental-property"
