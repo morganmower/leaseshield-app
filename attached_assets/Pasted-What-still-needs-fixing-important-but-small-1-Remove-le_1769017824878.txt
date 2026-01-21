@@ -1,0 +1,119 @@
+What still needs fixing (important but small)
+1. Remove leftover transitional copy (this is #1)
+
+You still have two legacy lines that undermine the clean flow:
+
+❌ Inside the terms box:
+
+must finish this before continuing
+
+❌ Above the checkbox:
+
+By continuing, you confirm you understand these requirements.
+
+These are artifacts from the old two-checkbox flow.
+
+✅ What to do
+
+Delete both.
+
+The checkbox + disabled button already communicates this implicitly and more cleanly.
+
+2. Tighten the top info banner (reduce “legal voice”)
+
+Current:
+
+This application collects information needed to evaluate your rental request. All applications are reviewed using the same screening criteria and in the order received.
+
+This is fine, but slightly stiff.
+
+Optional improvement (recommended):
+
+This application collects information needed to evaluate your rental request. Applications are reviewed using the same screening criteria and in the order received.
+
+Same meaning, slightly more human.
+
+3. Clarify “Move-In Funds” to avoid contradiction
+
+Right now you say:
+
+Terms box shows exact deposit
+
+Additional section says “Exact amounts may vary by unit”
+
+That can feel contradictory.
+
+✅ Fix (very small copy change)
+
+Change Move-In Funds to:
+
+Move-in funds are due upon approval unless otherwise stated in the rental terms above.
+
+This aligns everything and defers authority to the terms box.
+
+4. Strengthen the acknowledgment (microcopy polish)
+
+Your checkbox text is good. You can make it slightly more defensible without sounding legal.
+
+Current:
+
+I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this property.
+
+Suggested final version:
+
+I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this rental.
+
+Why:
+
+“this rental” reads more human than “this property”
+
+Slightly less formal, same legal weight
+
+Optional helper text under it (small, muted):
+
+This acknowledgment is required before starting the application.
+
+5. Button behavior (double-check this logic)
+
+Make sure:
+
+⛔ Start Application is disabled until checkbox is checked
+
+✅ Once checked, button activates immediately
+
+❌ No toast, modal, or warning text
+
+The cleaner this is, the more confident it feels.
+
+Optional polish (not required, but nice)
+Visual cue that this is a “gate”
+
+Add a subtle divider or spacing:
+
+[ Terms Box ]
+
+----------------------------
+
+☐ acknowledgment
+
+[ Start Application ]
+
+
+This reinforces the mental model:
+review → acknowledge → proceed
+
+Final verdict
+
+You’re in a very good place now.
+
+With these final tweaks:
+
+No redundant language
+
+No contradictory messaging
+
+One clear acknowledgment
+
+Clean audit trail
+
+Applicant-friendly and legally defensible

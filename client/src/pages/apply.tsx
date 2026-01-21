@@ -774,7 +774,7 @@ export default function Apply() {
               <CardHeader className="text-center border-b pb-6">
                 {/* Section 1: Before You Apply - Short intro */}
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mb-4 text-sm text-muted-foreground">
-                  This application collects information needed to evaluate your rental request. All applications are reviewed using the same screening criteria and in the order received.
+                  This application collects information needed to evaluate your rental request. Applications are reviewed using the same screening criteria and in the order received.
                 </div>
               </CardHeader>
               <CardContent className="pt-6 space-y-6">
@@ -841,7 +841,7 @@ export default function Apply() {
                         data-testid="checkbox-acknowledge-terms"
                       />
                       <Label htmlFor="acknowledgeTerms" className="text-sm cursor-pointer">
-                        I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this property.
+                        I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this rental.
                       </Label>
                     </div>
                   </>

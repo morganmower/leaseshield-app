@@ -1624,14 +1624,14 @@ export const defaultCoverPageTemplate = {
   intro: "Please read the following requirements carefully before submitting your application. Applications are reviewed in the order received.",
   sections: [
     { id: "processing_time", heading: "Processing Time", body: "Most applications are processed within 1–3 business days." },
-    { id: "required_uploads", heading: "Required Documents", body: "Government ID + proof of income are required. Additional documents may be requested." },
-    { id: "move_in_funds", heading: "Move-In Funds", body: "Move-in funds are due upon approval (deposit + first month's rent). Exact amounts may vary by unit." },
-    { id: "pet_policy", heading: "Pet Policy", body: "Pets may require approval and additional deposits/fees. Unauthorized pets may be grounds for denial or lease violation." },
+    { id: "required_uploads", heading: "Required Documents", body: "Government-issued ID and proof of income are required. Additional documents may be requested." },
+    { id: "move_in_funds", heading: "Move-In Funds", body: "Move-in funds are due upon approval unless otherwise stated in the rental terms above." },
+    { id: "pet_policy", heading: "Pet Policy", body: "Pets may require approval and additional deposits or fees. Unauthorized pets may result in denial or lease violation." },
     { id: "renters_insurance", heading: "Renters Insurance", body: "Renters insurance may be required prior to move-in and throughout the lease term." },
-    { id: "fees", heading: "Fees", body: "Late fees and other administrative fees may apply per lease terms and property policy." },
+    { id: "fees", heading: "Fees", body: "Late fees and other administrative fees may apply per the lease agreement." },
     { id: "no_verbal", heading: "No Verbal Agreements", body: "All agreements must be in writing. Verbal statements do not modify the lease." }
   ],
-  footerNote: "By continuing, you confirm you understand these requirements."
+  footerNote: ""
 };
 
 // Default field schema template (visibility toggles)
