@@ -85,6 +85,32 @@ export default function Properties() {
   const DEFAULT_PROPERTY_TERMS: PropertyTermsType = {};
   const [propertyTerms, setPropertyTerms] = useState<PropertyTermsType>(DEFAULT_PROPERTY_TERMS);
 
+  // Application field toggles - controls which fields appear on the rental application form
+  type FieldVisibility = "required" | "optional" | "hidden";
+  interface FieldSchemaFields {
+    desiredMoveInDate: FieldVisibility;
+    numberOfOccupants: FieldVisibility;
+    personalReferences: FieldVisibility;
+    housingVoucher: FieldVisibility;
+    referralSource: FieldVisibility;
+    currentLandlordContact: FieldVisibility;
+    employerPhone: FieldVisibility;
+    monthlyIncome: FieldVisibility;
+    reasonForMoving: FieldVisibility;
+  }
+  const DEFAULT_FIELD_SETTINGS: FieldSchemaFields = {
+    desiredMoveInDate: "optional",
+    numberOfOccupants: "optional",
+    personalReferences: "optional",
+    housingVoucher: "hidden",
+    referralSource: "optional",
+    currentLandlordContact: "optional",
+    employerPhone: "optional",
+    monthlyIncome: "required",
+    reasonForMoving: "optional"
+  };
+  const [fieldSettings, setFieldSettings] = useState<FieldSchemaFields>(DEFAULT_FIELD_SETTINGS);
+
   const { data: properties = [], isLoading, error } = useQuery<RentalProperty[]>({
     queryKey: ["/api/rental/properties"],
     retry: (failureCount, error: any) => {
@@ -101,7 +127,7 @@ export default function Properties() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, propertyTermsJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson?: PropertyTermsType }) => {
+    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson?: PropertyTermsType; fieldSchemaOverrideJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -110,7 +136,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideEnabled: true, fieldSchemaOverrideJson }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -127,7 +153,7 @@ export default function Properties() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTermsType }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTermsType; fieldSchemaOverrideJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -136,7 +162,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson, fieldSchemaOverrideEnabled: true, fieldSchemaOverrideJson }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -224,6 +250,7 @@ export default function Properties() {
     setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening(false);
     setPropertyTerms(DEFAULT_PROPERTY_TERMS);
+    setFieldSettings(DEFAULT_FIELD_SETTINGS);
     setEditingProperty(null);
   };
 
@@ -241,6 +268,23 @@ export default function Properties() {
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening((property as any).autoScreening ?? false);
     setPropertyTerms((property as any).propertyTermsJson || DEFAULT_PROPERTY_TERMS);
+    // Load field schema settings from property override
+    const override = (property as any).fieldSchemaOverrideJson;
+    if (override?.fields) {
+      setFieldSettings({
+        desiredMoveInDate: override.fields.desiredMoveInDate?.visibility || "optional",
+        numberOfOccupants: override.fields.numberOfOccupants?.visibility || "optional",
+        personalReferences: override.fields.personalReferences?.visibility || "optional",
+        housingVoucher: override.fields.housingVoucher?.visibility || "hidden",
+        referralSource: override.fields.referralSource?.visibility || "optional",
+        currentLandlordContact: override.fields.currentLandlordContact?.visibility || "optional",
+        employerPhone: override.fields.employerPhone?.visibility || "optional",
+        monthlyIncome: override.fields.monthlyIncome?.visibility || "required",
+        reasonForMoving: override.fields.reasonForMoving?.visibility || "optional"
+      });
+    } else {
+      setFieldSettings(DEFAULT_FIELD_SETTINGS);
+    }
     setIsEditDialogOpen(true);
   };
 
@@ -291,16 +335,71 @@ export default function Properties() {
     }
   };
 
+  // Build the field schema override, merging with existing settings if editing
+  const buildFieldSchemaOverride = () => {
+    // Get existing override from property being edited
+    const existingOverride = editingProperty ? (editingProperty as any).fieldSchemaOverrideJson : null;
+    
+    // Start with existing or default structure
+    const base = existingOverride || {
+      stateScope: "all_leaseshield_states",
+      fields: {
+        phone: { visibility: "required" },
+        dlNumber: { visibility: "optional" },
+        dlState: { visibility: "optional" },
+        ssn: { visibility: "hidden" },
+        dob: { visibility: "hidden" },
+        currentAddress: { visibility: "required" },
+        previousAddresses: { visibility: "required" },
+        employmentHistory: { visibility: "required" },
+        rentalHistory: { visibility: "optional" },
+        vehicles: { visibility: "optional" },
+        pets: { visibility: "optional" },
+        emergencyContact: { visibility: "optional" }
+      },
+      historyRules: {
+        minAddressYears: 2,
+        minEmploymentYears: 2,
+        minPreviousRentals: 2
+      },
+      uploads: {
+        govId: { required: true, label: "Government ID" },
+        paystubs30Days: { required: true, label: "Paystubs (last 30 days)" },
+        taxDocsSelfEmployed: { required: false, label: "Self-employed tax documents (Schedule C, etc.)" },
+        otherIncome: { required: false, label: "Other income documentation" }
+      }
+    };
+    
+    // Merge in the UI-controlled field settings
+    return {
+      ...base,
+      fields: {
+        ...(base.fields || {}),
+        desiredMoveInDate: { visibility: fieldSettings.desiredMoveInDate },
+        numberOfOccupants: { visibility: fieldSettings.numberOfOccupants },
+        personalReferences: { visibility: fieldSettings.personalReferences },
+        housingVoucher: { visibility: fieldSettings.housingVoucher },
+        referralSource: { visibility: fieldSettings.referralSource },
+        currentLandlordContact: { visibility: fieldSettings.currentLandlordContact },
+        employerPhone: { visibility: fieldSettings.employerPhone },
+        monthlyIncome: { visibility: fieldSettings.monthlyIncome },
+        reasonForMoving: { visibility: fieldSettings.reasonForMoving }
+      }
+    };
+  };
+
   const handleSubmit = () => {
     if (!formData.name) {
       toast({ title: "Missing Fields", description: "Please fill in property name.", variant: "destructive" });
       return;
     }
 
+    const fieldSchemaOverrideJson = buildFieldSchemaOverride();
+
     if (editingProperty) {
-      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms });
+      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, fieldSchemaOverrideJson });
     } else {
-      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms });
+      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms, fieldSchemaOverrideJson });
     }
   };
 
@@ -676,6 +775,152 @@ export default function Properties() {
                   </div>
                 </div>
               </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Application Field Settings</Label>
+                <p className="text-xs text-muted-foreground">
+                  Choose which fields appear on the rental application and whether they're required
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Desired Move-in Date</Label>
+                      <p className="text-xs text-muted-foreground">When they plan to move in</p>
+                    </div>
+                    <Select value={fieldSettings.desiredMoveInDate} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, desiredMoveInDate: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-movein"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Number of Occupants</Label>
+                      <p className="text-xs text-muted-foreground">List of everyone who will live there</p>
+                    </div>
+                    <Select value={fieldSettings.numberOfOccupants} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, numberOfOccupants: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-occupants"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Personal References</Label>
+                      <p className="text-xs text-muted-foreground">Non-landlord/employer references (max 2)</p>
+                    </div>
+                    <Select value={fieldSettings.personalReferences} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, personalReferences: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-references"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Housing Voucher / Section 8</Label>
+                      <p className="text-xs text-muted-foreground">Hidden by default for source-of-income laws</p>
+                    </div>
+                    <Select value={fieldSettings.housingVoucher} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, housingVoucher: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-voucher"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">How Did You Hear About Us</Label>
+                      <p className="text-xs text-muted-foreground">Track marketing sources</p>
+                    </div>
+                    <Select value={fieldSettings.referralSource} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, referralSource: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-referral"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Current Landlord Contact</Label>
+                      <p className="text-xs text-muted-foreground">Landlord name/phone for reference</p>
+                    </div>
+                    <Select value={fieldSettings.currentLandlordContact} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, currentLandlordContact: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-landlord"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Employer Phone</Label>
+                      <p className="text-xs text-muted-foreground">Phone for employment verification</p>
+                    </div>
+                    <Select value={fieldSettings.employerPhone} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, employerPhone: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-employer"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Monthly Income</Label>
+                      <p className="text-xs text-muted-foreground">Applicant's monthly income</p>
+                    </div>
+                    <Select value={fieldSettings.monthlyIncome} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, monthlyIncome: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-income"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Reason for Moving</Label>
+                      <p className="text-xs text-muted-foreground">Why they're leaving current residence</p>
+                    </div>
+                    <Select value={fieldSettings.reasonForMoving} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, reasonForMoving: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-add-field-reason"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancel</Button>
@@ -929,6 +1174,152 @@ export default function Properties() {
                       onChange={(e) => setPropertyTerms(prev => ({ ...prev, additionalNotes: e.target.value }))}
                       data-testid="input-edit-additional-notes"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Application Field Settings</Label>
+                <p className="text-xs text-muted-foreground">
+                  Choose which fields appear on the rental application and whether they're required
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Desired Move-in Date</Label>
+                      <p className="text-xs text-muted-foreground">When they plan to move in</p>
+                    </div>
+                    <Select value={fieldSettings.desiredMoveInDate} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, desiredMoveInDate: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-movein"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Number of Occupants</Label>
+                      <p className="text-xs text-muted-foreground">List of everyone who will live there</p>
+                    </div>
+                    <Select value={fieldSettings.numberOfOccupants} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, numberOfOccupants: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-occupants"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Personal References</Label>
+                      <p className="text-xs text-muted-foreground">Non-landlord/employer references (max 2)</p>
+                    </div>
+                    <Select value={fieldSettings.personalReferences} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, personalReferences: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-references"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Housing Voucher / Section 8</Label>
+                      <p className="text-xs text-muted-foreground">Hidden by default for source-of-income laws</p>
+                    </div>
+                    <Select value={fieldSettings.housingVoucher} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, housingVoucher: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-voucher"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">How Did You Hear About Us</Label>
+                      <p className="text-xs text-muted-foreground">Track marketing sources</p>
+                    </div>
+                    <Select value={fieldSettings.referralSource} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, referralSource: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-referral"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Current Landlord Contact</Label>
+                      <p className="text-xs text-muted-foreground">Landlord name/phone for reference</p>
+                    </div>
+                    <Select value={fieldSettings.currentLandlordContact} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, currentLandlordContact: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-landlord"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Employer Phone</Label>
+                      <p className="text-xs text-muted-foreground">Phone for employment verification</p>
+                    </div>
+                    <Select value={fieldSettings.employerPhone} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, employerPhone: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-employer"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Monthly Income</Label>
+                      <p className="text-xs text-muted-foreground">Applicant's monthly income</p>
+                    </div>
+                    <Select value={fieldSettings.monthlyIncome} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, monthlyIncome: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-income"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Reason for Moving</Label>
+                      <p className="text-xs text-muted-foreground">Why they're leaving current residence</p>
+                    </div>
+                    <Select value={fieldSettings.reasonForMoving} onValueChange={(v: any) => setFieldSettings(s => ({ ...s, reasonForMoving: v }))}>
+                      <SelectTrigger className="w-28" data-testid="select-edit-field-reason"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="required">Required</SelectItem>
+                        <SelectItem value="optional">Optional</SelectItem>
+                        <SelectItem value="hidden">Hidden</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </div>
