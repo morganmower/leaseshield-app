@@ -390,18 +390,6 @@ export default function Apply() {
   const [currentStep, setCurrentStep] = useState(0);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const [hasAcknowledgedTerms, setHasAcknowledgedTerms] = useState(false);
-
-  // Auto-acknowledge when no footer note or no property terms exist
-  useEffect(() => {
-    if (linkData) {
-      if (!linkData.coverPage?.footerNote) {
-        setHasAcknowledged(true);
-      }
-      if (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v)) {
-        setHasAcknowledgedTerms(true);
-      }
-    }
-  }, [linkData]);
   const [personToken, setPersonToken] = useState<string | null>(() => {
     // For invite flows, the URL token IS the person token
     if (isInviteFlow) return token;
@@ -459,6 +447,18 @@ export default function Apply() {
   const linkData = isInviteFlow ? inviteLinkData : directLinkData;
   const isLoadingLink = isInviteFlow ? (isLoadingPerson || isLoadingInviteLink) : isLoadingDirectLink;
   const linkError = isInviteFlow ? inviteLinkError : directLinkError;
+
+  // Auto-acknowledge when no footer note or no property terms exist
+  useEffect(() => {
+    if (linkData) {
+      if (!linkData.coverPage?.footerNote) {
+        setHasAcknowledged(true);
+      }
+      if (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v)) {
+        setHasAcknowledgedTerms(true);
+      }
+    }
+  }, [linkData]);
 
   // Initialize form data from saved data
   useEffect(() => {
