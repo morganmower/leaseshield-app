@@ -6815,9 +6815,35 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             ` : ''}
 
             ${person.fcraAuthorized ? `
-            <div class="consent-status authorized">
-              <span class="checkmark">&#10003;</span>
-              <span>Background Check Authorized - ${formatDate(person.fcraAuthorizedTimestamp)}</span>
+            <div class="fcra-authorization-box">
+              <div class="fcra-header">
+                <span class="checkmark">&#10003;</span>
+                <span class="fcra-title">Background Screening Disclosure &amp; Acknowledgment</span>
+                <span class="fcra-date">Acknowledged: ${formatDate(person.fcraAuthorizedTimestamp)}</span>
+              </div>
+              <div class="fcra-content">
+                <p>As part of the rental application process, the landlord or property manager may request a background screening report about you for housing purposes.</p>
+                <p class="fcra-subheading">If screening is requested:</p>
+                <ul>
+                  <li>You will receive a separate invitation directly from Western Verify, the consumer reporting agency, delivered through its screening platform DigitalDelve</li>
+                  <li>That invitation will include a standalone disclosure and authorization, which you must review and complete before any consumer report is obtained</li>
+                  <li>LeaseShield does not collect or store your Social Security number, date of birth, or screening authorization</li>
+                </ul>
+                <p>The background screening report, if obtained, may include information permitted by law, such as credit history, rental history, employment-related information, criminal records, and eviction records.</p>
+                <p class="fcra-subheading">Adverse Action Notice:</p>
+                <p>If adverse action is taken based in whole or in part on information contained in a consumer report, you will be provided an adverse action notice that includes:</p>
+                <ul>
+                  <li>The name, address, and phone number of the consumer reporting agency (Western Verify) that provided the report</li>
+                  <li>A statement that the consumer reporting agency did not make the decision and cannot explain why the decision was made</li>
+                  <li>Notice of your rights under the Fair Credit Reporting Act (FCRA), including your right to obtain a free copy of your consumer report and to dispute inaccurate or incomplete information</li>
+                </ul>
+                <p class="fcra-subheading">By acknowledging, applicant confirmed:</p>
+                <ul>
+                  <li>Understanding that a background screening may be requested in connection with the rental application</li>
+                  <li>Understanding that any screening authorization will be collected directly by Western Verify, through its screening platform DigitalDelve, and not by LeaseShield</li>
+                  <li>Understanding that LeaseShield does not make rental decisions</li>
+                </ul>
+              </div>
             </div>
             ` : `
             <div class="consent-status pending">
@@ -7137,6 +7163,57 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               color: #22c55e;
               font-size: 16px;
               font-weight: bold;
+            }
+            .fcra-authorization-box {
+              margin-top: 16px;
+              background: #fef3c7;
+              border: 1px solid #fcd34d;
+              border-radius: 8px;
+              padding: 12px 16px;
+            }
+            .fcra-header {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              margin-bottom: 12px;
+              padding-bottom: 8px;
+              border-bottom: 1px solid #fcd34d;
+              flex-wrap: wrap;
+            }
+            .fcra-header .checkmark {
+              color: #16a34a;
+              font-size: 18px;
+              font-weight: bold;
+            }
+            .fcra-title {
+              font-weight: 600;
+              font-size: 13px;
+              color: #92400e;
+            }
+            .fcra-date {
+              margin-left: auto;
+              font-size: 11px;
+              color: #b45309;
+              font-weight: 500;
+            }
+            .fcra-content {
+              font-size: 10px;
+              color: #78350f;
+              line-height: 1.5;
+            }
+            .fcra-content p {
+              margin: 6px 0;
+            }
+            .fcra-content ul {
+              margin: 6px 0 10px 0;
+              padding-left: 18px;
+            }
+            .fcra-content li {
+              margin-bottom: 3px;
+            }
+            .fcra-subheading {
+              font-weight: 600;
+              margin-top: 10px !important;
             }
             .page-break {
               page-break-before: always;
