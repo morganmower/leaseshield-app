@@ -1679,6 +1679,30 @@ export default function Apply() {
                     </div>
                   </div>
                 )}
+
+                <div className="space-y-4 pt-6 border-t">
+                  <Label className="text-base font-medium">Do you or anyone in your household smoke or vape?</Label>
+                  <div className="flex gap-6">
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="smokesVapesYes"
+                        checked={formData.smokesOrVapes === true}
+                        onCheckedChange={() => updateField("smokesOrVapes", true)}
+                        data-testid="checkbox-smokes-vapes-yes"
+                      />
+                      <Label htmlFor="smokesVapesYes" className="cursor-pointer">Yes</Label>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Checkbox
+                        id="smokesVapesNo"
+                        checked={formData.smokesOrVapes === false}
+                        onCheckedChange={() => updateField("smokesOrVapes", false)}
+                        data-testid="checkbox-smokes-vapes-no"
+                      />
+                      <Label htmlFor="smokesVapesNo" className="cursor-pointer">No</Label>
+                    </div>
+                  </div>
+                </div>
               </CardContent>
               <CardFooter className="flex justify-between border-t pt-6">
                 <Button variant="outline" onClick={() => setCurrentStep(3)}>
@@ -2013,6 +2037,15 @@ export default function Apply() {
                   ) : (
                     <p className="text-sm text-muted-foreground">Not specified</p>
                   )}
+                </div>
+
+                <div className="bg-muted/50 p-4 rounded-lg space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    Smoking/Vaping
+                  </h3>
+                  <p className="text-sm">
+                    {formData.smokesOrVapes === true ? "Yes" : formData.smokesOrVapes === false ? "No" : "Not specified"}
+                  </p>
                 </div>
 
                 {/* Add co-applicant option */}

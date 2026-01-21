@@ -1350,10 +1350,10 @@ Best regards`;
                                     </div>
                                   </div>
                                 )}
-                                {person.formJson.smoker !== undefined && (
+                                {(person.formJson.smoker !== undefined || person.formJson.smokesOrVapes !== undefined) && (
                                   <div data-testid={`field-smoker-${person.id}`}>
-                                    <span className="text-muted-foreground block text-xs">Smoker</span>
-                                    <span>{person.formJson.smoker ? "Yes" : "No"}</span>
+                                    <span className="text-muted-foreground block text-xs">Smokes/Vapes</span>
+                                    <span>{(person.formJson.smokesOrVapes ?? person.formJson.smoker) ? "Yes" : "No"}</span>
                                   </div>
                                 )}
                                 {person.formJson.hasBeenEvicted !== undefined && (

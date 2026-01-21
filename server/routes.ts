@@ -6680,6 +6680,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                   <span>${formData.hasFelony ? 'Yes' : 'No'}</span>
                 </div>
                 ` : ''}
+                ${(formData.smokesOrVapes !== undefined || formData.smoker !== undefined) ? `
+                <div class="info-item">
+                  <label>Smokes/Vapes</label>
+                  <span>${(formData.smokesOrVapes ?? formData.smoker) ? 'Yes' : 'No'}</span>
+                </div>
+                ` : ''}
               </div>
               ${formData.pets && Array.isArray(formData.pets) && formData.pets.length > 0 ? `
               <div class="pets-list">
