@@ -1,0 +1,74 @@
+You can use this almost verbatim.
+
+Rental Property & Application Information
+
+(Completed by Owner/Manager prior to sending application)
+
+Rental Property Address:
+Street: ______________________________
+City: __________________ State: ______ Zip: __________
+
+Financial Terms
+Monthly Rent: $________________
+
+Non-Refundable Application Fee: $________ per adult applicant
+(Additional screening fees may apply for aliases or prior names)
+
+Security Deposit: $________________
+Refundable ☐ Yes ☐ No
+
+Lease Initiation / Administrative Fee (Non-Refundable): $________________
+
+Application Completion Requirements
+Full payment of the security deposit is:
+☐ Required upon approval
+☐ Required prior to move-in
+☐ Not required until lease signing
+
+Approval & Lease Signing Timeline
+Upon approval, applicant(s) must sign the rental agreement within ______ hours (recommended: 24–72 hours), or the application may be declined and the next qualified applicant considered.
+
+Payment Prior to Occupancy
+Applicant(s) agree that all required funds, including deposits and first month’s rent, must be paid prior to occupancy.
+
+Application Review Process
+Applications are reviewed in the order received and evaluated based on the owner’s written rental criteria. Applicants may request to review the rental criteria and fee structure prior to submitting an application.
+
+Fair Housing & Screening Disclosure
+The housing provider does not discriminate on the basis of race, color, religion, sex, national origin, disability, familial status, sexual orientation, gender identity, or source of income.
+
+Criminal history, if considered, will be evaluated on an individualized basis in accordance with applicable law.
+
+How I’d implement this in the app (important for you)
+
+Landlord side
+
+Structured fields (not a text box)
+
+Saved per property
+
+Editable anytime
+
+Applicant side
+
+“Property & Terms Summary” page
+
+One checkbox:
+
+☐ I acknowledge and understand the rental terms, fees, and screening criteria above.
+
+Stored
+
+Timestamp
+
+Applicant acknowledgment
+
+Version of terms shown
+
+That becomes gold if there’s ever a dispute.
+
+Bottom line (direct answer)
+
+✔️ Yes — add this
+❌ Not as raw text inside the tenant application
+✅ As a landlord pre-application setup that feeds a standardized disclosure
