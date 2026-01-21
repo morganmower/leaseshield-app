@@ -6429,9 +6429,549 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="consent-authorization-${person.firstName}-${person.lastName}.pdf"`);
       res.send(pdfBuffer);
-    } catch (error) {
-      console.error("Error generating consent PDF:", error);
-      res.status(500).json({ message: "Failed to generate consent PDF" });
+    } catch (error: any) {
+      console.error("Error generating consent PDF:", error?.message || error);
+      console.error("Error stack:", error?.stack);
+      res.status(500).json({ message: "Failed to generate consent PDF", error: error?.message });
+    }
+  });
+
+  // Download full rental application as PDF
+  app.get('/api/rental/submissions/:id/application-pdf', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      
+      if (!submission) {
+        return res.status(404).json({ message: "Submission not found" });
+      }
+
+      // Verify ownership
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) {
+        return res.status(404).json({ message: "Unit not found" });
+      }
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) {
+        return res.status(403).json({ message: "Access denied" });
+      }
+
+      // Get all people for this submission
+      const people = await storage.getRentalSubmissionPeople(submission.id);
+      const decision = await storage.getSubmissionDecision(submission.id);
+
+      // Helper functions
+      const escapeHtml = (str: string | null | undefined): string => {
+        if (!str) return '';
+        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+      };
+
+      const formatDate = (dateStr: string | null | undefined): string => {
+        if (!dateStr) return 'N/A';
+        return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+      };
+
+      const roleLabel = (role: string): string => {
+        switch (role) {
+          case 'applicant': return 'Primary Applicant';
+          case 'coapplicant': return 'Co-Applicant';
+          case 'guarantor': return 'Guarantor';
+          default: return role;
+        }
+      };
+
+      // Generate person sections
+      const generatePersonSection = (person: any, index: number) => {
+        const formData = person.formJson || {};
+        
+        return `
+          <div class="person-section ${index > 0 ? 'page-break' : ''}">
+            <div class="person-header">
+              <h2>${escapeHtml(person.firstName)} ${escapeHtml(person.lastName)}</h2>
+              <span class="role-badge">${roleLabel(person.role)}</span>
+            </div>
+            
+            <div class="info-section">
+              <h3>Contact Information</h3>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>Email</label>
+                  <span>${escapeHtml(person.email)}</span>
+                </div>
+                ${formData.phone ? `
+                <div class="info-item">
+                  <label>Phone</label>
+                  <span>${escapeHtml(formData.phone)}</span>
+                </div>
+                ` : ''}
+                ${formData.dateOfBirth ? `
+                <div class="info-item">
+                  <label>Date of Birth</label>
+                  <span>${escapeHtml(formData.dateOfBirth)}</span>
+                </div>
+                ` : ''}
+                ${formData.driversLicense ? `
+                <div class="info-item">
+                  <label>Driver's License</label>
+                  <span>${escapeHtml(formData.driversLicense)}</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+
+            ${formData.currentAddress ? `
+            <div class="info-section">
+              <h3>Current Residence</h3>
+              <div class="info-grid">
+                <div class="info-item wide">
+                  <label>Address</label>
+                  <span>${escapeHtml(formData.currentAddress)}${formData.currentCity ? `, ${escapeHtml(formData.currentCity)}` : ''}${formData.currentState ? `, ${escapeHtml(formData.currentState)}` : ''} ${escapeHtml(formData.currentZip || '')}</span>
+                </div>
+                ${formData.currentLandlordName ? `
+                <div class="info-item">
+                  <label>Landlord Name</label>
+                  <span>${escapeHtml(formData.currentLandlordName)}</span>
+                </div>
+                ` : ''}
+                ${formData.currentLandlordPhone ? `
+                <div class="info-item">
+                  <label>Landlord Phone</label>
+                  <span>${escapeHtml(formData.currentLandlordPhone)}</span>
+                </div>
+                ` : ''}
+                ${formData.currentRent ? `
+                <div class="info-item">
+                  <label>Current Rent</label>
+                  <span>$${escapeHtml(formData.currentRent)}/mo</span>
+                </div>
+                ` : ''}
+                ${formData.moveInDate ? `
+                <div class="info-item">
+                  <label>Move-In Date</label>
+                  <span>${escapeHtml(formData.moveInDate)}</span>
+                </div>
+                ` : ''}
+                ${formData.reasonForMoving ? `
+                <div class="info-item wide">
+                  <label>Reason for Moving</label>
+                  <span>${escapeHtml(formData.reasonForMoving)}</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
+
+            ${formData.currentEmployer || formData.monthlyIncome ? `
+            <div class="info-section">
+              <h3>Employment &amp; Income</h3>
+              <div class="info-grid">
+                ${formData.currentEmployer ? `
+                <div class="info-item">
+                  <label>Employer</label>
+                  <span>${escapeHtml(formData.currentEmployer)}</span>
+                </div>
+                ` : ''}
+                ${formData.employerPhone ? `
+                <div class="info-item">
+                  <label>Employer Phone</label>
+                  <span>${escapeHtml(formData.employerPhone)}</span>
+                </div>
+                ` : ''}
+                ${formData.jobTitle ? `
+                <div class="info-item">
+                  <label>Job Title</label>
+                  <span>${escapeHtml(formData.jobTitle)}</span>
+                </div>
+                ` : ''}
+                ${formData.monthlyIncome ? `
+                <div class="info-item">
+                  <label>Monthly Income</label>
+                  <span>$${escapeHtml(formData.monthlyIncome)}</span>
+                </div>
+                ` : ''}
+                ${formData.employmentLength ? `
+                <div class="info-item">
+                  <label>Time at Job</label>
+                  <span>${escapeHtml(formData.employmentLength)}</span>
+                </div>
+                ` : ''}
+                ${formData.additionalIncome ? `
+                <div class="info-item">
+                  <label>Additional Income</label>
+                  <span>$${escapeHtml(formData.additionalIncome)} (${escapeHtml(formData.additionalIncomeSource || 'Other')})</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
+
+            ${formData.emergencyContactName || formData.emergencyContactPhone ? `
+            <div class="info-section">
+              <h3>Emergency Contact</h3>
+              <div class="info-grid">
+                ${formData.emergencyContactName ? `
+                <div class="info-item">
+                  <label>Name</label>
+                  <span>${escapeHtml(formData.emergencyContactName)}</span>
+                </div>
+                ` : ''}
+                ${formData.emergencyContactPhone ? `
+                <div class="info-item">
+                  <label>Phone</label>
+                  <span>${escapeHtml(formData.emergencyContactPhone)}</span>
+                </div>
+                ` : ''}
+                ${formData.emergencyContactRelationship ? `
+                <div class="info-item">
+                  <label>Relationship</label>
+                  <span>${escapeHtml(formData.emergencyContactRelationship)}</span>
+                </div>
+                ` : ''}
+              </div>
+            </div>
+            ` : ''}
+
+            ${formData.hasPets !== undefined || formData.smoker !== undefined || formData.hasBeenEvicted !== undefined || formData.hasFelony !== undefined ? `
+            <div class="info-section">
+              <h3>Additional Information</h3>
+              <div class="info-grid">
+                ${formData.hasPets !== undefined ? `
+                <div class="info-item">
+                  <label>Has Pets</label>
+                  <span>${formData.hasPets ? 'Yes' : 'No'}</span>
+                </div>
+                ` : ''}
+                ${formData.smoker !== undefined ? `
+                <div class="info-item">
+                  <label>Smoker</label>
+                  <span>${formData.smoker ? 'Yes' : 'No'}</span>
+                </div>
+                ` : ''}
+                ${formData.hasBeenEvicted !== undefined ? `
+                <div class="info-item">
+                  <label>Prior Eviction</label>
+                  <span>${formData.hasBeenEvicted ? 'Yes' : 'No'}</span>
+                </div>
+                ` : ''}
+                ${formData.hasFelony !== undefined ? `
+                <div class="info-item">
+                  <label>Felony Conviction</label>
+                  <span>${formData.hasFelony ? 'Yes' : 'No'}</span>
+                </div>
+                ` : ''}
+              </div>
+              ${formData.pets && Array.isArray(formData.pets) && formData.pets.length > 0 ? `
+              <div class="pets-list">
+                <label>Pets:</label>
+                <ul>
+                  ${formData.pets.map((p: any) => `<li>${escapeHtml(p.type || '')} ${p.breed ? `(${escapeHtml(p.breed)})` : ''} ${p.weight ? `- ${escapeHtml(p.weight)} lbs` : ''} ${p.isServiceAnimal ? '- Service Animal' : ''}</li>`).join('')}
+                </ul>
+              </div>
+              ` : ''}
+              ${formData.vehicles && Array.isArray(formData.vehicles) && formData.vehicles.length > 0 ? `
+              <div class="vehicles-list">
+                <label>Vehicles:</label>
+                <ul>
+                  ${formData.vehicles.map((v: any) => `<li>${escapeHtml(v.year || '')} ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${v.color ? `(${escapeHtml(v.color)})` : ''} ${v.licensePlate ? `- ${escapeHtml(v.licensePlate)}` : ''}</li>`).join('')}
+                </ul>
+              </div>
+              ` : ''}
+            </div>
+            ` : ''}
+
+            ${person.fcraAuthorized ? `
+            <div class="consent-status authorized">
+              <span class="checkmark">&#10003;</span>
+              <span>Background Check Authorized - ${formatDate(person.fcraAuthorizedTimestamp)}</span>
+            </div>
+            ` : `
+            <div class="consent-status pending">
+              <span>Background Check Authorization: Pending</span>
+            </div>
+            `}
+          </div>
+        `;
+      };
+
+      const primaryApplicant = people.find(p => p.role === 'applicant');
+
+      const htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <style>
+            * { box-sizing: border-box; }
+            body {
+              font-family: 'Helvetica Neue', Arial, sans-serif;
+              max-width: 850px;
+              margin: 0 auto;
+              padding: 40px;
+              line-height: 1.5;
+              color: #1a1a1a;
+              font-size: 12px;
+            }
+            .header {
+              text-align: center;
+              border-bottom: 3px solid #0d9488;
+              padding-bottom: 20px;
+              margin-bottom: 30px;
+            }
+            .header h1 {
+              color: #0d9488;
+              margin: 0 0 8px 0;
+              font-size: 26px;
+              font-weight: 600;
+            }
+            .header .subtitle {
+              color: #6b7280;
+              font-size: 14px;
+            }
+            .property-info {
+              background: #f0fdfa;
+              border: 1px solid #99f6e4;
+              border-radius: 8px;
+              padding: 16px;
+              margin-bottom: 24px;
+            }
+            .property-info h3 {
+              margin: 0 0 12px 0;
+              color: #0d9488;
+              font-size: 14px;
+            }
+            .property-info .details {
+              display: flex;
+              gap: 32px;
+              flex-wrap: wrap;
+            }
+            .property-info .detail-item label {
+              display: block;
+              font-size: 10px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+            }
+            .property-info .detail-item span {
+              font-size: 14px;
+              font-weight: 500;
+            }
+            .person-section {
+              margin-bottom: 32px;
+              padding-bottom: 24px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .person-section:last-child {
+              border-bottom: none;
+            }
+            .person-header {
+              display: flex;
+              align-items: center;
+              gap: 12px;
+              margin-bottom: 16px;
+            }
+            .person-header h2 {
+              margin: 0;
+              font-size: 18px;
+              color: #1a1a1a;
+            }
+            .role-badge {
+              background: #0d9488;
+              color: white;
+              padding: 4px 12px;
+              border-radius: 12px;
+              font-size: 11px;
+              font-weight: 500;
+            }
+            .info-section {
+              margin-bottom: 20px;
+            }
+            .info-section h3 {
+              color: #374151;
+              font-size: 13px;
+              font-weight: 600;
+              margin: 0 0 12px 0;
+              padding-bottom: 6px;
+              border-bottom: 1px solid #e5e7eb;
+            }
+            .info-grid {
+              display: grid;
+              grid-template-columns: repeat(3, 1fr);
+              gap: 12px;
+            }
+            .info-item {
+              padding: 8px;
+              background: #f9fafb;
+              border-radius: 4px;
+            }
+            .info-item.wide {
+              grid-column: span 2;
+            }
+            .info-item label {
+              display: block;
+              font-size: 10px;
+              color: #6b7280;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              margin-bottom: 2px;
+            }
+            .info-item span {
+              font-size: 12px;
+              color: #1a1a1a;
+            }
+            .consent-status {
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              padding: 12px 16px;
+              border-radius: 6px;
+              font-size: 12px;
+              margin-top: 16px;
+            }
+            .consent-status.authorized {
+              background: #dcfce7;
+              color: #166534;
+            }
+            .consent-status.pending {
+              background: #fef3c7;
+              color: #92400e;
+            }
+            .consent-status .checkmark {
+              font-size: 16px;
+              font-weight: bold;
+            }
+            .pets-list, .vehicles-list {
+              margin-top: 12px;
+            }
+            .pets-list label, .vehicles-list label {
+              display: block;
+              font-size: 11px;
+              color: #6b7280;
+              margin-bottom: 4px;
+            }
+            .pets-list ul, .vehicles-list ul {
+              margin: 0;
+              padding-left: 20px;
+            }
+            .pets-list li, .vehicles-list li {
+              font-size: 12px;
+              margin-bottom: 4px;
+            }
+            .decision-box {
+              margin-top: 32px;
+              padding: 20px;
+              border-radius: 8px;
+            }
+            .decision-box.approved {
+              background: #dcfce7;
+              border: 2px solid #22c55e;
+            }
+            .decision-box.denied {
+              background: #fef2f2;
+              border: 2px solid #ef4444;
+            }
+            .decision-box h3 {
+              margin: 0 0 12px 0;
+              font-size: 16px;
+            }
+            .decision-box.approved h3 { color: #166534; }
+            .decision-box.denied h3 { color: #991b1b; }
+            .decision-box p {
+              margin: 4px 0;
+              font-size: 12px;
+            }
+            .footer {
+              margin-top: 40px;
+              padding-top: 16px;
+              border-top: 1px solid #e5e7eb;
+              text-align: center;
+              font-size: 10px;
+              color: #9ca3af;
+            }
+            .page-break {
+              page-break-before: always;
+            }
+            @media print {
+              body { padding: 20px; }
+              .page-break { page-break-before: always; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Rental Application</h1>
+            <div class="subtitle">Submitted ${formatDate(submission.createdAt)}</div>
+          </div>
+
+          <div class="property-info">
+            <h3>Property Information</h3>
+            <div class="details">
+              <div class="detail-item">
+                <label>Property</label>
+                <span>${escapeHtml(property.name)}</span>
+              </div>
+              <div class="detail-item">
+                <label>Unit</label>
+                <span>${escapeHtml(unit.unitLabel)}</span>
+              </div>
+              <div class="detail-item">
+                <label>Status</label>
+                <span>${submission.status}</span>
+              </div>
+            </div>
+          </div>
+
+          ${people.map((person, index) => generatePersonSection(person, index)).join('')}
+
+          ${decision ? `
+          <div class="decision-box ${decision.decision}">
+            <h3>Application ${decision.decision === 'approved' ? 'Approved' : 'Denied'}</h3>
+            <p><strong>Decision Date:</strong> ${formatDate(decision.decidedAt)}</p>
+            ${decision.notes ? `<p><strong>Notes:</strong> ${escapeHtml(decision.notes)}</p>` : ''}
+          </div>
+          ` : ''}
+
+          <div class="footer">
+            <p>Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
+            <p>Application ID: ${submission.id}</p>
+          </div>
+        </body>
+        </html>
+      `;
+
+      // Generate PDF using Puppeteer
+      const puppeteer = await import('puppeteer');
+      const chromiumPath = execSync('which chromium').toString().trim();
+      const browser = await puppeteer.default.launch({ 
+        headless: true,
+        executablePath: chromiumPath,
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage']
+      });
+      const page = await browser.newPage();
+
+      await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+      const pdfBuffer = await page.pdf({
+        format: 'Letter',
+        printBackground: true,
+        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+      });
+      
+      await browser.close();
+
+      const fileName = primaryApplicant 
+        ? `rental-application-${primaryApplicant.firstName}-${primaryApplicant.lastName}.pdf`
+        : `rental-application-${submission.id.slice(0, 8)}.pdf`;
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${fileName}"`);
+      res.send(pdfBuffer);
+    } catch (error: any) {
+      console.error("Error generating application PDF:", error?.message || error);
+      console.error("Error stack:", error?.stack);
+      res.status(500).json({ message: "Failed to generate application PDF", error: error?.message });
     }
   });
 
