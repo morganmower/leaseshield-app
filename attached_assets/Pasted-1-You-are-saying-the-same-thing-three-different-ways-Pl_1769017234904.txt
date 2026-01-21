@@ -1,0 +1,163 @@
+1. You are saying the same thing three different ways
+
+“Please read carefully…”
+
+“must finish this before continuing”
+
+Two separate acknowledgment checkboxes
+
+That creates cognitive friction and makes applicants hesitate.
+
+2. The top half is generic, the bottom half is specific
+
+Top: “Exact amounts may vary by unit”
+
+Bottom: Shows exact rent, deposit, fee, deadline
+
+That feels contradictory, even if legally fine.
+
+3. Two acknowledgments = unclear intent
+
+Applicants don’t know:
+
+Which one is legally important?
+
+Why they need both?
+
+What actually unlocks the application?
+
+The guiding principle (this fixes everything)
+
+This page should have ONE job:
+“Here are the property-specific terms. Review and acknowledge them to continue.”
+
+Everything else should support that.
+
+The fix: restructure the page into 3 clear sections
+SECTION 1: Purpose + fairness (short)
+
+This stays, but tighten it.
+
+Replace the current top box with this:
+
+Before You Apply
+This application collects information needed to evaluate your rental request.
+All applications are reviewed using the same screening criteria and in the order received.
+
+That’s it. No more fluff.
+
+SECTION 2: Property-specific terms (move this UP)
+
+Right now this is buried. It should be the centerpiece.
+
+Rename the section
+
+Change
+“Property Terms & Fees”
+to
+“This Rental’s Terms & Fees”
+
+That signals importance.
+
+Keep it exactly as-is visually, but add ONE line above it:
+
+These are the specific terms for this rental. Please review carefully.
+
+Minor copy tweaks inside:
+
+Change “Lease Signing Deadline” → “Lease Must Be Signed Within”
+
+Change “48 hours after approval” → “48 hours after approval” (this is good already)
+
+SECTION 3: Requirements & policies (collapsed / secondary)
+
+This is where flow improves dramatically.
+
+Change “Rental Application Requirements” to:
+
+Additional Requirements & Policies
+
+Then make this accordion / collapsible (open by default is fine).
+
+Inside, keep your sections but tighten wording slightly:
+
+Processing Time
+
+Most applications are processed within 1–3 business days.
+
+Required Documents
+
+Government-issued ID and proof of income are required. Additional documents may be requested.
+
+Move-In Funds
+
+Move-in funds are due upon approval unless otherwise stated in the rental terms above.
+
+⬅️ This line removes the contradiction
+
+Pet Policy
+
+Pets may require approval and additional deposits or fees. Unauthorized pets may result in denial or lease violation.
+
+Renters Insurance
+
+Renters insurance may be required prior to move-in and throughout the lease term.
+
+Fees
+
+Late fees and other administrative fees may apply per the lease agreement.
+
+No Verbal Agreements
+
+All agreements must be in writing. Verbal statements do not modify the lease.
+
+The BIGGEST fix: merge the acknowledgments
+❌ Current problem
+
+You have:
+
+A checkbox inside the terms box
+
+A second checkbox below it
+
+This feels redundant and annoying.
+
+✅ Replace BOTH with ONE acknowledgment (this is critical)
+
+Single checkbox, placed directly under the terms box:
+
+☐ I have reviewed and acknowledge the rent, fees, deposits, deadlines, and key rental terms for this property.
+
+That’s it.
+No second checkbox.
+No “must finish this before continuing” line (remove it).
+
+Button logic (important)
+
+Start Application is disabled until checkbox is checked
+
+No additional warning text needed
+
+This creates a clean cause-and-effect relationship.
+
+What to REMOVE entirely
+
+Delete these:
+
+“must finish this before continuing”
+
+“By continuing, you confirm you understand these requirements.”
+
+They add nothing once the acknowledgment is correct.
+
+Why this works (from a product + legal standpoint)
+
+✅ No contradictions between general info and specific terms
+
+✅ One clear legal acknowledgment
+
+✅ Better applicant trust (less legalese, more clarity)
+
+✅ Cleaner audit trail (single acknowledgment tied to terms snapshot)
+
+✅ Feels modern and intentional, not slapped together
