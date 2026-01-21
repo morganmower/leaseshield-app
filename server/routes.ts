@@ -7759,7 +7759,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(410).json({ message: "This application link has expired" });
       }
 
-      const { email, firstName, lastName, personType } = req.body;
+      const { email, firstName, lastName, personType, propertyTermsAcknowledgedAt } = req.body;
       
       if (!email || !firstName || !lastName) {
         return res.status(400).json({ message: "Email, first name, and last name are required" });
@@ -7780,6 +7780,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         lastName,
         formJson: {},
         inviteToken: randomUUID().replace(/-/g, ''),
+        propertyTermsAcknowledgedAt: propertyTermsAcknowledgedAt ? new Date(propertyTermsAcknowledgedAt) : null,
       });
 
       // Log event

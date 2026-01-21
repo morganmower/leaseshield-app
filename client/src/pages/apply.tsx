@@ -390,6 +390,18 @@ export default function Apply() {
   const [currentStep, setCurrentStep] = useState(0);
   const [hasAcknowledged, setHasAcknowledged] = useState(false);
   const [hasAcknowledgedTerms, setHasAcknowledgedTerms] = useState(false);
+
+  // Auto-acknowledge when no footer note or no property terms exist
+  useEffect(() => {
+    if (linkData) {
+      if (!linkData.coverPage?.footerNote) {
+        setHasAcknowledged(true);
+      }
+      if (!linkData.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v)) {
+        setHasAcknowledgedTerms(true);
+      }
+    }
+  }, [linkData]);
   const [personToken, setPersonToken] = useState<string | null>(() => {
     // For invite flows, the URL token IS the person token
     if (isInviteFlow) return token;
@@ -462,10 +474,14 @@ export default function Apply() {
   // Start application mutation
   const startMutation = useMutation({
     mutationFn: async (data: { email: string; firstName: string; lastName: string }) => {
+      const hasTerms = linkData?.propertyTerms && Object.values(linkData.propertyTerms).some(v => v);
       const res = await fetch(`/api/apply/${token}/start`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data,
+          propertyTermsAcknowledgedAt: hasTerms && hasAcknowledgedTerms ? new Date().toISOString() : null,
+        }),
       });
       if (!res.ok) throw new Error("Failed to start application");
       return res.json();
@@ -631,7 +647,9 @@ export default function Apply() {
     setPersonToken(null);
     setFormData({});
     setCurrentStep(0);
-    setHasAcknowledged(false);
+    // Reset acknowledgment states, but auto-ack if no footer note or no terms
+    setHasAcknowledged(!linkData?.coverPage?.footerNote);
+    setHasAcknowledgedTerms(!linkData?.propertyTerms || !Object.values(linkData.propertyTerms).some(v => v));
   };
 
   if (personData?.isCompleted) {
