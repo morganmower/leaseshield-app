@@ -604,7 +604,7 @@ export default function Properties() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Property Terms & Fees</Label>
                 <p className="text-xs text-muted-foreground">
-                  These details will be shown to applicants before they apply
+                  These details will be shown to applicants before they apply. Enter "N/A" for any that don't apply.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 pt-2">
@@ -860,7 +860,7 @@ export default function Properties() {
               <div className="space-y-3">
                 <Label className="text-sm font-medium">Property Terms & Fees</Label>
                 <p className="text-xs text-muted-foreground">
-                  These details will be shown to applicants before they apply
+                  These details will be shown to applicants before they apply. Enter "N/A" for any that don't apply.
                 </p>
                 
                 <div className="grid grid-cols-2 gap-4 pt-2">
