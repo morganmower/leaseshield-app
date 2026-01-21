@@ -251,6 +251,25 @@ export default function AdminPage() {
 
             <Card className="hover-elevate">
               <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Applications Activity</CardTitle>
+                <FileText className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/applications-activity" asChild>
+                  <Button 
+                    size="sm" 
+                    className="w-full" 
+                    data-testid="button-applications-activity"
+                  >
+                    <FileText className="h-4 w-4 mr-2" />
+                    View All Applications
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">Tips & Best Practices</CardTitle>
                 <Lightbulb className="h-4 w-4 text-muted-foreground" />
               </CardHeader>

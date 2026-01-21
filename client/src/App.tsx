@@ -53,6 +53,7 @@ import AdminBroadcasts from "@/pages/admin-broadcasts";
 import AdminDirectMessages from "@/pages/admin-direct-messages";
 import AdminScreeningCredentials from "@/pages/admin-screening-credentials";
 import AdminTips from "@/pages/admin-tips";
+import AdminApplicationsActivity from "@/pages/admin-applications-activity";
 import AdminStateNotes from "@/pages/admin-state-notes";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
@@ -193,6 +194,7 @@ function Router() {
       <Route path="/admin/screening-credentials">{() => <AdminRoute component={AdminScreeningCredentials} />}</Route>
       <Route path="/admin/tips">{() => <AdminRoute component={AdminTips} />}</Route>
       <Route path="/admin/state-notes">{() => <AdminRoute component={AdminStateNotes} />}</Route>
+      <Route path="/admin/applications-activity">{() => <AdminRoute component={AdminApplicationsActivity} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

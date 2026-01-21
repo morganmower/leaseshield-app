@@ -2620,6 +2620,126 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin Applications Activity - view all rental submissions across all users
+  app.get('/api/admin/applications-activity', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: "Access denied. Admin only." });
+      }
+
+      // Fetch all submissions with full details using Drizzle relations
+      const submissions = await db.query.rentalSubmissions.findMany({
+        with: {
+          applicationLink: {
+            with: {
+              unit: {
+                with: {
+                  property: {
+                    with: {
+                      user: true, // The landlord
+                    },
+                  },
+                },
+              },
+            },
+          },
+          people: true,
+          screeningOrder: true,
+          decision: true,
+          events: true,
+        },
+        orderBy: (rs, { desc }) => [desc(rs.createdAt)],
+      });
+
+      // Transform into a more digestible format for the admin UI
+      const activityData = submissions.map(sub => {
+        const property = sub.applicationLink?.unit?.property;
+        const landlord = property?.user;
+        const primaryApplicant = sub.people?.find(p => p.role === 'applicant');
+        const coApplicants = sub.people?.filter(p => p.role === 'coapplicant') || [];
+        const guarantors = sub.people?.filter(p => p.role === 'guarantor') || [];
+
+        return {
+          id: sub.id,
+          status: sub.status,
+          submittedAt: sub.submittedAt,
+          createdAt: sub.createdAt,
+          // Landlord info
+          landlord: landlord ? {
+            id: landlord.id,
+            email: landlord.email,
+            name: [landlord.firstName, landlord.lastName].filter(Boolean).join(' ') || landlord.email,
+          } : null,
+          // Property info
+          property: property ? {
+            id: property.id,
+            name: property.name,
+            address: property.address,
+            city: property.city,
+            state: property.state,
+          } : null,
+          // Unit info
+          unit: sub.applicationLink?.unit ? {
+            id: sub.applicationLink.unit.id,
+            label: sub.applicationLink.unit.unitLabel,
+          } : null,
+          // Primary applicant
+          applicant: primaryApplicant ? {
+            id: primaryApplicant.id,
+            firstName: primaryApplicant.firstName,
+            lastName: primaryApplicant.lastName,
+            email: primaryApplicant.email,
+            phone: primaryApplicant.phone,
+            isCompleted: primaryApplicant.isCompleted,
+            completedAt: primaryApplicant.completedAt,
+          } : null,
+          // Co-applicants and guarantors
+          coApplicants: coApplicants.map(p => ({
+            id: p.id,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            email: p.email,
+            isCompleted: p.isCompleted,
+          })),
+          guarantors: guarantors.map(p => ({
+            id: p.id,
+            firstName: p.firstName,
+            lastName: p.lastName,
+            email: p.email,
+            isCompleted: p.isCompleted,
+          })),
+          // Screening info
+          screening: sub.screeningOrder ? {
+            status: sub.screeningOrder.status,
+            referenceNumber: sub.screeningOrder.referenceNumber,
+            createdAt: sub.screeningOrder.createdAt,
+            reportUrl: sub.screeningOrder.reportUrl,
+          } : null,
+          // Decision
+          decision: sub.decision ? {
+            decision: sub.decision.decision,
+            decidedAt: sub.decision.decidedAt,
+            notes: sub.decision.notes,
+          } : null,
+          // Event timeline
+          events: sub.events?.map(e => ({
+            type: e.eventType,
+            createdAt: e.createdAt,
+            metadata: e.metadataJson,
+          })) || [],
+        };
+      });
+
+      res.json(activityData);
+    } catch (error) {
+      console.error("Error fetching applications activity:", error);
+      res.status(500).json({ message: "Failed to fetch applications activity" });
+    }
+  });
+
   // Contact form route (public - no authentication required)
   app.post('/api/contact', async (req, res) => {
     try {
