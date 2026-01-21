@@ -252,10 +252,12 @@ export default function RentalApplications() {
     setCreateLinkAfterUnit(!!createLinkImmediately);
     
     if (createLinkImmediately) {
-      // Show property terms dialog before creating link
-      setPropertyTermsPropertyId(propertyId);
-      setPropertyTerms(DEFAULT_PROPERTY_TERMS);
-      setIsPropertyTermsOpen(true);
+      // Terms come from property now, so directly create unit and link
+      createUnitMutation.mutate({ 
+        propertyId, 
+        data: { unitLabel: "" }, 
+        createLink: true 
+      });
     } else {
       setIsAddUnitOpen(true);
     }
