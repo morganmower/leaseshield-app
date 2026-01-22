@@ -22,6 +22,7 @@ import path from "path";
 import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import { execSync } from "child_process";
+import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 
 // Stripe configuration - use STRIPE_SECRET_KEY for both test and live
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -213,6 +214,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // JWT Auth routes
   app.use('/api/auth', authRoutes);
+
+  // Object Storage routes for public assets
+  registerObjectStorageRoutes(app);
 
   // User preferences - with strict input validation
   const userPreferencesSchema = z.object({
