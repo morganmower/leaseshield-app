@@ -62,6 +62,88 @@ interface ChatMessage {
   type: 'user' | 'bot';
 }
 
+function VideoWalkthroughSection() {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  const handlePlayClick = () => {
+    if (videoRef.current) {
+      videoRef.current.play();
+      setIsPlaying(true);
+    }
+  };
+
+  const handleVideoPlay = () => setIsPlaying(true);
+  const handleVideoPause = () => setIsPlaying(false);
+  const handleVideoEnded = () => setIsPlaying(false);
+
+  return (
+    <section id="walkthrough-video" className="py-12 md:py-16 bg-white dark:bg-background">
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true }}
+          variants={staggerContainer}
+          className="text-center"
+        >
+          <motion.h2 
+            variants={fadeInUp}
+            className="text-2xl md:text-3xl font-bold tracking-tight text-ink-900 dark:text-foreground mb-4"
+          >
+            See LeaseShield in Action
+          </motion.h2>
+          <motion.p 
+            variants={fadeInUp}
+            className="text-base text-muted-foreground mb-8 max-w-2xl mx-auto"
+          >
+            Watch this quick walkthrough to see how LeaseShield helps you understand screening reports and make confident decisions.
+          </motion.p>
+          
+          <motion.div 
+            variants={fadeInUp}
+            className="relative rounded-2xl overflow-hidden shadow-2xl border border-slate-200 dark:border-slate-700"
+          >
+            <video
+              ref={videoRef}
+              controls
+              className="w-full aspect-video bg-slate-900"
+              preload="metadata"
+              data-testid="video-walkthrough"
+              onPlay={handleVideoPlay}
+              onPause={handleVideoPause}
+              onEnded={handleVideoEnded}
+            >
+              <source src="/public/leaseshield-walkthrough.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+            
+            {/* Play Button Overlay */}
+            {!isPlaying && (
+              <button
+                onClick={handlePlayClick}
+                className="absolute inset-0 flex items-center justify-center bg-slate-900/40 transition-opacity group"
+                data-testid="button-play-video"
+                aria-label="Play video"
+              >
+                <div className="w-20 h-20 rounded-full bg-brand-500 flex items-center justify-center shadow-lg transform group-hover:scale-110 transition-transform">
+                  <svg 
+                    className="w-8 h-8 text-white ml-1" 
+                    viewBox="0 0 24 24" 
+                    fill="currentColor"
+                  >
+                    <path d="M8 5v14l11-7z"/>
+                  </svg>
+                </div>
+              </button>
+            )}
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}
+
 export default function Landing() {
   const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
@@ -401,9 +483,40 @@ export default function Landing() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Video Walkthrough CTA */}
+            <motion.div 
+              variants={fadeInUp}
+              className="mt-8 text-center"
+            >
+              <p className="text-sm text-muted-foreground mb-3">
+                Not sure where to start?
+              </p>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  const videoSection = document.getElementById('walkthrough-video');
+                  videoSection?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                className="text-brand-600 dark:text-brand-400"
+                data-testid="link-watch-walkthrough"
+              >
+                <svg 
+                  className="w-5 h-5 mr-2" 
+                  viewBox="0 0 24 24" 
+                  fill="currentColor"
+                >
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+                2-Minute Walkthrough: See How LeaseShield Works
+              </Button>
+            </motion.div>
           </motion.div>
         </div>
       </section>
+
+      {/* Video Walkthrough Section */}
+      <VideoWalkthroughSection />
 
       {/* When landlords use LeaseShield */}
       <section className="py-12 md:py-16 bg-panel-50 dark:bg-muted/20">
