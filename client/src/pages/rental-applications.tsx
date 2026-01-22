@@ -118,7 +118,7 @@ export default function RentalApplications() {
   const hasError = error !== null && !isTrialExpired;
 
   const createPropertyMutation = useMutation({
-    mutationFn: async (data: typeof propertyForm) => {
+    mutationFn: async (data: { propertyForm: typeof propertyForm; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson: PropertyTerms }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -127,7 +127,12 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          ...data.propertyForm,
+          requiredDocumentTypes: data.requiredDocumentTypes,
+          autoScreening: data.autoScreening,
+          propertyTermsJson: data.propertyTermsJson,
+        }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -136,6 +141,9 @@ export default function RentalApplications() {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/properties"] });
       setIsAddPropertyOpen(false);
       setPropertyForm({ name: "", address: "", city: "", state: "", zipCode: "" });
+      setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
+      setAutoScreening(false);
+      setPropertyTerms(DEFAULT_PROPERTY_TERMS);
       toast({ title: "Property Created", description: "Your rental property has been added." });
     },
     onError: () => {
@@ -407,7 +415,7 @@ export default function RentalApplications() {
 
         {/* Add Property Dialog */}
         <Dialog open={isAddPropertyOpen} onOpenChange={setIsAddPropertyOpen}>
-          <DialogContent className="sm:max-w-[500px]">
+          <DialogContent className="sm:max-w-[500px] max-h-[85vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Add Rental Property</DialogTitle>
               <DialogDescription>
@@ -475,13 +483,171 @@ export default function RentalApplications() {
                   data-testid="input-rental-property-zip"
                 />
               </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium">Required Documents</Label>
+                <p className="text-xs text-muted-foreground">
+                  Select which documents applicants must upload when applying
+                </p>
+                
+                <div className="space-y-3 pt-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-id" className="text-sm">ID / Driver's License</Label>
+                      <p className="text-xs text-muted-foreground">Always required</p>
+                    </div>
+                    <Switch 
+                      id="add-req-id" 
+                      checked={true} 
+                      disabled 
+                      data-testid="switch-add-doc-id"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-income" className="text-sm">Proof of Income</Label>
+                      <p className="text-xs text-muted-foreground">Paystubs, employment letter, etc.</p>
+                    </div>
+                    <Switch 
+                      id="add-req-income" 
+                      checked={docRequirements.income} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, income: checked })}
+                      data-testid="switch-add-doc-income"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-bank" className="text-sm">Bank Statements</Label>
+                      <p className="text-xs text-muted-foreground">Recent bank statements</p>
+                    </div>
+                    <Switch 
+                      id="add-req-bank" 
+                      checked={docRequirements.bank} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, bank: checked })}
+                      data-testid="switch-add-doc-bank"
+                    />
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label htmlFor="add-req-reference" className="text-sm">Reference Letters</Label>
+                      <p className="text-xs text-muted-foreground">From previous landlords or employers</p>
+                    </div>
+                    <Switch 
+                      id="add-req-reference" 
+                      checked={docRequirements.reference} 
+                      onCheckedChange={(checked) => setDocRequirements({ ...docRequirements, reference: checked })}
+                      data-testid="switch-add-doc-reference"
+                    />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between pt-4 border-t">
+                <div>
+                  <Label htmlFor="add-auto-screening" className="text-sm">Auto-Screening</Label>
+                  <p className="text-xs text-muted-foreground">Automatically request screening when application is submitted</p>
+                </div>
+                <Switch 
+                  id="add-auto-screening" 
+                  checked={autoScreening} 
+                  onCheckedChange={setAutoScreening}
+                  data-testid="switch-add-auto-screening"
+                />
+              </div>
+
+              <Separator className="my-4" />
+
+              <div className="space-y-3">
+                <Label className="text-sm font-medium flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" />
+                  Property Terms & Fees
+                </Label>
+                <p className="text-xs text-muted-foreground">
+                  Set rent, fees, and deposit information that applicants will see before starting their application
+                </p>
+                
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="add-monthlyRent" className="text-xs">Monthly Rent</Label>
+                    <Input
+                      id="add-monthlyRent"
+                      placeholder="e.g. $1,500"
+                      value={propertyTerms.monthlyRent || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, monthlyRent: e.target.value })}
+                      data-testid="input-add-monthly-rent"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="add-applicationFee" className="text-xs">Application Fee</Label>
+                    <Input
+                      id="add-applicationFee"
+                      placeholder="e.g. $50 per adult"
+                      value={propertyTerms.applicationFee || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, applicationFee: e.target.value })}
+                      data-testid="input-add-application-fee"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="add-securityDeposit" className="text-xs">Security Deposit</Label>
+                    <Input
+                      id="add-securityDeposit"
+                      placeholder="e.g. $1,500"
+                      value={propertyTerms.securityDeposit || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, securityDeposit: e.target.value })}
+                      data-testid="input-add-security-deposit"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="add-adminFee" className="text-xs">Admin/Lease Fee</Label>
+                    <Input
+                      id="add-adminFee"
+                      placeholder="e.g. $150"
+                      value={propertyTerms.adminFee || ""}
+                      onChange={(e) => setPropertyTerms({ ...propertyTerms, adminFee: e.target.value })}
+                      data-testid="input-add-admin-fee"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="add-leaseDeadline" className="text-xs">Lease Signing Deadline (hours after approval)</Label>
+                  <Input
+                    id="add-leaseDeadline"
+                    type="number"
+                    placeholder="e.g. 48"
+                    value={propertyTerms.leaseSignDeadlineHours || ""}
+                    onChange={(e) => setPropertyTerms({ ...propertyTerms, leaseSignDeadlineHours: e.target.value ? parseInt(e.target.value) : undefined })}
+                    data-testid="input-add-lease-deadline"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="add-additionalNotes" className="text-xs">Additional Notes</Label>
+                  <Textarea
+                    id="add-additionalNotes"
+                    placeholder="Any other terms or notes for applicants..."
+                    value={propertyTerms.additionalNotes || ""}
+                    onChange={(e) => setPropertyTerms({ ...propertyTerms, additionalNotes: e.target.value })}
+                    className="h-20"
+                    data-testid="input-add-additional-notes"
+                  />
+                </div>
+              </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddPropertyOpen(false)}>
                 Cancel
               </Button>
               <Button
-                onClick={() => createPropertyMutation.mutate(propertyForm)}
+                onClick={() => createPropertyMutation.mutate({
+                  propertyForm,
+                  requiredDocumentTypes: docRequirements,
+                  autoScreening,
+                  propertyTermsJson: propertyTerms,
+                })}
                 disabled={!propertyForm.name || createPropertyMutation.isPending}
                 data-testid="button-submit-rental-property"
               >
