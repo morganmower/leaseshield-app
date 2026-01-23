@@ -8,6 +8,9 @@ import { courtListenerService } from './courtListenerService';
 import { billAnalysisService } from './billAnalysisService';
 import { storage } from './storage';
 import { notifyUsersOfTemplateUpdate } from './templateNotifications';
+import { db } from './db';
+import { monitoringRuns, legislationSources } from '@shared/schema';
+import { eq, inArray } from 'drizzle-orm';
 import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -1001,6 +1004,29 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
   // ============================================================================
 
   /**
+   * Sync legislation source state filters with active states from the database.
+   * This ensures new states are automatically included in monitoring.
+   * Only updates sources that have state-based filtering (legiscan, pluralPolicy, courtListener).
+   */
+  async syncStateFiltersWithActiveStates(): Promise<void> {
+    const { getActiveStateIds, clearStateCache } = await import('./states/getActiveStates');
+    
+    // Clear the cache to ensure we get fresh state data
+    clearStateCache();
+    
+    const activeStates = await getActiveStateIds();
+    
+    // Update state-based sources with all active states
+    const stateBasedSources = ['legiscan', 'pluralPolicy', 'courtListener'];
+    
+    await db.update(legislationSources)
+      .set({ stateFilter: activeStates })
+      .where(inArray(legislationSources.id, stateBasedSources));
+    
+    console.log(`📍 Synced ${activeStates.length} active states to legislation sources: ${activeStates.join(', ')}`);
+  }
+
+  /**
    * Ingest now - fetch from all sources, normalize, store.
    * Does NOT touch templates or publish anything.
    * Returns structured result for admin UI.
@@ -1013,6 +1039,9 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
   }> {
     console.log('\n🌙 [ingestNow] Starting legislative ingest...');
     
+    // Sync legislation source state filters with active states before ingesting
+    await this.syncStateFiltersWithActiveStates();
+    
     const { runNightlyIngest } = await import('./legislation/ingestService');
     const result = await runNightlyIngest();
     
@@ -1024,6 +1053,20 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
         status: sr.status,
       };
     }
+    
+    // Record a monitoring run for the status UI
+    const { getActiveStateIds } = await import('./states/getActiveStates');
+    const activeStates = await getActiveStateIds();
+    
+    await db.insert(monitoringRuns).values({
+      statesChecked: activeStates,
+      billsFound: result.totalItemsFetched,
+      relevantBills: result.newItemsStored,
+      templatesQueued: 0,
+      status: result.errors.length === 0 ? 'success' : 'partial',
+      errorMessage: result.errors.length > 0 ? result.errors.join('; ') : undefined,
+      summaryReport: `Ingest: ${result.sourcesProcessed} sources, ${result.totalItemsFetched} items fetched, ${result.newItemsStored} new, ${result.duplicatesSkipped} duplicates`,
+    });
     
     console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`);
     
