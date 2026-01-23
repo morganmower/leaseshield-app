@@ -221,6 +221,8 @@ export const legalUpdates = pgTable("legal_updates", {
   afterText: text("after_text"),
   effectiveDate: timestamp("effective_date"),
   impactLevel: varchar("impact_level", { length: 20 }).notNull(), // 'high', 'medium', 'low'
+  category: varchar("category", { length: 50 }), // 'section8', 'hud', 'eviction', 'deposits', 'general'
+  sourceBillId: varchar("source_bill_id"), // Link to legislative monitoring bill if auto-published
   affectedTemplateIds: text("affected_template_ids").array(), // Templates updated due to this legal change
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),

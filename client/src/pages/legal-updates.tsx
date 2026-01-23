@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText } from "lucide-react";
+import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home } from "lucide-react";
 import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -69,6 +69,11 @@ export default function LegalUpdatesPage() {
       return response.json();
     },
   });
+
+  // Section 8 / HUD specific updates (filter by category)
+  const section8Updates = (legalUpdates || []).filter(
+    update => (update as any).category === 'section8'
+  );
 
   const { data: states } = useQuery<Array<{ id: string; name: string }>>({
     queryKey: ["/api/states"],
@@ -221,8 +226,9 @@ export default function LegalUpdatesPage() {
         )}
 
         <Tabs defaultValue="recent" className="space-y-6" data-testid="tabs-legal-updates">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="recent" data-testid="tab-recent-updates">Recent Updates ({(legalUpdates?.length || 0) + (caseLaw?.length || 0)})</TabsTrigger>
+            <TabsTrigger value="section8" data-testid="tab-section8">Section 8 / HUD ({section8Updates.length})</TabsTrigger>
             <TabsTrigger value="case-law" data-testid="tab-case-law">Court Decisions ({caseLaw?.length || 0})</TabsTrigger>
           </TabsList>
 
@@ -398,6 +404,97 @@ export default function LegalUpdatesPage() {
                   </div>
                 )}
               </>
+            )}
+          </TabsContent>
+
+          {/* Section 8 / HUD Tab */}
+          <TabsContent value="section8" className="space-y-4">
+            {updatesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : section8Updates.length > 0 ? (
+              <div className="space-y-4">
+                <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <Home className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground">
+                        <strong>Section 8 & HUD Updates:</strong> These updates specifically affect Housing Choice Voucher (Section 8) properties, subsidized housing, and HUD-regulated rentals.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {section8Updates.map((update) => (
+                  <Card key={update.id} className="overflow-hidden" data-testid={`card-section8-${update.id}`}>
+                    <button
+                      onClick={() => toggleUpdateExpanded(update.id)}
+                      className="w-full p-4 text-left hover-elevate transition-colors"
+                      data-testid={`button-expand-section8-${update.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-foreground line-clamp-2">{update.title}</h3>
+                            {selectedState === "NATIONAL" && update.stateId && (
+                              <StateBadge stateId={update.stateId} />
+                            )}
+                            {getImpactBadge(update.impactLevel)}
+                            <Badge variant="secondary">
+                              Section 8
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>
+                          {update.effectiveDate && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Effective: {format(new Date(update.effectiveDate), "MMMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          {expandedUpdates.has(update.id) ? (
+                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    {expandedUpdates.has(update.id) && (
+                      <div className="px-4 pb-4 border-t space-y-4" data-testid={`expanded-section8-${update.id}`}>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Why This Matters</h4>
+                          <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
+                        </div>
+                        {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
+                          <div>
+                            <h4 className="font-semibold text-sm mb-2">Affected Documents</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {update.affectedTemplateIds.map((templateId) => {
+                                const template = getTemplateById(templateId);
+                                return template ? (
+                                  <Link key={templateId} to={`/templates?id=${templateId}`}>
+                                    <Badge variant="outline" className="cursor-pointer hover:bg-muted">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      {template.title}
+                                    </Badge>
+                                  </Link>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Home className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No Section 8 or HUD updates for {selectedState === "NATIONAL" ? "any state" : states?.find(s => s.id === selectedState)?.name} yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Check back regularly for updates affecting housing voucher properties.</p>
+              </div>
             )}
           </TabsContent>
 

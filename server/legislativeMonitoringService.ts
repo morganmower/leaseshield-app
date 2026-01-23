@@ -10,7 +10,7 @@ import { storage } from './storage';
 import { notifyUsersOfTemplateUpdate } from './templateNotifications';
 import { db } from './db';
 import { monitoringRuns, legislationSources } from '@shared/schema';
-import { inArray, sql } from 'drizzle-orm';
+import { inArray, sql, and, eq } from 'drizzle-orm';
 import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -1117,7 +1117,10 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
       summaryReport: `Ingest (Group ${stateGroup}): ${result.sourcesProcessed} sources, ${result.totalItemsFetched} items fetched, ${result.newItemsStored} new, ${result.duplicatesSkipped} duplicates`,
     });
     
-    console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources (Group ${stateGroup})`);
+    // Auto-publish high-relevance bills to Legal Updates for landlord visibility
+    const autoPublishedCount = await this.autoPublishHighRelevanceBills();
+    
+    console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources (Group ${stateGroup}), ${autoPublishedCount} auto-published to Legal Updates`);
     
     return {
       sources,
@@ -1125,6 +1128,73 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
       totalNew: result.newItemsStored,
       errors: result.errors,
     };
+  }
+
+  /**
+   * Auto-publish high-relevance bills to the Legal Updates table
+   * so landlords can see them on the Legal Updates page.
+   */
+  private async autoPublishHighRelevanceBills(): Promise<number> {
+    const { legalUpdates, legislativeMonitoring } = await import('@shared/schema');
+    
+    // Find high-relevance bills that haven't been published as legal updates yet
+    const unpublishedBills = await db.select()
+      .from(legislativeMonitoring)
+      .where(
+        and(
+          inArray(legislativeMonitoring.relevanceLevel, ['high', 'medium']),
+          eq(legislativeMonitoring.isReviewed, false)
+        )
+      );
+    
+    let publishedCount = 0;
+    
+    for (const bill of unpublishedBills) {
+      // Check if already published as a legal update
+      const [existing] = await db.select({ id: legalUpdates.id })
+        .from(legalUpdates)
+        .where(eq(legalUpdates.sourceBillId, bill.id))
+        .limit(1);
+      
+      if (existing) continue;
+      
+      // Determine category based on bill content/topics
+      let category = 'general';
+      const titleLower = (bill.title || '').toLowerCase();
+      const descLower = (bill.description || '').toLowerCase();
+      
+      if (titleLower.includes('section 8') || titleLower.includes('housing choice voucher') || 
+          titleLower.includes('hcv') || descLower.includes('section 8') || 
+          descLower.includes('housing choice voucher') || titleLower.includes('hud') ||
+          descLower.includes('housing assistance') || descLower.includes('subsidized housing')) {
+        category = 'section8';
+      } else if (titleLower.includes('eviction') || descLower.includes('eviction')) {
+        category = 'eviction';
+      } else if (titleLower.includes('deposit') || descLower.includes('security deposit')) {
+        category = 'deposits';
+      }
+      
+      // Create legal update for landlords to see
+      await db.insert(legalUpdates).values({
+        stateId: bill.stateId || 'US',
+        title: bill.billNumber ? `${bill.billNumber}: ${bill.title}` : bill.title,
+        summary: bill.description || bill.title,
+        whyItMatters: bill.aiAnalysis || 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
+        impactLevel: bill.relevanceLevel || 'medium',
+        category,
+        sourceBillId: bill.id,
+        affectedTemplateIds: bill.affectedTemplateIds || [],
+        isActive: true,
+      });
+      
+      publishedCount++;
+    }
+    
+    if (publishedCount > 0) {
+      console.log(`📢 Auto-published ${publishedCount} high-relevance bills to Legal Updates`);
+    }
+    
+    return publishedCount;
   }
 
   /**
