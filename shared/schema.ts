@@ -615,6 +615,7 @@ export const monitoringRuns = pgTable("monitoring_runs", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   runDate: timestamp("run_date").defaultNow(),
   statesChecked: text("states_checked").array(), // ['UT', 'TX', 'ND', 'SD']
+  stateGroup: varchar("state_group"), // 'A' or 'B' - which rotation group was used for rate limit management
   billsFound: integer("bills_found").default(0),
   relevantBills: integer("relevant_bills").default(0),
   templatesQueued: integer("templates_queued").default(0),

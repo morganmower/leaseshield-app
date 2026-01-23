@@ -10,7 +10,7 @@ import { storage } from './storage';
 import { notifyUsersOfTemplateUpdate } from './templateNotifications';
 import { db } from './db';
 import { monitoringRuns, legislationSources } from '@shared/schema';
-import { inArray } from 'drizzle-orm';
+import { inArray, sql } from 'drizzle-orm';
 import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -1005,11 +1005,15 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
 
   /**
    * Sync legislation source state filters with active states from the database.
-   * This ensures new states are automatically included in monitoring.
-   * Only updates sources that have state-based filtering (legiscan, pluralPolicy, courtListener).
+   * Uses a rotation strategy to split states into two groups (A/B) using round-robin
+   * distribution and alternates between them on each run to avoid hitting API rate limits.
+   * The group selection is based on the last successful run's recorded state_group,
+   * ensuring strict alternation and auditability.
+   * @returns The group name ('A' or 'B') that will be used for this run
    */
-  async syncStateFiltersWithActiveStates(): Promise<void> {
+  async syncStateFiltersWithActiveStates(): Promise<string> {
     const { getActiveStateIds, clearStateCache } = await import('./states/getActiveStates');
+    const { desc } = await import('drizzle-orm');
     
     // Clear the cache to ensure we get fresh state data
     clearStateCache();
@@ -1019,17 +1023,51 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     // Guard against empty state list to avoid clearing filters
     if (activeStates.length === 0) {
       console.warn('⚠️ No active states found - skipping legislation source filter update');
-      return;
+      return 'A';
     }
     
-    // Update state-based sources with all active states
+    // Distribute states using round-robin assignment for balanced load
+    // Even indices go to Group A, odd indices go to Group B
+    const sortedStates = [...activeStates].sort();
+    const groupA: string[] = [];
+    const groupB: string[] = [];
+    sortedStates.forEach((state, index) => {
+      if (index % 2 === 0) {
+        groupA.push(state);
+      } else {
+        groupB.push(state);
+      }
+    });
+    
+    // Determine which group to use by looking at the last successful run's state_group
+    // and toggling to the opposite group. This ensures strict alternation.
+    const [lastSuccessfulRun] = await db.select({ stateGroup: monitoringRuns.stateGroup })
+      .from(monitoringRuns)
+      .where(inArray(monitoringRuns.status, ['success', 'completed']))
+      .orderBy(desc(monitoringRuns.createdAt))
+      .limit(1);
+    
+    // Toggle from last group: if last was A, use B; if last was B or null, use A
+    const lastGroup = lastSuccessfulRun?.stateGroup;
+    const useGroupA = lastGroup === 'B' || !lastGroup; // Toggle, default to A if no previous
+    const currentGroup = useGroupA ? groupA : groupB;
+    const groupName = useGroupA ? 'A' : 'B';
+    
+    console.log(`🔄 State rotation: Last run used Group ${lastGroup || 'none'}, this run uses Group ${groupName}`);
+    console.log(`   Group A: ${groupA.join(', ')}`);
+    console.log(`   Group B: ${groupB.join(', ')}`);
+    console.log(`   ➡️ This run's group: ${currentGroup.join(', ')}`);
+    
+    // Update state-based sources with only the current group's states
     const stateBasedSources = ['legiscan', 'pluralPolicy', 'courtListener'];
     
     await db.update(legislationSources)
-      .set({ stateFilter: activeStates })
+      .set({ stateFilter: currentGroup })
       .where(inArray(legislationSources.id, stateBasedSources));
     
-    console.log(`📍 Synced ${activeStates.length} active states to legislation sources: ${activeStates.join(', ')}`);
+    console.log(`📍 Synced ${currentGroup.length} states (Group ${groupName}) to legislation sources`);
+    
+    return groupName;
   }
 
   /**
@@ -1046,7 +1084,8 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     console.log('\n🌙 [ingestNow] Starting legislative ingest...');
     
     // Sync legislation source state filters with active states before ingesting
-    await this.syncStateFiltersWithActiveStates();
+    // Returns the group name (A or B) that was selected for this run
+    const stateGroup = await this.syncStateFiltersWithActiveStates();
     
     const { runNightlyIngest } = await import('./legislation/ingestService');
     const result = await runNightlyIngest();
@@ -1060,21 +1099,25 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
       };
     }
     
-    // Record a monitoring run for the status UI
-    const { getActiveStateIds } = await import('./states/getActiveStates');
-    const activeStates = await getActiveStateIds();
+    // Get the states that were actually checked (from the current group's state filter)
+    const [legiscanSource] = await db.select({ stateFilter: legislationSources.stateFilter })
+      .from(legislationSources)
+      .where(inArray(legislationSources.id, ['legiscan']));
+    const statesChecked = legiscanSource?.stateFilter ?? [];
     
+    // Record a monitoring run for the status UI, including the state group for auditability
     await db.insert(monitoringRuns).values({
-      statesChecked: activeStates,
+      statesChecked,
+      stateGroup, // Record which group was used for this run
       billsFound: result.totalItemsFetched,
       relevantBills: result.newItemsStored,
       templatesQueued: 0,
       status: result.errors.length === 0 ? 'success' : 'partial',
       errorMessage: result.errors.length > 0 ? result.errors.join('; ') : undefined,
-      summaryReport: `Ingest: ${result.sourcesProcessed} sources, ${result.totalItemsFetched} items fetched, ${result.newItemsStored} new, ${result.duplicatesSkipped} duplicates`,
+      summaryReport: `Ingest (Group ${stateGroup}): ${result.sourcesProcessed} sources, ${result.totalItemsFetched} items fetched, ${result.newItemsStored} new, ${result.duplicatesSkipped} duplicates`,
     });
     
-    console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources`);
+    console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources (Group ${stateGroup})`);
     
     return {
       sources,
