@@ -10,7 +10,7 @@ import { storage } from './storage';
 import { notifyUsersOfTemplateUpdate } from './templateNotifications';
 import { db } from './db';
 import { monitoringRuns, legislationSources } from '@shared/schema';
-import { eq, inArray } from 'drizzle-orm';
+import { inArray } from 'drizzle-orm';
 import type { InsertLegislativeMonitoring, InsertCaseLawMonitoring, InsertTemplateReviewQueue, InsertApplicationComplianceRule } from '@shared/schema';
 
 export class LegislativeMonitoringService {
@@ -1015,6 +1015,12 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     clearStateCache();
     
     const activeStates = await getActiveStateIds();
+    
+    // Guard against empty state list to avoid clearing filters
+    if (activeStates.length === 0) {
+      console.warn('⚠️ No active states found - skipping legislation source filter update');
+      return;
+    }
     
     // Update state-based sources with all active states
     const stateBasedSources = ['legiscan', 'pluralPolicy', 'courtListener'];
