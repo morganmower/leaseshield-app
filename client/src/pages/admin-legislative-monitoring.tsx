@@ -213,6 +213,42 @@ export default function AdminLegislativeMonitoring() {
     },
   });
 
+  const getActionRecommendation = (bill: LegislativeBill) => {
+    const hasAffectedTemplates = bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0;
+    
+    if (bill.relevanceLevel === 'high' && hasAffectedTemplates) {
+      return { 
+        label: 'Review Required', 
+        className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+        description: 'High priority with affected templates - review for template updates'
+      };
+    } else if (bill.relevanceLevel === 'high') {
+      return { 
+        label: 'Review Required', 
+        className: 'bg-amber-100 text-amber-800 dark:bg-amber-900 dark:text-amber-200',
+        description: 'High priority - review manually'
+      };
+    } else if (bill.relevanceLevel === 'medium') {
+      return { 
+        label: 'Monitor', 
+        className: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+        description: 'Keep an eye on this - may become relevant'
+      };
+    } else {
+      return { 
+        label: 'Safe to Dismiss', 
+        className: 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400',
+        description: 'Low impact - can be dismissed'
+      };
+    }
+  };
+
+  const priorityCounts = {
+    high: pendingBills.filter(b => b.relevanceLevel === 'high').length,
+    medium: pendingBills.filter(b => b.relevanceLevel === 'medium').length,
+    low: pendingBills.filter(b => b.relevanceLevel === 'low' || b.relevanceLevel === 'dismissed').length,
+  };
+
   const getRelevanceBadge = (level: string) => {
     const config = {
       high: { variant: 'destructive' as const, label: 'High Priority' },
@@ -410,6 +446,40 @@ export default function AdminLegislativeMonitoring() {
           </TabsContent>
 
           <TabsContent value="pending-bills" className="space-y-4">
+            {pendingBills.length > 0 && (
+              <Card className="mb-4">
+                <CardContent className="py-4">
+                  <div className="flex flex-wrap items-center gap-4">
+                    <span className="text-sm font-medium text-foreground">Quick Summary:</span>
+                    {priorityCounts.high > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-red-500" />
+                        <span className="text-sm">
+                          <span className="font-semibold">{priorityCounts.high}</span> need review
+                        </span>
+                      </div>
+                    )}
+                    {priorityCounts.medium > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-amber-500" />
+                        <span className="text-sm">
+                          <span className="font-semibold">{priorityCounts.medium}</span> to monitor
+                        </span>
+                      </div>
+                    )}
+                    {priorityCounts.low > 0 && (
+                      <div className="flex items-center gap-2">
+                        <div className="w-3 h-3 rounded-full bg-gray-400" />
+                        <span className="text-sm">
+                          <span className="font-semibold">{priorityCounts.low}</span> can dismiss
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {pendingBills.length === 0 ? (
               <Card>
                 <CardContent className="flex flex-col items-center justify-center py-12">
@@ -420,7 +490,9 @@ export default function AdminLegislativeMonitoring() {
                 </CardContent>
               </Card>
             ) : (
-              pendingBills.map((bill) => (
+              pendingBills.map((bill) => {
+                const recommendation = getActionRecommendation(bill);
+                return (
                 <Card key={bill.id} data-testid={`card-bill-${bill.id}`}>
                   <CardHeader>
                     <div className="flex items-start justify-between gap-4">
@@ -429,6 +501,9 @@ export default function AdminLegislativeMonitoring() {
                           <CardTitle className="text-lg" data-testid={`text-bill-number-${bill.id}`}>
                             {bill.billNumber}
                           </CardTitle>
+                          <Badge className={recommendation.className} data-testid={`badge-action-${bill.id}`}>
+                            {recommendation.label}
+                          </Badge>
                           {getRelevanceBadge(bill.relevanceLevel)}
                           <Badge variant="outline">{bill.stateId}</Badge>
                           {bill.dataSource && (
@@ -539,7 +614,8 @@ export default function AdminLegislativeMonitoring() {
                     </div>
                   </CardContent>
                 </Card>
-              ))
+              );
+              })
             )}
           </TabsContent>
 
