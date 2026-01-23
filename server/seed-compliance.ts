@@ -1034,6 +1034,143 @@ const comprehensiveComplianceCards = [
     sortOrder: 5,
   },
 
+  // NEW MEXICO Compliance Cards
+  {
+    stateId: "NM",
+    title: "Required Lease Disclosures",
+    summary: "New Mexico landlords must provide specific disclosures under the Owner Resident Relations Act",
+    category: "disclosures",
+    content: {
+      sections: [
+        {
+          title: "Lead-Based Paint Disclosure",
+          content: "Required for properties built before 1978 per federal law. Must provide EPA pamphlet.",
+        },
+        {
+          title: "Owner/Agent Identity Disclosure",
+          content: "NMSA 47-8-19 requires disclosure of owner's name, address, and any authorized agent for service of process.",
+        },
+        {
+          title: "Move-In Condition Statement",
+          content: "Landlord must provide a written statement of the condition of the premises at move-in.",
+        },
+        {
+          title: "Utility Rate Disclosure",
+          content: "If utilities are shared or included, landlord must disclose how charges are calculated.",
+        },
+      ],
+    },
+    sortOrder: 1,
+  },
+  {
+    stateId: "NM",
+    title: "Security Deposit Rules",
+    summary: "New Mexico Owner Resident Relations Act governs deposit limits and return timelines",
+    category: "deposits",
+    content: {
+      sections: [
+        {
+          title: "Deposit Limit",
+          content: "Security deposit may not exceed one month's rent for leases under one year. No statutory limit for longer leases.",
+        },
+        {
+          title: "30-Day Return Requirement",
+          content: "NMSA 47-8-18 requires return of security deposit within 30 days of lease termination.",
+        },
+        {
+          title: "Itemized Statement Required",
+          content: "Must provide written itemized statement of any deductions from the security deposit.",
+        },
+        {
+          title: "Forfeiture for Non-Compliance",
+          content: "Failure to return deposit or provide itemization within 30 days may result in forfeiture of right to deductions.",
+        },
+      ],
+    },
+    sortOrder: 2,
+  },
+  {
+    stateId: "NM",
+    title: "Eviction Notice Requirements",
+    summary: "New Mexico Owner Resident Relations Act specifies notice periods and procedures",
+    category: "evictions",
+    content: {
+      sections: [
+        {
+          title: "3-Day Notice (Non-Payment)",
+          content: "NMSA 47-8-33: For unpaid rent, serve 3-day notice to pay or quit before filing eviction.",
+        },
+        {
+          title: "7-Day Notice (Lease Violations)",
+          content: "NMSA 47-8-33: For curable lease violations, provide 7-day notice to cure or vacate.",
+        },
+        {
+          title: "30-Day Notice (Month-to-Month)",
+          content: "NMSA 47-8-37: To terminate month-to-month tenancy, provide 30-day written notice.",
+        },
+        {
+          title: "Court Filing Required",
+          content: "Self-help evictions prohibited. Must file forcible entry and detainer lawsuit in court.",
+        },
+      ],
+    },
+    sortOrder: 3,
+  },
+  {
+    stateId: "NM",
+    title: "Fair Housing Protections",
+    summary: "New Mexico Human Rights Act provides fair housing protections",
+    category: "fair_housing",
+    content: {
+      sections: [
+        {
+          title: "Protected Classes",
+          content: "New Mexico prohibits discrimination based on race, religion, color, national origin, ancestry, sex, sexual orientation, gender identity, spousal affiliation, and physical or mental disability.",
+        },
+        {
+          title: "Source of Income Protection",
+          content: "New Mexico does not have statewide source of income protections, but some municipalities like Albuquerque and Santa Fe do.",
+        },
+        {
+          title: "Disability Accommodations",
+          content: "Landlords must make reasonable accommodations for tenants with disabilities and allow reasonable modifications.",
+        },
+        {
+          title: "Familial Status Protection",
+          content: "Cannot discriminate against families with children under 18, except in qualified senior housing.",
+        },
+      ],
+    },
+    sortOrder: 4,
+  },
+  {
+    stateId: "NM",
+    title: "Rent Increase Rules",
+    summary: "New Mexico has no statewide rent control but requires proper notice for increases",
+    category: "rent_increases",
+    content: {
+      sections: [
+        {
+          title: "No Statewide Rent Control",
+          content: "New Mexico does not have rent control laws—landlords can set rent at market rates.",
+        },
+        {
+          title: "30-Day Notice Required",
+          content: "For month-to-month tenancies, rent increases require 30-day advance written notice.",
+        },
+        {
+          title: "Lease Term Increases",
+          content: "Cannot increase rent during fixed lease term unless lease specifically allows it.",
+        },
+        {
+          title: "Retaliatory Increase Prohibited",
+          content: "NMSA 47-8-39: Cannot increase rent in retaliation for tenant exercising legal rights.",
+        },
+      ],
+    },
+    sortOrder: 5,
+  },
+
   // ENTRY NOTICE REQUIREMENTS - All States
   {
     stateId: "UT",

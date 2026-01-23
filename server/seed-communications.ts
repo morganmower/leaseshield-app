@@ -21,6 +21,7 @@ const STATE_STATUTE_REFS: Record<string, string> = {
   AZ: "Arizona Revised Statutes",
   FL: "Florida Statutes",
   IL: "Illinois Compiled Statutes",
+  NM: "New Mexico Statutes Annotated",
 };
 
 function getTemplates(stateCode: string, stateName: string) {

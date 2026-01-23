@@ -72,6 +72,7 @@ const US_STATES = [
   { value: "NV", label: "Nevada" },
   { value: "AZ", label: "Arizona" },
   { value: "FL", label: "Florida" },
+  { value: "NM", label: "New Mexico" },
 ];
 
 export default function RentalApplications() {

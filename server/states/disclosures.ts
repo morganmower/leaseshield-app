@@ -221,6 +221,24 @@ export const STATE_DISCLOSURE_REGISTRY: Record<string, DisclosureBuilder> = {
     H3("25.9 Chicago RLTO (If Applicable)"),
     P("If the property is located in Chicago, additional tenant protections apply under the Chicago Residential Landlord and Tenant Ordinance, including required interest on security deposits, specific move-in/move-out procedures, and additional disclosure requirements."),
   ],
+  NM: () => [
+    H3("25.1 New Mexico Owner Resident Relations Act"),
+    P("This Lease is governed by the New Mexico Owner Resident Relations Act (NMSA 47-8-1 et seq.), which establishes the rights and obligations of landlords and tenants in residential rental agreements."),
+    H3("25.2 Fair Housing Compliance"),
+    P("In accordance with the New Mexico Human Rights Act (NMSA 28-1-1 et seq.), discrimination is prohibited based on race, religion, color, national origin, ancestry, sex, sexual orientation, gender identity, spousal affiliation, or physical or mental disability."),
+    H3("25.3 Owner/Agent Disclosure"),
+    P("Per NMSA 47-8-19, the Landlord discloses the name and address of the owner and any person authorized to manage the premises or receive service of process on behalf of the owner."),
+    H3("25.4 Security Deposit (NMSA 47-8-18)"),
+    P("For leases under one year, security deposit may not exceed one month's rent. Landlord shall return the deposit within 30 days of lease termination with an itemized statement of any deductions. Failure to comply may result in forfeiture of right to claim deductions."),
+    H3("25.5 Lead-Based Paint Disclosure"),
+    P("For properties built before 1978, Landlord discloses all known lead-based paint hazards."),
+    H3("25.6 Entry Notice"),
+    P("Landlord shall provide at least 24 hours' notice before entering the Premises except in emergencies."),
+    H3("25.7 Retaliatory Conduct Prohibited"),
+    P("Per NMSA 47-8-39, Landlord shall not retaliate against Tenant for exercising legal rights, including filing complaints with governmental agencies or organizing tenant associations."),
+    H3("25.8 Habitability Requirements"),
+    P("Per NMSA 47-8-20, Landlord shall maintain the dwelling in a habitable condition, including functioning plumbing, heating, electrical, and weatherproofing as required by law."),
+  ],
 };
 
 function getDefaultDisclosures(): Paragraph[] {
