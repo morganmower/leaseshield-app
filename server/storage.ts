@@ -1440,10 +1440,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLastSuccessfulMonitoringRun(): Promise<MonitoringRun | undefined> {
+    // Accept 'success', 'completed', or 'partial' as successful runs
+    // 'partial' means the run completed but had some non-fatal errors (e.g., rate limiting)
     const [run] = await db
       .select()
       .from(monitoringRuns)
-      .where(eq(monitoringRuns.status, 'success'))
+      .where(inArray(monitoringRuns.status, ['success', 'completed', 'partial']))
       .orderBy(desc(monitoringRuns.createdAt))
       .limit(1);
     return run;
@@ -1459,7 +1461,7 @@ export class DatabaseStorage implements IStorage {
       .where(
         and(
           gte(monitoringRuns.createdAt, startOfMonth),
-          eq(monitoringRuns.status, 'success')
+          inArray(monitoringRuns.status, ['success', 'completed', 'partial'])
         )
       )
       .limit(1);
