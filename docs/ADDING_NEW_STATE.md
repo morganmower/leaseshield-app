@@ -9,8 +9,13 @@ Adding a new state requires:
 2. Legal template content
 3. Compliance card content
 4. Communication template content
-5. Legal updates content
-6. Verification and testing
+5. State disclosures for document generation
+6. Decoder notes initialization
+7. Legal updates content (optional)
+8. Running seed scripts
+9. Verification and testing
+10. **Updating state counts in documentation and frontend**
+11. Manual testing
 
 ## Prerequisites
 
@@ -271,7 +276,43 @@ STATE SETUP VERIFICATION REPORT
     Templates: 12 | Compliance: 8 | Communications: 5 | Legal Updates: 2
 ```
 
-## Step 10: Test in Application
+## Step 10: Update State Counts and Documentation
+
+After adding a new state, update all locations that reference the total number of supported states:
+
+### Files to Update
+
+| File | Location | What to Update |
+|------|----------|----------------|
+| `replit.md` | Line ~4 (Overview section) | Update "supports X states" count and state list |
+| `replit.md` | Line ~74 (State-specific content) | Update "All X states have comprehensive disclosures" |
+| `README.md` | Line ~185 (Roadmap Phase 1) | Update "Core templates for X states" |
+| `progress.md` | Line ~93 (Template Features) | Update "State-specific versions (X states)" |
+| `progress.md` | Line ~489 (Notes section) | Update "All X states have templates" |
+| `docs/document-download-tests.md` | Lines ~196-199 | Update regression test checklist state counts |
+| `client/src/pages/landing.tsx` | Line ~37 (STATES array) | Add new state name to the array |
+| `client/src/pages/rental-applications.tsx` | US_STATES array | Add new state code and name |
+| `server/seed.ts` | statesData array | Add new state entry |
+| `server/seed-communications.ts` | STATE_STATUTE_REFS | Add state code and statute reference |
+| `server/states/disclosures.ts` | STATE_DISCLOSURE_REGISTRY | Add state disclosures for document generation |
+
+### Quick Update Commands
+
+After adding all state content, use these search commands to find hardcoded state counts:
+
+```bash
+# Find hardcoded "X states" references
+grep -rn "15 states\|16 states\|17 states" --include="*.md" --include="*.tsx" --include="*.ts"
+
+# Find state arrays that may need updating
+grep -rn "const STATES\|US_STATES\|statesData" --include="*.tsx" --include="*.ts"
+```
+
+### Template Count Note
+
+The template count on the landing page is dynamic (fetched from `/api/stats/template-count`), but the fallback value in `client/src/pages/landing.tsx` should be updated if significantly different from the actual count after seeding.
+
+## Step 11: Test in Application
 
 1. Log in to the application
 2. Set the new state as your preferred state
@@ -284,19 +325,37 @@ STATE SETUP VERIFICATION REPORT
 
 Use this checklist before considering the state complete:
 
+### Data & Content
 - [ ] State added to `seed.ts` and database
-- [ ] All required template types added
-- [ ] All required compliance cards added
-- [ ] All required communication templates added
+- [ ] All required template types added to `seed-comprehensive.ts`
+- [ ] All required compliance cards added to `seed-compliance.ts`
+- [ ] State statute reference added to `seed-communications.ts`
+- [ ] State disclosures added to `server/states/disclosures.ts`
 - [ ] Legal updates added (if applicable)
-- [ ] State disclosures added (if applicable)
 - [ ] Seeds executed successfully
-- [ ] Verification script passes (`verifyStateSetup.ts`)
+
+### Decoder Notes
 - [ ] **Decoder Notes initialized** (`initStateNotes.ts <STATE>`)
 - [ ] **Required decoder topics approved** (fair_chance_housing, individualized_assessment, local_overrides_present)
 - [ ] **Decoder notes verification passes** (`verifyStateNotes.ts <STATE>`)
+
+### Frontend Updates
+- [ ] State added to STATES array in `client/src/pages/landing.tsx`
+- [ ] State added to US_STATES in `client/src/pages/rental-applications.tsx`
+- [ ] Template count fallback updated in `landing.tsx` (if significantly different)
+
+### Documentation Updates (State Counts)
+- [ ] `replit.md` Overview - update state count and list
+- [ ] `replit.md` State-specific content - update "All X states"
+- [ ] `README.md` Roadmap Phase 1 - update state count
+- [ ] `progress.md` Template Features - update state count
+- [ ] `progress.md` Notes section - update state count
+- [ ] `docs/document-download-tests.md` - update regression test counts
+
+### Verification
+- [ ] Verification script passes (`verifyStateSetup.ts <STATE>`)
 - [ ] Manual testing completed (including decoder smoke test)
-- [ ] replit.md updated with new state
+- [ ] Landing page shows correct state count
 
 ## Troubleshooting
 
