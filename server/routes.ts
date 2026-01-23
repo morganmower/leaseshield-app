@@ -2211,14 +2211,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       let updates;
       
       if (stateId === 'NATIONAL') {
-        // Get legal updates from all 4 monitored states
-        const utUpdates = await storage.getLegalUpdatesByState('UT');
-        const txUpdates = await storage.getLegalUpdatesByState('TX');
-        const ndUpdates = await storage.getLegalUpdatesByState('ND');
-        const sdUpdates = await storage.getLegalUpdatesByState('SD');
-        updates = [...utUpdates, ...txUpdates, ...ndUpdates, ...sdUpdates];
+        // Get all legal updates including federal
+        updates = await storage.getAllLegalUpdates();
       } else {
-        updates = await storage.getLegalUpdatesByState(stateId as string);
+        // Get state-specific updates AND federal (US) updates - they apply to all states
+        const stateUpdates = await storage.getLegalUpdatesByState(stateId as string);
+        const federalUpdates = await storage.getLegalUpdatesByState('US');
+        updates = [...stateUpdates, ...federalUpdates];
       }
       
       // Also fetch recent legislative monitoring records (high/medium relevance) for this state(s)
