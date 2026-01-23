@@ -71,7 +71,7 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
   - **PDF** (Puppeteer): Used for delivery, legal filings, and court submissions. HTML-to-PDF ensures pixel-perfect rendering.
   - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
   - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
-  - **State-specific content**: All 15 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
+  - **State-specific content**: All 16 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
 - **Legislative Monitoring**: Safe two-job architecture with approval gates:
   - **Data Sources (8 total)**: LegiScan API, Plural Policy API, Utah GLEN API, Federal Register API, eCFR API, Congress.gov API, HUD ONAP/PIH poller, CourtListener API
   - **Safe Workflow**:

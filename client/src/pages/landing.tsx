@@ -37,7 +37,7 @@ import { landingCopy } from "@/content/landingCopy";
 const STATES = [
   "Utah", "Texas", "North Dakota", "South Dakota", "North Carolina",
   "Ohio", "Michigan", "Idaho", "Wyoming", "California",
-  "Virginia", "Nevada", "Arizona", "Florida", "Illinois"
+  "Virginia", "Nevada", "Arizona", "Florida", "Illinois", "New Mexico"
 ] as const;
 
 const fadeInUp = {
@@ -161,7 +161,7 @@ export default function Landing() {
     queryKey: ['/api/stats/template-count'],
   });
 
-  const templateCount = templateStats?.count || 26;
+  const templateCount = templateStats?.count || 247;
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
