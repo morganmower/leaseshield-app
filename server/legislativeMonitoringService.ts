@@ -1118,7 +1118,7 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     });
     
     // Auto-publish high-relevance bills to Legal Updates for landlord visibility
-    const autoPublishedCount = await this.autoPublishHighRelevanceBills();
+    const autoPublishedCount = await this.autoPublishAllBills();
     
     console.log(`✅ [ingestNow] Complete: ${result.newItemsStored} new items from ${result.sourcesProcessed} sources (Group ${stateGroup}), ${autoPublishedCount} auto-published to Legal Updates`);
     
@@ -1134,18 +1134,14 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
    * Auto-publish high-relevance bills to the Legal Updates table
    * so landlords can see them on the Legal Updates page.
    */
-  private async autoPublishHighRelevanceBills(): Promise<number> {
+  private async autoPublishAllBills(): Promise<number> {
     const { legalUpdates, legislativeMonitoring } = await import('@shared/schema');
     
-    // Find high-relevance bills that haven't been published as legal updates yet
+    // Find ALL bills that haven't been published as legal updates yet
+    // All legislation is visible to landlords for transparency
     const unpublishedBills = await db.select()
       .from(legislativeMonitoring)
-      .where(
-        and(
-          inArray(legislativeMonitoring.relevanceLevel, ['high', 'medium']),
-          eq(legislativeMonitoring.isReviewed, false)
-        )
-      );
+      .where(eq(legislativeMonitoring.isReviewed, false));
     
     let publishedCount = 0;
     
@@ -1191,7 +1187,7 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     }
     
     if (publishedCount > 0) {
-      console.log(`📢 Auto-published ${publishedCount} high-relevance bills to Legal Updates`);
+      console.log(`📢 Auto-published ${publishedCount} bills to Legal Updates for landlord visibility`);
     }
     
     return publishedCount;

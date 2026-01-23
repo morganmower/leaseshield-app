@@ -53,6 +53,16 @@ interface CaseLaw {
   createdAt: string;
 }
 
+interface DraftedChanges {
+  draftedClause: string;
+  clauseLocation: string;
+  beforeText: string;
+  afterText: string;
+  changeType: 'add_clause' | 'modify_clause' | 'add_disclosure' | 'update_notice_period' | 'other';
+  changeSummary: string;
+  legalReference: string;
+}
+
 interface TemplateReview {
   id: string;
   templateId: string;
@@ -221,14 +231,58 @@ export default function AdminLegislativeMonitoring() {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
       toast({
-        title: 'Bill Approved',
-        description: data.message || 'Template updates have been queued.',
+        title: 'AI Drafts Created',
+        description: data.message || 'Template drafts have been created. Review them in the Template Drafts tab.',
       });
     },
     onError: () => {
       toast({
         title: 'Error',
-        description: 'Failed to approve bill',
+        description: 'Failed to create drafts',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  // Query for pending template drafts
+  const { data: templateDrafts } = useQuery<TemplateReview[]>({
+    queryKey: ['/api/admin/template-review-queue', 'pending'],
+    queryFn: async () => {
+      const response = await fetch('/api/admin/template-review-queue?status=pending', {
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to fetch template drafts');
+      return response.json();
+    },
+  });
+
+  const pendingDrafts = (templateDrafts || []).filter(d => d.status === 'pending');
+
+  // Parse drafted changes from JSON
+  const parseDraftedChanges = (recommendedChanges: string): DraftedChanges | null => {
+    try {
+      return JSON.parse(recommendedChanges);
+    } catch {
+      return null;
+    }
+  };
+
+  // One-click approve mutation
+  const quickApproveMutation = useMutation({
+    mutationFn: async (reviewId: string) => {
+      return await apiRequest('PATCH', `/api/admin/template-review-queue/${reviewId}/quick-approve`, {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
+      toast({
+        title: 'Template Updated',
+        description: data.message || 'Template has been updated and users notified.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to apply template update',
         variant: 'destructive',
       });
     },
@@ -381,6 +435,9 @@ export default function AdminLegislativeMonitoring() {
             </TabsTrigger>
             <TabsTrigger value="pending-bills" data-testid="tab-pending-bills">
               Pending Bills ({pendingBills.length})
+            </TabsTrigger>
+            <TabsTrigger value="template-drafts" data-testid="tab-template-drafts">
+              Template Drafts ({pendingDrafts.length})
             </TabsTrigger>
             <TabsTrigger value="case-law" data-testid="tab-case-law">
               Case Law ({caseLaws.length})
@@ -656,6 +713,124 @@ export default function AdminLegislativeMonitoring() {
                 </Card>
               );
               })
+            )}
+          </TabsContent>
+
+          <TabsContent value="template-drafts" className="space-y-4">
+            {pendingDrafts.length === 0 ? (
+              <Card>
+                <CardContent className="flex flex-col items-center justify-center py-12">
+                  <CheckCircle className="h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground" data-testid="text-no-drafts">
+                    No template drafts pending approval
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Approve bills with affected templates to generate AI drafts
+                  </p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="space-y-4">
+                <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                  <CardContent className="py-4">
+                    <p className="text-sm text-foreground">
+                      <strong>One-Click Approval:</strong> AI has drafted clause changes for these templates. Review the draft and click "Apply Draft" to update the template and notify landlords.
+                    </p>
+                  </CardContent>
+                </Card>
+                {pendingDrafts.map((draft) => {
+                  const changes = parseDraftedChanges(draft.recommendedChanges);
+                  return (
+                    <Card key={draft.id} data-testid={`card-draft-${draft.id}`}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="space-y-1 flex-1">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <CardTitle className="text-lg">
+                                {draft.template?.title || 'Unknown Template'}
+                              </CardTitle>
+                              <Badge variant="outline">{draft.template?.stateId}</Badge>
+                              {changes?.changeType && (
+                                <Badge variant="secondary">
+                                  {changes.changeType === 'add_clause' ? 'Add Clause' :
+                                   changes.changeType === 'modify_clause' ? 'Modify Clause' :
+                                   changes.changeType === 'add_disclosure' ? 'Add Disclosure' :
+                                   changes.changeType === 'update_notice_period' ? 'Update Notice' :
+                                   'Other Change'}
+                                </Badge>
+                              )}
+                            </div>
+                            <CardDescription>
+                              {draft.bill ? `${draft.bill.billNumber}: ${draft.bill.title}` : draft.reason}
+                            </CardDescription>
+                          </div>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        {changes ? (
+                          <>
+                            <div className="bg-muted/50 rounded-lg p-4">
+                              <h4 className="font-semibold text-sm mb-2">Summary</h4>
+                              <p className="text-sm text-muted-foreground">{changes.changeSummary}</p>
+                              {changes.legalReference && (
+                                <p className="text-xs text-muted-foreground mt-2">
+                                  Reference: {changes.legalReference}
+                                </p>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <h4 className="font-semibold text-sm mb-2">Drafted Clause</h4>
+                              <p className="text-xs text-muted-foreground mb-2">
+                                Location: {changes.clauseLocation}
+                              </p>
+                              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4">
+                                <pre className="text-sm whitespace-pre-wrap font-mono">
+                                  {changes.draftedClause}
+                                </pre>
+                              </div>
+                            </div>
+
+                            {changes.beforeText && (
+                              <div>
+                                <h4 className="font-semibold text-sm mb-2">Before / After</h4>
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="bg-red-50 dark:bg-red-950/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
+                                    <p className="text-xs font-medium mb-1 text-red-800 dark:text-red-200">Before</p>
+                                    <p className="text-sm">{changes.beforeText}</p>
+                                  </div>
+                                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                                    <p className="text-xs font-medium mb-1 text-green-800 dark:text-green-200">After</p>
+                                    <p className="text-sm">{changes.afterText}</p>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="bg-muted/50 rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground">
+                              {draft.recommendedChanges || 'No drafted changes available'}
+                            </p>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                          <Button
+                            variant="default"
+                            onClick={() => quickApproveMutation.mutate(draft.id)}
+                            disabled={quickApproveMutation.isPending}
+                            data-testid={`button-apply-draft-${draft.id}`}
+                          >
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Apply Draft
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
             )}
           </TabsContent>
 

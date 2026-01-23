@@ -498,6 +498,109 @@ Be conservative - only set affectsApplications: true if the bill CLEARLY creates
       };
     }
   }
+
+  /**
+   * Generate specific draft clause/language changes for a template based on a bill.
+   * Returns before/after text for admin review and one-click approval.
+   */
+  async generateDraftClauseChanges(
+    templateTitle: string,
+    templateDescription: string,
+    templateType: string,
+    stateId: string,
+    billNumber: string,
+    billTitle: string,
+    billDescription: string,
+    aiAnalysis: string
+  ): Promise<{
+    draftedClause: string;
+    clauseLocation: string;
+    beforeText: string;
+    afterText: string;
+    changeType: 'add_clause' | 'modify_clause' | 'add_disclosure' | 'update_notice_period' | 'other';
+    changeSummary: string;
+    legalReference: string;
+  }> {
+    try {
+      const prompt = `You are a legal document specialist drafting specific clause language for landlord-tenant documents.
+
+Based on this legislative change, generate the EXACT new clause language that should be added or modified in the template.
+
+BILL INFORMATION:
+Bill Number: ${billNumber}
+Title: ${billTitle}
+Description: ${billDescription}
+AI Analysis: ${aiAnalysis}
+
+TEMPLATE TO UPDATE:
+Title: ${templateTitle}
+Type: ${templateType}
+State: ${stateId}
+Description: ${templateDescription}
+
+Generate:
+1. The EXACT new clause text (ready to insert into a legal document)
+2. Where in the document this clause should go
+3. If modifying existing language, show before/after
+4. What type of change this is
+5. A brief summary for the admin to review
+6. The statutory reference (e.g., "Utah Code § 57-22-5")
+
+Respond in JSON format:
+{
+  "draftedClause": "The complete clause text to add, written in proper legal document style. Be specific and comprehensive.",
+  "clauseLocation": "Section name or placement guidance (e.g., 'Section 25: Required Disclosures' or 'Add as new Section 12')",
+  "beforeText": "If modifying existing language, the original text. Otherwise empty string.",
+  "afterText": "If modifying existing language, the new text. Otherwise same as draftedClause.",
+  "changeType": "add_clause | modify_clause | add_disclosure | update_notice_period | other",
+  "changeSummary": "One sentence summary for admin: what this change does and why it's required",
+  "legalReference": "Statutory citation (e.g., 'Utah Code § 57-22-5(1)(b)')"
+}`;
+
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4o',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a legal document specialist who drafts precise clause language for landlord-tenant documents. Always write in formal legal style appropriate for lease agreements and disclosures.',
+          },
+          {
+            role: 'user',
+            content: prompt,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.2, // Low temperature for precise legal language
+      });
+
+      const response = completion.choices[0].message.content;
+      if (!response) {
+        throw new Error('No response from OpenAI');
+      }
+
+      const result = JSON.parse(response);
+      return {
+        draftedClause: result.draftedClause || 'Unable to generate draft clause',
+        clauseLocation: result.clauseLocation || 'Review document for appropriate placement',
+        beforeText: result.beforeText || '',
+        afterText: result.afterText || result.draftedClause || '',
+        changeType: result.changeType || 'other',
+        changeSummary: result.changeSummary || 'Review required',
+        legalReference: result.legalReference || '',
+      };
+    } catch (error) {
+      console.error('Error generating draft clause:', error);
+      return {
+        draftedClause: 'Unable to auto-generate clause. Manual drafting required.',
+        clauseLocation: 'Review document for appropriate placement',
+        beforeText: '',
+        afterText: '',
+        changeType: 'other',
+        changeSummary: 'AI drafting failed - manual review required',
+        legalReference: '',
+      };
+    }
+  }
 }
 
 export const billAnalysisService = new BillAnalysisService();

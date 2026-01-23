@@ -3055,6 +3055,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin - One-click approve AI-drafted template update
+  app.patch("/api/admin/template-review-queue/:id/quick-approve", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { id } = req.params;
+      const userId = getUserId(req);
+
+      const review = await storage.getTemplateReviewById(id);
+      if (!review) {
+        return res.status(404).json({ message: "Review not found" });
+      }
+
+      // Parse the AI-drafted changes from recommendedChanges
+      let draftedChanges = {
+        draftedClause: '',
+        clauseLocation: '',
+        changeType: 'other',
+        changeSummary: '',
+        legalReference: '',
+      };
+
+      if (review.recommendedChanges) {
+        try {
+          draftedChanges = JSON.parse(review.recommendedChanges);
+        } catch {
+          // Not JSON, use as plain text
+          draftedChanges.draftedClause = review.recommendedChanges;
+          draftedChanges.changeSummary = 'Manual update based on legislative change';
+        }
+      }
+
+      // Get the template
+      const template = await storage.getTemplate(review.templateId);
+      if (!template) {
+        return res.status(404).json({ message: "Template not found" });
+      }
+
+      // Generate version notes from the draft
+      const versionNotes = draftedChanges.changeSummary || 'Legislative update applied';
+      const lastUpdateReason = draftedChanges.legalReference 
+        ? `Legislative update: ${draftedChanges.legalReference}`
+        : 'Legislative compliance update';
+
+      // Publish the template update with the drafted changes
+      const { template: updatedTemplate, version } = await storage.publishTemplateUpdate({
+        templateId: review.templateId,
+        reviewId: id,
+        pdfUrl: template.pdfUrl, // Keep existing PDF - would need to regenerate separately
+        fillableFormData: template.fillableFormData,
+        versionNotes,
+        lastUpdateReason,
+        publishedBy: userId,
+      });
+
+      // Update the review queue entry
+      await storage.updateTemplateReviewQueue(id, {
+        status: 'approved' as any,
+        approvedAt: new Date(),
+        approvalNotes: `Quick-approved AI draft: ${draftedChanges.changeSummary}`,
+        approvedChanges: draftedChanges.draftedClause,
+      });
+
+      // Notify users about the template update
+      const notificationsSent = await notifyUsersOfTemplateUpdate(updatedTemplate, version);
+
+      res.json({ 
+        success: true, 
+        template: updatedTemplate, 
+        version,
+        notificationsSent,
+        message: `Template "${template.title}" updated and ${notificationsSent} users notified`,
+      });
+    } catch (error: any) {
+      console.error("Error quick-approving template update:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
   // Get template version history
   app.get("/api/templates/:id/versions", async (req, res) => {
     try {
@@ -3306,7 +3383,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Approve a bill and queue template updates (admin only)
+  // Approve a bill and queue template updates with AI-drafted changes (admin only)
   app.patch('/api/admin/legislative-bills/:id/approve', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
       const userId = getUserId(req);
@@ -3324,9 +3401,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Bill not found' });
       }
 
-      // Queue template reviews for each affected template
+      // Queue template reviews with AI-drafted clause changes
       let templatesQueued = 0;
+      const draftResults: Array<{ templateId: string; changeSummary: string; draftedClause: string }> = [];
+      
       if (bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0) {
+        const { billAnalysisService } = await import('./billAnalysisService');
+        
         for (const templateId of bill.affectedTemplateIds) {
           // Check if a review already exists for this bill+template
           const existing = await db.query.templateReviewQueue.findFirst({
@@ -3337,16 +3418,73 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           
           if (!existing) {
+            // Get template details for AI drafting
+            const template = await storage.getTemplate(templateId);
+            
+            let draftedChanges: {
+              draftedClause: string;
+              clauseLocation: string;
+              beforeText: string;
+              afterText: string;
+              changeType: string;
+              changeSummary: string;
+              legalReference: string;
+            } = {
+              draftedClause: 'Review bill for potential template changes',
+              clauseLocation: '',
+              beforeText: '',
+              afterText: '',
+              changeType: 'other',
+              changeSummary: 'Manual review required',
+              legalReference: '',
+            };
+            
+            // Generate AI-drafted clause changes
+            if (template) {
+              try {
+                const aiDraft = await billAnalysisService.generateDraftClauseChanges(
+                  template.title,
+                  template.description || '',
+                  template.templateType,
+                  template.stateId,
+                  bill.billNumber || '',
+                  bill.title,
+                  bill.description || '',
+                  bill.aiAnalysis || ''
+                );
+                draftedChanges = {
+                  draftedClause: aiDraft.draftedClause,
+                  clauseLocation: aiDraft.clauseLocation,
+                  beforeText: aiDraft.beforeText,
+                  afterText: aiDraft.afterText,
+                  changeType: aiDraft.changeType,
+                  changeSummary: aiDraft.changeSummary,
+                  legalReference: aiDraft.legalReference,
+                };
+              } catch (draftError) {
+                console.error('Error generating draft for template:', templateId, draftError);
+              }
+            }
+            
+            // Store the drafted changes as JSON in recommendedChanges
+            const recommendedChangesJson = JSON.stringify(draftedChanges);
+            
+            const { templateReviewQueue } = await import('@shared/schema');
             await db.insert(templateReviewQueue).values({
               templateId,
               billId: id,
               reason: `Legislative update: ${bill.billNumber} - ${bill.title}`,
-              recommendedChanges: bill.aiAnalysis || 'Review bill for potential template changes',
-              status: 'approved',
-              approvedAt: new Date(),
-              approvalNotes: 'Auto-approved by admin',
+              recommendedChanges: recommendedChangesJson,
+              status: 'pending', // Pending admin approval of draft
+              queuedAt: new Date(),
             });
+            
             templatesQueued++;
+            draftResults.push({
+              templateId,
+              changeSummary: draftedChanges.changeSummary,
+              draftedClause: draftedChanges.draftedClause.substring(0, 200) + '...',
+            });
           }
         }
       }
@@ -3356,13 +3494,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isReviewed: true,
         reviewedBy: userId,
         reviewedAt: new Date(),
-        reviewNotes: `Approved by admin - ${templatesQueued} template updates queued`,
+        reviewNotes: `Approved by admin - ${templatesQueued} template drafts created`,
       });
 
       res.json({ 
         success: true, 
-        message: `Bill approved - ${templatesQueued} template updates queued`,
-        templatesQueued 
+        message: `Bill approved - ${templatesQueued} template drafts created for review`,
+        templatesQueued,
+        drafts: draftResults,
       });
     } catch (error) {
       console.error('Error approving bill:', error);
