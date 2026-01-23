@@ -3279,6 +3279,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dismiss/review a pending bill (admin only)
+  app.patch('/api/admin/legislative-bills/:id/dismiss', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { id } = req.params;
+      const { reviewNotes } = req.body;
+
+      await storage.updateLegislativeMonitoring(id, {
+        isReviewed: true,
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+        reviewNotes: reviewNotes || 'Dismissed by admin - no template updates needed',
+      });
+
+      res.json({ success: true, message: 'Bill dismissed' });
+    } catch (error) {
+      console.error('Error dismissing bill:', error);
+      res.status(500).json({ message: 'Failed to dismiss bill' });
+    }
+  });
+
   // Get all monitored case law (admin only)
   // Get case law for authenticated users (filtered by relevance and state)
   app.get('/api/case-law', isAuthenticated, async (req: any, res) => {

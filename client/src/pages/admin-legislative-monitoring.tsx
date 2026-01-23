@@ -193,6 +193,26 @@ export default function AdminLegislativeMonitoring() {
     },
   });
 
+  const dismissBillMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      return await apiRequest('PATCH', `/api/admin/legislative-bills/${billId}/dismiss`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
+      toast({
+        title: 'Bill Dismissed',
+        description: 'Bill has been marked as reviewed and removed from pending list.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to dismiss bill',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getRelevanceBadge = (level: string) => {
     const config = {
       high: { variant: 'destructive' as const, label: 'High Priority' },
@@ -499,11 +519,23 @@ export default function AdminLegislativeMonitoring() {
                       </div>
                     )}
 
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground pt-2 border-t">
-                      <Clock className="h-4 w-4" />
-                      <span data-testid={`text-bill-date-${bill.id}`}>
-                        Status updated: {bill.statusDate ? safeFormatDate(bill.statusDate, 'MMM d, yyyy') : 'Unknown'}
-                      </span>
+                    <div className="flex items-center justify-between pt-2 border-t">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Clock className="h-4 w-4" />
+                        <span data-testid={`text-bill-date-${bill.id}`}>
+                          Status updated: {bill.statusDate ? safeFormatDate(bill.statusDate, 'MMM d, yyyy') : 'Unknown'}
+                        </span>
+                      </div>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => dismissBillMutation.mutate(bill.id)}
+                        disabled={dismissBillMutation.isPending}
+                        data-testid={`button-dismiss-${bill.id}`}
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Dismiss
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
