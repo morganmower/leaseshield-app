@@ -3306,6 +3306,70 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Approve a bill and queue template updates (admin only)
+  app.patch('/api/admin/legislative-bills/:id/approve', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const { id } = req.params;
+      
+      // Get the bill to find affected templates
+      const bill = await storage.getLegislativeMonitoringByBillId(id);
+      if (!bill) {
+        return res.status(404).json({ message: 'Bill not found' });
+      }
+
+      // Queue template reviews for each affected template
+      let templatesQueued = 0;
+      if (bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0) {
+        for (const templateId of bill.affectedTemplateIds) {
+          // Check if a review already exists for this bill+template
+          const existing = await db.query.templateReviewQueue.findFirst({
+            where: (table, { eq, and }) => and(
+              eq(table.billId, id),
+              eq(table.templateId, templateId)
+            ),
+          });
+          
+          if (!existing) {
+            await db.insert(templateReviewQueue).values({
+              templateId,
+              billId: id,
+              reason: `Legislative update: ${bill.billNumber} - ${bill.title}`,
+              recommendedChanges: bill.aiAnalysis || 'Review bill for potential template changes',
+              status: 'approved',
+              approvedAt: new Date(),
+              approvalNotes: 'Auto-approved by admin',
+            });
+            templatesQueued++;
+          }
+        }
+      }
+
+      // Mark the bill as reviewed
+      await storage.updateLegislativeMonitoring(id, {
+        isReviewed: true,
+        reviewedBy: userId,
+        reviewedAt: new Date(),
+        reviewNotes: `Approved by admin - ${templatesQueued} template updates queued`,
+      });
+
+      res.json({ 
+        success: true, 
+        message: `Bill approved - ${templatesQueued} template updates queued`,
+        templatesQueued 
+      });
+    } catch (error) {
+      console.error('Error approving bill:', error);
+      res.status(500).json({ message: 'Failed to approve bill' });
+    }
+  });
+
   // Get all monitored case law (admin only)
   // Get case law for authenticated users (filtered by relevance and state)
   app.get('/api/case-law', isAuthenticated, async (req: any, res) => {

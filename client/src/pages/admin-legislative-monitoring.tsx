@@ -213,6 +213,27 @@ export default function AdminLegislativeMonitoring() {
     },
   });
 
+  const approveBillMutation = useMutation({
+    mutationFn: async (billId: string) => {
+      return await apiRequest('PATCH', `/api/admin/legislative-bills/${billId}/approve`, {});
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/legislative-bills'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
+      toast({
+        title: 'Bill Approved',
+        description: data.message || 'Template updates have been queued.',
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to approve bill',
+        variant: 'destructive',
+      });
+    },
+  });
+
   const getActionRecommendation = (bill: LegislativeBill) => {
     const hasAffectedTemplates = bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0;
     
@@ -594,23 +615,42 @@ export default function AdminLegislativeMonitoring() {
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between pt-2 border-t">
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Clock className="h-4 w-4" />
-                        <span data-testid={`text-bill-date-${bill.id}`}>
-                          Status updated: {bill.statusDate ? safeFormatDate(bill.statusDate, 'MMM d, yyyy') : 'Unknown'}
-                        </span>
+                    <div className="bg-muted/50 rounded-md p-3 mt-2">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        <strong>What to do:</strong> {recommendation.description}
+                      </p>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <Clock className="h-3 w-3" />
+                          <span data-testid={`text-bill-date-${bill.id}`}>
+                            Updated: {bill.statusDate ? safeFormatDate(bill.statusDate, 'MMM d, yyyy') : 'Unknown'}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0 && (
+                            <Button
+                              variant="default"
+                              size="sm"
+                              onClick={() => approveBillMutation.mutate(bill.id)}
+                              disabled={approveBillMutation.isPending}
+                              data-testid={`button-approve-${bill.id}`}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Approve Updates
+                            </Button>
+                          )}
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => dismissBillMutation.mutate(bill.id)}
+                            disabled={dismissBillMutation.isPending}
+                            data-testid={`button-dismiss-${bill.id}`}
+                          >
+                            <XCircle className="h-4 w-4 mr-1" />
+                            Dismiss
+                          </Button>
+                        </div>
                       </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => dismissBillMutation.mutate(bill.id)}
-                        disabled={dismissBillMutation.isPending}
-                        data-testid={`button-dismiss-${bill.id}`}
-                      >
-                        <XCircle className="h-4 w-4 mr-1" />
-                        Dismiss
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
