@@ -252,6 +252,9 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground">{update.title}</h3>
+                                {selectedState === "NATIONAL" && (
+                                  <StateBadge stateId={update.stateId} />
+                                )}
                                 {(update as any).isNewest && (
                                   <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white" data-testid={`badge-new-${update.id}`}>
                                     New
@@ -339,8 +342,11 @@ export default function LegalUpdatesPage() {
                         >
                           <div className="flex items-start justify-between gap-4">
                             <div className="flex-1">
-                              <div className="flex items-start gap-2 mb-1">
+                              <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
+                                {selectedState === "NATIONAL" && caseItem.stateId && (
+                                  <StateBadge stateId={caseItem.stateId} />
+                                )}
                                 {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
                               </div>
                               <p className="text-sm text-muted-foreground">{caseItem.citation}</p>
@@ -412,8 +418,11 @@ export default function LegalUpdatesPage() {
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
-                          <div className="flex items-start gap-2 mb-1">
+                          <div className="flex items-start gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
+                            {selectedState === "NATIONAL" && caseItem.stateId && (
+                              <StateBadge stateId={caseItem.stateId} />
+                            )}
                             {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
                           </div>
                           <p className="text-sm text-muted-foreground">{caseItem.citation}</p>

@@ -20,6 +20,10 @@ const STATE_NAMES: Record<string, string> = {
   NV: "Nevada",
   AZ: "Arizona",
   FL: "Florida",
+  IL: "Illinois",
+  NM: "New Mexico",
+  NATIONAL: "Federal",
+  FEDERAL: "Federal",
 };
 
 export function StateBadge({ stateId, className }: StateBadgeProps) {

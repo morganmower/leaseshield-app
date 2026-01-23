@@ -294,6 +294,7 @@ These files contain hardcoded state maps. **If you don't update these, template 
 | `server/aiContentService.ts` | `STATE_NAMES` | State code → state name |
 | `server/pluralPolicyService.ts` | `STATE_JURISDICTION_MAP` | State code → jurisdiction ID |
 | `server/legislation/sources/adapters/pluralPolicyAdapter.ts` | `STATE_JURISDICTION_MAP` | State code → jurisdiction ID (format: `ocd-jurisdiction/country:us/state:XX/government`) |
+| `client/src/components/state-badge.tsx` | `STATE_NAMES` | State code → state name (for UI display) |
 
 **Example additions:**
 ```typescript
@@ -375,6 +376,7 @@ Use this checklist before considering the state complete:
 - [ ] **STATE_NAMES map updated** in `server/aiContentService.ts`
 - [ ] **STATE_JURISDICTION_MAP updated** in `server/pluralPolicyService.ts`
 - [ ] **STATE_JURISDICTION_MAP updated** in `server/legislation/sources/adapters/pluralPolicyAdapter.ts`
+- [ ] **STATE_NAMES map updated** in `client/src/components/state-badge.tsx`
 
 ### Decoder Notes
 - [ ] **Decoder Notes initialized** (`initStateNotes.ts <STATE>`)
