@@ -46,6 +46,8 @@ const STATE_JURISDICTION_MAP: Record<string, string> = {
   NV: 'ocd-jurisdiction/country:us/state:nv/government',
   AZ: 'ocd-jurisdiction/country:us/state:az/government',
   FL: 'ocd-jurisdiction/country:us/state:fl/government',
+  IL: 'ocd-jurisdiction/country:us/state:il/government',
+  NM: 'ocd-jurisdiction/country:us/state:nm/government',
 };
 
 function extractStateFromJurisdiction(jurisdictionId: string): string | undefined {

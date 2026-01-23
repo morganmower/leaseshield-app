@@ -44,6 +44,7 @@ const STATE_NAMES: Record<string, string> = {
   AZ: 'Arizona',
   FL: 'Florida',
   IL: 'Illinois',
+  NM: 'New Mexico',
 };
 
 const DEPOSIT_RETURN_DAYS: Record<string, string> = {
@@ -62,6 +63,7 @@ const DEPOSIT_RETURN_DAYS: Record<string, string> = {
   AZ: '14',
   FL: '15-60',
   IL: '30-45',
+  NM: '30',
 };
 
 function escapeHtml(unsafe: string): string {

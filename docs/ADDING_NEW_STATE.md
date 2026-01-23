@@ -282,6 +282,33 @@ After adding a new state, update all locations that reference the total number o
 
 ### Files to Update
 
+#### ⚠️ CRITICAL: Document Generator Files (Downloads will FAIL without these!)
+
+These files contain hardcoded state maps. **If you don't update these, template downloads will fail for the new state.**
+
+| File | Constant(s) | What to Add |
+|------|-------------|-------------|
+| `server/utils/leaseAgreementGenerator.ts` | `STATE_NAMES`, `DEPOSIT_RETURN_DAYS` | State code → state name, deposit return days |
+| `server/utils/blankApplicationGenerator.ts` | `STATE_NAMES` | State code → state name |
+| `server/utils/moveOutChecklistGenerator.ts` | `STATE_NAMES` | State code → state name |
+| `server/aiContentService.ts` | `STATE_NAMES` | State code → state name |
+| `server/pluralPolicyService.ts` | `STATE_JURISDICTION_MAP` | State code → jurisdiction ID |
+| `server/legislation/sources/adapters/pluralPolicyAdapter.ts` | `STATE_JURISDICTION_MAP` | State code → jurisdiction ID (format: `ocd-jurisdiction/country:us/state:XX/government`) |
+
+**Example additions:**
+```typescript
+// In leaseAgreementGenerator.ts STATE_NAMES:
+NM: 'New Mexico',
+
+// In leaseAgreementGenerator.ts DEPOSIT_RETURN_DAYS:
+NM: '30',
+
+// In pluralPolicyAdapter.ts STATE_JURISDICTION_MAP:
+NM: 'ocd-jurisdiction/country:us/state:nm/government',
+```
+
+#### Documentation & Frontend Files
+
 | File | Location | What to Update |
 |------|----------|----------------|
 | `replit.md` | Line ~4 (Overview section) | Update "supports X states" count and state list |
@@ -291,6 +318,9 @@ After adding a new state, update all locations that reference the total number o
 | `progress.md` | Line ~489 (Notes section) | Update "All X states have templates" |
 | `docs/document-download-tests.md` | Lines ~196-199 | Update regression test checklist state counts |
 | `client/src/pages/landing.tsx` | Line ~37 (STATES array) | Add new state name to the array |
+| `client/src/pages/landing.tsx` | Line ~2310 (Footer States list) | Add new state name to footer list |
+| `client/src/pages/disclaimers.tsx` | Line ~144 | Update state count in legal disclaimer |
+| `client/src/pages/help-center.tsx` | Lines ~57, ~61 | Update state count and template count in FAQ |
 | `client/src/pages/rental-applications.tsx` | US_STATES array | Add new state code and name |
 | `server/seed.ts` | statesData array | Add new state entry |
 | `server/seed-communications.ts` | STATE_STATUTE_REFS | Add state code and statute reference |
@@ -298,14 +328,17 @@ After adding a new state, update all locations that reference the total number o
 
 ### Quick Update Commands
 
-After adding all state content, use these search commands to find hardcoded state counts:
+After adding all state content, use these search commands to find hardcoded state counts and state maps:
 
 ```bash
-# Find hardcoded "X states" references
+# Find hardcoded "X states" references (update with current count)
 grep -rn "15 states\|16 states\|17 states" --include="*.md" --include="*.tsx" --include="*.ts"
 
 # Find state arrays that may need updating
 grep -rn "const STATES\|US_STATES\|statesData" --include="*.tsx" --include="*.ts"
+
+# CRITICAL: Find document generator STATE_NAMES maps (MUST update for downloads to work)
+grep -rn "STATE_NAMES.*Record\|DEPOSIT_RETURN_DAYS\|STATE_JURISDICTION_MAP" server/utils/ server/legislation/
 ```
 
 ### Template Count Note
@@ -334,6 +367,15 @@ Use this checklist before considering the state complete:
 - [ ] Legal updates added (if applicable)
 - [ ] Seeds executed successfully
 
+### ⚠️ CRITICAL: Document Generator & Service Updates (Downloads break without these!)
+- [ ] **STATE_NAMES map updated** in `server/utils/leaseAgreementGenerator.ts`
+- [ ] **DEPOSIT_RETURN_DAYS map updated** in `server/utils/leaseAgreementGenerator.ts`
+- [ ] **STATE_NAMES map updated** in `server/utils/blankApplicationGenerator.ts`
+- [ ] **STATE_NAMES map updated** in `server/utils/moveOutChecklistGenerator.ts`
+- [ ] **STATE_NAMES map updated** in `server/aiContentService.ts`
+- [ ] **STATE_JURISDICTION_MAP updated** in `server/pluralPolicyService.ts`
+- [ ] **STATE_JURISDICTION_MAP updated** in `server/legislation/sources/adapters/pluralPolicyAdapter.ts`
+
 ### Decoder Notes
 - [ ] **Decoder Notes initialized** (`initStateNotes.ts <STATE>`)
 - [ ] **Required decoder topics approved** (fair_chance_housing, individualized_assessment, local_overrides_present)
@@ -341,6 +383,8 @@ Use this checklist before considering the state complete:
 
 ### Frontend Updates
 - [ ] State added to STATES array in `client/src/pages/landing.tsx`
+- [ ] State added to footer States list in `client/src/pages/landing.tsx`
+- [ ] State count updated in `client/src/pages/disclaimers.tsx`
 - [ ] State added to US_STATES in `client/src/pages/rental-applications.tsx`
 - [ ] Template count fallback updated in `landing.tsx` (if significantly different)
 

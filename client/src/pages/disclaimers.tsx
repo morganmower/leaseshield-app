@@ -141,8 +141,8 @@ export default function Disclaimers() {
                   and property management vary <strong>significantly by state, county, and municipality</strong>.
                 </p>
                 <p>
-                  While LeaseShield App provides state-specific templates and guidance for Utah, Texas, North Dakota, 
-                  and South Dakota, you are responsible for:
+                  While LeaseShield App provides state-specific templates and guidance for our 16 supported states 
+                  (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL, IL, NM), you are responsible for:
                 </p>
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>Verifying that information is current and accurate for your jurisdiction</li>

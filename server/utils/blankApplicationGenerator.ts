@@ -40,6 +40,8 @@ const STATE_NAMES: Record<string, string> = {
   NV: 'Nevada',
   AZ: 'Arizona',
   FL: 'Florida',
+  IL: 'Illinois',
+  NM: 'New Mexico',
 };
 
 function escapeHtml(unsafe: string): string {
