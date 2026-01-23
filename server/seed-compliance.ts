@@ -1577,6 +1577,33 @@ const comprehensiveComplianceCards = [
     },
     sortOrder: 6,
   },
+  {
+    stateId: "NM",
+    title: "Entry Notice Requirements",
+    summary: "New Mexico requires landlords to provide notice before entering rental units",
+    category: "entry_notice",
+    content: {
+      sections: [
+        {
+          title: "24-Hour Notice Standard",
+          content: "Under NMSA 47-8-24, landlords should provide at least 24 hours' notice before entry for non-emergency purposes.",
+        },
+        {
+          title: "Reasonable Hours",
+          content: "Entry should occur during reasonable hours, typically daytime business hours, unless tenant agrees otherwise.",
+        },
+        {
+          title: "Permitted Entry Purposes",
+          content: "Entry allowed for inspections, repairs, showing the unit to prospective tenants, and checking on tenant welfare.",
+        },
+        {
+          title: "Emergency Entry",
+          content: "Landlord may enter without notice in genuine emergencies such as fire, flood, or to protect health and safety.",
+        },
+      ],
+    },
+    sortOrder: 6,
+  },
 ];
 
 async function seedComplianceCards() {
