@@ -64,12 +64,24 @@ export class CourtListenerService {
   private apiKey: string;
   private baseUrl = 'https://www.courtlistener.com/api/rest/v4';
   private stateCourtMap: { [key: string]: string[] } = {
-    // State to CourtListener court IDs mapping
-    UT: ['court-of-appeals-of-utah', 'supreme-court-of-utah', 'court-of-appeals-of-the-united-states-tenth-circuit'],
-    TX: ['court-of-appeals-of-texas', 'supreme-court-of-texas', 'court-of-appeals-of-the-united-states-fifth-circuit'],
-    ND: ['court-of-appeals-of-north-dakota', 'supreme-court-of-north-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    SD: ['court-of-appeals-of-south-dakota', 'supreme-court-of-south-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    NC: ['court-of-appeals-of-north-carolina', 'supreme-court-of-north-carolina', 'court-of-appeals-of-the-united-states-fourth-circuit'],
+    // State to CourtListener court IDs mapping - all 16 supported states
+    // Format: state supreme court, state appeals court, federal circuit court
+    AZ: ['supreme-court-of-arizona', 'court-of-appeals-of-arizona', 'court-of-appeals-of-the-united-states-ninth-circuit'],
+    CA: ['supreme-court-of-california', 'court-of-appeals-of-california', 'court-of-appeals-of-the-united-states-ninth-circuit'],
+    FL: ['supreme-court-of-florida', 'district-court-of-appeal-of-florida', 'court-of-appeals-of-the-united-states-eleventh-circuit'],
+    ID: ['supreme-court-of-idaho', 'court-of-appeals-of-idaho', 'court-of-appeals-of-the-united-states-ninth-circuit'],
+    IL: ['supreme-court-of-illinois', 'appellate-court-of-illinois', 'court-of-appeals-of-the-united-states-seventh-circuit'],
+    MI: ['supreme-court-of-michigan', 'court-of-appeals-of-michigan', 'court-of-appeals-of-the-united-states-sixth-circuit'],
+    NC: ['supreme-court-of-north-carolina', 'court-of-appeals-of-north-carolina', 'court-of-appeals-of-the-united-states-fourth-circuit'],
+    ND: ['supreme-court-of-north-dakota', 'court-of-appeals-of-north-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
+    NM: ['supreme-court-of-new-mexico', 'court-of-appeals-of-new-mexico', 'court-of-appeals-of-the-united-states-tenth-circuit'],
+    NV: ['supreme-court-of-nevada', 'court-of-appeals-of-nevada', 'court-of-appeals-of-the-united-states-ninth-circuit'],
+    OH: ['supreme-court-of-ohio', 'court-of-appeals-of-ohio', 'court-of-appeals-of-the-united-states-sixth-circuit'],
+    SD: ['supreme-court-of-south-dakota', 'court-of-appeals-of-south-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
+    TX: ['supreme-court-of-texas', 'court-of-appeals-of-texas', 'court-of-appeals-of-the-united-states-fifth-circuit'],
+    UT: ['supreme-court-of-utah', 'court-of-appeals-of-utah', 'court-of-appeals-of-the-united-states-tenth-circuit'],
+    VA: ['supreme-court-of-virginia', 'court-of-appeals-of-virginia', 'court-of-appeals-of-the-united-states-fourth-circuit'],
+    WY: ['supreme-court-of-wyoming', 'court-of-appeals-of-the-united-states-tenth-circuit'],
   };
 
   constructor() {
@@ -81,31 +93,60 @@ export class CourtListenerService {
 
   /**
    * Search for case law related to landlord-tenant law
+   * @param stateId - The state to search for (e.g., 'UT', 'TX')
+   * @param keywords - Optional custom keywords (defaults to landlord-tenant terms)
+   * @param daysBack - How many days back to search (default 60)
    */
-  async searchCases(stateId: string, keywords: string[] = []): Promise<CourtListenerSearchResponse | null> {
+  async searchCases(stateId: string, keywords: string[] = [], daysBack: number = 60): Promise<CourtListenerSearchResponse | null> {
+    if (!this.apiKey) {
+      console.warn(`⚠️ COURTLISTENER_API_KEY not set, skipping search for ${stateId}`);
+      return null;
+    }
+
     try {
       // Default landlord-tenant keywords for v4 API
       const searchTerms = keywords.length > 0 ? keywords : [
         'landlord tenant',
         'eviction',
-        'lease',
-        'rental',
+        'lease agreement',
+        'security deposit',
+        'unlawful detainer',
+        'fair housing',
       ];
 
-      // v4 API uses simpler query format - just search terms, no complex syntax
-      const query = searchTerms.join(' OR ');
+      // Calculate date range for recent cases
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysBack);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
 
+      // Get state courts for filtering
+      const stateCourts = this.stateCourtMap[stateId] || [];
+
+      // v4 API search endpoint
       const url = new URL(`${this.baseUrl}/search/`);
+      
+      // Build query with date filter and keywords
+      const query = `(${searchTerms.join(' OR ')}) AND filed_after:${startDateStr} AND filed_before:${endDateStr}`;
       url.searchParams.set('q', query);
+      url.searchParams.set('type', 'o'); // opinions only
       url.searchParams.set('format', 'json');
-      url.searchParams.set('limit', '20');
+      url.searchParams.set('order_by', 'dateFiled desc');
+      url.searchParams.set('limit', '25');
+      
+      // Add court filter if we have courts mapped for this state
+      if (stateCourts.length > 0) {
+        url.searchParams.set('court', stateCourts.join(','));
+      }
 
       const headers: HeadersInit = {
         'Authorization': `Token ${this.apiKey}`,
         'Accept': 'application/json',
       };
 
-      console.log(`🔍 Searching CourtListener for ${stateId} case law with query: "${query}"`);
+      console.log(`🔍 Searching CourtListener for ${stateId} case law (${startDateStr} to ${endDateStr})`);
+      console.log(`   Query: "${query.substring(0, 80)}..."`);
       const response = await fetch(url.toString(), { headers });
 
       if (!response.ok) {
