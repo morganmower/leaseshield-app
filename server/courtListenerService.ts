@@ -63,26 +63,6 @@ interface CourtListenerSearchResponse {
 export class CourtListenerService {
   private apiKey: string;
   private baseUrl = 'https://www.courtlistener.com/api/rest/v4';
-  private stateCourtMap: { [key: string]: string[] } = {
-    // State to CourtListener court IDs mapping - all 16 supported states
-    // Format: state supreme court, state appeals court, federal circuit court
-    AZ: ['supreme-court-of-arizona', 'court-of-appeals-of-arizona', 'court-of-appeals-of-the-united-states-ninth-circuit'],
-    CA: ['supreme-court-of-california', 'court-of-appeals-of-california', 'court-of-appeals-of-the-united-states-ninth-circuit'],
-    FL: ['supreme-court-of-florida', 'district-court-of-appeal-of-florida', 'court-of-appeals-of-the-united-states-eleventh-circuit'],
-    ID: ['supreme-court-of-idaho', 'court-of-appeals-of-idaho', 'court-of-appeals-of-the-united-states-ninth-circuit'],
-    IL: ['supreme-court-of-illinois', 'appellate-court-of-illinois', 'court-of-appeals-of-the-united-states-seventh-circuit'],
-    MI: ['supreme-court-of-michigan', 'court-of-appeals-of-michigan', 'court-of-appeals-of-the-united-states-sixth-circuit'],
-    NC: ['supreme-court-of-north-carolina', 'court-of-appeals-of-north-carolina', 'court-of-appeals-of-the-united-states-fourth-circuit'],
-    ND: ['supreme-court-of-north-dakota', 'court-of-appeals-of-north-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    NM: ['supreme-court-of-new-mexico', 'court-of-appeals-of-new-mexico', 'court-of-appeals-of-the-united-states-tenth-circuit'],
-    NV: ['supreme-court-of-nevada', 'court-of-appeals-of-nevada', 'court-of-appeals-of-the-united-states-ninth-circuit'],
-    OH: ['supreme-court-of-ohio', 'court-of-appeals-of-ohio', 'court-of-appeals-of-the-united-states-sixth-circuit'],
-    SD: ['supreme-court-of-south-dakota', 'court-of-appeals-of-south-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    TX: ['supreme-court-of-texas', 'court-of-appeals-of-texas', 'court-of-appeals-of-the-united-states-fifth-circuit'],
-    UT: ['supreme-court-of-utah', 'court-of-appeals-of-utah', 'court-of-appeals-of-the-united-states-tenth-circuit'],
-    VA: ['supreme-court-of-virginia', 'court-of-appeals-of-virginia', 'court-of-appeals-of-the-united-states-fourth-circuit'],
-    WY: ['supreme-court-of-wyoming', 'court-of-appeals-of-the-united-states-tenth-circuit'],
-  };
 
   constructor() {
     this.apiKey = process.env.COURTLISTENER_API_KEY || '';
@@ -121,24 +101,17 @@ export class CourtListenerService {
       const startDateStr = startDate.toISOString().split('T')[0];
       const endDateStr = endDate.toISOString().split('T')[0];
 
-      // Get state courts for filtering
-      const stateCourts = this.stateCourtMap[stateId] || [];
-
       // v4 API search endpoint
       const url = new URL(`${this.baseUrl}/search/`);
       
-      // Build query with date filter and keywords
-      const query = `(${searchTerms.join(' OR ')}) AND filed_after:${startDateStr} AND filed_before:${endDateStr}`;
+      // Build query with keywords (date filtering is done post-retrieval for reliability)
+      // The API uses field:value syntax for some filters, but OR for keywords
+      const query = searchTerms.join(' OR ');
       url.searchParams.set('q', query);
       url.searchParams.set('type', 'o'); // opinions only
       url.searchParams.set('format', 'json');
       url.searchParams.set('order_by', 'dateFiled desc');
-      url.searchParams.set('limit', '25');
-      
-      // Add court filter if we have courts mapped for this state
-      if (stateCourts.length > 0) {
-        url.searchParams.set('court', stateCourts.join(','));
-      }
+      url.searchParams.set('limit', '50'); // Get more results since we filter by state post-retrieval
 
       const headers: HeadersInit = {
         'Authorization': `Token ${this.apiKey}`,
@@ -166,10 +139,9 @@ export class CourtListenerService {
 
       // Transform v4 response to match our expected format
       const rawResults = data.results || data.data || [];
-      const totalCount = data.count || data.total_count || rawResults.length;
 
       // Convert camelCase API response to snake_case for our schema
-      const results = rawResults.map((item: any) => ({
+      let results = rawResults.map((item: any) => ({
         id: item.cluster_id || item.id,
         url: item.url || `https://www.courtlistener.com${item.absolute_url}`,
         absolute_url: item.absolute_url || '',
@@ -191,18 +163,43 @@ export class CourtListenerService {
         date_last_index: item.date_last_index || '',
       }));
 
+      // Filter by date range (post-retrieval filtering for reliability)
+      results = results.filter((item: CourtListenerCluster) => {
+        if (!item.date_filed) return false;
+        const filed = new Date(item.date_filed);
+        return filed >= startDate && filed <= endDate;
+      });
+
+      // Filter by state - check if court name contains state name or abbreviation
+      const stateNames: { [key: string]: string } = {
+        AZ: 'arizona', CA: 'california', FL: 'florida', ID: 'idaho',
+        IL: 'illinois', MI: 'michigan', NC: 'north carolina', ND: 'north dakota',
+        NM: 'new mexico', NV: 'nevada', OH: 'ohio', SD: 'south dakota',
+        TX: 'texas', UT: 'utah', VA: 'virginia', WY: 'wyoming',
+      };
+      const stateName = stateNames[stateId]?.toLowerCase() || '';
+      const stateAbbrev = stateId.toLowerCase();
+      
+      results = results.filter((item: CourtListenerCluster) => {
+        const courtLower = (item.court || '').toLowerCase();
+        return courtLower.includes(stateName) || 
+               courtLower.includes(` ${stateAbbrev} `) ||
+               courtLower.startsWith(stateAbbrev + ' ') ||
+               courtLower.endsWith(` ${stateAbbrev}`);
+      });
+
       const transformedResponse: CourtListenerSearchResponse = {
         meta: {
-          limit: 20,
+          limit: 50,
           next: data.next || null,
           offset: 0,
           previous: data.previous || null,
-          total_count: totalCount,
+          total_count: results.length,
         },
         results: results,
       };
 
-      console.log(`✅ Found ${totalCount} case law matches for ${stateId}`);
+      console.log(`✅ Found ${results.length} case law matches for ${stateId} (filtered from ${rawResults.length} total)`);
       return transformedResponse;
     } catch (error) {
       console.error('Error searching CourtListener:', error);

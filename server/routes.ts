@@ -3568,6 +3568,53 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Test CourtListener API (admin only) - for debugging
+  app.get('/api/admin/case-law/test', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+
+      if (!user?.isAdmin) {
+        return res.status(403).json({ message: 'Admin access required' });
+      }
+
+      const stateId = (req.query.stateId as string) || 'UT';
+      const daysBack = parseInt(req.query.daysBack as string) || 60;
+
+      const { courtListenerService } = await import('./courtListenerService');
+      
+      console.log(`🧪 Testing CourtListener API for ${stateId} (${daysBack} days back)`);
+      const results = await courtListenerService.searchCases(stateId, [], daysBack);
+
+      if (!results) {
+        return res.json({
+          success: false,
+          message: 'CourtListener API returned no results (check API key)',
+          stateId,
+          daysBack,
+          apiKeySet: !!process.env.COURTLISTENER_API_KEY,
+        });
+      }
+
+      res.json({
+        success: true,
+        stateId,
+        daysBack,
+        totalCount: results.meta.total_count,
+        resultsReturned: results.results.length,
+        cases: results.results.slice(0, 5).map(c => ({
+          id: c.id,
+          caseName: c.case_name,
+          dateFiled: c.date_filed,
+          court: c.court,
+        })),
+      });
+    } catch (error) {
+      console.error('Error testing CourtListener:', error);
+      res.status(500).json({ message: 'Failed to test CourtListener API', error: String(error) });
+    }
+  });
+
   // Approve a template update (admin only)
   app.post('/api/admin/template-review/:id/approve', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
