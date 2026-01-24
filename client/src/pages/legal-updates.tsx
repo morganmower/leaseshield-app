@@ -155,6 +155,36 @@ export default function LegalUpdatesPage() {
     }
   };
 
+  const getSourceBadge = (update: LegalUpdate) => {
+    const category = (update as any).category;
+    const stateId = update.stateId;
+    
+    // Section 8 / HUD specific items
+    if (category === 'section8') {
+      return (
+        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs">
+          Section 8 / HUD
+        </Badge>
+      );
+    }
+    
+    // Federal (non-Section 8)
+    if (stateId === 'US') {
+      return (
+        <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs">
+          Federal
+        </Badge>
+      );
+    }
+    
+    // State-specific
+    if (stateId) {
+      return <StateBadge stateId={stateId} />;
+    }
+    
+    return null;
+  };
+
   const toggleUpdateExpanded = (id: string) => {
     const newExpanded = new Set(expandedUpdates);
     if (newExpanded.has(id)) {
@@ -258,9 +288,7 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground">{update.title}</h3>
-                                {selectedState === "NATIONAL" && (
-                                  <StateBadge stateId={update.stateId} />
-                                )}
+                                {getSourceBadge(update)}
                                 {(update as any).isNewest && (
                                   <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white" data-testid={`badge-new-${update.id}`}>
                                     New
@@ -350,7 +378,7 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                                {selectedState === "NATIONAL" && caseItem.stateId && (
+                                {caseItem.stateId && (
                                   <StateBadge stateId={caseItem.stateId} />
                                 )}
                                 {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
@@ -436,13 +464,8 @@ export default function LegalUpdatesPage() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-foreground line-clamp-2">{update.title}</h3>
-                            {selectedState === "NATIONAL" && update.stateId && (
-                              <StateBadge stateId={update.stateId} />
-                            )}
+                            {getSourceBadge(update)}
                             {getImpactBadge(update.impactLevel)}
-                            <Badge variant="secondary">
-                              Section 8
-                            </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>
                           {update.effectiveDate && (
@@ -517,7 +540,7 @@ export default function LegalUpdatesPage() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                            {selectedState === "NATIONAL" && caseItem.stateId && (
+                            {caseItem.stateId && (
                               <StateBadge stateId={caseItem.stateId} />
                             )}
                             {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
