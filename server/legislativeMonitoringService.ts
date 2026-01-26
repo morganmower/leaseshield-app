@@ -1131,63 +1131,109 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
   }
 
   /**
-   * Auto-publish high-relevance bills to the Legal Updates table
+   * Auto-publish housing-related legislative items from normalized_updates to legal_updates
    * so landlords can see them on the Legal Updates page.
+   * 
+   * Items are auto-published if they have housing-related topics:
+   * - landlord_tenant, eviction, security_deposit, fair_housing (100% relevant)
+   * - nahasda_core, ihbg, tribal_adjacent, hud_general (Section 8/tribal housing)
+   * 
+   * Items tagged 'not_relevant' are skipped entirely.
    */
   private async autoPublishAllBills(): Promise<number> {
-    const { legalUpdates, legislativeMonitoring } = await import('@shared/schema');
+    const { legalUpdates, normalizedUpdates } = await import('@shared/schema');
+    const { isNull, and: andOp, or: orOp, arrayOverlaps, ne, sql: sqlOp } = await import('drizzle-orm');
     
-    // Find ALL bills that haven't been published as legal updates yet
-    // All legislation is visible to landlords for transparency
-    const unpublishedBills = await db.select()
-      .from(legislativeMonitoring)
-      .where(eq(legislativeMonitoring.isReviewed, false));
+    // Housing-related topics that warrant auto-publishing
+    const HOUSING_TOPICS = [
+      'landlord_tenant',
+      'eviction', 
+      'security_deposit',
+      'fair_housing',
+      'nahasda_core',
+      'ihbg',
+      'tribal_adjacent',
+      'hud_general',
+    ];
+    
+    // Find normalized updates that:
+    // 1. Have housing-related topics (not 'not_relevant')
+    // 2. Haven't been published to legal_updates yet (no matching source_bill_id)
+    const unpublishedItems = await db.select()
+      .from(normalizedUpdates)
+      .where(
+        andOp(
+          // Has at least one housing topic
+          sqlOp`${normalizedUpdates.topics} && ARRAY[${sqlOp.join(HOUSING_TOPICS.map(t => sqlOp`${t}`), sqlOp`, `)}]::text[]`,
+        )
+      );
     
     let publishedCount = 0;
+    const stateStats: Record<string, number> = {};
     
-    for (const bill of unpublishedBills) {
-      // Check if already published as a legal update
+    for (const item of unpublishedItems) {
+      // Check if already published as a legal update (using sourceKey as the unique identifier)
       const [existing] = await db.select({ id: legalUpdates.id })
         .from(legalUpdates)
-        .where(eq(legalUpdates.sourceBillId, bill.id))
+        .where(eq(legalUpdates.sourceBillId, item.id))
         .limit(1);
       
       if (existing) continue;
       
-      // Determine category based on bill content/topics
+      // Determine category based on topics
+      const topics = item.topics || [];
       let category = 'general';
-      const titleLower = (bill.title || '').toLowerCase();
-      const descLower = (bill.description || '').toLowerCase();
       
-      if (titleLower.includes('section 8') || titleLower.includes('housing choice voucher') || 
-          titleLower.includes('hcv') || descLower.includes('section 8') || 
-          descLower.includes('housing choice voucher') || titleLower.includes('hud') ||
-          descLower.includes('housing assistance') || descLower.includes('subsidized housing')) {
+      // Priority order for category assignment
+      if (topics.includes('nahasda_core') || topics.includes('ihbg') || topics.includes('tribal_adjacent')) {
+        category = 'tribal';
+      } else if (topics.includes('hud_general')) {
         category = 'section8';
-      } else if (titleLower.includes('eviction') || descLower.includes('eviction')) {
+      } else if (topics.includes('eviction')) {
         category = 'eviction';
-      } else if (titleLower.includes('deposit') || descLower.includes('security deposit')) {
+      } else if (topics.includes('security_deposit')) {
         category = 'deposits';
+      } else if (topics.includes('fair_housing')) {
+        category = 'fair_housing';
+      } else if (topics.includes('landlord_tenant')) {
+        category = 'landlord_tenant';
       }
+      
+      // Also check title/summary for Section 8 keywords as backup
+      const titleLower = (item.title || '').toLowerCase();
+      const summaryLower = (item.summary || '').toLowerCase();
+      if (titleLower.includes('section 8') || titleLower.includes('housing choice voucher') || 
+          titleLower.includes('hcv') || summaryLower.includes('section 8') ||
+          summaryLower.includes('housing assistance') || summaryLower.includes('subsidized housing')) {
+        category = 'section8';
+      }
+      
+      // Determine state from jurisdiction
+      const stateId = item.jurisdictionState || (item.jurisdictionLevel === 'federal' ? 'US' : 'US');
       
       // Create legal update for landlords to see
       await db.insert(legalUpdates).values({
-        stateId: bill.stateId || 'US',
-        title: bill.billNumber ? `${bill.billNumber}: ${bill.title}` : bill.title,
-        summary: bill.description || bill.title,
-        whyItMatters: bill.aiAnalysis || 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
-        impactLevel: bill.relevanceLevel || 'medium',
+        stateId,
+        title: item.title,
+        summary: item.summary || item.title,
+        whyItMatters: item.aiAnalysis || 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
+        impactLevel: item.severity || 'medium',
         category,
-        sourceBillId: bill.id,
-        affectedTemplateIds: bill.affectedTemplateIds || [],
+        sourceBillId: item.id,
+        affectedTemplateIds: item.affectedTemplateIds || [],
         isActive: true,
+        effectiveDate: item.effectiveDate,
       });
       
       publishedCount++;
+      stateStats[stateId] = (stateStats[stateId] || 0) + 1;
     }
     
     if (publishedCount > 0) {
-      console.log(`📢 Auto-published ${publishedCount} bills to Legal Updates for landlord visibility`);
+      console.log(`📢 Auto-published ${publishedCount} items to Legal Updates:`);
+      for (const [state, count] of Object.entries(stateStats).sort((a, b) => a[0].localeCompare(b[0]))) {
+        console.log(`   ${state}: ${count} updates`);
+      }
     }
     
     return publishedCount;
