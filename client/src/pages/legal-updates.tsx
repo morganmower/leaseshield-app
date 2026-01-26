@@ -330,8 +330,9 @@ export default function LegalUpdatesPage() {
                                 </div>
                               </div>
                             ) : (
-                              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground italic">
-                                Detailed analysis is being prepared. Check back soon for a before/after comparison.
+                              <div>
+                                <h4 className="font-semibold text-sm mb-2">Summary</h4>
+                                <p className="text-sm text-muted-foreground">{update.summary || update.title}</p>
                               </div>
                             )}
                             {/* View Updated Templates section */}
