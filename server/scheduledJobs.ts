@@ -1178,20 +1178,63 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
+  // Track last successful ingest date to prevent duplicate runs on same day
+  private lastIngestDate: string | null = null;
+  
   // Run nightly ingest to pull updates from all 8 legislative sources
   // Uses job lock to prevent overlapping runs
+  // Only runs once per day even if app restarts multiple times
   async runNightlyIngestJob(): Promise<void> {
     try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
+      
+      // Skip if already ran today (prevents re-running on app restarts)
+      if (this.lastIngestDate === today) {
+        console.log(`⏭️ Nightly ingest already ran today (${today}) - skipping`);
+        return;
+      }
+      
+      // Check database for last successful run today
+      const { db } = await import('./db');
+      const { monitoringRuns } = await import('@shared/schema');
+      const { gte, desc, or, eq } = await import('drizzle-orm');
+      
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      
+      const [lastRunToday] = await db.select({ id: monitoringRuns.id })
+        .from(monitoringRuns)
+        .where(gte(monitoringRuns.runDate, todayStart))
+        .orderBy(desc(monitoringRuns.runDate))
+        .limit(1);
+      
+      if (lastRunToday) {
+        console.log(`⏭️ Nightly ingest already ran today (${today}) - found in database, skipping`);
+        this.lastIngestDate = today;
+        return;
+      }
+      
       const { withJobLock } = await import('./utils/jobLock');
       const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
       
-      console.log('🌙 Running nightly legislative ingest...');
+      console.log(`🌙 Running nightly legislative ingest for ${today}...`);
       
       const result = await withJobLock('legislative-monitoring', async () => {
         return await legislativeMonitoringService.ingestNow();
       });
       
-      console.log(`✅ Nightly ingest complete: ${result.totalNew} new items from ${Object.keys(result.sources).length} sources`);
+      // Mark today as complete
+      this.lastIngestDate = today;
+      
+      // Log detailed summary
+      console.log(`\n✅ NIGHTLY INGEST COMPLETE (${today})`);
+      console.log(`   Sources processed: ${Object.keys(result.sources).length}`);
+      console.log(`   Items fetched: ${result.totalFetched}`);
+      console.log(`   New items stored: ${result.totalNew}`);
+      if (result.errors.length > 0) {
+        console.log(`   ⚠️ Errors: ${result.errors.join(', ')}`);
+      }
+      console.log('');
     } catch (error: any) {
       if (error?.status === 409) {
         console.log('⏭️ Nightly ingest skipped - another job is running');
