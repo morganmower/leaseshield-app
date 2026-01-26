@@ -111,7 +111,7 @@ export class CourtListenerService {
       url.searchParams.set('type', 'o'); // opinions only
       url.searchParams.set('format', 'json');
       url.searchParams.set('order_by', 'dateFiled desc');
-      url.searchParams.set('limit', '50'); // Get more results since we filter by state post-retrieval
+      // Note: 'limit' parameter is not valid for CourtListener search endpoint
 
       const headers: HeadersInit = {
         'Authorization': `Token ${this.apiKey}`,
