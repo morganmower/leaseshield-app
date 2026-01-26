@@ -124,50 +124,62 @@ class LegiScanAdapter implements LegislationSourceAdapter {
       throw new Error('LegiScan requires states to be provided via params.states (no hardcoded fallback)');
     }
     const states = params.states;
-    const year = new Date().getFullYear();
+    const currentYear = new Date().getFullYear();
+    
+    // Determine years to fetch:
+    // - First run (no since date): fetch 2 years of history
+    // - Subsequent runs: only fetch current year (duplicates will be skipped)
+    const isFirstRun = !params.since;
+    const yearsToFetch = isFirstRun ? [currentYear, currentYear - 1] : [currentYear];
+    
+    if (isFirstRun) {
+      console.log(`📅 First run detected - fetching ${yearsToFetch.length} years of history: ${yearsToFetch.join(', ')}`);
+    }
     
     for (const state of states) {
-      try {
-        const keywords = ['landlord', 'tenant', 'rental', 'eviction', 'lease', 'housing'];
-        const query = keywords.join(' OR ');
-        
-        const url = new URL(this.baseUrl);
-        url.searchParams.set('key', this.apiKey);
-        url.searchParams.set('op', 'getSearch');
-        url.searchParams.set('state', state);
-        url.searchParams.set('query', query);
-        url.searchParams.set('year', year.toString());
+      for (const year of yearsToFetch) {
+        try {
+          const keywords = ['landlord', 'tenant', 'rental', 'eviction', 'lease', 'housing'];
+          const query = keywords.join(' OR ');
+          
+          const url = new URL(this.baseUrl);
+          url.searchParams.set('key', this.apiKey);
+          url.searchParams.set('op', 'getSearch');
+          url.searchParams.set('state', state);
+          url.searchParams.set('query', query);
+          url.searchParams.set('year', year.toString());
 
-        const response = await fetch(url.toString());
-        
-        if (!response.ok) {
-          errors.push(`LegiScan error for ${state}: ${response.status}`);
-          continue;
-        }
+          const response = await fetch(url.toString());
+          
+          if (!response.ok) {
+            errors.push(`LegiScan error for ${state} (${year}): ${response.status}`);
+            continue;
+          }
 
-        const data = await response.json();
-        
-        if (data.status === 'ERROR') {
-          errors.push(`LegiScan error for ${state}: ${JSON.stringify(data)}`);
-          continue;
-        }
+          const data = await response.json();
+          
+          if (data.status === 'ERROR') {
+            errors.push(`LegiScan error for ${state} (${year}): ${JSON.stringify(data)}`);
+            continue;
+          }
 
-        const results = data.searchresult || {};
-        for (const key of Object.keys(results)) {
-          if (key === 'summary') continue;
-          const bill = results[key];
-          if (bill && bill.bill_id) {
-            const normalized = normalizeBill({ ...bill, state });
-            if (!normalized.topics.includes('not_relevant')) {
-              items.push(normalized);
+          const results = data.searchresult || {};
+          for (const key of Object.keys(results)) {
+            if (key === 'summary') continue;
+            const bill = results[key];
+            if (bill && bill.bill_id) {
+              const normalized = normalizeBill({ ...bill, state });
+              if (!normalized.topics.includes('not_relevant')) {
+                items.push(normalized);
+              }
             }
           }
+          
+          console.log(`🔍 LegiScan ${state} (${year}): Found ${Object.keys(results).length - 1} bills`);
+          
+        } catch (error) {
+          errors.push(`LegiScan fetch error for ${state} (${year}): ${error}`);
         }
-        
-        console.log(`🔍 LegiScan ${state}: Found ${Object.keys(results).length - 1} bills`);
-        
-      } catch (error) {
-        errors.push(`LegiScan fetch error for ${state}: ${error}`);
       }
     }
 
