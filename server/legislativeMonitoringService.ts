@@ -1142,13 +1142,14 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
    */
   /**
    * Generate AI before/after analysis for a legal update
-   * Uses rate limiting to avoid API overload
+   * Uses rate limiting with exponential backoff to avoid API overload
    */
   private async generateBeforeAfterAnalysis(
     title: string,
     summary: string,
     stateId: string,
-    category: string
+    category: string,
+    retryCount = 0
   ): Promise<{ beforeText: string; afterText: string; whyItMatters: string; effectiveDate: Date | null }> {
     const OpenAI = (await import('openai')).default;
     const openai = new OpenAI();
@@ -1211,8 +1212,16 @@ Respond in this exact JSON format:
         whyItMatters: parsed.whyItMatters || '',
         effectiveDate,
       };
-    } catch (error) {
-      console.warn(`  ⚠️ AI analysis failed, using defaults:`, error);
+    } catch (error: any) {
+      // Handle rate limiting with exponential backoff
+      if (error?.status === 429 && retryCount < 3) {
+        const backoffSeconds = Math.pow(2, retryCount + 1) * 10; // 20s, 40s, 80s
+        console.log(`  ⏳ Rate limited, waiting ${backoffSeconds}s before retry ${retryCount + 1}/3...`);
+        await new Promise(resolve => setTimeout(resolve, backoffSeconds * 1000));
+        return this.generateBeforeAfterAnalysis(title, summary, stateId, category, retryCount + 1);
+      }
+      
+      console.warn(`  ⚠️ AI analysis failed, using defaults:`, error?.message || error);
       return {
         beforeText: 'Previous regulations applied to this area.',
         afterText: 'New requirements may be in effect. Review the full legislation for details.',
@@ -1302,8 +1311,8 @@ Respond in this exact JSON format:
         category
       );
       
-      // Rate limit: wait 1 second between AI calls to avoid hitting limits
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Rate limit: wait 20 seconds between AI calls to stay well under 3/min limit
+      await new Promise(resolve => setTimeout(resolve, 20000));
       
       // Create legal update for landlords to see (WITH before/after text)
       await db.insert(legalUpdates).values({
