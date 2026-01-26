@@ -1140,6 +1140,88 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
    * 
    * Items tagged 'not_relevant' are skipped entirely.
    */
+  /**
+   * Generate AI before/after analysis for a legal update
+   * Uses rate limiting to avoid API overload
+   */
+  private async generateBeforeAfterAnalysis(
+    title: string,
+    summary: string,
+    stateId: string,
+    category: string
+  ): Promise<{ beforeText: string; afterText: string; whyItMatters: string; effectiveDate: Date | null }> {
+    const OpenAI = (await import('openai')).default;
+    const openai = new OpenAI();
+    
+    const stateName = stateId === 'US' ? 'Federal' : stateId;
+    
+    const prompt = `You are a legal analyst helping landlords understand new housing legislation.
+
+Title: ${title}
+Summary: ${summary || title}
+State: ${stateName}
+Category: ${category}
+
+Generate a brief, landlord-friendly analysis with these 4 parts:
+
+1. BEFORE: What was the law/situation BEFORE this change? (1-2 sentences, start with "Previously..." or "Under the old law...")
+
+2. AFTER: What is the NEW requirement or change? (1-2 sentences, start with "Now..." or "The new law...")
+
+3. WHY_IT_MATTERS: Why should a landlord care about this? What action might they need to take? (1-2 sentences)
+
+4. EFFECTIVE_DATE: Based on the title/summary, estimate when this might take effect. If a bill is being introduced, assume 6-12 months from now. If it mentions a specific date, use that. Format as YYYY-MM-DD. If truly unknown, respond with "unknown".
+
+Respond in this exact JSON format:
+{
+  "beforeText": "...",
+  "afterText": "...",
+  "whyItMatters": "...",
+  "effectiveDate": "YYYY-MM-DD or unknown"
+}`;
+
+    try {
+      const response = await openai.chat.completions.create({
+        model: 'gpt-4o-mini',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.3,
+        max_tokens: 500,
+      });
+
+      const content = response.choices[0]?.message?.content || '';
+      const jsonMatch = content.match(/\{[\s\S]*\}/);
+      
+      if (!jsonMatch) {
+        throw new Error('No JSON found in response');
+      }
+
+      const parsed = JSON.parse(jsonMatch[0]);
+      
+      let effectiveDate: Date | null = null;
+      if (parsed.effectiveDate && parsed.effectiveDate !== 'unknown') {
+        const dateObj = new Date(parsed.effectiveDate);
+        if (!isNaN(dateObj.getTime())) {
+          effectiveDate = dateObj;
+        }
+      }
+
+      return {
+        beforeText: parsed.beforeText || '',
+        afterText: parsed.afterText || '',
+        whyItMatters: parsed.whyItMatters || '',
+        effectiveDate,
+      };
+    } catch (error) {
+      console.warn(`  ⚠️ AI analysis failed, using defaults:`, error);
+      return {
+        beforeText: 'Previous regulations applied to this area.',
+        afterText: 'New requirements may be in effect. Review the full legislation for details.',
+        whyItMatters: 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
+        effectiveDate: null,
+      };
+    }
+  }
+  
   private async autoPublishAllBills(): Promise<number> {
     const { legalUpdates, normalizedUpdates } = await import('@shared/schema');
     const { isNull, and: andOp, or: orOp, arrayOverlaps, ne, sql: sqlOp } = await import('drizzle-orm');
@@ -1211,18 +1293,32 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
       // Determine state from jurisdiction
       const stateId = item.jurisdictionState || (item.jurisdictionLevel === 'federal' ? 'US' : 'US');
       
-      // Create legal update for landlords to see
+      // Generate AI before/after analysis
+      console.log(`   📝 Generating analysis for: ${item.title?.substring(0, 50)}...`);
+      const analysis = await this.generateBeforeAfterAnalysis(
+        item.title || '',
+        item.summary || '',
+        stateId,
+        category
+      );
+      
+      // Rate limit: wait 1 second between AI calls to avoid hitting limits
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Create legal update for landlords to see (WITH before/after text)
       await db.insert(legalUpdates).values({
         stateId,
         title: item.title,
         summary: item.summary || item.title,
-        whyItMatters: item.aiAnalysis || 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
+        beforeText: analysis.beforeText,
+        afterText: analysis.afterText,
+        whyItMatters: analysis.whyItMatters || item.aiAnalysis || 'This legislative update may affect your rental properties.',
         impactLevel: item.severity || 'medium',
         category,
         sourceBillId: item.id,
         affectedTemplateIds: item.affectedTemplateIds || [],
         isActive: true,
-        effectiveDate: item.effectiveDate,
+        effectiveDate: analysis.effectiveDate || item.effectiveDate,
       });
       
       publishedCount++;
