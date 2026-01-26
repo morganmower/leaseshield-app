@@ -1311,8 +1311,8 @@ Respond in this exact JSON format:
         category
       );
       
-      // Rate limit: wait 20 seconds between AI calls to stay well under 3/min limit
-      await new Promise(resolve => setTimeout(resolve, 20000));
+      // Brief pause between AI calls (Replit AI integration has generous limits)
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
       // Create legal update for landlords to see (WITH before/after text)
       await db.insert(legalUpdates).values({
