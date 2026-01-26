@@ -318,16 +318,22 @@ export default function LegalUpdatesPage() {
                               <h4 className="font-semibold text-sm mb-2">Why It Matters</h4>
                               <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
                             </div>
-                            <div className="grid gap-4 md:grid-cols-2">
-                              <div>
-                                <h4 className="font-semibold text-sm mb-2 text-amber-600">Before</h4>
-                                <p className="text-sm text-muted-foreground">{update.beforeText}</p>
+                            {(update.beforeText || update.afterText) ? (
+                              <div className="grid gap-4 md:grid-cols-2">
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-2 text-amber-600">Before</h4>
+                                  <p className="text-sm text-muted-foreground">{update.beforeText || 'See full legislation for details.'}</p>
+                                </div>
+                                <div>
+                                  <h4 className="font-semibold text-sm mb-2 text-green-600">After</h4>
+                                  <p className="text-sm text-muted-foreground">{update.afterText || 'See full legislation for details.'}</p>
+                                </div>
                               </div>
-                              <div>
-                                <h4 className="font-semibold text-sm mb-2 text-green-600">After</h4>
-                                <p className="text-sm text-muted-foreground">{update.afterText}</p>
+                            ) : (
+                              <div className="bg-muted/50 rounded-lg p-3 text-sm text-muted-foreground italic">
+                                Detailed analysis is being prepared. Check back soon for a before/after comparison.
                               </div>
-                            </div>
+                            )}
                             {/* View Updated Templates section */}
                             {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
                               <div className="pt-2">
