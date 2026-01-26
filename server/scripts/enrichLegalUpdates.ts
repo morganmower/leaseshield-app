@@ -132,12 +132,12 @@ async function enrichLegalUpdates() {
       stateStats[update.stateId] = (stateStats[update.stateId] || 0) + 1;
       console.log(' ✓');
 
-      // Rate limit: wait 25s between requests (API limit is 3/min)
-      await new Promise(resolve => setTimeout(resolve, 25000));
+      // Brief pause between AI calls (Replit AI integration has generous limits)
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error: any) {
       if (error?.status === 429) {
-        console.log(' ⏳ rate limited, waiting 30s...');
-        await new Promise(resolve => setTimeout(resolve, 30000));
+        console.log(' ⏳ rate limited, waiting 5s...');
+        await new Promise(resolve => setTimeout(resolve, 5000));
         // Retry this item
         const retryEnrichment = await generateEnrichment(
           update.title,
