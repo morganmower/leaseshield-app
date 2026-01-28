@@ -101,11 +101,23 @@ export default function DenialDecisionAssistant() {
 
   const { data: cities = [], isLoading: citiesLoading } = useQuery<City[]>({
     queryKey: ['/api/denial-decision/cities', selectedStateId],
+    queryFn: async () => {
+      if (!selectedStateId) return [];
+      const res = await apiRequest('GET', `/api/denial-decision/cities?stateId=${selectedStateId}`);
+      return res.json();
+    },
     enabled: !!selectedStateId,
   });
 
   const { data: criteriaByCategory, isLoading: criteriaLoading } = useQuery<CriteriaByCategory>({
     queryKey: ['/api/denial-decision/criteria', selectedStateId, selectedCityId],
+    queryFn: async () => {
+      if (!selectedStateId) return {};
+      const params = new URLSearchParams({ stateId: selectedStateId });
+      if (selectedCityId) params.set('cityId', selectedCityId);
+      const res = await apiRequest('GET', `/api/denial-decision/criteria?${params.toString()}`);
+      return res.json();
+    },
     enabled: !!selectedStateId,
   });
 
