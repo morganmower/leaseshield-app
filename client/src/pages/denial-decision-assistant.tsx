@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { State, City } from "@shared/schema";
+import type { State, City, County } from "@shared/schema";
 import {
   AlertTriangle,
   Lock,
@@ -84,6 +84,7 @@ export default function DenialDecisionAssistant() {
   
   const [selectedStateId, setSelectedStateId] = useState<string | null>(user?.preferredState || null);
   const [selectedCityId, setSelectedCityId] = useState<string | null>(user?.preferredCity || null);
+  const [selectedCountyId, setSelectedCountyId] = useState<string | null>(null);
   const [criteriaPresent, setCriteriaPresent] = useState<Set<string>>(new Set());
   const [decisionOutcome, setDecisionOutcome] = useState<'approve' | 'conditional' | 'deny' | null>(null);
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
@@ -109,12 +110,23 @@ export default function DenialDecisionAssistant() {
     enabled: !!selectedStateId,
   });
 
+  const { data: counties = [], isLoading: countiesLoading } = useQuery<County[]>({
+    queryKey: ['/api/denial-decision/counties', selectedStateId],
+    queryFn: async () => {
+      if (!selectedStateId) return [];
+      const res = await apiRequest('GET', `/api/denial-decision/counties?stateId=${selectedStateId}`);
+      return res.json();
+    },
+    enabled: !!selectedStateId,
+  });
+
   const { data: criteriaByCategory, isLoading: criteriaLoading } = useQuery<CriteriaByCategory>({
-    queryKey: ['/api/denial-decision/criteria', selectedStateId, selectedCityId],
+    queryKey: ['/api/denial-decision/criteria', selectedStateId, selectedCityId, selectedCountyId],
     queryFn: async () => {
       if (!selectedStateId) return {};
       const params = new URLSearchParams({ stateId: selectedStateId });
       if (selectedCityId) params.set('cityId', selectedCityId);
+      if (selectedCountyId) params.set('countyId', selectedCountyId);
       const res = await apiRequest('GET', `/api/denial-decision/criteria?${params.toString()}`);
       return res.json();
     },
@@ -130,6 +142,13 @@ export default function DenialDecisionAssistant() {
     cities.find(c => c.id === selectedCityId), 
     [cities, selectedCityId]
   );
+
+  const selectedCounty = useMemo(() => 
+    counties.find(c => c.id === selectedCountyId), 
+    [counties, selectedCountyId]
+  );
+
+  const hasLocalRules = !!selectedCityId || !!selectedCountyId;
 
   const generateTextMutation = useMutation({
     mutationFn: async () => {
@@ -196,7 +215,12 @@ export default function DenialDecisionAssistant() {
   const handleStateChange = (stateId: string) => {
     setSelectedStateId(stateId);
     setSelectedCityId(null);
+    setSelectedCountyId(null);
     setCriteriaPresent(new Set());
+  };
+
+  const handleCountyChange = (countyId: string | null) => {
+    setSelectedCountyId(countyId);
   };
 
   const handleCityChange = (cityId: string | null) => {
@@ -327,9 +351,14 @@ export default function DenialDecisionAssistant() {
 
   const canProceedToStep2 = !!selectedStateId;
   const canProceedToStep3 = criteriaPresent.size > 0;
-  const jurisdictionLabel = selectedCity 
-    ? `${selectedCity.name}, ${selectedState?.name}` 
-    : selectedState?.name || 'Select Location';
+  
+  const jurisdictionParts: string[] = [];
+  if (selectedCity) jurisdictionParts.push(selectedCity.name);
+  if (selectedCounty) jurisdictionParts.push(selectedCounty.name);
+  if (selectedState) jurisdictionParts.push(selectedState.name);
+  const jurisdictionLabel = jurisdictionParts.length > 0 
+    ? jurisdictionParts.join(', ') 
+    : 'Select Location';
 
   // Extract denial reasons as bullet points for preview
   const denialReasonBullets: string[] = useMemo(() => {
@@ -482,6 +511,51 @@ export default function DenialDecisionAssistant() {
               </div>
             )}
 
+            {selectedStateId && counties.length > 0 && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">
+                  County <span className="text-muted-foreground font-normal">(optional)</span>
+                </label>
+                <Select 
+                  value={selectedCountyId || 'none'} 
+                  onValueChange={(v) => handleCountyChange(v === 'none' ? null : v)}
+                  disabled={countiesLoading}
+                >
+                  <SelectTrigger data-testid="select-county">
+                    <SelectValue placeholder="Select a county (optional)..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No specific county</SelectItem>
+                    {counties.map(county => (
+                      <SelectItem key={county.id} value={county.id}>
+                        {county.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Some counties have their own Fair Chance Housing or Source of Income protections.
+                </p>
+              </div>
+            )}
+
+            {hasLocalRules && (
+              <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
+                <CardContent className="py-3 px-4 flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                      Local Rules Apply
+                    </p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      {selectedCity?.name || selectedCounty?.name} has additional screening restrictions 
+                      that may limit which denial reasons you can use.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="pt-4">
               <Button 
                 onClick={() => setCurrentStep(2)} 
@@ -507,6 +581,23 @@ export default function DenialDecisionAssistant() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
+            {hasLocalRules && (
+              <Card className="border-purple-200 bg-purple-50 dark:border-purple-800 dark:bg-purple-950/30">
+                <CardContent className="py-3 px-4 flex items-start gap-3">
+                  <Shield className="h-5 w-5 text-purple-600 dark:text-purple-400 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                      Local Rules Apply
+                    </p>
+                    <p className="text-xs text-purple-600 dark:text-purple-400 mt-1">
+                      {selectedCity?.name || selectedCounty?.name} has additional screening restrictions.
+                      Items marked with <Lock className="h-3 w-3 inline mx-1" /> cannot be used as denial reasons.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+            
             {criteriaLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
