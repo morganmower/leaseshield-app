@@ -1028,6 +1028,17 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              {/* Quick Decision CTA */}
+              <div className="mt-4 pt-4 border-t">
+                <Link href="/denial-decision">
+                  <Button variant="outline" className="w-full" data-testid="button-credit-decision-cta">
+                    <Scale className="h-4 w-4 mr-2" />
+                    Ready to make a decision? Go to Decision Assistant
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
         </div>
@@ -1274,6 +1285,17 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              {/* Quick Decision CTA */}
+              <div className="mt-4 pt-4 border-t">
+                <Link href="/denial-decision">
+                  <Button variant="outline" className="w-full" data-testid="button-criminal-decision-cta">
+                    <Scale className="h-4 w-4 mr-2" />
+                    Ready to make a decision? Go to Decision Assistant
+                    <ChevronRight className="h-4 w-4 ml-2" />
+                  </Button>
+                </Link>
+              </div>
             </div>
           </Card>
         </div>
