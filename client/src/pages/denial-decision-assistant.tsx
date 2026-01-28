@@ -901,6 +901,9 @@ export default function DenialDecisionAssistant() {
                         <p className="text-xs text-muted-foreground mt-1">
                           Use this if your decision is not final and you want to give the applicant a chance to dispute report information.
                         </p>
+                        <p className="text-xs text-muted-foreground mt-1 italic">
+                          Note: Your decision details above are saved to your audit trail. The Pre-Adverse letter uses tentative language (e.g., "may not meet criteria") for FCRA compliance.
+                        </p>
                       </div>
                     </div>
                   ) : (
