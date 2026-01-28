@@ -899,7 +899,7 @@ export default function DenialDecisionAssistant() {
                           Optional: Download Pre-Adverse Notice
                         </button>
                         <p className="text-xs text-muted-foreground mt-1">
-                          Pre-Adverse gives the applicant a chance to review/dispute the report before your final decision.
+                          Use this if your decision is not final and you want to give the applicant a chance to dispute report information.
                         </p>
                       </div>
                     </div>
