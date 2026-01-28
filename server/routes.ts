@@ -9534,6 +9534,35 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       return res.status(400).json({ message: "stateId is required" });
     }
 
+    // SERVER-SIDE ENFORCEMENT: Check for blocked criteria and reject them
+    const rules = await storage.getDenialCriteriaRulesForJurisdiction(stateId, cityId);
+    const ruleMap = new Map<string, any>();
+    for (const rule of rules) {
+      const existing = ruleMap.get(rule.criteriaId);
+      if (!existing) {
+        ruleMap.set(rule.criteriaId, rule);
+      } else {
+        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0);
+        const newSpecificity = (rule.cityId ? 2 : 0) + (rule.stateId ? 1 : 0);
+        if (newSpecificity > existingSpecificity) {
+          ruleMap.set(rule.criteriaId, rule);
+        }
+      }
+    }
+
+    // Filter out blocked criteria - they cannot be used for denial
+    const blockedCriteriaUsed = criteriaIds.filter((id: string) => {
+      const rule = ruleMap.get(id);
+      return rule?.status === 'blocked';
+    });
+
+    if (blockedCriteriaUsed.length > 0) {
+      return res.status(400).json({ 
+        message: "Cannot use blocked criteria for denial decisions",
+        blockedCriteriaIds: blockedCriteriaUsed
+      });
+    }
+
     const templates = await storage.getDenialSentenceTemplates(criteriaIds, stateId, cityId);
     
     // Pick the most specific template for each criterion (city > state > universal)
@@ -9595,6 +9624,38 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
     // Create a version hash from current rules
     const rules = await storage.getDenialCriteriaRulesForJurisdiction(stateId, cityId);
+    
+    // SERVER-SIDE ENFORCEMENT: Build rule map and check for blocked criteria in denial
+    const ruleMap = new Map<string, any>();
+    for (const rule of rules) {
+      const existing = ruleMap.get(rule.criteriaId);
+      if (!existing) {
+        ruleMap.set(rule.criteriaId, rule);
+      } else {
+        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0);
+        const newSpecificity = (rule.cityId ? 2 : 0) + (rule.stateId ? 1 : 0);
+        if (newSpecificity > existingSpecificity) {
+          ruleMap.set(rule.criteriaId, rule);
+        }
+      }
+    }
+
+    // If outcome is deny, ensure no blocked criteria are in the selected list
+    if (outcome === 'deny' && criteriaSelected && Array.isArray(criteriaSelected)) {
+      const blockedCriteriaUsed = criteriaSelected.filter((id: string) => {
+        const rule = ruleMap.get(id);
+        return rule?.status === 'blocked';
+      });
+
+      if (blockedCriteriaUsed.length > 0) {
+        return res.status(400).json({ 
+          message: "Cannot use blocked criteria for denial decisions",
+          blockedCriteriaIds: blockedCriteriaUsed
+        });
+      }
+    }
+
+    // Create rule version with snapshot of active rules
     const ruleVersion = `v${Date.now()}_${rules.length}rules`;
 
     const auditLog = await storage.createDenialDecisionAuditLog({
