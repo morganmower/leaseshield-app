@@ -9847,22 +9847,46 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     const safeApplicantAddress = escapeHtml(applicantAddress || '');
     
     // Parse denial reasons into bullet points (max 5), with reason hygiene
+    // For pre-adverse: use tentative language ("may", "under consideration", "reflected in the consumer report")
+    // For adverse/final: use specific final language ("did not meet", "presents a risk")
     const reasonLines = denialReasons.split('\n').filter((r: string) => r.trim().length > 0).slice(0, 5);
     const sanitizedReasons = reasonLines.map((reason: string) => {
       let sanitized = escapeHtml(reason.trim());
-      // Reason hygiene: replace vague wording with specific allowed phrasing
-      sanitized = sanitized.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
-      sanitized = sanitized.replace(/poor credit/gi, 'credit history did not meet minimum criteria');
-      sanitized = sanitized.replace(/low credit score/gi, 'credit score below required threshold');
-      sanitized = sanitized.replace(/insufficient credit/gi, 'insufficient credit history to verify');
-      sanitized = sanitized.replace(/too many late payments/gi, 'payment history did not meet criteria');
-      sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing within specified timeframe');
-      sanitized = sanitized.replace(/criminal record/gi, 'criminal history pursuant to individualized assessment');
-      sanitized = sanitized.replace(/arrest record/gi, 'conviction record pursuant to individualized assessment');
-      sanitized = sanitized.replace(/eviction history/gi, 'prior eviction judgment within specified timeframe');
-      sanitized = sanitized.replace(/evicted before/gi, 'prior eviction judgment within specified timeframe');
-      sanitized = sanitized.replace(/not enough income/gi, 'income did not meet required threshold');
-      sanitized = sanitized.replace(/income too low/gi, 'income did not meet required threshold');
+      
+      if (isPreAdverse) {
+        // PRE-ADVERSE: Tentative language - reference the report, not the applicant's character
+        sanitized = sanitized.replace(/bad credit/gi, 'information in the consumer report may not meet our credit criteria');
+        sanitized = sanitized.replace(/poor credit/gi, 'information in the consumer report may not meet our credit criteria');
+        sanitized = sanitized.replace(/low credit score/gi, 'credit score reflected in the consumer report may not meet our threshold');
+        sanitized = sanitized.replace(/insufficient credit/gi, 'credit history reflected in the consumer report may be insufficient to verify');
+        sanitized = sanitized.replace(/too many late payments/gi, 'payment history reflected in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing reflected in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/criminal record/gi, 'criminal history information reflected in the consumer report may present a risk related to resident safety or property');
+        sanitized = sanitized.replace(/arrest record/gi, 'conviction record reflected in the consumer report may not meet our screening criteria');
+        sanitized = sanitized.replace(/eviction history/gi, 'eviction history reflected in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/evicted before/gi, 'eviction record reflected in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/not enough income/gi, 'income information may not meet our required threshold');
+        sanitized = sanitized.replace(/income too low/gi, 'income information may not meet our required threshold');
+        // Generic catch-all for pre-adverse: soften any absolute statements
+        sanitized = sanitized.replace(/did not meet/gi, 'may not meet');
+        sanitized = sanitized.replace(/does not meet/gi, 'may not meet');
+        sanitized = sanitized.replace(/presents a/gi, 'may present a');
+        sanitized = sanitized.replace(/is a/gi, 'may be a');
+      } else {
+        // ADVERSE/FINAL: Specific and final language
+        sanitized = sanitized.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
+        sanitized = sanitized.replace(/poor credit/gi, 'credit history did not meet minimum criteria');
+        sanitized = sanitized.replace(/low credit score/gi, 'credit score below required threshold');
+        sanitized = sanitized.replace(/insufficient credit/gi, 'insufficient credit history to verify');
+        sanitized = sanitized.replace(/too many late payments/gi, 'payment history did not meet criteria');
+        sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing within specified timeframe');
+        sanitized = sanitized.replace(/criminal record/gi, 'criminal history pursuant to individualized assessment presents a documented risk to resident safety or property');
+        sanitized = sanitized.replace(/arrest record/gi, 'conviction record pursuant to individualized assessment');
+        sanitized = sanitized.replace(/eviction history/gi, 'prior eviction judgment within specified timeframe');
+        sanitized = sanitized.replace(/evicted before/gi, 'prior eviction judgment within specified timeframe');
+        sanitized = sanitized.replace(/not enough income/gi, 'income did not meet required threshold');
+        sanitized = sanitized.replace(/income too low/gi, 'income did not meet required threshold');
+      }
       return sanitized;
     });
 
