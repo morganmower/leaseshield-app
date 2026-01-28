@@ -109,6 +109,12 @@ IMPORTANT: Do NOT use generic placeholder text. If you don't have specific infor
       }
     }
 
+    // Normalize actionItems - if it's an array, join with newlines for cleaner display
+    let actionItems = parsed.actionItems || '';
+    if (Array.isArray(actionItems)) {
+      actionItems = actionItems.map((item: string, i: number) => `${i + 1}. ${item}`).join('\n');
+    }
+
     return {
       summary: parsed.summary || summary || title,
       beforeText: parsed.beforeText || '',
@@ -116,7 +122,7 @@ IMPORTANT: Do NOT use generic placeholder text. If you don't have specific infor
       whyItMatters: parsed.whyItMatters || '',
       effectiveDate,
       billStatus: parsed.billStatus || 'unknown',
-      actionItems: parsed.actionItems || '',
+      actionItems,
       expectedTimeline: parsed.expectedTimeline || '',
     };
   } catch (error) {

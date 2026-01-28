@@ -383,7 +383,22 @@ export default function LegalUpdatesPage() {
                                   <ListTodo className="h-4 w-4" />
                                   What You Should Do
                                 </h4>
-                                <p className="text-sm text-muted-foreground">{(update as any).actionItems}</p>
+                                {(() => {
+                                  const items = (update as any).actionItems;
+                                  try {
+                                    const parsed = JSON.parse(items);
+                                    if (Array.isArray(parsed)) {
+                                      return (
+                                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                                          {parsed.map((item: string, idx: number) => (
+                                            <li key={idx}>{item}</li>
+                                          ))}
+                                        </ul>
+                                      );
+                                    }
+                                  } catch {}
+                                  return <p className="text-sm text-muted-foreground">{items}</p>;
+                                })()}
                               </div>
                             )}
 
