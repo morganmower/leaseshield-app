@@ -644,9 +644,13 @@ export default function Dashboard() {
                       </div>
                       <h3 className="font-semibold text-foreground mb-2">{update.title}</h3>
                       <p className="text-sm text-muted-foreground mb-3">{update.summary}</p>
-                      <p className="text-sm font-medium text-foreground">
-                        Why it matters: <span className="font-normal text-muted-foreground">{update.whyItMatters}</span>
-                      </p>
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                        <h4 className="font-semibold text-sm mb-1 text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                          <span className="w-2 h-2 rounded-full bg-blue-500" />
+                          Why It Matters
+                        </h4>
+                        <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
+                      </div>
                     </div>
                     <Button 
                       variant="outline" 
@@ -766,22 +770,34 @@ export default function Dashboard() {
               <p className="text-sm text-muted-foreground">{selectedUpdate?.summary}</p>
             </div>
 
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Why It Matters</h4>
+            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+              <h4 className="font-semibold text-sm mb-2 text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-blue-500" />
+                Why It Matters
+              </h4>
               <p className="text-sm text-muted-foreground">{selectedUpdate?.whyItMatters}</p>
             </div>
 
-            {selectedUpdate?.beforeText && (
-              <div>
-                <h4 className="text-sm font-semibold text-foreground mb-1">Before</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.beforeText}</p>
-              </div>
-            )}
-
-            {selectedUpdate?.afterText && (
-              <div>
-                <h4 className="text-sm font-semibold text-foreground mb-1">After</h4>
-                <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.afterText}</p>
+            {(selectedUpdate?.beforeText || selectedUpdate?.afterText) && (
+              <div className="grid gap-4 md:grid-cols-2">
+                {selectedUpdate?.beforeText && (
+                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                    <h4 className="font-semibold text-sm mb-2 text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-amber-500" />
+                      Before
+                    </h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.beforeText}</p>
+                  </div>
+                )}
+                {selectedUpdate?.afterText && (
+                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                    <h4 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500" />
+                      After
+                    </h4>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.afterText}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>
