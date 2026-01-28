@@ -300,9 +300,34 @@ export default function DenialDecisionAssistant() {
   const handleDownloadLetter = async (letterType: 'pre-adverse' | 'adverse' | 'denial') => {
     if (!generateTextMutation.data?.text) return;
     
-    autoSaveDenialDecision();
-    
     setIsDownloading(true);
+    
+    // First, save the decision and get the audit log ID
+    let currentAuditLogId = savedAuditLogId;
+    if (!decisionSaved) {
+      try {
+        const saveRes = await apiRequest('POST', '/api/denial-decision/save', {
+          stateId: selectedStateId,
+          cityId: selectedCityId || undefined,
+          countyId: selectedCountyId || undefined,
+          outcome: 'deny',
+          criteriaPresent: Array.from(criteriaPresent),
+          criteriaSelected: Array.from(criteriaPresent),
+          generatedText: generateTextMutation.data?.text,
+          noticesProvided: NOTICES_AUTO_INCLUDED.map(n => n.id),
+          applicantName: applicantName || undefined,
+        });
+        const savedData = await saveRes.json();
+        if (savedData?.id) {
+          currentAuditLogId = savedData.id;
+          setSavedAuditLogId(savedData.id);
+        }
+        setDecisionSaved(true);
+      } catch (err) {
+        console.error('Failed to save decision before letter download:', err);
+      }
+    }
+    
     try {
       const res = await apiRequest('POST', '/api/denial-decision/adverse-action-letter', {
         applicantName: applicantName || 'Applicant',
@@ -314,7 +339,7 @@ export default function DenialDecisionAssistant() {
         criteriaIds: Array.from(criteriaPresent),
         isFcra: usedConsumerReport,
         letterType: letterType,
-        auditLogId: savedAuditLogId || undefined,
+        auditLogId: currentAuditLogId || undefined,
       });
       
       if (!res.ok) {
