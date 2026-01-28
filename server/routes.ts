@@ -9847,31 +9847,44 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     const safeApplicantAddress = escapeHtml(applicantAddress || '');
     
     // Parse denial reasons into bullet points (max 5), with reason hygiene
-    // For pre-adverse: use tentative language ("may", "under consideration", "reflected in the consumer report")
+    // For pre-adverse: use tentative language ("may", "under consideration", "information contained in the report")
     // For adverse/final: use specific final language ("did not meet", "presents a risk")
     const reasonLines = denialReasons.split('\n').filter((r: string) => r.trim().length > 0).slice(0, 5);
     const sanitizedReasons = reasonLines.map((reason: string) => {
       let sanitized = escapeHtml(reason.trim());
       
       if (isPreAdverse) {
-        // PRE-ADVERSE: Tentative language - reference the report, not the applicant's character
-        sanitized = sanitized.replace(/bad credit/gi, 'information in the consumer report may not meet our credit criteria');
-        sanitized = sanitized.replace(/poor credit/gi, 'information in the consumer report may not meet our credit criteria');
-        sanitized = sanitized.replace(/low credit score/gi, 'credit score reflected in the consumer report may not meet our threshold');
-        sanitized = sanitized.replace(/insufficient credit/gi, 'credit history reflected in the consumer report may be insufficient to verify');
-        sanitized = sanitized.replace(/too many late payments/gi, 'payment history reflected in the consumer report may not meet our criteria');
-        sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing reflected in the consumer report may not meet our criteria');
-        sanitized = sanitized.replace(/criminal record/gi, 'criminal history information reflected in the consumer report may present a risk related to resident safety or property');
-        sanitized = sanitized.replace(/arrest record/gi, 'conviction record reflected in the consumer report may not meet our screening criteria');
-        sanitized = sanitized.replace(/eviction history/gi, 'eviction history reflected in the consumer report may not meet our criteria');
-        sanitized = sanitized.replace(/evicted before/gi, 'eviction record reflected in the consumer report may not meet our criteria');
-        sanitized = sanitized.replace(/not enough income/gi, 'income information may not meet our required threshold');
-        sanitized = sanitized.replace(/income too low/gi, 'income information may not meet our required threshold');
-        // Generic catch-all for pre-adverse: soften any absolute statements
+        // PRE-ADVERSE: Tentative language - reference the report, not the applicant
+        // HARD GUARDS: Block any final denial language in pre-adverse
+        sanitized = sanitized.replace(/was denied/gi, 'may not meet our criteria');
+        sanitized = sanitized.replace(/has been denied/gi, 'may not meet our criteria');
+        sanitized = sanitized.replace(/we denied/gi, 'we are considering');
+        sanitized = sanitized.replace(/is denied/gi, 'may not meet our criteria');
+        sanitized = sanitized.replace(/application denied/gi, 'application under consideration');
+        
+        // Specific reason transformations to ultra-defensive wording
+        sanitized = sanitized.replace(/bad credit/gi, 'information contained in the consumer report may not meet our credit criteria');
+        sanitized = sanitized.replace(/poor credit/gi, 'information contained in the consumer report may not meet our credit criteria');
+        sanitized = sanitized.replace(/low credit score/gi, 'credit score information in the consumer report may not meet our threshold');
+        sanitized = sanitized.replace(/insufficient credit/gi, 'credit history information in the consumer report may be insufficient to verify');
+        sanitized = sanitized.replace(/too many late payments/gi, 'payment history information in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy information in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/criminal record/gi, 'certain information in the consumer report may relate to housing safety');
+        sanitized = sanitized.replace(/criminal history/gi, 'certain information in the consumer report may relate to housing safety');
+        sanitized = sanitized.replace(/conviction/gi, 'certain information in the consumer report may relate to housing safety');
+        sanitized = sanitized.replace(/arrest record/gi, 'certain information in the consumer report may not meet our screening criteria');
+        sanitized = sanitized.replace(/eviction history/gi, 'eviction information in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/evicted before/gi, 'eviction information in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/prior eviction/gi, 'eviction information in the consumer report may not meet our criteria');
+        sanitized = sanitized.replace(/not enough income/gi, 'income information may not meet our threshold');
+        sanitized = sanitized.replace(/income too low/gi, 'income information may not meet our threshold');
+        
+        // Generic catch-all: soften any remaining absolute statements
         sanitized = sanitized.replace(/did not meet/gi, 'may not meet');
         sanitized = sanitized.replace(/does not meet/gi, 'may not meet');
-        sanitized = sanitized.replace(/presents a/gi, 'may present a');
-        sanitized = sanitized.replace(/is a/gi, 'may be a');
+        sanitized = sanitized.replace(/presents a documented risk/gi, 'may relate to');
+        sanitized = sanitized.replace(/presents a risk/gi, 'may relate to');
+        sanitized = sanitized.replace(/directly relates/gi, 'may relate');
       } else {
         // ADVERSE/FINAL: Specific and final language
         sanitized = sanitized.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
@@ -9987,7 +10000,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           <p>Dear ${safeApplicantName},</p>
           ${isPreAdverse ? `
           <p style="margin-top: 8px;">We are considering <strong>denying your rental application</strong> based, in whole or in part, on information obtained from a consumer reporting agency. This is not a final decision.</p>
-          <p style="margin-top: 8px;"><strong>You have the right to review and dispute</strong> the information in your consumer report before we make a final decision. Please contact the consumer reporting agency listed below within <strong>5 business days</strong> if you believe there are errors in your report.</p>
+          <p style="margin-top: 8px;">If you believe the information in the consumer report is inaccurate or incomplete, you may contact the consumer reporting agency listed below as soon as possible.</p>
           ` : `
           <p style="margin-top: 8px;">We regret to inform you that your rental application has been denied${isFcra ? ' based, in whole or in part, on information obtained from a consumer reporting agency' : ''}.</p>
           `}
@@ -10019,7 +10032,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             <ul>
               <li>You may obtain a <strong>free copy</strong> of your consumer report within 60 days by contacting the agency above.</li>
               <li>You have the right to <strong>dispute</strong> the accuracy or completeness of any information in your report.</li>
-              ${isPreAdverse ? '<li>You have <strong>5 business days</strong> to dispute any inaccurate information before a final decision is made.</li>' : ''}
+              ${isPreAdverse ? '<li>If you believe any information is inaccurate, please contact the consumer reporting agency as soon as possible before a final decision is made.</li>' : ''}
               <li>You may have additional rights under ${jurisdictionLabel || 'state'} law.</li>
             </ul>
           </div>
