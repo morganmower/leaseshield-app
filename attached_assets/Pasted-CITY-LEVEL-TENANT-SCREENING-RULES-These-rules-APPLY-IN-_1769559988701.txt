@@ -1,0 +1,235 @@
+CITY-LEVEL TENANT SCREENING RULES
+
+(These rules APPLY IN ADDITION to state law)
+If your property is in one of these cities, follow these extra rules.
+
+ARIZONA
+PHOENIX
+
+You CANNOT deny based on:
+• Arrests that did not lead to a conviction
+• Very old criminal convictions that have nothing to do with housing safety
+
+You CAN deny based on:
+• Recent convictions that clearly relate to safety or property damage
+• Eviction judgments (not just filings)
+
+Extra Rules You Must Follow:
+• Criminal history must relate to resident safety
+• Do not automatically deny “any criminal record”
+
+CALIFORNIA
+LOS ANGELES
+
+You CANNOT deny based on:
+• Any arrest without a conviction
+• Criminal convictions older than 7 years
+• Eviction filings where the tenant was not evicted
+• Use of housing vouchers or rental assistance
+
+You CAN deny based on:
+• Recent, serious convictions that pose a real safety risk
+• Eviction judgments within legal limits
+
+Extra Rules You Must Follow:
+• You must review criminal history after the application
+• You must consider the time passed and the type of offense
+• You must give a written reason if you deny based on criminal history
+
+SAN FRANCISCO
+
+You CANNOT deny based on:
+• Any arrest that did not result in conviction
+• Any conviction older than 7 years
+• Non-violent convictions unrelated to housing
+• Eviction filings without a judgment
+
+You CAN deny based on:
+• Recent, serious convictions tied to safety
+
+Extra Rules You Must Follow:
+• Criminal screening happens later in the process
+• You must give the applicant a chance to explain
+• Written notice is required before and after denial
+
+OAKLAND
+
+You CANNOT deny based on:
+• Criminal records older than 7 years
+• Sealed, dismissed, or expunged records
+• Eviction filings
+
+You CAN deny based on:
+• Recent convictions tied to safety
+
+Extra Rules You Must Follow:
+• You must allow the applicant to provide context
+• Denials must be narrowly based on real risk
+
+ILLINOIS
+CHICAGO
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Convictions older than 3 years (with very limited exceptions)
+• Sealed or expunged records
+• Eviction filings without a judgment
+• Housing vouchers or lawful income
+
+You CAN deny based on:
+• Recent convictions that affect safety
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Criminal review happens after conditional approval
+• You must give the applicant a chance to respond
+• Written explanation required if denying
+
+MICHIGAN
+DETROIT
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Sealed or expunged records
+
+You CAN deny based on:
+• Convictions that clearly relate to safety or property risk
+
+Extra Rules You Must Follow:
+• Criminal history must directly relate to housing risk
+• Adverse action notice required
+
+NEVADA
+LAS VEGAS / CLARK COUNTY
+
+You CANNOT deny based on:
+• Housing vouchers or rental assistance
+• Arrests without conviction
+
+You CAN deny based on:
+• Relevant criminal convictions
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Screening rules must be applied the same to everyone
+
+NEW MEXICO
+ALBUQUERQUE
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Sealed or expunged records
+• Housing vouchers
+• Eviction filings without judgment
+
+You CAN deny based on:
+• Convictions tied to safety
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Criminal history must show real housing risk
+• Individual review is required
+
+NORTH CAROLINA
+CHARLOTTE
+
+You CANNOT deny based on:
+• Arrests without conviction
+
+You CAN deny based on:
+• Convictions related to safety
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Screening policies must be consistent
+
+OHIO
+COLUMBUS
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Sealed or expunged records
+
+You CAN deny based on:
+• Relevant convictions
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Follow fair housing rules strictly
+• Adverse action notice required
+
+CLEVELAND
+
+You CANNOT deny based on:
+• Eviction filings without judgment
+• Arrests without conviction
+
+You CAN deny based on:
+• Eviction judgments
+• Relevant convictions
+
+TEXAS
+AUSTIN
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Criminal records unrelated to housing safety
+
+You CAN deny based on:
+• Serious convictions tied to safety
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Be prepared to explain why a conviction matters
+
+DALLAS
+HOUSTON
+
+You CANNOT deny based on:
+• Arrests without conviction
+
+You CAN deny based on:
+• Relevant convictions
+• Eviction judgments
+
+UTAH
+SALT LAKE CITY
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Housing vouchers
+
+You CAN deny based on:
+• Relevant convictions
+• Eviction judgments
+
+Extra Rules You Must Follow:
+• Screening rules must be documented and consistent
+
+VIRGINIA
+RICHMOND
+
+You CANNOT deny based on:
+• Arrests without conviction
+• Housing vouchers
+
+You CAN deny based on:
+• Relevant convictions
+• Eviction judgments
+
+ALEXANDRIA
+
+You CANNOT deny based on:
+• Eviction filings without judgment
+• Arrests without conviction
+
+You CAN deny based on:
+• Eviction judgments
+• Relevant convictions
+
+HOW THIS SHOULD SHOW UP IN LEASESHIELD
+
+Plain UI Example (Perfect for New Landlords):
+
+⚠️ Extra Rules Apply (Chicago, IL)
+You cannot deny based on arrests, old convictions, eviction filings, or housing vouchers. Criminal history must be reviewed after conditional approval and requires written justification.
