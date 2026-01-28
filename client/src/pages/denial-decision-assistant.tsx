@@ -71,11 +71,10 @@ const CONDITION_OPTIONS = [
   { id: 'prepaid_rent', label: 'Require prepaid rent' },
 ];
 
-const NOTICES_REQUIRED = [
-  { id: 'adverse_action', label: 'Adverse Action Notice', required: true },
-  { id: 'pre_adverse', label: 'Pre-Adverse Action Notice — Required only if you used a third-party screening report (e.g., credit check, background check). Gives the applicant a chance to dispute errors before final denial.', required: false },
-  { id: 'credit_report_source', label: 'Include credit reporting agency contact info', required: true },
-  { id: 'dispute_rights', label: 'Include right to dispute information', required: true },
+const NOTICES_AUTO_INCLUDED = [
+  { id: 'adverse_action', label: 'Adverse Action Notice' },
+  { id: 'credit_report_source', label: 'Credit reporting agency contact info' },
+  { id: 'dispute_rights', label: 'Right to dispute information' },
 ];
 
 export default function DenialDecisionAssistant() {
@@ -88,7 +87,7 @@ export default function DenialDecisionAssistant() {
   const [criteriaPresent, setCriteriaPresent] = useState<Set<string>>(new Set());
   const [decisionOutcome, setDecisionOutcome] = useState<'approve' | 'conditional' | 'deny' | null>(null);
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
-  const [noticesChecked, setNoticesChecked] = useState<Set<string>>(new Set());
+  const [decisionSaved, setDecisionSaved] = useState(false);
   const [applicantName, setApplicantName] = useState('');
   const [applicantAddress, setApplicantAddress] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -240,25 +239,19 @@ export default function DenialDecisionAssistant() {
     });
   };
 
-  const handleSaveDenial = () => {
-    const requiredNotices = NOTICES_REQUIRED.filter(n => n.required);
-    const missingRequired = requiredNotices.filter(n => !noticesChecked.has(n.id));
+  const autoSaveDenialDecision = () => {
+    if (decisionSaved) return;
     
-    if (missingRequired.length > 0) {
-      toast({
-        title: "Required Notices",
-        description: "Please confirm all required notices are included.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     saveDecisionMutation.mutate({
       outcome: 'deny',
       criteriaPresent: Array.from(criteriaPresent),
       criteriaSelected: Array.from(criteriaPresent),
       generatedText: generateTextMutation.data?.text,
-      noticesProvided: Array.from(noticesChecked),
+      noticesProvided: NOTICES_AUTO_INCLUDED.map(n => n.id),
+    }, {
+      onSuccess: () => {
+        setDecisionSaved(true);
+      }
     });
   };
 
@@ -274,6 +267,8 @@ export default function DenialDecisionAssistant() {
 
   const handleDownloadAdverseAction = async () => {
     if (!generateTextMutation.data?.text) return;
+    
+    autoSaveDenialDecision();
     
     setIsDownloading(true);
     try {
@@ -307,7 +302,7 @@ export default function DenialDecisionAssistant() {
       
       toast({
         title: usedConsumerReport ? "Adverse Action Letter Downloaded" : "Denial Notice Downloaded",
-        description: "The letter has been downloaded and logged to your audit trail.",
+        description: "Decision saved to your audit trail.",
       });
     } catch (error: any) {
       toast({
@@ -754,37 +749,35 @@ export default function DenialDecisionAssistant() {
 
                 <div className="space-y-3">
                   <h4 className="font-medium flex items-center gap-2">
-                    <AlertCircle className="h-4 w-4 text-amber-500" />
-                    Required Notices Checklist
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Required Notices (Automatically Included)
                   </h4>
                   <div className="space-y-2">
-                    {NOTICES_REQUIRED.map(notice => (
-                      <label 
+                    {NOTICES_AUTO_INCLUDED.map(notice => (
+                      <div 
                         key={notice.id}
-                        className="flex items-center gap-3 p-3 border rounded-md cursor-pointer hover-elevate"
+                        className="flex items-center gap-3 p-3 border rounded-md bg-green-50/50 dark:bg-green-950/20 border-green-200 dark:border-green-800"
+                        data-testid={`notice-auto-${notice.id}`}
                       >
-                        <Checkbox
-                          checked={noticesChecked.has(notice.id)}
-                          onCheckedChange={(checked) => {
-                            setNoticesChecked(prev => {
-                              const next = new Set(prev);
-                              if (checked) {
-                                next.add(notice.id);
-                              } else {
-                                next.delete(notice.id);
-                              }
-                              return next;
-                            });
-                          }}
-                          data-testid={`checkbox-notice-${notice.id}`}
-                        />
-                        <span className="text-sm flex-1">{notice.label}</span>
-                        {notice.required && (
-                          <Badge variant="outline" className="text-xs">Required</Badge>
-                        )}
-                      </label>
+                        <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+                        <span className="text-sm">{notice.label}</span>
+                      </div>
                     ))}
                   </div>
+                  
+                  {usedConsumerReport && (
+                    <div className="mt-4 p-4 border rounded-md border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
+                      <div className="flex items-start gap-3">
+                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Pre-Adverse Action Notice</p>
+                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                            Since you used a screening report, FCRA requires you to send a Pre-Adverse Action Notice before the final denial. This gives the applicant a chance to dispute errors. The letter you download will include instructions.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">
@@ -805,20 +798,8 @@ export default function DenialDecisionAssistant() {
                   </div>
 
                   <div className="flex flex-wrap gap-3">
-                    <Button 
-                      onClick={handleSaveDenial}
-                      disabled={saveDecisionMutation.isPending}
-                      data-testid="button-save-denial"
-                    >
-                      {saveDecisionMutation.isPending ? (
-                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                      ) : null}
-                      Save & Log Decision
-                    </Button>
-                    
                     {usedConsumerReport ? (
                       <Button
-                        variant="outline"
                         onClick={() => setShowPreviewModal(true)}
                         disabled={!generateTextMutation.data?.text}
                         data-testid="button-preview-adverse-action"
@@ -828,7 +809,6 @@ export default function DenialDecisionAssistant() {
                       </Button>
                     ) : (
                       <Button
-                        variant="outline"
                         onClick={handleDownloadAdverseAction}
                         disabled={!generateTextMutation.data?.text || isDownloading}
                         data-testid="button-download-denial-notice"
@@ -838,10 +818,17 @@ export default function DenialDecisionAssistant() {
                         ) : (
                           <FileText className="h-4 w-4 mr-2" />
                         )}
-                        Download Denial Notice (non-FCRA)
+                        Download Denial Notice
                       </Button>
                     )}
                   </div>
+                  
+                  {decisionSaved && (
+                    <p className="text-sm text-muted-foreground flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Decision saved automatically for your records
+                    </p>
+                  )}
                 </div>
 
                 <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
@@ -911,16 +898,23 @@ export default function DenialDecisionAssistant() {
                   </DialogContent>
                 </Dialog>
 
-                {saveDecisionMutation.isSuccess && (
+                {decisionSaved && (
                   <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
-                    <CardContent className="py-4 flex items-center gap-3">
-                      <CheckCircle className="h-6 w-6 text-green-600" />
-                      <div>
-                        <p className="font-medium text-green-800 dark:text-green-200">
-                          Denial Decision Logged
-                        </p>
-                        <p className="text-sm text-green-600 dark:text-green-400">
-                          This denial has been recorded in your audit trail with full compliance documentation.
+                    <CardContent className="py-4 space-y-3">
+                      <div className="flex items-center gap-3">
+                        <CheckCircle className="h-6 w-6 text-green-600" />
+                        <div>
+                          <p className="font-medium text-green-800 dark:text-green-200">
+                            Denial Decision Logged
+                          </p>
+                          <p className="text-sm text-green-600 dark:text-green-400">
+                            This denial has been recorded in your audit trail.
+                          </p>
+                        </div>
+                      </div>
+                      <div className="pt-2 border-t border-green-200 dark:border-green-700">
+                        <p className="text-sm text-green-700 dark:text-green-300">
+                          <span className="font-medium">What this means:</span> This record shows which rules applied, what information you relied on, and the exact notice provided — in case the decision is ever questioned.
                         </p>
                       </div>
                     </CardContent>
@@ -1007,7 +1001,7 @@ function CriterionRow({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Badge variant="outline" className="text-xs gap-1 border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
-                  <AlertTriangle className="h-3 w-3" /> Extra Steps Required
+                  <AlertTriangle className="h-3 w-3" /> Extra Steps Required (we'll guide you)
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
@@ -1025,7 +1019,7 @@ function CriterionRow({
           )}
           {!isBlocked && !isConditional && (
             <Badge variant="outline" className="text-xs gap-1 border-green-400 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400">
-              <CheckCircle className="h-3 w-3" /> Allowed to Consider
+              <CheckCircle className="h-3 w-3" /> Allowed (if consistent with your criteria)
             </Badge>
           )}
         </div>
