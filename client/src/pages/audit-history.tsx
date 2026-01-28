@@ -427,13 +427,23 @@ export default function AuditHistory() {
                 <div className="space-y-2 pt-2 border-t">
                   <p className="text-sm font-medium flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    Internal Decision Record
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse' 
+                      ? 'Preliminary Decision (Pre-Adverse)' 
+                      : 'Internal Decision Record'}
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    Your detailed reasoning (kept on file). The letter sent to the applicant uses appropriate language for the notice type.
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse'
+                      ? 'Tentative decision pending applicant response. Final decision not yet made.'
+                      : 'Your detailed reasoning (kept on file).'}
                   </p>
                   <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
-                    {viewingLog.generatedDenialText}
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse'
+                      ? viewingLog.generatedDenialText
+                          .replace(/was denied/gi, 'could be denied')
+                          .replace(/has been denied/gi, 'may be denied')
+                          .replace(/is denied/gi, 'could be denied')
+                          .replace(/The application was denied/gi, 'The application could be denied')
+                      : viewingLog.generatedDenialText}
                   </div>
                 </div>
               )}
