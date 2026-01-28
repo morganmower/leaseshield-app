@@ -58,6 +58,7 @@ import AdminApplicationsActivity from "@/pages/admin-applications-activity";
 import AdminStateNotes from "@/pages/admin-state-notes";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
+import AuditHistory from "@/pages/audit-history";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 import RentalApplications from "@/pages/rental-applications";
@@ -133,6 +134,7 @@ function Router() {
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
         <Route path="/screening">{() => <Redirect to="/login" />}</Route>
         <Route path="/denial-decision">{() => <Redirect to="/login" />}</Route>
+        <Route path="/audit-history">{() => <Redirect to="/login" />}</Route>
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
         <Route path="/settings">{() => <Redirect to="/login" />}</Route>
         <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
@@ -176,6 +178,7 @@ function Router() {
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening" component={Screening} />
       <Route path="/denial-decision" component={DenialDecisionAssistant} />
+      <Route path="/audit-history" component={AuditHistory} />
       <Route path="/tenant-issues" component={TenantIssues} />
       <Route path="/communications" component={Communications} />
       <Route path="/rent-ledger" component={RentLedger} />

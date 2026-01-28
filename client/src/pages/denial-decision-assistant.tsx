@@ -1,6 +1,7 @@
 import { useState, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -362,11 +363,18 @@ export default function DenialDecisionAssistant() {
         </CardContent>
       </Card>
 
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2" data-testid="text-page-title">Denial Decision Assistant</h1>
-        <p className="text-muted-foreground">
-          Navigate tenant screening decisions while staying compliant with fair housing laws.
-        </p>
+      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold mb-2" data-testid="text-page-title">Denial Decision Assistant</h1>
+          <p className="text-muted-foreground">
+            Navigate tenant screening decisions while staying compliant with fair housing laws.
+          </p>
+        </div>
+        <Link href="/audit-history">
+          <Button variant="outline" size="sm" data-testid="button-view-history">
+            <ClipboardCheck className="h-4 w-4 mr-1" /> View History
+          </Button>
+        </Link>
       </div>
 
       <div className="flex items-center gap-2 mb-6" data-testid="step-indicator">

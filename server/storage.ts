@@ -531,6 +531,7 @@ export interface IStorage {
   getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string): Promise<DenialCriteriaRule[]>;
   getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]>;
   createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog>;
+  getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]>;
   updateUserPreferredCity(userId: string, cityId: string | null): Promise<User>;
 }
 
@@ -3055,6 +3056,14 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return created;
     }, 'createDenialDecisionAuditLog');
+  }
+
+  async getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(denialDecisionAuditLogs)
+        .where(eq(denialDecisionAuditLogs.userId, userId))
+        .orderBy(desc(denialDecisionAuditLogs.createdAt));
+    }, 'getDenialDecisionAuditLogs');
   }
 
   async updateUserPreferredCity(userId: string, cityId: string | null): Promise<User> {

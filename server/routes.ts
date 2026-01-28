@@ -9436,6 +9436,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(cities);
   }));
 
+  // Get audit history for the current user
+  app.get('/api/denial-decision/audit-history', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const logs = await storage.getDenialDecisionAuditLogs(req.user.id);
+    res.json(logs);
+  }));
+
   // Get all denial criteria with rules for a jurisdiction
   app.get('/api/denial-decision/criteria', isAuthenticated, asyncHandler(async (req: any, res) => {
     const { stateId, cityId } = req.query;
