@@ -32,6 +32,7 @@ import {
   Lock,
   ThumbsUp,
   ThumbsDown,
+  ChevronRight,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
@@ -951,6 +952,22 @@ export default function Screening() {
                       </div>
                     )}
                   </div>
+
+                  {/* Decision CTA */}
+                  <Link href="/denial-decision">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="cta-credit-decision">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-lg">
+                          <Scale className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Ready to make a decision?</p>
+                          <p className="text-sm text-muted-foreground">Use the Denial Decision Assistant for compliant approval or denial</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </Link>
                 </>
               )}
 
@@ -1181,6 +1198,22 @@ export default function Screening() {
                       </div>
                     )}
                   </div>
+
+                  {/* Decision CTA */}
+                  <Link href="/denial-decision">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="cta-criminal-decision">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-lg">
+                          <Scale className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Ready to make a decision?</p>
+                          <p className="text-sm text-muted-foreground">Use the Denial Decision Assistant for compliant approval or denial</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </Link>
                 </>
               )}
 
