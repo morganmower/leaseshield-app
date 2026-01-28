@@ -90,6 +90,7 @@ export default function DenialDecisionAssistant() {
   const [decisionOutcome, setDecisionOutcome] = useState<'approve' | 'conditional' | 'deny' | null>(null);
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
   const [decisionSaved, setDecisionSaved] = useState(false);
+  const [savedAuditLogId, setSavedAuditLogId] = useState<number | null>(null);
   const [applicantName, setApplicantName] = useState('');
   const [applicantAddress, setApplicantAddress] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
@@ -188,7 +189,10 @@ export default function DenialDecisionAssistant() {
       });
       return res.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
+      if (data?.id) {
+        setSavedAuditLogId(data.id);
+      }
       toast({
         title: "Decision Saved",
         description: "Your decision has been logged to the audit trail.",
@@ -274,8 +278,11 @@ export default function DenialDecisionAssistant() {
       generatedText: generateTextMutation.data?.text,
       noticesProvided: NOTICES_AUTO_INCLUDED.map(n => n.id),
     }, {
-      onSuccess: () => {
+      onSuccess: (data) => {
         setDecisionSaved(true);
+        if (data?.id) {
+          setSavedAuditLogId(data.id);
+        }
       }
     });
   };
@@ -307,6 +314,7 @@ export default function DenialDecisionAssistant() {
         criteriaIds: Array.from(criteriaPresent),
         isFcra: usedConsumerReport,
         letterType: letterType,
+        auditLogId: savedAuditLogId || undefined,
       });
       
       if (!res.ok) {

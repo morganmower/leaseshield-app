@@ -9804,13 +9804,25 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       denialReasons,
       criteriaIds,
       isFcra = true,
-      letterType = 'adverse' // 'pre-adverse', 'adverse', or 'denial'
+      letterType = 'adverse', // 'pre-adverse', 'adverse', or 'denial'
+      auditLogId
     } = req.body;
 
     const isPreAdverse = letterType === 'pre-adverse';
 
     if (!stateId || !denialReasons) {
       return res.status(400).json({ message: "stateId and denialReasons are required" });
+    }
+    
+    // Update audit log with the letter type if auditLogId is provided
+    if (auditLogId) {
+      try {
+        const letterTypeDb = isPreAdverse ? 'pre_adverse' : 'adverse_action';
+        await storage.updateDenialDecisionAuditLogLetterType(auditLogId, req.user.id, letterTypeDb);
+      } catch (err) {
+        console.error('Failed to update audit log with letter type:', err);
+        // Don't fail the request, just log the error
+      }
     }
     
     // Get jurisdiction info for disclosure (built separately from existing state/city lookups below)

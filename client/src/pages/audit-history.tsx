@@ -449,9 +449,16 @@ export default function AuditHistory() {
               )}
 
               {viewingLog.adverseActionLetterGenerated && (
-                <div className="flex items-center gap-2 pt-2 border-t text-sm text-primary">
-                  <FileText className="h-4 w-4" />
-                  Adverse Action Letter was generated for this decision
+                <div className="space-y-1 pt-2 border-t">
+                  <p className="text-sm font-medium">Letter Downloaded</p>
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <FileText className="h-4 w-4" />
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse' 
+                      ? 'Pre-Adverse Action Notice' 
+                      : (viewingLog as any).letterTypeDownloaded === 'adverse_action'
+                        ? 'Adverse Action Letter (Final)'
+                        : 'Letter generated'}
+                  </div>
                 </div>
               )}
 

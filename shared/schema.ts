@@ -2364,6 +2364,7 @@ export const denialDecisionAuditLogs = pgTable("denial_decision_audit_logs", {
   generatedDenialText: text("generated_denial_text"),
   adverseActionLetterGenerated: boolean("adverse_action_letter_generated").default(false),
   adverseActionLetterId: varchar("adverse_action_letter_id"),
+  letterTypeDownloaded: varchar("letter_type_downloaded", { length: 50 }), // 'pre_adverse' or 'adverse_action'
   conditions: jsonb("conditions").$type<string[]>(), // For conditional approvals
   fairChanceStepsCompleted: jsonb("fair_chance_steps_completed").$type<Record<string, boolean>>(),
   noticesProvided: jsonb("notices_provided").$type<string[]>(), // ["adverse_action", "pre_adverse", etc.]

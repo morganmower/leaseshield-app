@@ -539,6 +539,7 @@ export interface IStorage {
   getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]>;
   deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean>;
   updateDenialDecisionAuditLog(id: string, userId: string, updates: { applicantName?: string; outcome?: 'approve' | 'conditional' | 'deny' }): Promise<DenialDecisionAuditLog | null>;
+  updateDenialDecisionAuditLogLetterType(id: number, userId: string, letterType: string): Promise<DenialDecisionAuditLog | null>;
   updateUserPreferredCity(userId: string, cityId: string | null): Promise<User>;
 }
 
@@ -3126,6 +3127,22 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated || null;
     }, 'updateDenialDecisionAuditLog');
+  }
+
+  async updateDenialDecisionAuditLogLetterType(id: number, userId: string, letterType: string): Promise<DenialDecisionAuditLog | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(denialDecisionAuditLogs)
+        .set({ 
+          letterTypeDownloaded: letterType,
+          adverseActionLetterGenerated: true
+        })
+        .where(and(
+          eq(denialDecisionAuditLogs.id, String(id)),
+          eq(denialDecisionAuditLogs.userId, userId)
+        ))
+        .returning();
+      return updated || null;
+    }, 'updateDenialDecisionAuditLogLetterType');
   }
 
   async updateUserPreferredCity(userId: string, cityId: string | null): Promise<User> {
