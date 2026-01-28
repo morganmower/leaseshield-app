@@ -9442,6 +9442,32 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(logs);
   }));
 
+  // Delete an audit history entry
+  app.delete('/api/denial-decision/audit-history/:id', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { id } = req.params;
+    const deleted = await storage.deleteDenialDecisionAuditLog(id, req.user.id);
+    if (!deleted) {
+      return res.status(404).json({ message: "Entry not found or not authorized" });
+    }
+    res.json({ success: true });
+  }));
+
+  // Update an audit history entry
+  app.patch('/api/denial-decision/audit-history/:id', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { id } = req.params;
+    const { applicantName, outcome } = req.body;
+    
+    if (outcome && !['approve', 'conditional', 'deny'].includes(outcome)) {
+      return res.status(400).json({ message: "Invalid outcome value" });
+    }
+    
+    const updated = await storage.updateDenialDecisionAuditLog(id, req.user.id, { applicantName, outcome });
+    if (!updated) {
+      return res.status(404).json({ message: "Entry not found or not authorized" });
+    }
+    res.json(updated);
+  }));
+
   // Get all denial criteria with rules for a jurisdiction
   app.get('/api/denial-decision/criteria', isAuthenticated, asyncHandler(async (req: any, res) => {
     const { stateId, cityId } = req.query;

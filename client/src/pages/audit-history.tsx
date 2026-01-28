@@ -1,9 +1,15 @@
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { useQuery } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
+import { useQuery, useMutation } from "@tanstack/react-query";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Link } from "wouter";
 import {
   CheckCircle,
@@ -15,6 +21,8 @@ import {
   MapPin,
   FileText,
   Loader2,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 
 interface AuditLog {
@@ -57,6 +65,11 @@ const OUTCOME_STYLES = {
 
 export default function AuditHistory() {
   const { user, isLoading: authLoading } = useAuth();
+  const { toast } = useToast();
+  const [editingLog, setEditingLog] = useState<AuditLog | null>(null);
+  const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editOutcome, setEditOutcome] = useState<'approve' | 'conditional' | 'deny'>('approve');
 
   const { data: logs = [], isLoading } = useQuery<AuditLog[]>({
     queryKey: ['/api/denial-decision/audit-history'],
@@ -66,6 +79,49 @@ export default function AuditHistory() {
     },
     enabled: !!user,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await apiRequest('DELETE', `/api/denial-decision/audit-history/${id}`);
+      if (!res.ok) throw new Error('Failed to delete');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/denial-decision/audit-history'] });
+      toast({ title: "Entry Deleted", description: "The decision record has been removed." });
+      setDeleteLogId(null);
+    },
+    onError: () => {
+      toast({ title: "Delete Failed", description: "Could not delete this entry.", variant: "destructive" });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: async ({ id, applicantName, outcome }: { id: string; applicantName: string; outcome: 'approve' | 'conditional' | 'deny' }) => {
+      const res = await apiRequest('PATCH', `/api/denial-decision/audit-history/${id}`, { applicantName, outcome });
+      if (!res.ok) throw new Error('Failed to update');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/denial-decision/audit-history'] });
+      toast({ title: "Entry Updated", description: "The decision record has been updated." });
+      setEditingLog(null);
+    },
+    onError: () => {
+      toast({ title: "Update Failed", description: "Could not update this entry.", variant: "destructive" });
+    },
+  });
+
+  const openEditDialog = (log: AuditLog) => {
+    setEditingLog(log);
+    setEditName(log.applicantName || "");
+    setEditOutcome(log.outcome);
+  };
+
+  const handleSaveEdit = () => {
+    if (!editingLog) return;
+    updateMutation.mutate({ id: editingLog.id, applicantName: editName, outcome: editOutcome });
+  };
 
   if (authLoading || isLoading) {
     return (
@@ -148,10 +204,29 @@ export default function AuditHistory() {
                         </CardDescription>
                       </div>
                     </div>
-                    <Badge variant="outline" className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {log.cityName ? `${log.cityName}, ${log.stateId}` : log.stateId}
-                    </Badge>
+                    <div className="flex items-center gap-2">
+                      <Badge variant="outline" className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {log.cityName ? `${log.cityName}, ${log.stateId}` : log.stateId}
+                      </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => openEditDialog(log)}
+                        data-testid={`button-edit-${log.id}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setDeleteLogId(log.id)}
+                        className="text-destructive hover:text-destructive"
+                        data-testid={`button-delete-${log.id}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="pt-0 space-y-3">
@@ -195,6 +270,70 @@ export default function AuditHistory() {
           })}
         </div>
       )}
+
+      <Dialog open={!!editingLog} onOpenChange={(open) => !open && setEditingLog(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Decision Record</DialogTitle>
+            <DialogDescription>
+              Update the applicant name or change the decision outcome.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Applicant Name</label>
+              <Input
+                value={editName}
+                onChange={(e) => setEditName(e.target.value)}
+                placeholder="Enter applicant name"
+                data-testid="input-edit-name"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Decision Outcome</label>
+              <Select value={editOutcome} onValueChange={(v) => setEditOutcome(v as any)}>
+                <SelectTrigger data-testid="select-edit-outcome">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="approve">Approved</SelectItem>
+                  <SelectItem value="conditional">Conditional</SelectItem>
+                  <SelectItem value="deny">Denied</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingLog(null)}>Cancel</Button>
+            <Button onClick={handleSaveEdit} disabled={updateMutation.isPending} data-testid="button-save-edit">
+              {updateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog open={!!deleteLogId} onOpenChange={(open) => !open && setDeleteLogId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete this record?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently remove this screening decision from your history. This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => deleteLogId && deleteMutation.mutate(deleteLogId)}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              data-testid="button-confirm-delete"
+            >
+              {deleteMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

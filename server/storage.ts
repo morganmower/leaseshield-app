@@ -532,6 +532,8 @@ export interface IStorage {
   getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]>;
   createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog>;
   getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]>;
+  deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean>;
+  updateDenialDecisionAuditLog(id: string, userId: string, updates: { applicantName?: string; outcome?: 'approve' | 'conditional' | 'deny' }): Promise<DenialDecisionAuditLog | null>;
   updateUserPreferredCity(userId: string, cityId: string | null): Promise<User>;
 }
 
@@ -3064,6 +3066,30 @@ export class DatabaseStorage implements IStorage {
         .where(eq(denialDecisionAuditLogs.userId, userId))
         .orderBy(desc(denialDecisionAuditLogs.createdAt));
     }, 'getDenialDecisionAuditLogs');
+  }
+
+  async deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean> {
+    return handleDbOperation(async () => {
+      const result = await db.delete(denialDecisionAuditLogs)
+        .where(and(
+          eq(denialDecisionAuditLogs.id, id),
+          eq(denialDecisionAuditLogs.userId, userId)
+        ));
+      return (result.rowCount ?? 0) > 0;
+    }, 'deleteDenialDecisionAuditLog');
+  }
+
+  async updateDenialDecisionAuditLog(id: string, userId: string, updates: { applicantName?: string; outcome?: 'approve' | 'conditional' | 'deny' }): Promise<DenialDecisionAuditLog | null> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(denialDecisionAuditLogs)
+        .set(updates)
+        .where(and(
+          eq(denialDecisionAuditLogs.id, id),
+          eq(denialDecisionAuditLogs.userId, userId)
+        ))
+        .returning();
+      return updated || null;
+    }, 'updateDenialDecisionAuditLog');
   }
 
   async updateUserPreferredCity(userId: string, cityId: string | null): Promise<User> {
