@@ -9799,26 +9799,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const pdfId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Save wizard snapshot to audit log
-    try {
-      await storage.createDenialDecisionAuditLog({
-        userId: req.user.id,
-        stateId,
-        cityId: cityId || null,
-        cityName: city?.name || null,
-        ruleVersion: `v1-${state?.code || 'unknown'}-${cityId || 'state'}-${new Date().toISOString().split('T')[0]}`,
-        outcome: 'deny',
-        criteriaPresent: criteriaIds || [],
-        criteriaSelectedForDenial: criteriaIds || [],
-        generatedDenialText: denialReasons,
-        noticesProvided: isFcra ? ['adverse_action', 'credit_report_source', 'dispute_rights'] : ['general_denial_notice'],
-        applicantName: applicantName || null,
-        adverseActionLetterGenerated: isFcra,
-        adverseActionLetterId: isFcra ? pdfId : null,
-      });
-    } catch (auditError) {
-      console.error('[Adverse Action] Failed to save audit log:', auditError);
-    }
+    // Note: Audit log is already created by the denial decision wizard endpoint
+    // This endpoint only generates the PDF letter, not a new audit record
 
     // CRA info
     const CRA = {
