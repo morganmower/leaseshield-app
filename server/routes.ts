@@ -9733,8 +9733,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       cityId,
       denialReasons,
       criteriaIds,
-      isFcra = true
+      isFcra = true,
+      letterType = 'adverse' // 'pre-adverse', 'adverse', or 'denial'
     } = req.body;
+
+    const isPreAdverse = letterType === 'pre-adverse';
 
     if (!stateId || !denialReasons) {
       return res.status(400).json({ message: "stateId and denialReasons are required" });
@@ -9819,9 +9822,19 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     // Build reasons list HTML
     const reasonsListHtml = sanitizedReasons.map((r: string) => `<li>${r}</li>`).join('\n');
 
-    // Generate clean single-page letter HTML
-    const letterTitle = isFcra ? 'ADVERSE ACTION NOTICE' : 'RENTAL APPLICATION DENIAL';
-    const letterSubtitle = isFcra ? 'Rental Application Decision' : '';
+    // Generate clean single-page letter HTML based on letter type
+    let letterTitle: string;
+    let letterSubtitle: string;
+    if (isPreAdverse) {
+      letterTitle = 'PRE-ADVERSE ACTION NOTICE';
+      letterSubtitle = 'Preliminary Rental Application Decision';
+    } else if (isFcra) {
+      letterTitle = 'ADVERSE ACTION NOTICE';
+      letterSubtitle = 'Rental Application Decision';
+    } else {
+      letterTitle = 'RENTAL APPLICATION DENIAL';
+      letterSubtitle = '';
+    }
 
     const html = `
       <!DOCTYPE html>
@@ -9877,23 +9890,29 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
         <div class="section">
           <p>Dear ${safeApplicantName},</p>
+          ${isPreAdverse ? `
+          <p style="margin-top: 8px;">We are considering <strong>denying your rental application</strong> based, in whole or in part, on information obtained from a consumer reporting agency. This is not a final decision.</p>
+          <p style="margin-top: 8px;"><strong>You have the right to review and dispute</strong> the information in your consumer report before we make a final decision. Please contact the consumer reporting agency listed below within <strong>5 business days</strong> if you believe there are errors in your report.</p>
+          ` : `
           <p style="margin-top: 8px;">We regret to inform you that your rental application has been denied${isFcra ? ' based, in whole or in part, on information obtained from a consumer reporting agency' : ''}.</p>
+          `}
         </div>
 
         <div class="section">
-          <div class="section-title">Reason(s) for Denial</div>
+          <div class="section-title">${isPreAdverse ? 'Reason(s) Under Consideration' : 'Reason(s) for Denial'}</div>
           <ul class="reasons-list">
             ${reasonsListHtml}
           </ul>
         </div>
 
-        ${isFcra ? `
+        ${isFcra || isPreAdverse ? `
         <div class="section">
           <div class="section-title">Consumer Reporting Agency</div>
           <div class="cra-box">
             <strong>${CRA.name}</strong><br>
             ${CRA.address}<br>
             Phone: ${CRA.phone}<br>
+            Email: ${CRA.email}<br>
             Website: ${CRA.website}
           </div>
           <p style="margin-top: 6px; font-size: 9pt; font-style: italic;">The consumer reporting agency did not make this decision and cannot explain why it was made.</p>
@@ -9905,6 +9924,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             <ul>
               <li>You may obtain a <strong>free copy</strong> of your consumer report within 60 days by contacting the agency above.</li>
               <li>You have the right to <strong>dispute</strong> the accuracy or completeness of any information in your report.</li>
+              ${isPreAdverse ? '<li>You have <strong>5 business days</strong> to dispute any inaccurate information before a final decision is made.</li>' : ''}
               <li>You may have additional rights under ${jurisdictionLabel || 'state'} law.</li>
             </ul>
           </div>
@@ -9923,7 +9943,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         </div>
 
         <div class="footer">
-          ${isFcra ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m)' : 'This notice is provided for your records'}
+          ${isPreAdverse ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m(a))' : isFcra ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m)' : 'This notice is provided for your records'}
           ${jurisdictionLabel ? ` and applicable ${jurisdictionLabel} fair housing laws` : ''}.
         </div>
       </body>

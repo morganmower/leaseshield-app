@@ -265,7 +265,7 @@ export default function DenialDecisionAssistant() {
     }
   };
 
-  const handleDownloadAdverseAction = async () => {
+  const handleDownloadLetter = async (letterType: 'pre-adverse' | 'adverse' | 'denial') => {
     if (!generateTextMutation.data?.text) return;
     
     autoSaveDenialDecision();
@@ -280,6 +280,7 @@ export default function DenialDecisionAssistant() {
         denialReasons: generateTextMutation.data.text,
         criteriaIds: Array.from(criteriaPresent),
         isFcra: usedConsumerReport,
+        letterType: letterType,
       });
       
       if (!res.ok) {
@@ -291,17 +292,24 @@ export default function DenialDecisionAssistant() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      const filename = usedConsumerReport 
-        ? `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`
-        : `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`;
-      a.download = filename;
+      const filenames: Record<string, string> = {
+        'pre-adverse': `pre-adverse-action-notice-${new Date().toISOString().split('T')[0]}.pdf`,
+        'adverse': `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`,
+        'denial': `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`,
+      };
+      a.download = filenames[letterType];
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
       
+      const titles: Record<string, string> = {
+        'pre-adverse': 'Pre-Adverse Action Notice Downloaded',
+        'adverse': 'Adverse Action Letter Downloaded',
+        'denial': 'Denial Notice Downloaded',
+      };
       toast({
-        title: usedConsumerReport ? "Adverse Action Letter Downloaded" : "Denial Notice Downloaded",
+        title: titles[letterType],
         description: "Decision saved to your audit trail.",
       });
     } catch (error: any) {
@@ -314,6 +322,8 @@ export default function DenialDecisionAssistant() {
       setIsDownloading(false);
     }
   };
+
+  const handleDownloadAdverseAction = () => handleDownloadLetter(usedConsumerReport ? 'adverse' : 'denial');
 
   const canProceedToStep2 = !!selectedStateId;
   const canProceedToStep3 = criteriaPresent.size > 0;
@@ -805,16 +815,41 @@ export default function DenialDecisionAssistant() {
                     </label>
                   </div>
 
+                  {usedConsumerReport && (
+                    <div className="p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm">
+                      <div className="font-medium text-amber-800 dark:text-amber-200 mb-1">FCRA Two-Letter Requirement</div>
+                      <p className="text-amber-700 dark:text-amber-300">
+                        When using a consumer report, FCRA requires a <strong>two-step process</strong>: (1) Send the Pre-Adverse Notice first, 
+                        giving the applicant 5 business days to dispute. (2) After the waiting period, send the final Adverse Action Letter.
+                      </p>
+                    </div>
+                  )}
+
                   <div className="flex flex-wrap gap-3">
                     {usedConsumerReport ? (
-                      <Button
-                        onClick={() => setShowPreviewModal(true)}
-                        disabled={!generateTextMutation.data?.text}
-                        data-testid="button-preview-adverse-action"
-                      >
-                        <Eye className="h-4 w-4 mr-2" />
-                        Preview & Download Adverse Action Letter
-                      </Button>
+                      <>
+                        <Button
+                          onClick={() => handleDownloadLetter('pre-adverse')}
+                          disabled={!generateTextMutation.data?.text || isDownloading}
+                          variant="outline"
+                          data-testid="button-download-pre-adverse"
+                        >
+                          {isDownloading ? (
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          ) : (
+                            <FileText className="h-4 w-4 mr-2" />
+                          )}
+                          1. Pre-Adverse Notice
+                        </Button>
+                        <Button
+                          onClick={() => setShowPreviewModal(true)}
+                          disabled={!generateTextMutation.data?.text}
+                          data-testid="button-preview-adverse-action"
+                        >
+                          <Eye className="h-4 w-4 mr-2" />
+                          2. Adverse Action Letter
+                        </Button>
+                      </>
                     ) : (
                       <Button
                         onClick={handleDownloadAdverseAction}
