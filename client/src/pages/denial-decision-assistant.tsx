@@ -322,7 +322,7 @@ export default function DenialDecisionAssistant() {
     : selectedState?.name || 'Select Location';
 
   // Extract denial reasons as bullet points for preview
-  const denialReasonBullets = useMemo(() => {
+  const denialReasonBullets: string[] = useMemo(() => {
     if (!generateTextMutation.data?.text) return [];
     const text = generateTextMutation.data.text;
     // Split by newlines and filter out empty lines, take first 5
