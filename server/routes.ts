@@ -9692,7 +9692,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(user);
   }));
 
-  // Generate adverse action letter PDF
+  // Generate adverse action letter PDF (FCRA or non-FCRA)
   app.post('/api/denial-decision/adverse-action-letter', isAuthenticated, asyncHandler(async (req: any, res) => {
     const { 
       applicantName, 
@@ -9700,7 +9700,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       stateId, 
       cityId,
       denialReasons,
-      criteriaIds
+      criteriaIds,
+      isFcra = true
     } = req.body;
 
     if (!stateId || !denialReasons) {
@@ -9720,7 +9721,26 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     // Sanitize user inputs
     const safeApplicantName = escapeHtml(applicantName || 'Applicant');
     const safeApplicantAddress = escapeHtml(applicantAddress || '');
-    const safeDenialReasons = escapeHtml(denialReasons);
+    
+    // Parse denial reasons into bullet points (max 5), with reason hygiene
+    const reasonLines = denialReasons.split('\n').filter((r: string) => r.trim().length > 0).slice(0, 5);
+    const sanitizedReasons = reasonLines.map((reason: string) => {
+      let sanitized = escapeHtml(reason.trim());
+      // Reason hygiene: replace vague wording with specific allowed phrasing
+      sanitized = sanitized.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
+      sanitized = sanitized.replace(/poor credit/gi, 'credit history did not meet minimum criteria');
+      sanitized = sanitized.replace(/low credit score/gi, 'credit score below required threshold');
+      sanitized = sanitized.replace(/insufficient credit/gi, 'insufficient credit history to verify');
+      sanitized = sanitized.replace(/too many late payments/gi, 'payment history did not meet criteria');
+      sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing within specified timeframe');
+      sanitized = sanitized.replace(/criminal record/gi, 'criminal history pursuant to individualized assessment');
+      sanitized = sanitized.replace(/arrest record/gi, 'conviction record pursuant to individualized assessment');
+      sanitized = sanitized.replace(/eviction history/gi, 'prior eviction judgment within specified timeframe');
+      sanitized = sanitized.replace(/evicted before/gi, 'prior eviction judgment within specified timeframe');
+      sanitized = sanitized.replace(/not enough income/gi, 'income did not meet required threshold');
+      sanitized = sanitized.replace(/income too low/gi, 'income did not meet required threshold');
+      return sanitized;
+    });
 
     // Get state and city info
     const state = await storage.getStateById(stateId);
@@ -9732,148 +9752,146 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     const jurisdictionLabel = city ? `${city.name}, ${state?.name}` : state?.name || '';
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    const pdfId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Generate HTML for the adverse action letter
+    // Save wizard snapshot to audit log
+    try {
+      await storage.createDenialDecisionAuditLog({
+        userId: req.user.id,
+        stateId,
+        cityId: cityId || null,
+        cityName: city?.name || null,
+        ruleVersion: `v1-${state?.code || 'unknown'}-${cityId || 'state'}-${new Date().toISOString().split('T')[0]}`,
+        outcome: 'deny',
+        criteriaPresent: criteriaIds || [],
+        criteriaSelectedForDenial: criteriaIds || [],
+        generatedDenialText: denialReasons,
+        noticesProvided: isFcra ? ['adverse_action', 'credit_report_source', 'dispute_rights'] : ['general_denial_notice'],
+        applicantName: applicantName || null,
+        adverseActionLetterGenerated: isFcra,
+        adverseActionLetterId: isFcra ? pdfId : null,
+      });
+    } catch (auditError) {
+      console.error('[Adverse Action] Failed to save audit log:', auditError);
+    }
+
+    // CRA info
+    const CRA = {
+      name: 'Western Verify LLC',
+      address: '1698 E Skyline Dr Suite 101, South Ogden, UT 84403',
+      phone: '(855) 973-9378',
+      website: 'www.westernverify.com'
+    };
+
+    // Build reasons list HTML
+    const reasonsListHtml = sanitizedReasons.map((r: string) => `<li>${r}</li>`).join('\n');
+
+    // Generate clean single-page letter HTML
+    const letterTitle = isFcra ? 'ADVERSE ACTION NOTICE' : 'RENTAL APPLICATION DENIAL';
+    const letterSubtitle = isFcra ? 'Rental Application Decision' : '';
+
     const html = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
         <style>
+          * { margin: 0; padding: 0; box-sizing: border-box; }
           body {
-            font-family: 'Times New Roman', serif;
-            font-size: 12pt;
-            line-height: 1.6;
-            max-width: 8.5in;
-            margin: 0 auto;
-            padding: 1in;
+            font-family: 'Georgia', 'Times New Roman', serif;
+            font-size: 11pt;
+            line-height: 1.5;
+            color: #222;
+            padding: 0.75in;
           }
           .header {
             text-align: center;
-            margin-bottom: 30px;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
             border-bottom: 2px solid #333;
-            padding-bottom: 20px;
           }
-          .header h1 {
-            font-size: 18pt;
-            margin: 0 0 5px 0;
-          }
-          .header p {
-            margin: 0;
-            color: #666;
-          }
-          .date {
-            text-align: right;
-            margin-bottom: 30px;
-          }
-          .recipient {
-            margin-bottom: 30px;
-          }
-          .content {
-            margin-bottom: 30px;
-          }
-          .content p {
-            margin-bottom: 15px;
-            text-align: justify;
-          }
-          .reasons-box {
-            border: 1px solid #333;
-            padding: 15px;
-            margin: 20px 0;
-            background: #f9f9f9;
-          }
-          .reasons-box h3 {
-            margin: 0 0 10px 0;
-            font-size: 12pt;
-          }
-          .cra-section {
-            border: 1px solid #666;
-            padding: 15px;
-            margin: 20px 0;
-            background: #fff;
-          }
-          .cra-section h3 {
-            margin: 0 0 10px 0;
-            font-size: 11pt;
-          }
-          .rights-section {
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid #ccc;
-          }
-          .rights-section h3 {
-            font-size: 11pt;
-            margin-bottom: 10px;
-          }
-          .rights-section ul {
-            margin: 0;
-            padding-left: 20px;
-          }
-          .signature {
-            margin-top: 50px;
-          }
-          .signature-line {
-            border-top: 1px solid #333;
-            width: 300px;
-            margin-top: 50px;
-            padding-top: 5px;
-          }
+          .header h1 { font-size: 16pt; font-weight: bold; margin-bottom: 4px; }
+          .header p { font-size: 10pt; color: #555; }
+          .meta { display: flex; justify-content: space-between; margin-bottom: 20px; }
+          .meta .date { text-align: right; }
+          .recipient { margin-bottom: 16px; }
+          .section { margin-bottom: 16px; }
+          .section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #444; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
+          .reasons-list { list-style-type: disc; margin-left: 20px; margin-top: 6px; }
+          .reasons-list li { margin-bottom: 4px; }
+          .cra-box { background: #f8f8f8; border: 1px solid #ddd; padding: 10px; margin-top: 6px; font-size: 10pt; }
+          .rights-box { background: #fff; border: 1px solid #ccc; padding: 10px; margin-top: 6px; font-size: 9.5pt; }
+          .rights-box ul { margin-left: 16px; margin-top: 4px; }
+          .rights-box li { margin-bottom: 3px; }
+          .signature { margin-top: 32px; }
+          .signature-line { border-top: 1px solid #333; width: 250px; margin-top: 40px; padding-top: 4px; font-size: 10pt; }
+          .footer { margin-top: 24px; font-size: 8pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
         </style>
       </head>
       <body>
         <div class="header">
-          <h1>ADVERSE ACTION NOTICE</h1>
-          <p>Fair Credit Reporting Act (FCRA) Required Disclosure</p>
+          <h1>${letterTitle}</h1>
+          ${letterSubtitle ? `<p>${letterSubtitle}</p>` : ''}
         </div>
 
-        <div class="date">${dateStr}</div>
-
-        <div class="recipient">
-          <strong>${safeApplicantName}</strong><br>
-          ${safeApplicantAddress ? safeApplicantAddress.replace(/,/g, '<br>') : '[Address on file]'}
+        <div class="meta">
+          <div class="recipient">
+            <strong>${safeApplicantName}</strong><br>
+            ${safeApplicantAddress ? safeApplicantAddress.replace(/,/g, '<br>') : ''}
+          </div>
+          <div class="date">${dateStr}</div>
         </div>
 
-        <div class="content">
+        <div class="section">
           <p>Dear ${safeApplicantName},</p>
+          <p style="margin-top: 8px;">We regret to inform you that your rental application has been denied${isFcra ? ' based, in whole or in part, on information obtained from a consumer reporting agency' : ''}.</p>
+        </div>
 
-          <p>We regret to inform you that your application for housing has been denied. This decision was based, in whole or in part, on information obtained from a consumer reporting agency.</p>
+        <div class="section">
+          <div class="section-title">Reason(s) for Denial</div>
+          <ul class="reasons-list">
+            ${reasonsListHtml}
+          </ul>
+        </div>
 
-          <div class="reasons-box">
-            <h3>Reason(s) for Denial:</h3>
-            <p>${safeDenialReasons.replace(/\n/g, '<br>')}</p>
+        ${isFcra ? `
+        <div class="section">
+          <div class="section-title">Consumer Reporting Agency</div>
+          <div class="cra-box">
+            <strong>${CRA.name}</strong><br>
+            ${CRA.address}<br>
+            Phone: ${CRA.phone}<br>
+            Website: ${CRA.website}
           </div>
+          <p style="margin-top: 6px; font-size: 9pt; font-style: italic;">The consumer reporting agency did not make this decision and cannot explain why it was made.</p>
+        </div>
 
-          <p>This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m) and applicable ${jurisdictionLabel} fair housing laws.</p>
-
-          <div class="cra-section">
-            <h3>Consumer Reporting Agency Information:</h3>
-            <p>
-              <strong>Western Verify LLC</strong><br>
-              P.O. Box 9009<br>
-              Ogden, UT 84409<br>
-              Phone: 1-888-256-0898<br>
-              Website: www.westernverify.com
-            </p>
-            <p><em>Note: The consumer reporting agency did not make the decision to take adverse action and is unable to provide the specific reasons why the adverse action was taken.</em></p>
-          </div>
-
-          <div class="rights-section">
-            <h3>Your Rights Under the Fair Credit Reporting Act:</h3>
+        <div class="section">
+          <div class="section-title">Your Rights</div>
+          <div class="rights-box">
             <ul>
-              <li>You have the right to obtain a free copy of your consumer report from the consumer reporting agency within 60 days of this notice.</li>
-              <li>You have the right to dispute the accuracy or completeness of any information in your consumer report directly with the consumer reporting agency.</li>
-              <li>You may have additional rights under your state's laws.</li>
+              <li>You may obtain a <strong>free copy</strong> of your consumer report within 60 days by contacting the agency above.</li>
+              <li>You have the right to <strong>dispute</strong> the accuracy or completeness of any information in your report.</li>
+              <li>You may have additional rights under ${jurisdictionLabel || 'state'} law.</li>
             </ul>
           </div>
-
-          <p>If you believe this decision was based on inaccurate information, you may contact the consumer reporting agency listed above to obtain a copy of your report and dispute any inaccuracies.</p>
         </div>
+        ` : `
+        <div class="section">
+          <p style="font-size: 10pt;">If you have questions about this decision, please contact the property manager.</p>
+        </div>
+        `}
 
         <div class="signature">
           <p>Sincerely,</p>
           <div class="signature-line">
-            Property Manager/Owner
+            Property Manager / Owner
           </div>
+        </div>
+
+        <div class="footer">
+          ${isFcra ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m)' : 'This notice is provided for your records'}
+          ${jurisdictionLabel ? ` and applicable ${jurisdictionLabel} fair housing laws` : ''}.
         </div>
       </body>
       </html>
@@ -9892,12 +9910,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       
       const pdfBuffer = await page.pdf({
         format: 'Letter',
-        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+        margin: { top: '0.25in', right: '0.25in', bottom: '0.25in', left: '0.25in' },
         printBackground: true,
       });
 
+      const filename = isFcra 
+        ? `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`
+        : `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`;
+
       res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
       res.send(Buffer.from(pdfBuffer));
     } finally {
       await browser.close();

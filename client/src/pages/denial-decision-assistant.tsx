@@ -25,7 +25,18 @@ import {
   Info,
   AlertCircle,
   Loader2,
+  Eye,
+  Download,
+  X,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
 interface CriterionWithRule {
   id: string;
@@ -80,6 +91,8 @@ export default function DenialDecisionAssistant() {
   const [applicantName, setApplicantName] = useState('');
   const [applicantAddress, setApplicantAddress] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
+  const [usedConsumerReport, setUsedConsumerReport] = useState(false);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const { data: states = [], isLoading: statesLoading } = useQuery<State[]>({
     queryKey: ['/api/states'],
@@ -258,6 +271,7 @@ export default function DenialDecisionAssistant() {
         cityId: selectedCityId || undefined,
         denialReasons: generateTextMutation.data.text,
         criteriaIds: Array.from(criteriaPresent),
+        isFcra: usedConsumerReport,
       });
       
       if (!res.ok) {
@@ -269,15 +283,18 @@ export default function DenialDecisionAssistant() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`;
+      const filename = usedConsumerReport 
+        ? `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`
+        : `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = filename;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       a.remove();
       
       toast({
-        title: "Letter Downloaded",
-        description: "The adverse action letter has been downloaded.",
+        title: usedConsumerReport ? "Adverse Action Letter Downloaded" : "Denial Notice Downloaded",
+        description: "The letter has been downloaded and logged to your audit trail.",
       });
     } catch (error: any) {
       toast({
@@ -295,6 +312,23 @@ export default function DenialDecisionAssistant() {
   const jurisdictionLabel = selectedCity 
     ? `${selectedCity.name}, ${selectedState?.name}` 
     : selectedState?.name || 'Select Location';
+
+  // Extract denial reasons as bullet points for preview
+  const denialReasonBullets = useMemo(() => {
+    if (!generateTextMutation.data?.text) return [];
+    const text = generateTextMutation.data.text;
+    // Split by newlines and filter out empty lines, take first 5
+    const lines = text.split('\n').filter((line: string) => line.trim().length > 0);
+    return lines.slice(0, 5);
+  }, [generateTextMutation.data?.text]);
+
+  // CRA info for preview
+  const CRA_INFO = {
+    name: "Western Verify LLC",
+    address: "1698 E Skyline Dr Suite 101, South Ogden, UT 84403",
+    phone: "(855) 973-9378",
+    website: "www.westernverify.com"
+  };
 
   if (authLoading) {
     return (
@@ -733,31 +767,129 @@ export default function DenialDecisionAssistant() {
                   </div>
                 </div>
 
-                <div className="flex flex-wrap gap-3 pt-4">
-                  <Button 
-                    onClick={handleSaveDenial}
-                    disabled={saveDecisionMutation.isPending}
-                    data-testid="button-save-denial"
-                  >
-                    {saveDecisionMutation.isPending ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : null}
-                    Save & Log Decision
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={handleDownloadAdverseAction}
-                    disabled={!generateTextMutation.data?.text || isDownloading}
-                    data-testid="button-download-adverse-action"
-                  >
-                    {isDownloading ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                <div className="space-y-4 pt-4 border-t">
+                  <div className="flex items-start gap-3 p-3 border rounded-md bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                    <Checkbox
+                      id="fcra-confirm"
+                      checked={usedConsumerReport}
+                      onCheckedChange={(checked) => setUsedConsumerReport(!!checked)}
+                      className="mt-0.5"
+                      data-testid="checkbox-fcra-confirm"
+                    />
+                    <label htmlFor="fcra-confirm" className="text-sm cursor-pointer">
+                      <span className="font-medium">I confirm this decision used a consumer report</span>
+                      <span className="text-muted-foreground block mt-0.5">
+                        (credit, criminal, or eviction report from a screening provider)
+                      </span>
+                    </label>
+                  </div>
+
+                  <div className="flex flex-wrap gap-3">
+                    <Button 
+                      onClick={handleSaveDenial}
+                      disabled={saveDecisionMutation.isPending}
+                      data-testid="button-save-denial"
+                    >
+                      {saveDecisionMutation.isPending ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : null}
+                      Save & Log Decision
+                    </Button>
+                    
+                    {usedConsumerReport ? (
+                      <Button
+                        variant="outline"
+                        onClick={() => setShowPreviewModal(true)}
+                        disabled={!generateTextMutation.data?.text}
+                        data-testid="button-preview-adverse-action"
+                      >
+                        <Eye className="h-4 w-4 mr-2" />
+                        Preview & Download Adverse Action Letter
+                      </Button>
                     ) : (
-                      <FileText className="h-4 w-4 mr-2" />
+                      <Button
+                        variant="outline"
+                        onClick={handleDownloadAdverseAction}
+                        disabled={!generateTextMutation.data?.text || isDownloading}
+                        data-testid="button-download-denial-notice"
+                      >
+                        {isDownloading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <FileText className="h-4 w-4 mr-2" />
+                        )}
+                        Download Denial Notice (non-FCRA)
+                      </Button>
                     )}
-                    Download Adverse Action Letter
-                  </Button>
+                  </div>
                 </div>
+
+                <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
+                  <DialogContent className="max-w-lg">
+                    <DialogHeader>
+                      <DialogTitle className="flex items-center gap-2">
+                        <FileText className="h-5 w-5" />
+                        Adverse Action Letter Preview
+                      </DialogTitle>
+                      <DialogDescription>
+                        Review the information before downloading. Make sure everything is correct.
+                      </DialogDescription>
+                    </DialogHeader>
+                    
+                    <div className="space-y-4 py-2">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-muted-foreground">Applicant</h4>
+                        <p className="font-medium">{applicantName || 'Not specified'}</p>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-muted-foreground">Reason(s) for Denial</h4>
+                        <ul className="list-disc pl-5 space-y-1 text-sm">
+                          {denialReasonBullets.map((reason, i) => (
+                            <li key={i}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-muted-foreground">Consumer Reporting Agency</h4>
+                        <div className="text-sm">
+                          <p className="font-medium">{CRA_INFO.name}</p>
+                          <p className="text-muted-foreground">{CRA_INFO.address}</p>
+                          <p>Phone: {CRA_INFO.phone}</p>
+                          <p>Website: {CRA_INFO.website}</p>
+                        </div>
+                      </div>
+
+                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md">
+                        <p className="text-xs text-amber-800 dark:text-amber-200">
+                          The letter will include FCRA-required notices about the applicant's right to dispute information and obtain a free copy of their report.
+                        </p>
+                      </div>
+                    </div>
+
+                    <DialogFooter className="flex-col sm:flex-row gap-2">
+                      <Button variant="outline" onClick={() => setShowPreviewModal(false)}>
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={() => {
+                          setShowPreviewModal(false);
+                          handleDownloadAdverseAction();
+                        }}
+                        disabled={isDownloading}
+                        data-testid="button-confirm-download"
+                      >
+                        {isDownloading ? (
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        ) : (
+                          <Download className="h-4 w-4 mr-2" />
+                        )}
+                        Download PDF
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
 
                 {saveDecisionMutation.isSuccess && (
                   <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
