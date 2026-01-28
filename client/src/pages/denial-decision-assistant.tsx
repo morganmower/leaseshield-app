@@ -78,6 +78,8 @@ export default function DenialDecisionAssistant() {
   const [selectedConditions, setSelectedConditions] = useState<Set<string>>(new Set());
   const [noticesChecked, setNoticesChecked] = useState<Set<string>>(new Set());
   const [applicantName, setApplicantName] = useState('');
+  const [applicantAddress, setApplicantAddress] = useState('');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: states = [], isLoading: statesLoading } = useQuery<State[]>({
     queryKey: ['/api/states'],
@@ -244,6 +246,50 @@ export default function DenialDecisionAssistant() {
     }
   };
 
+  const handleDownloadAdverseAction = async () => {
+    if (!generateTextMutation.data?.text) return;
+    
+    setIsDownloading(true);
+    try {
+      const res = await apiRequest('POST', '/api/denial-decision/adverse-action-letter', {
+        applicantName: applicantName || 'Applicant',
+        applicantAddress: applicantAddress || '',
+        stateId: selectedStateId,
+        cityId: selectedCityId || undefined,
+        denialReasons: generateTextMutation.data.text,
+        criteriaIds: Array.from(criteriaPresent),
+      });
+      
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({ message: 'Failed to generate letter' }));
+        throw new Error(errorData.message || 'Failed to generate the letter');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      toast({
+        title: "Letter Downloaded",
+        description: "The adverse action letter has been downloaded.",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Download Failed",
+        description: error.message || "Failed to generate the letter",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   const canProceedToStep2 = !!selectedStateId;
   const canProceedToStep3 = criteriaPresent.size > 0;
   const jurisdictionLabel = selectedCity 
@@ -397,7 +443,7 @@ export default function DenialDecisionAssistant() {
               Step 2: What Showed Up?
             </CardTitle>
             <CardDescription>
-              Check the items that appeared in the applicant's screening report.
+              Check what appeared in the screening report. We'll tell you what you can and cannot use as a denial reason in your location.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -588,12 +634,12 @@ export default function DenialDecisionAssistant() {
       {currentStep === 4 && (
         <Card data-testid="card-step-4">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+          <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
               Step 4: Generate Safe Denial
             </CardTitle>
             <CardDescription>
-              Use this compliant denial text and ensure all required notices are included.
+              Use this compliant denial text and ensure all required notices are included. If a consumer report was used, you can download the required adverse action letter.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
@@ -621,6 +667,34 @@ export default function DenialDecisionAssistant() {
                     data-testid="text-denial-content"
                   >
                     {generateTextMutation.data.text}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="font-medium">Applicant Information (for adverse action letter)</h4>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1">
+                      <label className="text-sm text-muted-foreground">Applicant Name</label>
+                      <input
+                        type="text"
+                        value={applicantName}
+                        onChange={(e) => setApplicantName(e.target.value)}
+                        placeholder="Full name"
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                        data-testid="input-applicant-name"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className="text-sm text-muted-foreground">Applicant Address</label>
+                      <input
+                        type="text"
+                        value={applicantAddress}
+                        onChange={(e) => setApplicantAddress(e.target.value)}
+                        placeholder="Street, City, State ZIP"
+                        className="w-full px-3 py-2 border rounded-md text-sm"
+                        data-testid="input-applicant-address"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -659,7 +733,7 @@ export default function DenialDecisionAssistant() {
                   </div>
                 </div>
 
-                <div className="flex gap-3 pt-4">
+                <div className="flex flex-wrap gap-3 pt-4">
                   <Button 
                     onClick={handleSaveDenial}
                     disabled={saveDecisionMutation.isPending}
@@ -669,6 +743,19 @@ export default function DenialDecisionAssistant() {
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : null}
                     Save & Log Decision
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={handleDownloadAdverseAction}
+                    disabled={!generateTextMutation.data?.text || isDownloading}
+                    data-testid="button-download-adverse-action"
+                  >
+                    {isDownloading ? (
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    ) : (
+                      <FileText className="h-4 w-4 mr-2" />
+                    )}
+                    Download Adverse Action Letter
                   </Button>
                 </div>
 
@@ -749,15 +836,16 @@ function CriterionRow({
           {isBlocked && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="secondary" className="text-xs gap-1">
+                <Badge variant="secondary" className="text-xs gap-1 bg-red-100 text-red-700 dark:bg-red-950 dark:text-red-400">
                   <Lock className="h-3 w-3" /> Not Allowed
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
+                <p className="text-sm font-medium mb-1">You cannot use this for denial</p>
                 <p className="text-sm">{criterion.explanationPlain || criterion.whyItMatters || 'This criterion cannot be used for denial in this jurisdiction.'}</p>
                 {criterion.legalAlternative && (
-                  <p className="text-sm mt-1 text-muted-foreground">
-                    Alternative: {criterion.legalAlternative}
+                  <p className="text-sm mt-2 text-muted-foreground">
+                    <strong>Alternative:</strong> {criterion.legalAlternative}
                   </p>
                 )}
               </TooltipContent>
@@ -766,14 +854,15 @@ function CriterionRow({
           {isConditional && (
             <Tooltip>
               <TooltipTrigger asChild>
-                <Badge variant="outline" className="text-xs gap-1 border-amber-400 text-amber-700 dark:text-amber-400">
-                  <AlertTriangle className="h-3 w-3" /> Conditional
+                <Badge variant="outline" className="text-xs gap-1 border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-400">
+                  <AlertTriangle className="h-3 w-3" /> Extra Steps Required
                 </Badge>
               </TooltipTrigger>
               <TooltipContent className="max-w-xs">
+                <p className="text-sm font-medium mb-1">Allowed, but extra steps required</p>
                 <p className="text-sm">{criterion.explanationPlain || 'This criterion requires additional steps before it can be used.'}</p>
                 {criterion.requiredSteps && criterion.requiredSteps.length > 0 && (
-                  <ul className="text-sm mt-1 list-disc pl-4">
+                  <ul className="text-sm mt-2 list-disc pl-4">
                     {criterion.requiredSteps.map((step, i) => (
                       <li key={i}>{step}</li>
                     ))}
@@ -781,6 +870,11 @@ function CriterionRow({
                 )}
               </TooltipContent>
             </Tooltip>
+          )}
+          {!isBlocked && !isConditional && (
+            <Badge variant="outline" className="text-xs gap-1 border-green-400 bg-green-50 text-green-700 dark:bg-green-950 dark:text-green-400">
+              <CheckCircle className="h-3 w-3" /> Allowed to Consider
+            </Badge>
           )}
         </div>
         {criterion.description && (

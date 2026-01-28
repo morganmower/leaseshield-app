@@ -1237,6 +1237,28 @@ export default function Screening() {
           </Card>
         </div>
 
+        {/* Denial Decision Assistant CTA */}
+        <div className="mb-8">
+          <Link href="/denial-decision">
+            <Card className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 hover-elevate cursor-pointer" data-testid="card-denial-decision-cta">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Scale className="h-6 w-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-foreground mb-1">Denial Decision Assistant</h3>
+                  <p className="text-muted-foreground mb-3">
+                    Pick your city and we'll block illegal denial reasons and generate compliant denial text + required notices.
+                  </p>
+                  <p className="text-sm text-primary hover:underline">
+                    Not sure what you can deny for in your city? Start here →
+                  </p>
+                </div>
+              </div>
+            </Card>
+          </Link>
+        </div>
+
         {/* Privacy Notice - Moved below helpers */}
         <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
           <div className="flex items-start gap-3">

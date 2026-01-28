@@ -9692,6 +9692,218 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(user);
   }));
 
+  // Generate adverse action letter PDF
+  app.post('/api/denial-decision/adverse-action-letter', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { 
+      applicantName, 
+      applicantAddress, 
+      stateId, 
+      cityId,
+      denialReasons,
+      criteriaIds
+    } = req.body;
+
+    if (!stateId || !denialReasons) {
+      return res.status(400).json({ message: "stateId and denialReasons are required" });
+    }
+
+    // HTML escape helper to prevent injection
+    const escapeHtml = (str: string) => {
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
+
+    // Sanitize user inputs
+    const safeApplicantName = escapeHtml(applicantName || 'Applicant');
+    const safeApplicantAddress = escapeHtml(applicantAddress || '');
+    const safeDenialReasons = escapeHtml(denialReasons);
+
+    // Get state and city info
+    const state = await storage.getStateById(stateId);
+    let city = null;
+    if (cityId) {
+      city = await storage.getCity(cityId);
+    }
+
+    const jurisdictionLabel = city ? `${city.name}, ${state?.name}` : state?.name || '';
+    const today = new Date();
+    const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+    // Generate HTML for the adverse action letter
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <style>
+          body {
+            font-family: 'Times New Roman', serif;
+            font-size: 12pt;
+            line-height: 1.6;
+            max-width: 8.5in;
+            margin: 0 auto;
+            padding: 1in;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+          }
+          .header h1 {
+            font-size: 18pt;
+            margin: 0 0 5px 0;
+          }
+          .header p {
+            margin: 0;
+            color: #666;
+          }
+          .date {
+            text-align: right;
+            margin-bottom: 30px;
+          }
+          .recipient {
+            margin-bottom: 30px;
+          }
+          .content {
+            margin-bottom: 30px;
+          }
+          .content p {
+            margin-bottom: 15px;
+            text-align: justify;
+          }
+          .reasons-box {
+            border: 1px solid #333;
+            padding: 15px;
+            margin: 20px 0;
+            background: #f9f9f9;
+          }
+          .reasons-box h3 {
+            margin: 0 0 10px 0;
+            font-size: 12pt;
+          }
+          .cra-section {
+            border: 1px solid #666;
+            padding: 15px;
+            margin: 20px 0;
+            background: #fff;
+          }
+          .cra-section h3 {
+            margin: 0 0 10px 0;
+            font-size: 11pt;
+          }
+          .rights-section {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #ccc;
+          }
+          .rights-section h3 {
+            font-size: 11pt;
+            margin-bottom: 10px;
+          }
+          .rights-section ul {
+            margin: 0;
+            padding-left: 20px;
+          }
+          .signature {
+            margin-top: 50px;
+          }
+          .signature-line {
+            border-top: 1px solid #333;
+            width: 300px;
+            margin-top: 50px;
+            padding-top: 5px;
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>ADVERSE ACTION NOTICE</h1>
+          <p>Fair Credit Reporting Act (FCRA) Required Disclosure</p>
+        </div>
+
+        <div class="date">${dateStr}</div>
+
+        <div class="recipient">
+          <strong>${safeApplicantName}</strong><br>
+          ${safeApplicantAddress ? safeApplicantAddress.replace(/,/g, '<br>') : '[Address on file]'}
+        </div>
+
+        <div class="content">
+          <p>Dear ${safeApplicantName},</p>
+
+          <p>We regret to inform you that your application for housing has been denied. This decision was based, in whole or in part, on information obtained from a consumer reporting agency.</p>
+
+          <div class="reasons-box">
+            <h3>Reason(s) for Denial:</h3>
+            <p>${safeDenialReasons.replace(/\n/g, '<br>')}</p>
+          </div>
+
+          <p>This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m) and applicable ${jurisdictionLabel} fair housing laws.</p>
+
+          <div class="cra-section">
+            <h3>Consumer Reporting Agency Information:</h3>
+            <p>
+              <strong>Western Verify LLC</strong><br>
+              P.O. Box 9009<br>
+              Ogden, UT 84409<br>
+              Phone: 1-888-256-0898<br>
+              Website: www.westernverify.com
+            </p>
+            <p><em>Note: The consumer reporting agency did not make the decision to take adverse action and is unable to provide the specific reasons why the adverse action was taken.</em></p>
+          </div>
+
+          <div class="rights-section">
+            <h3>Your Rights Under the Fair Credit Reporting Act:</h3>
+            <ul>
+              <li>You have the right to obtain a free copy of your consumer report from the consumer reporting agency within 60 days of this notice.</li>
+              <li>You have the right to dispute the accuracy or completeness of any information in your consumer report directly with the consumer reporting agency.</li>
+              <li>You may have additional rights under your state's laws.</li>
+            </ul>
+          </div>
+
+          <p>If you believe this decision was based on inaccurate information, you may contact the consumer reporting agency listed above to obtain a copy of your report and dispute any inaccuracies.</p>
+        </div>
+
+        <div class="signature">
+          <p>Sincerely,</p>
+          <div class="signature-line">
+            Property Manager/Owner
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    // Generate PDF using puppeteer
+    const puppeteer = await import('puppeteer');
+    const browser = await puppeteer.default.launch({
+      headless: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+    
+    try {
+      const page = await browser.newPage();
+      await page.setContent(html, { waitUntil: 'networkidle0' });
+      
+      const pdfBuffer = await page.pdf({
+        format: 'Letter',
+        margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' },
+        printBackground: true,
+      });
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf"`);
+      res.send(Buffer.from(pdfBuffer));
+    } finally {
+      await browser.close();
+    }
+  }));
+
   // Admin: Get coverage report (all states x topics matrix)
   app.get('/api/admin/state-notes/coverage', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
     const coverage = await storage.getStateNotesCoverage();
