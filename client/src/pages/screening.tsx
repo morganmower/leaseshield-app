@@ -33,6 +33,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
+  History,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
@@ -706,15 +707,25 @@ export default function Screening() {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Screening Decoder
-          </h1>
-          <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
-          </p>
-          <p className="text-muted-foreground">
-            Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
-          </p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+                Screening Decoder
+              </h1>
+              <p className="text-muted-foreground mb-2">
+                <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
+              </p>
+              <p className="text-muted-foreground">
+                Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
+              </p>
+            </div>
+            <Link to="/audit-history">
+              <Button variant="outline" className="flex items-center gap-2" data-testid="button-view-history">
+                <History className="h-4 w-4" />
+                View History
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Legal Disclaimer */}
