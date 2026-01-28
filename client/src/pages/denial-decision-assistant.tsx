@@ -333,9 +333,10 @@ export default function DenialDecisionAssistant() {
   // CRA info for preview
   const CRA_INFO = {
     name: "Western Verify LLC",
-    address: "1698 E Skyline Dr Suite 101, South Ogden, UT 84403",
-    phone: "(855) 973-9378",
-    website: "www.westernverify.com"
+    address: "489 W South Jordan Pkwy, Suite 200, South Jordan, UT 84095",
+    phone: "(888) 610-WEST",
+    website: "www.westernverify.com",
+    email: "support@westernverify.com"
   };
 
   if (authLoading) {
