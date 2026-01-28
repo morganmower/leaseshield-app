@@ -9929,11 +9929,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       </html>
     `;
 
-    // Generate PDF using puppeteer
+    // Generate PDF using puppeteer with system Chromium
     const puppeteer = await import('puppeteer');
+    const chromiumPath = execSync('which chromium').toString().trim();
     const browser = await puppeteer.default.launch({
       headless: true,
-      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      executablePath: chromiumPath,
+      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     });
     
     try {
