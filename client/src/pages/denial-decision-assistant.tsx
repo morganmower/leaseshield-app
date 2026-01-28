@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -93,7 +94,6 @@ export default function DenialDecisionAssistant() {
   const [applicantAddress, setApplicantAddress] = useState('');
   const [isDownloading, setIsDownloading] = useState(false);
   const [usedConsumerReport, setUsedConsumerReport] = useState(false);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   const { data: states = [], isLoading: statesLoading } = useQuery<State[]>({
     queryKey: ['/api/states'],
@@ -361,24 +361,6 @@ export default function DenialDecisionAssistant() {
   const jurisdictionLabel = jurisdictionParts.length > 0 
     ? jurisdictionParts.join(', ') 
     : 'Select Location';
-
-  // Extract denial reasons as bullet points for preview
-  const denialReasonBullets: string[] = useMemo(() => {
-    if (!generateTextMutation.data?.text) return [];
-    const text = generateTextMutation.data.text;
-    // Split by newlines and filter out empty lines, take first 5
-    const lines = text.split('\n').filter((line: string) => line.trim().length > 0);
-    return lines.slice(0, 5);
-  }, [generateTextMutation.data?.text]);
-
-  // CRA info for preview
-  const CRA_INFO = {
-    name: "Western Verify LLC",
-    address: "489 W South Jordan Pkwy, Suite 200, South Jordan, UT 84095",
-    phone: "(888) 610-WEST",
-    website: "www.westernverify.com",
-    email: "support@westernverify.com"
-  };
 
   if (authLoading) {
     return (
@@ -869,95 +851,72 @@ export default function DenialDecisionAssistant() {
                     ))}
                   </div>
                   
-                  {usedConsumerReport && (
-                    <div className="mt-4 p-4 border rounded-md border-blue-200 dark:border-blue-800 bg-blue-50/50 dark:bg-blue-950/20">
-                      <div className="flex items-start gap-3">
-                        <Info className="h-4 w-4 text-blue-600 mt-0.5" />
-                        <div>
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">You need to send TWO letters (not one)</p>
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                            Because you used a credit check, background check, or other screening report, federal law (FCRA) requires a two-step process:
-                          </p>
-                          <ol className="text-xs text-blue-600 dark:text-blue-400 mt-2 ml-4 list-decimal space-y-1">
-                            <li><strong>First:</strong> Send a "Pre-Adverse Action" letter giving the applicant 5 days to dispute any errors in their report</li>
-                            <li><strong>Then:</strong> After waiting, send the final "Adverse Action" denial letter</li>
-                          </ol>
-                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
-                            Your download will include both letters with instructions.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">
-                  <div className="flex items-start gap-3 p-3 border rounded-md bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
-                    <Checkbox
-                      id="fcra-confirm"
-                      checked={usedConsumerReport}
-                      onCheckedChange={(checked) => setUsedConsumerReport(!!checked)}
-                      className="mt-0.5"
-                      data-testid="checkbox-fcra-confirm"
-                    />
-                    <label htmlFor="fcra-confirm" className="text-sm cursor-pointer">
-                      <span className="font-medium">I confirm this decision used a consumer report</span>
+                  <div className="flex items-center justify-between p-3 border rounded-md">
+                    <label htmlFor="consumer-report-toggle" className="text-sm cursor-pointer">
+                      <span className="font-medium">Did you use a consumer report?</span>
                       <span className="text-muted-foreground block mt-0.5">
                         (credit, criminal, or eviction report from a screening provider)
                       </span>
                     </label>
+                    <div className="flex items-center gap-2">
+                      <span className={`text-sm ${!usedConsumerReport ? 'font-medium' : 'text-muted-foreground'}`}>No</span>
+                      <Switch
+                        id="consumer-report-toggle"
+                        checked={usedConsumerReport}
+                        onCheckedChange={setUsedConsumerReport}
+                        data-testid="switch-consumer-report"
+                      />
+                      <span className={`text-sm ${usedConsumerReport ? 'font-medium' : 'text-muted-foreground'}`}>Yes</span>
+                    </div>
                   </div>
 
-                  {usedConsumerReport && (
-                    <div className="p-3 rounded-md bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 text-sm">
-                      <div className="font-medium text-amber-800 dark:text-amber-200 mb-1">FCRA Two-Letter Requirement</div>
-                      <p className="text-amber-700 dark:text-amber-300">
-                        When using a consumer report, FCRA requires a <strong>two-step process</strong>: (1) Send the Pre-Adverse Notice first, 
-                        giving the applicant 5 business days to dispute. (2) After the waiting period, send the final Adverse Action Letter.
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex flex-wrap gap-3">
-                    {usedConsumerReport ? (
-                      <>
-                        <Button
-                          onClick={() => handleDownloadLetter('pre-adverse')}
-                          disabled={!generateTextMutation.data?.text || isDownloading}
-                          variant="outline"
-                          data-testid="button-download-pre-adverse"
-                        >
-                          {isDownloading ? (
-                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          ) : (
-                            <FileText className="h-4 w-4 mr-2" />
-                          )}
-                          1. Pre-Adverse Notice
-                        </Button>
-                        <Button
-                          onClick={() => setShowPreviewModal(true)}
-                          disabled={!generateTextMutation.data?.text}
-                          data-testid="button-preview-adverse-action"
-                        >
-                          <Eye className="h-4 w-4 mr-2" />
-                          2. Adverse Action Letter
-                        </Button>
-                      </>
-                    ) : (
+                  {usedConsumerReport ? (
+                    <div className="space-y-3">
                       <Button
                         onClick={handleDownloadAdverseAction}
                         disabled={!generateTextMutation.data?.text || isDownloading}
-                        data-testid="button-download-denial-notice"
+                        className="w-full"
+                        data-testid="button-download-adverse-action"
                       >
                         {isDownloading ? (
                           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                         ) : (
                           <FileText className="h-4 w-4 mr-2" />
                         )}
-                        Download Denial Notice
+                        Download Adverse Action Letter
                       </Button>
-                    )}
-                  </div>
+                      
+                      <div className="text-center">
+                        <button
+                          onClick={() => handleDownloadLetter('pre-adverse')}
+                          disabled={!generateTextMutation.data?.text || isDownloading}
+                          className="text-sm text-muted-foreground hover:text-foreground underline underline-offset-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          data-testid="link-download-pre-adverse"
+                        >
+                          Optional: Download Pre-Adverse Notice
+                        </button>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Pre-Adverse gives the applicant a chance to review/dispute the report before your final decision.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <Button
+                      onClick={() => handleDownloadLetter('denial')}
+                      disabled={!generateTextMutation.data?.text || isDownloading}
+                      data-testid="button-download-denial-notice"
+                    >
+                      {isDownloading ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <FileText className="h-4 w-4 mr-2" />
+                      )}
+                      Download Denial Notice
+                    </Button>
+                  )}
                   
                   {decisionSaved && (
                     <p className="text-sm text-muted-foreground flex items-center gap-2">
@@ -966,73 +925,6 @@ export default function DenialDecisionAssistant() {
                     </p>
                   )}
                 </div>
-
-                <Dialog open={showPreviewModal} onOpenChange={setShowPreviewModal}>
-                  <DialogContent className="max-w-lg">
-                    <DialogHeader>
-                      <DialogTitle className="flex items-center gap-2">
-                        <FileText className="h-5 w-5" />
-                        Adverse Action Letter Preview
-                      </DialogTitle>
-                      <DialogDescription>
-                        Review the information before downloading. Make sure everything is correct.
-                      </DialogDescription>
-                    </DialogHeader>
-                    
-                    <div className="space-y-4 py-2">
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Applicant</h4>
-                        <p className="font-medium">{applicantName || 'Not specified'}</p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Reason(s) for Denial</h4>
-                        <ul className="list-disc pl-5 space-y-1 text-sm">
-                          {denialReasonBullets.map((reason, i) => (
-                            <li key={i}>{reason}</li>
-                          ))}
-                        </ul>
-                      </div>
-
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium text-muted-foreground">Consumer Reporting Agency</h4>
-                        <div className="text-sm">
-                          <p className="font-medium">{CRA_INFO.name}</p>
-                          <p className="text-muted-foreground">{CRA_INFO.address}</p>
-                          <p>Phone: {CRA_INFO.phone}</p>
-                          <p>Website: {CRA_INFO.website}</p>
-                        </div>
-                      </div>
-
-                      <div className="p-3 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-md">
-                        <p className="text-xs text-amber-800 dark:text-amber-200">
-                          The letter will include FCRA-required notices about the applicant's right to dispute information and obtain a free copy of their report.
-                        </p>
-                      </div>
-                    </div>
-
-                    <DialogFooter className="flex-col sm:flex-row gap-2">
-                      <Button variant="outline" onClick={() => setShowPreviewModal(false)}>
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setShowPreviewModal(false);
-                          handleDownloadAdverseAction();
-                        }}
-                        disabled={isDownloading}
-                        data-testid="button-confirm-download"
-                      >
-                        {isDownloading ? (
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                        ) : (
-                          <Download className="h-4 w-4 mr-2" />
-                        )}
-                        Download PDF
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
 
                 {decisionSaved && (
                   <Card className="bg-green-50 dark:bg-green-950/30 border-green-200 dark:border-green-800">
