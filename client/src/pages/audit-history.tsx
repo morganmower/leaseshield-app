@@ -23,6 +23,9 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  Eye,
+  Building,
+  Scale,
 } from "lucide-react";
 
 interface AuditLog {
@@ -30,6 +33,8 @@ interface AuditLog {
   userId: string;
   applicantName: string | null;
   stateId: string;
+  countyId: string | null;
+  countyName: string | null;
   cityId: string | null;
   cityName: string | null;
   ruleVersion: string;
@@ -39,6 +44,8 @@ interface AuditLog {
   generatedDenialText: string | null;
   adverseActionLetterGenerated: boolean;
   conditionsApplied: string[] | null;
+  fairChanceStepsCompleted: Record<string, boolean> | null;
+  noticesProvided: string[] | null;
   createdAt: string;
 }
 
@@ -67,6 +74,7 @@ export default function AuditHistory() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [editingLog, setEditingLog] = useState<AuditLog | null>(null);
+  const [viewingLog, setViewingLog] = useState<AuditLog | null>(null);
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editOutcome, setEditOutcome] = useState<'approve' | 'conditional' | 'deny'>('approve');
@@ -207,8 +215,20 @@ export default function AuditHistory() {
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {log.cityName ? `${log.cityName}, ${log.stateId}` : log.stateId}
+                        {log.cityName 
+                          ? `${log.cityName}, ${log.stateId}` 
+                          : log.countyName 
+                            ? `${log.countyName}, ${log.stateId}`
+                            : log.stateId}
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setViewingLog(log)}
+                        data-testid={`button-view-${log.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -309,6 +329,140 @@ export default function AuditHistory() {
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               Save Changes
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingLog} onOpenChange={(open) => !open && setViewingLog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Decision Details
+            </DialogTitle>
+            <DialogDescription>
+              Full record of this screening decision
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingLog && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Applicant</p>
+                  <p className="font-medium">{viewingLog.applicantName || "Not specified"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Decision</p>
+                  <Badge className={OUTCOME_STYLES[viewingLog.outcome].badgeClass}>
+                    {OUTCOME_STYLES[viewingLog.outcome].label}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Date</p>
+                  <p className="flex items-center gap-1 text-sm">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(viewingLog.createdAt)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Jurisdiction</p>
+                  <div className="flex items-center gap-1 text-sm">
+                    <MapPin className="h-3 w-3" />
+                    <span>
+                      {viewingLog.cityName && `${viewingLog.cityName}, `}
+                      {viewingLog.countyName && `${viewingLog.countyName}, `}
+                      {viewingLog.stateId}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {viewingLog.criteriaPresent && viewingLog.criteriaPresent.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    Criteria Present in Report
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.criteriaPresent.map((code, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.criteriaSelectedForDenial && viewingLog.criteriaSelectedForDenial.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2 text-destructive">
+                    <Scale className="h-4 w-4" />
+                    Criteria Used for Denial
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.criteriaSelectedForDenial.map((code, i) => (
+                      <Badge key={i} variant="destructive" className="text-xs">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.outcome === 'conditional' && viewingLog.conditionsApplied && viewingLog.conditionsApplied.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2 text-amber-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    Conditions Applied
+                  </p>
+                  <ul className="text-sm list-disc list-inside space-y-1">
+                    {viewingLog.conditionsApplied.map((condition, i) => (
+                      <li key={i}>{condition}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {viewingLog.generatedDenialText && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    Generated Denial Text
+                  </p>
+                  <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
+                    {viewingLog.generatedDenialText}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.noticesProvided && viewingLog.noticesProvided.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium">Notices Provided</p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.noticesProvided.map((notice, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {notice.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.adverseActionLetterGenerated && (
+                <div className="flex items-center gap-2 pt-2 border-t text-sm text-primary">
+                  <FileText className="h-4 w-4" />
+                  Adverse Action Letter was generated for this decision
+                </div>
+              )}
+
+              <div className="pt-2 border-t text-xs text-muted-foreground">
+                Rule Version: {viewingLog.ruleVersion}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingLog(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
