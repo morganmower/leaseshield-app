@@ -319,13 +319,10 @@ function DecoderDisplay({ explanation, decoderType, userState, userStateName, st
         
         {/* Fallback Text - when state law question but no vetted snippet */}
         {fallbackText && !stateNote && (
-          <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              <h4 className="font-semibold text-foreground">State-Specific Requirements</h4>
-            </div>
-            <p className="text-foreground text-sm leading-relaxed ml-7">{fallbackText}</p>
-          </div>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 italic">
+            <Info className="h-4 w-4 flex-shrink-0" />
+            {fallbackText}
+          </p>
         )}
         
         <div className="pt-2 text-xs text-muted-foreground border-t border-muted/50 mt-4 space-y-1">
