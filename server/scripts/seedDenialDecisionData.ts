@@ -388,7 +388,8 @@ export async function seedDenialDecisionData() {
 }
 
 // Run if executed directly
-if (require.main === module) {
+const isMainModule = import.meta.url === `file://${process.argv[1]}`;
+if (isMainModule) {
   seedDenialDecisionData()
     .then(() => process.exit(0))
     .catch((err) => {

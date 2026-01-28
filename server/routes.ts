@@ -9424,6 +9424,213 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(note);
   }));
 
+  // ===== DENIAL DECISION ASSISTANT ENDPOINTS =====
+
+  // Get cities by state
+  app.get('/api/denial-decision/cities', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { stateId } = req.query;
+    if (!stateId) {
+      return res.status(400).json({ message: "stateId is required" });
+    }
+    const cities = await storage.getCitiesByState(stateId as string);
+    res.json(cities);
+  }));
+
+  // Get all denial criteria with rules for a jurisdiction
+  app.get('/api/denial-decision/criteria', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { stateId, cityId } = req.query;
+    if (!stateId) {
+      return res.status(400).json({ message: "stateId is required" });
+    }
+
+    // Get all criteria
+    const criteria = await storage.getAllDenialCriteria();
+    
+    // Get rules for this jurisdiction
+    const rules = await storage.getDenialCriteriaRulesForJurisdiction(
+      stateId as string, 
+      cityId as string | undefined
+    );
+
+    // Build a map of criteriaId -> most specific rule (city overrides state overrides federal)
+    const ruleMap = new Map<string, any>();
+    for (const rule of rules) {
+      const existing = ruleMap.get(rule.criteriaId);
+      if (!existing) {
+        ruleMap.set(rule.criteriaId, rule);
+      } else {
+        // City rules override state, state overrides federal
+        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0);
+        const newSpecificity = (rule.cityId ? 2 : 0) + (rule.stateId ? 1 : 0);
+        if (newSpecificity > existingSpecificity) {
+          ruleMap.set(rule.criteriaId, rule);
+        }
+      }
+    }
+
+    // Group criteria by category with their rules
+    const grouped: Record<string, Array<{
+      id: string;
+      code: string;
+      label: string;
+      description: string | null;
+      status: 'blocked' | 'allowed' | 'conditional';
+      explanationPlain: string | null;
+      whyItMatters: string | null;
+      legalAlternative: string | null;
+      requiredSteps: string[] | null;
+    }>> = {};
+
+    for (const criterion of criteria) {
+      const rule = ruleMap.get(criterion.id);
+      const status = rule?.status || 'allowed'; // Default to allowed if no rule
+      
+      if (!grouped[criterion.category]) {
+        grouped[criterion.category] = [];
+      }
+      
+      grouped[criterion.category].push({
+        id: criterion.id,
+        code: criterion.code,
+        label: criterion.label,
+        description: criterion.description,
+        status,
+        explanationPlain: rule?.explanationPlain || null,
+        whyItMatters: rule?.whyItMatters || null,
+        legalAlternative: rule?.legalAlternative || null,
+        requiredSteps: rule?.requiredSteps || null,
+      });
+    }
+
+    res.json(grouped);
+  }));
+
+  // Get sentence templates for selected criteria
+  app.get('/api/denial-decision/sentence-templates', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { criteriaIds, stateId, cityId } = req.query;
+    
+    if (!criteriaIds || !stateId) {
+      return res.status(400).json({ message: "criteriaIds and stateId are required" });
+    }
+
+    const ids = Array.isArray(criteriaIds) ? criteriaIds : [criteriaIds];
+    const templates = await storage.getDenialSentenceTemplates(
+      ids as string[],
+      stateId as string,
+      cityId as string | undefined
+    );
+
+    res.json(templates);
+  }));
+
+  // Generate combined denial text
+  app.post('/api/denial-decision/generate-text', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { criteriaIds, stateId, cityId } = req.body;
+    
+    if (!criteriaIds || !Array.isArray(criteriaIds) || criteriaIds.length === 0) {
+      return res.status(400).json({ message: "criteriaIds must be a non-empty array" });
+    }
+    if (!stateId) {
+      return res.status(400).json({ message: "stateId is required" });
+    }
+
+    const templates = await storage.getDenialSentenceTemplates(criteriaIds, stateId, cityId);
+    
+    // Pick the most specific template for each criterion (city > state > universal)
+    const templateMap = new Map<string, any>();
+    for (const template of templates) {
+      const existing = templateMap.get(template.criteriaId);
+      if (!existing) {
+        templateMap.set(template.criteriaId, template);
+      } else {
+        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0) + (existing.isDefault ? 0 : 0.5);
+        const newSpecificity = (template.cityId ? 2 : 0) + (template.stateId ? 1 : 0) + (template.isDefault ? 0 : 0.5);
+        if (newSpecificity > existingSpecificity) {
+          templateMap.set(template.criteriaId, template);
+        }
+      }
+    }
+
+    // Combine sentences
+    const sentences = Array.from(templateMap.values()).map(t => t.sentenceText);
+    const combinedText = sentences.join(' ');
+
+    res.json({ 
+      text: combinedText,
+      sentences,
+      templateCount: sentences.length 
+    });
+  }));
+
+  // Save decision to audit log
+  app.post('/api/denial-decision/save', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { 
+      stateId, 
+      cityId, 
+      outcome, 
+      criteriaPresent, 
+      criteriaSelected, 
+      generatedText,
+      conditions,
+      fairChanceSteps,
+      applicantName,
+      propertyId,
+      noticesProvided
+    } = req.body;
+
+    if (!stateId || !outcome || !criteriaPresent) {
+      return res.status(400).json({ message: "stateId, outcome, and criteriaPresent are required" });
+    }
+
+    if (!['approve', 'conditional', 'deny'].includes(outcome)) {
+      return res.status(400).json({ message: "outcome must be 'approve', 'conditional', or 'deny'" });
+    }
+
+    // Get city name if cityId is provided
+    let cityName: string | undefined;
+    if (cityId) {
+      const city = await storage.getCity(cityId);
+      cityName = city?.name;
+    }
+
+    // Create a version hash from current rules
+    const rules = await storage.getDenialCriteriaRulesForJurisdiction(stateId, cityId);
+    const ruleVersion = `v${Date.now()}_${rules.length}rules`;
+
+    const auditLog = await storage.createDenialDecisionAuditLog({
+      userId: req.user.id,
+      propertyId: propertyId || null,
+      applicantName: applicantName || null,
+      stateId,
+      cityId: cityId || null,
+      cityName: cityName || null,
+      ruleVersion,
+      outcome,
+      criteriaPresent,
+      criteriaSelectedForDenial: criteriaSelected || null,
+      blockedCriteriaShown: null, // Could be populated if needed
+      generatedDenialText: generatedText || null,
+      adverseActionLetterGenerated: false,
+      adverseActionLetterId: null,
+      conditions: conditions || null,
+      fairChanceStepsCompleted: fairChanceSteps || null,
+      noticesProvided: noticesProvided || null,
+      ipAddress: req.ip || null,
+      userAgent: req.get('user-agent') || null,
+    });
+
+    res.status(201).json(auditLog);
+  }));
+
+  // Update user's preferred city
+  app.patch('/api/user/preferred-city', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { cityId } = req.body;
+    
+    // cityId can be null to clear the preference
+    const user = await storage.updateUserPreferredCity(req.user.id, cityId || null);
+    res.json(user);
+  }));
+
   // Admin: Get coverage report (all states x topics matrix)
   app.get('/api/admin/state-notes/coverage', isAuthenticated, requireAdmin, asyncHandler(async (req: any, res) => {
     const coverage = await storage.getStateNotesCoverage();

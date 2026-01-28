@@ -68,6 +68,7 @@ import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
 import ScreeningExplain from "@/pages/screening-explain";
 import DashboardPreview from "@/pages/dashboard-preview";
 import Activate from "@/pages/activate";
+import DenialDecisionAssistant from "@/pages/denial-decision-assistant";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -131,6 +132,7 @@ function Router() {
         <Route path="/rental-submissions">{() => <Redirect to="/login" />}</Route>
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
         <Route path="/screening">{() => <Redirect to="/login" />}</Route>
+        <Route path="/denial-decision">{() => <Redirect to="/login" />}</Route>
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
         <Route path="/settings">{() => <Redirect to="/login" />}</Route>
         <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
@@ -173,6 +175,7 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening" component={Screening} />
+      <Route path="/denial-decision" component={DenialDecisionAssistant} />
       <Route path="/tenant-issues" component={TenantIssues} />
       <Route path="/communications" component={Communications} />
       <Route path="/rent-ledger" component={RentLedger} />

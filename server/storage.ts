@@ -142,6 +142,21 @@ import {
   stateNotes,
   type StateNote,
   type InsertStateNote,
+  cities,
+  denialCriteria,
+  denialCriteriaRules,
+  denialSentenceTemplates,
+  denialDecisionAuditLogs,
+  type City,
+  type InsertCity,
+  type DenialCriteria,
+  type InsertDenialCriteria,
+  type DenialCriteriaRule,
+  type InsertDenialCriteriaRule,
+  type DenialSentenceTemplate,
+  type InsertDenialSentenceTemplate,
+  type DenialDecisionAuditLog,
+  type InsertDenialDecisionAuditLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray, ne } from "drizzle-orm";
@@ -508,6 +523,15 @@ export interface IStorage {
   approveStateNote(id: string, reviewedByUserId: string, approvalChecklist: Record<string, boolean>): Promise<StateNote | null>;
   archiveStateNote(id: string): Promise<StateNote | null>;
   getStateNotesCoverage(): Promise<Array<{ stateId: string; decoder: string; topic: string; hasApproved: boolean; lastReviewedAt: Date | null }>>;
+
+  // Denial Decision Assistant operations
+  getCitiesByState(stateId: string): Promise<City[]>;
+  getCity(id: string): Promise<City | undefined>;
+  getAllDenialCriteria(): Promise<DenialCriteria[]>;
+  getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string): Promise<DenialCriteriaRule[]>;
+  getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]>;
+  createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog>;
+  updateUserPreferredCity(userId: string, cityId: string | null): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -2939,6 +2963,111 @@ export class DatabaseStorage implements IStorage {
 
       return Array.from(coverageMap.values());
     }, 'getStateNotesCoverage');
+  }
+
+  // Denial Decision Assistant operations
+  async getCitiesByState(stateId: string): Promise<City[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(cities)
+        .where(and(eq(cities.stateId, stateId), eq(cities.isActive, true)))
+        .orderBy(cities.name);
+    }, 'getCitiesByState');
+  }
+
+  async getCity(id: string): Promise<City | undefined> {
+    return handleDbOperation(async () => {
+      const [city] = await db.select().from(cities).where(eq(cities.id, id));
+      return city;
+    }, 'getCity');
+  }
+
+  async getAllDenialCriteria(): Promise<DenialCriteria[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(denialCriteria)
+        .where(eq(denialCriteria.isActive, true))
+        .orderBy(denialCriteria.sortOrder, denialCriteria.label);
+    }, 'getAllDenialCriteria');
+  }
+
+  async getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string): Promise<DenialCriteriaRule[]> {
+    return handleDbOperation(async () => {
+      const conditions = [
+        or(
+          isNull(denialCriteriaRules.stateId),
+          eq(denialCriteriaRules.stateId, stateId)
+        ),
+        or(
+          isNull(denialCriteriaRules.endDate),
+          gt(denialCriteriaRules.endDate, new Date())
+        )
+      ];
+
+      if (cityId) {
+        conditions.push(
+          or(
+            isNull(denialCriteriaRules.cityId),
+            eq(denialCriteriaRules.cityId, cityId)
+          )
+        );
+      } else {
+        conditions.push(isNull(denialCriteriaRules.cityId));
+      }
+
+      return await db.select().from(denialCriteriaRules)
+        .where(and(...conditions))
+        .orderBy(desc(denialCriteriaRules.version));
+    }, 'getDenialCriteriaRulesForJurisdiction');
+  }
+
+  async getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]> {
+    return handleDbOperation(async () => {
+      if (criteriaIds.length === 0) return [];
+
+      const conditions = [
+        inArray(denialSentenceTemplates.criteriaId, criteriaIds),
+        eq(denialSentenceTemplates.isActive, true),
+        or(
+          isNull(denialSentenceTemplates.stateId),
+          eq(denialSentenceTemplates.stateId, stateId)
+        )
+      ];
+
+      if (cityId) {
+        conditions.push(
+          or(
+            isNull(denialSentenceTemplates.cityId),
+            eq(denialSentenceTemplates.cityId, cityId)
+          )
+        );
+      } else {
+        conditions.push(isNull(denialSentenceTemplates.cityId));
+      }
+
+      return await db.select().from(denialSentenceTemplates)
+        .where(and(...conditions));
+    }, 'getDenialSentenceTemplates');
+  }
+
+  async createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog> {
+    return handleDbOperation(async () => {
+      const [created] = await db.insert(denialDecisionAuditLogs)
+        .values(log)
+        .returning();
+      return created;
+    }, 'createDenialDecisionAuditLog');
+  }
+
+  async updateUserPreferredCity(userId: string, cityId: string | null): Promise<User> {
+    return handleDbOperation(async () => {
+      const [user] = await db.update(users)
+        .set({ preferredCity: cityId, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning();
+      if (!user) {
+        throw new Error(`User not found: ${userId}`);
+      }
+      return user;
+    }, 'updateUserPreferredCity');
   }
 }
 
