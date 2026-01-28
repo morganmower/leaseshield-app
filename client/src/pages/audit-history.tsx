@@ -451,7 +451,7 @@ export default function AuditHistory() {
                 </div>
               )}
 
-              {viewingLog.adverseActionLetterGenerated && (
+              {viewingLog.outcome === 'deny' && viewingLog.adverseActionLetterGenerated && (
                 <div className="space-y-1 pt-2 border-t">
                   <p className="text-sm font-medium">Letter Downloaded</p>
                   <div className="flex items-center gap-2 text-sm text-primary">
