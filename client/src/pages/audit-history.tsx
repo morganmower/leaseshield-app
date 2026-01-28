@@ -427,7 +427,10 @@ export default function AuditHistory() {
                 <div className="space-y-2 pt-2 border-t">
                   <p className="text-sm font-medium flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    Generated Denial Text
+                    Internal Decision Record
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Your detailed reasoning (kept on file). The letter sent to the applicant uses appropriate language for the notice type.
                   </p>
                   <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
                     {viewingLog.generatedDenialText}
