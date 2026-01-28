@@ -73,7 +73,7 @@ const CONDITION_OPTIONS = [
 
 const NOTICES_REQUIRED = [
   { id: 'adverse_action', label: 'Adverse Action Notice', required: true },
-  { id: 'pre_adverse', label: 'Pre-Adverse Action Notice (if using screening report)', required: false },
+  { id: 'pre_adverse', label: 'Pre-Adverse Action Notice — Required only if you used a third-party screening report (e.g., credit check, background check). Gives the applicant a chance to dispute errors before final denial.', required: false },
   { id: 'credit_report_source', label: 'Include credit reporting agency contact info', required: true },
   { id: 'dispute_rights', label: 'Include right to dispute information', required: true },
 ];
