@@ -78,6 +78,7 @@ export default function AuditHistory() {
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editOutcome, setEditOutcome] = useState<'approve' | 'conditional' | 'deny'>('approve');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: logs = [], isLoading } = useQuery<AuditLog[]>({
     queryKey: ['/api/denial-decision/audit-history'],
@@ -129,6 +130,59 @@ export default function AuditHistory() {
   const handleSaveEdit = () => {
     if (!editingLog) return;
     updateMutation.mutate({ id: editingLog.id, applicantName: editName, outcome: editOutcome });
+  };
+
+  const handleDownloadLetter = async (log: AuditLog, letterType: 'pre-adverse' | 'adverse') => {
+    if (!log.generatedDenialText) return;
+    
+    setIsDownloading(true);
+    try {
+      const res = await apiRequest('POST', '/api/denial-decision/adverse-action-letter', {
+        applicantName: log.applicantName || 'Applicant',
+        applicantAddress: '',
+        stateId: log.stateId,
+        cityId: log.cityId || undefined,
+        countyId: log.countyId || undefined,
+        denialReasons: log.generatedDenialText,
+        criteriaIds: log.criteriaSelectedForDenial || [],
+        isFcra: true,
+        letterType: letterType,
+        auditLogId: log.id,
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to generate letter');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const filename = letterType === 'pre-adverse' 
+        ? `pre-adverse-action-notice-${new Date().toISOString().split('T')[0]}.pdf`
+        : `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      // Refresh to show updated letter type
+      queryClient.invalidateQueries({ queryKey: ['/api/denial-decision/audit-history'] });
+      
+      toast({
+        title: letterType === 'pre-adverse' ? 'Pre-Adverse Notice Downloaded' : 'Adverse Action Letter Downloaded',
+        description: "Letter type has been updated in the record.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not generate the letter.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   if (authLoading || isLoading) {
@@ -471,6 +525,34 @@ export default function AuditHistory() {
                       : (viewingLog as any).letterTypeDownloaded === 'adverse_action'
                         ? 'Adverse Action Letter (Final)'
                         : 'Letter generated'}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.outcome === 'deny' && viewingLog.generatedDenialText && (
+                <div className="space-y-2 pt-3 border-t">
+                  <p className="text-sm font-medium">Download Letter</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadLetter(viewingLog, 'pre-adverse')}
+                      disabled={isDownloading}
+                      data-testid="button-download-pre-adverse"
+                    >
+                      {isDownloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+                      Pre-Adverse Notice
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleDownloadLetter(viewingLog, 'adverse')}
+                      disabled={isDownloading}
+                      data-testid="button-download-adverse"
+                    >
+                      {isDownloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+                      Adverse Action Letter
+                    </Button>
                   </div>
                 </div>
               )}
