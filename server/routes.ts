@@ -9446,6 +9446,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     res.json(cities);
   }));
 
+  // Get counties for a state (for denial decision wizard)
+  app.get('/api/denial-decision/counties', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { stateId } = req.query;
+    if (!stateId) {
+      return res.status(400).json({ message: "stateId is required" });
+    }
+    const countiesList = await storage.getCountiesByState(stateId as string);
+    res.json(countiesList);
+  }));
+
+  // Get all known jurisdictions for dropdown fallback
+  app.get('/api/denial-decision/jurisdictions', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { stateId } = req.query;
+    const { getAllKnownJurisdictions } = await import('./services/jurisdictionResolver');
+    const jurisdictions = await getAllKnownJurisdictions(stateId as string | undefined);
+    res.json(jurisdictions);
+  }));
+
+  // Resolve jurisdiction from property
+  app.get('/api/denial-decision/resolve-jurisdiction', isAuthenticated, asyncHandler(async (req: any, res) => {
+    const { propertyId, stateId, cityName, countyName } = req.query;
+    const { resolveJurisdictionFromProperty, resolveJurisdictionFromLocation } = await import('./services/jurisdictionResolver');
+    
+    let resolved;
+    if (propertyId) {
+      resolved = await resolveJurisdictionFromProperty(propertyId as string);
+      if (!resolved) {
+        return res.status(404).json({ message: "Property not found or missing state" });
+      }
+    } else if (stateId) {
+      resolved = await resolveJurisdictionFromLocation(
+        stateId as string,
+        cityName as string | undefined,
+        countyName as string | undefined
+      );
+    } else {
+      return res.status(400).json({ message: "Either propertyId or stateId is required" });
+    }
+    
+    res.json(resolved);
+  }));
+
   // Get audit history for the current user
   app.get('/api/denial-decision/audit-history', isAuthenticated, asyncHandler(async (req: any, res) => {
     const logs = await storage.getDenialDecisionAuditLogs(req.user.id);
@@ -9480,7 +9522,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
   // Get all denial criteria with rules for a jurisdiction
   app.get('/api/denial-decision/criteria', isAuthenticated, asyncHandler(async (req: any, res) => {
-    const { stateId, cityId } = req.query;
+    const { stateId, cityId, countyId } = req.query;
     if (!stateId) {
       return res.status(400).json({ message: "stateId is required" });
     }
@@ -9488,22 +9530,26 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     // Get all criteria
     const criteria = await storage.getAllDenialCriteria();
     
-    // Get rules for this jurisdiction
+    // Get rules for this jurisdiction (city, county, state chain)
     const rules = await storage.getDenialCriteriaRulesForJurisdiction(
       stateId as string, 
-      cityId as string | undefined
+      cityId as string | undefined,
+      countyId as string | undefined
     );
 
-    // Build a map of criteriaId -> most specific rule (city overrides state overrides federal)
+    // Build a map of criteriaId -> most specific rule
+    // Priority: City (4) > County (2) > State (1) > Federal (0)
     const ruleMap = new Map<string, any>();
     for (const rule of rules) {
       const existing = ruleMap.get(rule.criteriaId);
       if (!existing) {
         ruleMap.set(rule.criteriaId, rule);
       } else {
-        // City rules override state, state overrides federal
-        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0);
-        const newSpecificity = (rule.cityId ? 2 : 0) + (rule.stateId ? 1 : 0);
+        // Calculate specificity: city beats county beats state beats federal
+        const getSpecificity = (r: any) => 
+          (r.cityId ? 4 : 0) + (r.countyId ? 2 : 0) + (r.stateId ? 1 : 0);
+        const existingSpecificity = getSpecificity(existing);
+        const newSpecificity = getSpecificity(rule);
         if (newSpecificity > existingSpecificity) {
           ruleMap.set(rule.criteriaId, rule);
         }

@@ -143,12 +143,15 @@ import {
   type StateNote,
   type InsertStateNote,
   cities,
+  counties,
   denialCriteria,
   denialCriteriaRules,
   denialSentenceTemplates,
   denialDecisionAuditLogs,
   type City,
   type InsertCity,
+  type County,
+  type InsertCounty,
   type DenialCriteria,
   type InsertDenialCriteria,
   type DenialCriteriaRule,
@@ -528,8 +531,10 @@ export interface IStorage {
   getCitiesByState(stateId: string): Promise<City[]>;
   getCity(id: string): Promise<City | undefined>;
   getAllDenialCriteria(): Promise<DenialCriteria[]>;
-  getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string): Promise<DenialCriteriaRule[]>;
-  getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]>;
+  getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string, countyId?: string): Promise<DenialCriteriaRule[]>;
+  getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string, countyId?: string): Promise<DenialSentenceTemplate[]>;
+  getCountiesByState(stateId: string): Promise<County[]>;
+  getCounty(id: string): Promise<County | undefined>;
   createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog>;
   getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]>;
   deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean>;
@@ -2992,7 +2997,7 @@ export class DatabaseStorage implements IStorage {
     }, 'getAllDenialCriteria');
   }
 
-  async getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string): Promise<DenialCriteriaRule[]> {
+  async getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string, countyId?: string): Promise<DenialCriteriaRule[]> {
     return handleDbOperation(async () => {
       const conditions = [
         or(
@@ -3005,6 +3010,7 @@ export class DatabaseStorage implements IStorage {
         )
       ];
 
+      // Include city rules if cityId provided
       if (cityId) {
         conditions.push(
           or(
@@ -3016,13 +3022,40 @@ export class DatabaseStorage implements IStorage {
         conditions.push(isNull(denialCriteriaRules.cityId));
       }
 
+      // Include county rules if countyId provided
+      if (countyId) {
+        conditions.push(
+          or(
+            isNull(denialCriteriaRules.countyId),
+            eq(denialCriteriaRules.countyId, countyId)
+          )
+        );
+      } else {
+        conditions.push(isNull(denialCriteriaRules.countyId));
+      }
+
       return await db.select().from(denialCriteriaRules)
         .where(and(...conditions))
         .orderBy(desc(denialCriteriaRules.version));
     }, 'getDenialCriteriaRulesForJurisdiction');
   }
 
-  async getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string): Promise<DenialSentenceTemplate[]> {
+  async getCountiesByState(stateId: string): Promise<County[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(counties)
+        .where(and(eq(counties.stateId, stateId), eq(counties.isActive, true)))
+        .orderBy(counties.name);
+    }, 'getCountiesByState');
+  }
+
+  async getCounty(id: string): Promise<County | undefined> {
+    return handleDbOperation(async () => {
+      const result = await db.select().from(counties).where(eq(counties.id, id));
+      return result[0];
+    }, 'getCounty');
+  }
+
+  async getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string, countyId?: string): Promise<DenialSentenceTemplate[]> {
     return handleDbOperation(async () => {
       if (criteriaIds.length === 0) return [];
 
@@ -3045,6 +3078,9 @@ export class DatabaseStorage implements IStorage {
       } else {
         conditions.push(isNull(denialSentenceTemplates.cityId));
       }
+
+      // Note: denialSentenceTemplates doesn't have countyId column yet, 
+      // but we can add it later if needed
 
       return await db.select().from(denialSentenceTemplates)
         .where(and(...conditions));
