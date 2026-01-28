@@ -35,6 +35,7 @@ export const users = pgTable("users", {
   subscriptionExpiresAt: timestamp("subscription_expires_at"),
   renewalReminderSentAt: timestamp("renewal_reminder_sent_at"), // Track when we sent renewal reminder
   paymentFailedAt: timestamp("payment_failed_at"), // Track when payment failed for banner display
+  subscribedAt: timestamp("subscribed_at"), // When first payment succeeded (official subscription start)
   // User preferences
   preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
   preferredCity: varchar("preferred_city"), // City ID for denial decision rules

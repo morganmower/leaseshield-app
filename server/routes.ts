@@ -1194,10 +1194,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           if (userResults.length > 0) {
             const user = userResults[0];
             // Payment successful - update to active and clear any payment failure state
-            await storage.updateUserStripeInfo(user.id, {
+            // Set subscribedAt on first successful payment (when subscription officially starts)
+            const updateData: any = {
               subscriptionStatus: 'active',
               paymentFailedAt: null, // Clear payment failed timestamp on successful payment
-            });
+            };
+            
+            // Only set subscribedAt if not already set (first payment = official join date)
+            if (!user.subscribedAt) {
+              updateData.subscribedAt = new Date();
+              console.log(`🎉 User ${user.id} first payment succeeded - setting subscribedAt (official subscription start)`);
+            }
+            
+            await storage.updateUserStripeInfo(user.id, updateData);
             console.log(`User ${user.id} payment succeeded - marked as active, cleared payment failed state`);
             
             // Send admin notification email about the payment

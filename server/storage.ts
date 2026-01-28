@@ -191,7 +191,7 @@ export interface IStorage {
     businessName?: string | null;
     phoneNumber?: string | null;
   }): Promise<User>;
-  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User>;
+  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User>;
   getUsersNeedingRenewalReminder(): Promise<User[]>;
   getUsersWithPaymentFailed(): Promise<User[]>;
   getAllActiveUsers(): Promise<User[]>;
@@ -587,7 +587,7 @@ export class DatabaseStorage implements IStorage {
     }, 'updateUserPreferences');
   }
 
-  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User> {
+  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User> {
     return handleDbOperation(async () => {
       const [user] = await db
         .update(users)
