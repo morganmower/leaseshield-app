@@ -23,6 +23,7 @@ import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import { execSync } from "child_process";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { getStateAdverseActionHtml } from "./states/adverseActionDisclosures";
 
 // Stripe configuration - use STRIPE_SECRET_KEY for both test and live
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -9943,6 +9944,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           <p style="font-size: 10pt;">If you have questions about this decision, please contact the property manager.</p>
         </div>
         `}
+
+        ${stateId ? getStateAdverseActionHtml(stateId) : ''}
 
         <div class="signature">
           <p>Sincerely,</p>
