@@ -9683,7 +9683,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.post('/api/denial-decision/save', isAuthenticated, asyncHandler(async (req: any, res) => {
     const { 
       stateId, 
-      cityId, 
+      cityId,
+      countyId, 
       outcome, 
       criteriaPresent, 
       criteriaSelected, 
@@ -9710,18 +9711,28 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       cityName = city?.name;
     }
 
-    // Create a version hash from current rules
-    const rules = await storage.getDenialCriteriaRulesForJurisdiction(stateId, cityId);
+    // Get county name if countyId is provided
+    let countyName: string | undefined;
+    if (countyId) {
+      const county = await storage.getCounty(countyId);
+      countyName = county?.name;
+    }
+
+    // Create a version hash from current rules (now including county)
+    const rules = await storage.getDenialCriteriaRulesForJurisdiction(stateId, cityId, countyId);
     
     // SERVER-SIDE ENFORCEMENT: Build rule map and check for blocked criteria in denial
+    // Priority: City (4) > County (2) > State (1) > Federal (0)
     const ruleMap = new Map<string, any>();
     for (const rule of rules) {
       const existing = ruleMap.get(rule.criteriaId);
       if (!existing) {
         ruleMap.set(rule.criteriaId, rule);
       } else {
-        const existingSpecificity = (existing.cityId ? 2 : 0) + (existing.stateId ? 1 : 0);
-        const newSpecificity = (rule.cityId ? 2 : 0) + (rule.stateId ? 1 : 0);
+        const getSpecificity = (r: any) => 
+          (r.cityId ? 4 : 0) + (r.countyId ? 2 : 0) + (r.stateId ? 1 : 0);
+        const existingSpecificity = getSpecificity(existing);
+        const newSpecificity = getSpecificity(rule);
         if (newSpecificity > existingSpecificity) {
           ruleMap.set(rule.criteriaId, rule);
         }
@@ -9751,6 +9762,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       propertyId: propertyId || null,
       applicantName: applicantName || null,
       stateId,
+      countyId: countyId || null,
+      countyName: countyName || null,
       cityId: cityId || null,
       cityName: cityName || null,
       ruleVersion,
@@ -9787,6 +9800,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       applicantAddress, 
       stateId, 
       cityId,
+      countyId,
       denialReasons,
       criteriaIds,
       isFcra = true,
@@ -9797,6 +9811,25 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
     if (!stateId || !denialReasons) {
       return res.status(400).json({ message: "stateId and denialReasons are required" });
+    }
+    
+    // Get jurisdiction info for disclosure (built separately from existing state/city lookups below)
+    let jurisdictionDisclosure = '';
+    if (cityId) {
+      const cityInfo = await storage.getCity(cityId);
+      if (cityInfo) {
+        jurisdictionDisclosure = `${cityInfo.name}, `;
+      }
+    }
+    if (countyId) {
+      const countyInfo = await storage.getCounty(countyId);
+      if (countyInfo) {
+        jurisdictionDisclosure += `${countyInfo.name}, `;
+      }
+    }
+    const stateInfo = await storage.getStateById(stateId);
+    if (stateInfo) {
+      jurisdictionDisclosure += stateInfo.name;
     }
 
     // HTML escape helper to prevent injection

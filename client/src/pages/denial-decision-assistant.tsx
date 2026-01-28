@@ -177,6 +177,7 @@ export default function DenialDecisionAssistant() {
       const res = await apiRequest('POST', '/api/denial-decision/save', {
         stateId: selectedStateId,
         cityId: selectedCityId || undefined,
+        countyId: selectedCountyId || undefined,
         outcome: data.outcome,
         criteriaPresent: data.criteriaPresent,
         criteriaSelected: data.criteriaSelected,
@@ -301,6 +302,7 @@ export default function DenialDecisionAssistant() {
         applicantAddress: applicantAddress || '',
         stateId: selectedStateId,
         cityId: selectedCityId || undefined,
+        countyId: selectedCountyId || undefined,
         denialReasons: generateTextMutation.data.text,
         criteriaIds: Array.from(criteriaPresent),
         isFcra: usedConsumerReport,
