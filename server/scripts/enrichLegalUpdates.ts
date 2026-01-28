@@ -143,8 +143,115 @@ function isPlaceholderText(text: string | null | undefined): boolean {
   return placeholders.some(p => text.includes(p));
 }
 
+const CONCURRENCY = 5; // Process 5 updates in parallel
+
+async function processOneUpdate(update: typeof legalUpdates.$inferSelect): Promise<{ success: boolean; stateId: string }> {
+  const shortTitle = update.title.length > 60 ? update.title.substring(0, 57) + '...' : update.title;
+  
+  try {
+    let rawData: any = null;
+    let sourceUrl: string | null = null;
+
+    if (update.sourceBillId) {
+      const monitoring = await db.select()
+        .from(legislativeMonitoring)
+        .where(eq(legislativeMonitoring.id, update.sourceBillId))
+        .limit(1);
+      
+      if (monitoring[0]) {
+        rawData = monitoring[0];
+        sourceUrl = monitoring[0].url;
+      }
+    }
+
+    if (!rawData) {
+      const normalized = await db.select()
+        .from(normalizedUpdates)
+        .where(like(normalizedUpdates.title, `%${update.title.substring(0, 30)}%`))
+        .limit(1);
+      
+      if (normalized[0]) {
+        sourceUrl = normalized[0].url;
+        if (normalized[0].rawItemId) {
+          const raw = await db.select()
+            .from(rawLegislationItems)
+            .where(eq(rawLegislationItems.id, normalized[0].rawItemId))
+            .limit(1);
+          if (raw[0]?.rawData) {
+            rawData = raw[0].rawData;
+          }
+        }
+      }
+    }
+
+    const enrichment = await generateEnrichment(
+      update.title,
+      update.summary || '',
+      update.stateId,
+      update.category || 'general',
+      rawData,
+      sourceUrl
+    );
+
+    await db.update(legalUpdates)
+      .set({
+        summary: enrichment.summary,
+        beforeText: enrichment.beforeText,
+        afterText: enrichment.afterText,
+        whyItMatters: enrichment.whyItMatters,
+        effectiveDate: enrichment.effectiveDate || update.effectiveDate,
+        billStatus: enrichment.billStatus,
+        actionItems: enrichment.actionItems,
+        expectedTimeline: enrichment.expectedTimeline,
+        sourceUrl: sourceUrl,
+        aiEnriched: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(legalUpdates.id, update.id));
+
+    console.log(`✓ [${update.stateId}] ${shortTitle}`);
+    return { success: true, stateId: update.stateId };
+  } catch (error: any) {
+    if (error?.status === 429 || error?.message?.includes('rate')) {
+      // Rate limited - wait and retry once
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      try {
+        const retryEnrichment = await generateEnrichment(
+          update.title,
+          update.summary || '',
+          update.stateId,
+          update.category || 'general',
+          null,
+          null
+        );
+        await db.update(legalUpdates)
+          .set({
+            summary: retryEnrichment.summary,
+            beforeText: retryEnrichment.beforeText,
+            afterText: retryEnrichment.afterText,
+            whyItMatters: retryEnrichment.whyItMatters,
+            billStatus: retryEnrichment.billStatus,
+            actionItems: retryEnrichment.actionItems,
+            expectedTimeline: retryEnrichment.expectedTimeline,
+            aiEnriched: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(legalUpdates.id, update.id));
+        console.log(`✓ [${update.stateId}] ${shortTitle} (retry)`);
+        return { success: true, stateId: update.stateId };
+      } catch {
+        console.log(`✗ [${update.stateId}] ${shortTitle} (retry failed)`);
+        return { success: false, stateId: update.stateId };
+      }
+    }
+    console.log(`✗ [${update.stateId}] ${shortTitle}: ${error?.message || 'Unknown error'}`);
+    return { success: false, stateId: update.stateId };
+  }
+}
+
 async function enrichLegalUpdates() {
-  console.log('🔄 Enriching legal updates with AI-generated content...\n');
+  console.log('🔄 Enriching legal updates with AI-generated content...');
+  console.log(`   Using ${CONCURRENCY} concurrent requests for speed\n`);
 
   const allUpdates = await db.select()
     .from(legalUpdates)
@@ -168,114 +275,27 @@ async function enrichLegalUpdates() {
   let errorCount = 0;
   const stateStats: Record<string, number> = {};
 
-  for (const update of updatesToEnrich) {
-    const shortTitle = update.title.length > 60 ? update.title.substring(0, 57) + '...' : update.title;
-    process.stdout.write(`[${update.stateId}] ${shortTitle}`);
-
-    try {
-      let rawData: any = null;
-      let sourceUrl: string | null = null;
-
-      if (update.sourceBillId) {
-        const monitoring = await db.select()
-          .from(legislativeMonitoring)
-          .where(eq(legislativeMonitoring.id, update.sourceBillId))
-          .limit(1);
-        
-        if (monitoring[0]) {
-          rawData = monitoring[0];
-          sourceUrl = monitoring[0].url;
-        }
-      }
-
-      if (!rawData) {
-        const normalized = await db.select()
-          .from(normalizedUpdates)
-          .where(like(normalizedUpdates.title, `%${update.title.substring(0, 30)}%`))
-          .limit(1);
-        
-        if (normalized[0]) {
-          sourceUrl = normalized[0].url;
-          if (normalized[0].rawItemId) {
-            const raw = await db.select()
-              .from(rawLegislationItems)
-              .where(eq(rawLegislationItems.id, normalized[0].rawItemId))
-              .limit(1);
-            if (raw[0]?.rawData) {
-              rawData = raw[0].rawData;
-            }
-          }
-        }
-      }
-
-      const enrichment = await generateEnrichment(
-        update.title,
-        update.summary || '',
-        update.stateId,
-        update.category || 'general',
-        rawData,
-        sourceUrl
-      );
-
-      await db.update(legalUpdates)
-        .set({
-          summary: enrichment.summary,
-          beforeText: enrichment.beforeText,
-          afterText: enrichment.afterText,
-          whyItMatters: enrichment.whyItMatters,
-          effectiveDate: enrichment.effectiveDate || update.effectiveDate,
-          billStatus: enrichment.billStatus,
-          actionItems: enrichment.actionItems,
-          expectedTimeline: enrichment.expectedTimeline,
-          sourceUrl: sourceUrl,
-          aiEnriched: true,
-          updatedAt: new Date(),
-        })
-        .where(eq(legalUpdates.id, update.id));
-
-      enrichedCount++;
-      stateStats[update.stateId] = (stateStats[update.stateId] || 0) + 1;
-      console.log(' ✓');
-
-      await new Promise(resolve => setTimeout(resolve, 1500));
-    } catch (error: any) {
-      if (error?.status === 429 || error?.message?.includes('rate')) {
-        console.log(' ⏳ rate limited, waiting 10s...');
-        await new Promise(resolve => setTimeout(resolve, 10000));
-        try {
-          const retryEnrichment = await generateEnrichment(
-            update.title,
-            update.summary || '',
-            update.stateId,
-            update.category || 'general',
-            null,
-            null
-          );
-          await db.update(legalUpdates)
-            .set({
-              summary: retryEnrichment.summary,
-              beforeText: retryEnrichment.beforeText,
-              afterText: retryEnrichment.afterText,
-              whyItMatters: retryEnrichment.whyItMatters,
-              billStatus: retryEnrichment.billStatus,
-              actionItems: retryEnrichment.actionItems,
-              expectedTimeline: retryEnrichment.expectedTimeline,
-              aiEnriched: true,
-              updatedAt: new Date(),
-            })
-            .where(eq(legalUpdates.id, update.id));
-          enrichedCount++;
-          stateStats[update.stateId] = (stateStats[update.stateId] || 0) + 1;
-          console.log(' ✓ (retry)');
-        } catch (retryError) {
-          errorCount++;
-          console.log(' ✗ (retry failed)');
-        }
+  // Process in batches with concurrency
+  for (let i = 0; i < updatesToEnrich.length; i += CONCURRENCY) {
+    const batch = updatesToEnrich.slice(i, i + CONCURRENCY);
+    const batchNum = Math.floor(i / CONCURRENCY) + 1;
+    const totalBatches = Math.ceil(updatesToEnrich.length / CONCURRENCY);
+    console.log(`\n📦 Batch ${batchNum}/${totalBatches} (${batch.length} updates):`);
+    
+    const results = await Promise.all(batch.map(update => processOneUpdate(update)));
+    
+    for (const result of results) {
+      if (result.success) {
+        enrichedCount++;
+        stateStats[result.stateId] = (stateStats[result.stateId] || 0) + 1;
       } else {
         errorCount++;
-        console.log(' ✗');
-        console.error(`  Error:`, error?.message || error);
       }
+    }
+    
+    // Small delay between batches to be nice to the API
+    if (i + CONCURRENCY < updatesToEnrich.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
 
