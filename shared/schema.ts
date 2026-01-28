@@ -226,6 +226,12 @@ export const legalUpdates = pgTable("legal_updates", {
   category: varchar("category", { length: 50 }), // 'section8', 'hud', 'eviction', 'deposits', 'general'
   sourceBillId: varchar("source_bill_id"), // Link to legislative monitoring bill if auto-published
   affectedTemplateIds: text("affected_template_ids").array(), // Templates updated due to this legal change
+  // Enhanced fields for better landlord communication
+  billStatus: varchar("bill_status", { length: 50 }), // 'introduced', 'in_committee', 'passed_chamber', 'signed', 'enacted', 'vetoed'
+  actionItems: text("action_items"), // What landlords should do now
+  expectedTimeline: text("expected_timeline"), // When this takes effect or next steps
+  sourceUrl: text("source_url"), // Link to original legislation/source
+  aiEnriched: boolean("ai_enriched").default(false), // Whether AI has enriched this update
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
