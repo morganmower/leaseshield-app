@@ -274,14 +274,14 @@ export default function AuditHistory() {
                     </div>
                   )}
 
-                  {log.outcome === 'deny' && (
+                  {log.outcome === 'deny' && log.adverseActionLetterGenerated && (
                     <div className="flex items-center gap-4 text-sm">
-                      {log.adverseActionLetterGenerated && (
-                        <span className="flex items-center gap-1 text-primary">
-                          <FileText className="h-4 w-4" />
-                          Adverse Action Letter Generated
-                        </span>
-                      )}
+                      <span className="flex items-center gap-1 text-primary">
+                        <FileText className="h-4 w-4" />
+                        {(log as any).letterTypeDownloaded === 'pre_adverse' 
+                          ? 'Pre-Adverse Action Notice Generated' 
+                          : 'Adverse Action Letter Generated'}
+                      </span>
                     </div>
                   )}
                 </CardContent>
