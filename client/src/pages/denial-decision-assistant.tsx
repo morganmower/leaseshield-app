@@ -770,9 +770,16 @@ export default function DenialDecisionAssistant() {
                       <div className="flex items-start gap-3">
                         <Info className="h-4 w-4 text-blue-600 mt-0.5" />
                         <div>
-                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">Pre-Adverse Action Notice</p>
+                          <p className="text-sm font-medium text-blue-800 dark:text-blue-200">You need to send TWO letters (not one)</p>
                           <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                            Since you used a screening report, FCRA requires you to send a Pre-Adverse Action Notice before the final denial. This gives the applicant a chance to dispute errors. The letter you download will include instructions.
+                            Because you used a credit check, background check, or other screening report, federal law (FCRA) requires a two-step process:
+                          </p>
+                          <ol className="text-xs text-blue-600 dark:text-blue-400 mt-2 ml-4 list-decimal space-y-1">
+                            <li><strong>First:</strong> Send a "Pre-Adverse Action" letter giving the applicant 5 days to dispute any errors in their report</li>
+                            <li><strong>Then:</strong> After waiting, send the final "Adverse Action" denial letter</li>
+                          </ol>
+                          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+                            Your download will include both letters with instructions.
                           </p>
                         </div>
                       </div>
