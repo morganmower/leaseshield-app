@@ -5065,11 +5065,23 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       };
 
       // Update status based on test result
+      const wasVerified = credentials.status === 'verified';
       await storage.updateLandlordScreeningCredentials(userId, {
         status: testResult.success ? 'verified' : 'failed',
         lastVerifiedAt: testResult.success ? new Date() : undefined,
         lastErrorMessage: testResult.success ? null : testResult.error,
       });
+
+      // Send email notification to landlord when credentials are newly verified
+      if (testResult.success && !wasVerified) {
+        const landlord = await storage.getUser(userId);
+        if (landlord) {
+          const { emailService } = await import('./emailService');
+          emailService.sendScreeningReadyNotification(landlord).catch(err => {
+            console.error('Failed to send screening ready notification:', err);
+          });
+        }
+      }
 
       res.json(testResult);
     } catch (error) {
