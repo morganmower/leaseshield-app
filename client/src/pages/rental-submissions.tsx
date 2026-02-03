@@ -42,6 +42,11 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
   Users,
   User,
   FileText,
@@ -62,6 +67,9 @@ import {
   Trash2,
   RefreshCw,
   Mail,
+  ChevronDown,
+  ChevronRight,
+  ChevronsUpDown,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
@@ -223,6 +231,7 @@ export default function RentalSubmissions() {
   const [denialReasonDetails, setDenialReasonDetails] = useState<Record<string, string>>({});
   const [sendNoticeMyself, setSendNoticeMyself] = useState(false);
   const [filterTab, setFilterTab] = useState<"all" | "decided" | "pending">("all");
+  const [expandedProperties, setExpandedProperties] = useState<Set<string>>(new Set());
   const [isLetterPreviewOpen, setIsLetterPreviewOpen] = useState(false);
   const [draftLetterSubject, setDraftLetterSubject] = useState("");
   const [draftLetterBody, setDraftLetterBody] = useState("");
@@ -704,6 +713,48 @@ Best regards`;
       decided,
     };
   }, [submissions]);
+
+  const groupedByProperty = useMemo(() => {
+    const groups = new Map<string, { propertyName: string; submissions: SubmissionSummary[]; pendingCount: number; decidedCount: number }>();
+    
+    for (const sub of filteredSubmissions) {
+      const key = sub.propertyName;
+      if (!groups.has(key)) {
+        groups.set(key, {
+          propertyName: key,
+          submissions: [],
+          pendingCount: 0,
+          decidedCount: 0,
+        });
+      }
+      const group = groups.get(key)!;
+      group.submissions.push(sub);
+      if (sub.decision) {
+        group.decidedCount++;
+      } else {
+        group.pendingCount++;
+      }
+    }
+    
+    return Array.from(groups.values()).sort((a, b) => 
+      a.propertyName.localeCompare(b.propertyName)
+    );
+  }, [filteredSubmissions]);
+
+  const toggleAllExpanded = () => {
+    const allCurrentlyExpanded = groupedByProperty.every(g => expandedProperties.has(g.propertyName));
+    if (allCurrentlyExpanded) {
+      setExpandedProperties(new Set());
+    } else {
+      setExpandedProperties(new Set(groupedByProperty.map(g => g.propertyName)));
+    }
+  };
+
+  const allExpanded = groupedByProperty.length > 0 && groupedByProperty.every(g => expandedProperties.has(g.propertyName));
+
+  useEffect(() => {
+    setExpandedProperties(new Set());
+  }, [filterTab]);
 
   if (selectedSubmission && submissionDetail) {
     return (
@@ -2034,90 +2085,157 @@ Best regards`;
           </CardContent>
         </Card>
       ) : (
-        <Card>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Property</TableHead>
-                <TableHead>Applicant</TableHead>
-                <TableHead>Decision</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredSubmissions.map((sub) => (
-                <TableRow key={sub.id} data-testid={`row-submission-${sub.id}`}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Building2 className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{sub.propertyName}</p>
-                        {sub.unitLabel && (
-                          <p className="text-xs text-muted-foreground">{sub.unitLabel}</p>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-sm text-muted-foreground" data-testid="text-grouped-summary">
+              {groupedByProperty.length} {groupedByProperty.length === 1 ? 'property' : 'properties'} with {filteredSubmissions.length} {filteredSubmissions.length === 1 ? 'application' : 'applications'}
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={toggleAllExpanded}
+              data-testid="button-toggle-all-properties"
+            >
+              <ChevronsUpDown className="h-4 w-4 mr-1" />
+              {allExpanded ? 'Collapse All' : 'Expand All'}
+            </Button>
+          </div>
+
+          {groupedByProperty.map((group) => {
+            const isExpanded = expandedProperties.has(group.propertyName);
+            return (
+              <Card key={group.propertyName} data-testid={`card-property-${group.propertyName}`}>
+                <Collapsible
+                  open={isExpanded}
+                  onOpenChange={(open) => {
+                    setExpandedProperties(prev => {
+                      const next = new Set(prev);
+                      if (open) {
+                        next.add(group.propertyName);
+                      } else {
+                        next.delete(group.propertyName);
+                      }
+                      return next;
+                    });
+                  }}
+                >
+                  <CollapsibleTrigger asChild>
+                    <button
+                      className="w-full text-left p-4 flex items-center justify-between gap-4"
+                      data-testid={`button-toggle-${group.propertyName}`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {isExpanded ? (
+                          <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
                         )}
-                      </div>
-                    </div>
-                  </TableCell>
-                  <TableCell>
-                    {sub.primaryApplicant ? (
-                      <div>
-                        <p className="font-medium">
-                          {sub.primaryApplicant.firstName} {sub.primaryApplicant.lastName}
-                        </p>
-                        <p className="text-xs text-muted-foreground">{sub.primaryApplicant.email}</p>
-                        {sub.peopleCount > 1 && (
-                          <p className="text-xs text-muted-foreground">
-                            +{sub.peopleCount - 1} more
+                        <Building2 className="h-5 w-5 text-primary" />
+                        <div>
+                          <h3 className="font-semibold" data-testid={`text-property-name-${group.propertyName}`}>{group.propertyName}</h3>
+                          <p className="text-sm text-muted-foreground" data-testid={`text-property-count-${group.propertyName}`}>
+                            {group.submissions.length} {group.submissions.length === 1 ? 'application' : 'applications'}
                           </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {group.pendingCount > 0 && (
+                          <Badge variant="outline" data-testid={`badge-pending-${group.propertyName}`}>
+                            {group.pendingCount} pending
+                          </Badge>
+                        )}
+                        {group.decidedCount > 0 && (
+                          <Badge variant="secondary" data-testid={`badge-decided-${group.propertyName}`}>
+                            {group.decidedCount} decided
+                          </Badge>
                         )}
                       </div>
-                    ) : (
-                      <span className="text-muted-foreground">—</span>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex flex-wrap gap-1">
-                      {sub.decision ? (
-                        <Badge className={decisionColors[sub.decision.decision]}>
-                          {sub.decision.decision === "approved" ? "Approved" : "Denied"}
-                        </Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-muted-foreground">
-                          Pending Review
-                        </Badge>
-                      )}
+                    </button>
+                  </CollapsibleTrigger>
+
+                  <CollapsibleContent>
+                    <div className="border-t">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Unit</TableHead>
+                          <TableHead>Applicant</TableHead>
+                          <TableHead>Decision</TableHead>
+                          <TableHead>Date</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {group.submissions.map((sub) => (
+                          <TableRow key={sub.id} data-testid={`row-submission-${sub.id}`}>
+                            <TableCell>
+                              <p className="font-medium" data-testid={`text-unit-${sub.id}`}>{sub.unitLabel || '—'}</p>
+                            </TableCell>
+                            <TableCell>
+                              {sub.primaryApplicant ? (
+                                <div>
+                                  <p className="font-medium" data-testid={`text-applicant-name-${sub.id}`}>
+                                    {sub.primaryApplicant.firstName} {sub.primaryApplicant.lastName}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground" data-testid={`text-applicant-email-${sub.id}`}>{sub.primaryApplicant.email}</p>
+                                  {sub.peopleCount > 1 && (
+                                    <p className="text-xs text-muted-foreground">
+                                      +{sub.peopleCount - 1} more
+                                    </p>
+                                  )}
+                                </div>
+                              ) : (
+                                <span className="text-muted-foreground">—</span>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex flex-wrap gap-1">
+                                {sub.decision ? (
+                                  <Badge className={decisionColors[sub.decision.decision]} data-testid={`badge-decision-${sub.id}`}>
+                                    {sub.decision.decision === "approved" ? "Approved" : "Denied"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="text-muted-foreground" data-testid={`badge-decision-${sub.id}`}>
+                                    Pending Review
+                                  </Badge>
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-sm" data-testid={`text-date-${sub.id}`}>{formatDate(sub.createdAt)}</p>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex items-center justify-end gap-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => setSelectedSubmission(sub.id)}
+                                  data-testid={`button-view-${sub.id}`}
+                                >
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => setDeleteSubmissionId(sub.id)}
+                                  data-testid={`button-delete-${sub.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
                     </div>
-                  </TableCell>
-                  <TableCell>
-                    <p className="text-sm">{formatDate(sub.createdAt)}</p>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => setSelectedSubmission(sub.id)}
-                        data-testid={`button-view-${sub.id}`}
-                      >
-                        <Eye className="h-4 w-4 mr-1" />
-                        View
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        onClick={() => setDeleteSubmissionId(sub.id)}
-                        data-testid={`button-delete-${sub.id}`}
-                      >
-                        <Trash2 className="h-4 w-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </Card>
+                  </CollapsibleContent>
+                </Collapsible>
+              </Card>
+            );
+          })}
+        </div>
       )}
     </div>
   );
