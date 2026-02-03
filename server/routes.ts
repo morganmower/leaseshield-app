@@ -5826,7 +5826,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const link = await storage.createRentalApplicationLink({
         unitId: unit.id,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: null,
       });
@@ -5871,7 +5871,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
           publicToken,
-          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
+          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms, rentAmount: unit.rentAmount },
           isActive: true,
           expiresAt: null,
         });
@@ -6010,7 +6010,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const link = await storage.createRentalApplicationLink({
         unitId: req.params.unitId,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
       });
