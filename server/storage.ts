@@ -261,7 +261,7 @@ export interface IStorage {
     month: number;
     year: number;
     templateDownloads: number;
-    westernVerifyClicks: number;
+    screeningRequests: number;
     creditHelperUses: number;
     criminalHelperUses: number;
     totalEvents: number;
@@ -1020,13 +1020,21 @@ export class DatabaseStorage implements IStorage {
         lte(analyticsEvents.createdAt, monthEnd)
       ));
     
-    const westernVerifyClicks = await db
+    const screeningRequests = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
       .where(and(
-        eq(analyticsEvents.eventType, 'western_verify_click'),
+        eq(analyticsEvents.eventType, 'screening_request'),
         gte(analyticsEvents.createdAt, monthStart),
         lte(analyticsEvents.createdAt, monthEnd)
+      ));
+
+    const applicationsSubmitted = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(rentalSubmissions)
+      .where(and(
+        gte(rentalSubmissions.createdAt, monthStart),
+        lte(rentalSubmissions.createdAt, monthEnd)
       ));
 
     const creditHelperUses = await db
@@ -1048,7 +1056,8 @@ export class DatabaseStorage implements IStorage {
       ));
 
     const totalDownloads = Number(templateDownloads[0]?.count || 0);
-    const totalWesternClicks = Number(westernVerifyClicks[0]?.count || 0);
+    const totalScreeningRequests = Number(screeningRequests[0]?.count || 0);
+    const totalApplications = Number(applicationsSubmitted[0]?.count || 0);
     const totalCreditHelperUses = Number(creditHelperUses[0]?.count || 0);
     const totalCriminalHelperUses = Number(criminalHelperUses[0]?.count || 0);
     const totalUsersCount = Number(totalUsers[0]?.count || 0);
@@ -1073,7 +1082,8 @@ export class DatabaseStorage implements IStorage {
       },
       usage: {
         totalDownloads,
-        westernVerifyClicks: totalWesternClicks,
+        applicationsSubmitted: totalApplications,
+        screeningRequests: totalScreeningRequests,
         creditHelperUses: totalCreditHelperUses,
         criminalHelperUses: totalCriminalHelperUses,
         avgDownloadsPerUser,
@@ -1159,7 +1169,7 @@ export class DatabaseStorage implements IStorage {
     month: number;
     year: number;
     templateDownloads: number;
-    westernVerifyClicks: number;
+    screeningRequests: number;
     creditHelperUses: number;
     criminalHelperUses: number;
     totalEvents: number;
@@ -1169,7 +1179,7 @@ export class DatabaseStorage implements IStorage {
     
     const engagementTypes = [
       'template_download',
-      'western_verify_click',
+      'screening_request',
       'credit_helper_use',
       'criminal_helper_use',
     ];
@@ -1189,7 +1199,7 @@ export class DatabaseStorage implements IStorage {
     // Group by month
     const monthlyData: Map<number, {
       templateDownloads: number;
-      westernVerifyClicks: number;
+      screeningRequests: number;
       creditHelperUses: number;
       criminalHelperUses: number;
     }> = new Map();
@@ -1198,7 +1208,7 @@ export class DatabaseStorage implements IStorage {
     for (let m = 1; m <= 12; m++) {
       monthlyData.set(m, {
         templateDownloads: 0,
-        westernVerifyClicks: 0,
+        screeningRequests: 0,
         creditHelperUses: 0,
         criminalHelperUses: 0,
       });
@@ -1213,8 +1223,8 @@ export class DatabaseStorage implements IStorage {
         case 'template_download':
           data.templateDownloads++;
           break;
-        case 'western_verify_click':
-          data.westernVerifyClicks++;
+        case 'screening_request':
+          data.screeningRequests++;
           break;
         case 'credit_helper_use':
           data.creditHelperUses++;
@@ -1229,7 +1239,7 @@ export class DatabaseStorage implements IStorage {
       month,
       year,
       ...data,
-      totalEvents: data.templateDownloads + data.westernVerifyClicks + data.creditHelperUses + data.criminalHelperUses,
+      totalEvents: data.templateDownloads + data.screeningRequests + data.creditHelperUses + data.criminalHelperUses,
     }));
   }
 
