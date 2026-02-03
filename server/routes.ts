@@ -5910,6 +5910,22 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         fieldSchemaOverrideJson,
       });
 
+      // Update active links with new unit label and rent amount
+      if (unit && (unitLabel !== undefined || rentAmount !== undefined)) {
+        const links = await storage.getRentalApplicationLinksByUnitId(req.params.id);
+        const activeLinks = links.filter(l => l.isActive);
+        
+        for (const link of activeLinks) {
+          const currentSchema = link.mergedSchemaJson as any || {};
+          const updatedSchema = {
+            ...currentSchema,
+            ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
+            ...(rentAmount !== undefined && { rentAmount }),
+          };
+          await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });
+        }
+      }
+
       res.json(unit);
     } catch (error) {
       console.error("Error updating rental unit:", error);
