@@ -1530,13 +1530,14 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(unit.unitLabel || "");
+  const [editRent, setEditRent] = useState(unit.rentAmount ? (unit.rentAmount / 100).toFixed(2) : "");
   
   const { data: links = [] } = useQuery<RentalApplicationLink[]>({
     queryKey: ["/api/rental/units", unit.id, "links"],
   });
 
   const updateUnitMutation = useMutation({
-    mutationFn: async (newLabel: string) => {
+    mutationFn: async ({ unitLabel, rentAmount }: { unitLabel: string; rentAmount: number | null }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/units/${unit.id}`, {
         method: "PATCH",
@@ -1545,18 +1546,18 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ unitLabel: newLabel }),
+        body: JSON.stringify({ unitLabel, rentAmount }),
       });
       if (!response.ok) throw new Error("Failed to update unit");
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", propertyId, "units"] });
-      toast({ title: "Unit Renamed", description: "The unit name has been updated." });
+      toast({ title: "Unit Updated", description: "The unit has been updated." });
       setIsEditing(false);
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to rename unit.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update unit.", variant: "destructive" });
     },
   });
 
@@ -1624,26 +1625,35 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
         <div className="flex items-center gap-2">
           <Home className="h-4 w-4 text-muted-foreground" />
           {isEditing ? (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 flex-wrap">
               <Input
                 value={editLabel}
                 onChange={(e) => setEditLabel(e.target.value)}
                 placeholder="e.g., Apt A, Unit 101"
-                className="h-7 w-32 text-sm"
+                className="h-7 w-28 text-sm"
                 autoFocus
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    updateUnitMutation.mutate(editLabel);
-                  } else if (e.key === "Escape") {
-                    setIsEditing(false);
-                    setEditLabel(unit.unitLabel || "");
-                  }
-                }}
                 data-testid={`input-edit-unit-${unit.id}`}
               />
+              <div className="flex items-center gap-1">
+                <span className="text-sm text-muted-foreground">$</span>
+                <Input
+                  value={editRent}
+                  onChange={(e) => setEditRent(e.target.value)}
+                  placeholder="Rent"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="h-7 w-24 text-sm"
+                  data-testid={`input-edit-rent-${unit.id}`}
+                />
+                <span className="text-sm text-muted-foreground">/mo</span>
+              </div>
               <Button
                 size="sm"
-                onClick={() => updateUnitMutation.mutate(editLabel)}
+                onClick={() => {
+                  const rentCents = editRent ? Math.round(parseFloat(editRent) * 100) : null;
+                  updateUnitMutation.mutate({ unitLabel: editLabel, rentAmount: rentCents });
+                }}
                 disabled={updateUnitMutation.isPending}
                 data-testid={`button-save-unit-${unit.id}`}
               >
@@ -1655,6 +1665,7 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
                 onClick={() => {
                   setIsEditing(false);
                   setEditLabel(unit.unitLabel || "");
+                  setEditRent(unit.rentAmount ? (unit.rentAmount / 100).toFixed(2) : "");
                 }}
                 data-testid={`button-cancel-edit-unit-${unit.id}`}
               >
@@ -1662,8 +1673,13 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-2">
               <span className="font-medium text-sm">{unit.unitLabel || "Default"}</span>
+              {unit.rentAmount && (
+                <Badge variant="outline" className="text-xs">
+                  ${(unit.rentAmount / 100).toLocaleString()}/mo
+                </Badge>
+              )}
               <Button
                 size="icon"
                 variant="ghost"

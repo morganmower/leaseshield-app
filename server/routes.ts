@@ -5899,10 +5899,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+      const { unitLabel, rentAmount, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
       
       const unit = await storage.updateRentalUnit(req.params.id, {
         unitLabel,
+        rentAmount,
         coverPageOverrideEnabled,
         coverPageOverrideJson,
         fieldSchemaOverrideEnabled,
