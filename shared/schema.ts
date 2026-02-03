@@ -805,6 +805,7 @@ export const communicationTemplateTypeEnum = pgEnum('communication_template_type
   'lease_renewal_notice',
   'late_payment_notice',
   'move_in_welcome',
+  'thirty_day_notice',
 ]);
 
 export const communicationTemplates = pgTable("communication_templates", {

@@ -21,6 +21,7 @@ const TEMPLATE_LABELS: Record<string, string> = {
   lease_renewal_notice: "Lease Renewal Notice",
   late_payment_notice: "Late Payment Notice",
   move_in_welcome: "Move-In Welcome",
+  thirty_day_notice: "30 Day Notice",
 };
 
 function DatePickerField({ 
