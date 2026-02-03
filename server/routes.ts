@@ -5823,10 +5823,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get property terms from the property's stored data
       const propertyTerms = property.propertyTermsJson || {};
 
+      // Format rent as currency string for display
+      const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+      const updatedPropertyTerms = {
+        ...propertyTerms,
+        ...(formattedRent && { monthlyRent: formattedRent }),
+      };
+      
       const link = await storage.createRentalApplicationLink({
         unitId: unit.id,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms, rentAmount: unit.rentAmount },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: null,
       });
@@ -5868,10 +5875,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         const fieldSchema = property.defaultFieldSchemaJson;
         const propertyTerms = property.propertyTermsJson || {};
         
+        // Format rent as currency string for display
+        const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+        const updatedPropertyTerms = {
+          ...propertyTerms,
+          ...(formattedRent && { monthlyRent: formattedRent }),
+        };
+        
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
           publicToken,
-          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms, rentAmount: unit.rentAmount },
+          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
           isActive: true,
           expiresAt: null,
         });
@@ -5917,10 +5931,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         
         for (const link of activeLinks) {
           const currentSchema = link.mergedSchemaJson as any || {};
+          const currentPropertyTerms = currentSchema.propertyTerms || {};
+          
+          // Format rent amount as currency string for display (e.g., "$1,500/mo")
+          const formattedRent = rentAmount !== undefined && rentAmount !== null
+            ? `$${(rentAmount / 100).toLocaleString()}/mo`
+            : currentPropertyTerms.monthlyRent;
+          
           const updatedSchema = {
             ...currentSchema,
             ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
             ...(rentAmount !== undefined && { rentAmount }),
+            propertyTerms: {
+              ...currentPropertyTerms,
+              ...(rentAmount !== undefined && { monthlyRent: formattedRent }),
+            },
           };
           await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });
         }
@@ -6023,10 +6048,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get property terms from property (fall back to request body for backwards compatibility)
       const propertyTerms = property.propertyTermsJson || req.body.propertyTerms || {};
 
+      // Format rent as currency string for display
+      const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+      const updatedPropertyTerms = {
+        ...propertyTerms,
+        ...(formattedRent && { monthlyRent: formattedRent }),
+      };
+      
       const link = await storage.createRentalApplicationLink({
         unitId: req.params.unitId,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms, rentAmount: unit.rentAmount },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
       });
