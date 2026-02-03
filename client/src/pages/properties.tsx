@@ -1429,7 +1429,6 @@ function PropertyCard({
   
   const { data: units = [] } = useQuery<RentalUnit[]>({
     queryKey: ["/api/rental/properties", property.id, "units"],
-    enabled: isExpanded,
   });
 
   const getPropertyTypeColor = (type: string | null | undefined) => {
