@@ -7897,10 +7897,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const { processScreeningRequest } = await import('./digitalDelveService');
       const { decryptCredentials } = await import('./crypto');
       
-      // Determine base URL for webhooks
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      const baseUrl = `${protocol}://${host}`;
+      // Determine base URL for webhooks - use stable production domain
+      // IMPORTANT: Use REPLIT_DOMAINS for consistent webhook URLs that Western Verify can reach
+      const baseUrl = process.env.REPLIT_DOMAINS 
+        ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+        : `${req.headers['x-forwarded-proto'] || req.protocol || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
       
       // Resolve landlord's screening credentials if configured
       let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
@@ -8787,10 +8788,10 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                     const { processScreeningRequest } = await import('./digitalDelveService');
                     const { decryptCredentials } = await import('./crypto');
                     
-                    // Construct base URL for webhook callbacks
-                    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-                    const host = req.headers['x-forwarded-host'] || req.headers.host;
-                    const baseUrl = `${protocol}://${host}`;
+                    // Construct base URL for webhook callbacks - use stable production domain
+                    const baseUrl = process.env.REPLIT_DOMAINS 
+                      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+                      : `${req.headers['x-forwarded-proto'] || req.protocol || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
                     
                     // Resolve landlord's screening credentials if configured
                     let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
