@@ -1,5 +1,5 @@
 // Hourly screening status poller
-// Checks in-progress screening orders via Western Verify SSO to detect completion
+// Checks pending (sent/in-progress) screening orders via Western Verify SSO to detect completion
 // and sends email notifications to property owners when screenings complete.
 
 import { storage } from "./storage";
@@ -83,11 +83,11 @@ export async function pollScreeningStatus(): Promise<void> {
     const orders = await storage.getInProgressScreeningOrdersWithOwnerInfo();
     
     if (orders.length === 0) {
-      console.log("[Poller] No in-progress screening orders to check");
+      console.log("[Poller] No pending screening orders to check");
       return;
     }
     
-    console.log(`[Poller] Found ${orders.length} in-progress orders to check`);
+    console.log(`[Poller] Found ${orders.length} pending orders to check`);
     
     // Group orders by owner to minimize credential decryption
     const ordersByOwner = new Map<string, Array<typeof orders[0] & { ownerId: string }>>();
