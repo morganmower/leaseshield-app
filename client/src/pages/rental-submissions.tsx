@@ -347,17 +347,17 @@ export default function RentalSubmissions() {
     onError: () => {},
   });
 
-  // Auto-sync in_progress screenings when viewing a submission
+  // Auto-sync sent/in_progress screenings when viewing a submission
   const autoSyncedRef = useRef<Set<string>>(new Set());
   useEffect(() => {
     if (!screeningOrders || screeningOrders.length === 0) return;
     
-    const inProgressOrders = screeningOrders.filter(
-      order => order.status === 'in_progress' && !autoSyncedRef.current.has(order.id)
+    const pendingOrders = screeningOrders.filter(
+      order => (order.status === 'sent' || order.status === 'in_progress') && !autoSyncedRef.current.has(order.id)
     );
     
-    if (inProgressOrders.length > 0) {
-      inProgressOrders.forEach(order => {
+    if (pendingOrders.length > 0) {
+      pendingOrders.forEach(order => {
         autoSyncedRef.current.add(order.id);
         syncScreeningMutation.mutate(order.id);
       });
@@ -1112,7 +1112,7 @@ Best regards`;
                                     <span className="ml-1">Resend Invitation</span>
                                   </Button>
                                 )}
-                                {personOrder.status === 'in_progress' && (
+                                {(personOrder.status === 'sent' || personOrder.status === 'in_progress') && (
                                   <Button
                                     size="sm"
                                     variant="outline"
