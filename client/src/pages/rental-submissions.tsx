@@ -94,6 +94,7 @@ interface SubmissionSummary {
     decision: "approved" | "denied";
     decidedAt: string;
   } | null;
+  screeningStatus: 'not_sent' | 'pending' | 'complete';
 }
 
 interface SubmissionPerson {
@@ -2161,6 +2162,7 @@ Best regards`;
                           <TableHead>Unit</TableHead>
                           <TableHead>Applicant</TableHead>
                           <TableHead>Decision</TableHead>
+                          <TableHead>Screening</TableHead>
                           <TableHead>Date</TableHead>
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -2200,6 +2202,21 @@ Best regards`;
                                   </Badge>
                                 )}
                               </div>
+                            </TableCell>
+                            <TableCell>
+                              {sub.screeningStatus === 'complete' ? (
+                                <Badge className="bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100" data-testid={`badge-screening-${sub.id}`}>
+                                  Complete
+                                </Badge>
+                              ) : sub.screeningStatus === 'pending' ? (
+                                <Badge className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-100" data-testid={`badge-screening-${sub.id}`}>
+                                  Pending
+                                </Badge>
+                              ) : (
+                                <Badge variant="outline" className="text-muted-foreground" data-testid={`badge-screening-${sub.id}`}>
+                                  Not Sent
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell>
                               <p className="text-sm" data-testid={`text-date-${sub.id}`}>{formatDate(sub.createdAt)}</p>

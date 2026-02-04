@@ -6209,6 +6209,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         }
         const primaryApplicant = people.find(p => p.role === 'applicant');
         const decision = await storage.getRentalDecision(sub.id);
+        
+        // Get screening status aggregation with normalization for vendor variants
+        const screeningOrders = await storage.getRentalScreeningOrdersBySubmission(sub.id);
+        let screeningStatus: 'not_sent' | 'pending' | 'complete' = 'not_sent';
+        if (screeningOrders.length > 0) {
+          // Normalize status to handle any vendor variants
+          const normalizedStatuses = screeningOrders.map(o => {
+            const s = (o.status || '').toLowerCase().replace(/[_\s-]/g, '');
+            if (s === 'complete' || s === 'completed') return 'complete';
+            if (s === 'sent' || s === 'inprogress' || s === 'pending') return 'pending';
+            return s;
+          });
+          const allComplete = normalizedStatuses.every(s => s === 'complete');
+          const anyPending = normalizedStatuses.some(s => s === 'pending');
+          if (allComplete) {
+            screeningStatus = 'complete';
+          } else if (anyPending || normalizedStatuses.some(s => s === 'complete')) {
+            screeningStatus = 'pending';
+          }
+        }
+        
         return {
           ...sub,
           propertyName,
@@ -6220,6 +6241,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           } : null,
           peopleCount: people.length,
           decision: decision ? { decision: decision.decision, decidedAt: decision.decidedAt } : null,
+          screeningStatus,
         };
       }));
       
