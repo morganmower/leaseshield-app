@@ -714,8 +714,11 @@ export async function handleResultWebhook(xml: string): Promise<{ success: boole
 }
 
 /**
- * Check if a screening report is available and sync status to complete if so.
- * This is useful when webhooks are missed or delayed.
+ * Refresh the SSO report URL for a screening order.
+ * IMPORTANT: Western Verify has NO status-check API. An SSO redirect URL does NOT
+ * mean the report is complete — it just provides an authenticated link to their portal.
+ * Completion status can ONLY be determined by their webhook callbacks.
+ * This function updates the report URL for portal access but NEVER changes order status.
  */
 export async function syncScreeningStatus(
   orderId: string,
@@ -735,35 +738,26 @@ export async function syncScreeningStatus(
       return { success: true, status: 'complete' };
     }
 
-    console.log(`[DigitalDelve] Syncing status for order ${orderId}, ref: ${order.referenceNumber}`);
+    console.log(`[DigitalDelve] Refreshing SSO URL for order ${orderId}, ref: ${order.referenceNumber}`);
     
     const ssoResult = await performSsoViewReport(order.referenceNumber, credentials);
     
-    // Always update last check time
     await storage.updateRentalScreeningOrder(orderId, {
       lastStatusCheckAt: new Date(),
+      ...(ssoResult.success && ssoResult.redirectUrl ? { reportUrl: ssoResult.redirectUrl } : {}),
     });
-    
-    if (ssoResult.success && ssoResult.redirectUrl) {
-      console.log(`[DigitalDelve] Report available - marking order ${orderId} as complete`);
-      await storage.updateRentalScreeningOrder(orderId, {
-        status: 'complete',
-        reportUrl: ssoResult.redirectUrl,
-        lastStatusCheckAt: new Date(),
-      });
-      return { success: true, status: 'complete' };
-    }
 
-    // Log the specific reason it's not complete
-    if (ssoResult.error === 'in_progress') {
+    if (ssoResult.success && ssoResult.redirectUrl) {
+      console.log(`[DigitalDelve] SSO URL refreshed for order ${orderId} (status remains: ${order.status})`);
+    } else if (ssoResult.error === 'in_progress') {
       console.log(`[DigitalDelve] Order ${orderId} still in progress at Western Verify`);
     } else if (ssoResult.error) {
-      console.warn(`[DigitalDelve] Sync check returned error for ${orderId}: ${ssoResult.error}`);
+      console.warn(`[DigitalDelve] SSO check returned error for ${orderId}: ${ssoResult.error}`);
     }
 
     return { success: true, status: order.status };
   } catch (error: any) {
-    console.error('[DigitalDelve] Error syncing screening status:', error);
+    console.error('[DigitalDelve] Error refreshing SSO URL:', error);
     return { success: false, status: 'error', error: error.message };
   }
 }
