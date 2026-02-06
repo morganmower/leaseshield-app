@@ -2261,17 +2261,23 @@ export class DatabaseStorage implements IStorage {
       const sixtyDaysAgo = new Date();
       sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
 
+      const submissionsWithOldScreening = db.select({ id: rentalScreeningOrders.submissionId })
+        .from(rentalScreeningOrders)
+        .where(lt(rentalScreeningOrders.createdAt, sixtyDaysAgo));
+
+      const submissionsWithOldDecision = db.select({ id: rentalDecisions.submissionId })
+        .from(rentalDecisions)
+        .where(lt(rentalDecisions.decidedAt, sixtyDaysAgo));
+
       const result = await db.update(rentalSubmissions)
         .set({ archivedAt: new Date(), updatedAt: new Date() })
         .where(
           and(
             isNull(rentalSubmissions.archivedAt),
             isNull(rentalSubmissions.deletedAt),
-            inArray(
-              rentalSubmissions.id,
-              db.select({ id: rentalDecisions.submissionId })
-                .from(rentalDecisions)
-                .where(lt(rentalDecisions.decidedAt, sixtyDaysAgo))
+            or(
+              inArray(rentalSubmissions.id, submissionsWithOldScreening),
+              inArray(rentalSubmissions.id, submissionsWithOldDecision)
             )
           )
         )
