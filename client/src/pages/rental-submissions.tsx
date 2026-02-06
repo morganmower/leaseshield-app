@@ -334,7 +334,8 @@ export default function RentalSubmissions() {
 
   const syncScreeningMutation = useMutation({
     mutationFn: async (orderId: string) => {
-      return apiRequest("POST", `/api/rental/screening/${orderId}/sync`);
+      const res = await apiRequest("POST", `/api/rental/screening/${orderId}/sync`);
+      return await res.json();
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
@@ -376,14 +377,19 @@ export default function RentalSubmissions() {
     if (lastBulkSyncCountRef.current === pendingCount) return;
     lastBulkSyncCountRef.current = pendingCount;
     
-    apiRequest("POST", "/api/rental/screening/bulk-sync")
-      .then((result: any) => {
-        queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+    (async () => {
+      try {
+        const res = await apiRequest("POST", "/api/rental/screening/bulk-sync");
+        const result = await res.json();
         if (result.completed > 0) {
           toast({ title: "Screenings Updated", description: `${result.completed} screening(s) marked complete.` });
         }
-      })
-      .catch(() => {});
+      } catch (err) {
+        console.error("[BulkSync] Failed:", err);
+      } finally {
+        queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      }
+    })();
   }, [submissions]);
 
   const resendInviteMutation = useMutation({
