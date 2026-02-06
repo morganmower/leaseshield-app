@@ -428,6 +428,15 @@ export async function performSsoViewReport(
       };
     }
     
+    // Check for In Progress status - report not yet ready
+    if (body.includes('<Status>In Progress</Status>') || body.includes('<Status>in progress</Status>') || body.includes('<Status>Pending</Status>')) {
+      console.log("[DigitalDelve] Report still in progress for ref:", referenceNumber);
+      return { 
+        success: false, 
+        error: 'in_progress'
+      };
+    }
+    
     // Check for error
     if (body.includes('<Status>Error</Status>')) {
       const errorMatch = body.match(/<Error>([^<]+)<\/Error>/i);
@@ -441,7 +450,6 @@ export async function performSsoViewReport(
     if (body.includes('<form') || body.includes('<FORM')) {
       const actionMatch = body.match(/action=["']([^"']+)["']/i);
       if (actionMatch && actionMatch[1]) {
-        // Return the WV portal - the SSO likely set session cookies
         return { 
           success: true, 
           redirectUrl: 'https://secure.westernverify.com/report_lookup.cfm'
@@ -450,7 +458,7 @@ export async function performSsoViewReport(
     }
     
     // Fallback - couldn't parse response, direct to login
-    console.warn("[DigitalDelve] Couldn't parse SSO response, directing to login");
+    console.warn("[DigitalDelve] Couldn't parse SSO response, directing to login. Body:", body.substring(0, 300));
     return { 
       success: false, 
       error: 'Unable to authenticate with Western Verify. Please log in manually.' 
@@ -731,13 +739,26 @@ export async function syncScreeningStatus(
     
     const ssoResult = await performSsoViewReport(order.referenceNumber, credentials);
     
+    // Always update last check time
+    await storage.updateRentalScreeningOrder(orderId, {
+      lastStatusCheckAt: new Date(),
+    });
+    
     if (ssoResult.success && ssoResult.redirectUrl) {
       console.log(`[DigitalDelve] Report available - marking order ${orderId} as complete`);
       await storage.updateRentalScreeningOrder(orderId, {
         status: 'complete',
         reportUrl: ssoResult.redirectUrl,
+        lastStatusCheckAt: new Date(),
       });
       return { success: true, status: 'complete' };
+    }
+
+    // Log the specific reason it's not complete
+    if (ssoResult.error === 'in_progress') {
+      console.log(`[DigitalDelve] Order ${orderId} still in progress at Western Verify`);
+    } else if (ssoResult.error) {
+      console.warn(`[DigitalDelve] Sync check returned error for ${orderId}: ${ssoResult.error}`);
     }
 
     return { success: true, status: order.status };
@@ -745,4 +766,42 @@ export async function syncScreeningStatus(
     console.error('[DigitalDelve] Error syncing screening status:', error);
     return { success: false, status: 'error', error: error.message };
   }
+}
+
+export async function bulkSyncScreeningStatuses(
+  userId: string,
+  credentials: ScreeningCredentials
+): Promise<{ synced: number; completed: number; errors: number }> {
+  let synced = 0, completed = 0, errors = 0;
+  
+  try {
+    const pendingOrders = await storage.getPendingScreeningOrdersForUser(userId);
+    
+    if (pendingOrders.length === 0) {
+      return { synced: 0, completed: 0, errors: 0 };
+    }
+    
+    console.log(`[DigitalDelve] Bulk sync: ${pendingOrders.length} pending orders for user ${userId}`);
+    
+    for (const order of pendingOrders) {
+      try {
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        const result = await syncScreeningStatus(order.id, credentials);
+        synced++;
+        if (result.status === 'complete') {
+          completed++;
+        }
+      } catch (err) {
+        console.error(`[DigitalDelve] Bulk sync error for order ${order.id}:`, err);
+        errors++;
+      }
+    }
+    
+    console.log(`[DigitalDelve] Bulk sync done: ${synced} checked, ${completed} completed, ${errors} errors`);
+  } catch (error) {
+    console.error('[DigitalDelve] Bulk sync error:', error);
+  }
+  
+  return { synced, completed, errors };
 }

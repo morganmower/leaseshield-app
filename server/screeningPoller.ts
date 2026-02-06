@@ -12,7 +12,7 @@ import { eq } from "drizzle-orm";
 
 let pollerInterval: NodeJS.Timeout | null = null;
 const POLLING_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
-const INITIAL_DELAY_MS = 5 * 60 * 1000; // 5 minutes after startup
+const INITIAL_DELAY_MS = 30 * 1000; // 30 seconds after startup
 
 interface ScreeningOrderWithOwner {
   order: typeof rentalScreeningOrders.$inferSelect;

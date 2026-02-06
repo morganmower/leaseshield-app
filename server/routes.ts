@@ -8353,9 +8353,38 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // NOTE: The check-status endpoint was removed because Western Verify
-  // does NOT have a RetrieveOrderStatus API function. Status updates 
-  // are received via webhooks to /api/webhooks/digitaldelve/status and /result
+  // Bulk sync all pending screenings for the current user
+  app.post('/api/rental/screening/bulk-sync', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      const storedCredentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!storedCredentials || !storedCredentials.encryptedUsername || !storedCredentials.encryptedPassword) {
+        return res.json({ synced: 0, completed: 0, errors: 0, message: 'no_credentials' });
+      }
+
+      const { decryptCredentials } = await import('./crypto');
+      let credentials;
+      try {
+        const decrypted = decryptCredentials({
+          encryptedUsername: storedCredentials.encryptedUsername,
+          encryptedPassword: storedCredentials.encryptedPassword,
+          encryptionIv: storedCredentials.encryptionIv,
+        });
+        credentials = { username: decrypted.username, password: decrypted.password };
+      } catch (e) {
+        return res.json({ synced: 0, completed: 0, errors: 0, message: 'credential_error' });
+      }
+
+      const { bulkSyncScreeningStatuses } = await import('./digitalDelveService');
+      const result = await bulkSyncScreeningStatuses(userId, credentials);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error in bulk screening sync:", error);
+      res.status(500).json({ message: "Failed to sync screening statuses" });
+    }
+  });
 
   // ============================================================
   // WEBHOOK ROUTES (No Auth - called by DigitalDelve)

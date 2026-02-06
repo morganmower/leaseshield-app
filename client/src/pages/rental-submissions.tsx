@@ -365,6 +365,27 @@ export default function RentalSubmissions() {
     }
   }, [screeningOrders]);
 
+  // Bulk sync all pending screenings when submissions list loads
+  const lastBulkSyncCountRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!submissions || submissions.length === 0) return;
+    
+    const pendingCount = submissions.filter(s => s.screeningStatus === 'pending').length;
+    if (pendingCount === 0) return;
+    
+    if (lastBulkSyncCountRef.current === pendingCount) return;
+    lastBulkSyncCountRef.current = pendingCount;
+    
+    apiRequest("POST", "/api/rental/screening/bulk-sync")
+      .then((result: any) => {
+        queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+        if (result.completed > 0) {
+          toast({ title: "Screenings Updated", description: `${result.completed} screening(s) marked complete.` });
+        }
+      })
+      .catch(() => {});
+  }, [submissions]);
+
   const resendInviteMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId: string }) => {
       return apiRequest("POST", `/api/rental/submissions/${submissionId}/people/${personId}/resend-invite`);

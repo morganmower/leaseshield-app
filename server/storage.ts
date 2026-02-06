@@ -457,6 +457,7 @@ export interface IStorage {
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
   deleteRentalScreeningOrder(id: string): Promise<boolean>;
   getScreeningOrdersNeedingPoll(): Promise<RentalScreeningOrder[]>;
+  getPendingScreeningOrdersForUser(userId: string): Promise<RentalScreeningOrder[]>;
   getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
     order: RentalScreeningOrder;
     ownerEmail: string;
@@ -2430,6 +2431,28 @@ export class DatabaseStorage implements IStorage {
         )
         .limit(10); // Batch size to avoid overloading
     }, 'getScreeningOrdersNeedingPoll');
+  }
+
+  async getPendingScreeningOrdersForUser(userId: string): Promise<RentalScreeningOrder[]> {
+    return handleDbOperation(async () => {
+      return await db
+        .select({ order: rentalScreeningOrders })
+        .from(rentalScreeningOrders)
+        .innerJoin(rentalSubmissions, eq(rentalScreeningOrders.submissionId, rentalSubmissions.id))
+        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
+        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
+        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
+        .where(
+          and(
+            eq(rentalProperties.userId, userId),
+            or(
+              eq(rentalScreeningOrders.status, 'sent'),
+              eq(rentalScreeningOrders.status, 'in_progress')
+            )
+          )
+        )
+        .then(rows => rows.map(r => r.order));
+    }, 'getPendingScreeningOrdersForUser');
   }
 
   async getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
