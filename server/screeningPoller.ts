@@ -11,7 +11,7 @@ import { rentalScreeningOrders, rentalProperties, rentalUnits, rentalApplication
 import { eq } from "drizzle-orm";
 
 let pollerInterval: NodeJS.Timeout | null = null;
-const POLLING_INTERVAL_MS = 60 * 60 * 1000; // 1 hour
+const POLLING_INTERVAL_MS = 15 * 60 * 1000; // 15 minutes
 const INITIAL_DELAY_MS = 30 * 1000; // 30 seconds after startup
 
 interface ScreeningOrderWithOwner {
@@ -76,7 +76,7 @@ async function getLandlordCredentials(ownerId: string): Promise<ScreeningCredent
  * Main polling function - checks all in-progress orders
  */
 export async function pollScreeningStatus(): Promise<void> {
-  console.log("[Poller] Starting hourly screening status check...");
+  console.log("[Poller] Starting screening status check...");
   
   try {
     // Get in-progress orders with owner info
@@ -178,7 +178,7 @@ export async function pollScreeningStatus(): Promise<void> {
       }
     }
     
-    console.log("[Poller] Hourly screening status check complete");
+    console.log("[Poller] Screening status check complete");
   } catch (error) {
     console.error("[Poller] Error during polling:", error);
   }
@@ -211,7 +211,7 @@ async function getOrderOwnerId(orderId: string): Promise<{ ownerId: string } | n
  * Start the hourly polling job
  */
 export function startScreeningPoller(): void {
-  console.log("[Poller] Starting screening status poller (hourly checks)");
+  console.log("[Poller] Starting screening status poller (every 15 minutes)");
   
   // Initial check after 5 minute delay
   setTimeout(() => {
@@ -223,7 +223,7 @@ export function startScreeningPoller(): void {
     pollScreeningStatus().catch(e => console.error("[Poller] Interval poll error:", e));
   }, POLLING_INTERVAL_MS);
   
-  console.log("[Poller] Screening poller scheduled (hourly)");
+  console.log("[Poller] Screening poller scheduled (every 15 minutes)");
 }
 
 /**

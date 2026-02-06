@@ -243,9 +243,18 @@ export default function RentalSubmissions() {
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [deleteSubmissionId, setDeleteSubmissionId] = useState<string | null>(null);
 
-  const { data: submissions, isLoading: isLoadingSubmissions } = useQuery<SubmissionSummary[]>({
+  const { data: submissions, isLoading: isLoadingSubmissions, refetch: refetchSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions"],
   });
+
+  const prevSelectedRef = useRef<string | null>(null);
+  useEffect(() => {
+    if (prevSelectedRef.current && !selectedSubmission) {
+      refetchSubmissions();
+      lastBulkSyncCountRef.current = null;
+    }
+    prevSelectedRef.current = selectedSubmission;
+  }, [selectedSubmission]);
 
   // Check screening integration status
   const { data: screeningCredentials } = useQuery<{
