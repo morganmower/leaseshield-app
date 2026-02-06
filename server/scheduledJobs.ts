@@ -125,6 +125,7 @@ export class ScheduledJobs {
   private monthlyPublishInterval: NodeJS.Timeout | null = null;
   private lifecycleEmailsInterval: NodeJS.Timeout | null = null;
   private biweeklyDigestInterval: NodeJS.Timeout | null = null;
+  private autoArchiveInterval: NodeJS.Timeout | null = null;
 
   // =========================================================================
   // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
@@ -1278,6 +1279,17 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
+  async autoArchiveOldSubmissions(): Promise<void> {
+    try {
+      const count = await storage.autoArchiveOldSubmissions();
+      if (count > 0) {
+        console.log(`Auto-archived ${count} submissions older than 60 days`);
+      }
+    } catch (error) {
+      console.error("Auto-archive job failed:", error);
+    }
+  }
+
   // Start all scheduled jobs
   async start(): Promise<void> {
     console.log('🚀 Starting scheduled jobs...');
@@ -1361,6 +1373,12 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.sendBiweeklyLegislativeDigest(), 10 * 60 * 1000); // First check after 10 minutes
 
+    this.autoArchiveInterval = setInterval(
+      () => this.autoArchiveOldSubmissions(),
+      24 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.autoArchiveOldSubmissions(), 11 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1431,6 +1449,11 @@ Manage preferences: ${baseUrl}/settings
     if (this.biweeklyDigestInterval) {
       clearInterval(this.biweeklyDigestInterval);
       this.biweeklyDigestInterval = null;
+    }
+
+    if (this.autoArchiveInterval) {
+      clearInterval(this.autoArchiveInterval);
+      this.autoArchiveInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

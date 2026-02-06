@@ -70,7 +70,11 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronsUpDown,
+  Search,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient, getAccessToken } from "@/lib/queryClient";
 
@@ -95,6 +99,7 @@ interface SubmissionSummary {
     decidedAt: string;
   } | null;
   screeningStatus: 'not_sent' | 'pending' | 'complete';
+  archivedAt: string | null;
 }
 
 interface SubmissionPerson {
@@ -242,9 +247,20 @@ export default function RentalSubmissions() {
   const [uploadFileType, setUploadFileType] = useState<string>("other");
   const [uploadFiles, setUploadFiles] = useState<File[]>([]);
   const [deleteSubmissionId, setDeleteSubmissionId] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: submissions, isLoading: isLoadingSubmissions, refetch: refetchSubmissions } = useQuery<SubmissionSummary[]>({
-    queryKey: ["/api/rental/submissions"],
+    queryKey: ["/api/rental/submissions", { includeArchived: showArchived }],
+    queryFn: async () => {
+      const token = getAccessToken();
+      const url = showArchived ? '/api/rental/submissions?includeArchived=true' : '/api/rental/submissions';
+      const res = await fetch(url, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) throw new Error("Failed to load submissions");
+      return res.json();
+    },
   });
 
   const prevSelectedRef = useRef<string | null>(null);
@@ -629,6 +645,19 @@ Best regards`;
     },
   });
 
+  const archiveMutation = useMutation({
+    mutationFn: async ({ id, archive }: { id: string; archive: boolean }) => {
+      return apiRequest("POST", `/api/rental/submissions/${id}/${archive ? 'archive' : 'unarchive'}`, {});
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/submissions"] });
+      toast({ title: "Success", description: "Application updated." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error?.message || "Failed to update application.", variant: "destructive" });
+    },
+  });
+
   const handleStatusChange = (status: string) => {
     if (selectedSubmission) {
       updateMutation.mutate({ id: selectedSubmission, status });
@@ -730,24 +759,49 @@ Best regards`;
 
   const filteredSubmissions = useMemo(() => {
     if (!submissions) return [];
+    let result = submissions;
+
     switch (filterTab) {
       case "pending":
-        return submissions.filter(s => !s.decision);
+        result = result.filter(s => !s.decision);
+        break;
       case "decided":
-        return submissions.filter(s => !!s.decision);
-      default:
-        return submissions;
+        result = result.filter(s => !!s.decision);
+        break;
     }
-  }, [submissions, filterTab]);
+
+    if (!showArchived) {
+      result = result.filter(s => !s.archivedAt);
+    }
+
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter(s => {
+        const applicantName = s.primaryApplicant
+          ? `${s.primaryApplicant.firstName} ${s.primaryApplicant.lastName}`.toLowerCase()
+          : '';
+        const email = s.primaryApplicant?.email?.toLowerCase() || '';
+        const property = s.propertyName.toLowerCase();
+        const unit = (s.unitLabel || '').toLowerCase();
+        const date = new Date(s.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }).toLowerCase();
+        return applicantName.includes(q) || email.includes(q) || property.includes(q) || unit.includes(q) || date.includes(q);
+      });
+    }
+
+    return result;
+  }, [submissions, filterTab, searchQuery, showArchived]);
 
   const countByTab = useMemo(() => {
-    if (!submissions) return { all: 0, pending: 0, decided: 0 };
-    const pending = submissions.filter(s => !s.decision).length;
-    const decided = submissions.filter(s => !!s.decision).length;
+    if (!submissions) return { all: 0, pending: 0, decided: 0, archived: 0 };
+    const active = submissions.filter(s => !s.archivedAt);
+    const pending = active.filter(s => !s.decision).length;
+    const decided = active.filter(s => !!s.decision).length;
+    const archived = submissions.filter(s => !!s.archivedAt).length;
     return {
-      all: submissions.length,
+      all: active.length,
       pending,
       decided,
+      archived,
     };
   }, [submissions]);
 
@@ -827,6 +881,31 @@ Best regards`;
               <Printer className="mr-2 h-4 w-4" />
               Print
             </Button>
+            {submissionDetail && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  archiveMutation.mutate(
+                    { id: selectedSubmission!, archive: !submissionDetail.archivedAt },
+                    { onSuccess: () => setSelectedSubmission(null) }
+                  );
+                }}
+                disabled={archiveMutation.isPending}
+                data-testid="button-archive-detail"
+              >
+                {submissionDetail.archivedAt ? (
+                  <>
+                    <ArchiveRestore className="mr-2 h-4 w-4" />
+                    Unarchive
+                  </>
+                ) : (
+                  <>
+                    <Archive className="mr-2 h-4 w-4" />
+                    Archive
+                  </>
+                )}
+              </Button>
+            )}
           </div>
         </div>
 
@@ -2050,6 +2129,28 @@ Best regards`;
         </TabsList>
       </Tabs>
 
+      <div className="flex flex-wrap items-center gap-3 mb-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search by name, property, or date..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-9"
+            data-testid="input-search-submissions"
+          />
+        </div>
+        <Button
+          variant={showArchived ? "default" : "outline"}
+          size="sm"
+          onClick={() => setShowArchived(!showArchived)}
+          data-testid="button-toggle-archived"
+        >
+          <Archive className="h-4 w-4 mr-1" />
+          {showArchived ? `Archived (${countByTab.archived})` : "Show Archived"}
+        </Button>
+      </div>
+
       {/* Screening integration opt-in banner */}
       {screeningCredentials && !screeningCredentials.configured && (
         <Card className="mb-4 border-primary/30 bg-primary/5">
@@ -2256,6 +2357,11 @@ Best regards`;
                             </TableCell>
                             <TableCell>
                               <p className="text-sm" data-testid={`text-date-${sub.id}`}>{formatDate(sub.createdAt)}</p>
+                              {sub.archivedAt && (
+                                <Badge variant="secondary" className="text-xs mt-1" data-testid={`badge-archived-${sub.id}`}>
+                                  Archived
+                                </Badge>
+                              )}
                             </TableCell>
                             <TableCell className="text-right">
                               <div className="flex items-center justify-end gap-1">
@@ -2267,6 +2373,20 @@ Best regards`;
                                 >
                                   <Eye className="h-4 w-4 mr-1" />
                                   View
+                                </Button>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  onClick={() => archiveMutation.mutate({ id: sub.id, archive: !sub.archivedAt })}
+                                  disabled={archiveMutation.isPending}
+                                  title={sub.archivedAt ? "Unarchive" : "Archive"}
+                                  data-testid={`button-archive-${sub.id}`}
+                                >
+                                  {sub.archivedAt ? (
+                                    <ArchiveRestore className="h-4 w-4 text-muted-foreground" />
+                                  ) : (
+                                    <Archive className="h-4 w-4 text-muted-foreground" />
+                                  )}
                                 </Button>
                                 <Button
                                   size="icon"

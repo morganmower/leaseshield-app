@@ -424,11 +424,14 @@ export interface IStorage {
   getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig>;
 
   // Rental Application System - Submission operations
-  getRentalSubmissionsByUserId(userId: string, includeDeleted?: boolean): Promise<RentalSubmission[]>;
+  getRentalSubmissionsByUserId(userId: string, includeDeleted?: boolean, includeArchived?: boolean): Promise<RentalSubmission[]>;
   getRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
   createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission>;
   updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null>;
   softDeleteRentalSubmission(id: string): Promise<boolean>;
+  archiveRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
+  unarchiveRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
+  autoArchiveOldSubmissions(): Promise<number>;
   getPendingSubmissionsCount(userId: string): Promise<number>;
 
   // Rental Application System - Submission people operations
@@ -2212,22 +2215,69 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Rental Submission operations
-  async getRentalSubmissionsByUserId(userId: string, includeDeleted: boolean = false): Promise<RentalSubmission[]> {
+  async getRentalSubmissionsByUserId(userId: string, includeDeleted: boolean = false, includeArchived: boolean = false): Promise<RentalSubmission[]> {
     return handleDbOperation(async () => {
+      const conditions = [eq(rentalProperties.userId, userId)];
+      if (!includeDeleted) {
+        conditions.push(isNull(rentalSubmissions.deletedAt));
+      }
+      if (!includeArchived) {
+        conditions.push(isNull(rentalSubmissions.archivedAt));
+      }
       const results = await db
         .select({ submission: rentalSubmissions })
         .from(rentalSubmissions)
         .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
         .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
         .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
-        .where(
-          includeDeleted 
-            ? eq(rentalProperties.userId, userId)
-            : and(eq(rentalProperties.userId, userId), isNull(rentalSubmissions.deletedAt))
-        )
+        .where(and(...conditions))
         .orderBy(desc(rentalSubmissions.createdAt));
       return results.map(r => r.submission);
     }, 'getRentalSubmissionsByUserId');
+  }
+
+  async archiveRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalSubmissions)
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .where(eq(rentalSubmissions.id, id))
+        .returning();
+      return updated;
+    }, 'archiveRentalSubmission');
+  }
+
+  async unarchiveRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalSubmissions)
+        .set({ archivedAt: null, updatedAt: new Date() })
+        .where(eq(rentalSubmissions.id, id))
+        .returning();
+      return updated;
+    }, 'unarchiveRentalSubmission');
+  }
+
+  async autoArchiveOldSubmissions(): Promise<number> {
+    return handleDbOperation(async () => {
+      const sixtyDaysAgo = new Date();
+      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+
+      const result = await db.update(rentalSubmissions)
+        .set({ archivedAt: new Date(), updatedAt: new Date() })
+        .where(
+          and(
+            isNull(rentalSubmissions.archivedAt),
+            isNull(rentalSubmissions.deletedAt),
+            inArray(
+              rentalSubmissions.id,
+              db.select({ id: rentalDecisions.submissionId })
+                .from(rentalDecisions)
+                .where(lt(rentalDecisions.decidedAt, sixtyDaysAgo))
+            )
+          )
+        )
+        .returning();
+      return result.length;
+    }, 'autoArchiveOldSubmissions');
   }
 
   async getRentalSubmission(id: string): Promise<RentalSubmission | undefined> {

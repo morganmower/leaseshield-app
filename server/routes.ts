@@ -6189,7 +6189,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.get('/api/rental/submissions', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const submissions = await storage.getRentalSubmissionsByUserId(userId);
+      const includeArchived = req.query.includeArchived === 'true';
+      const submissions = await storage.getRentalSubmissionsByUserId(userId, false, includeArchived);
       
       // Enrich with property/unit info and people
       const enriched = await Promise.all(submissions.map(async (sub) => {
@@ -6242,6 +6243,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           peopleCount: people.length,
           decision: decision ? { decision: decision.decision, decidedAt: decision.decidedAt } : null,
           screeningStatus,
+          archivedAt: sub.archivedAt,
         };
       }));
       
@@ -6379,6 +6381,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error) {
       console.error("Error deleting submission:", error);
       res.status(500).json({ message: "Failed to delete submission" });
+    }
+  });
+
+  app.post('/api/rental/submissions/:id/archive', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) return res.status(404).json({ message: "Application link not found" });
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) return res.status(404).json({ message: "Unit not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Access denied" });
+
+      const updated = await storage.archiveRentalSubmission(req.params.id);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error archiving submission:", error);
+      res.status(500).json({ message: "Failed to archive submission" });
+    }
+  });
+
+  app.post('/api/rental/submissions/:id/unarchive', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) return res.status(404).json({ message: "Application link not found" });
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) return res.status(404).json({ message: "Unit not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Access denied" });
+
+      const updated = await storage.unarchiveRentalSubmission(req.params.id);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error unarchiving submission:", error);
+      res.status(500).json({ message: "Failed to unarchive submission" });
     }
   });
 

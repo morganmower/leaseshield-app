@@ -1281,6 +1281,7 @@ export const rentalSubmissions = pgTable("rental_submissions", {
   status: rentalSubmissionStatusEnum("status").default('started').notNull(),
   submittedAt: timestamp("submitted_at"),
   deletedAt: timestamp("deleted_at"), // Soft delete - null means active, timestamp means deleted
+  archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
