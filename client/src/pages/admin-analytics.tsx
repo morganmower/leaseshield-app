@@ -692,7 +692,9 @@ export default function AdminAnalyticsPage() {
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
                             {(user as any).subscribedAt 
                               ? format(new Date((user as any).subscribedAt), "MMM d, yyyy")
-                              : "—"}
+                              : user.createdAt
+                                ? format(new Date(user.createdAt), "MMM d, yyyy")
+                                : "—"}
                           </td>
                         </tr>
                       ))}
