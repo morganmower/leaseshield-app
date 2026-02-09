@@ -8380,15 +8380,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       const { syncScreeningStatus } = await import('./digitalDelveService');
       const result = await syncScreeningStatus(req.params.orderId, credentials);
-      
-      if (result.success && result.status === 'complete') {
-        // Update submission status if all screenings are complete
-        const allOrders = await storage.getRentalScreeningOrdersBySubmission(order.submissionId);
-        const allComplete = allOrders.every(o => o.status === 'complete' || o.id === order.id);
-        if (allComplete) {
-          await storage.updateRentalSubmission(order.submissionId, { status: 'complete' });
-        }
-      }
 
       res.json(result);
     } catch (error) {
