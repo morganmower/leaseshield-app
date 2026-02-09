@@ -469,6 +469,15 @@ export interface IStorage {
     propertyName: string;
     unitName: string;
   }>>;
+  getAllPendingScreeningOrdersWithOwner(): Promise<Array<{
+    order: RentalScreeningOrder;
+    ownerUserId: string;
+    ownerEmail: string;
+    ownerFirstName: string | null;
+    personName: string;
+    propertyName: string;
+    unitName: string;
+  }>>;
 
   // Rental Application System - Decision operations
   getRentalDecision(submissionId: string): Promise<RentalDecision | undefined>;
@@ -2564,6 +2573,58 @@ export class DatabaseStorage implements IStorage {
         unitName: r.unitLabel,
       }));
     }, 'getInProgressScreeningOrdersWithOwnerInfo');
+  }
+
+  async getAllPendingScreeningOrdersWithOwner(): Promise<Array<{
+    order: RentalScreeningOrder;
+    ownerUserId: string;
+    ownerEmail: string;
+    ownerFirstName: string | null;
+    personName: string;
+    propertyName: string;
+    unitName: string;
+  }>> {
+    return handleDbOperation(async () => {
+      const results = await db
+        .select({
+          order: rentalScreeningOrders,
+          ownerUserId: users.id,
+          ownerEmail: users.email,
+          ownerFirstName: users.firstName,
+          personFirstName: rentalSubmissionPeople.firstName,
+          personLastName: rentalSubmissionPeople.lastName,
+          propertyName: rentalProperties.name,
+          unitLabel: rentalUnits.unitLabel,
+        })
+        .from(rentalScreeningOrders)
+        .innerJoin(rentalSubmissions, eq(rentalScreeningOrders.submissionId, rentalSubmissions.id))
+        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
+        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
+        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
+        .innerJoin(users, eq(rentalProperties.userId, users.id))
+        .leftJoin(rentalSubmissionPeople, eq(rentalScreeningOrders.personId, rentalSubmissionPeople.id))
+        .where(
+          and(
+            or(
+              eq(rentalScreeningOrders.status, 'sent'),
+              eq(rentalScreeningOrders.status, 'in_progress')
+            ),
+            isNull(rentalSubmissions.deletedAt)
+          )
+        );
+
+      return results.map(r => ({
+        order: r.order,
+        ownerUserId: r.ownerUserId,
+        ownerEmail: r.ownerEmail || '',
+        ownerFirstName: r.ownerFirstName,
+        personName: r.personFirstName && r.personLastName 
+          ? `${r.personFirstName} ${r.personLastName}` 
+          : 'Applicant',
+        propertyName: r.propertyName,
+        unitName: r.unitLabel,
+      }));
+    }, 'getAllPendingScreeningOrdersWithOwner');
   }
 
   // Rental Decision operations
