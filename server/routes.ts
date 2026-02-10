@@ -8,7 +8,7 @@ import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -3618,21 +3618,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let cases;
       if (stateId === 'NATIONAL') {
-        // Get all cases across all states
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table) => eq(table.isMonitored, true),
           limit: 100,
-          orderBy: (table) => [table.dateFiled],
+          orderBy: (table) => [desc(table.dateFiled)],
         });
       } else {
-        // Get cases for specific state
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table, { eq, and }) => and(
             eq(table.stateId, stateId as string),
             eq(table.isMonitored, true),
           ),
           limit: 50,
-          orderBy: (table) => [table.dateFiled],
+          orderBy: (table) => [desc(table.dateFiled)],
         });
       }
 
@@ -3711,6 +3709,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error testing CourtListener:', error);
       res.status(500).json({ message: 'Failed to test CourtListener API', error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/case-law/refresh', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const daysBack = parseInt(req.query.daysBack as string) || 180;
+      const stateId = req.query.stateId as string | undefined;
+
+      const { courtListenerService } = await import('./courtListenerService');
+      
+      console.log(`⚖️ Admin triggered case law refresh (daysBack=${daysBack}, state=${stateId || 'all'})`);
+      const result = await courtListenerService.refreshCaseLaw({
+        daysBack,
+        states: stateId ? [stateId] : undefined,
+      });
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      console.error('Error refreshing case law:', error);
+      res.status(500).json({ message: 'Failed to refresh case law', error: String(error) });
     }
   });
 
