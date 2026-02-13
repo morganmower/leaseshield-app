@@ -479,6 +479,20 @@ export default function Landing() {
                       <Lightbulb className="h-4 w-4" />
                       Explain This in Plain English
                     </div>
+                    
+                    {/* Adverse Action Support Link */}
+                    <button 
+                      onClick={() => window.location.href = "/screening/adverse-action"}
+                      className="w-full text-left mt-2 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-all cursor-pointer"
+                      data-testid="link-adverse-action"
+                    >
+                      <p className="text-xs font-medium text-amber-700 dark:text-amber-400">
+                        Need to decline a tenant?
+                      </p>
+                      <p className="text-[10px] text-amber-600/80 dark:text-amber-500/80">
+                        Get FCRA-compliant letters and learn what you can (and can't) say.
+                      </p>
+                    </button>
                   </div>
                 </div>
               </div>
@@ -669,7 +683,10 @@ export default function Landing() {
                 LeaseShield Is a Complete Landlord Protection System
               </h2>
               <p className="text-base sm:text-[17px] text-ink-700 dark:text-slate-300 mb-6 leading-relaxed">
-                Screening interpretation is just the starting point. Applications, state-specific leases, compliance alerts, and more. All in one connected dashboard.
+                Screening interpretation is just the starting point. Applications, state-specific leases, <span className="font-semibold">FCRA-compliant adverse action letters</span>, compliance alerts, and more. All in one connected dashboard.
+              </p>
+              <p className="text-sm text-ink-600 dark:text-slate-400 mb-6 leading-relaxed">
+                Declining a tenant? FCRA requires two notices. LeaseShield generates both with the right language and timing.
               </p>
               <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-xl p-4 inline-block">
                 <p className="text-sm sm:text-base text-foreground">

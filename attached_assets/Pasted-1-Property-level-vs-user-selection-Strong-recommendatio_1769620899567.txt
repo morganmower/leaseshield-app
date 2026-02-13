@@ -1,0 +1,249 @@
+1️⃣ Property-level vs user selection
+
+Strong recommendation: property-level (with a fallback selector).
+
+✅ Correct default behavior
+
+When generating an adverse action letter, the jurisdiction should be determined by:
+
+Property → address → city → county → state
+
+Not by a manual dropdown.
+
+Why this matters
+
+Landlords forget what city rules apply
+
+Multi-property owners will make mistakes if they manually pick
+
+Audit trails are stronger when tied to a property record
+
+It prevents “shopping” for easier rules
+
+This is a compliance product — automatic beats optional every time.
+
+What to do in edge cases
+
+If the user:
+
+hasn’t added a property yet
+
+is just testing the tool
+
+is using LeaseShield “standalone”
+
+👉 Then show a required location selector:
+
+“Select the property location this decision applies to.”
+
+But once a property exists, do not ask again. Use it silently.
+
+Audit trail bonus
+
+Log:
+
+property_id
+
+resolved jurisdiction chain (City → County → State)
+
+ruleset_version
+
+That’s gold if there’s ever a dispute.
+
+2️⃣ Coverage scope: hardcode vs database-driven
+
+Strong recommendation: database-driven rules, seeded with known cities.
+
+Do NOT hardcode logic in application code
+
+You will regret this within 60 days.
+
+Why:
+
+Cities add ordinances quietly
+
+Counties change rules (Cook County-style)
+
+States amend fair housing definitions
+
+You want to say “rules updated” without redeploying
+
+The right approach
+
+Use a rules table (or JSON ruleset) that your app reads, not contains.
+
+Example structure (conceptual)
+
+jurisdictions
+
+id, name, type (city/county/state), parent_id
+
+denial_rules
+
+jurisdiction_id
+
+criterion_code (e.g., CRIMINAL_HISTORY, VOUCHER)
+
+status: BLOCKED | CONDITIONAL | ALLOWED
+
+required_steps (optional)
+
+explanation_text
+
+Seed it initially with:
+
+Ann Arbor
+
+Detroit
+
+Chicago
+
+Cook County
+
+Oakland
+
+San Francisco
+
+Los Angeles
+
+Phoenix
+
+Tucson
+
+Tempe
+
+Salt Lake City
+
+Richmond
+
+Alexandria
+
+Then you can add more without code changes.
+
+This is exactly the kind of thing customers expect you to “just handle.”
+
+3️⃣ UI treatment when a rule is triggered
+
+This one is critical.
+
+✅ Yes: block certain denial reasons entirely
+❌ No: do NOT allow “proceed at your own risk” for illegal reasons
+
+You are selling protection, not disclaimers.
+
+If something is illegal to use in that jurisdiction:
+
+Make it unselectable
+
+Gray it out
+
+Lock icon
+
+Tooltip explaining why
+
+Example:
+
+🔒 Criminal history cannot be used for rental decisions in Ann Arbor, MI.
+
+This protects:
+
+the landlord
+
+you
+
+your “we guided them correctly” claim
+
+When warnings are appropriate (only these cases)
+
+Use warnings (yellow / conditional) when:
+
+the factor is legal with extra steps
+
+individualized assessment is required
+
+timing matters (post-conditional approval)
+
+In those cases:
+
+Allow selection
+
+Trigger required workflow steps
+
+Log completion before allowing denial
+
+The simple rule set (use this verbatim)
+HARD BLOCK (system-enforced)
+
+Use when:
+
+the law says “may not deny based on”
+
+or “may not consider”
+
+or “criminal history prohibited”
+
+Result:
+❌ Checkbox disabled
+❌ Cannot proceed using that reason
+
+CONDITIONAL (workflow enforced)
+
+Use when:
+
+allowed only after extra steps
+
+individualized assessment required
+
+timing matters
+
+Result:
+⚠️ Checkbox allowed
+⚠️ Additional steps required
+⚠️ Cannot finalize denial until completed
+
+ALLOWED (normal use)
+
+Use when:
+
+legal under state/city rules
+
+consistent with fair housing
+
+Result:
+✅ Checkbox allowed
+✅ Included in denial language
+
+What the banner should do (simple + effective)
+
+When a special jurisdiction is detected, show:
+
+⚠️ Local Rules Apply
+This location has additional tenant screening restrictions. LeaseShield has adjusted your options automatically.
+
+That line alone:
+
+reassures the user
+
+explains why things are blocked
+
+avoids legal jargon
+
+Final recommendation summary (build this way)
+
+✔ Jurisdiction resolved from property address
+✔ Manual selection only as fallback
+✔ Database-driven ruleset (no hardcoding)
+✔ Illegal reasons are blocked, not warned
+✔ Conditional reasons force workflow
+✔ Banner explains what happened, not the law
+✔ Audit trail logs resolved jurisdiction + ruleset
+
+If you build it this way, you:
+
+dramatically reduce landlord error
+
+strengthen your compliance story
+
+future-proof the product
+
+and justify the subscription in a very real way

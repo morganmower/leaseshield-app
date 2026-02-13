@@ -1,0 +1,403 @@
+Step A: Find a Replit checkpoint that still contains the missing uploads/applicants/*.ext files.
+
+Step B: Run a script that:
+
+reads your JSON mapping
+
+checks which expected UUID files exist in uploads/applicants/
+
+uploads each found file into Replit Object Storage at /.private/applicants/<uuid>.<ext>
+
+updates rental_submission_files.stored_path to the new bucket path:
+/replit-objstore-.../.private/applicants/<uuid>.<ext>
+
+produces a CSV report of restored vs missing.
+
+No guesswork, no manual matching.
+
+0) One-time: verify the recovered checkpoint actually contains the expected UUID filenames
+
+Once you restore a candidate checkpoint, run:
+
+ls -lah uploads/applicants | head
+ls -lah uploads/applicants | wc -l
+
+
+Then check if at least some of the DB-expected filenames exist:
+
+# replace with one known filename from mapping
+test -f "uploads/applicants/5ec4ee00-75c9-4f58-bfa0-2fc154af79bf.jpeg" && echo "FOUND" || echo "NOT FOUND"
+
+
+If you get “FOUND” on several, you’re in the right checkpoint.
+
+1) Install deps (if needed)
+npm i @google-cloud/storage pg
+
+2) Create scripts/recoverApplicantFiles.js
+/**
+ * scripts/recoverApplicantFiles.js
+ *
+ * Recovers applicant upload files from local disk (uploads/applicants/)
+ * and pushes them into Replit Object Storage (GCS-backed),
+ * then updates rental_submission_files.stored_path to point at the object path.
+ *
+ * Usage:
+ *   node scripts/recoverApplicantFiles.js \
+ *     --mapping ./.private/backups/file-mapping-1771017306730.json \
+ *     --bucket replit-objstore-38df3fee-63f6-49b7-8f77-81e0e71280fd \
+ *     --recoveredDir uploads/applicants \
+ *     --dry-run
+ *
+ * LIVE:
+ *   node scripts/recoverApplicantFiles.js \
+ *     --mapping ./.private/backups/file-mapping-1771017306730.json \
+ *     --bucket replit-objstore-38df3fee-63f6-49b7-8f77-81e0e71280fd \
+ *     --recoveredDir uploads/applicants
+ */
+
+import fs from "fs";
+import path from "path";
+import { Storage } from "@google-cloud/storage";
+import pg from "pg";
+
+const { Client } = pg;
+
+function getArg(name, fallback = null) {
+  const idx = process.argv.indexOf(name);
+  if (idx === -1) return fallback;
+  return process.argv[idx + 1] ?? fallback;
+}
+
+const mappingPath = getArg("--mapping");
+const bucketName = getArg("--bucket");
+const recoveredDir = getArg("--recoveredDir", "uploads/applicants");
+const dryRun = process.argv.includes("--dry-run");
+
+if (!mappingPath || !bucketName) {
+  console.error("Missing required args: --mapping <path> --bucket <name>");
+  process.exit(1);
+}
+
+const DATABASE_URL = process.env.DATABASE_URL || process.env.NEON_DATABASE_URL;
+if (!DATABASE_URL) {
+  console.error("Missing DATABASE_URL env var (Neon/Postgres connection string).");
+  process.exit(1);
+}
+
+// Replit Object Storage sidecar proxy endpoint:
+const REPLIT_GCS_ENDPOINT = "http://127.0.0.1:1106";
+
+// Your desired target directory in bucket:
+const TARGET_PREFIX = ".private/applicants/";
+// Stored path format you want in DB:
+const DB_PREFIX = `/${bucketName}/.private/applicants/`;
+
+function fileExists(p) {
+  try {
+    fs.accessSync(p, fs.constants.R_OK);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function loadMapping(p) {
+  const raw = fs.readFileSync(p, "utf8");
+  const json = JSON.parse(raw);
+  // allow mapping to be array or wrapped
+  return Array.isArray(json) ? json : (json.rows || []);
+}
+
+function safeCsv(val) {
+  const s = String(val ?? "");
+  if (s.includes(",") || s.includes('"') || s.includes("\n")) {
+    return `"${s.replace(/"/g, '""')}"`;
+  }
+  return s;
+}
+
+async function main() {
+  console.log("=== Applicant File Recovery ===");
+  console.log("Mapping:", mappingPath);
+  console.log("Recovered dir:", recoveredDir);
+  console.log("Bucket:", bucketName);
+  console.log("Mode:", dryRun ? "DRY RUN" : "LIVE");
+
+  const rows = loadMapping(mappingPath);
+  console.log("Mapping rows loaded:", rows.length);
+
+  // Replit object storage client: uses credential source automatically in Replit,
+  // endpoint points at sidecar proxy.
+  const storage = new Storage({
+    apiEndpoint: REPLIT_GCS_ENDPOINT,
+  });
+
+  const bucket = storage.bucket(bucketName);
+
+  const db = new Client({ connectionString: DATABASE_URL });
+  await db.connect();
+
+  // Report files
+  const reportLines = [];
+  reportLines.push([
+    "file_id",
+    "person_id",
+    "file_type",
+    "original_name",
+    "old_stored_path",
+    "expected_filename",
+    "local_found",
+    "uploaded",
+    "new_stored_path",
+    "error"
+  ].join(","));
+
+  let foundLocal = 0;
+  let uploadedCount = 0;
+  let updatedCount = 0;
+  let missingLocal = 0;
+  let skippedAlreadyCloud = 0;
+
+  for (const r of rows) {
+    const fileId = r.id || r.file_id;
+    const personId = r.person_id;
+    const fileType = r.file_type;
+    const originalName = r.original_name;
+    const oldStoredPath = r.stored_path;
+
+    if (!fileId || !oldStoredPath) continue;
+
+    // Skip if already pointing at bucket format (idempotent)
+    if (typeof oldStoredPath === "string" && oldStoredPath.startsWith(`/${bucketName}/.private/`)) {
+      skippedAlreadyCloud++;
+      reportLines.push([
+        safeCsv(fileId),
+        safeCsv(personId),
+        safeCsv(fileType),
+        safeCsv(originalName),
+        safeCsv(oldStoredPath),
+        safeCsv(path.basename(oldStoredPath)),
+        "n/a",
+        "n/a",
+        safeCsv(oldStoredPath),
+        ""
+      ].join(","));
+      continue;
+    }
+
+    const expectedFilename = path.basename(oldStoredPath); // uuid.ext
+    const localPath = path.join(recoveredDir, expectedFilename);
+
+    if (!fileExists(localPath)) {
+      missingLocal++;
+      reportLines.push([
+        safeCsv(fileId),
+        safeCsv(personId),
+        safeCsv(fileType),
+        safeCsv(originalName),
+        safeCsv(oldStoredPath),
+        safeCsv(expectedFilename),
+        "NO",
+        "NO",
+        "",
+        "local file missing"
+      ].join(","));
+      continue;
+    }
+
+    foundLocal++;
+
+    const destObject = `${TARGET_PREFIX}${expectedFilename}`;  // .private/applicants/uuid.ext
+    const newStoredPath = `${DB_PREFIX}${expectedFilename}`;   // /bucket/.private/applicants/uuid.ext
+
+    let uploaded = false;
+    let errMsg = "";
+
+    try {
+      if (dryRun) {
+        // no-op
+        uploaded = true; // treat as would upload
+      } else {
+        // Upload with resumable disabled to keep sidecar happy for small/med files
+        await bucket.upload(localPath, {
+          destination: destObject,
+          resumable: false,
+          // contentType helps correct handling later
+          metadata: {
+            contentType: r.mime_type || undefined,
+            metadata: {
+              originalName: originalName || "",
+              fileId: fileId,
+              personId: personId || "",
+              fileType: fileType || ""
+            }
+          }
+        });
+        uploaded = true;
+        uploadedCount++;
+      }
+    } catch (e) {
+      errMsg = e?.message || String(e);
+      reportLines.push([
+        safeCsv(fileId),
+        safeCsv(personId),
+        safeCsv(fileType),
+        safeCsv(originalName),
+        safeCsv(oldStoredPath),
+        safeCsv(expectedFilename),
+        "YES",
+        "NO",
+        "",
+        safeCsv(errMsg)
+      ].join(","));
+      continue;
+    }
+
+    try {
+      if (!dryRun) {
+        const res = await db.query(
+          `UPDATE rental_submission_files
+           SET stored_path = $1
+           WHERE id = $2`,
+          [newStoredPath, fileId]
+        );
+
+        if (res.rowCount !== 1) {
+          errMsg = `DB update rowCount=${res.rowCount}`;
+        } else {
+          updatedCount++;
+        }
+      }
+
+      reportLines.push([
+        safeCsv(fileId),
+        safeCsv(personId),
+        safeCsv(fileType),
+        safeCsv(originalName),
+        safeCsv(oldStoredPath),
+        safeCsv(expectedFilename),
+        "YES",
+        uploaded ? "YES" : "NO",
+        safeCsv(newStoredPath),
+        safeCsv(errMsg)
+      ].join(","));
+    } catch (e) {
+      errMsg = e?.message || String(e);
+      reportLines.push([
+        safeCsv(fileId),
+        safeCsv(personId),
+        safeCsv(fileType),
+        safeCsv(originalName),
+        safeCsv(oldStoredPath),
+        safeCsv(expectedFilename),
+        "YES",
+        uploaded ? "YES" : "NO",
+        safeCsv(newStoredPath),
+        safeCsv(errMsg)
+      ].join(","));
+      continue;
+    }
+  }
+
+  await db.end();
+
+  const outDir = ".private/recovery-reports";
+  fs.mkdirSync(outDir, { recursive: true });
+
+  const ts = Date.now();
+  const reportPath = path.join(outDir, `applicant-file-recovery-${ts}.csv`);
+  fs.writeFileSync(reportPath, reportLines.join("\n"), "utf8");
+
+  console.log("\n=== Summary ===");
+  console.log("Total mapping rows:", rows.length);
+  console.log("Already cloud (skipped):", skippedAlreadyCloud);
+  console.log("Local found:", foundLocal);
+  console.log("Local missing:", missingLocal);
+  console.log("Uploaded:", dryRun ? "(dry-run)" : uploadedCount);
+  console.log("DB updated:", dryRun ? "(dry-run)" : updatedCount);
+  console.log("Report written:", reportPath);
+
+  console.log("\nNext:");
+  console.log(dryRun
+    ? "Run again WITHOUT --dry-run to upload + update DB."
+    : "Validate random samples in UI, then consider deleting local recovered copies."
+  );
+}
+
+main().catch((e) => {
+  console.error("Fatal:", e);
+  process.exit(1);
+});
+
+3) Run it (dry-run first)
+Put the mapping JSON somewhere local in the repl
+
+If it’s currently in object storage only, download it into the workspace first (or copy it from wherever you already exported it).
+
+Then:
+
+node scripts/recoverApplicantFiles.js \
+  --mapping ./.private/backups/file-mapping-1771017306730.json \
+  --bucket replit-objstore-38df3fee-63f6-49b7-8f77-81e0e71280fd \
+  --recoveredDir uploads/applicants \
+  --dry-run
+
+
+This will generate a CSV report at:
+.private/recovery-reports/applicant-file-recovery-<timestamp>.csv
+
+Open that CSV and you’ll immediately see:
+
+which UUID files were found in the checkpoint
+
+which are still missing
+
+what new stored_path would be
+
+4) Run it live (uploads + DB updates)
+node scripts/recoverApplicantFiles.js \
+  --mapping ./.private/backups/file-mapping-1771017306730.json \
+  --bucket replit-objstore-38df3fee-63f6-49b7-8f77-81e0e71280fd \
+  --recoveredDir uploads/applicants
+
+5) Quick verification after live run
+
+Pick 2–3 file IDs from the CSV where uploaded=YES and confirm in DB:
+
+SELECT id, stored_path
+FROM rental_submission_files
+WHERE id IN (
+  '663b0f07-085a-46bc-8e30-a9bead40ec12'
+);
+
+
+Also verify object exists (optional but reassuring). If you have gsutil wired you can check, but usually you’ll just confirm your app can serve/download it.
+
+6) If you find a checkpoint with only some of the 169
+
+That’s common. The workflow becomes:
+
+Restore checkpoint A → run live script → saves report A
+
+Restore checkpoint B → run live script again (it will skip already-fixed DB rows) → report B
+
+Repeat until recovery rate plateaus
+
+This script is idempotent: it won’t overwrite rows already pointing to /${bucket}/.private/….
+
+One detail I’m going to push back on (important)
+
+Right now, your target DB stored_path is a bucket path like:
+
+/replit-objstore-.../.private/applicants/<uuid>.ext
+
+That’s fine if your app already understands that format and has a resolver that reads from object storage using that path. If your download route expects uploads/applicants/... and serves from disk, you’ll need to ensure it also supports the bucket path (sounds like you already did for uploaded_documents).
+
+If you paste your current “download file / serve file” route, I can sanity-check that it correctly handles:
+
+legacy disk paths
+
+new object-store paths
+
+without any edge-case 404s.
