@@ -226,6 +226,12 @@ export const legalUpdates = pgTable("legal_updates", {
   category: varchar("category", { length: 50 }), // 'section8', 'hud', 'eviction', 'deposits', 'general'
   sourceBillId: varchar("source_bill_id"), // Link to legislative monitoring bill if auto-published
   affectedTemplateIds: text("affected_template_ids").array(), // Templates updated due to this legal change
+  // Enhanced fields for better landlord communication
+  billStatus: varchar("bill_status", { length: 50 }), // 'introduced', 'in_committee', 'passed_chamber', 'signed', 'enacted', 'vetoed'
+  actionItems: text("action_items"), // What landlords should do now
+  expectedTimeline: text("expected_timeline"), // When this takes effect or next steps
+  sourceUrl: text("source_url"), // Link to original legislation/source
+  aiEnriched: boolean("ai_enriched").default(false), // Whether AI has enriched this update
   isActive: boolean("is_active").default(true),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -666,6 +672,7 @@ export const properties = pgTable("properties", {
   name: text("name").notNull(),
   address: text("address").notNull(),
   city: text("city"),
+  county: text("county"), // For county-level rule matching (e.g., "Cook County")
   state: varchar("state", { length: 2 }),
   zipCode: varchar("zip_code", { length: 10 }),
   propertyType: varchar("property_type", { length: 50 }),
@@ -798,6 +805,7 @@ export const communicationTemplateTypeEnum = pgEnum('communication_template_type
   'lease_renewal_notice',
   'late_payment_notice',
   'move_in_welcome',
+  'thirty_day_notice',
 ]);
 
 export const communicationTemplates = pgTable("communication_templates", {
@@ -1206,6 +1214,7 @@ export const rentalUnits = pgTable("rental_units", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   propertyId: varchar("property_id").notNull().references(() => rentalProperties.id, { onDelete: 'cascade' }),
   unitLabel: text("unit_label").notNull(), // e.g., "Unit A", "101", "Main House"
+  rentAmount: integer("rent_amount"), // Monthly rent in cents (e.g., 150000 = $1,500.00)
   coverPageOverrideEnabled: boolean("cover_page_override_enabled").default(false).notNull(),
   coverPageOverrideJson: jsonb("cover_page_override_json"), // Override cover page if enabled
   fieldSchemaOverrideEnabled: boolean("field_schema_override_enabled").default(false).notNull(),
@@ -1272,6 +1281,7 @@ export const rentalSubmissions = pgTable("rental_submissions", {
   status: rentalSubmissionStatusEnum("status").default('started').notNull(),
   submittedAt: timestamp("submitted_at"),
   deletedAt: timestamp("deleted_at"), // Soft delete - null means active, timestamp means deleted
+  archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -2181,6 +2191,31 @@ export const insertCitySchema = createInsertSchema(cities).omit({
 export type InsertCity = z.infer<typeof insertCitySchema>;
 export type City = typeof cities.$inferSelect;
 
+// Counties - for county-level screening rule overrides (e.g., Cook County, IL)
+export const counties = pgTable("counties", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: text("name").notNull(), // "Cook County", "Maricopa County", etc.
+  stateId: varchar("state_id", { length: 2 }).notNull().references(() => states.id),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("IDX_counties_state").on(table.stateId),
+]);
+
+export const countiesRelations = relations(counties, ({ one }) => ({
+  state: one(states, {
+    fields: [counties.stateId],
+    references: [states.id],
+  }),
+}));
+
+export const insertCountySchema = createInsertSchema(counties).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertCounty = z.infer<typeof insertCountySchema>;
+export type County = typeof counties.$inferSelect;
+
 // Denial criteria categories
 export const denialCriteriaCategoryEnum = pgEnum('denial_criteria_category', [
   'criminal',
@@ -2216,12 +2251,13 @@ export const insertDenialCriteriaSchema = createInsertSchema(denialCriteria).omi
 export type InsertDenialCriteria = z.infer<typeof insertDenialCriteriaSchema>;
 export type DenialCriteria = typeof denialCriteria.$inferSelect;
 
-// Denial Criteria Rules - BLOCK/ALLOW rules per jurisdiction (state or city)
+// Denial Criteria Rules - BLOCK/ALLOW rules per jurisdiction (state, county, or city)
 export const denialCriteriaRules = pgTable("denial_criteria_rules", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   criteriaId: varchar("criteria_id").notNull().references(() => denialCriteria.id),
   stateId: varchar("state_id", { length: 2 }).references(() => states.id), // null = federal default
-  cityId: varchar("city_id").references(() => cities.id), // null = state-level rule
+  countyId: varchar("county_id").references(() => counties.id), // null = state-level rule
+  cityId: varchar("city_id").references(() => cities.id), // null = state/county-level rule
   status: criteriaRuleStatusEnum("status").notNull(),
   explanationPlain: text("explanation_plain"), // "Not allowed in this city because..."
   whyItMatters: text("why_it_matters"), // Tooltip content
@@ -2236,6 +2272,7 @@ export const denialCriteriaRules = pgTable("denial_criteria_rules", {
 }, (table) => [
   index("IDX_criteria_rules_criteria").on(table.criteriaId),
   index("IDX_criteria_rules_state").on(table.stateId),
+  index("IDX_criteria_rules_county").on(table.countyId),
   index("IDX_criteria_rules_city").on(table.cityId),
 ]);
 
@@ -2247,6 +2284,10 @@ export const denialCriteriaRulesRelations = relations(denialCriteriaRules, ({ on
   state: one(states, {
     fields: [denialCriteriaRules.stateId],
     references: [states.id],
+  }),
+  county: one(counties, {
+    fields: [denialCriteriaRules.countyId],
+    references: [counties.id],
   }),
   city: one(cities, {
     fields: [denialCriteriaRules.cityId],
@@ -2314,6 +2355,8 @@ export const denialDecisionAuditLogs = pgTable("denial_decision_audit_logs", {
   propertyId: varchar("property_id").references(() => properties.id),
   applicantName: text("applicant_name"), // For reference, not PII stored
   stateId: varchar("state_id", { length: 2 }).notNull().references(() => states.id),
+  countyId: varchar("county_id").references(() => counties.id),
+  countyName: text("county_name"), // Snapshot in case county record changes
   cityId: varchar("city_id").references(() => cities.id),
   cityName: text("city_name"), // Snapshot in case city record changes
   ruleVersion: text("rule_version").notNull(), // Hash or version ID of rules at decision time
@@ -2324,6 +2367,7 @@ export const denialDecisionAuditLogs = pgTable("denial_decision_audit_logs", {
   generatedDenialText: text("generated_denial_text"),
   adverseActionLetterGenerated: boolean("adverse_action_letter_generated").default(false),
   adverseActionLetterId: varchar("adverse_action_letter_id"),
+  letterTypeDownloaded: varchar("letter_type_downloaded", { length: 50 }), // 'pre_adverse' or 'adverse_action'
   conditions: jsonb("conditions").$type<string[]>(), // For conditional approvals
   fairChanceStepsCompleted: jsonb("fair_chance_steps_completed").$type<Record<string, boolean>>(),
   noticesProvided: jsonb("notices_provided").$type<string[]>(), // ["adverse_action", "pre_adverse", etc.]
@@ -2348,6 +2392,10 @@ export const denialDecisionAuditLogsRelations = relations(denialDecisionAuditLog
   state: one(states, {
     fields: [denialDecisionAuditLogs.stateId],
     references: [states.id],
+  }),
+  county: one(counties, {
+    fields: [denialDecisionAuditLogs.countyId],
+    references: [counties.id],
   }),
   city: one(cities, {
     fields: [denialDecisionAuditLogs.cityId],

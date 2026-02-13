@@ -1,56 +1,94 @@
 import { db } from '../db';
-import { legalUpdates, normalizedUpdates } from '@shared/schema';
-import { eq, isNull, or, sql } from 'drizzle-orm';
+import { legalUpdates, rawLegislationItems, normalizedUpdates, legislativeMonitoring } from '@shared/schema';
+import { eq, or, like, and, isNull, sql } from 'drizzle-orm';
 import OpenAI from 'openai';
 
-const openai = new OpenAI();
+const openai = new OpenAI({
+  apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+  baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+});
 
 interface EnrichmentResult {
+  summary: string;
   beforeText: string;
   afterText: string;
   whyItMatters: string;
   effectiveDate: Date | null;
+  billStatus: string;
+  actionItems: string;
+  expectedTimeline: string;
 }
+
+const STATE_NAMES: Record<string, string> = {
+  'US': 'Federal (applies to all states)',
+  'UT': 'Utah',
+  'TX': 'Texas',
+  'ND': 'North Dakota',
+  'SD': 'South Dakota',
+  'NC': 'North Carolina',
+  'OH': 'Ohio',
+  'MI': 'Michigan',
+  'ID': 'Idaho',
+  'WY': 'Wyoming',
+  'CA': 'California',
+  'VA': 'Virginia',
+  'NV': 'Nevada',
+  'AZ': 'Arizona',
+  'FL': 'Florida',
+  'IL': 'Illinois',
+  'NM': 'New Mexico',
+};
 
 async function generateEnrichment(
   title: string,
   summary: string,
   stateId: string,
-  category: string
+  category: string,
+  rawData: any,
+  sourceUrl: string | null
 ): Promise<EnrichmentResult> {
-  const stateName = stateId === 'US' ? 'Federal' : stateId;
+  const stateName = STATE_NAMES[stateId] || stateId;
   
-  const prompt = `You are a legal analyst helping landlords understand new housing legislation.
+  const billContext = rawData ? `
+Additional Context:
+- Bill Number: ${rawData.bill_number || rawData.identifier || 'N/A'}
+- Status: ${rawData.status || rawData.last_action || 'Unknown'}
+- Last Action: ${rawData.last_action || rawData.latest_action_description || 'N/A'}
+- Last Action Date: ${rawData.last_action_date || rawData.latest_action_date || 'N/A'}
+- Bill URL: ${sourceUrl || rawData.url || rawData.openstates_url || 'N/A'}
+${rawData.abstract ? `- Abstract: ${rawData.abstract}` : ''}
+${rawData.description ? `- Description: ${rawData.description}` : ''}
+` : '';
+
+  const prompt = `You are a legal analyst helping landlords understand new housing legislation. Your audience is small and midsize landlords who need practical, actionable information.
 
 Title: ${title}
 Summary: ${summary || title}
 State: ${stateName}
-Category: ${category}
+Category: ${category || 'housing legislation'}
+${billContext}
 
-Generate a brief, landlord-friendly analysis with these 4 parts:
-
-1. BEFORE: What was the law/situation BEFORE this change? (1-2 sentences, start with "Previously..." or "Under the old law...")
-
-2. AFTER: What is the NEW requirement or change? (1-2 sentences, start with "Now..." or "The new law...")
-
-3. WHY_IT_MATTERS: Why should a landlord care about this? What action might they need to take? (1-2 sentences)
-
-4. EFFECTIVE_DATE: Based on the title/summary, estimate when this might take effect. If a bill is being introduced, assume 6-12 months from now. If it mentions a specific date, use that. Format as YYYY-MM-DD. If truly unknown, respond with "unknown".
+Generate a comprehensive, landlord-friendly analysis. Be SPECIFIC - mention actual requirements, dollar amounts, timeframes, and consequences where available.
 
 Respond in this exact JSON format:
 {
-  "beforeText": "...",
-  "afterText": "...",
-  "whyItMatters": "...",
-  "effectiveDate": "YYYY-MM-DD or unknown"
-}`;
+  "summary": "A clear 2-3 sentence summary explaining what this bill/regulation does in plain English. Be specific about requirements.",
+  "beforeText": "What was the law/situation BEFORE this change? Start with 'Previously' or 'Under current law'. Be specific about what landlords could or couldn't do.",
+  "afterText": "What is the NEW requirement? Start with 'Now' or 'This law would'. Include specific requirements, amounts, or deadlines if mentioned.",
+  "whyItMatters": "Why should a ${stateName} landlord care? What's the financial or legal impact? What could happen if they don't comply?",
+  "billStatus": "One of: introduced, in_committee, passed_house, passed_senate, passed_legislature, sent_to_governor, signed, enacted, vetoed, or unknown",
+  "actionItems": "What should landlords do NOW? List 1-3 specific actions they should take today.",
+  "expectedTimeline": "When will this take effect or when is the next milestone? Be specific with dates if available, or estimate based on typical legislative timelines."
+}
+
+IMPORTANT: Do NOT use generic placeholder text. If you don't have specific information, make reasonable inferences based on the bill title and category, clearly noting any assumptions.`;
 
   try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 800,
     });
 
     const content = response.choices[0]?.message?.content || '';
@@ -63,105 +101,201 @@ Respond in this exact JSON format:
     const parsed = JSON.parse(jsonMatch[0]);
     
     let effectiveDate: Date | null = null;
-    if (parsed.effectiveDate && parsed.effectiveDate !== 'unknown') {
-      const dateObj = new Date(parsed.effectiveDate);
+    if (rawData?.effective_date || rawData?.effectiveDate) {
+      const dateStr = rawData.effective_date || rawData.effectiveDate;
+      const dateObj = new Date(dateStr);
       if (!isNaN(dateObj.getTime())) {
         effectiveDate = dateObj;
       }
     }
 
+    // Normalize actionItems - if it's an array, join with newlines for cleaner display
+    let actionItems = parsed.actionItems || '';
+    if (Array.isArray(actionItems)) {
+      actionItems = actionItems.map((item: string, i: number) => `${i + 1}. ${item}`).join('\n');
+    }
+
     return {
+      summary: parsed.summary || summary || title,
       beforeText: parsed.beforeText || '',
       afterText: parsed.afterText || '',
       whyItMatters: parsed.whyItMatters || '',
       effectiveDate,
+      billStatus: parsed.billStatus || 'unknown',
+      actionItems,
+      expectedTimeline: parsed.expectedTimeline || '',
     };
   } catch (error) {
     console.error(`  ⚠️ AI generation failed:`, error);
-    return {
-      beforeText: 'Previous regulations applied to this area.',
-      afterText: 'New requirements may be in effect. Review the full legislation for details.',
-      whyItMatters: 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
-      effectiveDate: null,
-    };
+    throw error;
+  }
+}
+
+function isPlaceholderText(text: string | null | undefined): boolean {
+  if (!text) return true;
+  const placeholders = [
+    'Previous regulations applied to this area',
+    'New requirements may be in effect',
+    'This legislative update may affect your rental properties',
+    'Review for potential impact',
+    'See full legislation for details',
+  ];
+  return placeholders.some(p => text.includes(p));
+}
+
+const CONCURRENCY = 5; // Process 5 updates in parallel
+
+async function processOneUpdate(update: typeof legalUpdates.$inferSelect): Promise<{ success: boolean; stateId: string }> {
+  const shortTitle = update.title.length > 60 ? update.title.substring(0, 57) + '...' : update.title;
+  
+  try {
+    let rawData: any = null;
+    let sourceUrl: string | null = null;
+
+    if (update.sourceBillId) {
+      const monitoring = await db.select()
+        .from(legislativeMonitoring)
+        .where(eq(legislativeMonitoring.id, update.sourceBillId))
+        .limit(1);
+      
+      if (monitoring[0]) {
+        rawData = monitoring[0];
+        sourceUrl = monitoring[0].url;
+      }
+    }
+
+    if (!rawData) {
+      const normalized = await db.select()
+        .from(normalizedUpdates)
+        .where(like(normalizedUpdates.title, `%${update.title.substring(0, 30)}%`))
+        .limit(1);
+      
+      if (normalized[0]) {
+        sourceUrl = normalized[0].url;
+        if (normalized[0].rawItemId) {
+          const raw = await db.select()
+            .from(rawLegislationItems)
+            .where(eq(rawLegislationItems.id, normalized[0].rawItemId))
+            .limit(1);
+          if (raw[0]?.rawData) {
+            rawData = raw[0].rawData;
+          }
+        }
+      }
+    }
+
+    const enrichment = await generateEnrichment(
+      update.title,
+      update.summary || '',
+      update.stateId,
+      update.category || 'general',
+      rawData,
+      sourceUrl
+    );
+
+    await db.update(legalUpdates)
+      .set({
+        summary: enrichment.summary,
+        beforeText: enrichment.beforeText,
+        afterText: enrichment.afterText,
+        whyItMatters: enrichment.whyItMatters,
+        effectiveDate: enrichment.effectiveDate || update.effectiveDate,
+        billStatus: enrichment.billStatus,
+        actionItems: enrichment.actionItems,
+        expectedTimeline: enrichment.expectedTimeline,
+        sourceUrl: sourceUrl,
+        aiEnriched: true,
+        updatedAt: new Date(),
+      })
+      .where(eq(legalUpdates.id, update.id));
+
+    console.log(`✓ [${update.stateId}] ${shortTitle}`);
+    return { success: true, stateId: update.stateId };
+  } catch (error: any) {
+    if (error?.status === 429 || error?.message?.includes('rate')) {
+      // Rate limited - wait and retry once
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      try {
+        const retryEnrichment = await generateEnrichment(
+          update.title,
+          update.summary || '',
+          update.stateId,
+          update.category || 'general',
+          null,
+          null
+        );
+        await db.update(legalUpdates)
+          .set({
+            summary: retryEnrichment.summary,
+            beforeText: retryEnrichment.beforeText,
+            afterText: retryEnrichment.afterText,
+            whyItMatters: retryEnrichment.whyItMatters,
+            billStatus: retryEnrichment.billStatus,
+            actionItems: retryEnrichment.actionItems,
+            expectedTimeline: retryEnrichment.expectedTimeline,
+            aiEnriched: true,
+            updatedAt: new Date(),
+          })
+          .where(eq(legalUpdates.id, update.id));
+        console.log(`✓ [${update.stateId}] ${shortTitle} (retry)`);
+        return { success: true, stateId: update.stateId };
+      } catch {
+        console.log(`✗ [${update.stateId}] ${shortTitle} (retry failed)`);
+        return { success: false, stateId: update.stateId };
+      }
+    }
+    console.log(`✗ [${update.stateId}] ${shortTitle}: ${error?.message || 'Unknown error'}`);
+    return { success: false, stateId: update.stateId };
   }
 }
 
 async function enrichLegalUpdates() {
-  console.log('🔄 Enriching legal updates with AI-generated content...\n');
+  console.log('🔄 Enriching legal updates with AI-generated content...');
+  console.log(`   Using ${CONCURRENCY} concurrent requests for speed\n`);
 
-  const updatesToEnrich = await db.select()
+  const allUpdates = await db.select()
     .from(legalUpdates)
-    .where(
-      or(
-        isNull(legalUpdates.beforeText),
-        eq(legalUpdates.beforeText, ''),
-        isNull(legalUpdates.afterText),
-        eq(legalUpdates.afterText, '')
-      )
-    );
+    .where(eq(legalUpdates.isActive, true));
 
-  console.log(`Found ${updatesToEnrich.length} updates needing enrichment\n`);
+  const updatesToEnrich = allUpdates.filter(update => 
+    isPlaceholderText(update.whyItMatters) ||
+    isPlaceholderText(update.beforeText) ||
+    isPlaceholderText(update.afterText) ||
+    !(update as any).aiEnriched
+  );
+
+  console.log(`Found ${updatesToEnrich.length} of ${allUpdates.length} updates needing enrichment\n`);
+
+  if (updatesToEnrich.length === 0) {
+    console.log('✅ All updates are already enriched!');
+    process.exit(0);
+  }
 
   let enrichedCount = 0;
   let errorCount = 0;
   const stateStats: Record<string, number> = {};
 
-  for (const update of updatesToEnrich) {
-    process.stdout.write(`Processing: ${update.title.substring(0, 50)}...`);
-
-    try {
-      const enrichment = await generateEnrichment(
-        update.title,
-        update.summary || '',
-        update.stateId,
-        update.category || 'general'
-      );
-
-      await db.update(legalUpdates)
-        .set({
-          beforeText: enrichment.beforeText,
-          afterText: enrichment.afterText,
-          whyItMatters: enrichment.whyItMatters,
-          effectiveDate: enrichment.effectiveDate || update.effectiveDate,
-          updatedAt: new Date(),
-        })
-        .where(eq(legalUpdates.id, update.id));
-
-      enrichedCount++;
-      stateStats[update.stateId] = (stateStats[update.stateId] || 0) + 1;
-      console.log(' ✓');
-
-      // Pause between AI calls to avoid hitting rate limits
-      await new Promise(resolve => setTimeout(resolve, 3000));
-    } catch (error: any) {
-      if (error?.status === 429) {
-        console.log(' ⏳ rate limited, waiting 5s...');
-        await new Promise(resolve => setTimeout(resolve, 5000));
-        // Retry this item
-        const retryEnrichment = await generateEnrichment(
-          update.title,
-          update.summary || '',
-          update.stateId,
-          update.category || 'general'
-        );
-        await db.update(legalUpdates)
-          .set({
-            beforeText: retryEnrichment.beforeText,
-            afterText: retryEnrichment.afterText,
-            whyItMatters: retryEnrichment.whyItMatters,
-            effectiveDate: retryEnrichment.effectiveDate || update.effectiveDate,
-            updatedAt: new Date(),
-          })
-          .where(eq(legalUpdates.id, update.id));
+  // Process in batches with concurrency
+  for (let i = 0; i < updatesToEnrich.length; i += CONCURRENCY) {
+    const batch = updatesToEnrich.slice(i, i + CONCURRENCY);
+    const batchNum = Math.floor(i / CONCURRENCY) + 1;
+    const totalBatches = Math.ceil(updatesToEnrich.length / CONCURRENCY);
+    console.log(`\n📦 Batch ${batchNum}/${totalBatches} (${batch.length} updates):`);
+    
+    const results = await Promise.all(batch.map(update => processOneUpdate(update)));
+    
+    for (const result of results) {
+      if (result.success) {
         enrichedCount++;
-        stateStats[update.stateId] = (stateStats[update.stateId] || 0) + 1;
-        console.log(' ✓ (retry)');
+        stateStats[result.stateId] = (stateStats[result.stateId] || 0) + 1;
       } else {
         errorCount++;
-        console.log(' ✗');
-        console.error(`  Error:`, error);
       }
+    }
+    
+    // Small delay between batches to be nice to the API
+    if (i + CONCURRENCY < updatesToEnrich.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
     }
   }
 

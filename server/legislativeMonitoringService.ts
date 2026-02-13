@@ -1152,7 +1152,11 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     retryCount = 0
   ): Promise<{ beforeText: string; afterText: string; whyItMatters: string; effectiveDate: Date | null }> {
     const OpenAI = (await import('openai')).default;
-    const openai = new OpenAI();
+    // Use Replit AI integration (has quota, no personal API key needed)
+    const openai = new OpenAI({
+      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
+      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
+    });
     
     const stateName = stateId === 'US' ? 'Federal' : stateId;
     
