@@ -6,6 +6,7 @@ import { startScreeningPoller, stopScreeningPoller } from "./screeningPoller";
 import { closePool } from "./db";
 import { validateEnv } from "./utils/env";
 import { RateLimiter } from "./utils/validation";
+import { existsSync, readdirSync } from "fs";
 
 // Rate limiters for different endpoint types
 const authRateLimiter = new RateLimiter(10, 60 * 1000); // 10 auth attempts per minute
@@ -297,6 +298,12 @@ app.use((req, res, next) => {
     reusePort: true,
   }, () => {
     log(`serving on port ${port}`);
+
+    if (existsSync("uploads/applicants")) {
+      const n = readdirSync("uploads/applicants").length;
+      if (n > 0) console.warn(`[WARN] Found ${n} files in uploads/applicants — uploads should be object-storage only now.`);
+    }
+
     
     // Delay starting scheduled jobs to allow health checks to pass first
     // This ensures the server is fully ready before heavy operations begin

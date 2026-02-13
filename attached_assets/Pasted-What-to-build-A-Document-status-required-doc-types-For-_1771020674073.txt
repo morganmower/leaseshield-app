@@ -1,0 +1,147 @@
+What to build
+A) Document status + “required doc types”
+
+For each submission/person you already have expected doc types (ex: id, paystub, w2, etc.). You likely already infer this from your UI.
+
+Add two things:
+
+availability_status (you already agreed)
+
+a “missing doc” query that returns required doc types where no available file exists.
+
+Definition of missing for a doc type:
+
+no row exists for that person_id + file_type with availability_status='available', OR
+
+latest row exists but is missing
+
+B) Create a secure “Document Re-Upload Link”
+
+You generate a one-time, expiring link that:
+
+is tied to person_id (or submission_id)
+
+includes a list of allowed file types to upload (ONLY the missing ones)
+
+expires (ex: 7 days)
+
+can be single-use or multi-use until complete
+
+Example link:
+/reupload/<token>
+
+New DB table: document_reupload_tokens
+
+Minimal columns:
+
+id uuid
+
+person_id uuid (or submission_id)
+
+allowed_file_types json/text[] (ex: ["id","paystub"])
+
+expires_at timestamp
+
+used_at timestamp nullable
+
+created_at
+
+That’s it.
+
+C) The Re-Upload page (applicant-facing)
+
+Shows:
+
+“We’re missing: ID, Paystub”
+
+Upload buttons for those only
+
+Each upload writes into the same rental_submission_files table, same person_id, same file_type
+
+After each successful upload:
+
+mark file row availability_status='available'
+
+(optional) mark any older “missing” rows for that same person_id + file_type as superseded
+
+When all required docs are uploaded:
+
+show “You’re all set.”
+
+D) Admin button: “Request Missing Docs”
+
+On your internal UI, add a button on the submission/person view:
+
+It computes which docs are missing
+
+Creates a token
+
+Emails/SMS applicant the link
+
+Logs it in an “activity log” (optional)
+
+Important guardrails (so this can’t be abused)
+
+Token must not reveal sensitive data
+Use UUID token stored server-side; don’t encode IDs in the URL.
+
+Allowed file types enforced server-side
+Even if someone hacks the UI, the API must reject uploading anything outside the allowed set.
+
+Size/type validation
+Keep your current file size limits and mime checks.
+
+Expiration
+7 days is fine. Also allow admin to revoke (delete token or mark used).
+
+How it “puts them back in the same spot”
+
+Because your upload endpoint will be called with:
+
+person_id
+
+file_type (validated against allowed list)
+
+then you create the rental_submission_files row exactly as usual
+
+So the app UI that currently looks up files by person_id + file_type will immediately show the uploaded doc in the same section.
+
+Minimal API endpoints
+
+Admin creates link
+POST /api/admin/people/:personId/reupload-link
+
+server computes missing file types (or accepts explicit list)
+
+creates token row
+
+sends email to applicant
+
+Applicant views what’s needed
+GET /api/reupload/:token
+
+returns allowed file types + labels (“Government ID”, “Paystub”)
+
+returns whether already completed
+
+Applicant uploads
+POST /api/reupload/:token/upload
+
+multipart upload
+
+requires file_type in body
+
+validates file_type ∈ token.allowed_file_types
+
+uploads to object storage
+
+inserts into rental_submission_files with availability_status='available'
+
+Complete
+POST /api/reupload/:token/complete (optional)
+
+marks used_at when all missing docs present
+
+Copy/paste decision: should the link collect ONLY missing docs, or allow “replace existing” too?
+
+My recommendation: only missing docs, plus a separate admin action “Replace doc” (different flow) so you don’t accidentally overwrite a good file.

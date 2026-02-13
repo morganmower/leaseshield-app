@@ -24,6 +24,9 @@ import fs from "fs/promises";
 import { execSync } from "child_process";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
 import { getStateAdverseActionHtml } from "./states/adverseActionDisclosures";
+import { uploadApplicantBuffer, downloadApplicantStream, isObjstorePath, deleteApplicantObject } from "./applicantObjectStorage";
+import { rentalSubmissionFiles } from "@shared/schema";
+import fsSync from "fs";
 
 // Stripe configuration - use STRIPE_SECRET_KEY for both test and live
 if (!process.env.STRIPE_SECRET_KEY) {
@@ -90,26 +93,8 @@ const upload = multer({
   }
 });
 
-// Configure multer for applicant document uploads (PDF, JPG, PNG)
-const applicantUploadStorage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = 'uploads/applicants';
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error as Error, uploadDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueId = randomUUID();
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${uniqueId}${ext}`);
-  }
-});
-
 const applicantUpload = multer({
-  storage: applicantUploadStorage,
+  storage: multer.memoryStorage(),
   limits: { 
     fileSize: 10 * 1024 * 1024 // 10MB max file size
   },
@@ -9108,13 +9093,25 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "File type is required" });
       }
 
+      const ext = path.extname(req.file.originalname).toLowerCase() || "";
+      const uuid = randomUUID();
+      const filename = `${uuid}${ext}`;
+
+      const { dbPath } = await uploadApplicantBuffer(
+        req.file.buffer,
+        filename,
+        req.file.mimetype,
+        req.file.originalname
+      );
+
       const fileRecord = await storage.createRentalSubmissionFile({
         personId: person.id,
         fileType,
         originalName: req.file.originalname,
-        storedPath: req.file.path,
+        storedPath: dbPath,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
+        availabilityStatus: 'available',
       });
 
       res.status(201).json({
@@ -9144,6 +9141,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         fileType: f.fileType,
         originalName: f.originalName,
         fileSize: f.fileSize,
+        availabilityStatus: f.availabilityStatus,
         createdAt: f.createdAt,
       })));
     } catch (error) {
@@ -9166,11 +9164,14 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "File not found" });
       }
 
-      // Delete from disk
-      try {
-        await fs.unlink(file.storedPath);
-      } catch (e) {
-        console.error("Error deleting file from disk:", e);
+      if (isObjstorePath(file.storedPath)) {
+        await deleteApplicantObject(file.storedPath);
+      } else {
+        try {
+          await fs.unlink(file.storedPath);
+        } catch (e) {
+          console.error("Error deleting file from disk:", e);
+        }
       }
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);
@@ -9222,6 +9223,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           fileType: f.fileType,
           originalName: f.originalName,
           fileSize: f.fileSize,
+          availabilityStatus: f.availabilityStatus,
           createdAt: f.createdAt,
         }));
       }
@@ -9274,7 +9276,33 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      res.download(file.storedPath, file.originalName);
+      if (file.availabilityStatus === 'missing') {
+        return res.status(404).json({ message: "File unavailable (lost during a workspace reset before cloud migration)" });
+      }
+
+      if (isObjstorePath(file.storedPath)) {
+        const stream = await downloadApplicantStream(file.storedPath);
+        if (!stream) {
+          await db.update(rentalSubmissionFiles)
+            .set({ availabilityStatus: 'missing' })
+            .where(eq(rentalSubmissionFiles.id, file.id));
+          return res.status(404).json({ message: "File unavailable (missing from storage)" });
+        }
+        res.setHeader("Content-Type", file.mimeType || "application/octet-stream");
+        res.setHeader("Content-Disposition", `inline; filename="${file.originalName}"`);
+        stream.pipe(res);
+      } else if (file.storedPath.startsWith("uploads/")) {
+        const localPath = path.join(process.cwd(), file.storedPath);
+        if (!fsSync.existsSync(localPath)) {
+          await db.update(rentalSubmissionFiles)
+            .set({ availabilityStatus: 'missing' })
+            .where(eq(rentalSubmissionFiles.id, file.id));
+          return res.status(404).json({ message: "File unavailable (legacy local file missing)" });
+        }
+        res.download(localPath, file.originalName);
+      } else {
+        return res.status(400).json({ message: "Unrecognized file path format" });
+      }
     } catch (error) {
       console.error("Error downloading file:", error);
       res.status(500).json({ message: "Failed to download file" });
@@ -9326,14 +9354,25 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "Person not found in this submission" });
       }
 
-      // Save file record to database
+      const ext = path.extname(req.file.originalname).toLowerCase() || "";
+      const uuid = randomUUID();
+      const filename = `${uuid}${ext}`;
+
+      const { dbPath } = await uploadApplicantBuffer(
+        req.file.buffer,
+        filename,
+        req.file.mimetype,
+        req.file.originalname
+      );
+
       const newFile = await storage.createRentalSubmissionFile({
         personId,
         fileType,
         originalName: req.file.originalname,
-        storedPath: req.file.path,
+        storedPath: dbPath,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
+        availabilityStatus: 'available',
       });
 
       res.status(201).json(newFile);
@@ -9384,11 +9423,14 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      // Delete from disk
-      try {
-        await fs.unlink(file.storedPath);
-      } catch (e) {
-        console.error("Error deleting file from disk:", e);
+      if (isObjstorePath(file.storedPath)) {
+        await deleteApplicantObject(file.storedPath);
+      } else {
+        try {
+          await fs.unlink(file.storedPath);
+        } catch (e) {
+          console.error("Error deleting file from disk:", e);
+        }
       }
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);

@@ -1627,7 +1627,10 @@ Best regards`;
                                       const res = await fetch(`/api/rental/submissions/${selectedSubmission}/files/${file.id}/download`, {
                                         headers: token ? { Authorization: `Bearer ${token}` } : {},
                                       });
-                                      if (!res.ok) throw new Error("Download failed");
+                                      if (!res.ok) {
+                                        const body = await res.json().catch(() => ({}));
+                                        throw new Error(body.message || "Download failed");
+                                      }
                                       const blob = await res.blob();
                                       const url = URL.createObjectURL(blob);
                                       const a = document.createElement('a');
@@ -1637,8 +1640,8 @@ Best regards`;
                                       a.click();
                                       document.body.removeChild(a);
                                       URL.revokeObjectURL(url);
-                                    } catch (error) {
-                                      toast({ title: "Error", description: "Failed to download file", variant: "destructive" });
+                                    } catch (error: any) {
+                                      toast({ title: "Error", description: error?.message || "Failed to download file", variant: "destructive" });
                                     }
                                   }}
                                   data-testid={`button-download-${file.id}`}

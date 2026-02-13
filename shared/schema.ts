@@ -1368,6 +1368,7 @@ export const rentalSubmissionFiles = pgTable("rental_submission_files", {
   storedPath: text("stored_path").notNull(),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type", { length: 100 }),
+  availabilityStatus: varchar("availability_status", { length: 20 }).notNull().default('available'),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
