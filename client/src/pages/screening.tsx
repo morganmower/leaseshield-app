@@ -33,6 +33,7 @@ import {
   ThumbsUp,
   ThumbsDown,
   ChevronRight,
+  History,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
@@ -706,15 +707,25 @@ export default function Screening() {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Screening Decoder
-          </h1>
-          <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
-          </p>
-          <p className="text-muted-foreground">
-            Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
-          </p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+                Screening Decoder
+              </h1>
+              <p className="text-muted-foreground mb-2">
+                <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
+              </p>
+              <p className="text-muted-foreground">
+                Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
+              </p>
+            </div>
+            <Link to="/audit-history">
+              <Button variant="outline" className="flex items-center gap-2" data-testid="button-view-history">
+                <History className="h-4 w-4" />
+                View History
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Legal Disclaimer */}
@@ -1017,6 +1028,21 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-credit-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>
@@ -1263,30 +1289,24 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              {/* Quick Decision CTA */}
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-criminal-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
-        </div>
-
-        {/* Denial Decision Assistant CTA */}
-        <div className="mb-8">
-          <Link href="/denial-decision">
-            <Card className="p-6 bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20 hover-elevate cursor-pointer" data-testid="card-denial-decision-cta">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary/10 rounded-lg">
-                  <Scale className="h-6 w-6 text-primary" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="text-lg font-semibold text-foreground mb-1">Denial Decision Assistant</h3>
-                  <p className="text-muted-foreground mb-3">
-                    Pick your city and we'll block illegal denial reasons and generate compliant denial text + required notices.
-                  </p>
-                  <p className="text-sm text-primary hover:underline">
-                    Not sure what you can deny for in your city? Start here →
-                  </p>
-                </div>
-              </div>
-            </Card>
-          </Link>
         </div>
 
         {/* Privacy Notice - Moved below helpers */}

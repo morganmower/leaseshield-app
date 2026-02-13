@@ -23,6 +23,9 @@ import {
   Loader2,
   Pencil,
   Trash2,
+  Eye,
+  Building,
+  Scale,
 } from "lucide-react";
 
 interface AuditLog {
@@ -30,6 +33,8 @@ interface AuditLog {
   userId: string;
   applicantName: string | null;
   stateId: string;
+  countyId: string | null;
+  countyName: string | null;
   cityId: string | null;
   cityName: string | null;
   ruleVersion: string;
@@ -39,6 +44,8 @@ interface AuditLog {
   generatedDenialText: string | null;
   adverseActionLetterGenerated: boolean;
   conditionsApplied: string[] | null;
+  fairChanceStepsCompleted: Record<string, boolean> | null;
+  noticesProvided: string[] | null;
   createdAt: string;
 }
 
@@ -67,9 +74,11 @@ export default function AuditHistory() {
   const { user, isLoading: authLoading } = useAuth();
   const { toast } = useToast();
   const [editingLog, setEditingLog] = useState<AuditLog | null>(null);
+  const [viewingLog, setViewingLog] = useState<AuditLog | null>(null);
   const [deleteLogId, setDeleteLogId] = useState<string | null>(null);
   const [editName, setEditName] = useState("");
   const [editOutcome, setEditOutcome] = useState<'approve' | 'conditional' | 'deny'>('approve');
+  const [isDownloading, setIsDownloading] = useState(false);
 
   const { data: logs = [], isLoading } = useQuery<AuditLog[]>({
     queryKey: ['/api/denial-decision/audit-history'],
@@ -123,6 +132,59 @@ export default function AuditHistory() {
     updateMutation.mutate({ id: editingLog.id, applicantName: editName, outcome: editOutcome });
   };
 
+  const handleDownloadLetter = async (log: AuditLog, letterType: 'pre-adverse' | 'adverse') => {
+    if (!log.generatedDenialText) return;
+    
+    setIsDownloading(true);
+    try {
+      const res = await apiRequest('POST', '/api/denial-decision/adverse-action-letter', {
+        applicantName: log.applicantName || 'Applicant',
+        applicantAddress: '',
+        stateId: log.stateId,
+        cityId: log.cityId || undefined,
+        countyId: log.countyId || undefined,
+        denialReasons: log.generatedDenialText,
+        criteriaIds: log.criteriaSelectedForDenial || [],
+        isFcra: true,
+        letterType: letterType,
+        auditLogId: log.id,
+      });
+      
+      if (!res.ok) {
+        throw new Error('Failed to generate letter');
+      }
+      
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const filename = letterType === 'pre-adverse' 
+        ? `pre-adverse-action-notice-${new Date().toISOString().split('T')[0]}.pdf`
+        : `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      a.remove();
+      
+      // Refresh to show updated letter type
+      queryClient.invalidateQueries({ queryKey: ['/api/denial-decision/audit-history'] });
+      
+      toast({
+        title: letterType === 'pre-adverse' ? 'Pre-Adverse Notice Downloaded' : 'Adverse Action Letter Downloaded',
+        description: "Letter type has been updated in the record.",
+      });
+    } catch (error) {
+      toast({
+        title: "Download Failed",
+        description: "Could not generate the letter.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsDownloading(false);
+    }
+  };
+
   if (authLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-[400px]">
@@ -145,9 +207,9 @@ export default function AuditHistory() {
   return (
     <div className="container mx-auto px-4 py-6 max-w-4xl">
       <div className="flex items-center gap-4 mb-6">
-        <Link href="/screening">
+        <Link href="/denial-decision">
           <Button variant="ghost" size="sm" data-testid="button-back">
-            <ArrowLeft className="h-4 w-4 mr-1" /> Back to Screening
+            <ArrowLeft className="h-4 w-4 mr-1" /> Back to Decision Assistant
           </Button>
         </Link>
       </div>
@@ -207,8 +269,20 @@ export default function AuditHistory() {
                     <div className="flex items-center gap-2">
                       <Badge variant="outline" className="flex items-center gap-1">
                         <MapPin className="h-3 w-3" />
-                        {log.cityName ? `${log.cityName}, ${log.stateId}` : log.stateId}
+                        {log.cityName 
+                          ? `${log.cityName}, ${log.stateId}` 
+                          : log.countyName 
+                            ? `${log.countyName}, ${log.stateId}`
+                            : log.stateId}
                       </Badge>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => setViewingLog(log)}
+                        data-testid={`button-view-${log.id}`}
+                      >
+                        <Eye className="h-4 w-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
@@ -254,14 +328,14 @@ export default function AuditHistory() {
                     </div>
                   )}
 
-                  {log.outcome === 'deny' && (
+                  {log.outcome === 'deny' && log.adverseActionLetterGenerated && (
                     <div className="flex items-center gap-4 text-sm">
-                      {log.adverseActionLetterGenerated && (
-                        <span className="flex items-center gap-1 text-primary">
-                          <FileText className="h-4 w-4" />
-                          Adverse Action Letter Generated
-                        </span>
-                      )}
+                      <span className="flex items-center gap-1 text-primary">
+                        <FileText className="h-4 w-4" />
+                        {(log as any).letterTypeDownloaded === 'pre_adverse' 
+                          ? 'Pre-Adverse Action Notice Generated' 
+                          : 'Adverse Action Letter Generated'}
+                      </span>
                     </div>
                   )}
                 </CardContent>
@@ -309,6 +383,188 @@ export default function AuditHistory() {
               {updateMutation.isPending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : null}
               Save Changes
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingLog} onOpenChange={(open) => !open && setViewingLog(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              Decision Details
+            </DialogTitle>
+            <DialogDescription>
+              Full record of this screening decision
+            </DialogDescription>
+          </DialogHeader>
+          
+          {viewingLog && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Applicant</p>
+                  <p className="font-medium">{viewingLog.applicantName || "Not specified"}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Decision</p>
+                  <Badge className={OUTCOME_STYLES[viewingLog.outcome].badgeClass}>
+                    {OUTCOME_STYLES[viewingLog.outcome].label}
+                  </Badge>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Date</p>
+                  <p className="flex items-center gap-1 text-sm">
+                    <Calendar className="h-3 w-3" />
+                    {formatDate(viewingLog.createdAt)}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-muted-foreground">Jurisdiction</p>
+                  <div className="flex items-center gap-1 text-sm">
+                    <MapPin className="h-3 w-3" />
+                    <span>
+                      {viewingLog.cityName && `${viewingLog.cityName}, `}
+                      {viewingLog.countyName && `${viewingLog.countyName}, `}
+                      {viewingLog.stateId}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {viewingLog.criteriaPresent && viewingLog.criteriaPresent.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <ClipboardList className="h-4 w-4" />
+                    Criteria Present in Report
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.criteriaPresent.map((code, i) => (
+                      <Badge key={i} variant="secondary" className="text-xs">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.criteriaSelectedForDenial && viewingLog.criteriaSelectedForDenial.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2 text-destructive">
+                    <Scale className="h-4 w-4" />
+                    Criteria Used for Denial
+                  </p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.criteriaSelectedForDenial.map((code, i) => (
+                      <Badge key={i} variant="destructive" className="text-xs">
+                        {code}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.outcome === 'conditional' && viewingLog.conditionsApplied && viewingLog.conditionsApplied.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2 text-amber-600">
+                    <AlertTriangle className="h-4 w-4" />
+                    Conditions Applied
+                  </p>
+                  <ul className="text-sm list-disc list-inside space-y-1">
+                    {viewingLog.conditionsApplied.map((condition, i) => (
+                      <li key={i}>{condition}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {viewingLog.generatedDenialText && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium flex items-center gap-2">
+                    <FileText className="h-4 w-4" />
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse' 
+                      ? 'Preliminary Decision (Pre-Adverse)' 
+                      : 'Internal Decision Record'}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse'
+                      ? 'Tentative decision pending applicant response. Final decision not yet made.'
+                      : 'Your detailed reasoning (kept on file).'}
+                  </p>
+                  <div className="bg-muted p-3 rounded-md text-sm whitespace-pre-wrap">
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse'
+                      ? viewingLog.generatedDenialText
+                          .replace(/was denied/gi, 'could be denied')
+                          .replace(/has been denied/gi, 'may be denied')
+                          .replace(/is denied/gi, 'could be denied')
+                          .replace(/The application was denied/gi, 'The application could be denied')
+                      : viewingLog.generatedDenialText}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.noticesProvided && viewingLog.noticesProvided.length > 0 && (
+                <div className="space-y-2 pt-2 border-t">
+                  <p className="text-sm font-medium">Notices Provided</p>
+                  <div className="flex flex-wrap gap-1">
+                    {viewingLog.noticesProvided.map((notice, i) => (
+                      <Badge key={i} variant="outline" className="text-xs">
+                        {notice.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.outcome === 'deny' && viewingLog.adverseActionLetterGenerated && (
+                <div className="space-y-1 pt-2 border-t">
+                  <p className="text-sm font-medium">Letter Downloaded</p>
+                  <div className="flex items-center gap-2 text-sm text-primary">
+                    <FileText className="h-4 w-4" />
+                    {(viewingLog as any).letterTypeDownloaded === 'pre_adverse' 
+                      ? 'Pre-Adverse Action Notice' 
+                      : (viewingLog as any).letterTypeDownloaded === 'adverse_action'
+                        ? 'Adverse Action Letter (Final)'
+                        : 'Letter generated'}
+                  </div>
+                </div>
+              )}
+
+              {viewingLog.outcome === 'deny' && viewingLog.generatedDenialText && (
+                <div className="space-y-2 pt-3 border-t">
+                  <p className="text-sm font-medium">Download Letter</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDownloadLetter(viewingLog, 'pre-adverse')}
+                      disabled={isDownloading}
+                      data-testid="button-download-pre-adverse"
+                    >
+                      {isDownloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+                      Pre-Adverse Notice
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="default"
+                      onClick={() => handleDownloadLetter(viewingLog, 'adverse')}
+                      disabled={isDownloading}
+                      data-testid="button-download-adverse"
+                    >
+                      {isDownloading ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <FileText className="h-4 w-4 mr-1" />}
+                      Adverse Action Letter
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              <div className="pt-2 border-t text-xs text-muted-foreground">
+                Rule Version: {viewingLog.ruleVersion}
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setViewingLog(null)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
