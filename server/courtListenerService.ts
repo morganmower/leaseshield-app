@@ -63,14 +63,6 @@ interface CourtListenerSearchResponse {
 export class CourtListenerService {
   private apiKey: string;
   private baseUrl = 'https://www.courtlistener.com/api/rest/v4';
-  private stateCourtMap: { [key: string]: string[] } = {
-    // State to CourtListener court IDs mapping
-    UT: ['court-of-appeals-of-utah', 'supreme-court-of-utah', 'court-of-appeals-of-the-united-states-tenth-circuit'],
-    TX: ['court-of-appeals-of-texas', 'supreme-court-of-texas', 'court-of-appeals-of-the-united-states-fifth-circuit'],
-    ND: ['court-of-appeals-of-north-dakota', 'supreme-court-of-north-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    SD: ['court-of-appeals-of-south-dakota', 'supreme-court-of-south-dakota', 'court-of-appeals-of-the-united-states-eighth-circuit'],
-    NC: ['court-of-appeals-of-north-carolina', 'supreme-court-of-north-carolina', 'court-of-appeals-of-the-united-states-fourth-circuit'],
-  };
 
   constructor() {
     this.apiKey = process.env.COURTLISTENER_API_KEY || '';
@@ -81,31 +73,81 @@ export class CourtListenerService {
 
   /**
    * Search for case law related to landlord-tenant law
+   * @param stateId - The state to search for (e.g., 'UT', 'TX')
+   * @param keywords - Optional custom keywords (defaults to landlord-tenant terms)
+   * @param daysBack - How many days back to search (default 60)
    */
-  async searchCases(stateId: string, keywords: string[] = []): Promise<CourtListenerSearchResponse | null> {
+  async searchCases(stateId: string, keywords: string[] = [], daysBack: number = 60): Promise<CourtListenerSearchResponse | null> {
+    if (!this.apiKey) {
+      console.warn(`⚠️ COURTLISTENER_API_KEY not set, skipping search for ${stateId}`);
+      return null;
+    }
+
     try {
-      // Default landlord-tenant keywords for v4 API
       const searchTerms = keywords.length > 0 ? keywords : [
         'landlord tenant',
         'eviction',
-        'lease',
-        'rental',
+        'lease agreement',
+        'security deposit',
+        'unlawful detainer',
+        'fair housing',
       ];
 
-      // v4 API uses simpler query format - just search terms, no complex syntax
-      const query = searchTerms.join(' OR ');
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysBack);
+      const startDateStr = startDate.toISOString().split('T')[0];
+      const endDateStr = endDate.toISOString().split('T')[0];
+
+      const stateNames: { [key: string]: string } = {
+        AZ: 'arizona', CA: 'california', FL: 'florida', ID: 'idaho',
+        IL: 'illinois', MI: 'michigan', NC: 'north carolina', ND: 'north dakota',
+        NM: 'new mexico', NV: 'nevada', OH: 'ohio', SD: 'south dakota',
+        TX: 'texas', UT: 'utah', VA: 'virginia', WY: 'wyoming',
+      };
+
+      const stateCourts: { [key: string]: string[] } = {
+        AZ: ['ariz'],
+        CA: ['cal', 'cacd', 'caeb', 'canb', 'casb'],
+        FL: ['fla', 'flmd', 'flnd', 'flsd'],
+        ID: ['id', 'idaho'],
+        IL: ['ill', 'ilcd', 'ilnd', 'ilsd'],
+        MI: ['mich', 'mied', 'miwd'],
+        NC: ['nc', 'nceb', 'ncmd', 'ncwb'],
+        ND: ['nd'],
+        NM: ['nm'],
+        NV: ['nev'],
+        OH: ['ohio', 'ohnd', 'ohsd'],
+        SD: ['sd'],
+        TX: ['tex', 'txed', 'txnd', 'txsd', 'txwd'],
+        UT: ['utah', 'utd'],
+        VA: ['va', 'vaeb', 'vawb'],
+        WY: ['wyo'],
+      };
 
       const url = new URL(`${this.baseUrl}/search/`);
+
+      const keywordPart = `(${searchTerms.join(' OR ')})`;
+      const query = keywordPart;
       url.searchParams.set('q', query);
+      url.searchParams.set('type', 'o');
       url.searchParams.set('format', 'json');
-      url.searchParams.set('limit', '20');
+      url.searchParams.set('order_by', 'dateFiled desc');
+      url.searchParams.set('filed_after', startDateStr);
+      url.searchParams.set('filed_before', endDateStr);
+
+      const courts = stateCourts[stateId];
+      if (courts && courts.length > 0) {
+        url.searchParams.set('court', courts.join(' '));
+      }
 
       const headers: HeadersInit = {
         'Authorization': `Token ${this.apiKey}`,
         'Accept': 'application/json',
       };
 
-      console.log(`🔍 Searching CourtListener for ${stateId} case law with query: "${query}"`);
+      console.log(`🔍 Searching CourtListener for ${stateId} case law (${startDateStr} to ${endDateStr})`);
+      console.log(`   Query: "${query.substring(0, 80)}..."`);
       const response = await fetch(url.toString(), { headers });
 
       if (!response.ok) {
@@ -125,10 +167,9 @@ export class CourtListenerService {
 
       // Transform v4 response to match our expected format
       const rawResults = data.results || data.data || [];
-      const totalCount = data.count || data.total_count || rawResults.length;
 
       // Convert camelCase API response to snake_case for our schema
-      const results = rawResults.map((item: any) => ({
+      let results = rawResults.map((item: any) => ({
         id: item.cluster_id || item.id,
         url: item.url || `https://www.courtlistener.com${item.absolute_url}`,
         absolute_url: item.absolute_url || '',
@@ -150,18 +191,24 @@ export class CourtListenerService {
         date_last_index: item.date_last_index || '',
       }));
 
+      results = results.filter((item: CourtListenerCluster) => {
+        if (!item.date_filed) return false;
+        const filed = new Date(item.date_filed);
+        return filed >= startDate && filed <= endDate;
+      });
+
       const transformedResponse: CourtListenerSearchResponse = {
         meta: {
-          limit: 20,
+          limit: 50,
           next: data.next || null,
           offset: 0,
           previous: data.previous || null,
-          total_count: totalCount,
+          total_count: results.length,
         },
         results: results,
       };
 
-      console.log(`✅ Found ${totalCount} case law matches for ${stateId}`);
+      console.log(`✅ Found ${results.length} case law matches for ${stateId} (filtered from ${rawResults.length} total)`);
       return transformedResponse;
     } catch (error) {
       console.error('Error searching CourtListener:', error);
@@ -262,9 +309,16 @@ export class CourtListenerService {
   formatCitation(caseData: CourtListenerCluster): string {
     if (caseData.citations && caseData.citations.length > 0) {
       const citation = caseData.citations[0];
-      return `${citation.volume} ${citation.reporter} ${citation.page}`;
+      if (typeof citation === 'string') return citation;
+      if (citation.volume && citation.reporter && citation.page) {
+        return `${citation.volume} ${citation.reporter} ${citation.page}`;
+      }
     }
-    return caseData.case_number || `Cluster ID: ${caseData.id}`;
+    if (caseData.case_number) return caseData.case_number;
+    const name = caseData.case_name_short || caseData.case_name || '';
+    const year = caseData.date_filed ? new Date(caseData.date_filed).getFullYear() : '';
+    if (name && year) return `${name} (${year})`;
+    return name || `Case ${caseData.id}`;
   }
 
   /**
@@ -286,6 +340,109 @@ export class CourtListenerService {
       caseNumber: caseData.case_number || '',
       url: `https://www.courtlistener.com${caseData.absolute_url || ''}`,
     };
+  }
+
+  async refreshCaseLaw(options?: { daysBack?: number; states?: string[] }): Promise<{
+    searched: number;
+    newCases: number;
+    updatedCases: number;
+    errors: string[];
+  }> {
+    const { db } = await import('./db');
+    const { caseLawMonitoring } = await import('@shared/schema');
+    const { eq } = await import('drizzle-orm');
+    const { getActiveStateIds } = await import('./states/getActiveStates');
+
+    const daysBack = options?.daysBack ?? 180;
+    const stateIds = options?.states ?? await getActiveStateIds();
+    const errors: string[] = [];
+    let searched = 0;
+    let newCases = 0;
+    let updatedCases = 0;
+
+    if (!this.apiKey) {
+      errors.push('COURTLISTENER_API_KEY not configured');
+      return { searched, newCases, updatedCases, errors };
+    }
+
+    console.log(`⚖️ Refreshing case law for ${stateIds.length} states (${daysBack} days back)...`);
+
+    for (const stateId of stateIds) {
+      try {
+        const results = await this.searchCases(stateId, [], daysBack);
+        searched++;
+
+        if (!results || results.results.length === 0) {
+          continue;
+        }
+
+        for (const cluster of results.results) {
+          const caseIdStr = String(cluster.id);
+          const caseName = cluster.case_name || cluster.case_name_full || '';
+          if (!caseName) continue;
+
+          const citation = this.formatCitation(cluster);
+          const courtName = cluster.court || '';
+          const dateFiled = cluster.date_filed ? new Date(cluster.date_filed) : null;
+          const caseUrl = cluster.absolute_url
+            ? `https://www.courtlistener.com${cluster.absolute_url}`
+            : cluster.url || '';
+
+          const relevance = this.isRelevantCase(cluster) ? 'high' : 'medium';
+
+          const [existing] = await db
+            .select({ id: caseLawMonitoring.id })
+            .from(caseLawMonitoring)
+            .where(eq(caseLawMonitoring.caseId, caseIdStr))
+            .limit(1);
+
+          if (existing) {
+            await db
+              .update(caseLawMonitoring)
+              .set({
+                caseName,
+                citation,
+                court: courtName,
+                dateFiled,
+                url: caseUrl,
+                updatedAt: new Date(),
+              })
+              .where(eq(caseLawMonitoring.id, existing.id));
+            updatedCases++;
+          } else {
+            await db.insert(caseLawMonitoring).values({
+              caseId: caseIdStr,
+              stateId,
+              caseName,
+              caseNameFull: cluster.case_name_full || null,
+              citation,
+              court: courtName,
+              dateFiled,
+              caseNumber: cluster.case_number || null,
+              url: caseUrl,
+              relevanceLevel: relevance as any,
+              isMonitored: true,
+              isReviewed: false,
+            });
+            newCases++;
+          }
+        }
+
+        if (stateIds.indexOf(stateId) < stateIds.length - 1) {
+          await new Promise(resolve => setTimeout(resolve, 500));
+        }
+      } catch (error: any) {
+        errors.push(`${stateId}: ${error.message || error}`);
+        console.error(`❌ Error refreshing case law for ${stateId}:`, error);
+      }
+    }
+
+    console.log(`✅ Case law refresh complete: ${searched} states searched, ${newCases} new, ${updatedCases} updated`);
+    if (errors.length > 0) {
+      console.log(`   ⚠️ Errors: ${errors.join('; ')}`);
+    }
+
+    return { searched, newCases, updatedCases, errors };
   }
 }
 

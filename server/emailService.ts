@@ -1810,6 +1810,167 @@ Morgan
 
     return this.sendEmail(user, template);
   }
+
+  /**
+   * Send a bi-weekly legislative digest email summarizing new updates for a user's state
+   * Includes both state-specific updates and federal/HUD updates that apply to all landlords
+   */
+  async sendBiweeklyLegislativeDigest(
+    user: EmailRecipient,
+    stateUpdates: Array<{ title: string; summary: string; impactLevel: string; category?: string; stateId: string }>,
+    federalUpdates: Array<{ title: string; summary: string; impactLevel: string; category?: string }>,
+    templateChanges: Array<{ title: string; versionNotes: string }>,
+    digestPeriod: string,
+    userState: string
+  ): Promise<boolean> {
+    const firstName = user.firstName || 'there';
+    const totalUpdates = stateUpdates.length + federalUpdates.length + templateChanges.length;
+    
+    if (totalUpdates === 0) {
+      return false; // No updates to send
+    }
+
+    const stateNames: Record<string, string> = {
+      'UT': 'Utah', 'TX': 'Texas', 'ND': 'North Dakota', 'SD': 'South Dakota',
+      'NC': 'North Carolina', 'OH': 'Ohio', 'MI': 'Michigan', 'ID': 'Idaho',
+      'WY': 'Wyoming', 'CA': 'California', 'VA': 'Virginia', 'NV': 'Nevada',
+      'AZ': 'Arizona', 'FL': 'Florida', 'IL': 'Illinois', 'NM': 'New Mexico'
+    };
+    const stateName = stateNames[userState] || userState;
+
+    const getImpactBadge = (level: string) => {
+      const colors: Record<string, string> = {
+        high: '#dc2626',
+        medium: '#ea580c', 
+        low: '#6b7280'
+      };
+      return colors[level] || colors.low;
+    };
+
+    // Build update sections
+    const buildUpdateItem = (update: { title: string; summary: string; impactLevel: string }, badge: string) => `
+      <div style="border-left: 3px solid ${getImpactBadge(update.impactLevel)}; padding-left: 16px; margin-bottom: 16px;">
+        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+          <span style="background: #f1f5f9; color: #475569; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500;">${badge}</span>
+          <span style="background: ${getImpactBadge(update.impactLevel)}22; color: ${getImpactBadge(update.impactLevel)}; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; text-transform: uppercase;">${update.impactLevel}</span>
+        </div>
+        <h4 style="margin: 4px 0 8px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${update.title}</h4>
+        <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.5;">${update.summary}</p>
+      </div>
+    `;
+
+    const stateSection = stateUpdates.length > 0 ? `
+      <div style="margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+          ${stateName} Updates (${stateUpdates.length})
+        </h3>
+        ${stateUpdates.map(u => buildUpdateItem(u, stateName)).join('')}
+      </div>
+    ` : '';
+
+    const federalSection = federalUpdates.length > 0 ? `
+      <div style="margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+          Federal & HUD Updates (${federalUpdates.length})
+        </h3>
+        ${federalUpdates.map(u => buildUpdateItem(u, (u as any).category === 'section8' ? 'Section 8 / HUD' : 'Federal')).join('')}
+      </div>
+    ` : '';
+
+    const templateSection = templateChanges.length > 0 ? `
+      <div style="margin-bottom: 24px;">
+        <h3 style="margin: 0 0 16px 0; color: #0f172a; font-size: 16px; font-weight: 600; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">
+          Template Updates (${templateChanges.length})
+        </h3>
+        ${templateChanges.map(t => `
+          <div style="border-left: 3px solid #14b8a6; padding-left: 16px; margin-bottom: 16px;">
+            <h4 style="margin: 0 0 4px 0; color: #0f172a; font-size: 15px; font-weight: 600;">${t.title}</h4>
+            <p style="margin: 0; color: #64748b; font-size: 14px; line-height: 1.5;">${t.versionNotes || 'Updated for legal compliance'}</p>
+          </div>
+        `).join('')}
+      </div>
+    ` : '';
+
+    const template: EmailTemplate = {
+      subject: `LeaseShield Update: ${totalUpdates} new landlord-tenant ${totalUpdates === 1 ? 'update' : 'updates'} for ${stateName}`,
+      textBody: `Hi ${firstName},
+
+Here's your bi-weekly digest of landlord-tenant law updates for ${digestPeriod}.
+
+${stateUpdates.length > 0 ? `${stateName} UPDATES (${stateUpdates.length}):\n${stateUpdates.map(u => `- ${u.title}: ${u.summary}`).join('\n')}\n\n` : ''}
+${federalUpdates.length > 0 ? `FEDERAL & HUD UPDATES (${federalUpdates.length}):\n${federalUpdates.map(u => `- ${u.title}: ${u.summary}`).join('\n')}\n\n` : ''}
+${templateChanges.length > 0 ? `TEMPLATE UPDATES (${templateChanges.length}):\n${templateChanges.map(t => `- ${t.title}: ${t.versionNotes || 'Updated for legal compliance'}`).join('\n')}\n\n` : ''}
+
+View all updates and download updated templates: ${this.getBaseUrl()}/legal-updates
+
+Stay protected,
+The LeaseShield Team
+      `,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f8fafc;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
+          
+          <tr>
+            <td style="background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); padding: 32px 40px;">
+              <h1 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 700;">
+                LeaseShield Bi-Weekly Digest
+              </h1>
+              <p style="margin: 8px 0 0 0; color: #e0f2f1; font-size: 14px;">
+                ${digestPeriod} • ${stateName}
+              </p>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="padding: 32px 40px;">
+              <p style="margin: 0 0 24px 0; color: #475569; font-size: 15px; line-height: 1.6;">
+                Hi ${firstName}, here's a summary of ${totalUpdates} landlord-tenant ${totalUpdates === 1 ? 'update' : 'updates'} from the past two weeks that may affect your rental business.
+              </p>
+
+              ${stateSection}
+              ${federalSection}
+              ${templateSection}
+
+              <div style="text-align: center; margin: 32px 0 16px 0;">
+                <a href="${this.getBaseUrl()}/legal-updates" 
+                   style="display: inline-block; background-color: #14b8a6; color: #ffffff; text-decoration: none; padding: 12px 32px; border-radius: 6px; font-weight: 600; font-size: 15px;">
+                  View All Updates
+                </a>
+              </div>
+            </td>
+          </tr>
+
+          <tr>
+            <td style="background-color: #f8fafc; padding: 20px 40px; text-align: center; border-top: 1px solid #e2e8f0;">
+              <p style="margin: 0; color: #64748b; font-size: 13px;">
+                You're receiving this because you opted in to legislative update notifications.
+              </p>
+              <p style="margin: 8px 0 0 0; color: #94a3b8; font-size: 12px;">
+                <a href="${this.getBaseUrl()}/settings" style="color: #14b8a6;">Manage notification preferences</a>
+              </p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+      `,
+    };
+
+    return this.sendEmail(user, template);
+  }
 }
 
 export const emailService = new EmailService();

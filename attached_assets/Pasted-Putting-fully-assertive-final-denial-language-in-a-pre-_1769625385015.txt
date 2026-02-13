@@ -1,0 +1,81 @@
+Putting fully assertive, final denial language in a pre-adverse notice is risky, because pre-adverse must remain tentative.
+
+But removing reasons entirely also causes problems:
+
+landlords forget why they denied
+
+inconsistent explanations later
+
+weak audit trail
+
+So the answer is two parallel records:
+
+Internal decision record (always detailed)
+
+Applicant-facing letter (carefully phrased)
+
+The correct model (simple + defensible)
+1️⃣ INTERNAL: always store the full reason (no compromise)
+
+In LeaseShield, you should always store:
+
+The exact denial criteria selected
+
+The exact “safe denial sentence”
+
+Jurisdiction + ruleset version
+
+Timestamp
+
+This is your audit trail and landlord memory.
+
+This internal record can safely say:
+
+“Based on our written screening criteria, the applicant’s felony conviction presents a documented risk to resident safety or property.”
+
+That language is fine internally, because it’s not being sent yet.
+
+2️⃣ PRE-ADVERSE: include the reason, but soften the language
+
+You can include the reason in a pre-adverse notice — it just cannot sound final.
+
+✅ Correct way to do it
+
+Use tentative phrasing and reference the report, not the applicant.
+
+Example (production-safe):
+
+Reason(s) Under Consideration:
+Based on our written screening criteria, certain information contained in the consumer report may not meet the qualification requirements for this property.
+
+If you want to be more specific (only when legal):
+
+Based on our written screening criteria, a recent criminal conviction reflected in the consumer report may present a risk related to resident safety or property.
+
+Key words doing the work:
+
+may
+
+reflected in the consumer report
+
+under consideration
+
+This preserves transparency without locking the decision.
+
+3️⃣ POST-ADVERSE: be specific and final
+
+This is where the exact reason belongs, clearly and plainly.
+
+Example (post-adverse):
+
+The application was denied because it did not meet our written screening criteria. Specifically, a recent criminal conviction identified in the consumer report presents a documented risk to resident safety or property.
+
+This is:
+
+clear
+
+honest
+
+compliant
+
+defensible

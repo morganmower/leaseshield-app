@@ -2,6 +2,21 @@ import type { RequestHandler, Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, extractTokenFromHeader } from './jwt';
 import { storage } from './storage';
 
+// In-memory impersonation storage: adminId -> { impersonatedUserId, startedAt }
+const impersonationSessions = new Map<string, { impersonatedUserId: string; startedAt: Date }>();
+
+export function startImpersonation(adminId: string, targetUserId: string): void {
+  impersonationSessions.set(adminId, { impersonatedUserId: targetUserId, startedAt: new Date() });
+}
+
+export function stopImpersonation(adminId: string): void {
+  impersonationSessions.delete(adminId);
+}
+
+export function getImpersonationStatus(adminId: string): { impersonatedUserId: string; startedAt: Date } | null {
+  return impersonationSessions.get(adminId) || null;
+}
+
 export const isAuthenticated: RequestHandler = async (req: Request, res: Response, next: NextFunction) => {
   console.error(`🔒 [JWT Auth] ${req.method} ${req.path} - checking auth...`);
   
@@ -19,15 +34,32 @@ export const isAuthenticated: RequestHandler = async (req: Request, res: Respons
   }
 
   try {
-    const user = await storage.getUser(decoded.userId);
-    if (!user) {
+    const authenticatedUser = await storage.getUser(decoded.userId);
+    if (!authenticatedUser) {
       console.error(`🔒 [JWT Auth] ❌ User not found: ${decoded.userId}`);
       return res.status(401).json({ message: 'User not found' });
     }
 
-    (req as any).user = user;
-    (req as any).userId = user.id;
-    console.error(`🔒 [JWT Auth] ✅ Authenticated: ${user.email}`);
+    // Check for impersonation (only admins can impersonate)
+    const impersonation = authenticatedUser.isAdmin ? impersonationSessions.get(authenticatedUser.id) : null;
+    
+    if (impersonation) {
+      const impersonatedUser = await storage.getUser(impersonation.impersonatedUserId);
+      if (impersonatedUser) {
+        // Use impersonated user's context
+        (req as any).user = impersonatedUser;
+        (req as any).userId = impersonatedUser.id;
+        (req as any).isImpersonating = true;
+        (req as any).realAdmin = authenticatedUser;
+        console.error(`🔒 [JWT Auth] ✅ Admin ${authenticatedUser.email} impersonating: ${impersonatedUser.email}`);
+        return next();
+      }
+    }
+
+    (req as any).user = authenticatedUser;
+    (req as any).userId = authenticatedUser.id;
+    (req as any).isImpersonating = false;
+    console.error(`🔒 [JWT Auth] ✅ Authenticated: ${authenticatedUser.email}`);
     next();
   } catch (error) {
     console.error(`🔒 [JWT Auth] ❌ Database error:`, error);

@@ -13,7 +13,9 @@ export * from "./registry";
 
 import "./adapters/federalRegisterAdapter";
 import "./adapters/legiscanAdapter";
-import "./adapters/pluralPolicyAdapter";
+// DISABLED: Plural Policy hits daily rate limits constantly (500/day limit)
+// LegiScan provides sufficient state bill coverage
+// import "./adapters/pluralPolicyAdapter";
 import "./adapters/courtListenerAdapter";
 import "./adapters/utahGlenAdapter";
 import "./adapters/ecfrAdapter";
@@ -22,7 +24,7 @@ import "./adapters/congressGovAdapter";
 
 export { federalRegisterAdapter } from "./adapters/federalRegisterAdapter";
 export { legiscanAdapter } from "./adapters/legiscanAdapter";
-export { pluralPolicyAdapter } from "./adapters/pluralPolicyAdapter";
+// export { pluralPolicyAdapter } from "./adapters/pluralPolicyAdapter";
 export { courtListenerAdapter } from "./adapters/courtListenerAdapter";
 export { utahGlenAdapter } from "./adapters/utahGlenAdapter";
 export { ecfrAdapter } from "./adapters/ecfrAdapter";

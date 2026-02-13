@@ -32,6 +32,8 @@ import {
   Lock,
   ThumbsUp,
   ThumbsDown,
+  ChevronRight,
+  History,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
@@ -318,13 +320,10 @@ function DecoderDisplay({ explanation, decoderType, userState, userStateName, st
         
         {/* Fallback Text - when state law question but no vetted snippet */}
         {fallbackText && !stateNote && (
-          <div className="p-4 rounded-lg border bg-amber-50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-            <div className="flex items-center gap-2 mb-2">
-              <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-              <h4 className="font-semibold text-foreground">State-Specific Requirements</h4>
-            </div>
-            <p className="text-foreground text-sm leading-relaxed ml-7">{fallbackText}</p>
-          </div>
+          <p className="text-sm text-muted-foreground flex items-center gap-1.5 italic">
+            <Info className="h-4 w-4 flex-shrink-0" />
+            {fallbackText}
+          </p>
         )}
         
         <div className="pt-2 text-xs text-muted-foreground border-t border-muted/50 mt-4 space-y-1">
@@ -708,15 +707,25 @@ export default function Screening() {
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Screening Decoder
-          </h1>
-          <p className="text-muted-foreground mb-2">
-            <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
-          </p>
-          <p className="text-muted-foreground">
-            Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
-          </p>
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div>
+              <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
+                Screening Decoder
+              </h1>
+              <p className="text-muted-foreground mb-2">
+                <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
+              </p>
+              <p className="text-muted-foreground">
+                Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
+              </p>
+            </div>
+            <Link to="/audit-history">
+              <Button variant="outline" className="flex items-center gap-2" data-testid="button-view-history">
+                <History className="h-4 w-4" />
+                View History
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Legal Disclaimer */}
@@ -915,6 +924,22 @@ export default function Screening() {
                     fallbackText={creditFallbackText}
                   />
                   
+                  {/* Decision CTA */}
+                  <Link href="/denial-decision">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="cta-credit-decision">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-lg">
+                          <Scale className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Ready to make a decision?</p>
+                          <p className="text-sm text-muted-foreground">Use the Denial Decision Assistant for compliant approval or denial</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </Link>
+
                   {/* Feedback Buttons */}
                   <div className="flex items-center justify-center gap-4 mt-4 p-3 bg-muted/30 rounded-lg border">
                     <span className="text-sm text-muted-foreground">Was this helpful?</span>
@@ -1003,6 +1028,21 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-credit-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>
@@ -1145,6 +1185,22 @@ export default function Screening() {
                     fallbackText={criminalFallbackText}
                   />
                   
+                  {/* Decision CTA */}
+                  <Link href="/denial-decision">
+                    <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="cta-criminal-decision">
+                      <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-lg">
+                          <Scale className="h-5 w-5 text-primary" />
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">Ready to make a decision?</p>
+                          <p className="text-sm text-muted-foreground">Use the Denial Decision Assistant for compliant approval or denial</p>
+                        </div>
+                        <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </Link>
+
                   {/* Feedback Buttons */}
                   <div className="flex items-center justify-center gap-4 mt-4 p-3 bg-muted/30 rounded-lg border">
                     <span className="text-sm text-muted-foreground">Was this helpful?</span>
@@ -1233,6 +1289,22 @@ export default function Screening() {
                   </AccordionContent>
                 </AccordionItem>
               </Accordion>
+
+              {/* Quick Decision CTA */}
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-criminal-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>

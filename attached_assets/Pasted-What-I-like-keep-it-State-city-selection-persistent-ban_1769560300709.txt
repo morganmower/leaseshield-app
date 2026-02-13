@@ -1,0 +1,177 @@
+What I like (keep it)
+
+State + city selection + persistent banner: perfect.
+
+Blocked reasons are unselectable: this is the #1 liability reducer.
+
+No free-text denial (only templates): huge win.
+
+Audit log: must-have if you’re selling “lawsuit protection”.
+
+The biggest fix: add a “Decision Outcome” layer (Approve / Conditional / Deny)
+
+Right now your flow assumes “select reasons → deny.” New landlords often need:
+
+Approve
+
+Approve with conditions (higher deposit if legal, co-signer, add’l docs, etc.)
+
+Deny
+
+So build it as:
+
+Step A: “What showed up?”
+
+Step B: “Does this fail our criteria?” → outcome picker
+
+Step C (only if Deny/Conditional): generate compliant text + required notices
+
+This reduces over-denials and makes you feel like a real assistant, not a denial machine.
+
+Add “Fair Chance / Individualized Assessment” as a required mini-step (where applicable)
+
+In places like CA/Chicago/SF etc., it’s not enough to say “conviction within 7 years.” You need a lightweight workflow:
+
+When a user toggles any criminal conviction in a fair-chance jurisdiction:
+
+Ask 3 quick questions (radio buttons):
+
+How long ago? (0–1, 1–3, 3–7, 7+)
+
+Category (violent, property, drug, other)
+
+Housing relevance (safety risk / property risk / not directly relevant)
+
+Then require: “Applicant was given a chance to explain/submit info” checkbox where required.
+
+You can keep this simple for new landlords while still capturing the key “individual review” proof.
+
+Your “voucher” toggle needs a safer UX
+
+“Uses housing voucher → blocked” is good, but new landlords will mess this up unless you clarify.
+
+Better:
+
+Replace the toggle with a hard stop info card:
+
+“You cannot deny because they use a voucher.”
+
+Then offer legal alternatives to evaluate ability-to-pay:
+
+“Verified tenant portion of rent meets income requirement”
+
+“Required documentation not provided”
+
+“Program rules not satisfied (only if legitimate + documented)”
+
+This prevents them from thinking vouchers are a negative factor while still letting them evaluate income properly.
+
+Add “Eviction filing vs judgment” as an enforced interpretation step
+
+New landlords confuse “filing” and “judgment.”
+
+When they select any eviction item, force a single question:
+
+“Is this a court judgment (final eviction order)?”
+
+If No → you block using it as denial reason (in places where filing-only is prohibited)
+
+If Yes → allow and generate judgment-based language
+
+This eliminates the biggest eviction-history mistake.
+
+Add a “Notice Requirements” auto-checklist (in the same screen)
+
+If you’re using a consumer report, the app should automatically say:
+
+“Before you finalize, you must provide:”
+
+Adverse action notice (FCRA) ✅ auto-generated
+
+Copy of report / CRA contact info / rights summary ✅ (depending on your letter format)
+
+Any city/state pre-adverse steps ✅ when required (fair chance)
+
+New landlords don’t know what they don’t know. Make the app act like a flight checklist.
+
+Data model: keep it simple, but make it “versioned”
+
+Your tables are close. I’d tweak them like this:
+
+1) jurisdictions
+
+id, type (state/city/county), name, parent_id (city → state), fips(optional)
+
+2) criteria
+
+id, category (criminal/eviction/credit/income/verification), code (e.g., CRIM_ARREST), label
+
+3) rules
+
+jurisdiction_id
+
+criteria_id
+
+status: BLOCK, ALLOW, ALLOW_WITH_WORKFLOW
+
+effective_date, end_date (nullable)
+
+explanation_plain (tooltip)
+
+required_steps (json) (e.g., “individual_assessment”, “pre_adverse_notice”)
+
+4) templates
+
+criteria_id + jurisdiction_id(optional override)
+
+sentence_template (your 1-sentence lines)
+
+tone tags (neutral, combined, incomplete)
+
+5) decision_logs
+
+user_id, property_id
+
+jurisdiction snapshot (state/city + rule_version)
+
+selections (json), generated_text, notices_generated, timestamps
+
+Critical: store a rule_version or ruleset_hash in every log. If rules change later, your log still proves what the user saw at the time.
+
+UI improvements that make this “new landlord proof”
+
+Rename toggles from YES/NO to “This is present” (less confusing)
+
+For every blocked item show:
+
+“Not allowed to use in this city” + short why
+
+“What you can use instead” (one click to the legal criterion)
+
+Add a “Safe choice” button:
+
+“Generate safest compliant outcome” (it recommends Conditional vs Deny when denial reasons are weak)
+
+The one thing you must avoid
+
+Don’t label allowed items as “green = OK to deny” without context. It should be:
+
+Allowed to consider ✅
+
+Not “OK to deny” automatically
+
+That nuance protects you and prevents bad landlord decisions.
+
+What I’d ship first (minimum lovable + high safety)
+
+State/city selection + banner
+
+Criteria checklist with BLOCK/ALLOW logic
+
+1-sentence denial generator (no free text)
+
+Adverse action letter generator
+
+Immutable audit log with rule_version
+
+Then add fair-chance workflows and advanced notices as v2.

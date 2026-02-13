@@ -15,6 +15,7 @@ import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ChatWidget } from "@/components/chat-widget";
 import { PaymentFailedBanner } from "@/components/payment-failed-banner";
+import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { SubscriptionGate } from "@/components/subscription-gate";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -58,6 +59,7 @@ import AdminApplicationsActivity from "@/pages/admin-applications-activity";
 import AdminStateNotes from "@/pages/admin-state-notes";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
+import AuditHistory from "@/pages/audit-history";
 import LogoPicker from "@/pages/logo-picker";
 import LogoColors from "@/pages/logo-colors";
 import RentalApplications from "@/pages/rental-applications";
@@ -68,6 +70,7 @@ import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
 import ScreeningExplain from "@/pages/screening-explain";
 import DashboardPreview from "@/pages/dashboard-preview";
 import Activate from "@/pages/activate";
+import DenialDecisionAssistant from "@/pages/denial-decision-assistant";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -131,6 +134,8 @@ function Router() {
         <Route path="/rental-submissions">{() => <Redirect to="/login" />}</Route>
         <Route path="/compliance">{() => <Redirect to="/login" />}</Route>
         <Route path="/screening">{() => <Redirect to="/login" />}</Route>
+        <Route path="/denial-decision">{() => <Redirect to="/login" />}</Route>
+        <Route path="/audit-history">{() => <Redirect to="/login" />}</Route>
         <Route path="/my-documents">{() => <Redirect to="/login" />}</Route>
         <Route path="/settings">{() => <Redirect to="/login" />}</Route>
         <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
@@ -173,6 +178,8 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening" component={Screening} />
+      <Route path="/denial-decision" component={DenialDecisionAssistant} />
+      <Route path="/audit-history" component={AuditHistory} />
       <Route path="/tenant-issues" component={TenantIssues} />
       <Route path="/communications" component={Communications} />
       <Route path="/rent-ledger" component={RentLedger} />
@@ -262,6 +269,7 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
             </div>
           </header>
+          <ImpersonationBanner />
           <PaymentFailedBanner />
           <SubscriptionGate>
             <main className="flex-1 overflow-y-auto">{children}</main>

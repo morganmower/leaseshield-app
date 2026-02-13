@@ -1,0 +1,78 @@
+That flow is exactly how you make this “new landlord proof.” A few tweaks will make it safer (and reduce support tickets) while keeping it simple.
+
+Keep the one button, but add one “gate” before it
+
+Before Download Adverse Action Letter, require a single checkbox:
+
+☐ I confirm this decision used a consumer report (credit/criminal/eviction) from a screening provider.
+
+Why: if they didn’t use a consumer report (or they’re just rejecting on income/docs), you don’t want them firing off an “adverse action” letter unnecessarily. If unchecked, the button can change to “Download Denial Notice (non-FCRA)” or simply hide the AA option.
+
+Your PDF should be one page that reads cleanly
+
+New landlords and applicants both hate multi-part forms. Use a single letter with these sections (in this order):
+
+Decision: “Adverse Action Notice – Rental Application”
+
+Reason(s): the wizard-selected reasons (bullet list, max 3–5)
+
+Consumer Report Disclosure (plain English)
+
+CRA Info (name, address, phone, website)
+
+Important Rights (no more than a short block)
+
+CRA did not make the decision
+
+Right to dispute accuracy
+
+Right to a free copy within the required timeframe
+
+Signature line (landlord/manager name + property)
+
+That’s it. No extra forms.
+
+Two guardrails I’d add (invisible to them, huge for you)
+1) “Reason hygiene”
+
+When they pick reasons, your app should:
+
+prevent “bad credit” wording
+
+replace with specific allowed phrasing like “credit history did not meet minimum criteria”
+
+block anything voucher-related where prohibited
+
+block eviction “filing only” where prohibited
+
+2) Save the wizard snapshot into the PDF metadata and audit log
+
+When they download, store:
+
+wizard selections
+
+city/state ruleset version (hash)
+
+generated denial sentence(s)
+
+the exact PDF file ID + timestamp
+
+If they ever get challenged, you can show what the app displayed and what they selected.
+
+Small UX win: show a preview first (but still one button)
+
+Button: Preview & Download Adverse Action Letter
+On click, open a preview modal with:
+
+“Reasons included:” bullets
+
+“CRA:” name/phone
+
+“Applicant name:” pulled from application
+Then Download PDF.
+
+This catches the “oops wrong applicant” mistake.
+
+One last compliance note (simple)
+
+Your wizard should only include objective factors as reasons (credit thresholds, verified income, eviction judgment, conviction within allowed timeframe). Avoid subjective stuff like “doesn’t feel like a fit.”

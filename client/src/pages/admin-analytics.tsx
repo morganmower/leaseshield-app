@@ -26,7 +26,8 @@ interface AnalyticsSummary {
   };
   usage: {
     totalDownloads: number;
-    westernVerifyClicks: number;
+    applicationsSubmitted: number;
+    screeningRequests: number;
     creditHelperUses: number;
     criminalHelperUses: number;
     avgDownloadsPerUser: number;
@@ -58,12 +59,11 @@ interface EngagementEvent {
 
 const eventTypeLabels: Record<string, string> = {
   template_download: 'Template Download',
-  western_verify_click: 'Western Verify Click',
+  screening_request: 'Background Check Sent',
   credit_helper_use: 'Credit Helper Use',
   criminal_helper_use: 'Criminal Helper Use',
   compliance_card_view: 'Compliance Card View',
   legal_update_view: 'Legal Update View',
-  screening_request: 'Screening Request',
 };
 
 const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -72,7 +72,7 @@ interface MonthlySummary {
   month: number;
   year: number;
   templateDownloads: number;
-  westernVerifyClicks: number;
+  screeningRequests: number;
   creditHelperUses: number;
   criminalHelperUses: number;
   totalEvents: number;
@@ -305,8 +305,8 @@ export default function AdminAnalyticsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <BarChart
                   data={[
-                    { name: 'Downloads', value: analytics?.usage.totalDownloads || 0, color: '#3b82f6' },
-                    { name: 'Western Verify', value: analytics?.usage.westernVerifyClicks || 0, color: '#8b5cf6' },
+                    { name: 'Applications', value: analytics?.usage.applicationsSubmitted || 0, color: '#3b82f6' },
+                    { name: 'Background Checks', value: analytics?.usage.screeningRequests || 0, color: '#8b5cf6' },
                     { name: 'Credit Helper', value: analytics?.usage.creditHelperUses || 0, color: '#22c55e' },
                     { name: 'Criminal Helper', value: analytics?.usage.criminalHelperUses || 0, color: '#f97316' },
                   ]}
@@ -322,20 +322,20 @@ export default function AdminAnalyticsPage() {
               <div className="space-y-2 mt-4">
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
-                    <Download className="h-4 w-4" />
-                    Total Template Downloads
+                    <FileText className="h-4 w-4" />
+                    Applications Submitted
                   </span>
-                  <span className="font-bold" data-testid="text-total-downloads">
-                    {analytics?.usage.totalDownloads || 0}
+                  <span className="font-bold" data-testid="text-applications-submitted">
+                    {analytics?.usage.applicationsSubmitted || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
                   <span className="flex items-center gap-2">
                     <MousePointerClick className="h-4 w-4" />
-                    Western Verify Clicks
+                    Background Checks Sent
                   </span>
-                  <span className="font-bold" data-testid="text-western-verify-clicks">
-                    {analytics?.usage.westernVerifyClicks || 0}
+                  <span className="font-bold" data-testid="text-screening-requests">
+                    {analytics?.usage.screeningRequests || 0}
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
@@ -357,9 +357,12 @@ export default function AdminAnalyticsPage() {
                   </span>
                 </div>
                 <div className="flex items-center justify-between text-sm">
-                  <span>Avg Downloads per User</span>
-                  <span className="font-bold" data-testid="text-avg-downloads">
-                    {analytics?.usage?.avgDownloadsPerUser?.toFixed(1) ?? "0.0"}
+                  <span className="flex items-center gap-2">
+                    <Download className="h-4 w-4" />
+                    Template Downloads
+                  </span>
+                  <span className="font-bold" data-testid="text-total-downloads">
+                    {analytics?.usage.totalDownloads || 0}
                   </span>
                 </div>
               </div>
@@ -433,26 +436,26 @@ export default function AdminAnalyticsPage() {
                           <YAxis />
                           <Tooltip />
                           <Legend />
-                          <Bar dataKey="templateDownloads" name="Downloads" fill="#3b82f6" stackId="a" />
-                          <Bar dataKey="westernVerifyClicks" name="WV Clicks" fill="#8b5cf6" stackId="a" />
+                          <Bar dataKey="screeningRequests" name="Background Checks" fill="#8b5cf6" stackId="a" />
                           <Bar dataKey="creditHelperUses" name="Credit Helper" fill="#22c55e" stackId="a" />
                           <Bar dataKey="criminalHelperUses" name="Criminal Helper" fill="#f97316" stackId="a" />
+                          <Bar dataKey="templateDownloads" name="Downloads" fill="#3b82f6" stackId="a" />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>
                     
                     <div className="grid grid-cols-4 gap-4 text-center">
+                      <div className="p-3 rounded-md bg-purple-500/10">
+                        <div className="text-2xl font-bold text-purple-600">
+                          {monthlySummary.reduce((sum, m) => sum + m.screeningRequests, 0)}
+                        </div>
+                        <div className="text-xs text-muted-foreground">Background Checks</div>
+                      </div>
                       <div className="p-3 rounded-md bg-blue-500/10">
                         <div className="text-2xl font-bold text-blue-600">
                           {monthlySummary.reduce((sum, m) => sum + m.templateDownloads, 0)}
                         </div>
                         <div className="text-xs text-muted-foreground">Downloads</div>
-                      </div>
-                      <div className="p-3 rounded-md bg-purple-500/10">
-                        <div className="text-2xl font-bold text-purple-600">
-                          {monthlySummary.reduce((sum, m) => sum + m.westernVerifyClicks, 0)}
-                        </div>
-                        <div className="text-xs text-muted-foreground">WV Clicks</div>
                       </div>
                       <div className="p-3 rounded-md bg-green-500/10">
                         <div className="text-2xl font-bold text-green-600">
@@ -482,11 +485,10 @@ export default function AdminAnalyticsPage() {
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Events</SelectItem>
+                      <SelectItem value="screening_request">Background Checks Sent</SelectItem>
                       <SelectItem value="template_download">Template Downloads</SelectItem>
-                      <SelectItem value="western_verify_click">Western Verify Clicks</SelectItem>
                       <SelectItem value="credit_helper_use">Credit Helper Uses</SelectItem>
                       <SelectItem value="criminal_helper_use">Criminal Helper Uses</SelectItem>
-                      <SelectItem value="screening_request">Screening Requests</SelectItem>
                     </SelectContent>
                   </Select>
                   <span className="text-sm text-muted-foreground ml-auto">
@@ -688,7 +690,11 @@ export default function AdminAnalyticsPage() {
                                 : "—"}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
-                            {format(new Date(user.createdAt), "MMM d, yyyy")}
+                            {(user as any).subscribedAt 
+                              ? format(new Date((user as any).subscribedAt), "MMM d, yyyy")
+                              : user.createdAt
+                                ? format(new Date(user.createdAt), "MMM d, yyyy")
+                                : "—"}
                           </td>
                         </tr>
                       ))}
