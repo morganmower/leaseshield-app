@@ -125,8 +125,6 @@ export class ScheduledJobs {
   private monthlyPublishInterval: NodeJS.Timeout | null = null;
   private lifecycleEmailsInterval: NodeJS.Timeout | null = null;
   private biweeklyDigestInterval: NodeJS.Timeout | null = null;
-  private autoArchiveInterval: NodeJS.Timeout | null = null;
-  private caseLawRefreshInterval: NodeJS.Timeout | null = null;
 
   // =========================================================================
   // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
@@ -1180,33 +1178,6 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
-  private lastCaseLawRefreshDate: string | null = null;
-
-  async runWeeklyCaseLawRefresh(): Promise<void> {
-    try {
-      const now = new Date();
-      const dayOfWeek = now.getDay();
-      if (dayOfWeek !== 3) return;
-
-      const today = now.toISOString().split('T')[0];
-      if (this.lastCaseLawRefreshDate === today) {
-        return;
-      }
-
-      console.log(`⚖️ Running weekly case law refresh (${today})...`);
-      const { courtListenerService } = await import('./courtListenerService');
-      const result = await courtListenerService.refreshCaseLaw({ daysBack: 30 });
-      this.lastCaseLawRefreshDate = today;
-
-      console.log(`✅ Weekly case law refresh complete: ${result.newCases} new, ${result.updatedCases} updated`);
-      if (result.errors.length > 0) {
-        console.log(`   ⚠️ Errors: ${result.errors.join('; ')}`);
-      }
-    } catch (error) {
-      console.error('❌ Error in weekly case law refresh:', error);
-    }
-  }
-
   // Track last successful ingest date to prevent duplicate runs on same day
   private lastIngestDate: string | null = null;
   
@@ -1307,17 +1278,6 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
-  async autoArchiveOldSubmissions(): Promise<void> {
-    try {
-      const count = await storage.autoArchiveOldSubmissions();
-      if (count > 0) {
-        console.log(`Auto-archived ${count} submissions older than 60 days`);
-      }
-    } catch (error) {
-      console.error("Auto-archive job failed:", error);
-    }
-  }
-
   // Start all scheduled jobs
   async start(): Promise<void> {
     console.log('🚀 Starting scheduled jobs...');
@@ -1401,18 +1361,6 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.sendBiweeklyLegislativeDigest(), 10 * 60 * 1000); // First check after 10 minutes
 
-    this.autoArchiveInterval = setInterval(
-      () => this.autoArchiveOldSubmissions(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.autoArchiveOldSubmissions(), 11 * 60 * 1000);
-
-    this.caseLawRefreshInterval = setInterval(
-      () => this.runWeeklyCaseLawRefresh(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.runWeeklyCaseLawRefresh(), 12 * 60 * 1000);
-
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1483,16 +1431,6 @@ Manage preferences: ${baseUrl}/settings
     if (this.biweeklyDigestInterval) {
       clearInterval(this.biweeklyDigestInterval);
       this.biweeklyDigestInterval = null;
-    }
-
-    if (this.autoArchiveInterval) {
-      clearInterval(this.autoArchiveInterval);
-      this.autoArchiveInterval = null;
-    }
-
-    if (this.caseLawRefreshInterval) {
-      clearInterval(this.caseLawRefreshInterval);
-      this.caseLawRefreshInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');
