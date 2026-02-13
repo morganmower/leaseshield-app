@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2, UserCog, LogOut } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2, UserCog, LogOut, FileWarning } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -531,6 +531,16 @@ export default function AdminPage() {
                 >
                   <Scale className="h-4 w-4 mr-2" />
                   Legislative Monitoring
+                </Button>
+              </Link>
+              <Link href="/admin/file-recovery" asChild>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start" 
+                  data-testid="link-file-recovery"
+                >
+                  <FileWarning className="h-4 w-4 mr-2 text-destructive" />
+                  File Recovery
                 </Button>
               </Link>
             </CardContent>

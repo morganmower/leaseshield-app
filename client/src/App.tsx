@@ -57,6 +57,7 @@ import AdminScreeningCredentials from "@/pages/admin-screening-credentials";
 import AdminTips from "@/pages/admin-tips";
 import AdminApplicationsActivity from "@/pages/admin-applications-activity";
 import AdminStateNotes from "@/pages/admin-state-notes";
+import AdminFileRecovery from "@/pages/admin-file-recovery";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
 import AuditHistory from "@/pages/audit-history";
@@ -203,6 +204,7 @@ function Router() {
       <Route path="/admin/tips">{() => <AdminRoute component={AdminTips} />}</Route>
       <Route path="/admin/state-notes">{() => <AdminRoute component={AdminStateNotes} />}</Route>
       <Route path="/admin/applications-activity">{() => <AdminRoute component={AdminApplicationsActivity} />}</Route>
+      <Route path="/admin/file-recovery">{() => <AdminRoute component={AdminFileRecovery} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );

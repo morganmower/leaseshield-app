@@ -5,10 +5,10 @@ import { storage } from "./storage";
 import { isAuthenticated, requireAccess, requireAdmin, startImpersonation, stopImpersonation, getImpersonationStatus } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema, rentalSubmissionFiles, rentalSubmissionPeople, rentalSubmissions } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, like } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -2712,6 +2712,211 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error getting impersonation status:", error);
       res.status(500).json({ message: "Failed to get impersonation status" });
+    }
+  });
+
+  // ============================================
+  // Admin File Recovery API
+  // ============================================
+
+  // GET /api/admin/file-recovery/missing-files
+  app.get('/api/admin/file-recovery/missing-files', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const results = await db
+        .select({
+          fileId: rentalSubmissionFiles.id,
+          personId: rentalSubmissionFiles.personId,
+          fileType: rentalSubmissionFiles.fileType,
+          originalName: rentalSubmissionFiles.originalName,
+          storedPath: rentalSubmissionFiles.storedPath,
+          fileSize: rentalSubmissionFiles.fileSize,
+          mimeType: rentalSubmissionFiles.mimeType,
+          fileCreatedAt: rentalSubmissionFiles.createdAt,
+          personFirstName: rentalSubmissionPeople.firstName,
+          personLastName: rentalSubmissionPeople.lastName,
+          personEmail: rentalSubmissionPeople.email,
+          personRole: rentalSubmissionPeople.role,
+          submissionId: rentalSubmissionPeople.submissionId,
+          submissionStatus: rentalSubmissions.status,
+        })
+        .from(rentalSubmissionFiles)
+        .innerJoin(rentalSubmissionPeople, eq(rentalSubmissionFiles.personId, rentalSubmissionPeople.id))
+        .innerJoin(rentalSubmissions, eq(rentalSubmissionPeople.submissionId, rentalSubmissions.id))
+        .where(like(rentalSubmissionFiles.storedPath, 'uploads/%'));
+
+      const grouped: Record<string, any> = {};
+      for (const row of results) {
+        if (!grouped[row.personId]) {
+          grouped[row.personId] = {
+            personId: row.personId,
+            firstName: row.personFirstName,
+            lastName: row.personLastName,
+            email: row.personEmail,
+            role: row.personRole,
+            submissionId: row.submissionId,
+            submissionStatus: row.submissionStatus,
+            files: [],
+          };
+        }
+        grouped[row.personId].files.push({
+          id: row.fileId,
+          fileType: row.fileType,
+          originalName: row.originalName,
+          storedPath: row.storedPath,
+          fileSize: row.fileSize,
+          mimeType: row.mimeType,
+          createdAt: row.fileCreatedAt,
+        });
+      }
+
+      const people = Object.values(grouped);
+      res.json({
+        totalMissingFiles: results.length,
+        totalAffectedPeople: people.length,
+        people,
+      });
+    } catch (error) {
+      console.error("Error fetching missing files:", error);
+      res.status(500).json({ message: "Failed to fetch missing files" });
+    }
+  });
+
+  // GET /api/admin/file-recovery/orphan-files
+  app.get('/api/admin/file-recovery/orphan-files', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const privateDir = process.env.PRIVATE_OBJECT_DIR || '';
+      if (!privateDir) return res.status(500).json({ message: 'PRIVATE_OBJECT_DIR not set' });
+
+      const orphanPrefix = `${privateDir}/orphan-applicants/`;
+      const { bucketName, objectName } = parseObjectStoragePath(orphanPrefix);
+      const bucket = objectStorageClient.bucket(bucketName);
+
+      const [files] = await bucket.getFiles({ prefix: objectName });
+      const orphanFiles = await Promise.all(
+        files
+          .filter(f => f.name !== objectName)
+          .map(async (f) => {
+            const [metadata] = await f.getMetadata();
+            return {
+              filename: f.name.split('/').pop() || f.name,
+              fullPath: `/${bucketName}/${f.name}`,
+              size: Number(metadata.size || 0),
+              contentType: metadata.contentType || 'application/octet-stream',
+              updated: metadata.updated,
+            };
+          })
+      );
+
+      res.json({ totalOrphanFiles: orphanFiles.length, files: orphanFiles });
+    } catch (error) {
+      console.error("Error listing orphan files:", error);
+      res.status(500).json({ message: "Failed to list orphan files" });
+    }
+  });
+
+  // GET /api/admin/file-recovery/orphan-files/:filename/download
+  app.get('/api/admin/file-recovery/orphan-files/:filename/download', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const { filename } = req.params;
+      const privateDir = process.env.PRIVATE_OBJECT_DIR || '';
+      if (!privateDir) return res.status(500).json({ message: 'PRIVATE_OBJECT_DIR not set' });
+
+      const objectPath = `${privateDir}/orphan-applicants/${filename}`;
+      const { bucketName, objectName } = parseObjectStoragePath(objectPath);
+      const bucket = objectStorageClient.bucket(bucketName);
+      const file = bucket.file(objectName);
+
+      const [exists] = await file.exists();
+      if (!exists) return res.status(404).json({ message: "Orphan file not found" });
+
+      const [metadata] = await file.getMetadata();
+      res.set({
+        'Content-Type': metadata.contentType || 'application/octet-stream',
+        'Content-Disposition': `attachment; filename="${filename}"`,
+        'Content-Length': metadata.size,
+      });
+
+      const stream = file.createReadStream();
+      stream.on('error', (err: Error) => {
+        console.error('Stream error:', err);
+        if (!res.headersSent) res.status(500).json({ message: 'Error streaming file' });
+      });
+      stream.pipe(res);
+    } catch (error) {
+      console.error("Error downloading orphan file:", error);
+      res.status(500).json({ message: "Failed to download orphan file" });
+    }
+  });
+
+  // POST /api/admin/file-recovery/reupload/:fileId
+  app.post('/api/admin/file-recovery/reupload/:fileId', isAuthenticated, requireAdmin, applicantUpload.single('file'), async (req: any, res) => {
+    try {
+      const { fileId } = req.params;
+      const uploadedFile = req.file;
+      if (!uploadedFile) return res.status(400).json({ message: "No file uploaded" });
+
+      const [existing] = await db.select().from(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, fileId));
+      if (!existing) return res.status(404).json({ message: "File record not found" });
+
+      const newPath = await uploadToObjectStorage(
+        uploadedFile.buffer,
+        'applicants',
+        uploadedFile.originalname,
+        uploadedFile.mimetype,
+      );
+
+      await db.update(rentalSubmissionFiles)
+        .set({ storedPath: newPath })
+        .where(eq(rentalSubmissionFiles.id, fileId));
+
+      res.json({ success: true, fileId, newPath });
+    } catch (error) {
+      console.error("Error re-uploading file:", error);
+      res.status(500).json({ message: "Failed to re-upload file" });
+    }
+  });
+
+  // POST /api/admin/file-recovery/reupload-batch/:personId
+  app.post('/api/admin/file-recovery/reupload-batch/:personId', isAuthenticated, requireAdmin, applicantUpload.array('files', 20), async (req: any, res) => {
+    try {
+      const { personId } = req.params;
+      const uploadedFiles = req.files as Express.Multer.File[];
+      if (!uploadedFiles || uploadedFiles.length === 0) return res.status(400).json({ message: "No files uploaded" });
+
+      const existingFiles = await db.select().from(rentalSubmissionFiles)
+        .where(eq(rentalSubmissionFiles.personId, personId));
+
+      const matched: { fileId: string; originalName: string; newPath: string }[] = [];
+      const unmatched: string[] = [];
+
+      for (const uploaded of uploadedFiles) {
+        const match = existingFiles.find(
+          ef => ef.originalName.toLowerCase() === uploaded.originalname.toLowerCase()
+            && ef.storedPath.startsWith('uploads/')
+        );
+
+        if (match) {
+          const newPath = await uploadToObjectStorage(
+            uploaded.buffer,
+            'applicants',
+            uploaded.originalname,
+            uploaded.mimetype,
+          );
+
+          await db.update(rentalSubmissionFiles)
+            .set({ storedPath: newPath })
+            .where(eq(rentalSubmissionFiles.id, match.id));
+
+          matched.push({ fileId: match.id, originalName: uploaded.originalname, newPath });
+        } else {
+          unmatched.push(uploaded.originalname);
+        }
+      }
+
+      res.json({ success: true, matched, unmatched });
+    } catch (error) {
+      console.error("Error batch re-uploading files:", error);
+      res.status(500).json({ message: "Failed to batch re-upload files" });
     }
   });
 
