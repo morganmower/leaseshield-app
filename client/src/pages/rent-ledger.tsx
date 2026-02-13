@@ -314,7 +314,6 @@ export default function RentLedger() {
                       <SelectItem value="Late Fee">Late Fee</SelectItem>
                       <SelectItem value="Utility">Utility</SelectItem>
                       <SelectItem value="Deposit">Deposit</SelectItem>
-                      <SelectItem value="Pet Fee">Pet Fee</SelectItem>
                       <SelectItem value="Other">Other</SelectItem>
                     </SelectContent>
                   </Select>
@@ -671,7 +670,6 @@ export default function RentLedger() {
                     <SelectItem value="Late Fee">Late Fee</SelectItem>
                     <SelectItem value="Utility">Utility</SelectItem>
                     <SelectItem value="Deposit">Deposit</SelectItem>
-                    <SelectItem value="Pet Fee">Pet Fee</SelectItem>
                     <SelectItem value="Other">Other</SelectItem>
                   </SelectContent>
                 </Select>

@@ -15,7 +15,6 @@ import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ChatWidget } from "@/components/chat-widget";
 import { PaymentFailedBanner } from "@/components/payment-failed-banner";
-import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { SubscriptionGate } from "@/components/subscription-gate";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -269,7 +268,6 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
             </div>
           </header>
-          <ImpersonationBanner />
           <PaymentFailedBanner />
           <SubscriptionGate>
             <main className="flex-1 overflow-y-auto">{children}</main>
