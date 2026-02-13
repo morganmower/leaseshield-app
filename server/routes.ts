@@ -5,10 +5,10 @@ import { storage } from "./storage";
 import { isAuthenticated, requireAccess, requireAdmin, startImpersonation, stopImpersonation, getImpersonationStatus } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema, rentalSubmissionFiles, uploadedDocuments } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -43,21 +43,46 @@ const openai = new OpenAI({
 // Rate limiter for chat endpoint
 const chatRateLimiter = new RateLimiter(10, 60 * 1000); // 10 messages per minute
 
-// Configure multer with memory storage for object storage uploads
+// Configure multer for secure file uploads
+const uploadStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = 'uploads';
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error as Error, uploadDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    // Use UUID for collision-resistant filenames
+    const uniqueId = randomUUID();
+    const ext = path.extname(file.originalname);
+    cb(null, `${uniqueId}${ext}`);
+  }
+});
+
 const upload = multer({
-  storage: multer.memoryStorage(),
+  storage: uploadStorage,
   limits: { 
     fileSize: 20 * 1024 * 1024 // 20MB max file size
   },
   fileFilter: (req, file, cb) => {
+    // Allowed MIME types for PDF and DOCX
     const allowedMimeTypes = [
       'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'application/msword',
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
+      'application/msword', // .doc
     ];
+    
+    // Allowed file extensions
     const allowedExtensions = /\.(pdf|docx|doc)$/i;
+    
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(ext)) {
+    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
+    const extensionValid = allowedExtensions.test(ext);
+    
+    if (mimeTypeValid && extensionValid) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
@@ -65,8 +90,26 @@ const upload = multer({
   }
 });
 
+// Configure multer for applicant document uploads (PDF, JPG, PNG)
+const applicantUploadStorage = multer.diskStorage({
+  destination: async (req, file, cb) => {
+    const uploadDir = 'uploads/applicants';
+    try {
+      await fs.mkdir(uploadDir, { recursive: true });
+      cb(null, uploadDir);
+    } catch (error) {
+      cb(error as Error, uploadDir);
+    }
+  },
+  filename: (req, file, cb) => {
+    const uniqueId = randomUUID();
+    const ext = path.extname(file.originalname).toLowerCase();
+    cb(null, `${uniqueId}${ext}`);
+  }
+});
+
 const applicantUpload = multer({
-  storage: multer.memoryStorage(),
+  storage: applicantUploadStorage,
   limits: { 
     fileSize: 10 * 1024 * 1024 // 10MB max file size
   },
@@ -78,29 +121,18 @@ const applicantUpload = multer({
       'image/png',
     ];
     const allowedExtensions = /\.(pdf|jpg|jpeg|png)$/i;
+    
     const ext = path.extname(file.originalname).toLowerCase();
-    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(ext)) {
+    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
+    const extensionValid = allowedExtensions.test(ext);
+    
+    if (mimeTypeValid && extensionValid) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, JPG, and PNG files are allowed'));
     }
   }
 });
-
-import { uploadFileToCloud, downloadFileFromCloud, deleteFileFromCloud, checkFileHealth } from "./fileStorage";
-
-async function uploadToObjectStorage(buffer: Buffer, folder: string, originalName: string, mimeType: string): Promise<string> {
-  const result = await uploadFileToCloud(buffer, folder, originalName, mimeType);
-  return result.storedPath;
-}
-
-async function downloadFromObjectStorage(storedPath: string, res: any, originalName: string, mimeType?: string | null) {
-  await downloadFileFromCloud(storedPath, res, originalName, mimeType);
-}
-
-async function deleteFromObjectStorage(storedPath: string): Promise<void> {
-  await deleteFileFromCloud(storedPath);
-}
 
 // Helper to get user ID from request with validation
 function getUserId(req: any): string {
@@ -1946,17 +1978,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validatedMetadata.propertyId) {
         const property = await storage.getProperty(validatedMetadata.propertyId, userId);
         if (!property) {
+          // Clean up uploaded file if property validation fails
+          await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
           return res.status(403).json({ message: "Property not found or access denied" });
         }
       }
-
-      const storedPath = await uploadToObjectStorage(req.file.buffer, 'documents', req.file.originalname, req.file.mimetype);
 
       const uploadedDocument = await storage.createUploadedDocument({
         userId,
         propertyId: validatedMetadata.propertyId,
         fileName: req.file.originalname,
-        fileUrl: storedPath,
+        fileUrl: req.file.path,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         description: validatedMetadata.description,
@@ -1970,6 +2002,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(uploadedDocument);
     } catch (error) {
+      // Clean up uploaded file on error
+      if (req.file) {
+        await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
+      }
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
@@ -2027,13 +2063,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Document not found" });
       }
 
+      // Check if file exists on disk
+      try {
+        await fs.access(document.fileUrl);
+      } catch {
+        return res.status(404).json({ message: "File not found on disk" });
+      }
+
+      // Stream file to client with proper headers
+      res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
+      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
+      
+      const fileStream = (await import('fs')).createReadStream(document.fileUrl);
+      fileStream.pipe(res);
+
       await storage.trackEvent({
         userId,
         eventType: 'uploaded_document_downloaded',
         eventData: { fileName: document.fileName },
       });
-
-      await downloadFromObjectStorage(document.fileUrl, res, document.fileName, document.fileType);
     } catch (error) {
       console.error("Error downloading uploaded document:", error);
       res.status(500).json({ message: "Failed to download document" });
@@ -2084,7 +2132,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Document not found" });
       }
 
-      await deleteFromObjectStorage(document.fileUrl);
+      // Delete physical file from disk
+      try {
+        await fs.unlink(document.fileUrl);
+      } catch (err) {
+        console.error("Error deleting file from disk:", err);
+        // Continue - database record is already deleted
+      }
 
       res.json({ success: true });
     } catch (error) {
@@ -3564,19 +3618,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let cases;
       if (stateId === 'NATIONAL') {
+        // Get all cases across all states
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table) => eq(table.isMonitored, true),
           limit: 100,
-          orderBy: (table) => [desc(table.dateFiled)],
+          orderBy: (table) => [table.dateFiled],
         });
       } else {
+        // Get cases for specific state
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table, { eq, and }) => and(
             eq(table.stateId, stateId as string),
             eq(table.isMonitored, true),
           ),
           limit: 50,
-          orderBy: (table) => [desc(table.dateFiled)],
+          orderBy: (table) => [table.dateFiled],
         });
       }
 
@@ -3655,29 +3711,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error testing CourtListener:', error);
       res.status(500).json({ message: 'Failed to test CourtListener API', error: String(error) });
-    }
-  });
-
-  app.post('/api/admin/case-law/refresh', isAuthenticated, requireAdmin, async (req: any, res) => {
-    try {
-      const daysBack = parseInt(req.query.daysBack as string) || 180;
-      const stateId = req.query.stateId as string | undefined;
-
-      const { courtListenerService } = await import('./courtListenerService');
-      
-      console.log(`⚖️ Admin triggered case law refresh (daysBack=${daysBack}, state=${stateId || 'all'})`);
-      const result = await courtListenerService.refreshCaseLaw({
-        daysBack,
-        states: stateId ? [stateId] : undefined,
-      });
-
-      res.json({
-        success: true,
-        ...result,
-      });
-    } catch (error) {
-      console.error('Error refreshing case law:', error);
-      res.status(500).json({ message: 'Failed to refresh case law', error: String(error) });
     }
   });
 
@@ -8347,6 +8380,15 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       const { syncScreeningStatus } = await import('./digitalDelveService');
       const result = await syncScreeningStatus(req.params.orderId, credentials);
+      
+      if (result.success && result.status === 'complete') {
+        // Update submission status if all screenings are complete
+        const allOrders = await storage.getRentalScreeningOrdersBySubmission(order.submissionId);
+        const allComplete = allOrders.every(o => o.status === 'complete' || o.id === order.id);
+        if (allComplete) {
+          await storage.updateRentalSubmission(order.submissionId, { status: 'complete' });
+        }
+      }
 
       res.json(result);
     } catch (error) {
@@ -9054,13 +9096,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "File type is required" });
       }
 
-      const storedPath = await uploadToObjectStorage(req.file.buffer, 'applicants', req.file.originalname, req.file.mimetype);
-
       const fileRecord = await storage.createRentalSubmissionFile({
         personId: person.id,
         fileType,
         originalName: req.file.originalname,
-        storedPath,
+        storedPath: req.file.path,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
       });
@@ -9114,7 +9154,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "File not found" });
       }
 
-      await deleteFromObjectStorage(file.storedPath);
+      // Delete from disk
+      try {
+        await fs.unlink(file.storedPath);
+      } catch (e) {
+        console.error("Error deleting file from disk:", e);
+      }
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);
       res.json({ success: true });
@@ -9217,7 +9262,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      await downloadFromObjectStorage(file.storedPath, res, file.originalName, file.mimeType);
+      res.download(file.storedPath, file.originalName);
     } catch (error) {
       console.error("Error downloading file:", error);
       res.status(500).json({ message: "Failed to download file" });
@@ -9269,13 +9314,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "Person not found in this submission" });
       }
 
-      const storedPath = await uploadToObjectStorage(req.file.buffer, 'applicants', req.file.originalname, req.file.mimetype);
-
+      // Save file record to database
       const newFile = await storage.createRentalSubmissionFile({
         personId,
         fileType,
         originalName: req.file.originalname,
-        storedPath,
+        storedPath: req.file.path,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
       });
@@ -9328,7 +9372,12 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      await deleteFromObjectStorage(file.storedPath);
+      // Delete from disk
+      try {
+        await fs.unlink(file.storedPath);
+      } catch (e) {
+        console.error("Error deleting file from disk:", e);
+      }
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);
       res.json({ success: true });
@@ -10391,48 +10440,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
     });
   }));
-
-  app.get('/api/admin/file-health', isAuthenticated, requireAdmin, async (req: any, res) => {
-    try {
-      const rentalFiles = await db.select().from(rentalSubmissionFiles);
-      const uploadedDocs = await db.select().from(uploadedDocuments);
-
-      const results: any[] = [];
-      let healthy = 0;
-      let broken = 0;
-      let localOnly = 0;
-
-      for (const f of rentalFiles) {
-        const status = await checkFileHealth(f.id, f.originalName, f.storedPath, f.fileSize);
-        if (status.exists && status.sizeMatch) healthy++;
-        else if (status.storedPath.startsWith('uploads/') || status.storedPath.startsWith('/home/')) localOnly++;
-        else broken++;
-        results.push({ ...status, table: 'rental_submission_files', personId: f.personId });
-      }
-
-      for (const d of uploadedDocs) {
-        const status = await checkFileHealth(d.id, d.fileName, d.fileUrl, d.fileSize);
-        if (status.exists && status.sizeMatch) healthy++;
-        else if (status.storedPath.startsWith('uploads/') || status.storedPath.startsWith('/home/')) localOnly++;
-        else broken++;
-        results.push({ ...status, table: 'uploaded_documents', userId: d.userId });
-      }
-
-      res.json({
-        summary: {
-          total: results.length,
-          healthy,
-          broken,
-          localOnly,
-          checkedAt: new Date().toISOString(),
-        },
-        files: results,
-      });
-    } catch (error) {
-      console.error("Error checking file health:", error);
-      res.status(500).json({ message: "Failed to check file health" });
-    }
-  });
 
   const httpServer = createServer(app);
   return httpServer;

@@ -23,6 +23,7 @@ import {
   Gavel,
   CheckCircle2,
   Wand2,
+  Play,
   GraduationCap,
   Clock,
   Users,
@@ -33,6 +34,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { HelpCircle } from "lucide-react";
 import { Link } from "wouter";
 import { useDashboardTour } from "@/hooks/useDashboardTour";
+import { OnboardingVideoModal } from "@/components/onboarding-video-modal";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { TrialConversionNudge, ActivationReminder } from "@/components/trial-conversion-nudge";
 import leaseshieldIcon from "../assets/leaseshield-icon-v3.png";
@@ -42,6 +44,7 @@ export default function Dashboard() {
   const { user, isAuthenticated, isLoading } = useAuth();
   const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
   const [showTour, setShowTour] = useState(false);
+  const [showVideoModal, setShowVideoModal] = useState(false);
   const { restartTour } = useDashboardTour(showTour);
 
   useEffect(() => {
@@ -58,9 +61,12 @@ export default function Dashboard() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
+  // Tour disabled - users can click "Quick Guide" button if they want to see it
   useEffect(() => {
     if (user && !isLoading) {
+      // Mark tour as seen so it doesn't auto-start
       localStorage.setItem('leaseshield_tour_seen', 'true');
+      // Video modal no longer auto-pops - users click "Quick Guide" button when ready
     }
   }, [user, isLoading]);
 
@@ -167,6 +173,16 @@ export default function Dashboard() {
             </p>
           </div>
           <div className="flex items-center gap-2">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowVideoModal(true)}
+              data-testid="button-video-guide"
+              className="whitespace-nowrap"
+            >
+              <Play className="h-4 w-4 mr-2" />
+              Quick Guide
+            </Button>
             <ThemeToggle />
           </div>
         </div>
@@ -788,6 +804,11 @@ export default function Dashboard() {
         </DialogContent>
       </Dialog>
 
+      {/* Onboarding Video Modal */}
+      <OnboardingVideoModal 
+        isOpen={showVideoModal} 
+        onClose={() => setShowVideoModal(false)} 
+      />
     </div>
   );
 }

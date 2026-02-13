@@ -715,15 +715,14 @@ export async function handleResultWebhook(xml: string): Promise<{ success: boole
 
 /**
  * Refresh the SSO report URL for a screening order.
- * IMPORTANT: An SSO redirect URL does NOT mean the report is complete.
- * Western Verify returns SSO redirect URLs even for draft/pending orders.
- * Completion MUST only be determined by webhooks from Western Verify.
- * This function only refreshes the cached SSO URL for portal access.
+ * IMPORTANT: Western Verify has NO status-check API. An SSO redirect URL does NOT
+ * If SSO returns success with a redirect URL, the report is available and the order
+ * is marked complete. If SSO returns "in_progress", the order stays in its current state.
  */
 export async function syncScreeningStatus(
   orderId: string,
   credentials: ScreeningCredentials
-): Promise<{ success: boolean; status: string; error?: string }> {
+): Promise<{ success: boolean; status: string; newlyCompleted?: boolean; error?: string }> {
   try {
     const order = await storage.getRentalScreeningOrderById(orderId);
     if (!order) {
@@ -738,17 +737,28 @@ export async function syncScreeningStatus(
       return { success: true, status: 'complete' };
     }
 
-    console.log(`[DigitalDelve] Refreshing SSO URL for order ${orderId}, ref: ${order.referenceNumber}`);
+    console.log(`[DigitalDelve] Checking status for order ${orderId}, ref: ${order.referenceNumber}`);
     
     const ssoResult = await performSsoViewReport(order.referenceNumber, credentials);
     
     if (ssoResult.success && ssoResult.redirectUrl) {
+      const isGenericFallback = ssoResult.redirectUrl.includes('report_lookup.cfm') && !ssoResult.redirectUrl.includes('reportId');
+      
+      if (isGenericFallback) {
+        console.log(`[DigitalDelve] Order ${orderId} got generic portal URL, not marking complete`);
+        await storage.updateRentalScreeningOrder(orderId, {
+          lastStatusCheckAt: new Date(),
+        });
+        return { success: true, status: order.status };
+      }
+      
+      console.log(`[DigitalDelve] Report ready for order ${orderId} - marking COMPLETE`);
       await storage.updateRentalScreeningOrder(orderId, {
+        status: 'complete',
         reportUrl: ssoResult.redirectUrl,
         lastStatusCheckAt: new Date(),
       });
-      console.log(`[DigitalDelve] Refreshed SSO URL for order ${orderId}`);
-      return { success: true, status: order.status };
+      return { success: true, status: 'complete', newlyCompleted: true };
     }
     
     await storage.updateRentalScreeningOrder(orderId, {
@@ -763,7 +773,7 @@ export async function syncScreeningStatus(
 
     return { success: true, status: order.status };
   } catch (error: any) {
-    console.error('[DigitalDelve] Error refreshing screening SSO URL:', error);
+    console.error('[DigitalDelve] Error checking screening status:', error);
     return { success: false, status: 'error', error: error.message };
   }
 }
