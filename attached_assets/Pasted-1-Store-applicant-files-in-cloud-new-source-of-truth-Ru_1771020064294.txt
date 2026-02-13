@@ -1,0 +1,299 @@
+1) Store applicant files in cloud (new source of truth)
+✅ Rule
+
+All new uploads go to Replit Object Storage first. Disk is never the canonical store.
+
+DB change (minimal)
+
+Keep stored_path, but redefine it to always store object paths:
+
+Old: uploads/applicants/<uuid>.<ext>
+
+New: /<bucket>/.private/applicants/<uuid>.<ext>
+
+Optional (recommended): add columns so you’re not encoding storage semantics into one string:
+
+storage_provider (replit_objstore)
+
+bucket
+
+object_key (.private/applicants/<uuid>.<ext>)
+
+sha256 (optional but excellent)
+
+status (available | missing | orphan)
+
+2) Move existing files to cloud (the 27 survivors)
+
+You already basically did this idea with orphan handling — do it cleanly and auditable:
+
+Upload all files from uploads/applicants/* to:
+/.private/orphan-applicants/<uuid>.<ext>
+
+Produce orphan-recovery.csv with:
+filename, size, created_time, new_object_path
+
+Do not auto-link them to the 169 DB rows unless you can prove the match.
+
+3) Mark missing files as unavailable (so UI stops “ghost-linking”)
+Add one column (simple + powerful)
+
+availability_status on rental_submission_files:
+
+available
+
+missing (expected but not found in object storage)
+
+orphan (exists, but not linked)
+
+legacy_local (still on disk, not yet migrated)
+
+Then when a download is requested:
+
+If status missing → show a clear message: “File unavailable (workspace storage was reset before migration).”
+
+If available → serve from object storage.
+
+4) Clarify backup exports database records (weekly manifest)
+
+Write a job that exports a manifest to object storage:
+
+/.private/backups/file-manifests/manifest-YYYY-MM-DD.json
+
+Include:
+
+file id
+
+person_id
+
+original_name
+
+object path (bucket/key)
+
+size/mime
+
+created_at
+
+availability_status
+
+This gives you a durable “index” even if the DB ever rolls.
+
+5) Test upload and download (end-to-end + failure modes)
+
+You need 4 tests:
+
+Upload file → verify object exists → DB row points to object path
+
+Download file → returns correct bytes
+
+Simulate “missing” (delete object manually) → download returns “unavailable” with status change
+
+Legacy path (uploads/…) → either migrate or block gracefully
+
+Implementation: the core code you need
+A) Replit Object Storage helper (Node/TS)
+
+Use the sidecar proxy (127.0.0.1:1106) exactly like you described.
+
+// src/lib/objstore.ts
+import { Storage } from "@google-cloud/storage";
+
+const apiEndpoint = "http://127.0.0.1:1106";
+export const BUCKET = process.env.REPLIT_OBJSTORE_BUCKET!; 
+// e.g. replit-objstore-38df3fee-63f6-49b7-8f77-81e0e71280fd
+
+export const storage = new Storage({ apiEndpoint });
+export const bucket = storage.bucket(BUCKET);
+
+export function makeDbPath(objectKey: string) {
+  // objectKey like ".private/applicants/<uuid>.ext"
+  return `/${BUCKET}/${objectKey}`;
+}
+
+export function parseDbPath(dbPath: string) {
+  // "/bucket/.private/applicants/x.pdf"
+  const parts = dbPath.split("/").filter(Boolean);
+  const bucketName = parts[0];
+  const objectKey = parts.slice(1).join("/");
+  return { bucketName, objectKey };
+}
+
+B) Upload route: switch to memoryStorage + upload to object storage
+
+No diskStorage. No writing into uploads/.
+
+// src/routes/uploads.ts
+import multer from "multer";
+import path from "path";
+import { randomUUID } from "crypto";
+import { bucket, makeDbPath } from "../lib/objstore";
+
+// memory only
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+export const applicantUploadHandler = [
+  upload.single("file"),
+  async (req: any, res: any) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "No file uploaded" });
+
+    const ext = path.extname(file.originalname).toLowerCase() || "";
+    const id = randomUUID();
+    const filename = `${id}${ext}`;
+
+    const objectKey = `.private/applicants/${filename}`;
+    const dbPath = makeDbPath(objectKey);
+
+    // Upload buffer to object storage
+    const blob = bucket.file(objectKey);
+    await blob.save(file.buffer, {
+      resumable: false,
+      contentType: file.mimetype,
+      metadata: {
+        metadata: {
+          originalName: file.originalname,
+          // add personId/fileType/etc if you want
+        },
+      },
+    });
+
+    // Write DB row (example — adapt to your query layer)
+    // await db.query(`
+    //   INSERT INTO rental_submission_files (id, person_id, file_type, original_name, stored_path, file_size, mime_type, availability_status)
+    //   VALUES ($1,$2,$3,$4,$5,$6,$7,'available')
+    // `, [...]);
+
+    res.json({
+      ok: true,
+      stored_path: dbPath,
+      object_key: objectKey,
+      filename,
+    });
+  },
+];
+
+
+This alone prevents the original failure mode.
+
+C) Download route: unified resolver (object storage first)
+
+This is where you stop “ghost 404s” from legacy paths.
+
+// src/routes/files.ts
+import fs from "fs";
+import path from "path";
+import { bucket, parseDbPath, BUCKET } from "../lib/objstore";
+
+export async function serveFile(req: any, res: any) {
+  // fetch db row by id
+  // const row = await db.query("select stored_path, mime_type, original_name, availability_status from rental_submission_files where id=$1", [req.params.id]);
+  const row = req.fileRow; // placeholder
+
+  const storedPath = row.stored_path as string;
+
+  // New object-storage paths
+  if (storedPath.startsWith(`/${BUCKET}/`)) {
+    const { objectKey } = parseDbPath(storedPath);
+    const f = bucket.file(objectKey);
+
+    const [exists] = await f.exists();
+    if (!exists) {
+      // optionally update DB: availability_status='missing'
+      return res.status(404).json({ error: "File unavailable (missing from storage)" });
+    }
+
+    res.setHeader("Content-Type", row.mime_type || "application/octet-stream");
+    res.setHeader("Content-Disposition", `inline; filename="${row.original_name || "file"}"`);
+
+    f.createReadStream().pipe(res);
+    return;
+  }
+
+  // Legacy local disk paths (read-only / best-effort)
+  if (storedPath.startsWith("uploads/")) {
+    const localPath = path.join(process.cwd(), storedPath);
+    if (!fs.existsSync(localPath)) {
+      // update DB to missing to stop retries
+      return res.status(404).json({ error: "File unavailable (legacy local file missing)" });
+    }
+    res.setHeader("Content-Type", row.mime_type || "application/octet-stream");
+    fs.createReadStream(localPath).pipe(res);
+    return;
+  }
+
+  return res.status(400).json({ error: "Unrecognized stored_path format" });
+}
+
+D) “Drift audit” job (the thing that makes this never surprise you again)
+
+Run daily/hourly. It marks missing objects and alerts.
+
+Pseudo:
+
+query last 30 days of files with object paths
+
+exists() check
+
+if missing → set availability_status='missing' and log/notify
+
+Guardrails so nobody reintroduces disk storage
+1) Ban diskStorage at build time
+
+Add a simple grep check to your deploy script:
+
+grep -R "multer\.diskStorage" -n src && echo "diskStorage is forbidden" && exit 1
+
+2) DB constraint (optional)
+
+If you keep using stored_path, you can enforce:
+
+new rows must start with /${bucket}/.private/
+
+(Or enforce via application-level assertion.)
+
+The exact “Replit Support” message you should send
+
+You can send basically what you wrote + ask 3 very specific questions:
+
+Can Replit engineering access deeper snapshots beyond user-visible checkpoints for a specific repl and date range?
+
+What durability guarantees apply to the workspace filesystem vs object storage?
+
+Any official docs for presigned upload / best practice for large uploads via the sidecar?
+
+(You already have the narrative; keep it short, factual, and date-ranged.)
+
+Your plan, finalized into a punch list
+
+✅ Store applicant files in cloud
+
+Switch multer → memoryStorage
+
+Upload to /.private/applicants/
+
+stored_path becomes object-store path
+
+✅ Move existing files to cloud
+
+upload 27 → /.private/orphan-applicants/
+
+generate orphan report
+
+✅ Mark missing files as unavailable
+
+add availability_status
+
+download route returns clear error + sets status
+
+✅ Clarify backup exports database records
+
+weekly manifest export to object store
+
+✅ Test upload and download
+
+4 end-to-end tests + “missing object” test
+
+If you paste your current upload route + your current download route, I’ll rewrite them exactly in your code style (Express/TS, your DB helper, your existing object-store helper) so you can paste it into Replit with minimal merge pain.

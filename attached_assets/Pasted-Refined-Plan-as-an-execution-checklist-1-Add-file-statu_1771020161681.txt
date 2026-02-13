@@ -1,0 +1,233 @@
+Refined Plan (as an execution checklist)
+1) Add file status to records
+
+Add availability_status to rental_submission_files:
+
+available (default)
+
+missing
+
+(optional) legacy_local (if you want to distinguish old disk paths during transition)
+
+SQL (safe default):
+
+ALTER TABLE rental_submission_files
+ADD COLUMN IF NOT EXISTS availability_status TEXT NOT NULL DEFAULT 'available';
+
+CREATE INDEX IF NOT EXISTS idx_rsf_availability_status
+ON rental_submission_files (availability_status);
+
+2) Store uploads in new location (object storage only)
+
+Replace multer.diskStorage with multer.memoryStorage() and immediately save buffer to:
+
+Object key: .private/applicants/<uuid>.<ext>
+
+DB stored_path: /<bucket>/.private/applicants/<uuid>.<ext>
+
+status: available
+
+Key is: DB row gets written only after object upload succeeds (or do it in a transaction if your DB layer supports it).
+
+3) Serve files from new storage (unified route)
+
+Download route logic:
+
+If stored_path starts with /${bucket}/.private/…:
+
+exists() check
+
+if missing → set status to missing, return 404 with clear message
+
+else stream object
+
+Else if stored_path starts with uploads/…:
+
+if file exists → stream local (optional, transitional)
+
+else → mark missing + 404
+
+(or auto-migrate on read if you want, but keep it simple)
+
+4) Move old files to new storage (the 27 survivors + any others you find)
+
+Because you can match these by UUID filename, migrate directly into the same canonical path:
+
+.private/applicants/<uuid>.<ext>
+
+Then update DB stored_path accordingly, set status available.
+
+This becomes your “one-time backfill” script.
+
+5) Mark records with missing files
+
+You’ll mark missing in two ways:
+
+Inline in download route (your simplified drift audit)
+
+Optional: one-time marking script that scans DB rows with uploads/applicants/ and sets missing if not present on disk anymore (useful to clean UI quickly)
+
+6) Test all file upload features (4 scenarios)
+
+New upload → object exists → download works
+
+Delete object manually → download marks missing + errors cleanly
+
+Legacy path exists on disk → download works (transition support)
+
+Legacy path missing → status becomes missing + errors cleanly
+
+Drop-in code (aligned to your decisions)
+A) Object storage helper (reuses your bucket + sidecar)
+// src/lib/objstore.ts
+import { Storage } from "@google-cloud/storage";
+
+export const OBJSTORE_ENDPOINT = "http://127.0.0.1:1106";
+export const BUCKET = process.env.REPLIT_OBJSTORE_BUCKET!;
+
+export const storage = new Storage({ apiEndpoint: OBJSTORE_ENDPOINT });
+export const bucket = storage.bucket(BUCKET);
+
+export function toDbPath(objectKey: string) {
+  // objectKey: ".private/applicants/<uuid>.ext"
+  return `/${BUCKET}/${objectKey}`;
+}
+
+export function isObjstorePath(p: string) {
+  return p.startsWith(`/${BUCKET}/.private/`);
+}
+
+export function dbPathToObjectKey(p: string) {
+  // "/bucket/.private/applicants/x.pdf" -> ".private/applicants/x.pdf"
+  const parts = p.split("/").filter(Boolean);
+  return parts.slice(1).join("/"); // ".private/applicants/x.pdf"
+}
+
+B) Upload route (memoryStorage only)
+import multer from "multer";
+import path from "path";
+import { randomUUID } from "crypto";
+import { bucket, toDbPath } from "../lib/objstore";
+
+const upload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 10 * 1024 * 1024 },
+});
+
+export const uploadApplicantFile = [
+  upload.single("file"),
+  async (req: any, res: any) => {
+    const file = req.file;
+    if (!file) return res.status(400).json({ error: "No file uploaded" });
+
+    const ext = path.extname(file.originalname).toLowerCase() || "";
+    const uuid = randomUUID();
+    const filename = `${uuid}${ext}`;
+
+    const objectKey = `.private/applicants/${filename}`;
+    const storedPath = toDbPath(objectKey);
+
+    // 1) Upload first
+    const obj = bucket.file(objectKey);
+    await obj.save(file.buffer, {
+      resumable: false,
+      contentType: file.mimetype,
+      metadata: {
+        metadata: { originalName: file.originalname },
+      },
+    });
+
+    // 2) Then write DB row (adapt to your db helper)
+    // await db.query(`
+    // INSERT INTO rental_submission_files (id, person_id, file_type, original_name, stored_path, file_size, mime_type, availability_status)
+    // VALUES ($1,$2,$3,$4,$5,$6,$7,'available')
+    // `, [...]);
+
+    return res.json({ ok: true, stored_path: storedPath });
+  },
+];
+
+C) Download route (inline exists() check + mark missing)
+import fs from "fs";
+import path from "path";
+import { bucket, isObjstorePath, dbPathToObjectKey } from "../lib/objstore";
+
+export async function downloadApplicantFile(req: any, res: any) {
+  // const row = await db.query("SELECT ... FROM rental_submission_files WHERE id=$1", [req.params.id]);
+  const row = req.fileRow; // placeholder
+
+  const storedPath = row.stored_path as string;
+
+  // Object Storage
+  if (isObjstorePath(storedPath)) {
+    const objectKey = dbPathToObjectKey(storedPath);
+    const f = bucket.file(objectKey);
+
+    const [exists] = await f.exists();
+    if (!exists) {
+      // await db.query("UPDATE rental_submission_files SET availability_status='missing' WHERE id=$1", [row.id]);
+      return res.status(404).json({
+        error: "File unavailable (missing from storage).",
+        file_id: row.id,
+      });
+    }
+
+    res.setHeader("Content-Type", row.mime_type || "application/octet-stream");
+    res.setHeader(
+      "Content-Disposition",
+      `inline; filename="${row.original_name || "file"}"`
+    );
+    return f.createReadStream().pipe(res);
+  }
+
+  // Legacy Local (temporary support)
+  if (storedPath.startsWith("uploads/")) {
+    const localPath = path.join(process.cwd(), storedPath);
+    if (!fs.existsSync(localPath)) {
+      // await db.query("UPDATE rental_submission_files SET availability_status='missing' WHERE id=$1", [row.id]);
+      return res.status(404).json({
+        error: "File unavailable (legacy local file missing).",
+        file_id: row.id,
+      });
+    }
+
+    res.setHeader("Content-Type", row.mime_type || "application/octet-stream");
+    return fs.createReadStream(localPath).pipe(res);
+  }
+
+  return res.status(400).json({ error: "Unrecognized stored_path format." });
+}
+
+D) Migration script for the surviving disk files (matches by UUID filename)
+
+This migrates uploads/applicants/*.ext → .private/applicants/*.ext and updates matching DB rows by filename.
+
+Key idea: you already have DB rows whose stored_path contains uploads/applicants/<uuid>.<ext>; match on basename.
+
+If you want, I’ll write the full script with:
+
+dry-run mode
+
+upload
+
+DB update
+
+CSV report
+
+(You already have most of it from earlier; it just needs to update to your “no orphan folder” decision.)
+
+Final sanity guard (the one thing I’d still add)
+
+Even without CI, you can still “ban local uploads” by making it impossible at runtime:
+
+delete the uploads/applicants write logic entirely ✅
+
+and add a startup warning if the folder exists with files (so you notice unexpected writes)
+
+if (fs.existsSync("uploads/applicants")) {
+  const n = fs.readdirSync("uploads/applicants").length;
+  if (n > 0) console.warn(`[WARN] Found ${n} files in uploads/applicants — uploads should be object-storage only now.`);
+}
+
+
+Not required, but it’s a good tripwire.
