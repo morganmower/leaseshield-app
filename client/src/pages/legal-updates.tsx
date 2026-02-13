@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home, Clock, CheckCircle, ListTodo, Calendar } from "lucide-react";
+import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home } from "lucide-react";
 import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -155,36 +155,6 @@ export default function LegalUpdatesPage() {
     }
   };
 
-  const getSourceBadge = (update: LegalUpdate) => {
-    const category = (update as any).category;
-    const stateId = update.stateId;
-    
-    // Section 8 / HUD specific items
-    if (category === 'section8') {
-      return (
-        <Badge variant="outline" className="bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 border-blue-200 dark:border-blue-800 text-xs">
-          Section 8 / HUD
-        </Badge>
-      );
-    }
-    
-    // Federal (non-Section 8)
-    if (stateId === 'US') {
-      return (
-        <Badge variant="outline" className="bg-purple-50 dark:bg-purple-950/30 text-purple-700 dark:text-purple-300 border-purple-200 dark:border-purple-800 text-xs">
-          Federal
-        </Badge>
-      );
-    }
-    
-    // State-specific
-    if (stateId) {
-      return <StateBadge stateId={stateId} />;
-    }
-    
-    return null;
-  };
-
   const toggleUpdateExpanded = (id: string) => {
     const newExpanded = new Set(expandedUpdates);
     if (newExpanded.has(id)) {
@@ -288,7 +258,9 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground">{update.title}</h3>
-                                {getSourceBadge(update)}
+                                {selectedState === "NATIONAL" && (
+                                  <StateBadge stateId={update.stateId} />
+                                )}
                                 {(update as any).isNewest && (
                                   <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white" data-testid={`badge-new-${update.id}`}>
                                     New
@@ -314,108 +286,20 @@ export default function LegalUpdatesPage() {
                         </button>
                         {expandedUpdates.has(update.id) && (
                           <div className="px-4 pb-4 border-t space-y-4" data-testid={`expanded-update-${update.id}`}>
-                            {/* Status & Timeline Row */}
-                            {((update as any).billStatus || (update as any).expectedTimeline || update.effectiveDate) && (
-                              <div className="flex flex-wrap gap-4 py-2 bg-muted/30 rounded-lg px-3">
-                                {(update as any).billStatus && (update as any).billStatus !== 'unknown' && (
-                                  <div className="flex items-center gap-2">
-                                    <CheckCircle className="h-4 w-4 text-primary" />
-                                    <span className="text-sm">
-                                      <span className="text-muted-foreground">Status:</span>{' '}
-                                      <span className="font-medium capitalize">{(update as any).billStatus.replace(/_/g, ' ')}</span>
-                                    </span>
-                                  </div>
-                                )}
-                                {update.effectiveDate && (
-                                  <div className="flex items-center gap-2">
-                                    <Calendar className="h-4 w-4 text-primary" />
-                                    <span className="text-sm">
-                                      <span className="text-muted-foreground">Effective:</span>{' '}
-                                      <span className="font-medium">{format(new Date(update.effectiveDate), "MMMM d, yyyy")}</span>
-                                    </span>
-                                  </div>
-                                )}
-                                {(update as any).expectedTimeline && (
-                                  <div className="flex items-center gap-2">
-                                    <Clock className="h-4 w-4 text-muted-foreground" />
-                                    <span className="text-sm text-muted-foreground">{(update as any).expectedTimeline}</span>
-                                  </div>
-                                )}
-                              </div>
-                            )}
-
-                            {/* Why It Matters */}
                             <div>
                               <h4 className="font-semibold text-sm mb-2">Why It Matters</h4>
                               <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
                             </div>
-
-                            {/* Before/After Comparison */}
-                            {(update.beforeText && !update.beforeText.includes('Previous regulations applied')) || 
-                             (update.afterText && !update.afterText.includes('New requirements may be')) ? (
-                              <div className="grid gap-4 md:grid-cols-2">
-                                <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                                  <h4 className="font-semibold text-sm mb-2 text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-amber-500" />
-                                    Before
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">{update.beforeText}</p>
-                                </div>
-                                <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                                  <h4 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
-                                    <span className="w-2 h-2 rounded-full bg-green-500" />
-                                    After
-                                  </h4>
-                                  <p className="text-sm text-muted-foreground">{update.afterText}</p>
-                                </div>
-                              </div>
-                            ) : (
+                            <div className="grid gap-4 md:grid-cols-2">
                               <div>
-                                <h4 className="font-semibold text-sm mb-2">Summary</h4>
-                                <p className="text-sm text-muted-foreground">{update.summary || update.title}</p>
+                                <h4 className="font-semibold text-sm mb-2 text-amber-600">Before</h4>
+                                <p className="text-sm text-muted-foreground">{update.beforeText}</p>
                               </div>
-                            )}
-
-                            {/* Action Items */}
-                            {(update as any).actionItems && (
-                              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                                <h4 className="font-semibold text-sm mb-2 text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                                  <ListTodo className="h-4 w-4" />
-                                  What You Should Do
-                                </h4>
-                                {(() => {
-                                  const items = (update as any).actionItems;
-                                  try {
-                                    const parsed = JSON.parse(items);
-                                    if (Array.isArray(parsed)) {
-                                      return (
-                                        <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
-                                          {parsed.map((item: string, idx: number) => (
-                                            <li key={idx}>{item}</li>
-                                          ))}
-                                        </ul>
-                                      );
-                                    }
-                                  } catch {}
-                                  return <p className="text-sm text-muted-foreground">{items}</p>;
-                                })()}
+                              <div>
+                                <h4 className="font-semibold text-sm mb-2 text-green-600">After</h4>
+                                <p className="text-sm text-muted-foreground">{update.afterText}</p>
                               </div>
-                            )}
-
-                            {/* Source Link */}
-                            {(update as any).sourceUrl && (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                asChild
-                                data-testid={`button-source-${update.id}`}
-                              >
-                                <a href={(update as any).sourceUrl} target="_blank" rel="noopener noreferrer">
-                                  View Source <ExternalLink className="h-3 w-3 ml-2" />
-                                </a>
-                              </Button>
-                            )}
-
+                            </div>
                             {/* View Updated Templates section */}
                             {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
                               <div className="pt-2">
@@ -466,7 +350,7 @@ export default function LegalUpdatesPage() {
                             <div className="flex-1">
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                                {caseItem.stateId && (
+                                {selectedState === "NATIONAL" && caseItem.stateId && (
                                   <StateBadge stateId={caseItem.stateId} />
                                 )}
                                 {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}
@@ -552,8 +436,13 @@ export default function LegalUpdatesPage() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-foreground line-clamp-2">{update.title}</h3>
-                            {getSourceBadge(update)}
+                            {selectedState === "NATIONAL" && update.stateId && (
+                              <StateBadge stateId={update.stateId} />
+                            )}
                             {getImpactBadge(update.impactLevel)}
+                            <Badge variant="secondary">
+                              Section 8
+                            </Badge>
                           </div>
                           <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>
                           {update.effectiveDate && (
@@ -628,7 +517,7 @@ export default function LegalUpdatesPage() {
                         <div className="flex-1">
                           <div className="flex items-start gap-2 mb-1 flex-wrap">
                             <h3 className="font-semibold text-foreground line-clamp-2">{caseItem.caseName}</h3>
-                            {caseItem.stateId && (
+                            {selectedState === "NATIONAL" && caseItem.stateId && (
                               <StateBadge stateId={caseItem.stateId} />
                             )}
                             {caseItem.relevanceLevel && getImpactBadge(caseItem.relevanceLevel)}

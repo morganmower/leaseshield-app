@@ -124,9 +124,6 @@ export class ScheduledJobs {
   private nightlyIngestInterval: NodeJS.Timeout | null = null;
   private monthlyPublishInterval: NodeJS.Timeout | null = null;
   private lifecycleEmailsInterval: NodeJS.Timeout | null = null;
-  private biweeklyDigestInterval: NodeJS.Timeout | null = null;
-  private autoArchiveInterval: NodeJS.Timeout | null = null;
-  private caseLawRefreshInterval: NodeJS.Timeout | null = null;
 
   // =========================================================================
   // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
@@ -639,152 +636,6 @@ Manage preferences: ${baseUrl}/settings
     });
   }
 
-  // =========================================================================
-  // BI-WEEKLY LEGISLATIVE DIGEST
-  // Sends a digest of all new legal updates and template changes every 2 weeks
-  // =========================================================================
-
-  async sendBiweeklyLegislativeDigest(): Promise<void> {
-    try {
-      console.log('📋 Processing bi-weekly legislative digest...');
-
-      const now = new Date();
-      const startOfYear = new Date(now.getFullYear(), 0, 1);
-      const weekNumber = Math.floor((now.getTime() - startOfYear.getTime()) / (7 * 24 * 60 * 60 * 1000));
-      const biweekNumber = Math.floor(weekNumber / 2);
-      const digestKey = `${now.getFullYear()}-biweek${biweekNumber}`;
-
-      // Calculate the 2-week period
-      const twoWeeksAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
-      const periodStart = twoWeeksAgo.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const periodEnd = now.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-      const digestPeriod = `${periodStart} - ${periodEnd}`;
-
-      // Get all legal updates from the last 2 weeks
-      const recentLegalUpdates = await db.query.legalUpdates.findMany({
-        where: (updates, { gte }) => gte(updates.createdAt, twoWeeksAgo),
-      });
-
-      // Get all template version changes from the last 2 weeks with their templates
-      const recentTemplateVersions = await db
-        .select({
-          version: schema.templateVersions,
-          template: schema.templates,
-        })
-        .from(schema.templateVersions)
-        .innerJoin(schema.templates, eq(schema.templateVersions.templateId, schema.templates.id))
-        .where(gte(schema.templateVersions.createdAt, twoWeeksAgo));
-
-      console.log(`  Found ${recentLegalUpdates.length} legal updates, ${recentTemplateVersions.length} template changes in past 2 weeks`);
-
-      if (recentLegalUpdates.length === 0 && recentTemplateVersions.length === 0) {
-        console.log('✅ No updates to include in digest');
-        return;
-      }
-
-      // Separate federal/HUD updates from state-specific updates
-      const federalUpdates = recentLegalUpdates.filter(u => 
-        u.stateId === 'US' || (u as any).category === 'section8'
-      ).map(u => ({
-        title: u.title,
-        summary: u.summary,
-        impactLevel: u.impactLevel,
-        category: (u as any).category,
-      }));
-
-      // Get all active users who have opted in to legal update notifications
-      const eligibleUsers = await db
-        .select()
-        .from(users)
-        .where(
-          and(
-            eq(users.subscriptionStatus, 'active'),
-            eq(users.notifyLegalUpdates, true)
-          )
-        );
-
-      console.log(`  Found ${eligibleUsers.length} users opted in for legal update digests`);
-
-      let sentCount = 0;
-      for (const user of eligibleUsers) {
-        if (!user.email || !user.preferredState) continue;
-
-        // Check if user already received this digest
-        const [existingDigest] = await db
-          .select()
-          .from(analyticsEvents)
-          .where(
-            and(
-              eq(analyticsEvents.userId, user.id),
-              eq(analyticsEvents.eventType, 'biweekly_legislative_digest_sent'),
-              sql`${analyticsEvents.eventData}->>'digestKey' = ${digestKey}`
-            )
-          )
-          .limit(1);
-
-        if (existingDigest) {
-          continue; // Already sent this digest to this user
-        }
-
-        // Get state-specific updates for this user's state
-        const stateUpdates = recentLegalUpdates.filter(u => 
-          u.stateId === user.preferredState && (u as any).category !== 'section8'
-        ).map(u => ({
-          title: u.title,
-          summary: u.summary,
-          impactLevel: u.impactLevel,
-          stateId: u.stateId,
-        }));
-
-        // Get template changes for this user's state
-        const templateChanges = recentTemplateVersions.filter(v => 
-          v.template.stateId === user.preferredState
-        ).map(v => ({
-          title: v.template.title,
-          versionNotes: v.version.versionNotes || 'Updated for legal compliance',
-        }));
-
-        const totalUpdates = stateUpdates.length + federalUpdates.length + templateChanges.length;
-        if (totalUpdates === 0) {
-          continue; // No updates relevant to this user
-        }
-
-        // Send the digest email
-        const sent = await emailService.sendBiweeklyLegislativeDigest(
-          {
-            email: user.email,
-            firstName: user.firstName || undefined,
-            lastName: user.lastName || undefined,
-          },
-          stateUpdates,
-          federalUpdates,
-          templateChanges,
-          digestPeriod,
-          user.preferredState
-        );
-
-        if (sent) {
-          // Track that we sent this digest
-          await storage.trackEvent({
-            userId: user.id,
-            eventType: 'biweekly_legislative_digest_sent',
-            eventData: { 
-              digestKey, 
-              stateUpdates: stateUpdates.length,
-              federalUpdates: federalUpdates.length,
-              templateChanges: templateChanges.length,
-            },
-          });
-          sentCount++;
-        }
-      }
-
-      console.log(`✅ Bi-weekly legislative digest sent to ${sentCount} users`);
-    } catch (error) {
-      console.error('❌ Error sending bi-weekly legislative digest:', error);
-    }
-  }
-
   // Enroll users in trial expiration sequence 3 days before expiry
   async checkTrialExpirationEnrollments(): Promise<void> {
     try {
@@ -1180,90 +1031,20 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
-  private lastCaseLawRefreshDate: string | null = null;
-
-  async runWeeklyCaseLawRefresh(): Promise<void> {
-    try {
-      const now = new Date();
-      const dayOfWeek = now.getDay();
-      if (dayOfWeek !== 3) return;
-
-      const today = now.toISOString().split('T')[0];
-      if (this.lastCaseLawRefreshDate === today) {
-        return;
-      }
-
-      console.log(`⚖️ Running weekly case law refresh (${today})...`);
-      const { courtListenerService } = await import('./courtListenerService');
-      const result = await courtListenerService.refreshCaseLaw({ daysBack: 30 });
-      this.lastCaseLawRefreshDate = today;
-
-      console.log(`✅ Weekly case law refresh complete: ${result.newCases} new, ${result.updatedCases} updated`);
-      if (result.errors.length > 0) {
-        console.log(`   ⚠️ Errors: ${result.errors.join('; ')}`);
-      }
-    } catch (error) {
-      console.error('❌ Error in weekly case law refresh:', error);
-    }
-  }
-
-  // Track last successful ingest date to prevent duplicate runs on same day
-  private lastIngestDate: string | null = null;
-  
   // Run nightly ingest to pull updates from all 8 legislative sources
   // Uses job lock to prevent overlapping runs
-  // Only runs once per day even if app restarts multiple times
   async runNightlyIngestJob(): Promise<void> {
     try {
-      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
-      
-      // Skip if already ran today (prevents re-running on app restarts)
-      if (this.lastIngestDate === today) {
-        console.log(`⏭️ Nightly ingest already ran today (${today}) - skipping`);
-        return;
-      }
-      
-      // Check database for last successful run today
-      const { db } = await import('./db');
-      const { monitoringRuns } = await import('@shared/schema');
-      const { gte, desc, or, eq } = await import('drizzle-orm');
-      
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-      
-      const [lastRunToday] = await db.select({ id: monitoringRuns.id })
-        .from(monitoringRuns)
-        .where(gte(monitoringRuns.runDate, todayStart))
-        .orderBy(desc(monitoringRuns.runDate))
-        .limit(1);
-      
-      if (lastRunToday) {
-        console.log(`⏭️ Nightly ingest already ran today (${today}) - found in database, skipping`);
-        this.lastIngestDate = today;
-        return;
-      }
-      
       const { withJobLock } = await import('./utils/jobLock');
       const { legislativeMonitoringService } = await import('./legislativeMonitoringService');
       
-      console.log(`🌙 Running nightly legislative ingest for ${today}...`);
+      console.log('🌙 Running nightly legislative ingest...');
       
       const result = await withJobLock('legislative-monitoring', async () => {
         return await legislativeMonitoringService.ingestNow();
       });
       
-      // Mark today as complete
-      this.lastIngestDate = today;
-      
-      // Log detailed summary
-      console.log(`\n✅ NIGHTLY INGEST COMPLETE (${today})`);
-      console.log(`   Sources processed: ${Object.keys(result.sources).length}`);
-      console.log(`   Items fetched: ${result.totalFetched}`);
-      console.log(`   New items stored: ${result.totalNew}`);
-      if (result.errors.length > 0) {
-        console.log(`   ⚠️ Errors: ${result.errors.join(', ')}`);
-      }
-      console.log('');
+      console.log(`✅ Nightly ingest complete: ${result.totalNew} new items from ${Object.keys(result.sources).length} sources`);
     } catch (error: any) {
       if (error?.status === 409) {
         console.log('⏭️ Nightly ingest skipped - another job is running');
@@ -1304,17 +1085,6 @@ Manage preferences: ${baseUrl}/settings
       } else {
         console.error('❌ Error in monthly queue:', error);
       }
-    }
-  }
-
-  async autoArchiveOldSubmissions(): Promise<void> {
-    try {
-      const count = await storage.autoArchiveOldSubmissions();
-      if (count > 0) {
-        console.log(`Auto-archived ${count} submissions older than 60 days`);
-      }
-    } catch (error) {
-      console.error("Auto-archive job failed:", error);
     }
   }
 
@@ -1394,25 +1164,6 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.runMonthlyPublishJob(), 9 * 60 * 1000); // First check after 9 minutes
 
-    // Bi-weekly legislative digest (check daily, but only send once per 2 weeks)
-    this.biweeklyDigestInterval = setInterval(
-      () => this.sendBiweeklyLegislativeDigest(),
-      24 * 60 * 60 * 1000 // Check daily
-    );
-    setTimeout(() => this.sendBiweeklyLegislativeDigest(), 10 * 60 * 1000); // First check after 10 minutes
-
-    this.autoArchiveInterval = setInterval(
-      () => this.autoArchiveOldSubmissions(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.autoArchiveOldSubmissions(), 11 * 60 * 1000);
-
-    this.caseLawRefreshInterval = setInterval(
-      () => this.runWeeklyCaseLawRefresh(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.runWeeklyCaseLawRefresh(), 12 * 60 * 1000);
-
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1478,21 +1229,6 @@ Manage preferences: ${baseUrl}/settings
     if (this.monthlyPublishInterval) {
       clearInterval(this.monthlyPublishInterval);
       this.monthlyPublishInterval = null;
-    }
-
-    if (this.biweeklyDigestInterval) {
-      clearInterval(this.biweeklyDigestInterval);
-      this.biweeklyDigestInterval = null;
-    }
-
-    if (this.autoArchiveInterval) {
-      clearInterval(this.autoArchiveInterval);
-      this.autoArchiveInterval = null;
-    }
-
-    if (this.caseLawRefreshInterval) {
-      clearInterval(this.caseLawRefreshInterval);
-      this.caseLawRefreshInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

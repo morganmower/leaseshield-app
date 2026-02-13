@@ -3,7 +3,7 @@ import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'dev-jwt-secret-change-in-production';
 
-const ACCESS_TOKEN_EXPIRY = '24h';
+const ACCESS_TOKEN_EXPIRY = '15m';
 
 export interface TokenPayload {
   userId: string;

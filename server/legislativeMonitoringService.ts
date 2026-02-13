@@ -1131,218 +1131,63 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
   }
 
   /**
-   * Auto-publish housing-related legislative items from normalized_updates to legal_updates
+   * Auto-publish high-relevance bills to the Legal Updates table
    * so landlords can see them on the Legal Updates page.
-   * 
-   * Items are auto-published if they have housing-related topics:
-   * - landlord_tenant, eviction, security_deposit, fair_housing (100% relevant)
-   * - nahasda_core, ihbg, tribal_adjacent, hud_general (Section 8/tribal housing)
-   * 
-   * Items tagged 'not_relevant' are skipped entirely.
    */
-  /**
-   * Generate AI before/after analysis for a legal update
-   * Uses rate limiting with exponential backoff to avoid API overload
-   */
-  private async generateBeforeAfterAnalysis(
-    title: string,
-    summary: string,
-    stateId: string,
-    category: string,
-    retryCount = 0
-  ): Promise<{ beforeText: string; afterText: string; whyItMatters: string; effectiveDate: Date | null }> {
-    const OpenAI = (await import('openai')).default;
-    // Use Replit AI integration (has quota, no personal API key needed)
-    const openai = new OpenAI({
-      apiKey: process.env.AI_INTEGRATIONS_OPENAI_API_KEY,
-      baseURL: process.env.AI_INTEGRATIONS_OPENAI_BASE_URL,
-    });
-    
-    const stateName = stateId === 'US' ? 'Federal' : stateId;
-    
-    const prompt = `You are a legal analyst helping landlords understand new housing legislation.
-
-Title: ${title}
-Summary: ${summary || title}
-State: ${stateName}
-Category: ${category}
-
-Generate a brief, landlord-friendly analysis with these 4 parts:
-
-1. BEFORE: What was the law/situation BEFORE this change? (1-2 sentences, start with "Previously..." or "Under the old law...")
-
-2. AFTER: What is the NEW requirement or change? (1-2 sentences, start with "Now..." or "The new law...")
-
-3. WHY_IT_MATTERS: Why should a landlord care about this? What action might they need to take? (1-2 sentences)
-
-4. EFFECTIVE_DATE: Based on the title/summary, estimate when this might take effect. If a bill is being introduced, assume 6-12 months from now. If it mentions a specific date, use that. Format as YYYY-MM-DD. If truly unknown, respond with "unknown".
-
-Respond in this exact JSON format:
-{
-  "beforeText": "...",
-  "afterText": "...",
-  "whyItMatters": "...",
-  "effectiveDate": "YYYY-MM-DD or unknown"
-}`;
-
-    try {
-      const response = await openai.chat.completions.create({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        temperature: 0.3,
-        max_tokens: 500,
-      });
-
-      const content = response.choices[0]?.message?.content || '';
-      const jsonMatch = content.match(/\{[\s\S]*\}/);
-      
-      if (!jsonMatch) {
-        throw new Error('No JSON found in response');
-      }
-
-      const parsed = JSON.parse(jsonMatch[0]);
-      
-      let effectiveDate: Date | null = null;
-      if (parsed.effectiveDate && parsed.effectiveDate !== 'unknown') {
-        const dateObj = new Date(parsed.effectiveDate);
-        if (!isNaN(dateObj.getTime())) {
-          effectiveDate = dateObj;
-        }
-      }
-
-      return {
-        beforeText: parsed.beforeText || '',
-        afterText: parsed.afterText || '',
-        whyItMatters: parsed.whyItMatters || '',
-        effectiveDate,
-      };
-    } catch (error: any) {
-      // Handle rate limiting with exponential backoff
-      if (error?.status === 429 && retryCount < 3) {
-        const backoffSeconds = Math.pow(2, retryCount + 1) * 10; // 20s, 40s, 80s
-        console.log(`  ⏳ Rate limited, waiting ${backoffSeconds}s before retry ${retryCount + 1}/3...`);
-        await new Promise(resolve => setTimeout(resolve, backoffSeconds * 1000));
-        return this.generateBeforeAfterAnalysis(title, summary, stateId, category, retryCount + 1);
-      }
-      
-      console.warn(`  ⚠️ AI analysis failed, using defaults:`, error?.message || error);
-      return {
-        beforeText: 'Previous regulations applied to this area.',
-        afterText: 'New requirements may be in effect. Review the full legislation for details.',
-        whyItMatters: 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
-        effectiveDate: null,
-      };
-    }
-  }
-  
   private async autoPublishAllBills(): Promise<number> {
-    const { legalUpdates, normalizedUpdates } = await import('@shared/schema');
-    const { isNull, and: andOp, or: orOp, arrayOverlaps, ne, sql: sqlOp } = await import('drizzle-orm');
+    const { legalUpdates, legislativeMonitoring } = await import('@shared/schema');
     
-    // Housing-related topics that warrant auto-publishing
-    const HOUSING_TOPICS = [
-      'landlord_tenant',
-      'eviction', 
-      'security_deposit',
-      'fair_housing',
-      'nahasda_core',
-      'ihbg',
-      'tribal_adjacent',
-      'hud_general',
-    ];
-    
-    // Find normalized updates that:
-    // 1. Have housing-related topics (not 'not_relevant')
-    // 2. Haven't been published to legal_updates yet (no matching source_bill_id)
-    const unpublishedItems = await db.select()
-      .from(normalizedUpdates)
-      .where(
-        andOp(
-          // Has at least one housing topic
-          sqlOp`${normalizedUpdates.topics} && ARRAY[${sqlOp.join(HOUSING_TOPICS.map(t => sqlOp`${t}`), sqlOp`, `)}]::text[]`,
-        )
-      );
+    // Find ALL bills that haven't been published as legal updates yet
+    // All legislation is visible to landlords for transparency
+    const unpublishedBills = await db.select()
+      .from(legislativeMonitoring)
+      .where(eq(legislativeMonitoring.isReviewed, false));
     
     let publishedCount = 0;
-    const stateStats: Record<string, number> = {};
     
-    for (const item of unpublishedItems) {
-      // Check if already published as a legal update (using sourceKey as the unique identifier)
+    for (const bill of unpublishedBills) {
+      // Check if already published as a legal update
       const [existing] = await db.select({ id: legalUpdates.id })
         .from(legalUpdates)
-        .where(eq(legalUpdates.sourceBillId, item.id))
+        .where(eq(legalUpdates.sourceBillId, bill.id))
         .limit(1);
       
       if (existing) continue;
       
-      // Determine category based on topics
-      const topics = item.topics || [];
+      // Determine category based on bill content/topics
       let category = 'general';
+      const titleLower = (bill.title || '').toLowerCase();
+      const descLower = (bill.description || '').toLowerCase();
       
-      // Priority order for category assignment
-      if (topics.includes('nahasda_core') || topics.includes('ihbg') || topics.includes('tribal_adjacent')) {
-        category = 'tribal';
-      } else if (topics.includes('hud_general')) {
-        category = 'section8';
-      } else if (topics.includes('eviction')) {
-        category = 'eviction';
-      } else if (topics.includes('security_deposit')) {
-        category = 'deposits';
-      } else if (topics.includes('fair_housing')) {
-        category = 'fair_housing';
-      } else if (topics.includes('landlord_tenant')) {
-        category = 'landlord_tenant';
-      }
-      
-      // Also check title/summary for Section 8 keywords as backup
-      const titleLower = (item.title || '').toLowerCase();
-      const summaryLower = (item.summary || '').toLowerCase();
       if (titleLower.includes('section 8') || titleLower.includes('housing choice voucher') || 
-          titleLower.includes('hcv') || summaryLower.includes('section 8') ||
-          summaryLower.includes('housing assistance') || summaryLower.includes('subsidized housing')) {
+          titleLower.includes('hcv') || descLower.includes('section 8') || 
+          descLower.includes('housing choice voucher') || titleLower.includes('hud') ||
+          descLower.includes('housing assistance') || descLower.includes('subsidized housing')) {
         category = 'section8';
+      } else if (titleLower.includes('eviction') || descLower.includes('eviction')) {
+        category = 'eviction';
+      } else if (titleLower.includes('deposit') || descLower.includes('security deposit')) {
+        category = 'deposits';
       }
       
-      // Determine state from jurisdiction
-      const stateId = item.jurisdictionState || (item.jurisdictionLevel === 'federal' ? 'US' : 'US');
-      
-      // Generate AI before/after analysis
-      console.log(`   📝 Generating analysis for: ${item.title?.substring(0, 50)}...`);
-      const analysis = await this.generateBeforeAfterAnalysis(
-        item.title || '',
-        item.summary || '',
-        stateId,
-        category
-      );
-      
-      // Pause between AI calls to avoid hitting rate limits
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      
-      // Create legal update for landlords to see (WITH before/after text)
+      // Create legal update for landlords to see
       await db.insert(legalUpdates).values({
-        stateId,
-        title: item.title,
-        summary: item.summary || item.title,
-        beforeText: analysis.beforeText,
-        afterText: analysis.afterText,
-        whyItMatters: analysis.whyItMatters || item.aiAnalysis || 'This legislative update may affect your rental properties.',
-        impactLevel: item.severity || 'medium',
+        stateId: bill.stateId || 'US',
+        title: bill.billNumber ? `${bill.billNumber}: ${bill.title}` : bill.title,
+        summary: bill.description || bill.title,
+        whyItMatters: bill.aiAnalysis || 'This legislative update may affect your rental properties. Review for potential impact on your lease agreements and compliance requirements.',
+        impactLevel: bill.relevanceLevel || 'medium',
         category,
-        sourceBillId: item.id,
-        affectedTemplateIds: item.affectedTemplateIds || [],
+        sourceBillId: bill.id,
+        affectedTemplateIds: bill.affectedTemplateIds || [],
         isActive: true,
-        effectiveDate: analysis.effectiveDate || item.effectiveDate,
       });
       
       publishedCount++;
-      stateStats[stateId] = (stateStats[stateId] || 0) + 1;
     }
     
     if (publishedCount > 0) {
-      console.log(`📢 Auto-published ${publishedCount} items to Legal Updates:`);
-      for (const [state, count] of Object.entries(stateStats).sort((a, b) => a[0].localeCompare(b[0]))) {
-        console.log(`   ${state}: ${count} updates`);
-      }
+      console.log(`📢 Auto-published ${publishedCount} bills to Legal Updates for landlord visibility`);
     }
     
     return publishedCount;

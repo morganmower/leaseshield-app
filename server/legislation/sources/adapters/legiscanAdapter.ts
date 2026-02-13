@@ -124,102 +124,51 @@ class LegiScanAdapter implements LegislationSourceAdapter {
       throw new Error('LegiScan requires states to be provided via params.states (no hardcoded fallback)');
     }
     const states = params.states;
-    const currentYear = new Date().getFullYear();
-    
-    // Determine years to fetch based on since date:
-    // - First run (no since date): fetch 2 years of history
-    // - Subsequent runs: only fetch years from since date to current year
-    //   (LegiScan API only supports year-based queries, not exact dates)
-    const isFirstRun = !params.since;
-    let yearsToFetch: number[];
-    
-    if (isFirstRun) {
-      // First run: fetch current year and previous year
-      yearsToFetch = [currentYear, currentYear - 1];
-      console.log(`📅 First run detected - fetching ${yearsToFetch.length} years of history: ${yearsToFetch.join(', ')}`);
-    } else {
-      // Subsequent runs: only fetch years from since date to current year
-      // This minimizes API calls while still catching updates from the since year
-      const sinceDate = new Date(params.since!);
-      const sinceYear = sinceDate.getFullYear();
-      yearsToFetch = [];
-      for (let year = sinceYear; year <= currentYear; year++) {
-        yearsToFetch.push(year);
-      }
-      // Cap at 2 years max to conserve API credits
-      if (yearsToFetch.length > 2) {
-        yearsToFetch = yearsToFetch.slice(-2);
-      }
-      console.log(`📅 Fetching years since ${params.since!.split('T')[0]}: ${yearsToFetch.join(', ')}`);
-    }
-    
-    // Parse since date for post-fetch filtering (LegiScan API doesn't support date filtering)
-    const sinceDate = params.since ? new Date(params.since) : null;
-    let totalFetched = 0;
-    let afterSinceCount = 0;
+    const year = new Date().getFullYear();
     
     for (const state of states) {
-      for (const year of yearsToFetch) {
-        try {
-          const keywords = ['landlord', 'tenant', 'rental', 'eviction', 'lease', 'housing'];
-          const query = keywords.join(' OR ');
-          
-          const url = new URL(this.baseUrl);
-          url.searchParams.set('key', this.apiKey);
-          url.searchParams.set('op', 'getSearch');
-          url.searchParams.set('state', state);
-          url.searchParams.set('query', query);
-          url.searchParams.set('year', year.toString());
+      try {
+        const keywords = ['landlord', 'tenant', 'rental', 'eviction', 'lease', 'housing'];
+        const query = keywords.join(' OR ');
+        
+        const url = new URL(this.baseUrl);
+        url.searchParams.set('key', this.apiKey);
+        url.searchParams.set('op', 'getSearch');
+        url.searchParams.set('state', state);
+        url.searchParams.set('query', query);
+        url.searchParams.set('year', year.toString());
 
-          const response = await fetch(url.toString());
-          
-          if (!response.ok) {
-            errors.push(`LegiScan error for ${state} (${year}): ${response.status}`);
-            continue;
-          }
+        const response = await fetch(url.toString());
+        
+        if (!response.ok) {
+          errors.push(`LegiScan error for ${state}: ${response.status}`);
+          continue;
+        }
 
-          const data = await response.json();
-          
-          if (data.status === 'ERROR') {
-            errors.push(`LegiScan error for ${state} (${year}): ${JSON.stringify(data)}`);
-            continue;
-          }
+        const data = await response.json();
+        
+        if (data.status === 'ERROR') {
+          errors.push(`LegiScan error for ${state}: ${JSON.stringify(data)}`);
+          continue;
+        }
 
-          const results = data.searchresult || {};
-          let stateYearCount = 0;
-          for (const key of Object.keys(results)) {
-            if (key === 'summary') continue;
-            const bill = results[key];
-            if (bill && bill.bill_id) {
-              totalFetched++;
-              
-              // Post-fetch filtering: only include bills updated since last run
-              if (sinceDate && bill.status_date) {
-                const billDate = new Date(bill.status_date);
-                if (billDate < sinceDate) {
-                  continue; // Skip bills that haven't been updated since last run
-                }
-                afterSinceCount++;
-              }
-              
-              const normalized = normalizeBill({ ...bill, state });
-              if (!normalized.topics.includes('not_relevant')) {
-                items.push(normalized);
-                stateYearCount++;
-              }
+        const results = data.searchresult || {};
+        for (const key of Object.keys(results)) {
+          if (key === 'summary') continue;
+          const bill = results[key];
+          if (bill && bill.bill_id) {
+            const normalized = normalizeBill({ ...bill, state });
+            if (!normalized.topics.includes('not_relevant')) {
+              items.push(normalized);
             }
           }
-          
-          console.log(`🔍 LegiScan ${state} (${year}): Found ${stateYearCount} relevant bills`);
-          
-        } catch (error) {
-          errors.push(`LegiScan fetch error for ${state} (${year}): ${error}`);
         }
+        
+        console.log(`🔍 LegiScan ${state}: Found ${Object.keys(results).length - 1} bills`);
+        
+      } catch (error) {
+        errors.push(`LegiScan fetch error for ${state}: ${error}`);
       }
-    }
-    
-    if (sinceDate) {
-      console.log(`📊 LegiScan filtering: ${totalFetched} total → ${afterSinceCount} since ${sinceDate.toISOString().split('T')[0]} → ${items.length} relevant`);
     }
 
     return { items, errors };

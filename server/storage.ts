@@ -142,24 +142,6 @@ import {
   stateNotes,
   type StateNote,
   type InsertStateNote,
-  cities,
-  counties,
-  denialCriteria,
-  denialCriteriaRules,
-  denialSentenceTemplates,
-  denialDecisionAuditLogs,
-  type City,
-  type InsertCity,
-  type County,
-  type InsertCounty,
-  type DenialCriteria,
-  type InsertDenialCriteria,
-  type DenialCriteriaRule,
-  type InsertDenialCriteriaRule,
-  type DenialSentenceTemplate,
-  type InsertDenialSentenceTemplate,
-  type DenialDecisionAuditLog,
-  type InsertDenialDecisionAuditLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray, ne } from "drizzle-orm";
@@ -194,7 +176,7 @@ export interface IStorage {
     businessName?: string | null;
     phoneNumber?: string | null;
   }): Promise<User>;
-  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User>;
+  updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User>;
   getUsersNeedingRenewalReminder(): Promise<User[]>;
   getUsersWithPaymentFailed(): Promise<User[]>;
   getAllActiveUsers(): Promise<User[]>;
@@ -261,7 +243,7 @@ export interface IStorage {
     month: number;
     year: number;
     templateDownloads: number;
-    screeningRequests: number;
+    westernVerifyClicks: number;
     creditHelperUses: number;
     criminalHelperUses: number;
     totalEvents: number;
@@ -424,14 +406,11 @@ export interface IStorage {
   getEffectiveDocumentRequirements(linkId: string): Promise<import("@shared/schema").DocumentRequirementsConfig>;
 
   // Rental Application System - Submission operations
-  getRentalSubmissionsByUserId(userId: string, includeDeleted?: boolean, includeArchived?: boolean): Promise<RentalSubmission[]>;
+  getRentalSubmissionsByUserId(userId: string, includeDeleted?: boolean): Promise<RentalSubmission[]>;
   getRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
   createRentalSubmission(submission: InsertRentalSubmission): Promise<RentalSubmission>;
   updateRentalSubmission(id: string, submission: Partial<InsertRentalSubmission>): Promise<RentalSubmission | null>;
   softDeleteRentalSubmission(id: string): Promise<boolean>;
-  archiveRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
-  unarchiveRentalSubmission(id: string): Promise<RentalSubmission | undefined>;
-  autoArchiveOldSubmissions(): Promise<number>;
   getPendingSubmissionsCount(userId: string): Promise<number>;
 
   // Rental Application System - Submission people operations
@@ -460,18 +439,8 @@ export interface IStorage {
   updateRentalScreeningOrder(id: string, order: Partial<InsertRentalScreeningOrder>): Promise<RentalScreeningOrder | null>;
   deleteRentalScreeningOrder(id: string): Promise<boolean>;
   getScreeningOrdersNeedingPoll(): Promise<RentalScreeningOrder[]>;
-  getPendingScreeningOrdersForUser(userId: string): Promise<RentalScreeningOrder[]>;
   getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
     order: RentalScreeningOrder;
-    ownerEmail: string;
-    ownerFirstName: string | null;
-    personName: string;
-    propertyName: string;
-    unitName: string;
-  }>>;
-  getAllPendingScreeningOrdersWithOwner(): Promise<Array<{
-    order: RentalScreeningOrder;
-    ownerUserId: string;
     ownerEmail: string;
     ownerFirstName: string | null;
     personName: string;
@@ -539,21 +508,6 @@ export interface IStorage {
   approveStateNote(id: string, reviewedByUserId: string, approvalChecklist: Record<string, boolean>): Promise<StateNote | null>;
   archiveStateNote(id: string): Promise<StateNote | null>;
   getStateNotesCoverage(): Promise<Array<{ stateId: string; decoder: string; topic: string; hasApproved: boolean; lastReviewedAt: Date | null }>>;
-
-  // Denial Decision Assistant operations
-  getCitiesByState(stateId: string): Promise<City[]>;
-  getCity(id: string): Promise<City | undefined>;
-  getAllDenialCriteria(): Promise<DenialCriteria[]>;
-  getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string, countyId?: string): Promise<DenialCriteriaRule[]>;
-  getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string, countyId?: string): Promise<DenialSentenceTemplate[]>;
-  getCountiesByState(stateId: string): Promise<County[]>;
-  getCounty(id: string): Promise<County | undefined>;
-  createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog>;
-  getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]>;
-  deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean>;
-  updateDenialDecisionAuditLog(id: string, userId: string, updates: { applicantName?: string; outcome?: 'approve' | 'conditional' | 'deny' }): Promise<DenialDecisionAuditLog | null>;
-  updateDenialDecisionAuditLogLetterType(id: number, userId: string, letterType: string): Promise<DenialDecisionAuditLog | null>;
-  updateUserPreferredCity(userId: string, cityId: string | null): Promise<User>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -606,7 +560,7 @@ export class DatabaseStorage implements IStorage {
     }, 'updateUserPreferences');
   }
 
-  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User> {
+  async updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null }): Promise<User> {
     return handleDbOperation(async () => {
       const [user] = await db
         .update(users)
@@ -1033,21 +987,13 @@ export class DatabaseStorage implements IStorage {
         lte(analyticsEvents.createdAt, monthEnd)
       ));
     
-    const screeningRequests = await db
+    const westernVerifyClicks = await db
       .select({ count: sql<number>`count(*)` })
       .from(analyticsEvents)
       .where(and(
-        eq(analyticsEvents.eventType, 'screening_request'),
+        eq(analyticsEvents.eventType, 'western_verify_click'),
         gte(analyticsEvents.createdAt, monthStart),
         lte(analyticsEvents.createdAt, monthEnd)
-      ));
-
-    const applicationsSubmitted = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(rentalSubmissions)
-      .where(and(
-        gte(rentalSubmissions.createdAt, monthStart),
-        lte(rentalSubmissions.createdAt, monthEnd)
       ));
 
     const creditHelperUses = await db
@@ -1069,8 +1015,7 @@ export class DatabaseStorage implements IStorage {
       ));
 
     const totalDownloads = Number(templateDownloads[0]?.count || 0);
-    const totalScreeningRequests = Number(screeningRequests[0]?.count || 0);
-    const totalApplications = Number(applicationsSubmitted[0]?.count || 0);
+    const totalWesternClicks = Number(westernVerifyClicks[0]?.count || 0);
     const totalCreditHelperUses = Number(creditHelperUses[0]?.count || 0);
     const totalCriminalHelperUses = Number(criminalHelperUses[0]?.count || 0);
     const totalUsersCount = Number(totalUsers[0]?.count || 0);
@@ -1095,8 +1040,7 @@ export class DatabaseStorage implements IStorage {
       },
       usage: {
         totalDownloads,
-        applicationsSubmitted: totalApplications,
-        screeningRequests: totalScreeningRequests,
+        westernVerifyClicks: totalWesternClicks,
         creditHelperUses: totalCreditHelperUses,
         criminalHelperUses: totalCriminalHelperUses,
         avgDownloadsPerUser,
@@ -1182,7 +1126,7 @@ export class DatabaseStorage implements IStorage {
     month: number;
     year: number;
     templateDownloads: number;
-    screeningRequests: number;
+    westernVerifyClicks: number;
     creditHelperUses: number;
     criminalHelperUses: number;
     totalEvents: number;
@@ -1192,7 +1136,7 @@ export class DatabaseStorage implements IStorage {
     
     const engagementTypes = [
       'template_download',
-      'screening_request',
+      'western_verify_click',
       'credit_helper_use',
       'criminal_helper_use',
     ];
@@ -1212,7 +1156,7 @@ export class DatabaseStorage implements IStorage {
     // Group by month
     const monthlyData: Map<number, {
       templateDownloads: number;
-      screeningRequests: number;
+      westernVerifyClicks: number;
       creditHelperUses: number;
       criminalHelperUses: number;
     }> = new Map();
@@ -1221,7 +1165,7 @@ export class DatabaseStorage implements IStorage {
     for (let m = 1; m <= 12; m++) {
       monthlyData.set(m, {
         templateDownloads: 0,
-        screeningRequests: 0,
+        westernVerifyClicks: 0,
         creditHelperUses: 0,
         criminalHelperUses: 0,
       });
@@ -1236,8 +1180,8 @@ export class DatabaseStorage implements IStorage {
         case 'template_download':
           data.templateDownloads++;
           break;
-        case 'screening_request':
-          data.screeningRequests++;
+        case 'western_verify_click':
+          data.westernVerifyClicks++;
           break;
         case 'credit_helper_use':
           data.creditHelperUses++;
@@ -1252,7 +1196,7 @@ export class DatabaseStorage implements IStorage {
       month,
       year,
       ...data,
-      totalEvents: data.templateDownloads + data.screeningRequests + data.creditHelperUses + data.criminalHelperUses,
+      totalEvents: data.templateDownloads + data.westernVerifyClicks + data.creditHelperUses + data.criminalHelperUses,
     }));
   }
 
@@ -2224,75 +2168,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Rental Submission operations
-  async getRentalSubmissionsByUserId(userId: string, includeDeleted: boolean = false, includeArchived: boolean = false): Promise<RentalSubmission[]> {
+  async getRentalSubmissionsByUserId(userId: string, includeDeleted: boolean = false): Promise<RentalSubmission[]> {
     return handleDbOperation(async () => {
-      const conditions = [eq(rentalProperties.userId, userId)];
-      if (!includeDeleted) {
-        conditions.push(isNull(rentalSubmissions.deletedAt));
-      }
-      if (!includeArchived) {
-        conditions.push(isNull(rentalSubmissions.archivedAt));
-      }
       const results = await db
         .select({ submission: rentalSubmissions })
         .from(rentalSubmissions)
         .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
         .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
         .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
-        .where(and(...conditions))
+        .where(
+          includeDeleted 
+            ? eq(rentalProperties.userId, userId)
+            : and(eq(rentalProperties.userId, userId), isNull(rentalSubmissions.deletedAt))
+        )
         .orderBy(desc(rentalSubmissions.createdAt));
       return results.map(r => r.submission);
     }, 'getRentalSubmissionsByUserId');
-  }
-
-  async archiveRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
-    return handleDbOperation(async () => {
-      const [updated] = await db.update(rentalSubmissions)
-        .set({ archivedAt: new Date(), updatedAt: new Date() })
-        .where(eq(rentalSubmissions.id, id))
-        .returning();
-      return updated;
-    }, 'archiveRentalSubmission');
-  }
-
-  async unarchiveRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
-    return handleDbOperation(async () => {
-      const [updated] = await db.update(rentalSubmissions)
-        .set({ archivedAt: null, updatedAt: new Date() })
-        .where(eq(rentalSubmissions.id, id))
-        .returning();
-      return updated;
-    }, 'unarchiveRentalSubmission');
-  }
-
-  async autoArchiveOldSubmissions(): Promise<number> {
-    return handleDbOperation(async () => {
-      const sixtyDaysAgo = new Date();
-      sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-
-      const submissionsWithOldScreening = db.select({ id: rentalScreeningOrders.submissionId })
-        .from(rentalScreeningOrders)
-        .where(lt(rentalScreeningOrders.createdAt, sixtyDaysAgo));
-
-      const submissionsWithOldDecision = db.select({ id: rentalDecisions.submissionId })
-        .from(rentalDecisions)
-        .where(lt(rentalDecisions.decidedAt, sixtyDaysAgo));
-
-      const result = await db.update(rentalSubmissions)
-        .set({ archivedAt: new Date(), updatedAt: new Date() })
-        .where(
-          and(
-            isNull(rentalSubmissions.archivedAt),
-            isNull(rentalSubmissions.deletedAt),
-            or(
-              inArray(rentalSubmissions.id, submissionsWithOldScreening),
-              inArray(rentalSubmissions.id, submissionsWithOldDecision)
-            )
-          )
-        )
-        .returning();
-      return result.length;
-    }, 'autoArchiveOldSubmissions');
   }
 
   async getRentalSubmission(id: string): Promise<RentalSubmission | undefined> {
@@ -2498,28 +2389,6 @@ export class DatabaseStorage implements IStorage {
     }, 'getScreeningOrdersNeedingPoll');
   }
 
-  async getPendingScreeningOrdersForUser(userId: string): Promise<RentalScreeningOrder[]> {
-    return handleDbOperation(async () => {
-      return await db
-        .select({ order: rentalScreeningOrders })
-        .from(rentalScreeningOrders)
-        .innerJoin(rentalSubmissions, eq(rentalScreeningOrders.submissionId, rentalSubmissions.id))
-        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
-        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
-        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
-        .where(
-          and(
-            eq(rentalProperties.userId, userId),
-            or(
-              eq(rentalScreeningOrders.status, 'sent'),
-              eq(rentalScreeningOrders.status, 'in_progress')
-            )
-          )
-        )
-        .then(rows => rows.map(r => r.order));
-    }, 'getPendingScreeningOrdersForUser');
-  }
-
   async getInProgressScreeningOrdersWithOwnerInfo(): Promise<Array<{
     order: RentalScreeningOrder;
     ownerEmail: string;
@@ -2549,9 +2418,8 @@ export class DatabaseStorage implements IStorage {
         .leftJoin(rentalSubmissionPeople, eq(rentalScreeningOrders.personId, rentalSubmissionPeople.id))
         .where(
           and(
-            // Include sent/in-progress orders OR complete orders needing notification retry
+            // Include in-progress orders OR complete orders needing notification retry
             or(
-              eq(rentalScreeningOrders.status, 'sent'),
               eq(rentalScreeningOrders.status, 'in_progress'),
               and(
                 eq(rentalScreeningOrders.status, 'complete'),
@@ -2573,58 +2441,6 @@ export class DatabaseStorage implements IStorage {
         unitName: r.unitLabel,
       }));
     }, 'getInProgressScreeningOrdersWithOwnerInfo');
-  }
-
-  async getAllPendingScreeningOrdersWithOwner(): Promise<Array<{
-    order: RentalScreeningOrder;
-    ownerUserId: string;
-    ownerEmail: string;
-    ownerFirstName: string | null;
-    personName: string;
-    propertyName: string;
-    unitName: string;
-  }>> {
-    return handleDbOperation(async () => {
-      const results = await db
-        .select({
-          order: rentalScreeningOrders,
-          ownerUserId: users.id,
-          ownerEmail: users.email,
-          ownerFirstName: users.firstName,
-          personFirstName: rentalSubmissionPeople.firstName,
-          personLastName: rentalSubmissionPeople.lastName,
-          propertyName: rentalProperties.name,
-          unitLabel: rentalUnits.unitLabel,
-        })
-        .from(rentalScreeningOrders)
-        .innerJoin(rentalSubmissions, eq(rentalScreeningOrders.submissionId, rentalSubmissions.id))
-        .innerJoin(rentalApplicationLinks, eq(rentalSubmissions.applicationLinkId, rentalApplicationLinks.id))
-        .innerJoin(rentalUnits, eq(rentalApplicationLinks.unitId, rentalUnits.id))
-        .innerJoin(rentalProperties, eq(rentalUnits.propertyId, rentalProperties.id))
-        .innerJoin(users, eq(rentalProperties.userId, users.id))
-        .leftJoin(rentalSubmissionPeople, eq(rentalScreeningOrders.personId, rentalSubmissionPeople.id))
-        .where(
-          and(
-            or(
-              eq(rentalScreeningOrders.status, 'sent'),
-              eq(rentalScreeningOrders.status, 'in_progress')
-            ),
-            isNull(rentalSubmissions.deletedAt)
-          )
-        );
-
-      return results.map(r => ({
-        order: r.order,
-        ownerUserId: r.ownerUserId,
-        ownerEmail: r.ownerEmail || '',
-        ownerFirstName: r.ownerFirstName,
-        personName: r.personFirstName && r.personLastName 
-          ? `${r.personFirstName} ${r.personLastName}` 
-          : 'Applicant',
-        propertyName: r.propertyName,
-        unitName: r.unitLabel,
-      }));
-    }, 'getAllPendingScreeningOrdersWithOwner');
   }
 
   // Rental Decision operations
@@ -3123,190 +2939,6 @@ export class DatabaseStorage implements IStorage {
 
       return Array.from(coverageMap.values());
     }, 'getStateNotesCoverage');
-  }
-
-  // Denial Decision Assistant operations
-  async getCitiesByState(stateId: string): Promise<City[]> {
-    return handleDbOperation(async () => {
-      return await db.select().from(cities)
-        .where(and(eq(cities.stateId, stateId), eq(cities.isActive, true)))
-        .orderBy(cities.name);
-    }, 'getCitiesByState');
-  }
-
-  async getCity(id: string): Promise<City | undefined> {
-    return handleDbOperation(async () => {
-      const [city] = await db.select().from(cities).where(eq(cities.id, id));
-      return city;
-    }, 'getCity');
-  }
-
-  async getAllDenialCriteria(): Promise<DenialCriteria[]> {
-    return handleDbOperation(async () => {
-      return await db.select().from(denialCriteria)
-        .where(eq(denialCriteria.isActive, true))
-        .orderBy(denialCriteria.sortOrder, denialCriteria.label);
-    }, 'getAllDenialCriteria');
-  }
-
-  async getDenialCriteriaRulesForJurisdiction(stateId: string, cityId?: string, countyId?: string): Promise<DenialCriteriaRule[]> {
-    return handleDbOperation(async () => {
-      const conditions = [
-        or(
-          isNull(denialCriteriaRules.stateId),
-          eq(denialCriteriaRules.stateId, stateId)
-        ),
-        or(
-          isNull(denialCriteriaRules.endDate),
-          gt(denialCriteriaRules.endDate, new Date())
-        )
-      ];
-
-      // Include city rules if cityId provided
-      if (cityId) {
-        conditions.push(
-          or(
-            isNull(denialCriteriaRules.cityId),
-            eq(denialCriteriaRules.cityId, cityId)
-          )
-        );
-      } else {
-        conditions.push(isNull(denialCriteriaRules.cityId));
-      }
-
-      // Include county rules if countyId provided
-      if (countyId) {
-        conditions.push(
-          or(
-            isNull(denialCriteriaRules.countyId),
-            eq(denialCriteriaRules.countyId, countyId)
-          )
-        );
-      } else {
-        conditions.push(isNull(denialCriteriaRules.countyId));
-      }
-
-      return await db.select().from(denialCriteriaRules)
-        .where(and(...conditions))
-        .orderBy(desc(denialCriteriaRules.version));
-    }, 'getDenialCriteriaRulesForJurisdiction');
-  }
-
-  async getCountiesByState(stateId: string): Promise<County[]> {
-    return handleDbOperation(async () => {
-      return await db.select().from(counties)
-        .where(and(eq(counties.stateId, stateId), eq(counties.isActive, true)))
-        .orderBy(counties.name);
-    }, 'getCountiesByState');
-  }
-
-  async getCounty(id: string): Promise<County | undefined> {
-    return handleDbOperation(async () => {
-      const result = await db.select().from(counties).where(eq(counties.id, id));
-      return result[0];
-    }, 'getCounty');
-  }
-
-  async getDenialSentenceTemplates(criteriaIds: string[], stateId: string, cityId?: string, countyId?: string): Promise<DenialSentenceTemplate[]> {
-    return handleDbOperation(async () => {
-      if (criteriaIds.length === 0) return [];
-
-      const conditions = [
-        inArray(denialSentenceTemplates.criteriaId, criteriaIds),
-        eq(denialSentenceTemplates.isActive, true),
-        or(
-          isNull(denialSentenceTemplates.stateId),
-          eq(denialSentenceTemplates.stateId, stateId)
-        )
-      ];
-
-      if (cityId) {
-        conditions.push(
-          or(
-            isNull(denialSentenceTemplates.cityId),
-            eq(denialSentenceTemplates.cityId, cityId)
-          )
-        );
-      } else {
-        conditions.push(isNull(denialSentenceTemplates.cityId));
-      }
-
-      // Note: denialSentenceTemplates doesn't have countyId column yet, 
-      // but we can add it later if needed
-
-      return await db.select().from(denialSentenceTemplates)
-        .where(and(...conditions));
-    }, 'getDenialSentenceTemplates');
-  }
-
-  async createDenialDecisionAuditLog(log: InsertDenialDecisionAuditLog): Promise<DenialDecisionAuditLog> {
-    return handleDbOperation(async () => {
-      const [created] = await db.insert(denialDecisionAuditLogs)
-        .values(log)
-        .returning();
-      return created;
-    }, 'createDenialDecisionAuditLog');
-  }
-
-  async getDenialDecisionAuditLogs(userId: string): Promise<DenialDecisionAuditLog[]> {
-    return handleDbOperation(async () => {
-      return await db.select().from(denialDecisionAuditLogs)
-        .where(eq(denialDecisionAuditLogs.userId, userId))
-        .orderBy(desc(denialDecisionAuditLogs.createdAt));
-    }, 'getDenialDecisionAuditLogs');
-  }
-
-  async deleteDenialDecisionAuditLog(id: string, userId: string): Promise<boolean> {
-    return handleDbOperation(async () => {
-      const result = await db.delete(denialDecisionAuditLogs)
-        .where(and(
-          eq(denialDecisionAuditLogs.id, id),
-          eq(denialDecisionAuditLogs.userId, userId)
-        ));
-      return (result.rowCount ?? 0) > 0;
-    }, 'deleteDenialDecisionAuditLog');
-  }
-
-  async updateDenialDecisionAuditLog(id: string, userId: string, updates: { applicantName?: string; outcome?: 'approve' | 'conditional' | 'deny' }): Promise<DenialDecisionAuditLog | null> {
-    return handleDbOperation(async () => {
-      const [updated] = await db.update(denialDecisionAuditLogs)
-        .set(updates)
-        .where(and(
-          eq(denialDecisionAuditLogs.id, id),
-          eq(denialDecisionAuditLogs.userId, userId)
-        ))
-        .returning();
-      return updated || null;
-    }, 'updateDenialDecisionAuditLog');
-  }
-
-  async updateDenialDecisionAuditLogLetterType(id: number, userId: string, letterType: string): Promise<DenialDecisionAuditLog | null> {
-    return handleDbOperation(async () => {
-      const [updated] = await db.update(denialDecisionAuditLogs)
-        .set({ 
-          letterTypeDownloaded: letterType,
-          adverseActionLetterGenerated: true
-        })
-        .where(and(
-          eq(denialDecisionAuditLogs.id, String(id)),
-          eq(denialDecisionAuditLogs.userId, userId)
-        ))
-        .returning();
-      return updated || null;
-    }, 'updateDenialDecisionAuditLogLetterType');
-  }
-
-  async updateUserPreferredCity(userId: string, cityId: string | null): Promise<User> {
-    return handleDbOperation(async () => {
-      const [user] = await db.update(users)
-        .set({ preferredCity: cityId, updatedAt: new Date() })
-        .where(eq(users.id, userId))
-        .returning();
-      if (!user) {
-        throw new Error(`User not found: ${userId}`);
-      }
-      return user;
-    }, 'updateUserPreferredCity');
   }
 }
 

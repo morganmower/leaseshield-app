@@ -181,15 +181,7 @@ class FederalRegisterAdapter implements LegislationSourceAdapter {
     
     try {
       const toDate = new Date();
-      // First run (no since date): fetch 2 years of history
-      // Subsequent runs: use the since date from last run
-      const isFirstRun = !params.since;
-      const twoYearsAgo = new Date(Date.now() - 2 * 365 * 24 * 60 * 60 * 1000);
-      const fromDate = params.since ? new Date(params.since) : twoYearsAgo;
-      
-      if (isFirstRun) {
-        console.log(`📅 First run detected - fetching 2 years of Federal Register history`);
-      }
+      const fromDate = params.since ? new Date(params.since) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
       
       const searchParams = new URLSearchParams();
       searchParams.append('conditions[agencies][]', 'housing-and-urban-development-department');
