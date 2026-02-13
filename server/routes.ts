@@ -5,7 +5,7 @@ import { storage } from "./storage";
 import { isAuthenticated, requireAccess, requireAdmin, startImpersonation, stopImpersonation, getImpersonationStatus } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema, rentalSubmissionFiles, uploadedDocuments } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
 import { eq, desc } from "drizzle-orm";
@@ -87,66 +87,19 @@ const applicantUpload = multer({
   }
 });
 
-import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
-
-function parseObjectStoragePath(fullPath: string): { bucketName: string; objectName: string } {
-  const normalized = fullPath.startsWith('/') ? fullPath : `/${fullPath}`;
-  const parts = normalized.split('/');
-  if (parts.length < 3) throw new Error('Invalid object storage path');
-  return { bucketName: parts[1], objectName: parts.slice(2).join('/') };
-}
+import { uploadFileToCloud, downloadFileFromCloud, deleteFileFromCloud, checkFileHealth } from "./fileStorage";
 
 async function uploadToObjectStorage(buffer: Buffer, folder: string, originalName: string, mimeType: string): Promise<string> {
-  const privateDir = process.env.PRIVATE_OBJECT_DIR || '';
-  if (!privateDir) throw new Error('PRIVATE_OBJECT_DIR not set');
-  const uniqueId = randomUUID();
-  const ext = path.extname(originalName).toLowerCase();
-  const objectPath = `${privateDir}/${folder}/${uniqueId}${ext}`;
-  const { bucketName, objectName } = parseObjectStoragePath(objectPath);
-  const bucket = objectStorageClient.bucket(bucketName);
-  const file = bucket.file(objectName);
-  await file.save(buffer, { contentType: mimeType, resumable: false });
-  return objectPath;
+  const result = await uploadFileToCloud(buffer, folder, originalName, mimeType);
+  return result.storedPath;
 }
 
 async function downloadFromObjectStorage(storedPath: string, res: any, originalName: string, mimeType?: string | null) {
-  if (storedPath.startsWith('uploads/') || storedPath.startsWith('/home/')) {
-    return res.status(404).json({ message: "File was stored on local disk and is no longer available. Please re-upload." });
-  }
-  const { bucketName, objectName } = parseObjectStoragePath(storedPath);
-  const bucket = objectStorageClient.bucket(bucketName);
-  const file = bucket.file(objectName);
-  const [exists] = await file.exists();
-  if (!exists) {
-    return res.status(404).json({ message: "File not found in storage" });
-  }
-  const [metadata] = await file.getMetadata();
-  res.set({
-    'Content-Type': mimeType || metadata.contentType || 'application/octet-stream',
-    'Content-Disposition': `attachment; filename="${originalName}"`,
-    'Content-Length': metadata.size,
-  });
-  const stream = file.createReadStream();
-  stream.on('error', (err: Error) => {
-    console.error('Stream error:', err);
-    if (!res.headersSent) res.status(500).json({ message: 'Error streaming file' });
-  });
-  stream.pipe(res);
+  await downloadFileFromCloud(storedPath, res, originalName, mimeType);
 }
 
 async function deleteFromObjectStorage(storedPath: string): Promise<void> {
-  if (storedPath.startsWith('uploads/') || storedPath.startsWith('/home/')) {
-    return;
-  }
-  try {
-    const { bucketName, objectName } = parseObjectStoragePath(storedPath);
-    const bucket = objectStorageClient.bucket(bucketName);
-    const file = bucket.file(objectName);
-    const [exists] = await file.exists();
-    if (exists) await file.delete();
-  } catch (e) {
-    console.error('Error deleting from object storage:', e);
-  }
+  await deleteFileFromCloud(storedPath);
 }
 
 // Helper to get user ID from request with validation
@@ -10438,6 +10391,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
     });
   }));
+
+  app.get('/api/admin/file-health', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const rentalFiles = await db.select().from(rentalSubmissionFiles);
+      const uploadedDocs = await db.select().from(uploadedDocuments);
+
+      const results: any[] = [];
+      let healthy = 0;
+      let broken = 0;
+      let localOnly = 0;
+
+      for (const f of rentalFiles) {
+        const status = await checkFileHealth(f.id, f.originalName, f.storedPath, f.fileSize);
+        if (status.exists && status.sizeMatch) healthy++;
+        else if (status.storedPath.startsWith('uploads/') || status.storedPath.startsWith('/home/')) localOnly++;
+        else broken++;
+        results.push({ ...status, table: 'rental_submission_files', personId: f.personId });
+      }
+
+      for (const d of uploadedDocs) {
+        const status = await checkFileHealth(d.id, d.fileName, d.fileUrl, d.fileSize);
+        if (status.exists && status.sizeMatch) healthy++;
+        else if (status.storedPath.startsWith('uploads/') || status.storedPath.startsWith('/home/')) localOnly++;
+        else broken++;
+        results.push({ ...status, table: 'uploaded_documents', userId: d.userId });
+      }
+
+      res.json({
+        summary: {
+          total: results.length,
+          healthy,
+          broken,
+          localOnly,
+          checkedAt: new Date().toISOString(),
+        },
+        files: results,
+      });
+    } catch (error) {
+      console.error("Error checking file health:", error);
+      res.status(500).json({ message: "Failed to check file health" });
+    }
+  });
 
   const httpServer = createServer(app);
   return httpServer;
