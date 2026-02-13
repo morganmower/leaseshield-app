@@ -160,6 +160,9 @@ import {
   type InsertDenialSentenceTemplate,
   type DenialDecisionAuditLog,
   type InsertDenialDecisionAuditLog,
+  documentReuploadTokens,
+  type DocumentReuploadToken,
+  type InsertDocumentReuploadToken,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, and, or, desc, sql, isNull, lte, lt, gt, gte, inArray, ne } from "drizzle-orm";
@@ -436,15 +439,25 @@ export interface IStorage {
 
   // Rental Application System - Submission people operations
   getRentalSubmissionPeople(submissionId: string): Promise<RentalSubmissionPerson[]>;
+  getRentalSubmissionPerson(id: string): Promise<RentalSubmissionPerson | undefined>;
   getRentalSubmissionPersonByToken(token: string): Promise<RentalSubmissionPerson | undefined>;
   createRentalSubmissionPerson(person: InsertRentalSubmissionPerson): Promise<RentalSubmissionPerson>;
   updateRentalSubmissionPerson(id: string, person: Partial<InsertRentalSubmissionPerson>): Promise<RentalSubmissionPerson | null>;
 
   // Rental Application System - File operations
   getRentalSubmissionFiles(personId: string): Promise<RentalSubmissionFile[]>;
+  getCurrentFiles(personId: string): Promise<RentalSubmissionFile[]>;
   getRentalSubmissionFile(id: string): Promise<RentalSubmissionFile | undefined>;
   createRentalSubmissionFile(file: InsertRentalSubmissionFile): Promise<RentalSubmissionFile>;
   deleteRentalSubmissionFile(id: string): Promise<boolean>;
+  supersedeFilesForType(personId: string, fileType: string): Promise<void>;
+
+  // Document Re-upload Tokens
+  createDocumentReuploadToken(token: InsertDocumentReuploadToken): Promise<DocumentReuploadToken>;
+  getDocumentReuploadToken(id: string): Promise<DocumentReuploadToken | undefined>;
+  markDocumentReuploadTokenUsed(id: string): Promise<void>;
+  revokeDocumentReuploadToken(id: string): Promise<void>;
+  getDocumentReuploadTokensForPerson(personId: string): Promise<DocumentReuploadToken[]>;
 
   // Rental Application System - Acknowledgement operations
   createRentalSubmissionAcknowledgement(ack: InsertRentalSubmissionAcknowledgement): Promise<RentalSubmissionAcknowledgement>;
@@ -2351,6 +2364,14 @@ export class DatabaseStorage implements IStorage {
     }, 'getRentalSubmissionPeople');
   }
 
+  async getRentalSubmissionPerson(id: string): Promise<RentalSubmissionPerson | undefined> {
+    return handleDbOperation(async () => {
+      const [person] = await db.select().from(rentalSubmissionPeople)
+        .where(eq(rentalSubmissionPeople.id, id));
+      return person;
+    }, 'getRentalSubmissionPerson');
+  }
+
   async getRentalSubmissionPersonByToken(token: string): Promise<RentalSubmissionPerson | undefined> {
     return handleDbOperation(async () => {
       const [person] = await db.select().from(rentalSubmissionPeople).where(eq(rentalSubmissionPeople.inviteToken, token));
@@ -2400,11 +2421,74 @@ export class DatabaseStorage implements IStorage {
     }, 'createRentalSubmissionFile');
   }
 
+  async getCurrentFiles(personId: string): Promise<RentalSubmissionFile[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(rentalSubmissionFiles)
+        .where(and(
+          eq(rentalSubmissionFiles.personId, personId),
+          isNull(rentalSubmissionFiles.supersededAt),
+          eq(rentalSubmissionFiles.availabilityStatus, 'available')
+        ));
+    }, 'getCurrentFiles');
+  }
+
   async deleteRentalSubmissionFile(id: string): Promise<boolean> {
     return handleDbOperation(async () => {
       await db.delete(rentalSubmissionFiles).where(eq(rentalSubmissionFiles.id, id));
       return true;
     }, 'deleteRentalSubmissionFile');
+  }
+
+  async supersedeFilesForType(personId: string, fileType: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(rentalSubmissionFiles)
+        .set({ supersededAt: new Date() })
+        .where(and(
+          eq(rentalSubmissionFiles.personId, personId),
+          eq(rentalSubmissionFiles.fileType, fileType),
+          isNull(rentalSubmissionFiles.supersededAt)
+        ));
+    }, 'supersedeFilesForType');
+  }
+
+  // Document Re-upload Token operations
+  async createDocumentReuploadToken(token: InsertDocumentReuploadToken): Promise<DocumentReuploadToken> {
+    return handleDbOperation(async () => {
+      const [newToken] = await db.insert(documentReuploadTokens).values(token).returning();
+      return newToken;
+    }, 'createDocumentReuploadToken');
+  }
+
+  async getDocumentReuploadToken(id: string): Promise<DocumentReuploadToken | undefined> {
+    return handleDbOperation(async () => {
+      const [token] = await db.select().from(documentReuploadTokens)
+        .where(eq(documentReuploadTokens.id, id));
+      return token;
+    }, 'getDocumentReuploadToken');
+  }
+
+  async markDocumentReuploadTokenUsed(id: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(documentReuploadTokens)
+        .set({ usedAt: new Date() })
+        .where(eq(documentReuploadTokens.id, id));
+    }, 'markDocumentReuploadTokenUsed');
+  }
+
+  async revokeDocumentReuploadToken(id: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(documentReuploadTokens)
+        .set({ revokedAt: new Date() })
+        .where(eq(documentReuploadTokens.id, id));
+    }, 'revokeDocumentReuploadToken');
+  }
+
+  async getDocumentReuploadTokensForPerson(personId: string): Promise<DocumentReuploadToken[]> {
+    return handleDbOperation(async () => {
+      return await db.select().from(documentReuploadTokens)
+        .where(eq(documentReuploadTokens.personId, personId))
+        .orderBy(desc(documentReuploadTokens.createdAt));
+    }, 'getDocumentReuploadTokensForPerson');
   }
 
   // Rental Submission Acknowledgement operations

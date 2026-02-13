@@ -71,6 +71,7 @@ import ScreeningExplain from "@/pages/screening-explain";
 import DashboardPreview from "@/pages/dashboard-preview";
 import Activate from "@/pages/activate";
 import DenialDecisionAssistant from "@/pages/denial-decision-assistant";
+import Reupload from "@/pages/reupload";
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -123,6 +124,8 @@ function Router() {
         <Route path="/apply/:token" component={Apply} />
         <Route path="/apply/join/:token" component={Apply} />
         <Route path="/apply/person/:token" component={Apply} />
+        {/* Document re-upload */}
+        <Route path="/reupload/:token" component={Reupload} />
         {/* Redirect protected routes to login */}
         <Route path="/dashboard">{() => <Redirect to="/login" />}</Route>
         <Route path="/templates">{() => <Redirect to="/login" />}</Route>
@@ -175,6 +178,8 @@ function Router() {
       <Route path="/apply/:token" component={Apply} />
       <Route path="/apply/join/:token" component={Apply} />
       <Route path="/apply/person/:token" component={Apply} />
+      {/* Document re-upload (also accessible when logged in) */}
+      <Route path="/reupload/:token" component={Reupload} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening" component={Screening} />

@@ -96,7 +96,8 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
   - **Readiness Flag**: `states.decoder_notes_ready` boolean tracks when required topics are approved
 - **AI Chat Assistant**: Integrated GPT-4o-mini chat widget (OpenAI) for instant help on landlord-tenant law and platform features.
 - **Multi-Property Management**: CRUD operations for properties, document association, and filtering.
-- **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming and optional property association.
+- **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming and optional property association. Applicant file uploads stored in Replit Object Storage (.private/applicants/). Files tracked with `availability_status` (available/missing/legacy_local) and `superseded_at` for version history.
+- **Document Re-Upload System**: Secure token-based links for applicants to re-upload missing documents. Admin picks missing doc types, system emails applicant a 7-day expiring link. Uploads write to same `rental_submission_files` table with supersede logic. Token auto-completes when all requested types are uploaded. DB table: `document_reupload_tokens`. Route: `/reupload/:token`.
 - **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements, statute citations, key requirements, and actionable steps.
 
 ### Feature Specifications

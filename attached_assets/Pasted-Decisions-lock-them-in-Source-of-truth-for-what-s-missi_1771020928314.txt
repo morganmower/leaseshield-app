@@ -1,0 +1,226 @@
+Decisions (lock them in)
+
+Source of truth for “what’s missing”: admin-picked list at link creation (no required-docs system yet).
+
+Token scope: per-person (clean, precise, avoids co-applicant complexity).
+
+Email: Resend, short template.
+
+Superseded: do it (keeps UI clean, avoids “which is current?”).
+
+Below is the concrete spec + DB + endpoints + logic you can implement straight away.
+
+1) DB changes
+A) rental_submission_files
+
+Add two columns:
+
+ALTER TABLE rental_submission_files
+ADD COLUMN IF NOT EXISTS availability_status TEXT NOT NULL DEFAULT 'available';
+
+ALTER TABLE rental_submission_files
+ADD COLUMN IF NOT EXISTS superseded_at TIMESTAMPTZ NULL;
+
+CREATE INDEX IF NOT EXISTS idx_rsf_person_type_status
+ON rental_submission_files (person_id, file_type, availability_status);
+
+CREATE INDEX IF NOT EXISTS idx_rsf_person_type_superseded
+ON rental_submission_files (person_id, file_type, superseded_at);
+
+
+Rule: “Current” file for a person+type is the newest row where superseded_at IS NULL AND availability_status='available'.
+
+B) New table: document_reupload_tokens
+CREATE TABLE IF NOT EXISTS document_reupload_tokens (
+  id UUID PRIMARY KEY,
+  person_id UUID NOT NULL,
+  allowed_file_types JSONB NOT NULL,        -- e.g. ["id","paystub"]
+  expires_at TIMESTAMPTZ NOT NULL,
+  used_at TIMESTAMPTZ NULL,
+  created_by_user_id TEXT NULL,             -- optional (admin user id)
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_drt_person
+ON document_reupload_tokens (person_id);
+
+CREATE INDEX IF NOT EXISTS idx_drt_expires
+ON document_reupload_tokens (expires_at);
+
+
+Optional (nice): revoked_at TIMESTAMPTZ NULL.
+
+2) Admin workflow (explicit selection)
+UI behavior
+
+On the person/applicant detail screen:
+
+Button: Request documents
+
+Modal:
+
+checklist of doc types (id, paystub, w2, offer_letter, etc.)
+
+admin selects what’s missing
+
+default to previously-uploaded file types that are missing/unavailable if you want (but still admin confirm)
+
+3) API endpoints
+A) Admin creates token + sends email
+
+POST /api/admin/people/:personId/reupload-link
+
+Body:
+
+{
+  "allowed_file_types": ["id","paystub"],
+  "expires_in_days": 7
+}
+
+
+Server:
+
+validate types are in an allowlist
+
+create token row
+
+email applicant with link
+
+Response:
+
+{ "ok": true, "link": "https://yourapp.com/reupload/<token>" }
+
+B) Applicant loads token (what to upload)
+
+GET /api/reupload/:token
+
+Response:
+
+{
+  "person_id": "...",
+  "allowed_file_types": ["id","paystub"],
+  "expires_at": "...",
+  "already_uploaded": ["id"]   // optional convenience for UI
+}
+
+
+Rules:
+
+if expired or used → 410 Gone (with friendly message)
+
+do NOT return PII; just show allowed doc labels on UI
+
+C) Applicant uploads a doc (only allowed types)
+
+POST /api/reupload/:token/upload (multipart form-data)
+Fields:
+
+file_type (string)
+
+file (binary)
+
+Server does:
+
+Validate token not expired/revoked
+
+Validate file_type in token.allowed_file_types
+
+Validate mime/size
+
+Upload to object storage: .private/applicants/<uuid>.<ext>
+
+DB transaction:
+
+supersede any existing rows for same person_id + file_type where superseded_at IS NULL
+
+insert new row with availability_status='available' and superseded_at NULL
+
+Then optionally mark token used_at if all allowed file types now have an available, not-superseded file.
+
+4) Supersede logic (exact rule)
+
+When a new upload arrives for (person_id, file_type):
+
+UPDATE rental_submission_files
+SET superseded_at = now()
+WHERE person_id = $1
+  AND file_type = $2
+  AND superseded_at IS NULL;
+
+
+Then insert the new row.
+
+This works whether previous row was available or missing. It keeps one “current” row.
+
+5) Token completion rule
+
+After each upload, check if every allowed type has a current available file:
+
+For each type in allowed_file_types:
+
+exists row where person_id=?, file_type=?, superseded_at IS NULL, availability_status='available'
+
+If yes → set used_at=now().
+
+This prevents endless reuse and is very clean.
+
+6) Email template (Resend, restrained tone)
+
+Subject options:
+
+“Upload the missing documents”
+
+“Action needed: finish your application”
+
+Body (short):
+
+2 sentences
+
+bullet list of requested docs
+
+button/link
+
+expiry note
+
+Example:
+
+Subject: Upload the missing documents
+
+Hi {{firstNameOrThere}},
+
+We’re missing a couple items to finish your application: {{docList}}.
+Please upload them here: {{link}}
+
+This link expires on {{date}}.
+
+Thanks,
+Morgan
+LeaseShield / Western Verify
+
+(You can keep the brand name consistent with whichever is in the portal.)
+
+7) Download route behavior (ties into your “missing marking”)
+
+When serving an object path:
+
+if exists() false → set availability_status='missing' for the current row (superseded_at IS NULL), then return clean 404 message.
+
+This gives you self-healing status without a scheduled job.
+
+8) Allowlist doc types (do this now)
+
+Hardcode a server-side enum like:
+
+id
+
+paystub
+
+w2
+
+bank_statement
+
+offer_letter
+
+other
+
+Even if the admin UI shows checkboxes, the server must enforce.

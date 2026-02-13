@@ -1363,12 +1363,13 @@ export type RentalSubmissionPerson = typeof rentalSubmissionPeople.$inferSelect;
 export const rentalSubmissionFiles = pgTable("rental_submission_files", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   personId: varchar("person_id").notNull().references(() => rentalSubmissionPeople.id, { onDelete: 'cascade' }),
-  fileType: varchar("file_type", { length: 50 }).notNull(), // gov_id, paystubs, tax_docs, other
+  fileType: varchar("file_type", { length: 50 }).notNull(), // id, paystub, w2, bank, etc.
   originalName: text("original_name").notNull(),
   storedPath: text("stored_path").notNull(),
   fileSize: integer("file_size"),
   mimeType: varchar("mime_type", { length: 100 }),
   availabilityStatus: varchar("availability_status", { length: 20 }).notNull().default('available'),
+  supersededAt: timestamp("superseded_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -2410,3 +2411,29 @@ export const insertDenialDecisionAuditLogSchema = createInsertSchema(denialDecis
 });
 export type InsertDenialDecisionAuditLog = z.infer<typeof insertDenialDecisionAuditLogSchema>;
 export type DenialDecisionAuditLog = typeof denialDecisionAuditLogs.$inferSelect;
+
+// Document Re-upload Tokens - secure links for applicants to re-upload missing docs
+export const documentReuploadTokens = pgTable("document_reupload_tokens", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  personId: varchar("person_id").notNull().references(() => rentalSubmissionPeople.id, { onDelete: 'cascade' }),
+  allowedFileTypes: jsonb("allowed_file_types").notNull().$type<string[]>(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  revokedAt: timestamp("revoked_at"),
+  createdByUserId: text("created_by_user_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const documentReuploadTokensRelations = relations(documentReuploadTokens, ({ one }) => ({
+  person: one(rentalSubmissionPeople, {
+    fields: [documentReuploadTokens.personId],
+    references: [rentalSubmissionPeople.id],
+  }),
+}));
+
+export const insertDocumentReuploadTokenSchema = createInsertSchema(documentReuploadTokens).omit({
+  id: true,
+  createdAt: true,
+});
+export type InsertDocumentReuploadToken = z.infer<typeof insertDocumentReuploadTokenSchema>;
+export type DocumentReuploadToken = typeof documentReuploadTokens.$inferSelect;

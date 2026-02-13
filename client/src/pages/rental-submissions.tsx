@@ -249,6 +249,9 @@ export default function RentalSubmissions() {
   const [deleteSubmissionId, setDeleteSubmissionId] = useState<string | null>(null);
   const [showArchived, setShowArchived] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isReuploadDialogOpen, setIsReuploadDialogOpen] = useState(false);
+  const [reuploadPersonId, setReuploadPersonId] = useState<string | null>(null);
+  const [selectedReuploadTypes, setSelectedReuploadTypes] = useState<string[]>([]);
 
   const { data: submissions, isLoading: isLoadingSubmissions, refetch: refetchSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions", { includeArchived: showArchived }],
@@ -655,6 +658,36 @@ Best regards`;
     },
     onError: (error: any) => {
       toast({ title: "Error", description: error?.message || "Failed to update application.", variant: "destructive" });
+    },
+  });
+
+  const reuploadDocTypes = [
+    { type: "id", label: "Government-issued ID" },
+    { type: "paystub", label: "Pay Stubs" },
+    { type: "w2", label: "W-2 / Tax Documents" },
+    { type: "employment_letter", label: "Employment Verification Letter" },
+    { type: "bank", label: "Bank Statements" },
+    { type: "reference", label: "Reference Letters" },
+    { type: "rental_history", label: "Rental History / Landlord Reference" },
+    { type: "pet_doc", label: "Pet Documentation" },
+    { type: "additional", label: "Additional Supporting Documents" },
+    { type: "income", label: "Proof of Income" },
+  ];
+
+  const requestReuploadMutation = useMutation({
+    mutationFn: async ({ personId, types }: { personId: string; types: string[] }) => {
+      return apiRequest("POST", `/api/admin/people/${personId}/reupload-link`, {
+        allowed_file_types: types,
+        expires_in_days: 7,
+      });
+    },
+    onSuccess: (data: any) => {
+      setIsReuploadDialogOpen(false);
+      setSelectedReuploadTypes([]);
+      toast({ title: "Link sent", description: "The applicant will receive an email with the upload link." });
+    },
+    onError: (error: any) => {
+      toast({ title: "Error", description: error?.message || "Failed to send re-upload link.", variant: "destructive" });
     },
   });
 
@@ -1586,17 +1619,32 @@ Best regards`;
                             {roleLabels[person.role] || person.role}
                           </Badge>
                         </div>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          onClick={() => {
-                            setUploadPersonId(person.id);
-                            setIsUploadDialogOpen(true);
-                          }}
-                          data-testid={`button-upload-for-${person.id}`}
-                        >
-                          <Upload className="h-4 w-4" />
-                        </Button>
+                        <div className="flex items-center gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setReuploadPersonId(person.id);
+                              setSelectedReuploadTypes([]);
+                              setIsReuploadDialogOpen(true);
+                            }}
+                            data-testid={`button-request-docs-${person.id}`}
+                          >
+                            <Mail className="h-4 w-4 mr-1" />
+                            Request Docs
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              setUploadPersonId(person.id);
+                              setIsUploadDialogOpen(true);
+                            }}
+                            data-testid={`button-upload-for-${person.id}`}
+                          >
+                            <Upload className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
                       {personFiles.length === 0 ? (
                         <p className="text-sm text-muted-foreground" data-testid={`text-no-docs-${person.id}`}>No documents uploaded.</p>
@@ -2038,6 +2086,62 @@ Best regards`;
               >
                 {uploadFileMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 Upload {uploadFiles.length > 0 ? `(${uploadFiles.length})` : ''}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={isReuploadDialogOpen} onOpenChange={setIsReuploadDialogOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Request Missing Documents</DialogTitle>
+              <DialogDescription>
+                Select which documents to request from this applicant. They'll receive an email with a secure upload link that expires in 7 days.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-3 max-h-80 overflow-y-auto">
+              {reuploadDocTypes.map((dt) => (
+                <label
+                  key={dt.type}
+                  className="flex items-center gap-3 p-2 rounded-md hover-elevate cursor-pointer"
+                  data-testid={`checkbox-reupload-${dt.type}`}
+                >
+                  <Checkbox
+                    checked={selectedReuploadTypes.includes(dt.type)}
+                    onCheckedChange={(checked) => {
+                      setSelectedReuploadTypes((prev) =>
+                        checked
+                          ? [...prev, dt.type]
+                          : prev.filter((t) => t !== dt.type)
+                      );
+                    }}
+                  />
+                  <span className="text-sm">{dt.label}</span>
+                </label>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => setIsReuploadDialogOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (reuploadPersonId && selectedReuploadTypes.length > 0) {
+                    requestReuploadMutation.mutate({
+                      personId: reuploadPersonId,
+                      types: selectedReuploadTypes,
+                    });
+                  }
+                }}
+                disabled={selectedReuploadTypes.length === 0 || requestReuploadMutation.isPending}
+                data-testid="button-send-reupload-link"
+              >
+                {requestReuploadMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                <Mail className="h-4 w-4 mr-1" />
+                Send Upload Link
               </Button>
             </DialogFooter>
           </DialogContent>
