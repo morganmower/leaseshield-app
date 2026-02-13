@@ -1029,6 +1029,7 @@ export default function Screening() {
                 </AccordionItem>
               </Accordion>
 
+              {/* Quick Decision CTA */}
               <Link href="/denial-decision">
                 <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-credit-decision-cta">
                   <div className="flex items-center gap-3">

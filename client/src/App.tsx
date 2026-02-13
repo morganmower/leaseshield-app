@@ -15,7 +15,6 @@ import { HeaderContext } from "@/components/header-context";
 import { ErrorBoundary } from "@/components/error-boundary";
 import { ChatWidget } from "@/components/chat-widget";
 import { PaymentFailedBanner } from "@/components/payment-failed-banner";
-import { ImpersonationBanner } from "@/components/ImpersonationBanner";
 import { SubscriptionGate } from "@/components/subscription-gate";
 import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
@@ -57,7 +56,6 @@ import AdminScreeningCredentials from "@/pages/admin-screening-credentials";
 import AdminTips from "@/pages/admin-tips";
 import AdminApplicationsActivity from "@/pages/admin-applications-activity";
 import AdminStateNotes from "@/pages/admin-state-notes";
-import AdminFileRecovery from "@/pages/admin-file-recovery";
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
 import AuditHistory from "@/pages/audit-history";
@@ -204,7 +202,6 @@ function Router() {
       <Route path="/admin/tips">{() => <AdminRoute component={AdminTips} />}</Route>
       <Route path="/admin/state-notes">{() => <AdminRoute component={AdminStateNotes} />}</Route>
       <Route path="/admin/applications-activity">{() => <AdminRoute component={AdminApplicationsActivity} />}</Route>
-      <Route path="/admin/file-recovery">{() => <AdminRoute component={AdminFileRecovery} />}</Route>
       <Route component={NotFound} />
     </Switch>
   );
@@ -271,7 +268,6 @@ function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
               <ThemeToggle />
             </div>
           </header>
-          <ImpersonationBanner />
           <PaymentFailedBanner />
           <SubscriptionGate>
             <main className="flex-1 overflow-y-auto">{children}</main>

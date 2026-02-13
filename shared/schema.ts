@@ -805,7 +805,6 @@ export const communicationTemplateTypeEnum = pgEnum('communication_template_type
   'lease_renewal_notice',
   'late_payment_notice',
   'move_in_welcome',
-  'thirty_day_notice',
 ]);
 
 export const communicationTemplates = pgTable("communication_templates", {
@@ -1214,7 +1213,6 @@ export const rentalUnits = pgTable("rental_units", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   propertyId: varchar("property_id").notNull().references(() => rentalProperties.id, { onDelete: 'cascade' }),
   unitLabel: text("unit_label").notNull(), // e.g., "Unit A", "101", "Main House"
-  rentAmount: integer("rent_amount"), // Monthly rent in cents (e.g., 150000 = $1,500.00)
   coverPageOverrideEnabled: boolean("cover_page_override_enabled").default(false).notNull(),
   coverPageOverrideJson: jsonb("cover_page_override_json"), // Override cover page if enabled
   fieldSchemaOverrideEnabled: boolean("field_schema_override_enabled").default(false).notNull(),
@@ -1281,7 +1279,6 @@ export const rentalSubmissions = pgTable("rental_submissions", {
   status: rentalSubmissionStatusEnum("status").default('started').notNull(),
   submittedAt: timestamp("submitted_at"),
   deletedAt: timestamp("deleted_at"), // Soft delete - null means active, timestamp means deleted
-  archivedAt: timestamp("archived_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
