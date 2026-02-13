@@ -1,37 +1,15 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2, UserCog, LogOut } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2 } from "lucide-react";
 import { Link } from "wouter";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { queryClient, apiRequest } from "@/lib/queryClient";
-
-type User = {
-  id: string;
-  email: string;
-  firstName?: string | null;
-  lastName?: string | null;
-  isAdmin?: boolean;
-};
-
-type ImpersonationStatus = {
-  isImpersonating: boolean;
-  impersonating?: {
-    id: string;
-    email: string;
-    firstName?: string | null;
-    lastName?: string | null;
-  } | null;
-  startedAt?: string;
-};
 
 export default function AdminPage() {
   const { toast } = useToast();
   const [isExporting, setIsExporting] = useState(false);
-  const [selectedUserId, setSelectedUserId] = useState<string>("");
 
   // Fetch database stats
   const { data: dbStats, isLoading: statsLoading } = useQuery<{
@@ -41,63 +19,6 @@ export default function AdminPage() {
   }>({
     queryKey: ['/api/admin/database-stats'],
   });
-
-  // Fetch all users for impersonation selector
-  const { data: allUsers = [] } = useQuery<User[]>({
-    queryKey: ['/api/admin/users'],
-  });
-
-  // Fetch current impersonation status
-  const { data: impersonationStatus } = useQuery<ImpersonationStatus>({
-    queryKey: ['/api/admin/impersonation-status'],
-    refetchInterval: 10000, // Refresh every 10 seconds
-  });
-
-  const startImpersonationMutation = useMutation({
-    mutationFn: async (userId: string) => {
-      return await apiRequest('POST', `/api/admin/impersonate/${userId}`);
-    },
-    onSuccess: (data: { impersonating?: { email?: string } }) => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/impersonation-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({
-        title: "Impersonation Started",
-        description: `You are now viewing the app as ${data.impersonating?.email}`,
-      });
-      setSelectedUserId("");
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to start impersonation",
-        variant: "destructive",
-      });
-    },
-  });
-
-  const stopImpersonationMutation = useMutation({
-    mutationFn: async () => {
-      return await apiRequest('POST', '/api/admin/stop-impersonating');
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/admin/impersonation-status'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/auth/user'] });
-      toast({
-        title: "Impersonation Ended",
-        description: "You are back to your admin account",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error",
-        description: "Failed to stop impersonation",
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Filter out admin users from impersonation list (don't impersonate other admins)
-  const nonAdminUsers = allUsers.filter(u => !u.isAdmin);
 
   // Download full database export as JSON file
   const handleExport = async () => {
@@ -400,79 +321,6 @@ export default function AdminPage() {
                     </>
                   )}
                 </Button>
-              </CardContent>
-            </Card>
-
-            <Card className="hover-elevate md:col-span-2">
-              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">User Impersonation</CardTitle>
-                <UserCog className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                {impersonationStatus?.isImpersonating ? (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-md">
-                      <p className="text-sm font-medium text-amber-700 dark:text-amber-300">
-                        Currently viewing as: {impersonationStatus.impersonating?.email}
-                      </p>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {impersonationStatus.impersonating?.firstName} {impersonationStatus.impersonating?.lastName}
-                      </p>
-                    </div>
-                    <Button 
-                      size="sm" 
-                      variant="destructive"
-                      className="w-full" 
-                      onClick={() => stopImpersonationMutation.mutate()}
-                      disabled={stopImpersonationMutation.isPending}
-                      data-testid="button-stop-impersonation"
-                    >
-                      {stopImpersonationMutation.isPending ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Ending...
-                        </>
-                      ) : (
-                        <>
-                          <LogOut className="h-4 w-4 mr-2" />
-                          End Impersonation
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    <p className="text-xs text-muted-foreground">
-                      View the app as any user for support and debugging
-                    </p>
-                    <div className="flex gap-2 flex-wrap">
-                      <Select value={selectedUserId} onValueChange={setSelectedUserId}>
-                        <SelectTrigger className="flex-1" data-testid="select-impersonate-user">
-                          <SelectValue placeholder="Select a user..." />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {nonAdminUsers.map((user) => (
-                            <SelectItem key={user.id} value={user.id}>
-                              {user.email} {user.firstName && `(${user.firstName})`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Button 
-                        size="icon"
-                        onClick={() => selectedUserId && startImpersonationMutation.mutate(selectedUserId)}
-                        disabled={!selectedUserId || startImpersonationMutation.isPending}
-                        data-testid="button-start-impersonation"
-                      >
-                        {startImpersonationMutation.isPending ? (
-                          <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                          <UserCog className="h-4 w-4" />
-                        )}
-                      </Button>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
           </div>
