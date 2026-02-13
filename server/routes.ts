@@ -2,13 +2,13 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import cookieParser from "cookie-parser";
 import { storage } from "./storage";
-import { isAuthenticated, requireAccess, requireAdmin } from "./jwtAuth";
+import { isAuthenticated, requireAccess, requireAdmin, startImpersonation, stopImpersonation, getImpersonationStatus } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, desc } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -43,46 +43,21 @@ const openai = new OpenAI({
 // Rate limiter for chat endpoint
 const chatRateLimiter = new RateLimiter(10, 60 * 1000); // 10 messages per minute
 
-// Configure multer for secure file uploads
-const uploadStorage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = 'uploads';
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error as Error, uploadDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    // Use UUID for collision-resistant filenames
-    const uniqueId = randomUUID();
-    const ext = path.extname(file.originalname);
-    cb(null, `${uniqueId}${ext}`);
-  }
-});
-
+// Configure multer with memory storage for object storage uploads
 const upload = multer({
-  storage: uploadStorage,
+  storage: multer.memoryStorage(),
   limits: { 
     fileSize: 20 * 1024 * 1024 // 20MB max file size
   },
   fileFilter: (req, file, cb) => {
-    // Allowed MIME types for PDF and DOCX
     const allowedMimeTypes = [
       'application/pdf',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document', // .docx
-      'application/msword', // .doc
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'application/msword',
     ];
-    
-    // Allowed file extensions
     const allowedExtensions = /\.(pdf|docx|doc)$/i;
-    
     const ext = path.extname(file.originalname).toLowerCase();
-    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
-    const extensionValid = allowedExtensions.test(ext);
-    
-    if (mimeTypeValid && extensionValid) {
+    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(ext)) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, DOC, and DOCX files are allowed'));
@@ -90,26 +65,8 @@ const upload = multer({
   }
 });
 
-// Configure multer for applicant document uploads (PDF, JPG, PNG)
-const applicantUploadStorage = multer.diskStorage({
-  destination: async (req, file, cb) => {
-    const uploadDir = 'uploads/applicants';
-    try {
-      await fs.mkdir(uploadDir, { recursive: true });
-      cb(null, uploadDir);
-    } catch (error) {
-      cb(error as Error, uploadDir);
-    }
-  },
-  filename: (req, file, cb) => {
-    const uniqueId = randomUUID();
-    const ext = path.extname(file.originalname).toLowerCase();
-    cb(null, `${uniqueId}${ext}`);
-  }
-});
-
 const applicantUpload = multer({
-  storage: applicantUploadStorage,
+  storage: multer.memoryStorage(),
   limits: { 
     fileSize: 10 * 1024 * 1024 // 10MB max file size
   },
@@ -121,18 +78,76 @@ const applicantUpload = multer({
       'image/png',
     ];
     const allowedExtensions = /\.(pdf|jpg|jpeg|png)$/i;
-    
     const ext = path.extname(file.originalname).toLowerCase();
-    const mimeTypeValid = allowedMimeTypes.includes(file.mimetype);
-    const extensionValid = allowedExtensions.test(ext);
-    
-    if (mimeTypeValid && extensionValid) {
+    if (allowedMimeTypes.includes(file.mimetype) && allowedExtensions.test(ext)) {
       cb(null, true);
     } else {
       cb(new Error('Only PDF, JPG, and PNG files are allowed'));
     }
   }
 });
+
+import { objectStorageClient } from "./replit_integrations/object_storage/objectStorage";
+
+function parseObjectStoragePath(fullPath: string): { bucketName: string; objectName: string } {
+  const normalized = fullPath.startsWith('/') ? fullPath : `/${fullPath}`;
+  const parts = normalized.split('/');
+  if (parts.length < 3) throw new Error('Invalid object storage path');
+  return { bucketName: parts[1], objectName: parts.slice(2).join('/') };
+}
+
+async function uploadToObjectStorage(buffer: Buffer, folder: string, originalName: string, mimeType: string): Promise<string> {
+  const privateDir = process.env.PRIVATE_OBJECT_DIR || '';
+  if (!privateDir) throw new Error('PRIVATE_OBJECT_DIR not set');
+  const uniqueId = randomUUID();
+  const ext = path.extname(originalName).toLowerCase();
+  const objectPath = `${privateDir}/${folder}/${uniqueId}${ext}`;
+  const { bucketName, objectName } = parseObjectStoragePath(objectPath);
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+  await file.save(buffer, { contentType: mimeType, resumable: false });
+  return objectPath;
+}
+
+async function downloadFromObjectStorage(storedPath: string, res: any, originalName: string, mimeType?: string | null) {
+  if (storedPath.startsWith('uploads/') || storedPath.startsWith('/home/')) {
+    return res.status(404).json({ message: "File was stored on local disk and is no longer available. Please re-upload." });
+  }
+  const { bucketName, objectName } = parseObjectStoragePath(storedPath);
+  const bucket = objectStorageClient.bucket(bucketName);
+  const file = bucket.file(objectName);
+  const [exists] = await file.exists();
+  if (!exists) {
+    return res.status(404).json({ message: "File not found in storage" });
+  }
+  const [metadata] = await file.getMetadata();
+  res.set({
+    'Content-Type': mimeType || metadata.contentType || 'application/octet-stream',
+    'Content-Disposition': `attachment; filename="${originalName}"`,
+    'Content-Length': metadata.size,
+  });
+  const stream = file.createReadStream();
+  stream.on('error', (err: Error) => {
+    console.error('Stream error:', err);
+    if (!res.headersSent) res.status(500).json({ message: 'Error streaming file' });
+  });
+  stream.pipe(res);
+}
+
+async function deleteFromObjectStorage(storedPath: string): Promise<void> {
+  if (storedPath.startsWith('uploads/') || storedPath.startsWith('/home/')) {
+    return;
+  }
+  try {
+    const { bucketName, objectName } = parseObjectStoragePath(storedPath);
+    const bucket = objectStorageClient.bucket(bucketName);
+    const file = bucket.file(objectName);
+    const [exists] = await file.exists();
+    if (exists) await file.delete();
+  } catch (e) {
+    console.error('Error deleting from object storage:', e);
+  }
+}
 
 // Helper to get user ID from request with validation
 function getUserId(req: any): string {
@@ -1978,17 +1993,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (validatedMetadata.propertyId) {
         const property = await storage.getProperty(validatedMetadata.propertyId, userId);
         if (!property) {
-          // Clean up uploaded file if property validation fails
-          await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
           return res.status(403).json({ message: "Property not found or access denied" });
         }
       }
+
+      const storedPath = await uploadToObjectStorage(req.file.buffer, 'documents', req.file.originalname, req.file.mimetype);
 
       const uploadedDocument = await storage.createUploadedDocument({
         userId,
         propertyId: validatedMetadata.propertyId,
         fileName: req.file.originalname,
-        fileUrl: req.file.path,
+        fileUrl: storedPath,
         fileType: req.file.mimetype,
         fileSize: req.file.size,
         description: validatedMetadata.description,
@@ -2002,10 +2017,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       res.json(uploadedDocument);
     } catch (error) {
-      // Clean up uploaded file on error
-      if (req.file) {
-        await fs.unlink(req.file.path).catch(err => console.error("Error deleting orphaned file:", err));
-      }
       if (error instanceof z.ZodError) {
         return res.status(400).json({ message: "Invalid input data", errors: error.errors });
       }
@@ -2063,25 +2074,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Document not found" });
       }
 
-      // Check if file exists on disk
-      try {
-        await fs.access(document.fileUrl);
-      } catch {
-        return res.status(404).json({ message: "File not found on disk" });
-      }
-
-      // Stream file to client with proper headers
-      res.setHeader('Content-Type', document.fileType || 'application/octet-stream');
-      res.setHeader('Content-Disposition', `attachment; filename="${document.fileName}"`);
-      
-      const fileStream = (await import('fs')).createReadStream(document.fileUrl);
-      fileStream.pipe(res);
-
       await storage.trackEvent({
         userId,
         eventType: 'uploaded_document_downloaded',
         eventData: { fileName: document.fileName },
       });
+
+      await downloadFromObjectStorage(document.fileUrl, res, document.fileName, document.fileType);
     } catch (error) {
       console.error("Error downloading uploaded document:", error);
       res.status(500).json({ message: "Failed to download document" });
@@ -2132,13 +2131,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Document not found" });
       }
 
-      // Delete physical file from disk
-      try {
-        await fs.unlink(document.fileUrl);
-      } catch (err) {
-        console.error("Error deleting file from disk:", err);
-        // Continue - database record is already deleted
-      }
+      await deleteFromObjectStorage(document.fileUrl);
 
       res.json({ success: true });
     } catch (error) {
@@ -2630,6 +2623,95 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ message: "Failed to fetch users" });
+    }
+  });
+
+  // Admin: Start impersonating a user
+  app.post('/api/admin/impersonate/:userId', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const realAdmin = req.realAdmin || req.user;
+      const targetUserId = req.params.userId;
+      
+      // Can't impersonate yourself
+      if (targetUserId === realAdmin.id) {
+        return res.status(400).json({ message: "Cannot impersonate yourself" });
+      }
+      
+      // Verify target user exists
+      const targetUser = await storage.getUser(targetUserId);
+      if (!targetUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Start impersonation
+      startImpersonation(realAdmin.id, targetUserId);
+      
+      console.log(`🎭 Admin ${realAdmin.email} started impersonating ${targetUser.email}`);
+      
+      res.json({ 
+        success: true, 
+        impersonating: { 
+          id: targetUser.id, 
+          email: targetUser.email,
+          firstName: targetUser.firstName,
+          lastName: targetUser.lastName,
+        }
+      });
+    } catch (error) {
+      console.error("Error starting impersonation:", error);
+      res.status(500).json({ message: "Failed to start impersonation" });
+    }
+  });
+
+  // Admin: Stop impersonating
+  app.post('/api/admin/stop-impersonating', isAuthenticated, async (req: any, res) => {
+    try {
+      const realAdmin = req.realAdmin || req.user;
+      
+      if (!realAdmin.isAdmin) {
+        return res.status(403).json({ message: "Not authorized" });
+      }
+      
+      stopImpersonation(realAdmin.id);
+      
+      console.log(`🎭 Admin ${realAdmin.email} stopped impersonating`);
+      
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error stopping impersonation:", error);
+      res.status(500).json({ message: "Failed to stop impersonation" });
+    }
+  });
+
+  // Admin: Get current impersonation status
+  app.get('/api/admin/impersonation-status', isAuthenticated, async (req: any, res) => {
+    try {
+      const realAdmin = req.realAdmin || req.user;
+      
+      if (!realAdmin.isAdmin) {
+        return res.json({ isImpersonating: false });
+      }
+      
+      const status = getImpersonationStatus(realAdmin.id);
+      
+      if (status) {
+        const impersonatedUser = await storage.getUser(status.impersonatedUserId);
+        return res.json({
+          isImpersonating: true,
+          impersonating: impersonatedUser ? {
+            id: impersonatedUser.id,
+            email: impersonatedUser.email,
+            firstName: impersonatedUser.firstName,
+            lastName: impersonatedUser.lastName,
+          } : null,
+          startedAt: status.startedAt,
+        });
+      }
+      
+      res.json({ isImpersonating: false });
+    } catch (error) {
+      console.error("Error getting impersonation status:", error);
+      res.status(500).json({ message: "Failed to get impersonation status" });
     }
   });
 
@@ -3529,21 +3611,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       let cases;
       if (stateId === 'NATIONAL') {
-        // Get all cases across all states
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table) => eq(table.isMonitored, true),
           limit: 100,
-          orderBy: (table) => [table.dateFiled],
+          orderBy: (table) => [desc(table.dateFiled)],
         });
       } else {
-        // Get cases for specific state
         cases = await db.query.caseLawMonitoring.findMany({
           where: (table, { eq, and }) => and(
             eq(table.stateId, stateId as string),
             eq(table.isMonitored, true),
           ),
           limit: 50,
-          orderBy: (table) => [table.dateFiled],
+          orderBy: (table) => [desc(table.dateFiled)],
         });
       }
 
@@ -3622,6 +3702,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error testing CourtListener:', error);
       res.status(500).json({ message: 'Failed to test CourtListener API', error: String(error) });
+    }
+  });
+
+  app.post('/api/admin/case-law/refresh', isAuthenticated, requireAdmin, async (req: any, res) => {
+    try {
+      const daysBack = parseInt(req.query.daysBack as string) || 180;
+      const stateId = req.query.stateId as string | undefined;
+
+      const { courtListenerService } = await import('./courtListenerService');
+      
+      console.log(`⚖️ Admin triggered case law refresh (daysBack=${daysBack}, state=${stateId || 'all'})`);
+      const result = await courtListenerService.refreshCaseLaw({
+        daysBack,
+        states: stateId ? [stateId] : undefined,
+      });
+
+      res.json({
+        success: true,
+        ...result,
+      });
+    } catch (error) {
+      console.error('Error refreshing case law:', error);
+      res.status(500).json({ message: 'Failed to refresh case law', error: String(error) });
     }
   });
 
@@ -5065,11 +5168,23 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       };
 
       // Update status based on test result
+      const wasVerified = credentials.status === 'verified';
       await storage.updateLandlordScreeningCredentials(userId, {
         status: testResult.success ? 'verified' : 'failed',
         lastVerifiedAt: testResult.success ? new Date() : undefined,
         lastErrorMessage: testResult.success ? null : testResult.error,
       });
+
+      // Send email notification to landlord when credentials are newly verified
+      if (testResult.success && !wasVerified) {
+        const landlord = await storage.getUser(userId);
+        if (landlord) {
+          const { emailService } = await import('./emailService');
+          emailService.sendScreeningReadyNotification(landlord).catch(err => {
+            console.error('Failed to send screening ready notification:', err);
+          });
+        }
+      }
 
       res.json(testResult);
     } catch (error) {
@@ -5811,10 +5926,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get property terms from the property's stored data
       const propertyTerms = property.propertyTermsJson || {};
 
+      // Format rent as currency string for display
+      const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+      const updatedPropertyTerms = {
+        ...propertyTerms,
+        ...(formattedRent && { monthlyRent: formattedRent }),
+      };
+      
       const link = await storage.createRentalApplicationLink({
         unitId: unit.id,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: null,
       });
@@ -5856,10 +5978,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         const fieldSchema = property.defaultFieldSchemaJson;
         const propertyTerms = property.propertyTermsJson || {};
         
+        // Format rent as currency string for display
+        const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+        const updatedPropertyTerms = {
+          ...propertyTerms,
+          ...(formattedRent && { monthlyRent: formattedRent }),
+        };
+        
         link = await storage.createRentalApplicationLink({
           unitId: unit.id,
           publicToken,
-          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms },
+          mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel || "", propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
           isActive: true,
           expiresAt: null,
         });
@@ -5887,15 +6016,43 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { unitLabel, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+      const { unitLabel, rentAmount, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
       
       const unit = await storage.updateRentalUnit(req.params.id, {
         unitLabel,
+        rentAmount,
         coverPageOverrideEnabled,
         coverPageOverrideJson,
         fieldSchemaOverrideEnabled,
         fieldSchemaOverrideJson,
       });
+
+      // Update active links with new unit label and rent amount
+      if (unit && (unitLabel !== undefined || rentAmount !== undefined)) {
+        const links = await storage.getRentalApplicationLinksByUnitId(req.params.id);
+        const activeLinks = links.filter(l => l.isActive);
+        
+        for (const link of activeLinks) {
+          const currentSchema = link.mergedSchemaJson as any || {};
+          const currentPropertyTerms = currentSchema.propertyTerms || {};
+          
+          // Format rent amount as currency string for display (e.g., "$1,500/mo")
+          const formattedRent = rentAmount !== undefined && rentAmount !== null
+            ? `$${(rentAmount / 100).toLocaleString()}/mo`
+            : currentPropertyTerms.monthlyRent;
+          
+          const updatedSchema = {
+            ...currentSchema,
+            ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
+            ...(rentAmount !== undefined && { rentAmount }),
+            propertyTerms: {
+              ...currentPropertyTerms,
+              ...(rentAmount !== undefined && { monthlyRent: formattedRent }),
+            },
+          };
+          await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });
+        }
+      }
 
       res.json(unit);
     } catch (error) {
@@ -5994,10 +6151,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // Get property terms from property (fall back to request body for backwards compatibility)
       const propertyTerms = property.propertyTermsJson || req.body.propertyTerms || {};
 
+      // Format rent as currency string for display
+      const formattedRent = unit.rentAmount ? `$${(unit.rentAmount / 100).toLocaleString()}/mo` : null;
+      const updatedPropertyTerms = {
+        ...propertyTerms,
+        ...(formattedRent && { monthlyRent: formattedRent }),
+      };
+      
       const link = await storage.createRentalApplicationLink({
         unitId: req.params.unitId,
         publicToken,
-        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms },
+        mergedSchemaJson: { coverPage, fieldSchema, propertyName: property.name, unitLabel: unit.unitLabel, propertyTerms: updatedPropertyTerms, rentAmount: unit.rentAmount },
         isActive: true,
         expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : null,
       });
@@ -6039,7 +6203,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.get('/api/rental/submissions', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const submissions = await storage.getRentalSubmissionsByUserId(userId);
+      const includeArchived = req.query.includeArchived === 'true';
+      const submissions = await storage.getRentalSubmissionsByUserId(userId, false, includeArchived);
       
       // Enrich with property/unit info and people
       const enriched = await Promise.all(submissions.map(async (sub) => {
@@ -6059,6 +6224,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         }
         const primaryApplicant = people.find(p => p.role === 'applicant');
         const decision = await storage.getRentalDecision(sub.id);
+        
+        // Get screening status aggregation with normalization for vendor variants
+        const screeningOrders = await storage.getRentalScreeningOrdersBySubmission(sub.id);
+        let screeningStatus: 'not_sent' | 'pending' | 'complete' = 'not_sent';
+        if (screeningOrders.length > 0) {
+          // Normalize status to handle any vendor variants
+          const normalizedStatuses = screeningOrders.map(o => {
+            const s = (o.status || '').toLowerCase().replace(/[_\s-]/g, '');
+            if (s === 'complete' || s === 'completed') return 'complete';
+            if (s === 'sent' || s === 'inprogress' || s === 'pending') return 'pending';
+            return s;
+          });
+          const allComplete = normalizedStatuses.every(s => s === 'complete');
+          const anyPending = normalizedStatuses.some(s => s === 'pending');
+          if (allComplete) {
+            screeningStatus = 'complete';
+          } else if (anyPending || normalizedStatuses.some(s => s === 'complete')) {
+            screeningStatus = 'pending';
+          }
+        }
+        
         return {
           ...sub,
           propertyName,
@@ -6070,6 +6256,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           } : null,
           peopleCount: people.length,
           decision: decision ? { decision: decision.decision, decidedAt: decision.decidedAt } : null,
+          screeningStatus,
+          archivedAt: sub.archivedAt,
         };
       }));
       
@@ -6207,6 +6395,48 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     } catch (error) {
       console.error("Error deleting submission:", error);
       res.status(500).json({ message: "Failed to delete submission" });
+    }
+  });
+
+  app.post('/api/rental/submissions/:id/archive', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) return res.status(404).json({ message: "Application link not found" });
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) return res.status(404).json({ message: "Unit not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Access denied" });
+
+      const updated = await storage.archiveRentalSubmission(req.params.id);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error archiving submission:", error);
+      res.status(500).json({ message: "Failed to archive submission" });
+    }
+  });
+
+  app.post('/api/rental/submissions/:id/unarchive', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const submission = await storage.getRentalSubmission(req.params.id);
+      if (!submission) return res.status(404).json({ message: "Submission not found" });
+
+      const appLink = submission.applicationLinkId ? await storage.getRentalApplicationLink(submission.applicationLinkId) : null;
+      if (!appLink) return res.status(404).json({ message: "Application link not found" });
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) return res.status(404).json({ message: "Unit not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Access denied" });
+
+      const updated = await storage.unarchiveRentalSubmission(req.params.id);
+      res.json(updated);
+    } catch (error) {
+      console.error("Error unarchiving submission:", error);
+      res.status(500).json({ message: "Failed to unarchive submission" });
     }
   });
 
@@ -7747,10 +7977,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const { processScreeningRequest } = await import('./digitalDelveService');
       const { decryptCredentials } = await import('./crypto');
       
-      // Determine base URL for webhooks
-      const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-      const host = req.headers['x-forwarded-host'] || req.headers.host;
-      const baseUrl = `${protocol}://${host}`;
+      // Determine base URL for webhooks - use stable production domain
+      // IMPORTANT: Use REPLIT_DOMAINS for consistent webhook URLs that Western Verify can reach
+      const baseUrl = process.env.REPLIT_DOMAINS 
+        ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+        : `${req.headers['x-forwarded-proto'] || req.protocol || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
       
       // Resolve landlord's screening credentials if configured
       let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
@@ -8163,15 +8394,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       const { syncScreeningStatus } = await import('./digitalDelveService');
       const result = await syncScreeningStatus(req.params.orderId, credentials);
-      
-      if (result.success && result.status === 'complete') {
-        // Update submission status if all screenings are complete
-        const allOrders = await storage.getRentalScreeningOrdersBySubmission(order.submissionId);
-        const allComplete = allOrders.every(o => o.status === 'complete' || o.id === order.id);
-        if (allComplete) {
-          await storage.updateRentalSubmission(order.submissionId, { status: 'complete' });
-        }
-      }
 
       res.json(result);
     } catch (error) {
@@ -8180,9 +8402,38 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // NOTE: The check-status endpoint was removed because Western Verify
-  // does NOT have a RetrieveOrderStatus API function. Status updates 
-  // are received via webhooks to /api/webhooks/digitaldelve/status and /result
+  // Bulk sync all pending screenings for the current user
+  app.post('/api/rental/screening/bulk-sync', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      
+      const storedCredentials = await storage.getLandlordScreeningCredentials(userId);
+      if (!storedCredentials || !storedCredentials.encryptedUsername || !storedCredentials.encryptedPassword) {
+        return res.json({ synced: 0, completed: 0, errors: 0, message: 'no_credentials' });
+      }
+
+      const { decryptCredentials } = await import('./crypto');
+      let credentials;
+      try {
+        const decrypted = decryptCredentials({
+          encryptedUsername: storedCredentials.encryptedUsername,
+          encryptedPassword: storedCredentials.encryptedPassword,
+          encryptionIv: storedCredentials.encryptionIv,
+        });
+        credentials = { username: decrypted.username, password: decrypted.password };
+      } catch (e) {
+        return res.json({ synced: 0, completed: 0, errors: 0, message: 'credential_error' });
+      }
+
+      const { bulkSyncScreeningStatuses } = await import('./digitalDelveService');
+      const result = await bulkSyncScreeningStatuses(userId, credentials);
+      
+      res.json(result);
+    } catch (error) {
+      console.error("Error in bulk screening sync:", error);
+      res.status(500).json({ message: "Failed to sync screening statuses" });
+    }
+  });
 
   // ============================================================
   // WEBHOOK ROUTES (No Auth - called by DigitalDelve)
@@ -8637,10 +8888,10 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                     const { processScreeningRequest } = await import('./digitalDelveService');
                     const { decryptCredentials } = await import('./crypto');
                     
-                    // Construct base URL for webhook callbacks
-                    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
-                    const host = req.headers['x-forwarded-host'] || req.headers.host;
-                    const baseUrl = `${protocol}://${host}`;
+                    // Construct base URL for webhook callbacks - use stable production domain
+                    const baseUrl = process.env.REPLIT_DOMAINS 
+                      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+                      : `${req.headers['x-forwarded-proto'] || req.protocol || 'https'}://${req.headers['x-forwarded-host'] || req.headers.host}`;
                     
                     // Resolve landlord's screening credentials if configured
                     let screeningCredentials: { username: string; password: string; invitationId?: string } | undefined;
@@ -8850,11 +9101,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "File type is required" });
       }
 
+      const storedPath = await uploadToObjectStorage(req.file.buffer, 'applicants', req.file.originalname, req.file.mimetype);
+
       const fileRecord = await storage.createRentalSubmissionFile({
         personId: person.id,
         fileType,
         originalName: req.file.originalname,
-        storedPath: req.file.path,
+        storedPath,
         fileSize: req.file.size,
         mimeType: req.file.mimetype,
       });
@@ -8908,12 +9161,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(404).json({ message: "File not found" });
       }
 
-      // Delete from disk
-      try {
-        await fs.unlink(file.storedPath);
-      } catch (e) {
-        console.error("Error deleting file from disk:", e);
-      }
+      await deleteFromObjectStorage(file.storedPath);
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);
       res.json({ success: true });
@@ -9016,7 +9264,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      res.download(file.storedPath, file.originalName);
+      await downloadFromObjectStorage(file.storedPath, res, file.originalName, file.mimeType);
     } catch (error) {
       console.error("Error downloading file:", error);
       res.status(500).json({ message: "Failed to download file" });
@@ -9068,12 +9316,13 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(400).json({ message: "Person not found in this submission" });
       }
 
-      // Save file record to database
+      const storedPath = await uploadToObjectStorage(req.file.buffer, 'applicants', req.file.originalname, req.file.mimetype);
+
       const newFile = await storage.createRentalSubmissionFile({
         personId,
         fileType,
         originalName: req.file.originalname,
-        storedPath: req.file.path,
+        storedPath,
         mimeType: req.file.mimetype,
         fileSize: req.file.size,
       });
@@ -9126,12 +9375,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         return res.status(403).json({ message: "File not part of this submission" });
       }
 
-      // Delete from disk
-      try {
-        await fs.unlink(file.storedPath);
-      } catch (e) {
-        console.error("Error deleting file from disk:", e);
-      }
+      await deleteFromObjectStorage(file.storedPath);
 
       await storage.deleteRentalSubmissionFile(req.params.fileId);
       res.json({ success: true });
