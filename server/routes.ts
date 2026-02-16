@@ -9109,7 +9109,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // Applicant document upload endpoint
-  app.post('/api/apply/person/:personToken/upload', applicantUpload.single('file'), async (req, res) => {
+  app.post('/api/apply/person/:personToken/upload', (req, res, next) => {
+    applicantUpload.single('file')(req, res, (err: any) => {
+      if (err) {
+        console.error("Multer upload error:", err.message);
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({ message: err.message || "File upload failed" });
+      }
+      next();
+    });
+  }, async (req, res) => {
     try {
       const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
       
@@ -9343,7 +9352,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   });
 
   // Landlord: Upload a file to a submission (manual document upload)
-  app.post('/api/rental/submissions/:submissionId/files', isAuthenticated, applicantUpload.single('file'), async (req: any, res) => {
+  app.post('/api/rental/submissions/:submissionId/files', isAuthenticated, (req: any, res: any, next: any) => {
+    applicantUpload.single('file')(req, res, (err: any) => {
+      if (err) {
+        console.error("Multer upload error (admin):", err.message);
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({ message: err.message || "File upload failed" });
+      }
+      next();
+    });
+  }, async (req: any, res) => {
     try {
       const userId = req.user?.id;
       if (!userId) {
@@ -9617,7 +9635,16 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  app.post('/api/reupload/:token/upload', applicantUpload.single('file'), async (req: any, res) => {
+  app.post('/api/reupload/:token/upload', (req: any, res: any, next: any) => {
+    applicantUpload.single('file')(req, res, (err: any) => {
+      if (err) {
+        console.error("Multer upload error (reupload):", err.message);
+        const status = err.code === 'LIMIT_FILE_SIZE' ? 413 : 400;
+        return res.status(status).json({ message: err.message || "File upload failed" });
+      }
+      next();
+    });
+  }, async (req: any, res) => {
     try {
       const token = await storage.getDocumentReuploadToken(req.params.token);
       if (!token) return res.status(404).json({ message: "Link not found" });
