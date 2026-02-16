@@ -6021,28 +6021,32 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
 
       // Update active links with new unit label and rent amount
       if (unit && (unitLabel !== undefined || rentAmount !== undefined)) {
-        const links = await storage.getRentalApplicationLinksByUnitId(req.params.id);
-        const activeLinks = links.filter(l => l.isActive);
-        
-        for (const link of activeLinks) {
-          const currentSchema = link.mergedSchemaJson as any || {};
-          const currentPropertyTerms = currentSchema.propertyTerms || {};
+        try {
+          const links = await storage.getRentalApplicationLinksByUnitId(req.params.id);
+          const activeLinks = links.filter(l => l.isActive);
           
-          // Format rent amount as currency string for display (e.g., "$1,500/mo")
-          const formattedRent = rentAmount !== undefined && rentAmount !== null
-            ? `$${(rentAmount / 100).toLocaleString()}/mo`
-            : currentPropertyTerms.monthlyRent;
-          
-          const updatedSchema = {
-            ...currentSchema,
-            ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
-            ...(rentAmount !== undefined && { rentAmount }),
-            propertyTerms: {
-              ...currentPropertyTerms,
-              ...(rentAmount !== undefined && { monthlyRent: formattedRent }),
-            },
-          };
-          await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });
+          for (const link of activeLinks) {
+            const currentSchema = link.mergedSchemaJson as any || {};
+            const currentPropertyTerms = currentSchema.propertyTerms || {};
+            
+            const formattedRent = rentAmount !== undefined && rentAmount !== null
+              ? `$${(rentAmount / 100).toLocaleString()}/mo`
+              : currentPropertyTerms.monthlyRent;
+            
+            const updatedSchema = {
+              ...currentSchema,
+              ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
+              ...(rentAmount !== undefined && { rentAmount }),
+              propertyTerms: {
+                ...currentPropertyTerms,
+                ...(rentAmount !== undefined && { monthlyRent: formattedRent }),
+              },
+            };
+            await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });
+          }
+          console.log(`[Unit Update] Synced ${activeLinks.length} active link(s) for unit ${req.params.id}`);
+        } catch (linkSyncError) {
+          console.error(`[Unit Update] Failed to sync links for unit ${req.params.id}:`, linkSyncError);
         }
       }
 
@@ -8582,6 +8586,21 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         ? await storage.getActiveComplianceRulesForState(propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
 
+      // Build propertyTerms with live rent from unit (authoritative when set)
+      const cachedTerms = (link.mergedSchemaJson as any)?.propertyTerms || {};
+      let livePropertyTerms = { ...cachedTerms };
+      if (link.unitId) {
+        const liveUnit = await storage.getRentalUnit(link.unitId);
+        if (liveUnit) {
+          if (liveUnit.rentAmount != null) {
+            livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
+          }
+          if (liveUnit.unitLabel !== undefined) {
+            (link.mergedSchemaJson as any).unitLabel = liveUnit.unitLabel || "";
+          }
+        }
+      }
+
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
@@ -8589,7 +8608,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: currentFieldSchema,
-        propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
+        propertyTerms: livePropertyTerms,
         documentRequirements,
         propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
         complianceRules, // Dynamic compliance rules from database
@@ -8642,14 +8661,28 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         ? await storage.getActiveComplianceRulesForState(propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
 
-      // Return only the merged schema (cover page + fields) - no sensitive data
+      // Build propertyTerms with live rent from unit (authoritative when set)
+      const cachedTerms2 = (link.mergedSchemaJson as any)?.propertyTerms || {};
+      let livePropertyTerms2 = { ...cachedTerms2 };
+      if (link.unitId) {
+        const liveUnit = await storage.getRentalUnit(link.unitId);
+        if (liveUnit) {
+          if (liveUnit.rentAmount != null) {
+            livePropertyTerms2.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
+          }
+          if (liveUnit.unitLabel !== undefined) {
+            (link.mergedSchemaJson as any).unitLabel = liveUnit.unitLabel || "";
+          }
+        }
+      }
+
       res.json({
         id: link.id,
         propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
         unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
         coverPage: (link.mergedSchemaJson as any)?.coverPage,
         fieldSchema: currentFieldSchema,
-        propertyTerms: (link.mergedSchemaJson as any)?.propertyTerms || {},
+        propertyTerms: livePropertyTerms2,
         documentRequirements,
         propertyState,
         complianceRules,
