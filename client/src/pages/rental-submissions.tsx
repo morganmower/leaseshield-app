@@ -807,7 +807,9 @@ Best regards`;
         break;
     }
 
-    if (!showArchived) {
+    if (showArchived) {
+      result = result.filter(s => !!s.archivedAt);
+    } else {
       result = result.filter(s => !s.archivedAt);
     }
 
