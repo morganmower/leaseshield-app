@@ -73,6 +73,8 @@ import {
   Search,
   Archive,
   ArchiveRestore,
+  ArrowUp,
+  ArrowDown,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -252,6 +254,8 @@ export default function RentalSubmissions() {
   const [isReuploadDialogOpen, setIsReuploadDialogOpen] = useState(false);
   const [reuploadPersonId, setReuploadPersonId] = useState<string | null>(null);
   const [selectedReuploadTypes, setSelectedReuploadTypes] = useState<string[]>([]);
+  const [sortColumn, setSortColumn] = useState<"unit" | "applicant" | "decision" | "screening" | "date">("date");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 
   const { data: submissions, isLoading: isLoadingSubmissions, refetch: refetchSubmissions } = useQuery<SubmissionSummary[]>({
     queryKey: ["/api/rental/submissions", { includeArchived: showArchived }],
@@ -838,6 +842,47 @@ Best regards`;
     };
   }, [submissions]);
 
+  const sortSubmissions = (subs: SubmissionSummary[]) => {
+    const dir = sortDirection === "asc" ? 1 : -1;
+    return [...subs].sort((a, b) => {
+      let cmp = 0;
+      switch (sortColumn) {
+        case "unit":
+          cmp = (a.unitLabel || "").localeCompare(b.unitLabel || "");
+          break;
+        case "applicant": {
+          const nameA = a.primaryApplicant ? `${a.primaryApplicant.lastName} ${a.primaryApplicant.firstName}` : "";
+          const nameB = b.primaryApplicant ? `${b.primaryApplicant.lastName} ${b.primaryApplicant.firstName}` : "";
+          cmp = nameA.localeCompare(nameB);
+          break;
+        }
+        case "decision": {
+          const rank = (s: SubmissionSummary) => !s.decision ? 0 : s.decision.decision === "approved" ? 1 : 2;
+          cmp = rank(a) - rank(b);
+          break;
+        }
+        case "screening": {
+          const rank = (s: SubmissionSummary) => s.screeningStatus === "complete" ? 2 : s.screeningStatus === "pending" ? 1 : 0;
+          cmp = rank(a) - rank(b);
+          break;
+        }
+        case "date":
+          cmp = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+          break;
+      }
+      return cmp * dir;
+    });
+  };
+
+  const handleSort = (col: typeof sortColumn) => {
+    if (sortColumn === col) {
+      setSortDirection(d => d === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(col);
+      setSortDirection(col === "date" ? "desc" : "asc");
+    }
+  };
+
   const groupedByProperty = useMemo(() => {
     const groups = new Map<string, { propertyName: string; submissions: SubmissionSummary[]; pendingCount: number; decidedCount: number }>();
     
@@ -860,10 +905,14 @@ Best regards`;
       }
     }
     
-    return Array.from(groups.values()).sort((a, b) => 
+    const result = Array.from(groups.values()).sort((a, b) => 
       a.propertyName.localeCompare(b.propertyName)
     );
-  }, [filteredSubmissions]);
+    for (const g of result) {
+      g.submissions = sortSubmissions(g.submissions);
+    }
+    return result;
+  }, [filteredSubmissions, sortColumn, sortDirection]);
 
   const toggleAllExpanded = () => {
     const allCurrentlyExpanded = groupedByProperty.every(g => expandedProperties.has(g.propertyName));
@@ -2403,11 +2452,29 @@ Best regards`;
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead>Unit</TableHead>
-                          <TableHead>Applicant</TableHead>
-                          <TableHead>Decision</TableHead>
-                          <TableHead>Screening</TableHead>
-                          <TableHead>Date</TableHead>
+                          {([
+                            ["unit", "Unit"],
+                            ["applicant", "Applicant"],
+                            ["decision", "Decision"],
+                            ["screening", "Screening"],
+                            ["date", "Date"],
+                          ] as const).map(([col, label]) => (
+                            <TableHead
+                              key={col}
+                              className="cursor-pointer select-none"
+                              onClick={() => handleSort(col)}
+                              data-testid={`sort-${col}`}
+                            >
+                              <span className="inline-flex items-center gap-1">
+                                {label}
+                                {sortColumn === col ? (
+                                  sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+                                ) : (
+                                  <ChevronsUpDown className="h-3 w-3 text-muted-foreground/50" />
+                                )}
+                              </span>
+                            </TableHead>
+                          ))}
                           <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
