@@ -26,6 +26,7 @@ export default function Reupload() {
   const { toast } = useToast();
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
   const [uploadingType, setUploadingType] = useState<string | null>(null);
+  const [completedAll, setCompletedAll] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery<ReuploadTokenData>({
     queryKey: ["/api/reupload", token],
@@ -59,7 +60,11 @@ export default function Reupload() {
     },
     onSuccess: (result) => {
       toast({ title: "Uploaded", description: "Document uploaded successfully." });
-      refetch();
+      if (result.all_complete) {
+        setCompletedAll(true);
+      } else {
+        refetch();
+      }
     },
     onError: (err: Error) => {
       toast({ title: "Upload Failed", description: err.message, variant: "destructive" });
@@ -100,7 +105,7 @@ export default function Reupload() {
 
   if (!data) return null;
 
-  if (data.all_complete) {
+  if (completedAll || data.all_complete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
         <Card className="max-w-md w-full">
