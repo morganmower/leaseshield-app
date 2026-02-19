@@ -9540,6 +9540,8 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + expires_in_days);
 
+      await storage.revokeActiveTokensForPerson(req.params.personId);
+
       const token = await storage.createDocumentReuploadToken({
         personId: req.params.personId,
         allowedFileTypes: allowed_file_types,

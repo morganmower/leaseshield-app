@@ -457,6 +457,7 @@ export interface IStorage {
   getDocumentReuploadToken(id: string): Promise<DocumentReuploadToken | undefined>;
   markDocumentReuploadTokenUsed(id: string): Promise<void>;
   revokeDocumentReuploadToken(id: string): Promise<void>;
+  revokeActiveTokensForPerson(personId: string): Promise<void>;
   getDocumentReuploadTokensForPerson(personId: string): Promise<DocumentReuploadToken[]>;
 
   // Rental Application System - Acknowledgement operations
@@ -2481,6 +2482,20 @@ export class DatabaseStorage implements IStorage {
         .set({ revokedAt: new Date() })
         .where(eq(documentReuploadTokens.id, id));
     }, 'revokeDocumentReuploadToken');
+  }
+
+  async revokeActiveTokensForPerson(personId: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(documentReuploadTokens)
+        .set({ revokedAt: new Date() })
+        .where(
+          and(
+            eq(documentReuploadTokens.personId, personId),
+            isNull(documentReuploadTokens.usedAt),
+            isNull(documentReuploadTokens.revokedAt),
+          )
+        );
+    }, 'revokeActiveTokensForPerson');
   }
 
   async getDocumentReuploadTokensForPerson(personId: string): Promise<DocumentReuploadToken[]> {
