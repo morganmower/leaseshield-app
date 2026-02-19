@@ -2352,6 +2352,7 @@ export class DatabaseStorage implements IStorage {
         .where(and(
           eq(rentalProperties.userId, userId),
           isNull(rentalSubmissions.deletedAt),
+          isNull(rentalSubmissions.archivedAt),
           isNull(rentalDecisions.id)
         ));
       return results.length;
