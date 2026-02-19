@@ -9613,9 +9613,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       const currentFiles = await storage.getCurrentFiles(token.personId);
-      const currentTypes = new Set(currentFiles.map(f => f.fileType));
-      const alreadyUploaded = (token.allowedFileTypes as string[]).filter(t => currentTypes.has(t));
-      const stillNeeded = (token.allowedFileTypes as string[]).filter(t => !currentTypes.has(t));
+      const tokenCreatedAt = new Date(token.createdAt);
+      const filesAfterToken = currentFiles.filter(f => new Date(f.createdAt) > tokenCreatedAt);
+      const uploadedTypesAfterToken = new Set(filesAfterToken.map(f => f.fileType));
+      const alreadyUploaded = (token.allowedFileTypes as string[]).filter(t => uploadedTypesAfterToken.has(t));
+      const stillNeeded = (token.allowedFileTypes as string[]).filter(t => !uploadedTypesAfterToken.has(t));
 
       const person = await storage.getRentalSubmissionPerson(token.personId);
 
@@ -9687,8 +9689,10 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       });
 
       const currentFiles = await storage.getCurrentFiles(token.personId);
-      const currentTypes = new Set(currentFiles.map(f => f.fileType));
-      const allComplete = allowedTypes.every(t => currentTypes.has(t));
+      const tokenCreatedAt = new Date(token.createdAt);
+      const filesAfterToken = currentFiles.filter(f => new Date(f.createdAt) > tokenCreatedAt);
+      const uploadedTypesAfterToken = new Set(filesAfterToken.map(f => f.fileType));
+      const allComplete = allowedTypes.every(t => uploadedTypesAfterToken.has(t));
       if (allComplete) {
         await storage.markDocumentReuploadTokenUsed(token.id);
       }
