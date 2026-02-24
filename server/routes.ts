@@ -3346,67 +3346,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastName: user.lastName,
       } : undefined;
 
-      // Check if this template has a corresponding notice form with official PDF overlay mode
-      const titleLower = template.title.toLowerCase();
-      const isMichiganDemand = titleLower.includes('demand for possession') ||
-        (template.stateId === 'MI' && titleLower.includes('demand') && titleLower.includes('seven'));
-      
-      if (isMichiganDemand && format === 'pdf') {
+      // Route to official overlay renderer if this template has an output_template_id configured
+      if ((template as any).outputTemplateId && format === 'pdf') {
         try {
-          const { resolveForm, getOverlayData, calculateDates } = await import('./engine');
-          const { generateOverlayPdf } = await import('./engine/pdfOverlay');
-          const path = await import('path');
-          
-          const def = await resolveForm('mi_dc_100a_demand_possession_nonpayment');
-          const outputMode = def.outputTemplate?.mode;
-          
-          if (outputMode === 'official_pdf_overlay' && def.outputTemplate?.basePdfAttachmentPath) {
-            const mappedInputs: Record<string, string | number | boolean> = {};
-            
-            mappedInputs['plaintiff_name'] = String(fieldValues.landlordName || fieldValues.plaintiff_name || '');
-            mappedInputs['plaintiff_address'] = String(fieldValues.landlordAddress || fieldValues.plaintiff_address || '');
-            mappedInputs['plaintiff_city_state_zip'] = String(fieldValues.plaintiff_city_state_zip || '');
-            mappedInputs['plaintiff_phone'] = String(fieldValues.landlordPhone || fieldValues.plaintiff_phone || '');
-            mappedInputs['defendant_name'] = String(fieldValues.tenantName || fieldValues.defendant_name || '');
-            mappedInputs['defendant_address'] = String(fieldValues.propertyAddress || fieldValues.defendant_address || '');
-            mappedInputs['defendant_city_state_zip'] = String(fieldValues.defendant_city_state_zip || '');
-            mappedInputs['premises_address'] = String(fieldValues.propertyAddress || fieldValues.premises_address || '');
-            mappedInputs['premises_city'] = String(fieldValues.propertyCity || fieldValues.premises_city || '');
-            mappedInputs['premises_county'] = String(fieldValues.premises_county || '');
-            mappedInputs['rent_amount_due'] = String(fieldValues.amountDue || fieldValues.rent_amount_due || '');
-            mappedInputs['rent_period_from'] = String(fieldValues.rentDueDate || fieldValues.rent_period_from || '');
-            mappedInputs['rent_period_to'] = String(fieldValues.rent_period_to || '');
-            mappedInputs['monthly_rent_amount'] = String(fieldValues.monthly_rent_amount || '');
-            mappedInputs['service_date'] = String(fieldValues.noticeDate || fieldValues.service_date || '');
-            mappedInputs['server_name'] = String(fieldValues.server_name || '');
-            mappedInputs['plaintiff_name_print'] = mappedInputs['plaintiff_name'];
-            mappedInputs['plaintiff_phone_sig'] = mappedInputs['plaintiff_phone'];
-            mappedInputs['plaintiff_address_sig'] = mappedInputs['plaintiff_address'] + (mappedInputs['plaintiff_city_state_zip'] ? ', ' + mappedInputs['plaintiff_city_state_zip'] : '');
-            mappedInputs['signature_date'] = mappedInputs['service_date'];
-
-            const serviceSelection: Record<string, boolean> = {};
-            const serviceMethod = String(fieldValues.serviceMethod || '').toLowerCase();
-            for (const rule of def.serviceRules) {
-              const methodKey = rule.methodKey || '';
-              if (serviceMethod.includes('personal') && methodKey === 'personal') serviceSelection[rule.methodId] = true;
-              else if (serviceMethod.includes('mail') && !serviceMethod.includes('tack') && methodKey === 'first_class_mail') serviceSelection[rule.methodId] = true;
-              else if ((serviceMethod.includes('tack') || serviceMethod.includes('post')) && methodKey === 'posting') serviceSelection[rule.methodId] = true;
-            }
-
-            const overlayData = getOverlayData({ def, inputs: mappedInputs, serviceSelection, dateCalc: null });
-            const basePdfPath = path.resolve(process.cwd(), def.outputTemplate.basePdfAttachmentPath);
-            const pdfBuffer = await generateOverlayPdf(basePdfPath, overlayData);
-
-            const safeFilename = template.title.replace(/[^a-z0-9]/gi, '_');
-            assertLooksLikePdf(pdfBuffer);
-            return sendBinaryDownload(res, {
-              buffer: pdfBuffer,
-              filename: `${safeFilename}.pdf`,
-              contentType: CONTENT_TYPES.PDF,
-            });
-          }
+          const { renderDocument } = await import('./engine/documentRenderer');
+          const rendered = await renderDocument({
+            templateId: template.id,
+            inputs: fieldValues as Record<string, string | number | boolean>,
+            userId,
+            format: 'pdf',
+          });
+          assertLooksLikePdf(rendered.buffer);
+          return sendBinaryDownload(res, {
+            buffer: rendered.buffer,
+            filename: rendered.filename,
+            contentType: CONTENT_TYPES.PDF,
+          });
         } catch (overlayErr: any) {
-          console.warn('[DocumentGenerate] Overlay PDF failed, falling back to HTML generation:', overlayErr.message);
+          console.warn('[DocumentGenerate] Official overlay PDF failed, falling back to formatted generation:', overlayErr.message);
         }
       }
 

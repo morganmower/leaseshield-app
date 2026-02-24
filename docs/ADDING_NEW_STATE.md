@@ -430,3 +430,179 @@ When you add a new state to the database, all systems automatically include it:
 - User preferences validation
 - Template filtering
 - Compliance card filtering
+
+---
+
+## Adding an Official Court Form (PDF Overlay Mode)
+
+Official court forms (eviction notices, demand letters issued by state court authorities) follow a strict **PDF overlay** architecture. The output must be the official base PDF filled with user data — no LeaseShield headers, footers, metadata, or branding. This section documents the complete workflow.
+
+### Architecture Overview
+
+```
+User submits wizard form
+       ↓
+DocumentRenderer (server/engine/documentRenderer.ts)
+       ↓ reads template.output_template_id
+       ↓
+OfficialOverlayRenderer (server/engine/officialOverlayRenderer.ts)
+       ↓
+Strategy A: form_fields  → fill AcroForm fields by name (preferred)
+Strategy B: coordinates  → draw text at x/y coordinates (fallback)
+       ↓ mandatory flatten
+       ↓
+OverlayGuardrails        → page count check, banned string scan
+       ↓
+Buffer returned to user (official PDF, no LeaseShield content)
+```
+
+### Step 1: Download and Place the Official PDF
+
+```bash
+# Place the official PDF in the court-forms assets directory
+# Naming convention: {STATE}_{form_id}.pdf
+server/assets/court-forms/{STATE}_{form_id}.pdf
+
+# Example:
+server/assets/court-forms/MI_DC_100a.pdf
+```
+
+Use only the official, unmodified PDF from the state court authority. Never use a recreated or reformatted version.
+
+### Step 2: Inspect AcroForm Fields
+
+Run the inspect utility to discover what fields the PDF contains:
+
+```bash
+npx tsx server/scripts/inspectPdfFields.ts server/assets/court-forms/{STATE}_{form_id}.pdf
+```
+
+This will output:
+- Total page count and MediaBox dimensions per page
+- All AcroForm field names, types (TextField/CheckBox), and bounding rectangles
+- A field name mapping template (ready to copy into your seed/renderer code)
+- A recommendation: `form_fields` (if AcroForm fields exist) or `coordinates` (if not)
+
+Example output for a field:
+```
+[TextField   ] "First Middle and Last Name"  → page rect: x=153.1, y=528.7, w=248.5, h=11.9
+```
+
+### Step 3: Choose Render Strategy
+
+| Condition | Strategy |
+|-----------|----------|
+| PDF has usable named AcroForm fields | `form_fields` (primary) |
+| PDF has no AcroForm or fields are unnamed/broken | `coordinates` (fallback) |
+
+For `coordinates` strategy, use the x/y/page values from the inspect utility to build `overlay_fields` DB rows.
+
+### Step 4: Create the Notice Form Definition
+
+Create database records for the form:
+
+```sql
+-- 1. notice_forms
+INSERT INTO notice_forms (id, state_id, key, display_name, notice_category, is_active)
+VALUES (gen_random_uuid(), '{STATE}', '{state}_{form_id}_{notice_type}',
+        '{Full Display Name}', '{notice_category}', true);
+
+-- 2. notice_form_versions (status = 'approved' to be active)
+INSERT INTO notice_form_versions (id, form_id, version_number, status)
+VALUES (gen_random_uuid(), '<form_id>', 1, 'approved');
+
+-- 3. output_templates
+INSERT INTO output_templates (id, form_version_id, mode, base_pdf_attachment_path, render_strategy, page_count)
+VALUES (gen_random_uuid(), '<version_id>',
+        'official_pdf_overlay',
+        'server/assets/court-forms/{STATE}_{form_id}.pdf',
+        'form_fields',  -- or 'coordinates'
+        {page_count});
+```
+
+### Step 5: Create the Field Name Mapping (Strategy A — form_fields)
+
+If using `form_fields` strategy, add a field map to `server/engine/officialOverlayRenderer.ts`:
+
+```typescript
+// Add alongside MI_DC100A_FIELD_MAP
+const {STATE}_{FORM_ID}_FIELD_MAP: Record<string, string> = {
+  plaintiff_name: 'Exact PDF Field Name Here',
+  defendant_name: 'Another Exact PDF Field Name',
+  // ... copy from inspectPdfFields.ts output
+};
+```
+
+Then update the `fillFormFieldStrategy` function to select the correct map based on the base PDF path or a passed config parameter.
+
+If using `coordinates` strategy, insert rows into `overlay_fields`:
+
+```sql
+INSERT INTO overlay_fields (id, output_template_id, field_key, page_number, x, y, font, font_size, max_width, align, wrap)
+VALUES (gen_random_uuid(), '<output_template_id>', 'plaintiff_name', 1, 40, 701, 'Helvetica', 9, 285, 'left', false);
+-- (repeat for each field)
+```
+
+### Step 6: Link the Library Template
+
+After creating the `output_templates` record, link your LeaseShield library template to it:
+
+```sql
+UPDATE templates
+SET output_template_id = '<output_template_id>'
+WHERE state_id = '{STATE}' AND key = '{template_key}';
+```
+
+Or update the migration script (`server/scripts/migrateRendererSchema.ts`) to include the link.
+
+### Step 7: Run the Smoke Test
+
+Run the automated smoke test against the new form:
+
+```bash
+npx tsx server/scripts/testOverlayOutput.ts
+```
+
+For new forms, update `testOverlayOutput.ts` with:
+1. The correct `BASE_PDF_PATH`
+2. `TEST_FIELDS` matching the new form's field keys
+3. `testFieldAssertions` with the exact AcroForm field names and expected values
+
+The smoke test verifies:
+- Page count equals base PDF ✓
+- MediaBox dimensions match per page ✓
+- Output SHA-256 differs from base (fields were written) ✓
+- No banned strings in output (no LeaseShield metadata) ✓
+- Expected field values were written correctly ✓
+
+**The smoke test must pass before any form goes to production.**
+
+If it fails, a debug artifact is saved as `test_output_FAILED_{timestamp}.pdf` for visual inspection.
+
+### Step 8: Add Form-Specific Banned Strings (Optional)
+
+If the new form's official template includes strings that should never appear in output (e.g., placeholder text like "INSERT NAME HERE"), add them to `overlayGuardrails.ts`:
+
+```typescript
+const BANNED_STRINGS = [
+  'LeaseShield',
+  // ... existing entries ...
+  'INSERT NAME HERE',  // form-specific placeholder
+];
+```
+
+### Step 9: Holiday Calendar (If Applicable)
+
+If the notice period calculation depends on court holidays (e.g., court filing deadlines):
+
+1. Check if `notice_form_versions.statute_snapshot_text` references holiday exclusions
+2. Wire the form to the existing holiday calendar in `server/engine/dateEngine.ts`
+3. Document which calendar applies in the form's `statute_retrieved_at` / `statute_source_citation` fields
+
+### Architecture Rules (Never Violate These)
+
+- **No state-based branching in rendering code**: `officialOverlayRenderer.ts` must not contain `if (state === 'MI')` conditionals. Use form-specific field maps selected by base PDF path or config.
+- **Never call Puppeteer/HTML generator for official PDFs**: The `official_pdf_overlay` code path must only use pdf-lib. No `generateDocument()` or `generateHTMLFromTemplate()` calls.
+- **Always flatten**: Never return an unflatened overlay. Courts and PDF viewers show blank fields without flatten.
+- **Page count must match**: If the output has a different page count than the base PDF, the renderer throws before the PDF reaches the user.
+- **No LeaseShield metadata**: Verify with the banned string guardrails on every new form.

@@ -6,13 +6,11 @@ import {
   resolveServiceMethods,
   enforceServiceHierarchy,
   renderHtml,
-  getOverlayData,
 } from "../engine";
 import { db } from "../db";
 import { generatedNoticeDocuments, noticeAuditEvents } from "@shared/schema";
 import { randomUUID } from "crypto";
-import { generateOverlayPdf } from "../engine/pdfOverlay";
-import * as path from "path";
+import { renderDocument, saveRenderProvenance } from "../engine/documentRenderer";
 
 const router = Router();
 
@@ -201,7 +199,8 @@ router.post("/api/notice-forms/:formKey/generate", async (req, res) => {
 
 router.post("/api/notice-forms/:formKey/generate-pdf", async (req, res) => {
   try {
-    const def = await resolveForm(req.params.formKey);
+    const formKey = req.params.formKey;
+    const def = await resolveForm(formKey);
     const { inputs, gateAnswers, serviceSelection, serviceDate } = req.body;
     const userId = (req as any).userId;
 
@@ -224,56 +223,62 @@ router.post("/api/notice-forms/:formKey/generate-pdf", async (req, res) => {
 
     const outputMode = def.outputTemplate?.mode || 'leaseshield_formatted';
 
-    if (outputMode === 'official_pdf_overlay' && def.outputTemplate?.basePdfAttachmentPath) {
-      try {
-        const overlayData = getOverlayData({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });
-        const basePdfPath = path.resolve(process.cwd(), def.outputTemplate.basePdfAttachmentPath);
-        const pdfBuffer = await generateOverlayPdf(basePdfPath, overlayData);
+    if (outputMode === 'official_pdf_overlay') {
+      const rendered = await renderDocument({
+        noticeFormKey: formKey,
+        inputs: inputs || {},
+        gateAnswers: gateAnswers || {},
+        serviceSelection: serviceSelection || {},
+        dateCalc,
+        userId,
+        format: 'pdf',
+      });
 
-        if (userId) {
-          try {
-            const docId = randomUUID();
-            await db.insert(generatedNoticeDocuments).values({
-              id: docId,
-              formVersionId: def.version.id,
-              userId,
-              inputSnapshot: inputs,
-              gateSnapshot: gateAnswers,
-              serviceSnapshot: serviceSelection,
-              dateCalcSnapshot: dateCalc,
-              renderedHtml: null,
-              overlayJson: overlayData.length > 0 ? overlayData : null,
-              complianceDeadline: dateCalc?.complianceDeadline || null,
-              earliestFilingDate: dateCalc?.earliestFilingDate || null,
-            } as any);
+      if (userId) {
+        try {
+          const docId = randomUUID();
+          await db.insert(generatedNoticeDocuments).values({
+            id: docId,
+            formVersionId: def.version.id,
+            userId,
+            inputSnapshot: inputs,
+            gateSnapshot: gateAnswers,
+            serviceSnapshot: serviceSelection,
+            dateCalcSnapshot: dateCalc,
+            renderedHtml: null,
+            overlayJson: null,
+            complianceDeadline: dateCalc?.complianceDeadline || null,
+            earliestFilingDate: dateCalc?.earliestFilingDate || null,
+          } as any);
 
-            await db.insert(noticeAuditEvents).values({
-              id: randomUUID(),
-              documentId: docId,
-              eventType: 'generated',
-              actorId: userId,
-              detail: { formKey: def.form.key, versionNumber: def.version.versionNumber, outputMode: 'official_pdf_overlay' },
-            } as any);
-          } catch (dbErr: any) {
-            console.warn('[NoticeGeneration] Failed to log document generation:', dbErr.message);
-          }
+          await saveRenderProvenance(docId, {
+            renderModeUsed: rendered.renderModeUsed,
+            renderStrategyUsed: rendered.renderStrategyUsed,
+            basePdfSha256: rendered.basePdfSha256,
+            outputPdfSha256: rendered.outputPdfSha256,
+          });
+
+          await db.insert(noticeAuditEvents).values({
+            id: randomUUID(),
+            documentId: docId,
+            eventType: 'generated',
+            actorId: userId,
+            detail: {
+              formKey: def.form.key,
+              versionNumber: def.version.versionNumber,
+              outputMode: rendered.renderModeUsed,
+              renderStrategy: rendered.renderStrategyUsed,
+            },
+          } as any);
+        } catch (dbErr: any) {
+          console.warn('[NoticeGeneration] Failed to log document generation:', dbErr.message);
         }
-
-        const formTitle = def.form.displayName.replace(/[^a-zA-Z0-9]/g, '_');
-        res.setHeader('Content-Type', 'application/pdf');
-        res.setHeader('Content-Disposition', `attachment; filename="${formTitle}.pdf"`);
-        res.setHeader('Content-Length', pdfBuffer.length);
-        return res.send(pdfBuffer);
-      } catch (overlayErr: any) {
-        console.warn('[NoticeGeneration] Overlay PDF failed, falling back to HTML:', overlayErr.message);
-        const html = renderHtml({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });
-        return res.json({
-          fallback: true,
-          html,
-          dateCalc,
-          error: 'PDF overlay generation failed. Returning HTML output instead.',
-        });
       }
+
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `attachment; filename="${rendered.filename}"`);
+      res.setHeader('Content-Length', rendered.buffer.length);
+      return res.send(rendered.buffer);
     }
 
     const html = renderHtml({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });

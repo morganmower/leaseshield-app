@@ -67,11 +67,15 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Authentication**: Replit Auth with session handling.
 - **Payments**: Stripe Subscriptions with webhooks.
 - **Document Assembly Wizard**: Interactive multi-step forms, server-side PDF generation (Puppeteer) with professional styling, and robust HTML escaping.
-- **Document Generation Architecture**: 
-  - **PDF** (Puppeteer): Used for delivery, legal filings, and court submissions. HTML-to-PDF ensures pixel-perfect rendering.
+- **Document Generation Architecture**:
+  - **Gateway**: `server/engine/documentRenderer.ts` is the single entry point for all PDF generation. Routes never call PDF generators directly.
+  - **Official PDF Overlay** (`official_pdf_overlay` mode): Used for official court forms (MI DC 100a, etc.). Fills the unmodified base PDF using pdf-lib's AcroForm API (Strategy A: `form_fields`) or coordinate drawing (Strategy B: `coordinates`). Always flattened. Zero LeaseShield metadata in output. Guardrails: page count assertion, banned-string dual-layer scan (Latin-1 + UTF-16BE). See `server/engine/officialOverlayRenderer.ts`.
+  - **LeaseShield Formatted** (`leaseshield_formatted` mode): Puppeteer/HTML for LeaseShield-branded PDFs (leases, notices without official forms). DOCX uses native `docx` library.
+  - **Routing**: `templates.output_template_id` (FK to `output_templates`) triggers official overlay mode. If null → formatted mode. Zero title-matching heuristics; zero state-code conditionals in routing.
   - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
   - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
   - **State-specific content**: All 16 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
+  - **Developer Tools**: `npx tsx server/scripts/inspectPdfFields.ts <pdf>` lists all AcroForm fields. `npx tsx server/scripts/testOverlayOutput.ts` runs the MI DC 100a smoke test (13 assertions). See `docs/ADDING_NEW_STATE.md` for the full official court form onboarding workflow.
 - **Legislative Monitoring**: Safe two-job architecture with approval gates:
   - **Data Sources (8 total)**: LegiScan API, Plural Policy API, Utah GLEN API, Federal Register API, eCFR API, Congress.gov API, HUD ONAP/PIH poller, CourtListener API
   - **Safe Workflow**:

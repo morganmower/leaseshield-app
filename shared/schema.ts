@@ -145,6 +145,8 @@ export const templates = pgTable("templates", {
   fillableFormData: jsonb("fillable_form_data"), // JSON structure for fillable fields
   // Generation mode: wizard = landlord fills form, static = blank download for applicants
   generationMode: generationModeEnum("generation_mode").default('wizard'),
+  // Link to official notice form output template (enables official_pdf_overlay routing)
+  outputTemplateId: varchar("output_template_id"), // FK to output_templates.id (set after output_templates table is created)
   // Metadata
   version: integer("version").default(1),
   versionNotes: text("version_notes"), // What changed in this version
@@ -2478,6 +2480,11 @@ export const outputModeEnum = pgEnum('output_mode', [
   'leaseshield_formatted',
 ]);
 
+export const renderStrategyEnum = pgEnum('render_strategy', [
+  'form_fields',
+  'coordinates',
+]);
+
 export const formFieldTypeEnum = pgEnum('form_field_type', [
   'text',
   'money',
@@ -2693,6 +2700,7 @@ export const outputTemplates = pgTable("output_templates", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
   mode: outputModeEnum("mode").notNull(),
+  renderStrategy: renderStrategyEnum("render_strategy").default('form_fields'),
   basePdfAttachmentPath: text("base_pdf_attachment_path"),
   htmlTemplate: text("html_template"),
   docxTemplateAttachmentPath: text("docx_template_attachment_path"),
@@ -2732,6 +2740,10 @@ export const generatedNoticeDocuments = pgTable("generated_notice_documents", {
   pdfAttachmentPath: text("pdf_attachment_path"),
   docxAttachmentPath: text("docx_attachment_path"),
   isImmutable: boolean("is_immutable").notNull().default(true),
+  renderModeUsed: varchar("render_mode_used"),
+  renderStrategyUsed: varchar("render_strategy_used"),
+  basePdfSha256: varchar("base_pdf_sha256"),
+  outputPdfSha256: varchar("output_pdf_sha256"),
   createdAt: timestamp("created_at").defaultNow(),
 }, (table) => [
   index("idx_generated_notice_docs_user").on(table.userId),
