@@ -1,0 +1,140 @@
+[
+  {
+    "fieldKey": "plaintiff_name",
+    "x": 40,
+    "y": 701,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_address",
+    "x": 40,
+    "y": 689,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_phone",
+    "x": 190,
+    "y": 689,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_city_state_zip",
+    "x": 40,
+    "y": 677,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "defendant_name",
+    "x": 40,
+    "y": 651,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "defendant_address",
+    "x": 40,
+    "y": 639,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "defendant_city_state_zip",
+    "x": 40,
+    "y": 627,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "premises_address",
+    "x": 80,
+    "y": 553,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "premises_city",
+    "x": 62,
+    "y": 537,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "premises_county",
+    "x": 304,
+    "y": 537,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "rent_period_from",
+    "x": 120,
+    "y": 380,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "rent_period_to",
+    "x": 286,
+    "y": 380,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "monthly_rent_amount",
+    "x": 154,
+    "y": 364,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "rent_amount_due",
+    "x": 181,
+    "y": 348,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "service_checkbox_personal",
+    "x": 50,
+    "y": 287,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "service_checkbox_first_class_mail",
+    "x": 50,
+    "y": 274,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "service_checkbox_posting",
+    "x": 50,
+    "y": 261,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "service_date",
+    "x": 114,
+    "y": 242,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "server_name",
+    "x": 436,
+    "y": 242,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "signature_date",
+    "x": 476,
+    "y": 188,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_name_print",
+    "x": 96,
+    "y": 172,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_phone_sig",
+    "x": 394,
+    "y": 172,
+    "pageNumber": 1
+  },
+  {
+    "fieldKey": "plaintiff_address_sig",
+    "x": 80,
+    "y": 156,
+    "pageNumber": 1
+  }
+]
