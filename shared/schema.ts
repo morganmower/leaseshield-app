@@ -10,6 +10,8 @@ import {
   integer,
   boolean,
   pgEnum,
+  date,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -2437,3 +2439,455 @@ export const insertDocumentReuploadTokenSchema = createInsertSchema(documentReup
 });
 export type InsertDocumentReuploadToken = z.infer<typeof insertDocumentReuploadTokenSchema>;
 export type DocumentReuploadToken = typeof documentReuploadTokens.$inferSelect;
+
+// ============================================================================
+// COMPLIANCE MATRIX — State-Specific Legal Notice Forms
+// ============================================================================
+// Engine code MUST NOT branch on state_code or form keys.
+// All behavior is derived from matrix-provided enums and rules.
+// ============================================================================
+
+// --- Enums ---
+
+export const noticeFormStatusEnum = pgEnum('notice_form_status', [
+  'draft',
+  'approved',
+  'review_required',
+  'retired',
+]);
+
+export const localOverlayRiskEnum = pgEnum('local_overlay_risk', [
+  'low',
+  'med',
+  'high',
+]);
+
+export const dayTypeEnum = pgEnum('day_type', [
+  'calendar',
+  'business',
+  'judicial',
+  'judicial_holidays_excluded',
+]);
+
+export const countingConventionEnum = pgEnum('counting_convention', [
+  'day0_service_plus_n',
+]);
+
+export const outputModeEnum = pgEnum('output_mode', [
+  'official_pdf_overlay',
+  'leaseshield_formatted',
+]);
+
+export const formFieldTypeEnum = pgEnum('form_field_type', [
+  'text',
+  'money',
+  'date',
+  'select',
+  'checkbox',
+  'textarea',
+  'number',
+]);
+
+export const validationTypeEnum = pgEnum('validation_type', [
+  'regex',
+  'min',
+  'max',
+  'disallow_tokens',
+  'required_if',
+  'custom_rule',
+]);
+
+export const languageBlockTypeEnum = pgEnum('language_block_type', [
+  'statutory_language',
+  'tenant_warning',
+  'tenant_options_cure',
+  'local_disclaimer',
+  'other',
+]);
+
+export const serviceLeaseGateTypeEnum = pgEnum('service_lease_gate_type', [
+  'boolean',
+  'number',
+  'select',
+]);
+
+export const overlayAlignEnum = pgEnum('overlay_align', [
+  'left',
+  'center',
+  'right',
+]);
+
+export const noticeAuditEventTypeEnum = pgEnum('notice_audit_event_type', [
+  'date_override',
+  'form_generated',
+  'holiday_table_updated',
+  'form_locked',
+  'form_approved',
+  'form_retired',
+]);
+
+// --- Phase 1A: Core reference + versioning tables ---
+
+export const noticeForms = pgTable("notice_forms", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull().references(() => states.id),
+  key: varchar("key").notNull().unique(),
+  displayName: varchar("display_name").notNull(),
+  category: varchar("notice_category", { length: 50 }).notNull(),
+  localOverlayRisk: localOverlayRiskEnum("local_overlay_risk").notNull().default('low'),
+  disclaimerText: text("disclaimer_text"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_notice_forms_state").on(table.stateId),
+  index("idx_notice_forms_category").on(table.category),
+]);
+
+export const noticeFormVersions = pgTable("notice_form_versions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formId: varchar("form_id").notNull().references(() => noticeForms.id, { onDelete: 'cascade' }),
+  versionNumber: integer("version_number").notNull().default(1),
+  effectiveStart: date("effective_start"),
+  effectiveEnd: date("effective_end"),
+  status: noticeFormStatusEnum("status").notNull().default('draft'),
+  approvalNotes: text("approval_notes"),
+  statuteSnapshotText: text("statute_snapshot_text"),
+  statuteRetrievedAt: timestamp("statute_retrieved_at"),
+  statuteSourceCitation: text("statute_source_citation"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  index("idx_notice_form_versions_form").on(table.formId),
+  index("idx_notice_form_versions_status").on(table.status),
+]);
+
+export const holidayCalendars = pgTable("holiday_calendars", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull().references(() => states.id),
+  name: varchar("name").notNull(),
+  year: integer("year").notNull(),
+  version: varchar("version").notNull(),
+  sourceName: varchar("source_name"),
+  sourceCitation: text("source_citation"),
+  retrievedAt: timestamp("retrieved_at"),
+  sourceAttachmentPath: text("source_attachment_path"),
+  isActive: boolean("is_active").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_holiday_calendars_state_year").on(table.stateId, table.year),
+]);
+
+export const holidayCalendarDates = pgTable("holiday_calendar_dates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  holidayCalendarId: varchar("holiday_calendar_id").notNull().references(() => holidayCalendars.id, { onDelete: 'cascade' }),
+  date: date("date").notNull(),
+  label: text("label").notNull(),
+}, (table) => [
+  index("idx_holiday_calendar_dates_cal").on(table.holidayCalendarId),
+]);
+
+// --- Phase 1B: Day rules + service methods ---
+
+export const formDayRules = pgTable("form_day_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  dayType: dayTypeEnum("day_type").notNull(),
+  noticePeriodDays: integer("notice_period_days").notNull(),
+  countingConvention: countingConventionEnum("counting_convention").notNull().default('day0_service_plus_n'),
+  holidayCalendarId: varchar("holiday_calendar_id").references(() => holidayCalendars.id),
+}, (table) => [
+  index("idx_form_day_rules_version").on(table.formVersionId),
+]);
+
+export const serviceMethods = pgTable("service_methods", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key").notNull().unique(),
+  displayName: varchar("display_name").notNull(),
+});
+
+export const formServiceRules = pgTable("form_service_rules", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  methodId: varchar("method_id").notNull().references(() => serviceMethods.id),
+  isAllowed: boolean("is_allowed").notNull().default(true),
+  requiresPriorAttempts: boolean("requires_prior_attempts").notNull().default(false),
+  priorAttemptMethodIds: jsonb("prior_attempt_method_ids").$type<string[]>().default([]),
+  requiresAdditionalMethods: boolean("requires_additional_methods").notNull().default(false),
+  additionalMethodIds: jsonb("additional_method_ids").$type<string[]>().default([]),
+  ackText: text("ack_text"),
+  requiresAck: boolean("requires_ack").notNull().default(false),
+  sortOrder: integer("sort_order").notNull().default(0),
+}, (table) => [
+  index("idx_form_service_rules_version").on(table.formVersionId),
+]);
+
+export const formServiceLeaseGates = pgTable("form_service_lease_gates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  gateKey: varchar("gate_key").notNull(),
+  promptText: text("prompt_text").notNull(),
+  required: boolean("required").notNull().default(true),
+  type: serviceLeaseGateTypeEnum("type").notNull(),
+  selectOptions: jsonb("select_options").$type<string[]>(),
+  affectsNoticePeriod: boolean("affects_notice_period").notNull().default(false),
+  affectsServiceMethods: boolean("affects_service_methods").notNull().default(false),
+  affectedMethodIds: jsonb("affected_method_ids").$type<string[]>().default([]),
+}, (table) => [
+  index("idx_form_service_lease_gates_version").on(table.formVersionId),
+]);
+
+// --- Phase 1C: Language blocks + wizard fields + validation ---
+
+export const languageBlocks = pgTable("language_blocks", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  key: varchar("key").notNull().unique(),
+  text: text("text").notNull(),
+  sourceCitation: text("source_citation"),
+  retrievedAt: timestamp("retrieved_at"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const formRequiredLanguage = pgTable("form_required_language", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  blockType: languageBlockTypeEnum("block_type").notNull(),
+  languageBlockId: varchar("language_block_id").notNull().references(() => languageBlocks.id),
+  isRequired: boolean("is_required").notNull().default(true),
+  sortOrder: integer("sort_order").notNull().default(0),
+}, (table) => [
+  index("idx_form_required_language_version").on(table.formVersionId),
+]);
+
+export const formFields = pgTable("form_fields", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  key: varchar("key").notNull(),
+  label: varchar("label").notNull(),
+  type: formFieldTypeEnum("type").notNull(),
+  required: boolean("required").notNull().default(true),
+  helpText: text("help_text"),
+  defaultValue: text("default_value"),
+  selectOptions: jsonb("select_options").$type<string[]>(),
+  visibilityRule: jsonb("visibility_rule"),
+  sortOrder: integer("sort_order").notNull().default(0),
+  fieldGroup: varchar("field_group"),
+}, (table) => [
+  index("idx_form_fields_version").on(table.formVersionId),
+]);
+
+export const fieldValidations = pgTable("field_validations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  fieldId: varchar("field_id").notNull().references(() => formFields.id, { onDelete: 'cascade' }),
+  validationType: validationTypeEnum("validation_type").notNull(),
+  params: jsonb("params"),
+  errorMessage: text("error_message").notNull(),
+}, (table) => [
+  index("idx_field_validations_field").on(table.fieldId),
+]);
+
+// --- Phase 1D: Output rendering + generation audit ---
+
+export const outputTemplates = pgTable("output_templates", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id, { onDelete: 'cascade' }),
+  mode: outputModeEnum("mode").notNull(),
+  basePdfAttachmentPath: text("base_pdf_attachment_path"),
+  htmlTemplate: text("html_template"),
+  docxTemplateAttachmentPath: text("docx_template_attachment_path"),
+  pageCount: integer("page_count"),
+}, (table) => [
+  index("idx_output_templates_version").on(table.formVersionId),
+]);
+
+export const overlayFields = pgTable("overlay_fields", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  outputTemplateId: varchar("output_template_id").notNull().references(() => outputTemplates.id, { onDelete: 'cascade' }),
+  fieldKey: varchar("field_key").notNull(),
+  pageNumber: integer("page_number").notNull().default(1),
+  x: doublePrecision("x").notNull(),
+  y: doublePrecision("y").notNull(),
+  font: varchar("font").default('Helvetica'),
+  fontSize: doublePrecision("font_size").default(10),
+  maxWidth: doublePrecision("max_width"),
+  align: overlayAlignEnum("align").default('left'),
+  wrap: boolean("wrap").default(false),
+}, (table) => [
+  index("idx_overlay_fields_template").on(table.outputTemplateId),
+]);
+
+export const generatedNoticeDocuments = pgTable("generated_notice_documents", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  formVersionId: varchar("form_version_id").notNull().references(() => noticeFormVersions.id),
+  userId: varchar("user_id").notNull().references(() => users.id),
+  inputs: jsonb("inputs").notNull().$type<Record<string, string | number | boolean>>(),
+  serviceSelection: jsonb("service_selection").$type<Record<string, boolean | string>>(),
+  leaseGateAnswers: jsonb("lease_gate_answers").$type<Record<string, string | number | boolean>>(),
+  calculatedComplianceDeadline: date("calculated_compliance_deadline"),
+  calculatedEarliestFilingDate: date("calculated_earliest_filing_date"),
+  holidayCalendarVersionUsed: varchar("holiday_calendar_version_used"),
+  overrideComplianceDeadline: date("override_compliance_deadline"),
+  overrideConfirmedAt: timestamp("override_confirmed_at"),
+  pdfAttachmentPath: text("pdf_attachment_path"),
+  docxAttachmentPath: text("docx_attachment_path"),
+  isImmutable: boolean("is_immutable").notNull().default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_generated_notice_docs_user").on(table.userId),
+  index("idx_generated_notice_docs_version").on(table.formVersionId),
+]);
+
+export const noticeAuditEvents = pgTable("notice_audit_events", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  generatedDocumentId: varchar("generated_document_id").references(() => generatedNoticeDocuments.id),
+  formVersionId: varchar("form_version_id").references(() => noticeFormVersions.id),
+  userId: varchar("user_id").references(() => users.id),
+  eventType: noticeAuditEventTypeEnum("event_type").notNull(),
+  payload: jsonb("payload"),
+  createdAt: timestamp("created_at").defaultNow(),
+}, (table) => [
+  index("idx_notice_audit_events_doc").on(table.generatedDocumentId),
+  index("idx_notice_audit_events_type").on(table.eventType),
+]);
+
+// --- Relations ---
+
+export const noticeFormsRelations = relations(noticeForms, ({ one, many }) => ({
+  state: one(states, { fields: [noticeForms.stateId], references: [states.id] }),
+  versions: many(noticeFormVersions),
+}));
+
+export const noticeFormVersionsRelations = relations(noticeFormVersions, ({ one, many }) => ({
+  form: one(noticeForms, { fields: [noticeFormVersions.formId], references: [noticeForms.id] }),
+  dayRules: many(formDayRules),
+  serviceRules: many(formServiceRules),
+  leaseGates: many(formServiceLeaseGates),
+  requiredLanguage: many(formRequiredLanguage),
+  fields: many(formFields),
+  outputTemplates: many(outputTemplates),
+}));
+
+export const holidayCalendarsRelations = relations(holidayCalendars, ({ one, many }) => ({
+  state: one(states, { fields: [holidayCalendars.stateId], references: [states.id] }),
+  dates: many(holidayCalendarDates),
+}));
+
+export const holidayCalendarDatesRelations = relations(holidayCalendarDates, ({ one }) => ({
+  calendar: one(holidayCalendars, { fields: [holidayCalendarDates.holidayCalendarId], references: [holidayCalendars.id] }),
+}));
+
+export const formDayRulesRelations = relations(formDayRules, ({ one }) => ({
+  formVersion: one(noticeFormVersions, { fields: [formDayRules.formVersionId], references: [noticeFormVersions.id] }),
+  holidayCalendar: one(holidayCalendars, { fields: [formDayRules.holidayCalendarId], references: [holidayCalendars.id] }),
+}));
+
+export const formServiceRulesRelations = relations(formServiceRules, ({ one }) => ({
+  formVersion: one(noticeFormVersions, { fields: [formServiceRules.formVersionId], references: [noticeFormVersions.id] }),
+  method: one(serviceMethods, { fields: [formServiceRules.methodId], references: [serviceMethods.id] }),
+}));
+
+export const formServiceLeaseGatesRelations = relations(formServiceLeaseGates, ({ one }) => ({
+  formVersion: one(noticeFormVersions, { fields: [formServiceLeaseGates.formVersionId], references: [noticeFormVersions.id] }),
+}));
+
+export const formRequiredLanguageRelations = relations(formRequiredLanguage, ({ one }) => ({
+  formVersion: one(noticeFormVersions, { fields: [formRequiredLanguage.formVersionId], references: [noticeFormVersions.id] }),
+  block: one(languageBlocks, { fields: [formRequiredLanguage.languageBlockId], references: [languageBlocks.id] }),
+}));
+
+export const formFieldsRelations = relations(formFields, ({ one, many }) => ({
+  formVersion: one(noticeFormVersions, { fields: [formFields.formVersionId], references: [noticeFormVersions.id] }),
+  validations: many(fieldValidations),
+}));
+
+export const fieldValidationsRelations = relations(fieldValidations, ({ one }) => ({
+  field: one(formFields, { fields: [fieldValidations.fieldId], references: [formFields.id] }),
+}));
+
+export const outputTemplatesRelations = relations(outputTemplates, ({ one, many }) => ({
+  formVersion: one(noticeFormVersions, { fields: [outputTemplates.formVersionId], references: [noticeFormVersions.id] }),
+  overlayFields: many(overlayFields),
+}));
+
+export const overlayFieldsRelations = relations(overlayFields, ({ one }) => ({
+  outputTemplate: one(outputTemplates, { fields: [overlayFields.outputTemplateId], references: [outputTemplates.id] }),
+}));
+
+export const generatedNoticeDocumentsRelations = relations(generatedNoticeDocuments, ({ one, many }) => ({
+  formVersion: one(noticeFormVersions, { fields: [generatedNoticeDocuments.formVersionId], references: [noticeFormVersions.id] }),
+  user: one(users, { fields: [generatedNoticeDocuments.userId], references: [users.id] }),
+  auditEvents: many(noticeAuditEvents),
+}));
+
+export const noticeAuditEventsRelations = relations(noticeAuditEvents, ({ one }) => ({
+  generatedDocument: one(generatedNoticeDocuments, { fields: [noticeAuditEvents.generatedDocumentId], references: [generatedNoticeDocuments.id] }),
+  formVersion: one(noticeFormVersions, { fields: [noticeAuditEvents.formVersionId], references: [noticeFormVersions.id] }),
+  user: one(users, { fields: [noticeAuditEvents.userId], references: [users.id] }),
+}));
+
+// --- Insert schemas + types ---
+
+export const insertNoticeFormSchema = createInsertSchema(noticeForms).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertNoticeForm = z.infer<typeof insertNoticeFormSchema>;
+export type NoticeForm = typeof noticeForms.$inferSelect;
+
+export const insertNoticeFormVersionSchema = createInsertSchema(noticeFormVersions).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertNoticeFormVersion = z.infer<typeof insertNoticeFormVersionSchema>;
+export type NoticeFormVersion = typeof noticeFormVersions.$inferSelect;
+
+export const insertHolidayCalendarSchema = createInsertSchema(holidayCalendars).omit({ id: true, createdAt: true });
+export type InsertHolidayCalendar = z.infer<typeof insertHolidayCalendarSchema>;
+export type HolidayCalendar = typeof holidayCalendars.$inferSelect;
+
+export const insertHolidayCalendarDateSchema = createInsertSchema(holidayCalendarDates).omit({ id: true });
+export type InsertHolidayCalendarDate = z.infer<typeof insertHolidayCalendarDateSchema>;
+export type HolidayCalendarDate = typeof holidayCalendarDates.$inferSelect;
+
+export const insertFormDayRuleSchema = createInsertSchema(formDayRules).omit({ id: true });
+export type InsertFormDayRule = z.infer<typeof insertFormDayRuleSchema>;
+export type FormDayRule = typeof formDayRules.$inferSelect;
+
+export const insertServiceMethodSchema = createInsertSchema(serviceMethods).omit({ id: true });
+export type InsertServiceMethod = z.infer<typeof insertServiceMethodSchema>;
+export type ServiceMethod = typeof serviceMethods.$inferSelect;
+
+export const insertFormServiceRuleSchema = createInsertSchema(formServiceRules).omit({ id: true });
+export type InsertFormServiceRule = z.infer<typeof insertFormServiceRuleSchema>;
+export type FormServiceRule = typeof formServiceRules.$inferSelect;
+
+export const insertFormServiceLeaseGateSchema = createInsertSchema(formServiceLeaseGates).omit({ id: true });
+export type InsertFormServiceLeaseGate = z.infer<typeof insertFormServiceLeaseGateSchema>;
+export type FormServiceLeaseGate = typeof formServiceLeaseGates.$inferSelect;
+
+export const insertLanguageBlockSchema = createInsertSchema(languageBlocks).omit({ id: true, createdAt: true, updatedAt: true });
+export type InsertLanguageBlock = z.infer<typeof insertLanguageBlockSchema>;
+export type LanguageBlock = typeof languageBlocks.$inferSelect;
+
+export const insertFormRequiredLanguageSchema = createInsertSchema(formRequiredLanguage).omit({ id: true });
+export type InsertFormRequiredLanguage = z.infer<typeof insertFormRequiredLanguageSchema>;
+export type FormRequiredLanguage = typeof formRequiredLanguage.$inferSelect;
+
+export const insertFormFieldSchema = createInsertSchema(formFields).omit({ id: true });
+export type InsertFormField = z.infer<typeof insertFormFieldSchema>;
+export type FormField = typeof formFields.$inferSelect;
+
+export const insertFieldValidationSchema = createInsertSchema(fieldValidations).omit({ id: true });
+export type InsertFieldValidation = z.infer<typeof insertFieldValidationSchema>;
+export type FieldValidation = typeof fieldValidations.$inferSelect;
+
+export const insertOutputTemplateSchema = createInsertSchema(outputTemplates).omit({ id: true });
+export type InsertOutputTemplate = z.infer<typeof insertOutputTemplateSchema>;
+export type OutputTemplate = typeof outputTemplates.$inferSelect;
+
+export const insertOverlayFieldSchema = createInsertSchema(overlayFields).omit({ id: true });
+export type InsertOverlayField = z.infer<typeof insertOverlayFieldSchema>;
+export type OverlayField = typeof overlayFields.$inferSelect;
+
+export const insertGeneratedNoticeDocumentSchema = createInsertSchema(generatedNoticeDocuments).omit({ id: true, createdAt: true });
+export type InsertGeneratedNoticeDocument = z.infer<typeof insertGeneratedNoticeDocumentSchema>;
+export type GeneratedNoticeDocument = typeof generatedNoticeDocuments.$inferSelect;
+
+export const insertNoticeAuditEventSchema = createInsertSchema(noticeAuditEvents).omit({ id: true, createdAt: true });
+export type InsertNoticeAuditEvent = z.infer<typeof insertNoticeAuditEventSchema>;
+export type NoticeAuditEvent = typeof noticeAuditEvents.$inferSelect;

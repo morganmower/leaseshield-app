@@ -23,6 +23,8 @@ import { randomUUID } from "crypto";
 import fs from "fs/promises";
 import { execSync } from "child_process";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
+import { registerComplianceMatrixRoutes } from "./routes/complianceMatrix";
+import noticeGenerationRoutes from "./routes/noticeGeneration";
 import { getStateAdverseActionHtml } from "./states/adverseActionDisclosures";
 import { uploadApplicantBuffer, downloadApplicantStream, isObjstorePath, deleteApplicantObject } from "./applicantObjectStorage";
 import { rentalSubmissionFiles } from "@shared/schema";
@@ -203,6 +205,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Object Storage routes for public assets
   registerObjectStorageRoutes(app);
+
+  // Compliance Matrix admin routes (state-specific legal notice forms)
+  registerComplianceMatrixRoutes(app);
+
+  // Notice form generation engine routes (matrix-driven, zero state branching)
+  app.use(noticeGenerationRoutes);
 
   // User preferences - with strict input validation
   const userPreferencesSchema = z.object({
