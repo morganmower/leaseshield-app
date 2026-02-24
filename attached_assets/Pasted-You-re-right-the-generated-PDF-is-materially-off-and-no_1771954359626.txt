@@ -1,0 +1,88 @@
+You’re right — the generated PDF is materially “off,” and not just cosmetically. The biggest problems I see in the current output are structural (wrong content included) plus a few formatting/data bugs. 
+
+Seven_Day_Demand_for_Possession…
+
+1) Critical structural issue: it’s not just DC 100a — you’re appending lease content
+
+Pages 5–9 include “19. MICHIGAN STATE-SPECIFIC PROVISIONS” and a “SIGNATURE PAGE,” which are lease sections and have nothing to do with the SCAO DC 100a demand form. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: your generator is pulling the wrong template content (or concatenating multiple templates). DC 100a should be its own standalone output. Enforce a hard separation:
+
+template_type = notice_form (DC 100a/DC 100c)
+
+template_type = lease
+…and never merge them in one render path.
+
+2) Data/format bug: TOTAL AMOUNT DUE: $NaN
+
+This is a calculation failure and it makes the document unusable. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: in the render layer, never print NaN. Use:
+
+If numeric inputs missing → show blank line or $__________
+
+If present → compute deterministically and format to 2 decimals
+
+Also validate upstream:
+
+monthly_rent_amount numeric required if you compute totals
+
+total_rent_due_unpaid numeric required if you display “total due”
+
+3) DC 100a layout fidelity: this does not match SCAO “official form layout”
+
+Even before styling, your form reads like a “LeaseShield-styled legal notice,” not an overlay of the actual SCAO DC 100a. The SCAO form is typically a single-page court form with exact placement and standardized blocks; yours is multiple pages with custom sections like “LEGAL AUTHORITY,” “PAYMENT INFORMATION,” and local ordinance disclaimers. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix options (pick one, but you already spec’d the right one):
+
+Official PDF overlay mode (recommended): use the SCAO DC 100a PDF as the base and overlay typed values into fixed coordinates.
+
+Formatted template mode: only if you confirm courts accept it (they often won’t for official forms).
+
+Given your plan, Michigan should be official PDF overlay and should not include extra narrative sections.
+
+4) Content scope: “Late Fees (if applicable)” is risky here
+
+Your document includes a late fee field and a “TOTAL AMOUNT DUE” that likely includes late fees. That can create disputes and may not match what the court expects on the SCAO form (and it’s inconsistent with how you’re treating “rent-only” logic in other states). 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: for Michigan DC 100a, follow the actual SCAO fields. If the official form doesn’t have late fees as a distinct line item, don’t add it. If you want to track late fees internally, keep it out of the court form output.
+
+5) Certificate of Service: your options look custom and may be inaccurate for DC 100a
+
+You’re listing posting + mailing “after unsuccessful attempt at personal service” and citing MCL 600.5714(1)(a) in the certificate section. That may be wrong or at least not the right citation for service mechanics, and it’s definitely not “match the SCAO form.” 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: mirror the SCAO certificate-of-service section exactly (fields, checkboxes, wording). Put any “how service works” explanation in the Legal Notes panel in the UI, not inside the official form.
+
+6) Simple formatting issues (secondary)
+
+Too many underscores and inconsistent spacing (reads like a Word template exported to PDF, not a court form). 
+
+Seven_Day_Demand_for_Possession…
+
+“City: ___, Michigan” hardcodes the state even though the form already establishes Michigan; this is a style inconsistency. 
+
+Seven_Day_Demand_for_Possession…
+
+Repeated boilerplate sections (“LEGAL AUTHORITY”) inflate length and reduce fidelity. 
+
+Seven_Day_Demand_for_Possession…
+
+What I’d do next (fastest path to “correct”)
+
+Stop the template merge so DC 100a outputs alone (no lease pages).
+
+Switch MI DC 100a/DC 100c to Official PDF overlay mode (base SCAO PDF + coordinates).
+
+Add NaN guards + required numeric validation for any computed totals.
+
+Move disclaimers / authority / next steps into the UI Legal Notes panel, not the output form.
