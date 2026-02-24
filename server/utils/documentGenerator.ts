@@ -1022,6 +1022,10 @@ function getRentalApplicationContent(fieldValues: FieldValue, stateId: string): 
   `;
 }
 
+// Michigan DC 100a: Standalone court form — returns complete content including its own
+// signature block and certificate of service. Do NOT append state disclosures or
+// generic signature page. Future enhancement: use official SCAO PDF as base with
+// pdf-lib overlay for typed values at fixed coordinates (true "official form" mode).
 function getMichiganDemandForPossessionContent(fieldValues: FieldValue): string {
   const landlordName = escapeHtml(String(fieldValues.landlordName || fieldValues.plaintiff_name || ''));
   const landlordAddress = escapeHtml(String(fieldValues.landlordAddress || fieldValues.plaintiff_address || ''));
@@ -1030,93 +1034,73 @@ function getMichiganDemandForPossessionContent(fieldValues: FieldValue): string 
   const propertyAddress = escapeHtml(String(fieldValues.propertyAddress || fieldValues.premises_address || ''));
   const premisesCity = escapeHtml(String(fieldValues.propertyCity || fieldValues.premises_city || ''));
   const premisesCounty = escapeHtml(String(fieldValues.premises_county || ''));
-  const amountDue = escapeHtml(String(fieldValues.amountDue || fieldValues.rent_amount_due || ''));
   const rentPeriodFrom = escapeHtml(String(fieldValues.rentDueDate || fieldValues.rent_period_from || ''));
   const rentPeriodTo = escapeHtml(String(fieldValues.rent_period_to || ''));
-  const monthlyRent = escapeHtml(String(fieldValues.monthly_rent_amount || ''));
-  const lateFees = escapeHtml(String(fieldValues.lateFeeAmount || fieldValues.late_fees || '0.00'));
   const noticeDate = escapeHtml(String(fieldValues.noticeDate || fieldValues.service_date || ''));
   const serviceMethod = escapeHtml(String(fieldValues.serviceMethod || ''));
   const serverName = escapeHtml(String(fieldValues.server_name || ''));
-  const payByDate = escapeHtml(String(fieldValues.payByDate || ''));
+
+  const rawMonthlyRent = parseFloat(String(fieldValues.monthly_rent_amount || ''));
+  const rawAmountDue = parseFloat(String(fieldValues.amountDue || fieldValues.rent_amount_due || ''));
+
+  const monthlyRentDisplay = !isNaN(rawMonthlyRent) ? rawMonthlyRent.toFixed(2) : '';
+  const amountDueDisplay = !isNaN(rawAmountDue) ? rawAmountDue.toFixed(2) : '';
+
+  const blank = '____________';
 
   return `
-    <h1>DEMAND FOR POSSESSION</h1>
-    <h2 style="text-align: center; border: none; margin-top: -10pt;">NONPAYMENT OF RENT</h2>
-    <p style="text-align: center; font-size: 9pt; color: #555; margin-bottom: 20pt;">Michigan SCAO Form DC 100a &mdash; MCL &sect; 600.5714(1)(a); MCR 4.201</p>
+    <h1 style="font-size: 16pt; margin-bottom: 2pt;">DEMAND FOR POSSESSION</h1>
+    <h2 style="text-align: center; border: none; margin-top: 0; font-size: 13pt;">NONPAYMENT OF RENT</h2>
+    <p style="text-align: center; font-size: 9pt; color: #555; margin-bottom: 16pt;">Michigan SCAO Form DC 100a &mdash; MCL &sect; 600.5714(1)(a); MCR 4.201</p>
 
-    <div style="border: 1px solid #333; padding: 12pt; margin-bottom: 20pt;">
-      <p style="margin: 4pt 0;"><strong>Case No.:</strong> ___________________________</p>
-      <p style="margin: 4pt 0;"><strong>Court:</strong> _____________________________ District Court</p>
-      <p style="margin: 4pt 0;"><strong>County:</strong> ${premisesCounty || '_____________________________'}</p>
+    <div style="border: 1px solid #333; padding: 10pt; margin-bottom: 16pt;">
+      <p style="margin: 3pt 0;"><strong>Case No.:</strong> ${blank}</p>
+      <p style="margin: 3pt 0;"><strong>Court:</strong> ${blank} District Court</p>
+      <p style="margin: 3pt 0;"><strong>County:</strong> ${premisesCounty || blank}</p>
     </div>
 
-    <h2>PARTIES</h2>
-    <p><strong>Plaintiff (Landlord):</strong> ${landlordName || '___________________________'}</p>
-    <p><strong>Plaintiff Address:</strong> ${landlordAddress || '___________________________'}</p>
-    ${landlordPhone ? `<p><strong>Plaintiff Phone:</strong> ${landlordPhone}</p>` : ''}
-    <p style="margin-top: 12pt;"><strong>Defendant (Tenant):</strong> ${tenantName || '___________________________'}</p>
+    <h2 style="font-size: 12pt;">PARTIES</h2>
+    <p><strong>Plaintiff (Landlord):</strong> ${landlordName || blank}</p>
+    <p><strong>Address:</strong> ${landlordAddress || blank}</p>
+    ${landlordPhone ? `<p><strong>Phone:</strong> ${landlordPhone}</p>` : ''}
+    <p style="margin-top: 8pt;"><strong>Defendant (Tenant):</strong> ${tenantName || blank}</p>
 
-    <h2>PREMISES</h2>
-    <p><strong>Address of Premises:</strong> ${propertyAddress || '___________________________'}</p>
-    ${premisesCity ? `<p><strong>City:</strong> ${premisesCity}, Michigan</p>` : ''}
+    <h2 style="font-size: 12pt;">PREMISES</h2>
+    <p><strong>Address:</strong> ${propertyAddress || blank}</p>
+    ${premisesCity ? `<p><strong>City:</strong> ${premisesCity}</p>` : ''}
     ${premisesCounty ? `<p><strong>County:</strong> ${premisesCounty}</p>` : ''}
 
-    <h2>DEMAND</h2>
+    <h2 style="font-size: 12pt;">DEMAND</h2>
     <div class="legal-notice">
       <p>TO THE TENANT(S) AND ALL OTHER OCCUPANTS OF THE PREMISES DESCRIBED ABOVE:</p>
       <p><strong>DEMAND IS HEREBY MADE</strong> that you deliver up possession of the above-described premises within <strong>SEVEN (7) DAYS</strong> after service of this demand on the ground that the rent due has not been paid.</p>
-      <p>If you fail to deliver up possession within the time stated above, proceedings will be commenced against you to recover possession of the premises, the rent due, and other sums required under the lease or rental agreement, plus costs and attorney fees as allowed by law.</p>
+      <p>You may avoid proceedings by paying the full amount of rent due within the seven (7) day period to the landlord or landlord&rsquo;s agent at the address shown above.</p>
+      <p>If you fail to deliver up possession or pay the rent due within the time stated, proceedings will be commenced against you to recover possession, the rent due, and costs as allowed by law.</p>
     </div>
 
-    <h2>RENT ARREARAGE</h2>
-    <p><strong>Rent Period:</strong> ${rentPeriodFrom || '___________'} through ${rentPeriodTo || '___________'}</p>
-    <p><strong>Monthly Rent Amount:</strong> $${monthlyRent || '___________'}</p>
-    <p><strong>Total Rent Due and Unpaid:</strong> $${amountDue || '___________'}</p>
-    <p><strong>Late Fees (if applicable):</strong> $${lateFees}</p>
-    ${amountDue ? `<p><strong>TOTAL AMOUNT DUE:</strong> $${(parseFloat(String(fieldValues.amountDue || fieldValues.rent_amount_due || '0')) + parseFloat(String(fieldValues.lateFeeAmount || fieldValues.late_fees || '0'))).toFixed(2)}</p>` : '<p><strong>TOTAL AMOUNT DUE:</strong> $___________</p>'}
+    <h2 style="font-size: 12pt;">RENT ARREARAGE</h2>
+    <table style="width: 100%; border-collapse: collapse; margin: 8pt 0;">
+      <tr><td style="padding: 4pt 0; width: 60%;">Rent period:</td><td style="padding: 4pt 0;">${rentPeriodFrom || blank} through ${rentPeriodTo || blank}</td></tr>
+      <tr><td style="padding: 4pt 0;">Monthly rent amount:</td><td style="padding: 4pt 0;">${monthlyRentDisplay ? '$' + monthlyRentDisplay : '$' + blank}</td></tr>
+      <tr style="border-top: 1px solid #333;"><td style="padding: 4pt 0;"><strong>Total rent due and unpaid:</strong></td><td style="padding: 4pt 0;"><strong>${amountDueDisplay ? '$' + amountDueDisplay : '$' + blank}</strong></td></tr>
+    </table>
 
-    <h2>RIGHT TO CURE</h2>
-    <div class="legal-notice">
-      <p>YOU MAY AVOID THIS PROCEEDING by paying the full amount of rent due within the seven (7) day period. Payment must be made to the landlord or the landlord&rsquo;s agent at the address shown on this demand.</p>
-      <p>Pursuant to MCL &sect; 600.5714(1)(a), if the full amount of rent due is tendered within the seven-day period, the landlord shall not commence summary proceedings based on this demand.</p>
-    </div>
+    <h2 style="font-size: 12pt;">CERTIFICATE OF SERVICE</h2>
+    <p>I certify that on the date below, I served this Demand for Possession on the tenant(s) named above by:</p>
+    <p style="margin: 3pt 0 3pt 16pt;">&square; Personal service on tenant</p>
+    <p style="margin: 3pt 0 3pt 16pt;">&square; First-class mail to tenant&rsquo;s last known address</p>
+    <p style="margin: 3pt 0 3pt 16pt;">&square; Tacking (posting) on the premises and first-class mail</p>
+    ${serviceMethod ? `<p style="margin-top: 8pt;"><strong>Method used:</strong> ${serviceMethod}</p>` : ''}
 
-    <h2>PAYMENT INFORMATION</h2>
-    <p>Payment must be made in full to:</p>
-    <p><strong>${landlordName || '[LANDLORD NAME]'}</strong></p>
-    <p>${landlordAddress || '[LANDLORD ADDRESS]'}</p>
-    ${payByDate ? `<p><strong>Pay by:</strong> ${payByDate}</p>` : ''}
+    <table style="width: 100%; border-collapse: collapse; margin-top: 12pt;">
+      <tr><td style="padding: 4pt 0; width: 50%;">Date of service: ${noticeDate || blank}</td><td style="padding: 4pt 0;">Served by: ${serverName || blank}</td></tr>
+    </table>
 
-    <h2>LEGAL AUTHORITY</h2>
-    <p>This demand is made pursuant to:</p>
-    <p>&bull; <strong>MCL &sect; 600.5714(1)(a)</strong> &mdash; Grounds for summary proceedings: nonpayment of rent</p>
-    <p>&bull; <strong>MCL &sect; 554.134</strong> &mdash; Landlord-tenant relationships; termination</p>
-    <p>&bull; <strong>MCR 4.201</strong> &mdash; Summary proceedings to recover possession of premises</p>
-    <p>&bull; <strong>MCL &sect; 600.5701</strong> &mdash; Summary proceedings; jurisdiction and applicability</p>
-    <p>If you fail to pay or vacate within seven (7) days, the landlord may file a Summons and Complaint for Summary Proceedings in the District Court having jurisdiction over the premises.</p>
-
-    <h2>CERTIFICATE OF SERVICE</h2>
-    <p>I certify that on the date stated below, I served a copy of this Demand for Possession on the tenant(s) named above by the following method:</p>
-    <p>&square; Personal service on tenant</p>
-    <p>&square; Substituted service on a member of tenant's household of suitable age and discretion, AND mailing by first-class mail per MCR 2.105(A)(2)</p>
-    <p>&square; First-class mail to tenant's last known address</p>
-    <p>&square; Posting (tacking) on the premises AND mailing by first-class mail, after unsuccessful attempt at personal service per MCL &sect; 600.5714(1)(a)</p>
-    ${serviceMethod ? `<p><strong>Method Used:</strong> ${serviceMethod}</p>` : ''}
-    <p style="margin-top: 20pt;"><strong>Date of Service:</strong> ${noticeDate || '___________________________'}</p>
-    <p><strong>Served By:</strong> ${serverName || '___________________________'}</p>
-
-    <div class="signature-section">
-      <p style="margin-top: 40pt;"><strong>LANDLORD / AUTHORIZED AGENT:</strong></p>
-      <p style="margin-top: 30pt;">Signature: ___________________________</p>
-      <p>Print Name: ${landlordName || '___________________________'}</p>
-      <p>Date: ${noticeDate || '___________________________'}</p>
-    </div>
-
-    <div style="margin-top: 30pt; padding: 10pt; border: 1px solid #999; font-size: 9pt;">
-      <p style="margin: 4pt 0; text-align: center;"><strong>IMPORTANT NOTICE TO TENANT</strong></p>
-      <p style="margin: 4pt 0;">This is a legal document. If you have questions about your rights, you should consult with an attorney. Free legal help may be available through Michigan Legal Help (michiganlegalhelp.org) or your local Legal Aid office.</p>
-      <p style="margin: 4pt 0;">Some Michigan cities (e.g., Detroit, Ann Arbor) may have local ordinances that require additional notice or cure periods beyond state law. Check with your local jurisdiction.</p>
+    <div class="signature-section" style="margin-top: 24pt;">
+      <p><strong>LANDLORD / AUTHORIZED AGENT</strong></p>
+      <p style="margin-top: 24pt;">Signature: ${blank}${blank}</p>
+      <p>Print name: ${landlordName || blank}</p>
+      <p>Date: ${noticeDate || blank}</p>
     </div>
   `;
 }
@@ -1126,9 +1110,10 @@ function getNoticeContent(fieldValues: FieldValue, stateId: string, noticeType: 
   let noticeContent = '';
   
   // Michigan Seven-Day Demand for Possession (DC 100a / MCL 600.5714)
+  // Returns standalone court form content — do NOT append state disclosures or generic signature page
   if (titleLower.includes('demand for possession') || 
       (stateId === 'MI' && titleLower.includes('demand') && titleLower.includes('seven'))) {
-    noticeContent = getMichiganDemandForPossessionContent(fieldValues);
+    return getMichiganDemandForPossessionContent(fieldValues);
   }
   // Late Rent / Pay or Quit Notices
   else if (titleLower.includes('late rent') || titleLower.includes('pay or quit') || 
