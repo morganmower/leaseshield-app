@@ -1,0 +1,145 @@
+Here are the concrete issues and the exact fixes.
+
+1) You’re not using true “official PDF overlay”
+
+This PDF is clearly a generated document with your own header blocks:
+
+mmower21@gmail.com
+
+“State-Specific Legal Forms for MI”
+
+“Document Version / Last Updated / Generated”
+
+“State: MI | Version 2 / Last Legal Review … / informational purposes…”
+
+None of that exists on SCAO’s DC 100a. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: If Michigan is “Official PDF overlay,” then:
+
+No LeaseShield header/footer at all
+
+The output should start as the actual SCAO PDF and you only overlay field values in the blanks.
+
+If you don’t have the SCAO base PDF loaded into the template, you’re not overlaying—you’re recreating.
+
+2) Your Certificate of Service is likely wrong (and definitely not SCAO-faithful)
+
+You currently include:
+
+Personal service
+
+First-class mail
+
+Tacking (posting) + first-class mail
+
+“Method used: ____” (oddly redundant with checkboxes)
+
+That may not match the SCAO form’s exact options/wording/sequence. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: The certificate section needs to be identical to the SCAO form:
+
+Same checkbox labels
+
+Same ordering
+
+Same extra lines (or none)
+
+Same signature/print/date layout
+
+If you want “explain service rules,” that goes in the UI Legal Notes, not the form.
+
+3) You’re missing or misplacing core DC 100a structure
+
+Even in the parsed text, the layout is off:
+
+“PREMISES” breaks across pages awkwardly (PREMISES header on page 1, address on page 2). 
+
+Seven_Day_Demand_for_Possession…
+
+“Court: ___ District Court” is not how SCAO forms usually structure “court/county/case no” fields (they typically have fixed areas).
+
+This is a symptom of HTML-to-PDF flow layout, not fixed-position overlay.
+
+Fix: Stop flowing content across pages. Overlay requires fixed coordinates, not reflowable blocks.
+
+4) You still have non-SCAO add-ons at the bottom
+
+These lines make it look unofficial:
+
+“State: MI | Version 2”
+
+“Last Legal Review…”
+
+“For informational purposes only…”
+
+Even if legally sensible, they reduce court-familiarity and can invite rejection. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: Remove all LeaseShield footer content from overlay outputs. If you want disclaimers, place them:
+
+in the app UI
+
+or as a separate “instructions” page (not the court form)
+
+5) Field set needs to match SCAO exactly (no more, no less)
+
+You currently have:
+
+Monthly rent amount
+
+Total rent due and unpaid
+
+But you also include “Phone” and other fields; those may exist on SCAO but the wording/placement must match exactly. 
+
+Seven_Day_Demand_for_Possession…
+
+Fix: The safest standard is:
+
+use the SCAO PDF
+
+overlay exactly the fields SCAO provides
+
+don’t add “helpful” extras
+
+What to do next (practical, no guessing)
+A) Confirm you are using the real SCAO DC 100a PDF as the base
+
+If not, that’s the entire reason it “doesn’t look right.”
+
+Implementation checklist:
+
+Template output mode = official_pdf_overlay
+
+base_pdf = uploaded SCAO DC 100a PDF (unchanged)
+
+overlay map = x/y coordinates for each blank
+
+render pipeline = fill blanks only (no HTML headers/footers)
+
+B) Build a quick overlay QA test
+
+Hardcode test inputs (NOT in production logic) like:
+
+Tenant: “JOHN DOE”
+
+Rent due: “$1,234.00”
+
+Service date: “02/24/2026”
+Then verify visually:
+
+text sits inside blanks
+
+nothing wraps unexpectedly
+
+page count matches SCAO exactly
+
+C) Delete all top/bottom “LeaseShield metadata” for overlay outputs
+
+Keep it in the database/audit logs, not in the court PDF.
+
+If you want, paste a screenshot of the official SCAO DC 100a you’re trying to match (or upload that blank SCAO PDF). Then I can tell you precisely which sections/checkboxes are mismatched and what your overlay map needs to include/exclude.
