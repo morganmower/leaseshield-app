@@ -1,0 +1,327 @@
+Right now:
+
+16 active states
+
+Only MI DC 100a is configured as official_pdf_overlay
+
+MI DC 100c (Complaint – Land Contract) is still leaseshield_formatted
+
+That is architecturally inconsistent and will eventually cause confusion or court-format mismatch
+
+Below is a clean, consolidated Replit instruction set incorporating everything we discussed — scoped specifically to:
+
+locking down the rendering architecture
+
+converting MI DC 100c if appropriate
+
+preventing metadata leakage on all future official forms
+
+keeping formatted mode intact for non-court documents
+
+You can paste this directly into Replit.
+
+Replit Implementation Instructions — Final Rendering Architecture Lockdown
+Objective
+
+Standardize LeaseShield document rendering so that:
+
+All official court forms use official_pdf_overlay
+
+All overlays are derived strictly from the base government PDF
+
+No LeaseShield metadata or HTML formatting leaks into overlay outputs
+
+Michigan DC 100a and DC 100c are structurally consistent
+
+The system is future-proof for adding official forms in other states
+
+Phase A — Database & Routing (T001)
+1. Ensure templates link deterministically to output config
+
+Add:
+
+ALTER TABLE templates
+ADD COLUMN output_template_id UUID NULL REFERENCES output_templates(id);
+
+
+Remove any heuristic routing (title matching, state matching).
+
+Generation must use:
+
+templates.output_template_id → output_templates.mode
+
+
+No other routing logic allowed.
+
+2. Ensure output_templates has:
+render_strategy ENUM('form_fields','coordinates') DEFAULT 'form_fields';
+mode ENUM('official_pdf_overlay','leaseshield_formatted');
+base_pdf_attachment_path TEXT NULL;
+
+Phase B — Single Gateway Renderer (T002)
+
+Create:
+
+services/DocumentRenderer.ts
+
+
+It must be the ONLY module allowed to generate PDFs.
+
+Public API:
+
+render(templateId: string, inputs: any, userId: string)
+
+
+Flow:
+
+Load template
+
+If template.output_template_id exists:
+
+Load output_template config
+
+Dispatch by mode:
+
+official_pdf_overlay → officialOverlayRenderer
+
+leaseshield_formatted → formattedRenderer
+
+If no output_template_id → formattedRenderer (legacy leases)
+
+No route may call Puppeteer or pdf-lib directly.
+
+Phase C — Official Overlay Renderer (T003)
+
+Create:
+
+services/officialOverlayRenderer.ts
+
+Rendering Strategy Logic
+
+If:
+
+render_strategy = 'form_fields'
+
+
+Then:
+
+Load base PDF
+
+Use pdf-lib form API to fill named fields
+
+Map DB field_key → pdf_field_name
+
+Set text fields
+
+Set checkboxes
+
+MANDATORY: flatten()
+
+Save
+
+If:
+
+render_strategy = 'coordinates'
+
+
+Then:
+
+Load base PDF
+
+Draw text/checkmarks at stored coordinates
+
+MANDATORY: flatten()
+
+Save
+
+No HTML.
+No Puppeteer.
+No appended headers.
+No footers.
+
+Phase D — Remove Michigan Shortcut (T004)
+
+Delete Michigan-specific rendering logic in routes.ts
+
+Ensure no overlay path calls HTML renderer
+
+Confirm MI DC 100a uses official overlay path exclusively
+
+Phase E — Convert MI DC 100c (Complaint – Land Contract)
+
+Currently:
+
+mode = leaseshield_formatted
+
+
+Action:
+
+Inspect official SCAO DC 100c PDF.
+
+If courts expect official layout → convert to:
+
+mode = official_pdf_overlay
+render_strategy = form_fields (if fillable)
+
+
+Upload base SCAO DC 100c PDF.
+
+Map field_key → pdf_field_name.
+
+Enforce flatten.
+
+If SCAO DC 100c is a court-filed complaint form (which it is), it should almost certainly be official overlay, not formatted.
+
+Phase F — Runtime Guardrails (T005)
+
+For mode = official_pdf_overlay, enforce:
+
+1. Base PDF existence check
+
+Fail if missing.
+
+2. Page count equality
+generatedPdf.pageCount === basePdf.pageCount
+
+3. Mandatory flatten enforcement
+
+Renderer must flatten before saving.
+
+4. Dual-layer banned string detection
+
+Scan:
+
+A) Extracted text (pdf-parse or equivalent)
+B) Raw PDF bytes
+
+Block if any of these appear:
+
+LeaseShield
+
+Document Version
+
+Generated:
+
+For informational purposes
+
+State-Specific Legal Forms
+
+mmower21@gmail.com
+
+Fail hard. Do not persist corrupt output.
+
+Phase G — Provenance Tracking
+
+Add to generated_documents:
+
+render_mode_used
+render_strategy_used
+base_pdf_sha256
+output_pdf_sha256
+
+
+Compute SHA256 of base PDF and output PDF.
+
+Store on every generation.
+
+Phase H — Smoke Test (T006)
+
+Create test:
+
+testOfficialOverlayMI100a.ts
+
+
+It must:
+
+Generate MI DC 100a
+
+Assert:
+
+Page count matches base
+
+No banned strings (text + raw bytes)
+
+render_mode_used = official_pdf_overlay
+
+render_strategy_used populated
+
+Save artifact on failure
+
+CI must fail if this test fails.
+
+Phase I — inspectPdfFields Utility (T007)
+
+Create:
+
+scripts/inspectPdfFields.ts
+
+
+Function:
+
+Load a PDF
+
+Output:
+
+List of field names
+
+Field types (text / checkbox / dropdown)
+
+Whether form is AcroForm-capable
+
+Recommend:
+
+render_strategy = form_fields (if fields present)
+
+render_strategy = coordinates (if not)
+
+This becomes the workflow for adding new official forms.
+
+Final Enforcement Rules
+
+Official overlay never uses HTML.
+
+Official overlay always flattens.
+
+Metadata never enters overlay PDFs.
+
+Only DocumentRenderer writes PDFs.
+
+Routing is deterministic via output_template_id.
+
+MI DC 100a and DC 100c must both follow same architecture.
+
+Expected End State
+
+After implementation:
+
+MI DC 100a → official overlay (clean)
+
+MI DC 100c → official overlay (clean)
+
+All future official court forms follow identical pattern
+
+Metadata leak structurally impossible
+
+Rendering path deterministic
+
+CI blocks regression
+
+If you want next step guidance:
+
+The correct order to execute is:
+
+T002 (gateway)
+
+T004 (remove shortcut)
+
+T003 (clean overlay abstraction)
+
+T005 (guardrails)
+
+T006 (smoke test)
+
+Convert DC 100c
+
+Lock architecture
+
+That order prevents partial refactors from breaking production.
