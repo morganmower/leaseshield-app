@@ -1,0 +1,68 @@
+High-value edits (do these)
+1) Don’t say “completed PDF (for court)” globally
+
+Some courts reject landlord-created formats even if the content is right (Michigan is the exception because you’re matching SCAO). Make this safer:
+
+Change to:
+“completed PDF (court-ready format where accepted; official-form layout preserved where required).”
+
+2) Service method table: label it as “defaults” not “truth”
+
+You already say it will be re-verified, but the table still reads authoritative. One line fixes it:
+
+Add above table:
+“Service options shown are defaults pending statutory audit confirmation; UI will reflect the audit as the source of truth.”
+
+3) Add a “service completed date” vs “service attempt date” distinction
+
+A lot of disputes come from people mixing up “I mailed it” vs “it’s served.” You addressed FL; make it system-wide:
+
+Field label everywhere: “Date notice was served (effective service date)”
+
+In Legal Notes: “If served by mail, effective date may differ—verify under state rules.”
+
+You’re not calculating this; just prevent user confusion.
+
+4) Holiday sources: don’t store “source URL” only
+
+URLs change. Store:
+
+Source name (e.g., “Nevada Judicial Branch Holiday Schedule”)
+
+Date retrieved
+
+A PDF/screenshot attachment or text snapshot (admin upload)
+
+This is a litigation-grade improvement.
+
+5) California “judicial holidays” definition
+
+“California judicial holiday calendar” is fine, but in implementation you’ll need to key off Judicial Council / CCP-defined judicial holidays. In the spec, just tighten wording:
+
+Change: “California judicial holiday calendar” → “California judicial holidays (per CCP/Judicial Council)”
+
+6) Illinois rent-only validation phrasing
+
+You handled it well. I’d tighten the promise:
+
+Change from: “Pending verification — will not over-restrict”
+To: “Validation rules will match the statutory audit; no assumption of rent-only unless supported.”
+
+One addition that will save you later
+Add “Form Output Mode” as a compliance setting per form
+
+In the compliance matrix, add:
+
+Output mode: Official PDF overlay vs LeaseShield formatted template
+
+Rationale: some states/forms should be strict overlay to reduce rejection risk.
+
+You’re already doing this for MI. Make it an explicit field.
+
+Net: yes, this is ready
+
+If you apply the edits above, it becomes both:
+
+More defensible (less over-claiming)
+
+More implementable (clearer “source of truth” hierarchy)

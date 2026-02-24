@@ -1,0 +1,97 @@
+What’s solid (no changes needed)
+
+Compliance matrix first (source of truth/IP)
+
+Form Output Mode per form
+
+System-wide “effective service date” labeling + mail caveat
+
+Holiday tables: versioned + preserved source snapshot
+
+Audit trail includes holiday version
+
+Service hierarchy + dual-service UI enforcement (CA substitute/posting)
+
+Legislative monitoring lock + version/effective-date + statute snapshot
+
+AB 1482 advisory gating + forced acknowledgment (non-deterministic)
+
+Edits I would make before you treat this as “approved”
+1) Remove “Ready for final review / Once approved / I start…”
+
+That’s a process promise. Replace with a neutral close.
+
+Replace last line with:
+“Next: implement the compliance matrix schema and admin tooling, then build Michigan (DC 100a/DC 100c) as the reference implementation.”
+
+2) Compliance matrix: add “Required consumer-facing disclosures”
+
+Some notices require specific statutory disclosure blocks (Ohio is the obvious one). You mention “required statutory language,” but add a dedicated field so it’s not missed.
+
+Add checklist item:
+
+Mandatory tenant-facing disclosures / statutory warning text (exact)
+
+3) Compliance matrix: add “Jurisdiction overrides”
+
+You’re punting local ordinance databases (fine), but you should still track when a state is known to be “local-overlay heavy” so the UI always shows stronger disclaimers (CA now, likely others later).
+
+Add checklist item:
+
+Local overlay risk flag (Low/Med/High) + required disclaimer text
+
+4) Date calculator: define outputs precisely
+
+Right now it’s “suggested deadline.” Engineers will ask: is that “last day to comply” or “eligible filing date”? You’re not building the timeline tracker, but you still need the semantics.
+
+Add 2 definitions:
+
+Compliance deadline date (last day tenant can pay/cure/vacate)
+
+Earliest filing date (next eligible day), even if you don’t surface it yet
+You can compute it internally and store it; UI can hide it until v2.
+
+This prevents you from reworking stored records later.
+
+5) Texas: distinguish “lease-required delivery method” vs “lease-permitted electronic”
+
+You have gating for delivery method and a separate electronic concept in the service table. Make it explicit that “electronic” is only shown if lease permits + state allows.
+
+Add one line under TX gating:
+
+If lease permits electronic notice → allow electronic option; otherwise hide it.
+
+6) Service tables: “Mail (type)” should allow “Mail + copy required”
+
+CA already has dual-service; other states may have “mail plus posting” or “mail plus affidavit” quirks. The matrix should carry this, and the UI should render it.
+
+Add in service hierarchy section:
+
+Combined service requirements (e.g., substituted + mail copy) with enforcement rules
+
+(You already enforce CA; this makes it generic.)
+
+7) Statute snapshot: store effective date + retrieval timestamp
+
+You store snapshot text; also store:
+
+“Retrieved at” timestamp
+
+Source citation string (not just URL)
+
+This matters when statutes are amended and online versions shift.
+
+One wording tweak (important)
+
+You call it “court-ready format where accepted.” Good. Add a clarifier that LeaseShield does not guarantee court acceptance.
+
+Add parenthetical:
+“(court-ready where accepted; LeaseShield does not guarantee court acceptance)”
+
+That’s protective and accurate.
+
+Net
+
+Yes — this is a defensible, implementable plan.
+
+If you apply the edits above, you’ll remove the last ambiguity that causes build drift (especially around deadline semantics and the compliance matrix fields).

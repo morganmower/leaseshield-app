@@ -1,0 +1,238 @@
+Texas — One Missing Guardrail
+
+Texas
+
+Your lease-term gating is correct.
+
+What’s missing:
+
+Texas allows 3 days unless the lease provides otherwise, but:
+
+Some leases require written demand language
+
+Some leases require specific delivery method
+
+If your wizard only adjusts days but not delivery requirements, you can still produce a defective notice.
+
+Add:
+
+“Does your lease require a specific delivery method for notices?”
+☐ Yes (select method)
+☐ No
+
+If yes → restrict Certificate of Service to that method.
+
+Without this, Texas remains partially exposed.
+
+3️⃣ Florida — Business Day Engine Clarification
+
+Florida
+
+Your logic excludes Saturdays, Sundays, and legal holidays.
+
+But you need to define:
+
+Which legal holidays?
+
+Florida courts follow state-recognized legal holidays. That is not identical to federal holidays every year.
+
+If your holiday table is wrong, your business-day calculation fails.
+
+You need:
+
+Florida statutory holiday list versioned annually
+
+Admin source log (like Nevada)
+
+Otherwise your Nevada precision exceeds your Florida precision.
+
+4️⃣ Nevada — Good Structure, One Precision Issue
+
+Nevada
+
+You version judicial holidays annually. Good.
+
+But Nevada’s 5-day notice under NRS 40.253 also interacts with:
+
+Tenant right to cure period
+
+Affidavit of service timing before filing summary eviction
+
+Even though you’re not building court filings, your Legal Notes panel should clarify:
+
+“You must wait until the full 5 judicial days have expired before filing.”
+
+This prevents premature filings.
+
+5️⃣ California — Major Improvement, One Remaining Structural Risk
+
+California
+
+Your AB 1482 gating logic is the right move.
+
+However:
+
+You are currently asking:
+
+“Built before Feb 1, 2015? → Likely covered”
+
+That’s directionally correct but legally imprecise.
+
+Coverage depends on:
+
+Certificate of occupancy date
+
+Corporate ownership rules
+
+Notice of exemption filing
+
+Single-family home ownership structure
+
+If you present this as binary logic, landlords may incorrectly self-classify.
+
+Safer approach:
+
+Instead of:
+
+“Likely covered”
+
+Use:
+
+“Properties built before Feb 1, 2015 are generally covered unless exempt. Confirm exemption status.”
+
+Force user acknowledgment before proceeding.
+
+You cannot algorithmically determine AB 1482 compliance without property-level data you don’t collect.
+
+Your gating should be advisory + acknowledgment, not deterministic.
+
+6️⃣ Service Matrix — Still Needs Statute-Level Verification
+
+You marked:
+
+California posting allowed as last resort + mail.
+
+That is correct for 3-day notices under CCP §1162.
+
+But be careful:
+
+Service hierarchy matters:
+
+Personal
+
+Substituted service
+
+Posting + mailing (only after due diligence)
+
+Your wizard should:
+
+Not simply show posting as equal option.
+
+Instead:
+
+If user selects posting:
+→ Require confirmation:
+“Personal and substituted service were unsuccessful.”
+
+Otherwise you are enabling improper service sequencing.
+
+Same concept applies in:
+
+Nevada
+Texas
+
+Service order matters in some states.
+
+7️⃣ Date Override Logging — Strong
+
+Your audit trail is now defensible.
+
+Add one more element:
+
+Store:
+
+The holiday table version used during calculation.
+
+That way if a holiday table is later updated, you can prove what data the system used at that time.
+
+That’s enterprise-grade defensibility.
+
+8️⃣ Legislative Monitoring Lock — Excellent
+
+Locking form generation until admin review is the correct move.
+
+Two improvements:
+
+Add version numbering to each form template.
+
+Store statute snapshot text at time of approval.
+
+This protects you if a dispute arises about what version was active.
+
+9️⃣ Hidden Risk: Illinois
+
+Illinois
+
+Illinois 5-day notice requires:
+
+Exact demand amount
+
+Clear demand for possession if unpaid
+
+But Illinois case law is strict about including non-rent charges.
+
+You may want rent-only validation here as well — similar to California — unless statute clearly allows inclusion of certain fees.
+
+This is worth verifying before launch.
+
+🔟 Overall Risk Posture
+
+At this stage:
+
+Michigan, Utah, Arizona, Idaho, NM, ND, SD, WY → Low complexity
+Texas → Medium risk (lease-dependent rules)
+Florida → Medium (holiday + payment location logic)
+Nevada → Medium-high (judicial-day precision + service hierarchy)
+California → High (AB 1482 + local overlays)
+
+You have materially reduced structural risk.
+
+The remaining exposure is almost entirely in:
+
+Service sequencing
+
+Holiday definitions
+
+California property coverage logic
+
+Texas lease-specific notice requirements
+
+Strategic Assessment
+
+You now have a real compliance feature with:
+
+Validation
+
+Procedural awareness
+
+Audit logging
+
+Legislative locking
+
+Versioning potential
+
+This is differentiated from generic eviction template software.
+
+The next intelligent move is:
+
+Before building California, run a full statutory service-rule audit across all 16 states to confirm:
+
+Pre-suit service hierarchy
+
+Whether posting is conditional
+
+Whether mail requires certified vs regular
+
+Whether electronic service is ever allowed
+
+That audit will prevent 90% of procedural risk.

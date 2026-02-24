@@ -1,0 +1,273 @@
+Critical Risk Corrections
+A. California – “3 Court Days” Is Incorrect
+
+California 3-Day Notice to Pay Rent or Quit under CCP §1161(2):
+
+It is 3 days
+
+Excludes judicial holidays
+
+Saturdays count
+
+Sundays count
+
+Court holidays do not
+
+Do not label it “court days.” That phrase creates confusion and potential miscalculation.
+
+You said you are not auto-calculating dates — that reduces liability, but:
+
+You must include:
+
+“The deadline excludes judicial holidays.”
+
+Otherwise you are silently exposing users.
+
+B. Florida – 3 Business Days
+
+Florida requires:
+
+3 business days
+
+Excludes weekends AND legal holidays
+
+If you are not calculating dates, the form must clearly state:
+
+“The three-day period excludes Saturdays, Sundays, and legal holidays.”
+
+Otherwise landlords will miscount.
+
+C. Nevada – 5 Judicial Days
+
+Nevada requires judicial days (court days).
+
+That is not the same as business days.
+
+You cannot safely avoid explaining this.
+
+D. Utah – Calendar Days
+
+Utah 3 calendar days includes weekends and holidays.
+
+Utah landlords often miscalculate. Your system should explicitly label it:
+
+“3 calendar days (includes weekends and holidays).”
+
+3. Michigan Implementation (Reference State)
+
+Michigan
+
+You already have DC 100a.
+
+For Michigan specifically:
+
+Do NOT recreate layout from scratch.
+
+Courts recognize SCAO formatting.
+
+Best approach:
+
+Store official PDF
+
+Overlay typed values via absolute positioning
+
+Lock statutory language
+
+Do not paraphrase
+
+DC 100c must also follow SCAO layout.
+
+If you reformat heavily, some district courts will reject it.
+
+4. Certificate of Service — Liability Area
+
+You listed checkboxes:
+
+Personal delivery
+
+Household member
+
+First-class mail
+
+Electronic
+
+Posting
+
+Problem:
+
+Not all states allow posting.
+Not all states allow email.
+Not all states allow substitute service.
+
+This must be state-specific logic, not universal checkboxes.
+
+If you allow a landlord to check “posting” in a state that does not allow posting pre-filing, you have created procedural error.
+
+5. Your “No Date Calculation” Decision
+
+You said:
+
+Not auto-calculating dates (landlord enters the dates themselves to avoid liability)
+
+That reduces liability but creates UX friction.
+
+However — here is the strategic question:
+
+If LeaseShield does not calculate deadlines,
+what is your competitive moat?
+
+The true defensibility is:
+
+“Eligible to file eviction on ___”
+
+“Notice expires on ___”
+
+Countdown timers
+
+You can mitigate liability by:
+
+Auto-calculating
+
+Displaying formula used
+
+Including disclaimer
+
+Allowing override
+
+If you avoid calculation entirely, you are closer to a form repository than a compliance engine.
+
+That weakens long-term product differentiation.
+
+6. California Complexity Warning
+
+California termination notices are heavily impacted by:
+
+AB 1482 (statewide rent control)
+
+Just cause requirements
+
+Local ordinances (LA, SF, Oakland, etc.)
+
+COVID carryover protections (still relevant in some jurisdictions)
+
+A generic 30/60-day template is legally insufficient in some cities.
+
+You must either:
+
+Include jurisdiction check
+OR
+
+Include bold disclaimer: “Check local ordinances before serving.”
+
+Otherwise California becomes your highest litigation exposure state.
+
+7. Technical Architecture — Validation Layer
+
+You said no schema changes needed.
+
+That’s fine structurally, but you need:
+
+Field-Level Validation
+
+Example:
+
+CA nonpayment must include exact rent only
+
+No late fees
+
+No utilities
+
+No penalties
+
+If landlord includes fees in “rent owed,” that invalidates notice in CA.
+
+You need:
+
+if (state === "CA" && formType === "nonpayment") {
+  prohibitLateFees = true;
+}
+
+
+Otherwise you’re generating defective notices.
+
+8. Recommended Enhancement: “Legal Notes Panel”
+
+Inside each wizard:
+
+Add collapsible section:
+
+“How This Notice Works in [State]”
+
+Include:
+
+What days count
+
+Service rules
+
+Common mistakes
+
+Link to statute
+
+That adds educational authority without giving legal advice.
+
+9. Delivery Order Review
+
+Your order is logical.
+
+But from risk perspective:
+
+Michigan (controlled environment)
+
+Utah (you know this market deeply)
+
+Texas
+
+Florida
+
+Ohio
+
+Arizona
+
+Illinois
+
+Virginia
+
+California (after framework hardened)
+
+California should not be second. It is the most legally volatile state on your list.
+
+10. Hard Business Question
+
+Are you prepared to:
+
+Monitor statutory changes in all 16 states?
+
+Update forms within weeks of legislative change?
+
+Track judicial rule changes?
+
+Because eviction notice periods change frequently.
+
+If not, this feature becomes a liability over time.
+
+You already have legislative monitoring. This is where it becomes mission-critical.
+
+11. Bottom Line Assessment
+
+This is a strong feature with:
+
+High stickiness
+
+High landlord anxiety relief
+
+Strong post-screening retention
+
+But it is not low-risk.
+
+The difference between:
+
+“Downloadable template”
+and
+“Compliance system”
+
+is statutory precision and validation logic.

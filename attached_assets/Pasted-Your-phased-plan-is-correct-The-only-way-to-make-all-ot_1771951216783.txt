@@ -1,0 +1,457 @@
+Your phased plan is correct. The only way to make “all other states are data entry” true is to make the compliance matrix the single source of truth and to enforce a strict rule: engine code cannot branch on state/form IDs (only on matrix-provided enums and rules).
+
+Below is a concrete, buildable database design + admin tooling surface area + engine contract that supports Michigan “official PDF overlay” without any if (state === 'MI').
+
+Phase 1 — Compliance Matrix Schema (PostgreSQL)
+1) Core reference tables
+
+states
+
+id (PK)
+
+code (e.g., MI, CA)
+
+name
+
+forms
+
+id (PK)
+
+state_id (FK → states)
+
+key (stable internal slug, e.g., mi_dc_100a_nonpayment)
+
+display_name
+
+category (e.g., nonpayment, termination, noncompliance)
+
+local_overlay_risk (low|med|high)
+
+disclaimer_text (required for med/high)
+
+is_active (bool)
+
+form_versions (your “statute snapshot + effective dates + locking” lives here)
+
+id (PK)
+
+form_id (FK → forms)
+
+version_number (int or semver string)
+
+effective_start (date)
+
+effective_end (date nullable)
+
+status (draft|approved|review_required|retired)
+
+approval_notes
+
+statute_snapshot_text (text)
+
+statute_retrieved_at (timestamptz)
+
+statute_source_citation (text)
+
+“Locking” = status = review_required blocks new generation for that form_version.
+
+2) Day counting + holidays
+
+holiday_calendars
+
+id (PK)
+
+state_id (FK → states)
+
+name (e.g., NV Judicial Holidays)
+
+year (int)
+
+version (string like 2026.1)
+
+source_name
+
+source_citation
+
+retrieved_at (timestamptz)
+
+source_attachment_id (FK to your file storage table)
+
+is_active (bool)
+
+holiday_calendar_dates
+
+id (PK)
+
+holiday_calendar_id (FK → holiday_calendars)
+
+date (date)
+
+label (text)
+
+form_day_rules (per form_version; no hardcoding)
+
+id (PK)
+
+form_version_id (FK → form_versions)
+
+day_type (calendar|business|judicial|judicial_holidays_excluded)
+
+notice_period_days (int) — for default period; lease overrides are handled via gating + computed period inputs
+
+counting_convention (day0_service_plus_n by default)
+
+holiday_calendar_id (nullable FK → holiday_calendars) — your HolidayCalendarRef
+
+3) Service methods + hierarchy + combined requirements
+
+service_methods (master list; reused across states)
+
+id (PK)
+
+key (e.g., personal, substitute, first_class_mail, certified_mail, posting, electronic)
+
+display_name
+
+form_service_rules (what’s allowed + sequencing + combined requirements)
+
+id (PK)
+
+form_version_id (FK)
+
+method_id (FK → service_methods)
+
+is_allowed (bool)
+
+requires_prior_attempts (bool)
+
+prior_attempt_method_ids (int[] or join table) — e.g., posting requires personal + substitute attempts
+
+requires_additional_methods (bool)
+
+additional_method_ids (int[] or join table) — e.g., substitute requires mail copy
+
+ack_text (text nullable) — e.g., “I confirm personal and substituted were unsuccessful…”
+
+requires_ack (bool)
+
+This is how you enforce CA dual-service and posting hierarchy without referencing “CA”.
+
+form_service_lease_gates (optional, for lease-driven restrictions like TX)
+
+id (PK)
+
+form_version_id
+
+gate_key (e.g., lease_notice_period_override, lease_delivery_method_required, lease_electronic_allowed)
+
+prompt_text
+
+required (bool)
+
+type (boolean|number|select)
+
+select_options (jsonb nullable)
+
+4) Required language blocks (exact text)
+
+language_blocks
+
+id (PK)
+
+key (e.g., oh_3day_disclosure_block)
+
+text (exact)
+
+source_citation (optional)
+
+retrieved_at (optional)
+
+form_required_language (bind blocks to a form_version)
+
+id (PK)
+
+form_version_id
+
+block_type (statutory_language|tenant_warning|tenant_options_cure|local_disclaimer|other)
+
+language_block_id (FK → language_blocks)
+
+is_required (bool)
+
+5) Wizard fields + validation (matrix-driven)
+
+form_fields
+
+id (PK)
+
+form_version_id
+
+key (e.g., tenant_name, rent_owed, premises_address)
+
+label
+
+type (text|money|date|select|checkbox|textarea)
+
+required (bool)
+
+help_text
+
+visibility_rule (jsonb nullable) — e.g., show “electronic service” only if lease gate true AND service rule allows
+
+field_validations
+
+id (PK)
+
+field_id (FK → form_fields)
+
+validation_type (regex|min|max|disallow_tokens|required_if|custom_rule)
+
+params (jsonb) — e.g., CA rent-only disallow list or structured “fee components” model
+
+error_message
+
+Avoid building a brittle “disallow words” approach for money fields. Better: collect rent owed as “base rent due” plus optional “other charges” fields, then CA form simply disables other charges fields via matrix config.
+
+6) Output rendering (overlay vs formatted template)
+
+output_templates
+
+id (PK)
+
+form_version_id
+
+mode (official_pdf_overlay|leaseshield_formatted)
+
+base_pdf_attachment_id (nullable; required for overlay)
+
+html_template (nullable; required for formatted) — stored or referenced
+
+docx_template_attachment_id (nullable)
+
+page_count (int nullable)
+
+overlay_fields (only used when mode = official_pdf_overlay)
+
+id (PK)
+
+output_template_id
+
+field_key (matches form_fields.key OR derived keys like service_checkbox_personal)
+
+page_number (int)
+
+x (float)
+
+y (float)
+
+font (text)
+
+font_size (float)
+
+max_width (float nullable)
+
+align (left|center|right)
+
+wrap (bool)
+
+7) Generation + immutable artifacts + audit
+
+generated_documents
+
+id (PK)
+
+form_version_id
+
+user_id
+
+created_at
+
+inputs (jsonb) — frozen inputs used
+
+service_selection (jsonb)
+
+calculated_compliance_deadline (date)
+
+calculated_earliest_filing_date (date)
+
+holiday_calendar_version_used (text nullable)
+
+override_compliance_deadline (date nullable)
+
+override_confirmed_at (timestamptz nullable)
+
+pdf_attachment_id
+
+docx_attachment_id (nullable)
+
+is_immutable (bool default true)
+
+audit_events
+
+id (PK)
+
+generated_document_id (nullable FK)
+
+form_version_id (nullable FK)
+
+user_id
+
+event_type (e.g., date_override, form_generated, holiday_table_updated, form_locked)
+
+payload (jsonb)
+
+created_at
+
+Phase 2 — Admin Tooling (UI)
+
+Minimum screens (in this order):
+
+Forms
+
+Create form (state, name, key, category, overlay risk, disclaimer)
+
+List forms + active version + status
+
+Form Versions
+
+Create draft version, set effective dates, status workflow (draft → approved)
+
+Paste statute snapshot + citation + retrieved timestamp
+
+“Mark Review Required” (locks generation)
+
+Day Rules
+
+Select DayType + notice period default + counting convention
+
+Attach HolidayCalendarRef (only if DayType ≠ calendar)
+
+Wizard Fields
+
+Add/edit fields, types, required flags, help text
+
+Add validations (rules + messages)
+
+Configure conditional visibility and gating questions
+
+Service Rules
+
+Toggle allowed methods
+
+Configure hierarchy (prior attempts)
+
+Configure combined requirements (additional methods)
+
+Configure acknowledgments
+
+Configure lease gates (TX-style) as generic “gates”
+
+Language Blocks
+
+Maintain canonical blocks
+
+Attach blocks per form_version by type (warning/options/cure/etc.)
+
+Output Templates
+
+Choose mode
+
+Overlay: upload base PDF + set overlay fields (page/x/y/font)
+
+Formatted: edit HTML template and DOCX template mapping
+
+Preview / Test Harness
+
+Enter sample inputs → generate PDF preview + show:
+
+validations
+
+calculated dates
+
+service method enforcement
+
+language blocks inserted
+
+Show “diff” between versions for audit/QA
+
+Phase 3 — Matrix-Driven Engine Contracts (No state branching)
+Engine modules
+
+Matrix Resolver
+
+Input: form_key + as_of_date
+
+Output: fully hydrated FormDefinition object (version + fields + rules + templates)
+
+Validation Engine
+
+Runs field_validations, gate rules, and service constraints from matrix
+
+Date Engine
+
+Input: day_type, notice_period_days, holiday_calendar_dates, service_date, counting_convention
+
+Output: compliance_deadline, earliest_filing_date, explain_formula string
+
+Service Engine
+
+Renders available service methods based on matrix + user’s gate answers
+
+Enforces hierarchy + combined requirements + acknowledgments
+
+Renderer
+
+If mode = official_pdf_overlay: overlay engine places fields by overlay_fields
+
+If mode = leaseshield_formatted: HTML→PDF + DOCX template merge
+
+Hard rule to enforce internally
+
+No code is allowed to query state_code to branch behavior.
+
+All behavior is derived from:
+
+day_type
+
+holiday_calendar_ref
+
+service rules graph
+
+field validations
+
+output_template.mode
+
+Phase 4 — Michigan Validation (DC 100a / DC 100c)
+
+Michigan passes when:
+
+The only data you enter is:
+
+compliance matrix records + overlay coordinates + required blocks
+
+The engine:
+
+validates required fields
+
+computes dates (calendar days)
+
+renders service certificate correctly (allowed methods)
+
+outputs a PDF that matches the SCAO layout because the overlay template tells it how
+
+That proves the architecture.
+
+One implementation tip that prevents pain later
+
+Treat overlay coordinate mapping as its own “mini-product”:
+
+add snap-to-grid
+
+page preview with click-to-place fields
+
+per-field test values
+
+export/import overlay maps (JSON)
+
+Michigan will be fast if you can place 20–40 overlay fields efficiently.

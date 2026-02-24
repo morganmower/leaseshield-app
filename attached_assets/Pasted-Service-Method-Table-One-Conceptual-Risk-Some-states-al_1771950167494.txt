@@ -1,0 +1,229 @@
+Service Method Table — One Conceptual Risk
+
+Some states allow multiple service methods but impose combined service requirements, not alternatives.
+
+Example:
+
+California
+
+For 3-day notices under CCP §1162:
+
+If substituted service is used:
+
+You must also mail a copy.
+
+Your table correctly shows:
+
+Yes (household + mail copy)
+
+But your UI must enforce:
+
+If user selects “Substitute service” → automatically require mail copy checkbox.
+
+Do not allow “substitute only.”
+
+Same for posting:
+
+Posting + mailing required.
+
+This should not rely solely on acknowledgment text.
+It should enforce dual selection.
+
+3️⃣ Texas — Subtle Risk
+Texas
+
+Texas posting inside the main entry is allowed if:
+
+Personal delivery is not possible.
+
+That is conditional.
+
+You may want to treat Texas posting similar to CA/NV:
+Require confirmation that personal delivery was attempted.
+
+Texas eviction dismissals often happen due to defective service.
+
+4️⃣ Illinois — Be Careful With Rent-Only Assumption
+Illinois
+
+You wisely marked:
+
+Rent-only validation pending statute verification.
+
+Do not assume rent-only until statute + case law confirmed.
+
+Illinois sometimes permits certain lease-defined charges if defined as “additional rent.”
+
+If you apply California-style strict rent-only without legal basis, you may incorrectly block valid notices.
+
+Action item:
+Confirm whether Illinois allows:
+
+“Rent and other sums due” language
+
+Or strictly rent only
+
+Do not over-restrict unless statute requires it.
+
+5️⃣ Florida — One Edge Case
+Florida
+
+Your business-day engine excludes statutory holidays.
+
+Good.
+
+But Florida statute excludes:
+
+Saturdays
+
+Sundays
+
+Legal holidays
+
+If the notice is served by mail, some practitioners add additional mailing time.
+
+You are not calculating service completion timing.
+
+That’s fine because you’re asking for “date notice is served,” not “date mailed.”
+
+Make sure your UI clarifies:
+
+“Enter the date the notice was actually served (not the date you mailed it).”
+
+Otherwise landlords may enter mail date instead of effective service date.
+
+6️⃣ Nevada — Filing Timing Precision
+Nevada
+
+You correctly state:
+
+Wait full 5 judicial days before filing.
+
+Better wording:
+
+“You may file on the next judicial day after the 5th judicial day expires.”
+
+This avoids ambiguity around counting the expiration day.
+
+7️⃣ AB 1482 Advisory Gating — Strong, One More Safeguard
+California
+
+You are correctly not determining coverage algorithmically.
+
+Add one more element:
+
+Require user to check:
+
+☐ “I understand that if this property is covered by AB 1482 and I fail to comply, my eviction may be dismissed.”
+
+That is not legal advice.
+It is acknowledgment of risk.
+
+This materially reduces platform exposure.
+
+8️⃣ Versioning — Add One Enhancement
+
+You’re storing:
+
+Template version
+
+Statute snapshot
+
+Holiday table version
+
+Add:
+
+Effective date of template version
+
+So if a statute change occurs on July 1:
+
+You can prove version 3.2 was active until June 30
+
+Version 3.3 effective July 1
+
+This creates a defensible timeline.
+
+9️⃣ Pre-Build Statutory Audit — Make It Structured
+
+Your audit should not be informal.
+
+Create a structured checklist per state:
+
+For each notice:
+
+Statutory citation
+
+Required statutory language (exact text)
+
+Required formatting (if any)
+
+Required service hierarchy
+
+Required mail type
+
+Day-count rule
+
+Filing waiting period
+
+Case law quirks
+
+Electronic service allowed? (Y/N + conditions)
+
+Store this internally.
+
+This becomes your internal compliance matrix.
+
+That matrix is intellectual property.
+
+🔟 Hidden Long-Term Advantage
+
+If you execute this correctly:
+
+LeaseShield becomes:
+
+Screening + Compliance Engine
+
+Not dependent on PM software integrations
+
+High switching friction
+
+High landlord anxiety relief
+
+That is a moat.
+
+Final Evaluation
+
+At this stage, the architecture is:
+
+Logically coherent
+
+Risk-aware
+
+Version-controlled
+
+Audit-defensible
+
+Jurisdiction-sensitive
+
+Remaining risk areas are:
+
+Dual-service enforcement (CA substitute + mail)
+
+Texas posting conditionality
+
+Illinois rent-definition confirmation
+
+UI clarification around “served date” vs “mail date”
+
+Slight Nevada filing phrasing precision
+
+AB 1482 risk acknowledgment checkbox
+
+These are refinements, not structural flaws.
+
+If you want the smartest next step:
+
+Before building Michigan,
+build the internal statutory audit template structure first.
+
+That ensures every state is built from the same compliance checklist.

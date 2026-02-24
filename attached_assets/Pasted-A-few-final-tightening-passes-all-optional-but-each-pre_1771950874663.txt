@@ -1,0 +1,65 @@
+A few final tightening passes (all optional, but each prevents real-world failure modes):
+
+1) Add one more compliance-matrix field: “Required tenant cure options”
+
+Some notices require the tenant be told specific options (pay / cure / vacate) in a particular way. You partially cover this under “required language,” but making it explicit reduces misses.
+
+Add to checklist:
+
+Required tenant options & cure language (exact)
+
+2) Date calculator: define how you treat “day 0”
+
+Engineers will ask: if served on Feb 24, is Feb 24 counted as day 0 or day 1? Your examples imply “add N days” but don’t state counting convention.
+
+Add a rule in calculator section:
+
+Counting convention: “Day 0 = service date; compliance deadline = service date + N days (per day-type rules).”
+
+(If you later discover a state counts differently, you can encode that as a per-form override in the compliance matrix.)
+
+3) Separate “holiday tables” from “day-type”
+
+Right now holiday tables exist for NV/FL/CA. But any “business days” state will need holiday tables eventually, and “judicial days” implies court calendar. Make the schema generic:
+
+DayType: calendar | business | judicial | judicial-holidays-excluded
+
+HolidayCalendarRef: optional pointer (state+year+version)
+
+This avoids hardcoding “FL holiday table” logic.
+
+4) Service methods table: mark it as illustrative and move it below “audit”
+
+Even with your disclaimer, that table will be treated as truth by someone internally. You already state audit-first; make the table explicitly “example placeholders.”
+
+One-line header change:
+
+“Pre-suit service methods (illustrative defaults; replaced by audit results before launch)”
+
+5) Texas + electronic: add “state-law permitted” gate
+
+Lease permission isn’t enough if Texas law doesn’t recognize the method for this notice type in the way a landlord intends. You can keep your current language but add:
+
+“Electronic shown only if (a) lease permits and (b) compliance matrix marks electronic service as allowed for this form.”
+
+6) Ohio disclosure language: put it in the plan as a named requirement
+
+You referenced it in the delivery-order note. Make it explicit once:
+
+Add under Ohio form:
+
+“Mandatory statutory warning/disclosure block enforced from compliance matrix.”
+
+7) Admin locking: clarify whether “locked” blocks new generation only or also regeneration
+
+If a landlord generated a notice yesterday and statute changed today, can they regenerate the same document? You probably want:
+
+New generation locked
+
+Re-download of previously generated doc allowed (immutable artifact)
+
+Add a single statement:
+
+“Lock prevents new document generation; previously generated documents remain downloadable as immutable records.”
+
+This is operationally important.

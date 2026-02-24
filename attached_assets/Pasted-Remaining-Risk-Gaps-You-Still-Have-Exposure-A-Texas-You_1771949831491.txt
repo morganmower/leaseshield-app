@@ -1,0 +1,261 @@
+Remaining Risk Gaps (You Still Have Exposure)
+A. Texas — You Oversimplified
+
+Texas
+
+You correctly note:
+
+“3 days (default, unless lease specifies otherwise)”
+
+But your system currently does not force the user to confirm the lease terms.
+
+Risk:
+
+If the lease says 5 days and you generate a 3-day notice, the eviction can be dismissed.
+
+Required addition:
+
+Before generating Texas notice:
+
+“Does your lease specify a notice period for nonpayment?”
+☐ Yes — enter number of days
+☐ No — use statutory default (3 days)
+
+If “Yes,” require entry. Lock notice period to that value.
+
+Without that, Texas is a silent defect state.
+
+B. Nevada — Judicial Day Counting Is Non-Trivial
+
+Nevada
+
+You’re handling judicial days correctly conceptually.
+
+But:
+
+Nevada district courts observe specific holiday calendars.
+
+Judicial holidays are not always identical to federal holidays.
+
+If your calculator is wrong once, you lose credibility.
+
+Mitigation:
+
+Use Nevada Judicial Branch published holiday schedule annually.
+
+Version your holiday tables by year.
+
+Log holiday table source date in admin.
+
+This cannot be static logic.
+
+C. Florida — Payment Location Is Not Optional
+
+Florida
+
+You correctly flagged:
+
+Must include where rent can be paid.
+
+You must also:
+
+Require hours of availability if payment location is in-person.
+
+If payment is by mail, ensure mailing address is included.
+
+If electronic payment allowed, verify lease permits it.
+
+Otherwise the notice can be challenged as defective.
+
+Add conditional validation:
+
+If payment method = in person → require address + hours.
+If payment method = mail → require mailing address.
+If payment method = electronic → require lease authorization confirmation.
+
+D. California — Bigger Risk Than You’re Accounting For
+
+California
+
+Your disclaimer is good.
+
+But the real landmine is this:
+
+AB 1482 “just cause” and relocation requirements are not merely local — they’re statewide.
+
+Your 30-day / 60-day notices are insufficient in:
+
+Covered properties
+
+No-fault termination scenarios
+
+If you generate a 30-day notice without checking:
+
+Is property exempt from AB 1482?
+
+Has tenant occupied > 12 months?
+
+Is relocation assistance required?
+
+You may generate a legally defective notice.
+
+Mitigation:
+
+Before generating CA termination notice:
+
+Add gating questions:
+
+Is property subject to AB 1482?
+
+How long has tenant occupied property?
+
+Is termination for at-fault or no-fault reason?
+
+If you do not gate, you are not compliance-grade in California.
+
+3️⃣ Service Method Matrix — Needs Clarification
+
+Some entries in your table are too confident.
+
+Example:
+
+Ohio
+
+Ohio 3-Day Notice language is statutory and must contain:
+
+“You are being asked to leave the premises…”
+
+Ohio service is typically:
+
+Personal
+
+Residence service
+
+Certified mail
+
+But your matrix allows posting. Posting is usually for court service, not always pre-filing notice.
+
+You need to verify pre-suit notice service rules state-by-state, not court service rules.
+
+That distinction matters.
+
+4️⃣ Date Override Logging — Improve It
+
+You said:
+
+Override is logged on the form.
+
+That’s good. Not enough.
+
+Add:
+
+Store original calculated deadline
+
+Store override value
+
+Store timestamp
+
+Store user ID
+
+This protects you if someone later claims:
+
+“LeaseShield told me wrong.”
+
+Your audit trail must show:
+
+System suggested X.
+User changed to Y.
+User confirmed override.
+
+That’s defensible.
+
+5️⃣ Legislative Monitoring — Operational Question
+
+You said:
+
+Statutory changes flag affected forms for admin review.
+
+This needs workflow:
+
+Statute change detected.
+
+System flags specific form.
+
+Admin dashboard shows:
+
+Affected statute
+
+Prior version
+
+Effective date
+
+Form marked “Review Required” until updated.
+
+If you do not lock forms pending review after statute change, you risk serving outdated language.
+
+6️⃣ Competitive Positioning — This Is Now a Moat
+
+If implemented correctly, your differentiators become:
+
+Validation enforcement
+
+Procedural tracking
+
+Service-method gating
+
+Day-counting precision
+
+Audit logging
+
+Legislative change pipeline
+
+That is not a template library.
+
+That is a lightweight eviction compliance engine.
+
+That materially strengthens LeaseShield’s stickiness beyond screening.
+
+7️⃣ What I Would Add (Optional but Powerful)
+Eviction Timeline Tracker
+
+After notice generated:
+
+Dashboard shows:
+
+Notice served: Feb 24
+
+Deadline: March 3
+
+Eligible to file: March 4
+
+Status: Pending / Paid / Filed
+
+That’s high retention value.
+
+8️⃣ Overall Assessment
+
+Your revised plan is:
+
+Structured
+
+Risk-aware
+
+State-specific
+
+Architecturally coherent
+
+Properly staged (CA last)
+
+Remaining gaps are mostly:
+
+Texas lease override enforcement
+
+Nevada holiday engine precision
+
+Florida payment specificity
+
+California AB 1482 gating logic
+
+Service-method statutory verification
+
+If you fix those, this becomes a serious compliance feature.
