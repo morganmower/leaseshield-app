@@ -11,8 +11,25 @@ import {
 import { db } from "../db";
 import { generatedNoticeDocuments, noticeAuditEvents } from "@shared/schema";
 import { randomUUID } from "crypto";
+import { generateOverlayPdf } from "../engine/pdfOverlay";
+import * as path from "path";
 
 const router = Router();
+
+function selectDayRule(def: any, gateAnswers?: Record<string, string>) {
+  if (!def.dayRules || def.dayRules.length === 0) return null;
+  if (def.dayRules.length === 1) return def.dayRules[0];
+  if (gateAnswers && def.leaseGates) {
+    for (const gate of def.leaseGates) {
+      if (gate.affectsNoticePeriod) {
+        const answer = gateAnswers[gate.gateKey];
+        const matchRule = def.dayRules.find((r: any) => r.dayType === answer);
+        if (matchRule) return matchRule;
+      }
+    }
+  }
+  return def.dayRules[0];
+}
 
 router.get("/api/notice-forms/:formKey/definition", async (req, res) => {
   try {
@@ -54,19 +71,7 @@ router.post("/api/notice-forms/:formKey/calculate-dates", async (req, res) => {
       return res.status(400).json({ error: "serviceDate is required" });
     }
 
-    let applicableRule = def.dayRules[0];
-    if (def.dayRules.length > 1 && gateAnswers) {
-      for (const gate of def.leaseGates) {
-        if (gate.affectsNoticePeriod) {
-          const answer = gateAnswers[gate.gateKey];
-          const matchRule = def.dayRules.find(r => r.dayType === answer);
-          if (matchRule) {
-            applicableRule = matchRule;
-            break;
-          }
-        }
-      }
-    }
+    const applicableRule = selectDayRule(def, gateAnswers);
 
     if (!applicableRule) {
       return res.json({ complianceDeadline: null, earliestFilingDate: null, explainFormula: 'No day rules configured for this form' });
@@ -107,8 +112,8 @@ router.post("/api/notice-forms/:formKey/preview", async (req, res) => {
     const validation = validateInputs(def, inputs || {}, gateAnswers || {}, serviceSelection || {});
 
     let dateCalc = null;
-    if (serviceDate && def.dayRules.length > 0) {
-      const rule = def.dayRules[0];
+    const rule = selectDayRule(def, gateAnswers);
+    if (serviceDate && rule) {
       dateCalc = calculateDates({
         dayType: rule.dayType,
         noticePeriodDays: rule.noticePeriodDays,
@@ -143,14 +148,14 @@ router.post("/api/notice-forms/:formKey/generate", async (req, res) => {
     }
 
     let dateCalc = null;
-    if (serviceDate && def.dayRules.length > 0) {
-      const rule = def.dayRules[0];
+    const selectedRule = selectDayRule(def, gateAnswers);
+    if (serviceDate && selectedRule) {
       dateCalc = calculateDates({
-        dayType: rule.dayType,
-        noticePeriodDays: rule.noticePeriodDays,
-        countingConvention: rule.countingConvention,
+        dayType: selectedRule.dayType,
+        noticePeriodDays: selectedRule.noticePeriodDays,
+        countingConvention: selectedRule.countingConvention,
         serviceDate,
-        holidays: rule.holidays,
+        holidays: selectedRule.holidays,
       });
     }
 
@@ -190,6 +195,90 @@ router.post("/api/notice-forms/:formKey/generate", async (req, res) => {
     });
   } catch (err: any) {
     console.error('[NoticeGeneration] Error generating document:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+router.post("/api/notice-forms/:formKey/generate-pdf", async (req, res) => {
+  try {
+    const def = await resolveForm(req.params.formKey);
+    const { inputs, gateAnswers, serviceSelection, serviceDate } = req.body;
+    const userId = (req as any).userId;
+
+    const validation = validateInputs(def, inputs || {}, gateAnswers || {}, serviceSelection || {});
+    if (!validation.valid) {
+      return res.status(400).json({ error: 'Validation failed', errors: validation.errors });
+    }
+
+    let dateCalc = null;
+    const selectedRule = selectDayRule(def, gateAnswers);
+    if (serviceDate && selectedRule) {
+      dateCalc = calculateDates({
+        dayType: selectedRule.dayType,
+        noticePeriodDays: selectedRule.noticePeriodDays,
+        countingConvention: selectedRule.countingConvention,
+        serviceDate,
+        holidays: selectedRule.holidays,
+      });
+    }
+
+    const outputMode = def.outputTemplate?.mode || 'leaseshield_formatted';
+
+    if (outputMode === 'official_pdf_overlay' && def.outputTemplate?.basePdfAttachmentPath) {
+      try {
+        const overlayData = getOverlayData({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });
+        const basePdfPath = path.resolve(process.cwd(), def.outputTemplate.basePdfAttachmentPath);
+        const pdfBuffer = await generateOverlayPdf(basePdfPath, overlayData);
+
+        const docId = randomUUID();
+        await db.insert(generatedNoticeDocuments).values({
+          id: docId,
+          formVersionId: def.version.id,
+          userId: userId || null,
+          inputSnapshot: inputs,
+          gateSnapshot: gateAnswers,
+          serviceSnapshot: serviceSelection,
+          dateCalcSnapshot: dateCalc,
+          renderedHtml: null,
+          overlayJson: overlayData.length > 0 ? overlayData : null,
+          complianceDeadline: dateCalc?.complianceDeadline || null,
+          earliestFilingDate: dateCalc?.earliestFilingDate || null,
+        } as any);
+
+        await db.insert(noticeAuditEvents).values({
+          id: randomUUID(),
+          documentId: docId,
+          eventType: 'generated',
+          actorId: userId || null,
+          detail: { formKey: def.form.key, versionNumber: def.version.versionNumber, outputMode: 'official_pdf_overlay' },
+        } as any);
+
+        const formTitle = def.form.displayName.replace(/[^a-zA-Z0-9]/g, '_');
+        res.setHeader('Content-Type', 'application/pdf');
+        res.setHeader('Content-Disposition', `attachment; filename="${formTitle}.pdf"`);
+        res.setHeader('Content-Length', pdfBuffer.length);
+        return res.send(pdfBuffer);
+      } catch (overlayErr: any) {
+        console.warn('[NoticeGeneration] Overlay PDF failed, falling back to HTML:', overlayErr.message);
+        const html = renderHtml({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });
+        return res.json({
+          fallback: true,
+          html,
+          dateCalc,
+          error: 'PDF overlay generation failed. Returning HTML output instead.',
+        });
+      }
+    }
+
+    const html = renderHtml({ def, inputs: inputs || {}, serviceSelection: serviceSelection || {}, dateCalc });
+    return res.json({
+      fallback: true,
+      html,
+      dateCalc,
+      error: 'Form is not configured for PDF overlay mode. Returning HTML output instead.',
+    });
+  } catch (err: any) {
+    console.error('[NoticeGeneration] Error generating PDF:', err);
     res.status(500).json({ error: err.message });
   }
 });
