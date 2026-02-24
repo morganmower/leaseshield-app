@@ -108,7 +108,6 @@ async function fillFormFieldStrategy(
 ): Promise<Buffer> {
   const form = pdfDoc.getForm();
   const helvetica = await pdfDoc.embedFont(StandardFonts.Helvetica);
-  const fieldMap = config.fieldNameMap || MI_DC100A_FIELD_MAP;
 
   const valueMap: Record<string, string> = {};
   for (const field of config.overlayData) {
@@ -117,68 +116,105 @@ async function fillFormFieldStrategy(
     }
   }
 
-  const tenantParts: string[] = [];
-  if (valueMap['defendant_name']) tenantParts.push(valueMap['defendant_name']);
-  if (valueMap['defendant_address']) tenantParts.push(valueMap['defendant_address']);
-  if (valueMap['defendant_city_state_zip']) tenantParts.push(valueMap['defendant_city_state_zip']);
-  const tenantBlock = tenantParts.join('\n');
+  if (config.fieldNameMap) {
+    // Generic path: DB field_map_json drives all field fills.
+    // Each entry: field_key (matches overlayData value) → exact pdf AcroForm field name.
+    // Text fields: set text. CheckBox fields: check when value is 'X' / 'x' / 'true' / '1'.
+    for (const [fieldKey, pdfFieldName] of Object.entries(config.fieldNameMap)) {
+      const value = valueMap[fieldKey];
+      if (!value) continue;
 
-  const premisesParts: string[] = [];
-  if (valueMap['premises_address']) premisesParts.push(valueMap['premises_address']);
-  if (valueMap['premises_city']) premisesParts.push(valueMap['premises_city']);
-  if (valueMap['premises_county']) premisesParts.push(valueMap['premises_county'] + ' County');
-  const premisesBlock = premisesParts.join(', ');
+      let handled = false;
 
-  const addressSig = valueMap['plaintiff_address_sig']
-    || (valueMap['plaintiff_address'] || '') + (valueMap['plaintiff_city_state_zip'] ? ', ' + valueMap['plaintiff_city_state_zip'] : '');
-
-  const textFieldValues: Record<string, string> = {
-    plaintiff_name: valueMap['plaintiff_name'] || '',
-    plaintiff_city_state_zip: valueMap['plaintiff_city_state_zip'] || '',
-    plaintiff_phone: valueMap['plaintiff_phone'] || valueMap['plaintiff_phone_sig'] || '',
-    defendant_name: tenantBlock,
-    premises_address: premisesBlock,
-    rent_amount_due: valueMap['rent_amount_due'] || '',
-    service_date: valueMap['service_date'] || '',
-    server_name: valueMap['server_name'] || '',
-    signature_date: valueMap['signature_date'] || '',
-    plaintiff_name_print: valueMap['plaintiff_name_print'] || valueMap['plaintiff_name'] || '',
-    plaintiff_address_sig: addressSig,
-  };
-
-  for (const [fieldKey, value] of Object.entries(textFieldValues)) {
-    if (!value) continue;
-    const pdfFieldName = fieldMap[fieldKey];
-    if (!pdfFieldName) continue;
-    try {
-      const textField = form.getTextField(pdfFieldName);
-      textField.setText(value);
-      textField.defaultUpdateAppearances(helvetica);
-    } catch (e: any) {
-      console.warn(`[OfficialOverlay] Could not fill text field "${pdfFieldName}": ${e.message}`);
-    }
-  }
-
-  const checkboxFields: Record<string, string> = {
-    service_checkbox_personal: 'delivering it personally to the person in possession',
-    service_checkbox_first_class_mail: 'first class mail addressed to the person in possession',
-    service_checkbox_posting: 'delivering it on the premises to a member of his/her family or household or an employee ',
-  };
-
-  for (const [fieldKey, pdfFieldName] of Object.entries(checkboxFields)) {
-    if (valueMap[fieldKey] === 'X' || valueMap[fieldKey] === 'x') {
       try {
-        form.getCheckBox(pdfFieldName).check();
-      } catch (e: any) {
-        console.warn(`[OfficialOverlay] Could not check "${pdfFieldName}": ${e.message}`);
+        const textField = form.getTextField(pdfFieldName);
+        textField.setText(value);
+        textField.defaultUpdateAppearances(helvetica);
+        handled = true;
+      } catch { /* not a text field */ }
+
+      if (!handled) {
+        try {
+          const checkbox = form.getCheckBox(pdfFieldName);
+          if (value === 'X' || value === 'x' || value === 'true' || value === '1') {
+            checkbox.check();
+          }
+          handled = true;
+        } catch { /* not a checkbox either */ }
+      }
+
+      if (!handled) {
+        console.warn(`[OfficialOverlay] Field "${pdfFieldName}" not found as text or checkbox in PDF AcroForm`);
       }
     }
-  }
+  } else {
+    // Legacy path: MI DC 100a hardcoded logic (kept for backward compatibility).
+    // Only runs when no fieldNameMap is provided (DB value takes precedence).
+    const fieldMap = MI_DC100A_FIELD_MAP;
 
-  try {
-    form.getCheckBox('7 days').check();
-  } catch (e: any) {
-    console.warn(`[OfficialOverlay] Could not check "7 days": ${e.message}`);
+    const tenantParts: string[] = [];
+    if (valueMap['defendant_name']) tenantParts.push(valueMap['defendant_name']);
+    if (valueMap['defendant_address']) tenantParts.push(valueMap['defendant_address']);
+    if (valueMap['defendant_city_state_zip']) tenantParts.push(valueMap['defendant_city_state_zip']);
+    const tenantBlock = tenantParts.join('\n');
+
+    const premisesParts: string[] = [];
+    if (valueMap['premises_address']) premisesParts.push(valueMap['premises_address']);
+    if (valueMap['premises_city']) premisesParts.push(valueMap['premises_city']);
+    if (valueMap['premises_county']) premisesParts.push(valueMap['premises_county'] + ' County');
+    const premisesBlock = premisesParts.join(', ');
+
+    const addressSig = valueMap['plaintiff_address_sig']
+      || (valueMap['plaintiff_address'] || '') + (valueMap['plaintiff_city_state_zip'] ? ', ' + valueMap['plaintiff_city_state_zip'] : '');
+
+    const textFieldValues: Record<string, string> = {
+      plaintiff_name: valueMap['plaintiff_name'] || '',
+      plaintiff_city_state_zip: valueMap['plaintiff_city_state_zip'] || '',
+      plaintiff_phone: valueMap['plaintiff_phone'] || valueMap['plaintiff_phone_sig'] || '',
+      defendant_name: tenantBlock,
+      premises_address: premisesBlock,
+      rent_amount_due: valueMap['rent_amount_due'] || '',
+      service_date: valueMap['service_date'] || '',
+      server_name: valueMap['server_name'] || '',
+      signature_date: valueMap['signature_date'] || '',
+      plaintiff_name_print: valueMap['plaintiff_name_print'] || valueMap['plaintiff_name'] || '',
+      plaintiff_address_sig: addressSig,
+    };
+
+    for (const [fieldKey, value] of Object.entries(textFieldValues)) {
+      if (!value) continue;
+      const pdfFieldName = fieldMap[fieldKey];
+      if (!pdfFieldName) continue;
+      try {
+        const textField = form.getTextField(pdfFieldName);
+        textField.setText(value);
+        textField.defaultUpdateAppearances(helvetica);
+      } catch (e: any) {
+        console.warn(`[OfficialOverlay] Could not fill text field "${pdfFieldName}": ${e.message}`);
+      }
+    }
+
+    const checkboxFields: Record<string, string> = {
+      service_checkbox_personal: 'delivering it personally to the person in possession',
+      service_checkbox_first_class_mail: 'first class mail addressed to the person in possession',
+      service_checkbox_posting: 'delivering it on the premises to a member of his/her family or household or an employee ',
+    };
+
+    for (const [fieldKey, pdfFieldName] of Object.entries(checkboxFields)) {
+      if (valueMap[fieldKey] === 'X' || valueMap[fieldKey] === 'x') {
+        try {
+          form.getCheckBox(pdfFieldName).check();
+        } catch (e: any) {
+          console.warn(`[OfficialOverlay] Could not check "${pdfFieldName}": ${e.message}`);
+        }
+      }
+    }
+
+    try {
+      form.getCheckBox('7 days').check();
+    } catch (e: any) {
+      console.warn(`[OfficialOverlay] Could not check "7 days": ${e.message}`);
+    }
   }
 
   form.flatten();

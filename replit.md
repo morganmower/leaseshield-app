@@ -1,146 +1,55 @@
 # LeaseShield App - SaaS Platform for Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform for small and midsize landlords. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect investments and ensure legal compliance. The platform currently supports 16 states (UT, TX, ND, SD, NC, OH, MI, ID, WY, CA, VA, NV, AZ, FL, IL, NM).
-
-## Project Documentation
-
-### Key Documentation Files
-- **[README.md](./README.md)** — Business plan, mission statement, monetization strategy, competitive positioning, and feature overview. This is the foundational document explaining the project's purpose and goals.
-- **[progress.md](./progress.md)** — Detailed feature implementation checklist with checkbox tracking. Shows completed vs. pending features, organized by category. Use this to track development progress and identify remaining work.
-- **[replit.md](./replit.md)** (this file) — Technical architecture, system design decisions, and AI agent context. Maintains session memory and project state.
-- **[docs/ADDING_NEW_STATE.md](./docs/ADDING_NEW_STATE.md)** — Step-by-step guide for adding support for a new U.S. state, including database setup, templates, compliance cards, and verification.
-
-### Documentation Purposes
-| File | Purpose | When to Update |
-|------|---------|----------------|
-| README.md | Business context, goals, monetization | Major feature additions, business pivots |
-| progress.md | Feature tracking, implementation status | After completing features, sprint planning |
-| replit.md | Technical architecture, AI context | Architecture changes, new integrations |
+LeaseShield App is a subscription-based SaaS platform for small and midsize landlords, currently supporting 16 US states. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect landlord investments and ensure legal compliance. The project aims to be the go-to solution for landlords navigating legal complexities, offering clear, actionable advice and tools.
 
 ## User Preferences
-- **No free trial language**: Users are either "Active" (subscribed) or "Inactive" (not subscribed)
-- **Monthly billing default**: Subscribe page defaults to monthly ($10/month), annual framed as "Includes 2 months free"
-- **Core brand sentence**: "Most landlords only face these decisions a few times per year. LeaseShield is there when they do."
-
-## Email Strategy (Restraint-Based)
-Only 2 automated lifecycle emails, then silence:
-- **Email #1** (immediate on signup): Pure framing, founder voice (Morgan), no pricing, no CTA
-- **Email #2** (3 days if not subscribed): Calm nudge with "Quick note" subject, permission to wait
-- **No Email #3**: Silence is more powerful than a "last email" message
-- **Guiding rule**: If an email would make a landlord feel pressured instead of prepared, don't send it
-
-## Git & GitHub Workflow
-
-### Push Command
-```bash
-git push https://morganmower:$GITHUB_TOKEN@github.com/morganmower/leaseshield-app.git main
-```
-
-### When to Push
-- After completing a feature
-- At the end of each work session
-- Before starting major refactors
-
-### Workflow
-- **GitHub**: Source of truth for versioned code
-- **Replit**: Quick builds, testing, and deployment
-- **VS Code**: Deeper, faster, more controlled development
+- No free trial language: Users are either "Active" (subscribed) or "Inactive" (not subscribed)
+- Monthly billing default: Subscribe page defaults to monthly ($10/month), annual framed as "Includes 2 months free"
+- Core brand sentence: "Most landlords only face these decisions a few times per year. LeaseShield is there when they do."
 
 ## System Architecture
 
 ### UI/UX Decisions
-The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, matching the LeaseShield logo branding. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone.
-
-### Logo & Branding
-- **Primary Icon**: `client/src/assets/leaseshield-icon-v3.png` - House-shield-keyhole logo with transparent background. This is the master icon used on the dashboard and for favicon generation.
-- **Logo Files**: Horizontal logo at `client/src/assets/logo-horizontal.png`, stacked logo at `client/src/assets/logo-stacked.png`
-- **Logo Sizes**: sm (h-8), md (h-12), lg (h-16), xl (h-32) for horizontal variant
-- **Primary Color**: Teal/turquoise (HSL 168 76% 42%)
-- **Text Color**: Navy blue (HSL 215 35% 20%)
-- **Cache-busting**: Favicon/icon URLs use `?v=7` query parameter. Increment when assets change.
-- **CRITICAL - Vite Asset Caching**: When updating logo PNG files, always use a NEW filename (e.g., v2, v3) to force Vite to generate a new hash. Editing an existing file in-place will NOT update the cached asset.
+The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, matching the LeaseShield logo branding. Typography is Space Grotesk for headings and Inter for body text. UI patterns include cards with shadows, before/after comparisons, badge-based categorization, and icon-first navigation, all maintaining a "protective mentor" tone. Logo files are managed with specific sizing and cache-busting considerations.
 
 ### Technical Implementations
 - **Frontend**: React, TypeScript, TanStack Query, Wouter, Shadcn UI.
 - **Backend**: Express.js, PostgreSQL (Neon), Drizzle ORM.
 - **Authentication**: Replit Auth with session handling.
 - **Payments**: Stripe Subscriptions with webhooks.
-- **Document Assembly Wizard**: Interactive multi-step forms, server-side PDF generation (Puppeteer) with professional styling, and robust HTML escaping.
-- **Document Generation Architecture**:
-  - **Gateway**: `server/engine/documentRenderer.ts` is the single entry point for all PDF generation. Routes never call PDF generators directly.
-  - **Official PDF Overlay** (`official_pdf_overlay` mode): Used for official court forms (MI DC 100a, etc.). Fills the unmodified base PDF using pdf-lib's AcroForm API (Strategy A: `form_fields`) or coordinate drawing (Strategy B: `coordinates`). Always flattened. Zero LeaseShield metadata in output. Guardrails: page count assertion, banned-string dual-layer scan (Latin-1 + UTF-16BE). See `server/engine/officialOverlayRenderer.ts`.
-  - **LeaseShield Formatted** (`leaseshield_formatted` mode): Puppeteer/HTML for LeaseShield-branded PDFs (leases, notices without official forms). DOCX uses native `docx` library.
-  - **Routing**: `templates.output_template_id` (FK to `output_templates`) triggers official overlay mode. If null → formatted mode. Zero title-matching heuristics; zero state-code conditionals in routing.
-  - **DOCX** (native `docx` library): Used for editable customer documents. NEVER use html-to-docx (caused Word corruption). Guard comments in all generators prevent regression.
-  - **Shared utilities**: `docxBuilder.ts` provides reusable components (H1, H2, H3, P, SignatureLine, HR, Footer, Tables) and `getStateDisclosures()` for state-specific legal provisions.
-  - **State-specific content**: All 16 states have comprehensive disclosures in Section 25 of lease documents (security deposits, entry notice, fair housing, mold/radon/bed bugs as applicable).
-  - **Developer Tools**: `npx tsx server/scripts/inspectPdfFields.ts <pdf>` lists all AcroForm fields. `npx tsx server/scripts/testOverlayOutput.ts` runs the MI DC 100a smoke test (13 assertions). See `docs/ADDING_NEW_STATE.md` for the full official court form onboarding workflow.
-- **Legislative Monitoring**: Safe two-job architecture with approval gates:
-  - **Data Sources (8 total)**: LegiScan API, Plural Policy API, Utah GLEN API, Federal Register API, eCFR API, Congress.gov API, HUD ONAP/PIH poller, CourtListener API
-  - **Safe Workflow**:
-    1. `ingestNow()` - Fetch and normalize updates from all sources (no publishing)
-    2. `queueFromLatestIngest()` - Create template review entries for admin approval (no publishing)
-    3. `publishApproved()` - Only publish items that admin has explicitly approved
-  - **Job Lock**: Single lock key "legislative-monitoring" prevents overlapping runs (`server/utils/jobLock.ts`)
-  - **Topic-Based Routing**: Updates tagged with topics route only to relevant templates; tribal updates isolated from landlord-tenant content
-  - **Scheduled Jobs**: Nightly ingest (daily at ~1:30am), Monthly queue (1st of month) - both use safe workflow with job lock
-  - **API Endpoints**: `/api/admin/legislative-monitoring/run?mode=queueOnly|ingestOnly|publishApproved` (default: queueOnly)
-  - **DEPRECATED**: `runMonthlyMonitoring()` throws error directing to safe methods
-- **Template Review & Publishing**: Approval-gated system with transactional updates, versioning, history tracking, admin review queue, legislative bill flagging, and user notifications via Resend.
-- **Email Notifications**: Integrated with Resend for legal and template update notifications.
-- **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance, with "Learn" and "Ask" modes and privacy features.
-- **State Notes Safety System**: Zero AI-generated state law content in decoders:
-  - **DB Schema**: `state_notes` table with versioning, approval workflow, 5-point checklist validation
-  - **Topic Registry**: Controlled topic lists in `shared/decoderTopics.ts` (credit: 5 topics, criminal_eviction: 7 topics)
-  - **Required Topics**: `REQUIRED_CRIMINAL_EVICTION_TOPICS` (fair_chance_housing, individualized_assessment, local_overrides_present), `REQUIRED_CREDIT_TOPICS` (source_of_income)
-  - **Fallback Logic**: `shouldTriggerStateLawFallback()` detects state-specific questions; shows fallback text when no approved snippet exists
-  - **Prompt Guardrails**: Decoders instructed to never generate state-specific content; state notes injected at runtime from DB
-  - **Admin Scripts**: `initStateNotes.ts` seeds draft placeholders, `verifyStateNotes.ts` checks required coverage
-  - **Readiness Flag**: `states.decoder_notes_ready` boolean tracks when required topics are approved
-- **AI Chat Assistant**: Integrated GPT-4o-mini chat widget (OpenAI) for instant help on landlord-tenant law and platform features.
+- **Document Generation Architecture**: A robust system supporting server-side PDF generation using Puppeteer for LeaseShield-formatted documents and `pdf-lib` for official court forms (Official PDF Overlay mode). It includes a generic field map architecture for dynamic form filling and shared utilities for DOCX generation using the native `docx` library.
+- **Legislative Monitoring**: A safe, approval-gated two-job architecture ingests and normalizes legislative updates from multiple sources, queuing them for admin approval before publishing. It uses a job lock to prevent overlapping runs and topic-based routing for relevance.
+- **Template Review & Publishing**: Features an approval-gated system with transactional updates, versioning, history tracking, and admin review queues.
+- **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance.
+- **State Notes Safety System**: Ensures zero AI-generated state law content in decoders by injecting state notes from a versioned and approved database, with strict fallback logic and prompt guardrails.
+- **AI Chat Assistant**: Integrated GPT-4o-mini chat widget for instant help.
 - **Multi-Property Management**: CRUD operations for properties, document association, and filtering.
-- **Document Upload System**: Securely handles user uploads (PDF, DOC, DOCX up to 20MB) with custom naming and optional property association. Applicant file uploads stored in Replit Object Storage (.private/applicants/). Files tracked with `availability_status` (available/missing/legacy_local) and `superseded_at` for version history.
-- **Document Re-Upload System**: Secure token-based links for applicants to re-upload missing documents. Admin picks missing doc types, system emails applicant a 7-day expiring link. Uploads write to same `rental_submission_files` table with supersede logic. Token auto-completes when all requested types are uploaded. DB table: `document_reupload_tokens`. Route: `/reupload/:token`.
-- **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements, statute citations, key requirements, and actionable steps.
+- **Document Upload/Re-Upload System**: Securely handles user document uploads (PDF, DOC, DOCX) and provides token-based links for applicants to re-upload missing documents.
+- **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements.
 
 ### Feature Specifications
-- **Subscription Management**: 7-day free trial, $10/month subscription via Stripe.
-- **Template Library**: State-specific legal documents (PDF/DOCX) categorized by use case, including form fields and state statute references.
-- **Compliance Cards**: Detailed state-specific guidance with legal authority, key requirements, and actionable steps.
-- **Screening Toolkit**: Guides for credit reports, background checks, and Fair Housing, with CTAs for Western Verify integration and AI helpers.
-- **Tenant Issue Workflows**: Step-by-step resolution guides with state-specific procedures and document templates.
-- **User Preferences**: Allows users to set a preferred state for personalized content.
-- **Admin Interfaces**: Legislative monitoring UI and resource management (CRUD for Templates, Compliance Cards, Legal Updates).
+- **Subscription Management**: Integrated with Stripe.
+- **Template Library**: State-specific legal documents with form fields and statute references.
+- **Compliance Cards**: Detailed state-specific guidance.
+- **Screening Toolkit**: Guides for credit reports, background checks, and Fair Housing.
+- **Tenant Issue Workflows**: Step-by-step resolution guides.
+- **User Preferences**: Allows setting a preferred state for personalized content.
+- **Admin Interfaces**: For legislative monitoring and resource management.
 
 ### System Design Choices
 - **Deployment**: Automated deployments via Replit.
-- **Database Schema**: Comprehensive schema for users, states, templates, compliance cards, legal updates, analytics, screening content, tenant issue workflows, legislative monitoring data, notifications, properties, savedDocuments, and uploadedDocuments.
-  - **Unique Constraints**: Templates use `(state_id, key, version)`, compliance cards use `(state_id, key)`, communication templates use `(state_id, template_type, key)` for upsert-safe seeding.
-  - **Canonical Keys**: All content tables have a `key` column (NOT NULL) for idempotent upserts. Keys are auto-generated using slug pattern: `{category}_{type}_{slugified_title}`.
-- **API Endpoints**: Structured API for all core functionalities.
-- **Template Alignment**: Templates include form fields and legal text that align with all compliance card requirements for each state.
-- **State Registry Architecture**:
-  - **Database-Driven**: States table is single source of truth. No hardcoded state lists in code.
-  - **Caching**: `getActiveStateIds()` from `server/states/getActiveStates.ts` with 5-minute TTL via memoizee.
-  - **API Endpoint**: Frontend uses `/api/states` with `useStates()` hook (1 hour staleTime).
-  - **Adding States**: See `docs/ADDING_NEW_STATE.md` for complete workflow.
-  - **Verification**: Run `npx tsx server/scripts/verifyStateSetup.ts [STATE]` to validate state content.
+- **Database Schema**: Comprehensive schema with unique constraints and canonical keys for idempotent upserts.
+- **API Endpoints**: Structured API for core functionalities.
+- **Template Alignment**: Templates align with compliance card requirements.
+- **State Registry Architecture**: Database-driven with caching, an API endpoint, and scripts for verification.
 
 ## External Dependencies
 - **PostgreSQL (Neon)**: Relational database.
 - **Stripe**: Payment gateway.
 - **Replit Auth**: User authentication.
-- **Legislative Source APIs (8 total)**:
-  - **LegiScan API**: State bill tracking (15 states)
-  - **Plural Policy API (Open States v3)**: Additional bill coverage (rate limited: 1 req/sec, 500 daily)
-  - **Utah GLEN API**: Utah-specific state legislation
-  - **Federal Register API**: HUD regulations via Data.gov
-  - **eCFR API**: Code of Federal Regulations changes (24 CFR Part 1000 for NAHASDA)
-  - **Congress.gov API**: Federal housing bills (optional, requires API key)
-  - **HUD ONAP/PIH Notices**: Page polling for tribal housing notices
-  - **CourtListener API**: Court case and legal precedent tracking
-- **GPT-4 (OpenAI API via Replit AI Integration)**: AI analysis.
+- **Legislative Source APIs**: LegiScan, Plural Policy, Utah GLEN, Federal Register, eCFR, Congress.gov, HUD ONAP/PIH, CourtListener.
+- **GPT-4o-mini (OpenAI API via Replit AI Integration)**: AI analysis and chat.
 - **Puppeteer**: Server-side PDF generation.
 - **Western Verify LLC**: Tenant screening services (via CTAs).
 - **Resend**: Email notifications.

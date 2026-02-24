@@ -511,37 +511,51 @@ VALUES (gen_random_uuid(), '{STATE}', '{state}_{form_id}_{notice_type}',
 INSERT INTO notice_form_versions (id, form_id, version_number, status)
 VALUES (gen_random_uuid(), '<form_id>', 1, 'approved');
 
--- 3. output_templates
-INSERT INTO output_templates (id, form_version_id, mode, base_pdf_attachment_path, render_strategy, page_count)
+-- 3. output_templates (include field_map_json for form_fields strategy)
+INSERT INTO output_templates (id, form_version_id, mode, base_pdf_attachment_path, render_strategy, page_count, field_map_json)
 VALUES (gen_random_uuid(), '<version_id>',
         'official_pdf_overlay',
         'server/assets/court-forms/{STATE}_{form_id}.pdf',
         'form_fields',  -- or 'coordinates'
-        {page_count});
+        {page_count},
+        '{"plaintiff_name": "Exact PDF Field Name", "defendant_name": "Another PDF Field"}'::jsonb
+       );
 ```
 
 ### Step 5: Create the Field Name Mapping (Strategy A — form_fields)
 
-If using `form_fields` strategy, add a field map to `server/engine/officialOverlayRenderer.ts`:
+**Field maps live in the database — no code changes required.**
 
-```typescript
-// Add alongside MI_DC100A_FIELD_MAP
-const {STATE}_{FORM_ID}_FIELD_MAP: Record<string, string> = {
-  plaintiff_name: 'Exact PDF Field Name Here',
-  defendant_name: 'Another Exact PDF Field Name',
-  // ... copy from inspectPdfFields.ts output
-};
+The `field_map_json` JSONB column on `output_templates` maps `field_key` (the user input key) to the exact AcroForm field name in the PDF. Use the output from `inspectPdfFields.ts` to build this mapping.
+
+```sql
+-- Update an existing output_template with the field map:
+UPDATE output_templates
+SET field_map_json = '{
+  "plaintiff_name": "Exact PDF Field Name Here",
+  "defendant_name": "Another Exact PDF Field Name"
+}'::jsonb
+WHERE id = '<output_template_id>';
 ```
 
-Then update the `fillFormFieldStrategy` function to select the correct map based on the base PDF path or a passed config parameter.
+Key rules for `field_map_json`:
+- **Keys** = `field_key` values from `form_fields` or dynamic values (e.g., `compliance_deadline`, `service_checkbox_personal`)
+- **Values** = exact AcroForm field names from the PDF (copy exactly from `inspectPdfFields.ts` output, including spaces and special characters)
+- Text fields: renderer calls `form.getTextField(pdfFieldName).setText(value)`
+- Checkboxes: renderer calls `form.getCheckBox(pdfFieldName).check()` when value is `'X'`, `'x'`, `'true'`, or `'1'`
+- If a key is in `field_map_json` but the field doesn't exist in the PDF, a warning is logged and rendering continues
 
-If using `coordinates` strategy, insert rows into `overlay_fields`:
+> **Note:** The legacy `MI_DC100A_FIELD_MAP` constant in `officialOverlayRenderer.ts` is kept as a fallback only for backward compatibility. All new forms must use `field_map_json` in the DB. Never add new in-code field map constants.
+
+If using `coordinates` strategy (no AcroForm fields), insert rows into `overlay_fields` instead of using `field_map_json`:
 
 ```sql
 INSERT INTO overlay_fields (id, output_template_id, field_key, page_number, x, y, font, font_size, max_width, align, wrap)
 VALUES (gen_random_uuid(), '<output_template_id>', 'plaintiff_name', 1, 40, 701, 'Helvetica', 9, 285, 'left', false);
 -- (repeat for each field)
 ```
+
+Coordinates (x, y) are in PDF points from the bottom-left of each page. Use `inspectPdfFields.ts` field bounding boxes as reference for nearby coordinates, or use the PDF viewer ruler tool.
 
 ### Step 6: Link the Library Template
 

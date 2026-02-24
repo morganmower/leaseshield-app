@@ -2705,6 +2705,9 @@ export const outputTemplates = pgTable("output_templates", {
   htmlTemplate: text("html_template"),
   docxTemplateAttachmentPath: text("docx_template_attachment_path"),
   pageCount: integer("page_count"),
+  // For form_fields strategy: JSON mapping of field_key → exact pdf_field_name
+  // Preferred over any in-code field map constant — enables new forms without code changes
+  fieldMapJson: jsonb("field_map_json").$type<Record<string, string>>(),
 }, (table) => [
   index("idx_output_templates_version").on(table.formVersionId),
 ]);

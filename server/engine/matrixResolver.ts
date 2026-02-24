@@ -93,6 +93,8 @@ export type HydratedFormDefinition = {
     htmlTemplate: string | null;
     docxTemplateAttachmentPath: string | null;
     pageCount: number | null;
+    renderStrategy: string | null;
+    fieldMapJson: Record<string, string> | null;
     overlayFields: Array<{
       fieldKey: string;
       pageNumber: number;
@@ -194,6 +196,8 @@ export async function resolveForm(formKey: string, asOfDate?: Date): Promise<Hyd
       htmlTemplate: tmpl.htmlTemplate,
       docxTemplateAttachmentPath: tmpl.docxTemplateAttachmentPath,
       pageCount: tmpl.pageCount,
+      renderStrategy: tmpl.renderStrategy,
+      fieldMapJson: (tmpl.fieldMapJson as Record<string, string>) || null,
       overlayFields: oFields.map(f => ({
         fieldKey: f.fieldKey,
         pageNumber: f.pageNumber,

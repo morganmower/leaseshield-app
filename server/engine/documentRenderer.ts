@@ -63,7 +63,8 @@ async function renderFromNoticeForm(input: DocumentRenderInput): Promise<Documen
     dateCalc: input.dateCalc || null,
   });
 
-  const renderStrategy: RenderStrategy = (def.outputTemplate as any).renderStrategy || 'form_fields';
+  const renderStrategy: RenderStrategy = (def.outputTemplate.renderStrategy as RenderStrategy) || 'form_fields';
+  const fieldNameMap: Record<string, string> | undefined = def.outputTemplate.fieldMapJson || undefined;
 
   const basePdfBytes = fs.readFileSync(basePdfPath);
   const basePdfSha256 = computeSha256(basePdfBytes);
@@ -72,6 +73,7 @@ async function renderFromNoticeForm(input: DocumentRenderInput): Promise<Documen
     basePdfPath,
     overlayData,
     renderStrategy,
+    fieldNameMap,
   });
 
   const guardrailResult = await runOfficialOverlayGuardrails({
