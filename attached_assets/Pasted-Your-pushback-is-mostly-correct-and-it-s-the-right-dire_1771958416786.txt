@@ -1,0 +1,242 @@
+Your pushback is mostly correct, and it’s the right direction operationally. The key is to formalize the routing contract so “official overlay” always uses the correct path, whether the PDF is AcroForm-fillable or requires coordinate overlays—without reintroducing state branching or title heuristics.
+
+Below is the tightened plan (and the exact Replit instructions) that incorporates your points and closes the remaining gaps.
+
+1) Where your pushback is right (and what to codify)
+A) Prefer AcroForm field filling over x/y overlays
+
+Yes. If the official PDF has interactive fields, the primary render strategy should be:
+
+fill AcroForm fields (text + checkboxes)
+
+flatten
+
+output
+
+Coordinate overlay is the fallback when:
+
+the PDF has no form fields, or
+
+field names are inconsistent/unreliable, or
+
+checkboxes aren’t representable cleanly
+
+Codify this as: render_strategy = form_fields | coordinates inside the output_templates record (or derived by inspection + override).
+
+B) Keep output mode in output_templates, not templates
+
+Agreed. Do not force every library template to declare an output mode.
+
+What you do need is a deterministic, explicit link from a “template” to a “notice form” (or “output template config”) so the generator can route without heuristics.
+
+Codify this as: templates.notice_form_key (nullable) OR templates.output_template_id (nullable). Either is fine; I’d choose output_template_id if it’s truly 1:1.
+
+C) The real offender is documentGenerator.ts + routes.ts shortcuts
+
+Also correct. Rendering pipeline may be mostly there; the bug is the call sites that:
+
+add LeaseShield headers/metadata
+
+merge lease content
+
+have Michigan-only shortcuts
+
+contain state conditionals
+
+Codify this as: the only module allowed to generate PDFs is a new DocumentRenderer service. No route/component may bypass it.
+
+2) The hard requirement you should add (to prevent regressions)
+
+“Official overlay PDFs must be byte-structure derived from the base PDF, not rebuilt via HTML.”
+
+Concrete enforcement:
+
+If output_templates.mode = official_pdf_overlay, the renderer must:
+
+load base pdf bytes
+
+fill fields / draw overlays
+
+flatten
+
+save
+
+It must never call Puppeteer/HTML for that document.
+
+That single constraint eliminates the MI “still doesn’t look right” issue.
+
+3) Your 6-task plan (tightened, with acceptance criteria)
+Task 1 — Add explicit linkage: Template → Notice Form / Output Template
+
+DB change
+
+Add templates.output_template_id (nullable FK) or templates.notice_form_key.
+
+Update generation entrypoint to route on this linkage only (no title matching).
+
+Acceptance
+
+Given a template with output_template_id set, generation routes to DocumentRenderer.renderOfficialOverlay() when mode is official.
+
+Task 2 — Create DocumentRenderer module (single gateway)
+
+New module services/documentRenderer.ts
+
+Exports something like:
+
+render(templateId, inputs, userId): GeneratedDocument
+
+Internals:
+
+load template record
+
+if output_template_id exists:
+
+load output_template config
+
+dispatch by mode:
+
+official_pdf_overlay → overlay renderer (form-field first)
+
+leaseshield_formatted → Puppeteer/HTML pipeline
+
+else:
+
+existing formatted doc generation (leases, etc.) through formatted pipeline
+
+Acceptance
+
+No route or legacy generator directly writes PDF bytes anymore.
+
+Everything funnels through DocumentRenderer.
+
+Task 3 — Official overlay renderer supports two strategies
+
+In officialOverlayRenderer.ts:
+
+Strategy A (primary): AcroForm fill
+
+Detect or configured by output_templates.render_strategy = form_fields.
+
+Map field_key → pdf_field_name
+
+Set values / checkboxes
+
+Flatten
+
+Strategy B (fallback): coordinate overlay
+
+Use overlay_fields mapping for text/checkmarks
+
+Draw with pdf-lib
+
+Flatten
+
+Acceptance
+
+If base PDF has usable named fields → generator fills them; coordinate overlay not used.
+
+If base PDF lacks fields → fallback works.
+
+Task 4 — Remove Michigan-specific shortcuts and metadata injection
+
+Delete/refactor:
+
+routes.ts Michigan-specific generator shortcut
+
+Any logic that appends “Version / Generated / Email / For informational purposes” into official overlay PDFs
+
+Any concatenation/merging that causes the lease pages to appear in notice outputs
+
+Acceptance
+
+MI DC 100a output has no LeaseShield header/footer and no merged lease content.
+
+Output page count matches the base SCAO PDF.
+
+Task 5 — Guardrails + runtime assertions
+
+Implement assertions inside DocumentRenderer:
+
+If mode = official_pdf_overlay:
+
+base pdf must exist
+
+generated pdf must have same page count as base
+
+forbid running Puppeteer path
+
+forbid inserting LeaseShield metadata into PDF content
+
+Acceptance
+
+If any invariant breaks, generation fails fast with a clear error.
+
+Task 6 — Automated smoke tests (regression prevention)
+
+Add a test that generates MI DC 100a and scans extracted text for banned tokens:
+
+Examples:
+
+“LeaseShield”
+
+“Document Version”
+
+“Generated”
+
+your email
+
+“For informational purposes”
+
+“State-Specific Legal Forms”
+
+Also test page count equality with base pdf.
+
+Acceptance
+
+CI fails if any banned token appears in an official overlay output.
+
+4) The exact Replit instruction to paste (copy/paste)
+Refactor LeaseShield document generation to enforce two output modes via output_templates, with a single DocumentRenderer gateway.
+
+Goals:
+- official_pdf_overlay outputs must be derived from the base official PDF only (pdf-lib), never HTML/Puppeteer, and must not include LeaseShield headers/footers/metadata or extra pages.
+- leaseshield_formatted documents continue to use Puppeteer/HTML + DOCX.
+- No state-based branching in rendering or routing.
+
+Work:
+1) Add explicit linkage from templates to official notice forms:
+   - Add templates.output_template_id (nullable FK) OR templates.notice_form_key.
+   - Generation must route using this link only; remove title-matching heuristics.
+
+2) Create services/documentRenderer.ts as the only module allowed to generate PDFs:
+   - render(templateId, inputs, userId) -> generated doc record + attachments
+   - If template has output_template_id, load output_templates and dispatch by mode.
+
+3) Implement officialOverlayRenderer with two strategies:
+   - Primary: fill interactive PDF form fields via pdf-lib form API using a DB mapping (field_key -> pdf_field_name), then flatten.
+   - Fallback: coordinate overlay using overlay_fields when PDFs have no usable form fields; then flatten.
+   - Add output_templates.render_strategy enum: form_fields | coordinates (default form_fields).
+
+4) Remove MI-specific route shortcuts and any metadata injection in official overlays:
+   - Delete Michigan-only generator path in routes.ts.
+   - Remove any “Generated/Version/LeaseShield/email/disclaimer” content from official overlay PDFs.
+   - Ensure notices are never concatenated with lease pages.
+
+5) Add guardrails:
+   - If mode=official_pdf_overlay: require base pdf; page count must equal base; forbid Puppeteer; forbid headers/footers; fail fast on violations.
+
+6) Add automated smoke test for MI DC 100a:
+   - Generate using official overlay and assert:
+     a) page count equals base PDF page count
+     b) extracted text does NOT contain: “LeaseShield”, “Document Version”, “Generated”, “For informational purposes”, “State-Specific Legal Forms”, “mmower21@gmail.com”
+
+5) On documentGenerator.ts being a separate “bigger project”
+
+Agree it’s separate scope if you enforce the gateway rule above. You can quarantine documentGenerator.ts by:
+
+keeping it only for formatted lease docs, or
+
+gradually migrating its state-based terms into DB-driven matrix later
+
+But do not let it touch official overlays at all.

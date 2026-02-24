@@ -1,0 +1,148 @@
+You need a single, enforced document-rendering standard in the codebase so every document behaves consistently, with zero “custom” headers/footers leaking into official forms (your MI output still contains LeaseShield metadata like “State-Specific Legal Forms… Version… For informational purposes…” which is exactly what must never appear in an “official overlay” document). 
+
+Seven_Day_Demand_for_Possession…
+
+Below are the exact “commands/instructions” to give Replit (and the engineering rules to hard-enforce).
+
+Non-negotiable rules (apply to every document type)
+Rule A — Two output modes only
+
+official_pdf_overlay
+
+Base PDF is the official government/court form.
+
+Output must be pixel-identical to the base PDF except for filled blanks/checkmarks.
+
+No LeaseShield header/footer, no “version/last updated/generated,” no disclaimers in the PDF.
+
+All metadata goes to DB/audit logs, not the PDF.
+
+leaseshield_formatted
+
+LeaseShield-branded, consistent header/footer allowed.
+
+Uses your HTML→PDF pipeline (Puppeteer) and DOCX templates.
+
+Rule B — Template record must declare the mode
+
+Every template must have:
+
+output_mode: official_pdf_overlay | leaseshield_formatted
+
+Official overlay templates must also have:
+
+base_pdf_file_id
+
+overlay_map (field→page/x/y/font/etc.)
+
+Rule C — Renderer cannot branch on state
+
+No if (state === "MI").
+Renderer branches only on output_mode and generic rule enums.
+
+“Replit command” (paste this into Replit AI / your dev task)
+Implement a unified DocumentRenderer with two strictly enforced output modes:
+
+1) official_pdf_overlay:
+- Requires base_pdf_file_id and overlay_map in DB.
+- Render by loading the base PDF and overlaying field values at fixed coordinates.
+- Absolutely no LeaseShield headers/footers, disclaimers, “Generated/Version/Last updated,” or extra pages in the resulting PDF.
+- Store metadata (template version, generated timestamp, user id, statute snapshot id, etc.) only in the database/audit log, never in the PDF.
+- Enforce certificate-of-service checkboxes and combined-service requirements via overlay checkmarks/filled boxes only where the official form has them.
+
+2) leaseshield_formatted:
+- Render via existing Puppeteer HTML-to-PDF and DOCX template pipeline.
+- Branding header/footer permitted only in this mode.
+
+Hard constraints:
+- Renderer must not branch on state codes; behavior comes only from template.output_mode and matrix config.
+- official_pdf_overlay output page count must equal base PDF page count.
+- Add a test that fails if any footer/header text like “State:”, “Version”, “For informational purposes”, “LeaseShield”, or email appears in official_pdf_overlay output.
+
+Refactor existing MI DC 100a/DC 100c to official_pdf_overlay so the PDF is the actual SCAO form with only blank fields filled.
+
+Implementation checklist (what your dev should build)
+1) DB fields (minimum)
+
+templates.output_mode
+
+templates.base_pdf_file_id (nullable)
+
+templates.overlay_map_json (nullable)
+
+generated_docs.metadata_json (always; stores version, timestamps, etc.)
+
+2) Rendering pipeline
+
+official_pdf_overlay (use pdf-lib, not Puppeteer):
+
+Load base PDF
+
+For each overlay field:
+
+drawText() at (x,y) on the specified page
+
+For checkboxes, draw "X" or a small filled square aligned to the official checkbox location
+
+Save PDF bytes
+
+Never prepend/append pages
+
+Never add header/footer layers
+
+leaseshield_formatted (Puppeteer + your existing HTML templates):
+
+Standard header/footer OK here
+
+Standardize margins/fonts across all formatted docs
+
+3) Guardrails that prevent regressions
+
+Add runtime assertions:
+
+If output_mode === official_pdf_overlay:
+
+base_pdf_file_id must exist
+
+overlay_map_json must exist
+
+header/footer rendering must be disabled
+
+output page count must equal base PDF page count
+
+4) Automated “smoke test” (required)
+
+For overlay outputs, after generation:
+
+Extract text (pdf-parse or similar)
+
+Fail test if it contains banned strings (examples):
+
+"State-Specific Legal Forms"
+
+"Document Version"
+
+"Generated:"
+
+"For informational purposes"
+
+your email / “LeaseShield”
+This directly prevents the issue visible in your current output. 
+
+Seven_Day_Demand_for_Possession…
+
+“Definition of done” for every new official form
+
+A form is not considered complete until:
+
+You have the official base PDF stored.
+
+Overlay map places every field correctly (no wrapping drift).
+
+Generated PDF:
+
+matches base page count
+
+contains no LeaseShield metadata
+
+Validation rules + service rules are enforced in the wizard UI, not by adding extra “explanation” content to the PDF.

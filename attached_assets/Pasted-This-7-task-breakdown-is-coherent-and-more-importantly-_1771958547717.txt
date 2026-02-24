@@ -1,0 +1,141 @@
+This 7-task breakdown is coherent and, more importantly, closed under enforcement (i.e., if all 7 are done, you can’t accidentally “do it the old way” without tests/guardrails catching it). 👍
+
+A few tight refinements so engineering doesn’t misinterpret anything and so T005/T006 don’t become flaky.
+
+What’s solid
+
+T001 kills heuristics and makes routing deterministic.
+
+T002 is the real “control point.” If you enforce it, regressions stop.
+
+T003 correctly makes AcroForm the default with a coordinate fallback.
+
+T004 removes the last MI escape hatch and metadata leak path.
+
+T005 + T006 create both runtime and CI safety nets.
+
+T007 prevents future “field mapping guesswork.”
+
+Two important implementation clarifications
+1) T005 “text scan for banned strings” must use a robust extraction method
+
+Text extraction from PDFs is notoriously inconsistent depending on fonts/encoding and whether the PDF is flattened.
+
+To avoid flaky false negatives/positives:
+
+Use two checks:
+
+Structural check: verify the output is derived from the base PDF (page count match is good; add “same MediaBox sizes per page” if easy).
+
+Content check: banned-string scan using text extraction plus a fallback scan of raw PDF bytes for obvious metadata strings.
+
+Practical:
+
+If text extraction returns empty (common for some PDFs), the raw-bytes scan still catches “LeaseShield / Generated / Document Version / email” leaks if they were actually embedded.
+
+2) Flattening must be mandatory for official overlays
+
+If you fill AcroForm fields but don’t flatten, courts and users sometimes see blank forms depending on viewer.
+
+So add a guardrail:
+
+If mode=official_pdf_overlay: always flatten before saving.
+
+Acceptance criteria per task (so “done” is unambiguous)
+T001
+
+templates.output_template_id exists and is used as the only routing mechanism.
+
+output_templates.render_strategy exists and is respected (form_fields default).
+
+T002
+
+Only DocumentRenderer writes PDF bytes.
+
+Both routes (main doc route + notice route) call it.
+
+No other module returns PDF bytes directly.
+
+T003
+
+Overlay renderer chooses:
+
+form_fields: field mapping → fill → flatten → save
+
+coordinates: draw → flatten → save
+
+pdfOverlay.ts is internal only; no direct route imports.
+
+T004
+
+No MI shortcut remains in routes.ts.
+
+No overlay generation path calls Puppeteer/HTML generator.
+
+T005
+
+Runtime invariants:
+
+base PDF exists
+
+output page count equals base
+
+(recommended) MediaBox equality
+
+flatten enforced
+
+banned string detection (text + raw bytes fallback)
+
+Fail fast with explicit error messages.
+
+T006
+
+CI smoke test:
+
+generates MI DC 100a
+
+asserts page count equality
+
+asserts banned strings absent
+
+artifacts saved for debugging on failure
+
+T007
+
+Written workflow + inspectPdfFields utility
+
+Includes:
+
+how to map field keys → pdf field names
+
+when to switch to coordinate fallback
+
+how to add holiday calendar refs if needed
+
+how to add banned-string patterns if new leaks appear
+
+One more “small but high-value” addition (optional, but I’d do it)
+
+Add a “renderer provenance” field to the generated document record:
+
+render_mode_used: official_pdf_overlay
+
+render_strategy_used: form_fields|coordinates
+
+base_pdf_sha256
+
+output_pdf_sha256
+
+This makes debugging trivial when someone reports “it looks wrong.”
+
+Bottom line
+
+Your T001–T007 sequence is the right plan. If you implement it with:
+
+mandatory flattening
+
+robust banned-string detection (text + raw bytes fallback)
+
+deterministic acceptance criteria
+
+…then the MI formatting issue you’re seeing becomes structurally impossible to reintroduce.

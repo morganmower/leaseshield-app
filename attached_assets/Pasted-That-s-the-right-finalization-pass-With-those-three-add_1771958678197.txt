@@ -1,0 +1,186 @@
+That’s the right “finalization” pass. With those three additions, you’ve converted this from “best practices” into enforced invariants + observability, which is what you need.
+
+To make this fully executable for the dev team (and prevent scope drift), here’s the final plan framed as non-optional constraints + exact DoD per task, plus the only two places people usually screw it up.
+
+Global invariants (apply across T001–T007)
+
+Deterministic routing
+
+If templates.output_template_id is set, generation must route through that output template config.
+
+No title heuristics, no state branching.
+
+Single gateway
+
+Only DocumentRenderer may emit PDF bytes or write PDF attachments.
+
+Routes call DocumentRenderer only.
+
+Official overlay never uses HTML/Puppeteer
+
+mode=official_pdf_overlay must use pdf-lib only.
+
+Flatten is mandatory
+
+Both form-field and coordinate strategies must flatten before save.
+
+No runtime “optional flatten” flag.
+
+Dual-layer banned-string detection
+
+For official overlays, run:
+
+text extraction scan (best-effort)
+
+raw-bytes scan (fallback)
+
+Fail fast if either finds banned tokens.
+
+Renderer provenance saved on every generated record
+
+render_mode_used
+
+render_strategy_used
+
+base_pdf_sha256
+
+output_pdf_sha256
+
+Final T001–T007 with DoD
+T001 — DB wiring
+
+Add
+
+templates.output_template_id (nullable FK)
+
+output_templates.render_strategy enum: form_fields|coordinates (default form_fields)
+
+DoD
+
+All generation entrypoints use templates.output_template_id when present.
+
+No heuristic routing remains.
+
+T002 — DocumentRenderer gateway
+
+Add
+
+DocumentRenderer.render(templateId, inputs, userId) as the only public entrypoint for document generation.
+
+DoD
+
+All routes call DocumentRenderer.
+
+No other module writes PDFs or attachments.
+
+T003 — Two-strategy official overlay renderer
+
+Implement
+
+officialOverlayRenderer.render(...) that dispatches by render_strategy:
+
+form_fields: map field_key→pdf_field_name → fill → flatten → save
+
+coordinates: draw text/checkmarks → flatten → save
+
+DoD
+
+Both strategies flatten, always.
+
+pdfOverlay.ts becomes internal-only implementation detail.
+
+T004 — Remove MI shortcut + prevent mixed pipelines
+
+Remove
+
+routes.ts Michigan-specific bypass
+
+any call path where official overlays also invoke Puppeteer/HTML.
+
+DoD
+
+No overlay render path imports or calls HTML generator.
+
+MI DC 100a uses official overlay path only.
+
+T005 — Runtime guardrails (enforced invariants)
+
+Enforce for official overlays
+
+base PDF exists
+
+output page count == base page count (and ideally MediaBox equality)
+
+flatten confirmed
+
+banned-string scan:
+
+extracted text scan
+
+raw bytes scan
+
+provenance fields written
+
+DoD
+
+Any violation throws a hard error and does not persist output.
+
+T006 — CI smoke test
+
+Test
+
+Generate MI DC 100a
+
+Assert:
+
+page counts match
+
+dual banned-string checks pass
+
+provenance fields populated
+
+Save artifacts on failure
+
+DoD
+
+CI fails reliably on regressions; failure output is debuggable.
+
+T007 — Docs + utilities
+
+Deliver
+
+“How to add official court form” guide
+
+inspectPdfFields script:
+
+lists AcroForm field names (and checkbox field names)
+
+shows whether PDF is fillable
+
+recommends form_fields vs coordinates
+
+DoD
+
+A dev can add a new official form without reading renderer code.
+
+The two common failure modes to explicitly forbid
+
+Accidentally injecting LeaseShield metadata as a “helpful footer”
+
+Guarded by: dual banned-string checks + “overlay never uses HTML” invariant.
+
+Also: do not allow “Generated at” in any overlay code path.
+
+Not flattening
+
+Guarded by: mandatory flatten in both strategies + runtime assertion.
+
+What this achieves (in plain terms)
+
+After T001–T007 + the three additions:
+
+An “official form” output cannot quietly become a branded/flowed HTML PDF again.
+
+If someone tries, it breaks immediately in runtime and in CI.
+
+If a customer reports “it looks wrong,” provenance hashes + strategy info let you trace exactly what happened.
