@@ -230,28 +230,34 @@ router.post("/api/notice-forms/:formKey/generate-pdf", async (req, res) => {
         const basePdfPath = path.resolve(process.cwd(), def.outputTemplate.basePdfAttachmentPath);
         const pdfBuffer = await generateOverlayPdf(basePdfPath, overlayData);
 
-        const docId = randomUUID();
-        await db.insert(generatedNoticeDocuments).values({
-          id: docId,
-          formVersionId: def.version.id,
-          userId: userId || null,
-          inputSnapshot: inputs,
-          gateSnapshot: gateAnswers,
-          serviceSnapshot: serviceSelection,
-          dateCalcSnapshot: dateCalc,
-          renderedHtml: null,
-          overlayJson: overlayData.length > 0 ? overlayData : null,
-          complianceDeadline: dateCalc?.complianceDeadline || null,
-          earliestFilingDate: dateCalc?.earliestFilingDate || null,
-        } as any);
+        if (userId) {
+          try {
+            const docId = randomUUID();
+            await db.insert(generatedNoticeDocuments).values({
+              id: docId,
+              formVersionId: def.version.id,
+              userId,
+              inputSnapshot: inputs,
+              gateSnapshot: gateAnswers,
+              serviceSnapshot: serviceSelection,
+              dateCalcSnapshot: dateCalc,
+              renderedHtml: null,
+              overlayJson: overlayData.length > 0 ? overlayData : null,
+              complianceDeadline: dateCalc?.complianceDeadline || null,
+              earliestFilingDate: dateCalc?.earliestFilingDate || null,
+            } as any);
 
-        await db.insert(noticeAuditEvents).values({
-          id: randomUUID(),
-          documentId: docId,
-          eventType: 'generated',
-          actorId: userId || null,
-          detail: { formKey: def.form.key, versionNumber: def.version.versionNumber, outputMode: 'official_pdf_overlay' },
-        } as any);
+            await db.insert(noticeAuditEvents).values({
+              id: randomUUID(),
+              documentId: docId,
+              eventType: 'generated',
+              actorId: userId,
+              detail: { formKey: def.form.key, versionNumber: def.version.versionNumber, outputMode: 'official_pdf_overlay' },
+            } as any);
+          } catch (dbErr: any) {
+            console.warn('[NoticeGeneration] Failed to log document generation:', dbErr.message);
+          }
+        }
 
         const formTitle = def.form.displayName.replace(/[^a-zA-Z0-9]/g, '_');
         res.setHeader('Content-Type', 'application/pdf');
