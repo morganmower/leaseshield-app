@@ -1039,16 +1039,18 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
       }
     });
     
-    // Determine which group to use by looking at the last successful run's state_group
+    // Determine which group to use by looking at the last run's state_group
     // and toggling to the opposite group. This ensures strict alternation.
-    const [lastSuccessfulRun] = await db.select({ stateGroup: monitoringRuns.stateGroup })
+    // NOTE: Include 'partial' status — runs are frequently partial due to minor
+    // API warnings (e.g. CourtListener rate limits) and should still count for rotation.
+    const [lastRun] = await db.select({ stateGroup: monitoringRuns.stateGroup })
       .from(monitoringRuns)
-      .where(inArray(monitoringRuns.status, ['success', 'completed']))
+      .where(inArray(monitoringRuns.status, ['success', 'completed', 'partial']))
       .orderBy(desc(monitoringRuns.createdAt))
       .limit(1);
     
     // Toggle from last group: if last was A, use B; if last was B or null, use A
-    const lastGroup = lastSuccessfulRun?.stateGroup;
+    const lastGroup = lastRun?.stateGroup;
     const useGroupA = lastGroup === 'B' || !lastGroup; // Toggle, default to A if no previous
     const currentGroup = useGroupA ? groupA : groupB;
     const groupName = useGroupA ? 'A' : 'B';
