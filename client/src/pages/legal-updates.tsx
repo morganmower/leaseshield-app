@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home, Clock, CheckCircle, ListTodo, Calendar } from "lucide-react";
+import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home, Clock, CheckCircle, ListTodo, Calendar, Building2 } from "lucide-react";
 import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -70,9 +70,22 @@ export default function LegalUpdatesPage() {
     },
   });
 
-  // Section 8 / HUD specific updates (filter by category)
+  const isTribalUpdate = (update: LegalUpdate) => {
+    const category = (update as any).category;
+    if (category === 'tribal') return true;
+    if (category === 'section8') {
+      const title = update.title.toLowerCase();
+      return title.includes('tribal') || title.includes('tribe') || title.includes('indian') || title.includes('native american') || title.includes('tiac');
+    }
+    return false;
+  };
+
+  // Tribal Housing updates — category='tribal' plus tribal-named section8 entries
+  const tribalUpdates = (legalUpdates || []).filter(isTribalUpdate);
+
+  // Section 8 / HUD specific updates (exclude items already in tribal tab)
   const section8Updates = (legalUpdates || []).filter(
-    update => (update as any).category === 'section8'
+    update => (update as any).category === 'section8' && !isTribalUpdate(update)
   );
 
   const { data: states } = useQuery<Array<{ id: string; name: string }>>({
@@ -158,6 +171,15 @@ export default function LegalUpdatesPage() {
   const getSourceBadge = (update: LegalUpdate) => {
     const category = (update as any).category;
     const stateId = update.stateId;
+
+    // Tribal Housing items
+    if (category === 'tribal' || isTribalUpdate(update)) {
+      return (
+        <Badge variant="outline" className="bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800 text-xs">
+          Tribal Housing
+        </Badge>
+      );
+    }
     
     // Section 8 / HUD specific items
     if (category === 'section8') {
@@ -256,9 +278,10 @@ export default function LegalUpdatesPage() {
         )}
 
         <Tabs defaultValue="recent" className="space-y-6" data-testid="tabs-legal-updates">
-          <TabsList className="grid w-full grid-cols-3">
+          <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="recent" data-testid="tab-recent-updates">Recent Updates ({(legalUpdates?.length || 0) + (caseLaw?.length || 0)})</TabsTrigger>
             <TabsTrigger value="section8" data-testid="tab-section8">Section 8 / HUD ({section8Updates.length})</TabsTrigger>
+            <TabsTrigger value="tribal" data-testid="tab-tribal">Tribal Housing ({tribalUpdates.length})</TabsTrigger>
             <TabsTrigger value="case-law" data-testid="tab-case-law">Court Decisions ({caseLaw?.length || 0})</TabsTrigger>
           </TabsList>
 
@@ -627,6 +650,183 @@ export default function LegalUpdatesPage() {
                 <Home className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                 <p className="text-muted-foreground">No Section 8 or HUD updates for {selectedState === "NATIONAL" ? "any state" : states?.find(s => s.id === selectedState)?.name} yet.</p>
                 <p className="text-sm text-muted-foreground mt-2">Check back regularly for updates affecting housing voucher properties.</p>
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Tribal Housing Tab */}
+          <TabsContent value="tribal" className="space-y-4">
+            {updatesLoading ? (
+              <div className="flex justify-center py-8">
+                <div className="animate-spin w-6 h-6 border-4 border-primary border-t-transparent rounded-full" />
+              </div>
+            ) : tribalUpdates.length > 0 ? (
+              <div className="space-y-4">
+                <div className="bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-200 dark:border-emerald-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <Building2 className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-sm text-foreground">
+                        <strong>Tribal Housing Updates:</strong> These updates affect Tribal Housing Authorities, Native American Housing Assistance and Self-Determination Act (NAHASDA) programs, Tribal HUD-VASH, and Section 184 Indian Housing Loan Guarantee programs.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                {tribalUpdates.map((update) => (
+                  <Card key={update.id} className="overflow-hidden" data-testid={`card-tribal-${update.id}`}>
+                    <button
+                      onClick={() => toggleUpdateExpanded(update.id)}
+                      className="w-full p-4 text-left hover-elevate transition-colors"
+                      data-testid={`button-expand-tribal-${update.id}`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div className="flex-1">
+                          <div className="flex items-start gap-2 mb-1 flex-wrap">
+                            <h3 className="font-semibold text-foreground line-clamp-2">{update.title}</h3>
+                            {getSourceBadge(update)}
+                            {getImpactBadge(update.impactLevel)}
+                          </div>
+                          <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>
+                          {update.effectiveDate && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Effective: {format(new Date(update.effectiveDate), "MMMM d, yyyy")}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex-shrink-0">
+                          {expandedUpdates.has(update.id) ? (
+                            <ChevronUp className="h-5 w-5 text-muted-foreground" />
+                          ) : (
+                            <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                          )}
+                        </div>
+                      </div>
+                    </button>
+                    {expandedUpdates.has(update.id) && (
+                      <div className="px-4 pb-4 border-t space-y-4" data-testid={`expanded-tribal-${update.id}`}>
+                        {/* Status & Timeline Row */}
+                        {((update as any).billStatus || (update as any).expectedTimeline || update.effectiveDate) && (
+                          <div className="flex flex-wrap gap-4 py-2 bg-muted/30 rounded-lg px-3">
+                            {(update as any).billStatus && (update as any).billStatus !== 'unknown' && (
+                              <div className="flex items-center gap-2">
+                                <CheckCircle className="h-4 w-4 text-primary" />
+                                <span className="text-sm">
+                                  <span className="text-muted-foreground">Status:</span>{' '}
+                                  <span className="font-medium capitalize">{(update as any).billStatus.replace(/_/g, ' ')}</span>
+                                </span>
+                              </div>
+                            )}
+                            {update.effectiveDate && (
+                              <div className="flex items-center gap-2">
+                                <Calendar className="h-4 w-4 text-primary" />
+                                <span className="text-sm">
+                                  <span className="text-muted-foreground">Effective:</span>{' '}
+                                  <span className="font-medium">{format(new Date(update.effectiveDate), "MMMM d, yyyy")}</span>
+                                </span>
+                              </div>
+                            )}
+                            {(update as any).expectedTimeline && (
+                              <div className="flex items-center gap-2">
+                                <Clock className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm text-muted-foreground">{(update as any).expectedTimeline}</span>
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        <div>
+                          <h4 className="font-semibold text-sm mb-2">Why This Matters</h4>
+                          <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
+                        </div>
+
+                        {/* Before/After Comparison */}
+                        {(update.beforeText && !update.beforeText.includes('Previous regulations applied')) ||
+                         (update.afterText && !update.afterText.includes('New requirements may be')) ? (
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                              <h4 className="font-semibold text-sm mb-2 text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                Before
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{update.beforeText}</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                              <h4 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                After
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{update.afterText}</p>
+                            </div>
+                          </div>
+                        ) : null}
+
+                        {/* Action Items */}
+                        {(update as any).actionItems && (
+                          <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
+                            <h4 className="font-semibold text-sm mb-2 text-blue-700 dark:text-blue-400 flex items-center gap-2">
+                              <ListTodo className="h-4 w-4" />
+                              What You Should Do
+                            </h4>
+                            {(() => {
+                              const items = (update as any).actionItems;
+                              try {
+                                const parsed = JSON.parse(items);
+                                if (Array.isArray(parsed)) {
+                                  return (
+                                    <ul className="text-sm text-muted-foreground list-disc list-inside space-y-1">
+                                      {parsed.map((item: string, idx: number) => (
+                                        <li key={idx}>{item}</li>
+                                      ))}
+                                    </ul>
+                                  );
+                                }
+                              } catch {}
+                              return <p className="text-sm text-muted-foreground">{items}</p>;
+                            })()}
+                          </div>
+                        )}
+
+                        {(update as any).sourceUrl && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            asChild
+                            data-testid={`button-source-tribal-${update.id}`}
+                          >
+                            <a href={(update as any).sourceUrl} target="_blank" rel="noopener noreferrer">
+                              View Source <ExternalLink className="h-3 w-3 ml-2" />
+                            </a>
+                          </Button>
+                        )}
+
+                        {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
+                          <div className="pt-2">
+                            <h4 className="font-semibold text-sm mb-3">Affected Documents</h4>
+                            <div className="flex flex-wrap gap-2">
+                              {update.affectedTemplateIds.map((templateId) => {
+                                const template = getTemplateById(templateId);
+                                return template ? (
+                                  <Link key={templateId} to={`/templates?id=${templateId}`}>
+                                    <Badge variant="outline" className="cursor-pointer hover:bg-muted">
+                                      <FileText className="h-3 w-3 mr-1" />
+                                      {template.title}
+                                    </Badge>
+                                  </Link>
+                                ) : null;
+                              })}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </Card>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Building2 className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">No tribal housing updates for {selectedState === "NATIONAL" ? "any state" : states?.find(s => s.id === selectedState)?.name || "this state"} yet.</p>
+                <p className="text-sm text-muted-foreground mt-2">Select "All States" to view all tribal housing authority updates across the country.</p>
               </div>
             )}
           </TabsContent>
