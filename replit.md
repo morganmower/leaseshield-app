@@ -18,7 +18,13 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Backend**: Express.js, PostgreSQL (Neon), Drizzle ORM.
 - **Authentication**: Replit Auth with session handling.
 - **Payments**: Stripe Subscriptions with webhooks.
-- **Document Generation Architecture**: A robust system supporting server-side PDF generation using Puppeteer for LeaseShield-formatted documents and `pdf-lib` for official court forms (Official PDF Overlay mode). It includes a generic field map architecture for dynamic form filling and shared utilities for DOCX generation using the native `docx` library.
+- **Document Generation Architecture**: A robust system supporting server-side PDF generation using Puppeteer for LeaseShield-formatted documents and `pdf-lib` for official court forms (Official PDF Overlay mode). It includes a generic field map architecture for dynamic form filling and shared utilities for DOCX generation using the native `docx` library. Routing is deterministic via `templates.output_template_id` — zero state-code or title-matching heuristics. Field maps live in `output_templates.field_map_json` (DB-driven, no in-code constants for new forms).
+  - **Implemented Official PDF Overlay Forms** (mandatory flatten, zero LeaseShield branding):
+    - MI SCAO DC 100a — Demand for Possession: `form_fields` strategy, 13/13 smoke test assertions passing
+    - MI SCAO DC 100c — Complaint Land Contract Forfeiture: `form_fields` strategy, AcroForm fields, 2 pages
+    - SD UJS-112 — Verified Complaint for Eviction: `coordinates` strategy, 12 overlay_fields, 4 pages, 6/6 smoke test passing
+    - UT 1100EVJ — Complaint for Unlawful Detainer: `coordinates` strategy, 16 overlay_fields, 9 pages, 6/6 smoke test passing
+  - **Blocked (no statewide public PDF)**: OH (county-level only), ID (isc.idaho.gov 404 — revisit later); both remain `leaseshield_formatted`
 - **Legislative Monitoring**: A safe, approval-gated two-job architecture ingests and normalizes legislative updates from multiple sources, queuing them for admin approval before publishing. It uses a job lock to prevent overlapping runs and topic-based routing for relevance.
 - **Template Review & Publishing**: Features an approval-gated system with transactional updates, versioning, history tracking, and admin review queues.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance.

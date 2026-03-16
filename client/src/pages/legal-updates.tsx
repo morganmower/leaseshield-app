@@ -577,6 +577,28 @@ export default function LegalUpdatesPage() {
                           <h4 className="font-semibold text-sm mb-2">Why This Matters</h4>
                           <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
                         </div>
+
+                        {/* Before/After Comparison */}
+                        {(update.beforeText && !update.beforeText.includes('Previous regulations applied')) ||
+                         (update.afterText && !update.afterText.includes('New requirements may be')) ? (
+                          <div className="grid gap-4 md:grid-cols-2">
+                            <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
+                              <h4 className="font-semibold text-sm mb-2 text-amber-700 dark:text-amber-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-amber-500" />
+                                Before
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{update.beforeText}</p>
+                            </div>
+                            <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                              <h4 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full bg-green-500" />
+                                After
+                              </h4>
+                              <p className="text-sm text-muted-foreground">{update.afterText}</p>
+                            </div>
+                          </div>
+                        ) : null}
+
                         {update.affectedTemplateIds && update.affectedTemplateIds.length > 0 && (
                           <div>
                             <h4 className="font-semibold text-sm mb-2">Affected Documents</h4>
