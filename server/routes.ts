@@ -420,6 +420,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         lastVerifiedAt: credentials.lastVerifiedAt,
         lastErrorMessage: credentials.lastErrorMessage,
         hasDefaultInvitation: !!credentials.defaultInvitationId,
+        defaultInvitationId: credentials.defaultInvitationId || null,
         integrationReady,
         pendingAdminSetup,
       });

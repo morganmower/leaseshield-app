@@ -123,7 +123,7 @@ export default function Properties() {
   const isTrialExpired = error !== null && (error as any)?.status === 403;
 
   // Check if Western Verify credentials are configured
-  const { data: credentialsStatus, isFetched: credentialsFetched } = useQuery<{ configured: boolean }>({
+  const { data: credentialsStatus, isFetched: credentialsFetched } = useQuery<{ configured: boolean; defaultInvitationId?: string | null }>({
     queryKey: ["/api/screening-credentials"],
   });
 
@@ -707,7 +707,7 @@ export default function Properties() {
                 <Label htmlFor="add-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
                 <Input
                   id="add-screening-invitation-id"
-                  placeholder="Western Verify invitation ID for this property"
+                  placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
                   value={screeningInvitationId}
                   onChange={(e) => setScreeningInvitationId(e.target.value)}
                   data-testid="input-add-screening-invitation-id"
@@ -1121,7 +1121,7 @@ export default function Properties() {
                 <Label htmlFor="edit-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
                 <Input
                   id="edit-screening-invitation-id"
-                  placeholder="Western Verify invitation ID for this property"
+                  placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
                   value={screeningInvitationId}
                   onChange={(e) => setScreeningInvitationId(e.target.value)}
                   data-testid="input-edit-screening-invitation-id"
