@@ -622,7 +622,7 @@ Current implementation status as of March 2026. Every form listed here uses `off
 | Form | State | Strategy | PDF Asset | Smoke Test | Notes |
 |------|-------|----------|-----------|------------|-------|
 | MI SCAO DC 100a — Demand for Possession | MI | `form_fields` | `MI_DC_100a.pdf` | `testDC100aOverlay.ts` (13/13 ✓) | AcroForm; field_map_json in DB |
-| MI SCAO DC 100c — Complaint Land Contract Forfeiture | MI | `form_fields` | `MI_DC_100c.pdf` | `testDc100cOutput.ts` | AcroForm; field_map_json in DB; library template key: `evictions_mi_dc_100c_land_contract_complaint` |
+| MI SCAO DC 100c — Complaint Land Contract Forfeiture | MI | `form_fields` | `MI_DC_100c.pdf` | `testDc100cOutput.ts` (15/15 ✓) | AcroForm; field_map_json in DB; library template key: `evictions_mi_dc_100c_land_contract_complaint` |
 | SD UJS-112 — Verified Complaint for Eviction | SD | `coordinates` | `SD_verified_complaint.pdf` | `testSDOverlayOutput.ts` (6/6 ✓) | No AcroForm; 12 overlay_fields rows; 4 pages; fields on pages 2 & 4 |
 | UT 1100EVJ — Complaint for Unlawful Detainer | UT | `coordinates` | `UT_complaint_unlawful_detainer.pdf` | `testUTOverlayOutput.ts` (6/6 ✓) | No AcroForm; 16 overlay_fields rows; 9 pages; fields on pages 1 & 2 |
 
