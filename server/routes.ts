@@ -19,7 +19,14 @@ import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, assertVali
 import { getActiveStateIds } from "./states/getActiveStates";
 import multer from "multer";
 import path from "path";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes } from "crypto";
+
+function shortToken(length = 10): string {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+  const bytes = randomBytes(length);
+  return Array.from(bytes).map((b) => chars[(b as number) % chars.length]).join('');
+}
+
 import fs from "fs/promises";
 import { execSync } from "child_process";
 import { registerObjectStorageRoutes } from "./replit_integrations/object_storage";
@@ -5942,7 +5949,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       }
 
       // Create the application link
-      const publicToken = randomUUID().replace(/-/g, '');
+      const publicToken = shortToken();
       const coverPage = property.defaultCoverPageJson;
       const fieldSchema = property.defaultFieldSchemaJson;
       
@@ -5994,7 +6001,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
       // If createLink is true, also create an application link for this unit
       let link = null;
       if (createLink) {
-        const publicToken = randomUUID().replace(/-/g, '');
+        const publicToken = shortToken();
         
         // Compute merged schema from property defaults (unit has no overrides yet)
         const coverPage = property.defaultCoverPageJson;
@@ -6173,7 +6180,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         : property.defaultFieldSchemaJson;
 
       // Generate public token
-      const publicToken = randomUUID().replace(/-/g, '');
+      const publicToken = shortToken();
 
       // Get property terms from property (fall back to request body for backwards compatibility)
       const propertyTerms = property.propertyTermsJson || req.body.propertyTerms || {};
@@ -8777,7 +8784,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         firstName,
         lastName,
         formJson: {},
-        inviteToken: randomUUID().replace(/-/g, ''),
+        inviteToken: shortToken(),
         propertyTermsAcknowledgedAt: propertyTermsAcknowledgedAt ? new Date(propertyTermsAcknowledgedAt) : null,
       });
 
@@ -9083,7 +9090,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         });
       }
 
-      const inviteToken = randomUUID().replace(/-/g, '');
+      const inviteToken = shortToken();
 
       const person = await storage.createRentalSubmissionPerson({
         submissionId: inviter.submissionId,

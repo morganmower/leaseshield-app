@@ -268,6 +268,8 @@ export default function RentalSubmissions() {
       if (!res.ok) throw new Error("Failed to load submissions");
       return res.json();
     },
+    refetchInterval: 20000,
+    refetchOnWindowFocus: true,
   });
 
   const prevSelectedRef = useRef<string | null>(null);
@@ -300,6 +302,8 @@ export default function RentalSubmissions() {
       return res.json();
     },
     enabled: !!selectedSubmission,
+    refetchInterval: 20000,
+    refetchOnWindowFocus: true,
   });
 
   const { data: existingDecision } = useQuery<Decision | null>({
