@@ -101,6 +101,7 @@ export default function RentalApplications() {
 
   const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
   const [autoScreening, setAutoScreening] = useState(false);
+  const [screeningInvitationId, setScreeningInvitationId] = useState("");
 
   // Property terms dialog state
   const [isPropertyTermsOpen, setIsPropertyTermsOpen] = useState(false);
@@ -119,7 +120,7 @@ export default function RentalApplications() {
   const hasError = error !== null && !isTrialExpired;
 
   const createPropertyMutation = useMutation({
-    mutationFn: async (data: { propertyForm: typeof propertyForm; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; propertyTermsJson: PropertyTerms }) => {
+    mutationFn: async (data: { propertyForm: typeof propertyForm; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; screeningInvitationId: string; propertyTermsJson: PropertyTerms }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -132,6 +133,7 @@ export default function RentalApplications() {
           ...data.propertyForm,
           requiredDocumentTypes: data.requiredDocumentTypes,
           autoScreening: data.autoScreening,
+          screeningInvitationId: data.screeningInvitationId || null,
           propertyTermsJson: data.propertyTermsJson,
         }),
       });
@@ -144,6 +146,7 @@ export default function RentalApplications() {
       setPropertyForm({ name: "", address: "", city: "", state: "", zipCode: "" });
       setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
       setAutoScreening(false);
+      setScreeningInvitationId("");
       setPropertyTerms(DEFAULT_PROPERTY_TERMS);
       toast({ title: "Property Created", description: "Your rental property has been added." });
     },
@@ -153,7 +156,7 @@ export default function RentalApplications() {
   });
 
   const updatePropertyMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, propertyTermsJson }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; propertyTermsJson?: PropertyTerms }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson }: { id: string; data: typeof propertyForm; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; screeningInvitationId?: string; propertyTermsJson?: PropertyTerms }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -162,7 +165,7 @@ export default function RentalApplications() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, propertyTermsJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, propertyTermsJson }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -174,6 +177,7 @@ export default function RentalApplications() {
       setPropertyForm({ name: "", address: "", city: "", state: "", zipCode: "" });
       setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
       setAutoScreening(false);
+      setScreeningInvitationId("");
       toast({ title: "Property Updated", description: "Your rental property has been updated." });
     },
     onError: () => {
@@ -251,6 +255,7 @@ export default function RentalApplications() {
     });
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening((property as any).autoScreening ?? false);
+    setScreeningInvitationId((property as any).screeningInvitationId || "");
     setPropertyTerms((property as any).propertyTermsJson || DEFAULT_PROPERTY_TERMS);
     setIsEditPropertyOpen(true);
   };
@@ -561,6 +566,18 @@ export default function RentalApplications() {
                 />
               </div>
 
+              <div className="space-y-1 pt-2">
+                <Label htmlFor="add-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
+                <Input
+                  id="add-screening-invitation-id"
+                  placeholder="Western Verify invitation ID for this property"
+                  value={screeningInvitationId}
+                  onChange={(e) => setScreeningInvitationId(e.target.value)}
+                  data-testid="input-add-screening-invitation-id"
+                />
+                <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+              </div>
+
               <Separator className="my-4" />
 
               <div className="space-y-3">
@@ -647,6 +664,7 @@ export default function RentalApplications() {
                   propertyForm,
                   requiredDocumentTypes: docRequirements,
                   autoScreening,
+                  screeningInvitationId,
                   propertyTermsJson: propertyTerms,
                 })}
                 disabled={!propertyForm.name || createPropertyMutation.isPending}
@@ -799,6 +817,18 @@ export default function RentalApplications() {
                 />
               </div>
 
+              <div className="space-y-1 pt-2">
+                <Label htmlFor="edit-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
+                <Input
+                  id="edit-screening-invitation-id"
+                  placeholder="Western Verify invitation ID for this property"
+                  value={screeningInvitationId}
+                  onChange={(e) => setScreeningInvitationId(e.target.value)}
+                  data-testid="input-edit-screening-invitation-id"
+                />
+                <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+              </div>
+
               <Separator className="my-4" />
 
               <div className="space-y-3">
@@ -883,7 +913,7 @@ export default function RentalApplications() {
               <Button
                 onClick={() =>
                   editingProperty &&
-                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements, autoScreening, propertyTermsJson: propertyTerms })
+                  updatePropertyMutation.mutate({ id: editingProperty.id, data: propertyForm, requiredDocumentTypes: docRequirements, autoScreening, screeningInvitationId, propertyTermsJson: propertyTerms })
                 }
                 disabled={!propertyForm.name || updatePropertyMutation.isPending}
                 data-testid="button-update-rental-property"

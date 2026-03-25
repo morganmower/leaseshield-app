@@ -8,7 +8,7 @@ import Stripe from "stripe";
 import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, desc } from "drizzle-orm";
+import { eq, desc, sql } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -5801,7 +5801,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.post('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, propertyTermsJson } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
       
       if (!name) {
         return res.status(400).json({ message: "Property name is required" });
@@ -5820,6 +5820,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         defaultFieldSchemaJson: defaultFieldSchemaJson || defaultFieldSchemaTemplate,
         requiredDocumentTypes: requiredDocumentTypes || null,
         autoScreening: autoScreening ?? false,
+        screeningInvitationId: screeningInvitationId || null,
         propertyTermsJson: propertyTermsJson || null,
       });
 
@@ -5833,7 +5834,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.patch('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, propertyTermsJson } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
       
       const property = await storage.updateRentalProperty(req.params.id, userId, {
         name,
@@ -5847,6 +5848,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         defaultFieldSchemaJson,
         requiredDocumentTypes,
         autoScreening,
+        screeningInvitationId: screeningInvitationId || null,
         propertyTermsJson,
       });
 
@@ -8018,10 +8020,30 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             encryptedPassword: landlordCreds.encryptedPassword,
             encryptionIv: landlordCreds.encryptionIv,
           });
+          // Resolve per-property invitation ID override: submission → application_link → unit → property
+          let resolvedInvitationId = landlordCreds.defaultInvitationId || undefined;
+          try {
+            const propertyRow = await db.execute(sql`
+              SELECT rp.screening_invitation_id
+              FROM rental_submissions rs
+              JOIN rental_application_links ral ON rs.application_link_id = ral.id
+              JOIN rental_units ru ON ral.unit_id = ru.id
+              JOIN rental_properties rp ON ru.property_id = rp.id
+              WHERE rs.id = ${submission.id}
+              LIMIT 1
+            `);
+            const propInvId = propertyRow.rows[0]?.screening_invitation_id as string | null | undefined;
+            if (propInvId) {
+              resolvedInvitationId = propInvId;
+              console.log(`[Screening] Using per-property invitation ID for submission ${submission.id}`);
+            }
+          } catch (propErr) {
+            console.error("[Screening] Failed to resolve property invitation ID, using account default:", propErr);
+          }
           screeningCredentials = {
             username: decrypted.username,
             password: decrypted.password,
-            invitationId: landlordCreds.defaultInvitationId || undefined,
+            invitationId: resolvedInvitationId,
           };
         } catch (e) {
           console.error("Failed to decrypt landlord credentials, falling back to system credentials");
