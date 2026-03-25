@@ -277,6 +277,10 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
   </Applicant>
 </SSO>`;
 
+  // TEMP DEBUG LOG — remove after verifying ClientId in XML
+  const redactedXml = xml.replace(/<Password>[^<]*<\/Password>/, '<Password>[REDACTED]</Password>');
+  console.log('[DigitalDelve] AppScreen XML being sent:\n' + redactedXml);
+
   try {
     const { body } = await sendXmlRequest(xml);
     return parseXmlResponse(body);
