@@ -8986,10 +8986,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                           encryptedPassword: landlordCreds.encryptedPassword,
                           encryptionIv: landlordCreds.encryptionIv,
                         });
+                        // Resolve per-property invitation ID override (same chain as manual screening)
+                        const perPropertyId = (property as any).screeningInvitationId as string | null | undefined;
+                        let resolvedInvitationId = landlordCreds.defaultInvitationId || undefined;
+                        if (perPropertyId) {
+                          resolvedInvitationId = perPropertyId;
+                          console.log(`[Screening] Auto-screen: using per-property invitation ID for submission ${person.submissionId}`);
+                        }
                         screeningCredentials = {
                           username: decrypted.username,
                           password: decrypted.password,
-                          invitationId: landlordCreds.defaultInvitationId || undefined,
+                          invitationId: resolvedInvitationId,
                         };
                       } catch (e) {
                         console.error("Failed to decrypt landlord credentials, falling back to system credentials");
