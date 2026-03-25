@@ -8287,12 +8287,27 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
     }
   });
 
-  // Get available screening invitations (packages)
+  // Get available screening invitations (packages) — uses landlord's own credentials
   app.get('/api/rental/screening/invitations', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
+      const userId = req.user.id;
       const { retrieveInvitations } = await import('./digitalDelveService');
-      const result = await retrieveInvitations();
-      
+      const { decryptCredentials } = await import('./crypto');
+      const landlordCreds = await storage.getLandlordScreeningCredentials(userId);
+      let credentialsToUse: { username: string; password: string } | undefined;
+      if (landlordCreds && landlordCreds.status === 'verified') {
+        try {
+          const decrypted = decryptCredentials({
+            encryptedUsername: landlordCreds.encryptedUsername,
+            encryptedPassword: landlordCreds.encryptedPassword,
+            encryptionIv: landlordCreds.encryptionIv,
+          });
+          credentialsToUse = { username: decrypted.username, password: decrypted.password };
+        } catch (e) {
+          // fall through to system creds
+        }
+      }
+      const result = await retrieveInvitations(credentialsToUse);
       if (result.success) {
         res.json(result.invitations || []);
       } else {
