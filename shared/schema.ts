@@ -1193,7 +1193,6 @@ export const rentalProperties = pgTable("rental_properties", {
   requiredDocumentTypes: jsonb("required_document_types").$type<DocumentRequirementsConfig>(), // Which documents are required
   autoScreening: boolean("auto_screening").default(false).notNull(), // Automatically request screening on submission
   screeningInvitationId: varchar("screening_invitation_id", { length: 100 }), // Western Verify invitation ID override for this property
-  screeningClientId: varchar("screening_client_id", { length: 50 }), // Western Verify client group ID (CID) for sub-client invitations
   propertyTermsJson: jsonb("property_terms_json").$type<PropertyTerms>(), // Rent, fees, deposits, deadlines
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),

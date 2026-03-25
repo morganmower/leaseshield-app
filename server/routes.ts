@@ -5808,7 +5808,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.post('/api/rental/properties', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
       
       if (!name) {
         return res.status(400).json({ message: "Property name is required" });
@@ -5828,7 +5828,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         requiredDocumentTypes: requiredDocumentTypes || null,
         autoScreening: autoScreening ?? false,
         screeningInvitationId: screeningInvitationId || null,
-        screeningClientId: screeningClientId || null,
         propertyTermsJson: propertyTermsJson || null,
       });
 
@@ -5842,7 +5841,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
   app.patch('/api/rental/properties/:id', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson } = req.body;
+      const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
       
       const property = await storage.updateRentalProperty(req.params.id, userId, {
         name,
@@ -5857,7 +5856,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
         requiredDocumentTypes,
         autoScreening,
         screeningInvitationId: screeningInvitationId || null,
-        screeningClientId: screeningClientId || null,
         propertyTermsJson,
       });
 
@@ -8029,12 +8027,11 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             encryptedPassword: landlordCreds.encryptedPassword,
             encryptionIv: landlordCreds.encryptionIv,
           });
-          // Resolve per-property invitation ID + client group override: submission → application_link → unit → property
+          // Resolve per-property invitation ID override: submission → application_link → unit → property
           let resolvedInvitationId = landlordCreds.defaultInvitationId || undefined;
-          let resolvedClientId: string | undefined;
           try {
             const propertyRow = await db.execute(sql`
-              SELECT rp.screening_invitation_id, rp.screening_client_id
+              SELECT rp.screening_invitation_id
               FROM rental_submissions rs
               JOIN rental_application_links ral ON rs.application_link_id = ral.id
               JOIN rental_units ru ON ral.unit_id = ru.id
@@ -8043,14 +8040,9 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
               LIMIT 1
             `);
             const propInvId = propertyRow.rows[0]?.screening_invitation_id as string | null | undefined;
-            const propClientId = propertyRow.rows[0]?.screening_client_id as string | null | undefined;
             if (propInvId) {
               resolvedInvitationId = propInvId;
               console.log(`[Screening] Using per-property invitation ID for submission ${submission.id}`);
-            }
-            if (propClientId) {
-              resolvedClientId = propClientId;
-              console.log(`[Screening] Using per-property client group ID ${propClientId} for submission ${submission.id}`);
             }
           } catch (propErr) {
             console.error("[Screening] Failed to resolve property invitation ID, using account default:", propErr);
@@ -8059,7 +8051,6 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
             username: decrypted.username,
             password: decrypted.password,
             invitationId: resolvedInvitationId,
-            clientId: resolvedClientId,
           };
         } catch (e) {
           console.error("Failed to decrypt landlord credentials, falling back to system credentials");
@@ -9010,22 +9001,17 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
                           encryptedPassword: landlordCreds.encryptedPassword,
                           encryptionIv: landlordCreds.encryptionIv,
                         });
-                        // Resolve per-property invitation ID + client group override (same chain as manual screening)
+                        // Resolve per-property invitation ID override (same chain as manual screening)
                         const perPropertyId = (property as any).screeningInvitationId as string | null | undefined;
-                        const perPropertyClientId = (property as any).screeningClientId as string | null | undefined;
                         let resolvedInvitationId = landlordCreds.defaultInvitationId || undefined;
                         if (perPropertyId) {
                           resolvedInvitationId = perPropertyId;
                           console.log(`[Screening] Auto-screen: using per-property invitation ID for submission ${person.submissionId}`);
                         }
-                        if (perPropertyClientId) {
-                          console.log(`[Screening] Auto-screen: using per-property client group ID ${perPropertyClientId} for submission ${person.submissionId}`);
-                        }
                         screeningCredentials = {
                           username: decrypted.username,
                           password: decrypted.password,
                           invitationId: resolvedInvitationId,
-                          clientId: perPropertyClientId || undefined,
                         };
                       } catch (e) {
                         console.error("Failed to decrypt landlord credentials, falling back to system credentials");
