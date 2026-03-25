@@ -52,6 +52,7 @@ export interface ScreeningCredentials {
   username: string;
   password: string;
   invitationId?: string;
+  clientId?: string; // Western Verify client group ID (CID) for sub-client invitations
 }
 
 interface AppScreenRequest {
@@ -67,6 +68,7 @@ interface AppScreenRequest {
   zip?: string;
   referenceNumber: string;
   invitationId?: string;
+  clientId?: string; // Western Verify client group ID (CID) for sub-client invitations
   statusPostUrl: string;
   resultPostUrl: string;
   credentials?: ScreeningCredentials;
@@ -253,6 +255,7 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
 
   // Use the provided invitationId, per-landlord default, or system default
   const invitationId = data.invitationId || data.credentials?.invitationId || DEFAULT_INVITATION_ID;
+  const clientId = data.clientId || data.credentials?.clientId;
 
   // Full Integration AppScreen request per SSO API documentation
   // Sends an invitation email to the applicant who completes their info on Western Verify's portal
@@ -265,7 +268,7 @@ export async function sendAppScreenRequest(data: AppScreenRequest): Promise<Digi
   <Function>AppScreen</Function>
   <ResultPostURL>${escapeXml(data.resultPostUrl)}</ResultPostURL>
   <StatusPostURL>${escapeXml(data.statusPostUrl)}</StatusPostURL>
-  <InvitationId>${escapeXml(invitationId)}</InvitationId>
+  <InvitationId>${escapeXml(invitationId)}</InvitationId>${clientId ? `\n  <ClientId>${escapeXml(clientId)}</ClientId>` : ""}
   <Applicant>
     <ReferenceNumber>${escapeXml(data.referenceNumber)}</ReferenceNumber>
     <FirstName>${escapeXml(data.firstName)}</FirstName>

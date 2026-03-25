@@ -74,6 +74,7 @@ export default function Properties() {
   const [docRequirements, setDocRequirements] = useState<DocumentRequirementsConfig>(DEFAULT_DOCUMENT_REQUIREMENTS);
   const [autoScreening, setAutoScreening] = useState(false);
   const [screeningInvitationId, setScreeningInvitationId] = useState("");
+  const [screeningClientId, setScreeningClientId] = useState("");
 
   interface PropertyTermsType {
     monthlyRent?: string;
@@ -128,7 +129,7 @@ export default function Properties() {
   });
 
   const createMutation = useMutation({
-    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson, defaultFieldSchemaJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; screeningInvitationId?: string; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
+    mutationFn: async ({ data, requiredDocumentTypes, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson, defaultFieldSchemaJson }: { data: PropertyFormData; requiredDocumentTypes: DocumentRequirementsConfig; autoScreening: boolean; screeningInvitationId?: string; screeningClientId?: string; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch("/api/rental/properties", {
         method: "POST",
@@ -137,7 +138,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, propertyTermsJson, defaultFieldSchemaJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, screeningClientId: screeningClientId || null, propertyTermsJson, defaultFieldSchemaJson }),
       });
       if (!response.ok) throw new Error("Failed to create property");
       return response.json();
@@ -154,7 +155,7 @@ export default function Properties() {
   });
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson, defaultFieldSchemaJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; screeningInvitationId?: string; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
+    mutationFn: async ({ id, data, requiredDocumentTypes, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson, defaultFieldSchemaJson }: { id: string; data: PropertyFormData; requiredDocumentTypes?: DocumentRequirementsConfig; autoScreening?: boolean; screeningInvitationId?: string; screeningClientId?: string; propertyTermsJson?: PropertyTermsType; defaultFieldSchemaJson?: any }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/properties/${id}`, {
         method: "PATCH",
@@ -163,7 +164,7 @@ export default function Properties() {
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, propertyTermsJson, defaultFieldSchemaJson }),
+        body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, screeningClientId: screeningClientId || null, propertyTermsJson, defaultFieldSchemaJson }),
       });
       if (!response.ok) throw new Error("Failed to update property");
       return response.json();
@@ -251,6 +252,7 @@ export default function Properties() {
     setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening(false);
     setScreeningInvitationId("");
+    setScreeningClientId("");
     setPropertyTerms(DEFAULT_PROPERTY_TERMS);
     setFieldSettings(DEFAULT_FIELD_SETTINGS);
     setEditingProperty(null);
@@ -270,6 +272,7 @@ export default function Properties() {
     setDocRequirements((property.requiredDocumentTypes as DocumentRequirementsConfig) || DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening((property as any).autoScreening ?? false);
     setScreeningInvitationId((property as any).screeningInvitationId || "");
+    setScreeningClientId((property as any).screeningClientId || "");
     setPropertyTerms((property as any).propertyTermsJson || DEFAULT_PROPERTY_TERMS);
     // Load field schema settings from property's default field schema
     const override = (property as any).defaultFieldSchemaJson;
@@ -400,9 +403,9 @@ export default function Properties() {
     const defaultFieldSchemaJson = buildFieldSchemaOverride();
 
     if (editingProperty) {
-      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, screeningInvitationId, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
+      updateMutation.mutate({ id: editingProperty.id, data: formData, requiredDocumentTypes: docRequirements, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
     } else {
-      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, screeningInvitationId, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
+      createMutation.mutate({ data: formData, requiredDocumentTypes: docRequirements, autoScreening, screeningInvitationId, screeningClientId, propertyTermsJson: propertyTerms, defaultFieldSchemaJson });
     }
   };
 
@@ -712,6 +715,18 @@ export default function Properties() {
                   data-testid="input-add-screening-invitation-id"
                 />
                 <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+              </div>
+
+              <div className="space-y-1 pt-2">
+                <Label htmlFor="add-screening-client-id" className="text-sm">Client Group ID (optional)</Label>
+                <Input
+                  id="add-screening-client-id"
+                  placeholder="e.g. 43"
+                  value={screeningClientId}
+                  onChange={(e) => setScreeningClientId(e.target.value)}
+                  data-testid="input-add-screening-client-id"
+                />
+                <p className="text-xs text-muted-foreground">Required when using a sub-client (property group) invitation. Find this in your Western Verify portal URL as "CID=...".</p>
               </div>
 
               <Separator className="my-4" />
@@ -1126,6 +1141,18 @@ export default function Properties() {
                   data-testid="input-edit-screening-invitation-id"
                 />
                 <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+              </div>
+
+              <div className="space-y-1 pt-2">
+                <Label htmlFor="edit-screening-client-id" className="text-sm">Client Group ID (optional)</Label>
+                <Input
+                  id="edit-screening-client-id"
+                  placeholder="e.g. 43"
+                  value={screeningClientId}
+                  onChange={(e) => setScreeningClientId(e.target.value)}
+                  data-testid="input-edit-screening-client-id"
+                />
+                <p className="text-xs text-muted-foreground">Required when using a sub-client (property group) invitation. Find this in your Western Verify portal URL as "CID=...".</p>
               </div>
 
               <Separator className="my-4" />
