@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StateBadge } from "@/components/state-badge";
-import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home, Clock, CheckCircle, ListTodo, Calendar, Building2 } from "lucide-react";
+import { AlertTriangle, ExternalLink, ChevronDown, ChevronUp, BookMarked, Gavel, FileText, Home, Clock, CheckCircle, ListTodo, Calendar, Building2, ArrowUpDown, Flame, CalendarDays } from "lucide-react";
 import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
@@ -19,6 +19,7 @@ export default function LegalUpdatesPage() {
   const [selectedState, setSelectedState] = useState<string>(user?.preferredState || "UT");
   const [expandedUpdates, setExpandedUpdates] = useState<Set<string>>(new Set());
   const [expandedCases, setExpandedCases] = useState<Set<string>>(new Set());
+  const [sortOrder, setSortOrder] = useState<'newest' | 'impact'>('newest');
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -79,6 +80,20 @@ export default function LegalUpdatesPage() {
     }
     return false;
   };
+
+  const impactRank: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
+  const sortedLegalUpdates = [...(legalUpdates || [])].sort((a, b) => {
+    if (sortOrder === 'impact') {
+      const rankA = impactRank[a.impactLevel] ?? 3;
+      const rankB = impactRank[b.impactLevel] ?? 3;
+      if (rankA !== rankB) return rankA - rankB;
+    }
+    // Newest first (default and tiebreaker for impact sort)
+    const dateA = a.effectiveDate ? new Date(a.effectiveDate).getTime() : new Date(a.createdAt).getTime();
+    const dateB = b.effectiveDate ? new Date(b.effectiveDate).getTime() : new Date(b.createdAt).getTime();
+    return dateB - dateA;
+  });
 
   // Tribal Housing updates — category='tribal' plus tribal-named section8 entries
   const tribalUpdates = (legalUpdates || []).filter(isTribalUpdate);
@@ -277,6 +292,32 @@ export default function LegalUpdatesPage() {
           </div>
         )}
 
+        {/* Sort Toggle */}
+        <div className="flex items-center gap-2 mb-4">
+          <ArrowUpDown className="h-4 w-4 text-muted-foreground" />
+          <span className="text-sm text-muted-foreground">Sort by:</span>
+          <Button
+            size="sm"
+            variant={sortOrder === 'newest' ? 'default' : 'outline'}
+            onClick={() => setSortOrder('newest')}
+            data-testid="button-sort-newest"
+            className="gap-1"
+          >
+            <CalendarDays className="h-3.5 w-3.5" />
+            Most Recent
+          </Button>
+          <Button
+            size="sm"
+            variant={sortOrder === 'impact' ? 'default' : 'outline'}
+            onClick={() => setSortOrder('impact')}
+            data-testid="button-sort-impact"
+            className="gap-1"
+          >
+            <Flame className="h-3.5 w-3.5" />
+            Highest Impact
+          </Button>
+        </div>
+
         <Tabs defaultValue="recent" className="space-y-6" data-testid="tabs-legal-updates">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="recent" data-testid="tab-recent-updates">Recent Updates ({(legalUpdates?.length || 0) + (caseLaw?.length || 0)})</TabsTrigger>
@@ -294,13 +335,13 @@ export default function LegalUpdatesPage() {
             ) : (
               <>
                 {/* Legal Updates */}
-                {legalUpdates && legalUpdates.length > 0 ? (
+                {sortedLegalUpdates.length > 0 ? (
                   <div className="space-y-4 mb-8">
                     <h3 className="font-semibold text-lg flex items-center gap-2">
                       <BookMarked className="h-5 w-5" />
                       Legislative Changes
                     </h3>
-                    {legalUpdates.map((update) => (
+                    {sortedLegalUpdates.map((update) => (
                       <Card key={update.id} className="overflow-hidden" data-testid={`card-legal-update-${update.id}`}>
                         <button
                           onClick={() => toggleUpdateExpanded(update.id)}
@@ -312,19 +353,28 @@ export default function LegalUpdatesPage() {
                               <div className="flex items-start gap-2 mb-1 flex-wrap">
                                 <h3 className="font-semibold text-foreground">{update.title}</h3>
                                 {getSourceBadge(update)}
-                                {(update as any).isNewest && (
-                                  <Badge variant="default" className="bg-green-500 hover:bg-green-600 text-white" data-testid={`badge-new-${update.id}`}>
+                                {(update as any).isRecent && (
+                                  <Badge variant="default" className="bg-green-600 text-white text-xs" data-testid={`badge-new-${update.id}`}>
                                     New
                                   </Badge>
                                 )}
                                 {getImpactBadge(update.impactLevel)}
                               </div>
                               <p className="text-sm text-muted-foreground line-clamp-2">{update.summary}</p>
-                              {update.effectiveDate && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  Effective: {format(new Date(update.effectiveDate), "MMMM d, yyyy")}
-                                </p>
-                              )}
+                              <div className="flex items-center gap-3 mt-2 flex-wrap">
+                                {update.effectiveDate && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Calendar className="h-3 w-3" />
+                                    Effective: {format(new Date(update.effectiveDate), "MMM d, yyyy")}
+                                  </p>
+                                )}
+                                {update.createdAt && (
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    Added: {format(new Date(update.createdAt), "MMM d, yyyy")}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                             <div className="flex-shrink-0">
                               {expandedUpdates.has(update.id) ? (

@@ -2268,11 +2268,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return dateB - dateA; // Most recent first
       });
       
-      // Mark the first (most recent) item as "isNewest" for UI highlighting
-      const result = combined.map((item, index) => ({
-        ...item,
-        isNewest: index === 0
-      }));
+      // Mark items added/effective within the last 90 days as "isRecent" for UI highlighting
+      const ninetyDaysAgo = new Date();
+      ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+      const result = combined.map((item, index) => {
+        const itemDate = item.effectiveDate ? new Date(item.effectiveDate) : new Date(item.createdAt);
+        return {
+          ...item,
+          isNewest: index === 0,
+          isRecent: itemDate >= ninetyDaysAgo,
+        };
+      });
       
       res.json(result);
     } catch (error) {
