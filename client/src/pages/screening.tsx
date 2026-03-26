@@ -1029,6 +1029,20 @@ export default function Screening() {
                 </AccordionItem>
               </Accordion>
 
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-credit-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>
@@ -1276,6 +1290,20 @@ export default function Screening() {
                 </AccordionItem>
               </Accordion>
 
+              <Link href="/denial-decision">
+                <div className="mt-4 p-4 bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20 rounded-lg cursor-pointer hover-elevate" data-testid="button-criminal-decision-cta">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <Scale className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <p className="font-medium text-foreground">Ready to make a decision?</p>
+                      <p className="text-sm text-muted-foreground">Go to Denial Decision Assistant</p>
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </div>
+                </div>
+              </Link>
             </div>
           </Card>
         </div>

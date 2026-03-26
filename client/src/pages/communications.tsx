@@ -196,21 +196,23 @@ export default function Communications() {
                 {isLoading ? (
                   <p className="text-muted-foreground">Loading templates...</p>
                 ) : templates && templates.length > 0 ? (
-                  templates.map((template) => (
-                    <Button
-                      key={template.id}
-                      variant={selectedTemplate?.id === template.id ? "default" : "outline"}
-                      className="w-full justify-start text-left"
-                      onClick={() => {
-                        setSelectedTemplate(template);
-                        const fields = extractMergeFields(template.bodyText);
-                        setMergeFields(Object.fromEntries(fields.map((f) => [f, ""])));
-                      }}
-                      data-testid={`button-template-${template.id}`}
-                    >
-                      {TEMPLATE_LABELS[template.templateType] || template.title}
-                    </Button>
-                  ))
+                  templates
+                    .filter((t, i, arr) => arr.findIndex((x) => x.templateType === t.templateType) === i)
+                    .map((template) => (
+                      <Button
+                        key={template.id}
+                        variant={selectedTemplate?.id === template.id ? "default" : "outline"}
+                        className="w-full justify-start text-left"
+                        onClick={() => {
+                          setSelectedTemplate(template);
+                          const fields = extractMergeFields(template.bodyText);
+                          setMergeFields(Object.fromEntries(fields.map((f) => [f, ""])));
+                        }}
+                        data-testid={`button-template-${template.id}`}
+                      >
+                        {TEMPLATE_LABELS[template.templateType] || template.title}
+                      </Button>
+                    ))
                 ) : (
                   <div>
                     <p className="text-sm text-muted-foreground">No templates available for this state yet.</p>
