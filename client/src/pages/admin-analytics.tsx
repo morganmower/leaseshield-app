@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText, ChevronRight, Calendar } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
 import { Badge } from "@/components/ui/badge";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -78,6 +78,33 @@ interface MonthlySummary {
   totalEvents: number;
 }
 
+interface MrrHistoryEntry {
+  label: string;
+  year: number;
+  month: number;
+  mrr: number;
+  subscribers: number;
+}
+
+interface FunnelStage {
+  label: string;
+  count: number;
+}
+
+interface UserEngagementRow {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  subscriptionStatus: string | null;
+  subscribedAt: string | null;
+  createdAt: string;
+  lastActiveAt: string | null;
+  templateDownloads: number | string;
+  applicationsSent: number | string;
+  screeningRequests: number | string;
+}
+
 export default function AdminAnalyticsPage() {
   const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
@@ -86,6 +113,7 @@ export default function AdminAnalyticsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
+  const [userEngagementSort, setUserEngagementSort] = useState<"lastActive" | "downloads" | "applications">("lastActive");
 
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
@@ -93,6 +121,30 @@ export default function AdminAnalyticsPage() {
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+  });
+
+  const { data: mrrHistory } = useQuery<MrrHistoryEntry[]>({
+    queryKey: ["/api/admin/analytics/mrr-history"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/mrr-history");
+      return res.json();
+    },
+  });
+
+  const { data: funnelData } = useQuery<{ stages: FunnelStage[] }>({
+    queryKey: ["/api/admin/analytics/funnel"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/funnel");
+      return res.json();
+    },
+  });
+
+  const { data: userEngagement } = useQuery<UserEngagementRow[]>({
+    queryKey: ["/api/admin/analytics/users"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/users");
+      return res.json();
+    },
   });
 
   // Fetch monthly summary for selected year
@@ -557,6 +609,178 @@ export default function AdminAnalyticsPage() {
             </Tabs>
           </DialogContent>
         </Dialog>
+
+        {/* MRR Trend Line Chart */}
+        <Card>
+          <CardHeader>
+            <CardTitle>MRR Trend — Last 12 Months</CardTitle>
+            <CardDescription>
+              Monthly Recurring Revenue (monthly subscribers × $10 + annual × $8.33)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {mrrHistory && mrrHistory.length > 0 ? (
+              <ResponsiveContainer width="100%" height={240}>
+                <LineChart data={mrrHistory} margin={{ top: 8, right: 20, left: 10, bottom: 4 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="label" tick={{ fontSize: 12 }} />
+                  <YAxis
+                    tickFormatter={(v) => `$${v}`}
+                    tick={{ fontSize: 12 }}
+                    width={56}
+                  />
+                  <Tooltip
+                    formatter={(value: number, name: string) =>
+                      name === "mrr" ? [`$${value}`, "MRR"] : [value, "Subscribers"]
+                    }
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="mrr"
+                    stroke="hsl(var(--primary))"
+                    strokeWidth={2}
+                    dot={{ r: 3 }}
+                    activeDot={{ r: 5 }}
+                    name="mrr"
+                  />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <p className="text-muted-foreground text-sm py-8 text-center">No MRR data available yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Subscriber Funnel */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Subscriber Funnel</CardTitle>
+            <CardDescription>
+              Drop-off at each activation stage for current active subscribers
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {funnelData?.stages && funnelData.stages.length > 0 ? (() => {
+              const maxCount = funnelData.stages[0]?.count || 1;
+              return (
+                <div className="space-y-3" data-testid="funnel-stages">
+                  {funnelData.stages.map((stage, idx) => {
+                    const pct = Math.round((stage.count / maxCount) * 100);
+                    const dropPct = idx > 0
+                      ? Math.round(((funnelData.stages[idx - 1].count - stage.count) / (funnelData.stages[idx - 1].count || 1)) * 100)
+                      : 0;
+                    return (
+                      <div key={stage.label} data-testid={`funnel-stage-${idx}`}>
+                        <div className="flex items-center justify-between text-sm mb-1 gap-2 flex-wrap">
+                          <span className="font-medium">{stage.label}</span>
+                          <div className="flex items-center gap-3">
+                            <span className="text-muted-foreground">{stage.count.toLocaleString()}</span>
+                            {idx > 0 && dropPct > 0 && (
+                              <Badge variant="outline" className="text-xs text-destructive">
+                                -{dropPct}%
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                        <div className="h-2 bg-muted rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-primary rounded-full transition-all"
+                            style={{ width: `${pct}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })() : (
+              <p className="text-muted-foreground text-sm py-8 text-center">No funnel data available yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Per-User Engagement Table */}
+        <Card>
+          <CardHeader>
+            <div className="flex flex-row items-center justify-between gap-4 flex-wrap">
+              <div>
+                <CardTitle>Per-User Engagement</CardTitle>
+                <CardDescription>Activity summary for every non-admin user</CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Sort by:</span>
+                <Select value={userEngagementSort} onValueChange={(v) => setUserEngagementSort(v as any)}>
+                  <SelectTrigger className="w-[160px]" data-testid="select-user-sort">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="lastActive">Last Active</SelectItem>
+                    <SelectItem value="downloads">Downloads</SelectItem>
+                    <SelectItem value="applications">Applications</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {userEngagement && userEngagement.length > 0 ? (() => {
+              const sorted = [...userEngagement].sort((a, b) => {
+                if (userEngagementSort === "downloads") return Number(b.templateDownloads) - Number(a.templateDownloads);
+                if (userEngagementSort === "applications") return Number(b.applicationsSent) - Number(a.applicationsSent);
+                // lastActive
+                if (!a.lastActiveAt && !b.lastActiveAt) return 0;
+                if (!a.lastActiveAt) return 1;
+                if (!b.lastActiveAt) return -1;
+                return new Date(b.lastActiveAt).getTime() - new Date(a.lastActiveAt).getTime();
+              });
+              return (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm" data-testid="table-user-engagement">
+                    <thead>
+                      <tr className="border-b">
+                        <th className="text-left py-3 px-2 font-medium">User</th>
+                        <th className="text-left py-3 px-2 font-medium">Status</th>
+                        <th className="text-left py-3 px-2 font-medium">Last Active</th>
+                        <th className="text-right py-3 px-2 font-medium">Downloads</th>
+                        <th className="text-right py-3 px-2 font-medium">Applications</th>
+                        <th className="text-right py-3 px-2 font-medium">Screenings</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {sorted.map((u) => (
+                        <tr key={u.id} className="border-b hover-elevate" data-testid={`row-user-eng-${u.id}`}>
+                          <td className="py-3 px-2">
+                            <div className="flex flex-col">
+                              <span className="font-medium">
+                                {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Anonymous"}
+                              </span>
+                              <span className="text-xs text-muted-foreground">{u.email || "—"}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-2">
+                            {u.subscriptionStatus === "active"
+                              ? <Badge variant="default">Active</Badge>
+                              : <Badge variant="secondary">Inactive</Badge>}
+                          </td>
+                          <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
+                            {u.lastActiveAt
+                              ? format(new Date(u.lastActiveAt), "MMM d, yyyy")
+                              : "Never"}
+                          </td>
+                          <td className="py-3 px-2 text-right font-mono">{Number(u.templateDownloads)}</td>
+                          <td className="py-3 px-2 text-right font-mono">{Number(u.applicationsSent)}</td>
+                          <td className="py-3 px-2 text-right font-mono">{Number(u.screeningRequests)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            })() : (
+              <p className="text-center py-8 text-muted-foreground">No user engagement data</p>
+            )}
+          </CardContent>
+        </Card>
 
         <Card>
           <CardHeader>

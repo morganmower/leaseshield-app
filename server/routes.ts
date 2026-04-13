@@ -2729,6 +2729,218 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Admin: Application outcome aggregate stats
+  app.get('/api/admin/applications-activity/stats', isAuthenticated, requireAdmin, async (_req, res) => {
+    try {
+      // Approval rate
+      const decisionsResult = await db.execute(sql`
+        SELECT
+          COUNT(*) AS total,
+          COUNT(*) FILTER (WHERE decision = 'approved') AS approved
+        FROM rental_decisions
+      `);
+      const { total, approved } = decisionsResult.rows[0] as any;
+      const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
+
+      // Most common denial reason category
+      const denialResult = await db.execute(sql`
+        SELECT category, COUNT(*) AS cnt
+        FROM rental_denial_reasons
+        GROUP BY category
+        ORDER BY cnt DESC
+        LIMIT 1
+      `);
+      const topDenialCategory = denialResult.rows[0]
+        ? (denialResult.rows[0] as any).category
+        : null;
+
+      // Average days from submittedAt to decidedAt
+      const avgDaysResult = await db.execute(sql`
+        SELECT AVG(
+          EXTRACT(EPOCH FROM (rd.decided_at - rs.submitted_at)) / 86400
+        )::numeric(10,1) AS avg_days
+        FROM rental_decisions rd
+        JOIN rental_submissions rs ON rs.id = rd.submission_id
+        WHERE rs.submitted_at IS NOT NULL
+      `);
+      const avgDays = avgDaysResult.rows[0]
+        ? parseFloat((avgDaysResult.rows[0] as any).avg_days) || 0
+        : 0;
+
+      res.json({ approvalRate, topDenialCategory, avgDays, totalDecided: Number(total) });
+    } catch (error) {
+      console.error("Error fetching application stats:", error);
+      res.status(500).json({ message: "Failed to fetch application stats" });
+    }
+  });
+
+  // Admin: Subscriber funnel drop-off
+  app.get('/api/admin/analytics/funnel', isAuthenticated, requireAdmin, async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        WITH base AS (
+          SELECT id FROM users WHERE is_admin IS NOT TRUE
+        ),
+        active_subs AS (
+          SELECT id FROM users WHERE subscription_status = 'active' AND is_admin IS NOT TRUE
+        ),
+        with_property AS (
+          SELECT DISTINCT user_id AS id FROM properties
+          WHERE user_id IN (SELECT id FROM active_subs)
+        ),
+        with_link AS (
+          SELECT DISTINCT p.user_id AS id
+          FROM rental_application_links ral
+          JOIN units u ON u.id = ral.unit_id
+          JOIN properties p ON p.id = u.property_id
+          WHERE p.user_id IN (SELECT id FROM active_subs)
+        ),
+        with_submission AS (
+          SELECT DISTINCT p.user_id AS id
+          FROM rental_submissions rs
+          JOIN rental_application_links ral ON ral.id = rs.application_link_id
+          JOIN units u ON u.id = ral.unit_id
+          JOIN properties p ON p.id = u.property_id
+          WHERE p.user_id IN (SELECT id FROM active_subs)
+            AND rs.status IN ('submitted','screening_requested','in_progress','complete')
+        ),
+        with_screening AS (
+          SELECT DISTINCT p.user_id AS id
+          FROM rental_screening_orders rso
+          JOIN rental_submissions rs ON rs.id = rso.submission_id
+          JOIN rental_application_links ral ON ral.id = rs.application_link_id
+          JOIN units u ON u.id = ral.unit_id
+          JOIN properties p ON p.id = u.property_id
+          WHERE p.user_id IN (SELECT id FROM active_subs)
+        ),
+        with_decision AS (
+          SELECT DISTINCT p.user_id AS id
+          FROM rental_decisions rd
+          JOIN rental_submissions rs ON rs.id = rd.submission_id
+          JOIN rental_application_links ral ON ral.id = rs.application_link_id
+          JOIN units u ON u.id = ral.unit_id
+          JOIN properties p ON p.id = u.property_id
+          WHERE p.user_id IN (SELECT id FROM active_subs)
+        )
+        SELECT
+          (SELECT COUNT(*) FROM base) AS total_users,
+          (SELECT COUNT(*) FROM active_subs) AS active_subscribers,
+          (SELECT COUNT(*) FROM with_property) AS with_property,
+          (SELECT COUNT(*) FROM with_link) AS with_link,
+          (SELECT COUNT(*) FROM with_submission) AS with_submission,
+          (SELECT COUNT(*) FROM with_screening) AS with_screening,
+          (SELECT COUNT(*) FROM with_decision) AS with_decision
+      `);
+      const r = rows.rows[0] as any;
+      res.json({
+        stages: [
+          { label: "All Users", count: Number(r.total_users) },
+          { label: "Active Subscribers", count: Number(r.active_subscribers) },
+          { label: "Created a Property", count: Number(r.with_property) },
+          { label: "Sent Application Link", count: Number(r.with_link) },
+          { label: "Received Submission", count: Number(r.with_submission) },
+          { label: "Requested Screening", count: Number(r.with_screening) },
+          { label: "Issued Decision", count: Number(r.with_decision) },
+        ],
+      });
+    } catch (error) {
+      console.error("Error fetching funnel data:", error);
+      res.status(500).json({ message: "Failed to fetch funnel data" });
+    }
+  });
+
+  // Admin: Per-user engagement summary
+  app.get('/api/admin/analytics/users', isAuthenticated, requireAdmin, async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        SELECT
+          u.id,
+          u.email,
+          u.first_name AS "firstName",
+          u.last_name AS "lastName",
+          u.subscription_status AS "subscriptionStatus",
+          u.subscribed_at AS "subscribedAt",
+          u.created_at AS "createdAt",
+          -- Last analytics activity
+          MAX(ae.created_at) AS "lastActiveAt",
+          -- Template downloads
+          COUNT(ae.id) FILTER (WHERE ae.event_type = 'template_download') AS "templateDownloads",
+          -- Applications sent (links created = submissions that landlord initiated)
+          (
+            SELECT COUNT(DISTINCT rs.id)
+            FROM rental_submissions rs
+            JOIN rental_application_links ral ON ral.id = rs.application_link_id
+            JOIN units un ON un.id = ral.unit_id
+            JOIN properties pp ON pp.id = un.property_id
+            WHERE pp.user_id = u.id
+          ) AS "applicationsSent",
+          -- Screening requests
+          COUNT(ae.id) FILTER (WHERE ae.event_type IN ('screening_request', 'western_verify_click')) AS "screeningRequests"
+        FROM users u
+        LEFT JOIN analytics_events ae ON ae.user_id = u.id
+        WHERE u.is_admin IS NOT TRUE
+        GROUP BY u.id, u.email, u.first_name, u.last_name, u.subscription_status, u.subscribed_at, u.created_at
+        ORDER BY "lastActiveAt" DESC NULLS LAST
+      `);
+      res.json(rows.rows);
+    } catch (error) {
+      console.error("Error fetching user engagement:", error);
+      res.status(500).json({ message: "Failed to fetch user engagement" });
+    }
+  });
+
+  // Admin: MRR history for past 12 months
+  app.get('/api/admin/analytics/mrr-history', isAuthenticated, requireAdmin, async (_req, res) => {
+    try {
+      // Generate past 12 months
+      const months: { year: number; month: number; label: string }[] = [];
+      const now = new Date();
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        months.push({
+          year: d.getFullYear(),
+          month: d.getMonth() + 1,
+          label: d.toLocaleString('default', { month: 'short', year: '2-digit' }),
+        });
+      }
+
+      // For each month, count active subscribers and compute MRR
+      // A subscriber counts for a month if they subscribed before end of that month
+      // and either have no end date or ended after start of that month
+      const history = await Promise.all(
+        months.map(async ({ year, month, label }) => {
+          const start = new Date(year, month - 1, 1);
+          const end = new Date(year, month, 0, 23, 59, 59); // last day of month
+
+          const result = await db.execute(sql`
+            SELECT
+              COUNT(*) FILTER (WHERE billing_interval = 'year') AS annual_count,
+              COUNT(*) FILTER (WHERE billing_interval = 'month' OR billing_interval IS NULL) AS monthly_count
+            FROM users
+            WHERE is_admin IS NOT TRUE
+              AND subscribed_at <= ${end.toISOString()}
+              AND (
+                subscription_expires_at IS NULL
+                OR subscription_expires_at >= ${start.toISOString()}
+              )
+              AND subscription_status IN ('active', 'canceled')
+          `);
+          const r = result.rows[0] as any;
+          const annualCount = Number(r.annual_count) || 0;
+          const monthlyCount = Number(r.monthly_count) || 0;
+          // Annual = $100/year → $8.33/month. Monthly = $10/month
+          const mrr = Math.round(monthlyCount * 10 + annualCount * (100 / 12));
+          return { label, year, month, mrr, subscribers: annualCount + monthlyCount };
+        })
+      );
+
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching MRR history:", error);
+      res.status(500).json({ message: "Failed to fetch MRR history" });
+    }
+  });
+
   // Admin Applications Activity - view all rental submissions across all users
   app.get('/api/admin/applications-activity', isAuthenticated, requireAdmin, async (req: any, res) => {
     try {
@@ -2755,13 +2967,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
               },
             },
           },
-          people: true,
+          people: { with: { files: true } },
           screeningOrder: true,
-          decision: true,
+          decision: { with: { denialReasons: true } },
           events: true,
         },
         orderBy: (rs, { desc }) => [desc(rs.createdAt)],
       });
+
+      // Helper: extract key fields from formJson
+      function extractFormData(formJson: any) {
+        if (!formJson) return null;
+        return {
+          monthlyIncome: formJson.monthlyIncome ?? formJson.income ?? null,
+          employer: formJson.employer ?? formJson.currentEmployer ?? null,
+          employerPhone: formJson.employerPhone ?? null,
+          moveInDate: formJson.moveInDate ?? null,
+          desiredMoveInDate: formJson.desiredMoveInDate ?? formJson.moveInDate ?? null,
+          occupantCount: Array.isArray(formJson.occupants) ? formJson.occupants.length : (formJson.occupantCount ?? null),
+          petCount: Array.isArray(formJson.pets) ? formJson.pets.length : (formJson.petCount ?? null),
+          vehicleCount: Array.isArray(formJson.vehicles) ? formJson.vehicles.length : (formJson.vehicleCount ?? null),
+          pets: Array.isArray(formJson.pets) ? formJson.pets : [],
+          vehicles: Array.isArray(formJson.vehicles) ? formJson.vehicles : [],
+        };
+      }
 
       // Transform into a more digestible format for the admin UI
       const activityData = submissions.map(sub => {
@@ -2804,6 +3033,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
             phone: primaryApplicant.phone,
             isCompleted: primaryApplicant.isCompleted,
             completedAt: primaryApplicant.completedAt,
+            formData: extractFormData(primaryApplicant.formJson),
+            files: (primaryApplicant as any).files?.map((f: any) => ({
+              fileType: f.fileType,
+              availabilityStatus: f.availabilityStatus,
+            })) || [],
           } : null,
           // Co-applicants and guarantors
           coApplicants: coApplicants.map(p => ({
@@ -2812,6 +3046,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: p.lastName,
             email: p.email,
             isCompleted: p.isCompleted,
+            formData: extractFormData(p.formJson),
           })),
           guarantors: guarantors.map(p => ({
             id: p.id,
@@ -2819,6 +3054,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             lastName: p.lastName,
             email: p.email,
             isCompleted: p.isCompleted,
+            formData: extractFormData(p.formJson),
           })),
           // Screening info
           screening: sub.screeningOrder ? {
@@ -2827,11 +3063,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
             createdAt: sub.screeningOrder.createdAt,
             reportUrl: sub.screeningOrder.reportUrl,
           } : null,
-          // Decision
+          // Decision with denial reasons
           decision: sub.decision ? {
             decision: sub.decision.decision,
             decidedAt: sub.decision.decidedAt,
             notes: sub.decision.notes,
+            denialReasons: (sub.decision as any).denialReasons?.map((r: any) => ({
+              category: r.category,
+              detail: r.detail,
+            })) || [],
           } : null,
           // Event timeline
           events: sub.events?.map(e => ({
