@@ -91,6 +91,8 @@ interface MrrHistoryEntry {
 interface FunnelStage {
   label: string;
   count: number;
+  total: number | null;
+  totalLabel: string | null;
 }
 
 interface FunnelResponse {
@@ -771,9 +773,18 @@ export default function AdminAnalyticsPage() {
                     return (
                       <div key={stage.label} data-testid={`funnel-stage-${idx}`}>
                         <div className="flex items-center justify-between text-sm mb-1 gap-2 flex-wrap">
-                          <span className="font-medium">{stage.label}</span>
+                          <div>
+                            <span className="font-medium">{stage.label}</span>
+                            {stage.total != null && stage.total !== stage.count && (
+                              <span className="text-xs text-muted-foreground ml-2">
+                                {stage.total.toLocaleString()} {stage.totalLabel}
+                              </span>
+                            )}
+                          </div>
                           <div className="flex items-center gap-3">
-                            <span className="text-muted-foreground">{stage.count.toLocaleString()}</span>
+                            <span className="text-muted-foreground">
+                              {stage.count.toLocaleString()} {stage.count === 1 ? "user" : "users"}
+                            </span>
                             {idx > 0 && dropPct > 0 && (
                               <Badge variant="outline" className="text-xs text-destructive">
                                 -{dropPct}%

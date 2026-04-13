@@ -2843,28 +2843,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
         SELECT
           (SELECT COUNT(*) FROM base) AS total_users,
           (SELECT COUNT(*) FROM active_subs) AS active_subscribers,
+          -- distinct user counts (for drop-off %)
           (SELECT COUNT(*) FROM with_property) AS with_property,
           (SELECT COUNT(*) FROM with_link) AS with_link,
           (SELECT COUNT(*) FROM with_submission) AS with_submission,
           (SELECT COUNT(*) FROM with_screening) AS with_screening,
-          (SELECT COUNT(*) FROM with_decision) AS with_decision
+          (SELECT COUNT(*) FROM with_decision) AS with_decision,
+          -- total activity counts (volume, not distinct users)
+          (SELECT COUNT(*) FROM rental_properties WHERE user_id IN (SELECT id FROM active_subs)) AS total_properties,
+          (SELECT COUNT(ral.id) FROM rental_application_links ral JOIN rental_units ru ON ru.id = ral.unit_id JOIN rental_properties rp ON rp.id = ru.property_id WHERE rp.user_id IN (SELECT id FROM active_subs)) AS total_links,
+          (SELECT COUNT(rs.id) FROM rental_submissions rs JOIN rental_application_links ral ON ral.id = rs.application_link_id JOIN rental_units ru ON ru.id = ral.unit_id JOIN rental_properties rp ON rp.id = ru.property_id WHERE rp.user_id IN (SELECT id FROM active_subs) AND rs.status IN ('submitted','screening_requested','in_progress','complete')) AS total_submissions,
+          (SELECT COUNT(rso.id) FROM rental_screening_orders rso JOIN rental_submissions rs ON rs.id = rso.submission_id JOIN rental_application_links ral ON ral.id = rs.application_link_id JOIN rental_units ru ON ru.id = ral.unit_id JOIN rental_properties rp ON rp.id = ru.property_id WHERE rp.user_id IN (SELECT id FROM active_subs)) AS total_screenings,
+          (SELECT COUNT(rd.id) FROM rental_decisions rd JOIN rental_submissions rs ON rs.id = rd.submission_id JOIN rental_application_links ral ON ral.id = rs.application_link_id JOIN rental_units ru ON ru.id = ral.unit_id JOIN rental_properties rp ON rp.id = ru.property_id WHERE rp.user_id IN (SELECT id FROM active_subs)) AS total_decisions
       `);
       interface FunnelRow {
-        total_users: string; active_subscribers: string; with_property: string;
-        with_link: string; with_submission: string; with_screening: string; with_decision: string;
+        total_users: string; active_subscribers: string;
+        with_property: string; with_link: string; with_submission: string; with_screening: string; with_decision: string;
+        total_properties: string; total_links: string; total_submissions: string; total_screenings: string; total_decisions: string;
       }
       const r = rows.rows[0] as FunnelRow;
       res.json({
         from: fromDate ? fromDate.toISOString() : null,
         to: toDate ? toDate.toISOString() : null,
         stages: [
-          { label: "All Users", count: Number(r.total_users) },
-          { label: "Subscribers (Active + Trial)", count: Number(r.active_subscribers) },
-          { label: "Created a Property", count: Number(r.with_property) },
-          { label: "Sent Application Link", count: Number(r.with_link) },
-          { label: "Received Submission", count: Number(r.with_submission) },
-          { label: "Requested Screening", count: Number(r.with_screening) },
-          { label: "Issued Decision", count: Number(r.with_decision) },
+          { label: "All Users", count: Number(r.total_users), total: null, totalLabel: null },
+          { label: "Subscribers (Active + Trial)", count: Number(r.active_subscribers), total: null, totalLabel: null },
+          { label: "Created a Property", count: Number(r.with_property), total: Number(r.total_properties), totalLabel: "properties" },
+          { label: "Sent Application Link", count: Number(r.with_link), total: Number(r.total_links), totalLabel: "links sent" },
+          { label: "Received Submission", count: Number(r.with_submission), total: Number(r.total_submissions), totalLabel: "submissions" },
+          { label: "Requested Screening", count: Number(r.with_screening), total: Number(r.total_screenings), totalLabel: "orders" },
+          { label: "Issued Decision", count: Number(r.with_decision), total: Number(r.total_decisions), totalLabel: "decisions" },
         ],
       });
     } catch (error) {
