@@ -617,7 +617,7 @@ If the notice period calculation depends on court holidays (e.g., court filing d
 
 ## Official Court Form Registry
 
-Current implementation status as of March 2026. Every form listed here uses `official_pdf_overlay` with a mandatory flatten; zero LeaseShield branding or metadata is present in the output.
+Current implementation status as of April 2026. Every form listed here uses `official_pdf_overlay` with a mandatory flatten; zero LeaseShield branding or metadata is present in the output.
 
 | Form | State | Strategy | PDF Asset | Smoke Test | Notes |
 |------|-------|----------|-----------|------------|-------|
@@ -625,10 +625,10 @@ Current implementation status as of March 2026. Every form listed here uses `off
 | MI SCAO DC 100c — Complaint Land Contract Forfeiture | MI | `form_fields` | `MI_DC_100c.pdf` | `testDc100cOutput.ts` (15/15 ✓) | AcroForm; field_map_json in DB; library template key: `evictions_mi_dc_100c_land_contract_complaint` |
 | SD UJS-112 — Verified Complaint for Eviction | SD | `coordinates` | `SD_verified_complaint.pdf` | `testSDOverlayOutput.ts` (6/6 ✓) | No AcroForm; 12 overlay_fields rows; 4 pages; fields on pages 2 & 4 |
 | UT 1100EVJ — Complaint for Unlawful Detainer | UT | `coordinates` | `UT_complaint_unlawful_detainer.pdf` | `testUTOverlayOutput.ts` (6/6 ✓) | No AcroForm; 16 overlay_fields rows; 9 pages; fields on pages 1 & 2 |
+| ID CAO UD 1-1 — Complaint for Eviction Expedited Proceeding | ID | `form_fields` | `ID_CAO_UD_1-1.pdf` | `testIDOverlay.ts` (15/15 ✓) | AcroForm; 25 fields; 2 pages; field_map_json in DB; source: courtselfhelp.idaho.gov; camelCase field keys; Dropdown fields (county, judicial district) intentionally omitted — pdf-lib cannot set arbitrary dropdown text |
 
 **Blocked (no statewide public PDF available):**
-- **OH** — Eviction Summons and Complaint: Ohio uses county-level forms; no single statewide PDF is publicly accessible. Remains `leaseshield_formatted`.
-- **ID** — Complaint for Forcible Detainer: Idaho Supreme Court self-help forms were not accessible at isc.idaho.gov at the time of investigation (all URLs returned 404). Remains `leaseshield_formatted`. Re-check when isc.idaho.gov forms become available.
+- **OH** — Eviction Summons and Complaint: Ohio uses county-level forms only; no single statewide PDF is publicly accessible (confirmed via Ohio Supreme Court). Remains `leaseshield_formatted` permanently unless Ohio adopts a unified statewide form.
 
 ---
 

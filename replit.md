@@ -24,7 +24,8 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
     - MI SCAO DC 100c — Complaint Land Contract Forfeiture: `form_fields` strategy, AcroForm fields, 2 pages, 15/15 smoke test assertions passing
     - SD UJS-112 — Verified Complaint for Eviction: `coordinates` strategy, 12 overlay_fields, 4 pages, 6/6 smoke test passing
     - UT 1100EVJ — Complaint for Unlawful Detainer: `coordinates` strategy, 16 overlay_fields, 9 pages, 6/6 smoke test passing
-  - **Blocked (no statewide public PDF)**: OH (county-level only), ID (isc.idaho.gov 404 — revisit later); both remain `leaseshield_formatted`
+    - ID CAO UD 1-1 — Complaint for Eviction Expedited Proceeding: `form_fields` strategy, 25 AcroForm fields, 2 pages, 15/15 smoke test assertions passing; source: courtselfhelp.idaho.gov
+  - **Blocked (no statewide public PDF)**: OH (county-level only — each county has its own form); remains `leaseshield_formatted`
 - **Legislative Monitoring**: A safe, approval-gated two-job architecture ingests and normalizes legislative updates from multiple sources, queuing them for admin approval before publishing. It uses a job lock to prevent overlapping runs and topic-based routing for relevance.
 - **Template Review & Publishing**: Features an approval-gated system with transactional updates, versioning, history tracking, and admin review queues.
 - **AI Screening Helpers**: GPT-4o-mini powered tools for credit report and criminal/eviction screening, emphasizing Fair Housing compliance.

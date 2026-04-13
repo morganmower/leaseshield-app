@@ -50,7 +50,7 @@ export default function AdminPage() {
   // Fetch current impersonation status
   const { data: impersonationStatus } = useQuery<ImpersonationStatus>({
     queryKey: ['/api/admin/impersonation-status'],
-    refetchInterval: 10000, // Refresh every 10 seconds
+    refetchInterval: 60000,
   });
 
   const startImpersonationMutation = useMutation({

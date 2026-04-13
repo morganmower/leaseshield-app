@@ -6,8 +6,8 @@
  *  2. SD UJS 112  — Verified Complaint for Eviction (coordinates strategy — infrastructure only)
  *  3. UT 1100EV   — Complaint for Unlawful Detainer (coordinates strategy — infrastructure only)
  *
- * OH and ID have no statewide standardized eviction complaint form.
- * Those states remain leaseshield_formatted.
+ * OH has no statewide standardized eviction complaint form (county-level only).
+ * ID: now implemented via seedIDOverlayFields.ts (courtselfhelp.idaho.gov CAO UD 1-1).
  *
  * Run: npx tsx server/scripts/seedOfficialForms.ts
  */
@@ -230,7 +230,8 @@ async function seedUtComplaint() {
 
 async function main() {
   console.log('=== Official Court Form Seed Script ===');
-  console.log('OH and ID: no statewide standardized eviction form — remain leaseshield_formatted\n');
+  console.log('OH: no statewide eviction form (county-level only) — remains leaseshield_formatted');
+  console.log('ID: implemented separately — run seedIDOverlayFields.ts\n');
 
   await seedMiDc100c();
   await seedSdVerifiedComplaint();

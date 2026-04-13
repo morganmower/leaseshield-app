@@ -151,13 +151,15 @@ export function AppSidebar() {
 
   const { data: unreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/messages/unread-count"],
-    refetchInterval: 30000,
+    refetchInterval: 90000,
+    staleTime: 60000,
   });
   const broadcastUnreadCount = unreadData?.count || 0;
 
   const { data: directUnreadData } = useQuery<{ count: number }>({
     queryKey: ["/api/messages/direct/unread-count"],
-    refetchInterval: 30000,
+    refetchInterval: 90000,
+    staleTime: 60000,
   });
   const directUnreadCount = directUnreadData?.count || 0;
 
@@ -165,7 +167,8 @@ export function AppSidebar() {
 
   const { data: pendingAppsData } = useQuery<{ count: number }>({
     queryKey: ["/api/rental/submissions/pending-count"],
-    refetchInterval: 30000,
+    refetchInterval: 90000,
+    staleTime: 60000,
   });
   const pendingAppsCount = pendingAppsData?.count || 0;
 
