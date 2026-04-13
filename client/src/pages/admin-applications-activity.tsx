@@ -76,6 +76,7 @@ interface ApplicationActivity {
     status: string;
     referenceNumber: string;
     createdAt: string;
+    updatedAt: string | null;
     reportUrl: string | null;
   } | null;
   decision: {
@@ -491,7 +492,7 @@ export default function AdminApplicationsActivity() {
                       label="Screening Complete"
                       date={
                         selectedApplication.screening?.status === "complete"
-                          ? selectedApplication.screening.createdAt
+                          ? (selectedApplication.screening.updatedAt ?? selectedApplication.screening.createdAt)
                           : null
                       }
                       done={selectedApplication.screening?.status === "complete"}

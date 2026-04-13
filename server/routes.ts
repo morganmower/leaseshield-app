@@ -2739,7 +2739,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           COUNT(*) FILTER (WHERE decision = 'approved') AS approved
         FROM rental_decisions
       `);
-      const { total, approved } = decisionsResult.rows[0] as any;
+      interface DecisionCountRow { total: string; approved: string; }
+      const decisionRow = decisionsResult.rows[0] as DecisionCountRow | undefined;
+      const total = Number(decisionRow?.total ?? 0);
+      const approved = Number(decisionRow?.approved ?? 0);
       const approvalRate = total > 0 ? Math.round((approved / total) * 100) : 0;
 
       // Most common denial reason category
@@ -2750,8 +2753,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         ORDER BY cnt DESC
         LIMIT 1
       `);
+      interface DenialCategoryRow { category: string; }
       const topDenialCategory = denialResult.rows[0]
-        ? (denialResult.rows[0] as any).category
+        ? (denialResult.rows[0] as DenialCategoryRow).category
         : null;
 
       // Average days from submittedAt to decidedAt
@@ -2763,8 +2767,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         JOIN rental_submissions rs ON rs.id = rd.submission_id
         WHERE rs.submitted_at IS NOT NULL
       `);
+      interface AvgDaysRow { avg_days: string | null; }
       const avgDays = avgDaysResult.rows[0]
-        ? parseFloat((avgDaysResult.rows[0] as any).avg_days) || 0
+        ? parseFloat((avgDaysResult.rows[0] as AvgDaysRow).avg_days ?? '0') || 0
         : 0;
 
       res.json({ approvalRate, topDenialCategory, avgDays, totalDecided: Number(total) });
@@ -2831,7 +2836,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (SELECT COUNT(*) FROM with_screening) AS with_screening,
           (SELECT COUNT(*) FROM with_decision) AS with_decision
       `);
-      const r = rows.rows[0] as any;
+      interface FunnelRow {
+        total_users: string; active_subscribers: string; with_property: string;
+        with_link: string; with_submission: string; with_screening: string; with_decision: string;
+      }
+      const r = rows.rows[0] as FunnelRow;
       res.json({
         stages: [
           { label: "All Users", count: Number(r.total_users) },
@@ -2865,11 +2874,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           MAX(ae.created_at) AS "lastActiveAt",
           -- Template downloads
           COUNT(ae.id) FILTER (WHERE ae.event_type = 'template_download') AS "templateDownloads",
-          -- Applications sent (links created = submissions that landlord initiated)
+          -- Applications sent = outbound links created by this landlord
           (
-            SELECT COUNT(DISTINCT rs.id)
-            FROM rental_submissions rs
-            JOIN rental_application_links ral ON ral.id = rs.application_link_id
+            SELECT COUNT(DISTINCT ral.id)
+            FROM rental_application_links ral
             JOIN units un ON un.id = ral.unit_id
             JOIN properties pp ON pp.id = un.property_id
             WHERE pp.user_id = u.id
@@ -2925,7 +2933,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
               )
               AND subscription_status IN ('active', 'canceled')
           `);
-          const r = result.rows[0] as any;
+          interface MrrRow { annual_count: string; monthly_count: string; }
+          const r = result.rows[0] as MrrRow;
           const annualCount = Number(r.annual_count) || 0;
           const monthlyCount = Number(r.monthly_count) || 0;
           // Annual = $100/year → $8.33/month. Monthly = $10/month
@@ -3034,10 +3043,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             isCompleted: primaryApplicant.isCompleted,
             completedAt: primaryApplicant.completedAt,
             formData: extractFormData(primaryApplicant.formJson),
-            files: (primaryApplicant as any).files?.map((f: any) => ({
-              fileType: f.fileType,
-              availabilityStatus: f.availabilityStatus,
-            })) || [],
+            files: (Array.isArray((primaryApplicant as { files?: unknown[] }).files)
+              ? (primaryApplicant as { files: { fileType: string; availabilityStatus: string }[] }).files
+              : []
+            ).map(f => ({ fileType: f.fileType, availabilityStatus: f.availabilityStatus })),
           } : null,
           // Co-applicants and guarantors
           coApplicants: coApplicants.map(p => ({
@@ -3061,6 +3070,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: sub.screeningOrder.status,
             referenceNumber: sub.screeningOrder.referenceNumber,
             createdAt: sub.screeningOrder.createdAt,
+            updatedAt: sub.screeningOrder.updatedAt,
             reportUrl: sub.screeningOrder.reportUrl,
           } : null,
           // Decision with denial reasons
@@ -3068,10 +3078,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
             decision: sub.decision.decision,
             decidedAt: sub.decision.decidedAt,
             notes: sub.decision.notes,
-            denialReasons: (sub.decision as any).denialReasons?.map((r: any) => ({
-              category: r.category,
-              detail: r.detail,
-            })) || [],
+            denialReasons: (Array.isArray((sub.decision as { denialReasons?: unknown[] }).denialReasons)
+              ? (sub.decision as { denialReasons: { category: string; detail: string }[] }).denialReasons
+              : []
+            ).map(r => ({ category: r.category, detail: r.detail })),
           } : null,
           // Event timeline
           events: sub.events?.map(e => ({
