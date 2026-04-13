@@ -693,7 +693,7 @@ export default function AdminAnalyticsPage() {
               <div>
                 <CardTitle>Subscriber Funnel</CardTitle>
                 <CardDescription>
-                  Drop-off at each activation stage
+                  Drop-off at each activation stage for subscribed users (active &amp; trial)
                 </CardDescription>
               </div>
               <div className="flex items-center gap-2 flex-wrap" data-testid="funnel-date-filter">
@@ -752,7 +752,7 @@ export default function AdminAnalyticsPage() {
                 ? `Subscribers who joined on or after ${format(new Date(funnelDateParams.from), "MMM d, yyyy")}`
                 : funnelDateParams.to
                 ? `Subscribers who joined on or before ${format(new Date(funnelDateParams.to), "MMM d, yyyy")}`
-                : `All active subscribers · as of ${format(new Date(), "MMM d, yyyy")}`
+                : `All subscribed users (active & trial) · as of ${format(new Date(), "MMM d, yyyy")}`
               }
             </p>
           </CardHeader>

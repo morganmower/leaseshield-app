@@ -2800,7 +2800,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SELECT id FROM users WHERE is_admin IS NOT TRUE
         ),
         active_subs AS (
-          SELECT id FROM users WHERE subscription_status = 'active' AND is_admin IS NOT TRUE ${dateFilter}
+          SELECT id FROM users WHERE subscription_status IN ('active', 'trialing') AND is_admin IS NOT TRUE ${dateFilter}
         ),
         with_property AS (
           SELECT DISTINCT user_id AS id FROM rental_properties
@@ -2859,7 +2859,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         to: toDate ? toDate.toISOString() : null,
         stages: [
           { label: "All Users", count: Number(r.total_users) },
-          { label: "Active Subscribers", count: Number(r.active_subscribers) },
+          { label: "Subscribers (Active + Trial)", count: Number(r.active_subscribers) },
           { label: "Created a Property", count: Number(r.with_property) },
           { label: "Sent Application Link", count: Number(r.with_link) },
           { label: "Received Submission", count: Number(r.with_submission) },
