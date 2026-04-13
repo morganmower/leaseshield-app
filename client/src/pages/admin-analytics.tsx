@@ -113,7 +113,7 @@ export default function AdminAnalyticsPage() {
   const [selectedYear, setSelectedYear] = useState<number>(currentYear);
   const [selectedMonth, setSelectedMonth] = useState<number>(currentMonth);
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
-  const [userEngagementSort, setUserEngagementSort] = useState<"lastActive" | "downloads" | "applications">("lastActive");
+  const [userEngagementSort, setUserEngagementSort] = useState<"lastActive" | "downloads" | "applications" | "screenings">("lastActive");
 
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
@@ -661,13 +661,15 @@ export default function AdminAnalyticsPage() {
           </CardHeader>
           <CardContent>
             {funnelData?.stages && funnelData.stages.length > 0 ? (() => {
-              const maxCount = funnelData.stages[0]?.count || 1;
+              // Activation funnel starts at Active Subscribers; skip any pre-funnel "All Users" stage
+              const activationStages = funnelData.stages.filter(s => s.label !== "All Users");
+              const subscriberCount = activationStages[0]?.count || 1;
               return (
                 <div className="space-y-3" data-testid="funnel-stages">
-                  {funnelData.stages.map((stage, idx) => {
-                    const pct = Math.round((stage.count / maxCount) * 100);
+                  {activationStages.map((stage, idx) => {
+                    const pct = Math.round((stage.count / subscriberCount) * 100);
                     const dropPct = idx > 0
-                      ? Math.round(((funnelData.stages[idx - 1].count - stage.count) / (funnelData.stages[idx - 1].count || 1)) * 100)
+                      ? Math.round(((activationStages[idx - 1].count - stage.count) / (activationStages[idx - 1].count || 1)) * 100)
                       : 0;
                     return (
                       <div key={stage.label} data-testid={`funnel-stage-${idx}`}>
@@ -709,7 +711,15 @@ export default function AdminAnalyticsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-muted-foreground">Sort by:</span>
-                <Select value={userEngagementSort} onValueChange={(v) => setUserEngagementSort(v as any)}>
+                <Select
+                  value={userEngagementSort}
+                  onValueChange={(v) => {
+                    const valid = ["lastActive", "downloads", "applications", "screenings"] as const;
+                    if (valid.includes(v as typeof valid[number])) {
+                      setUserEngagementSort(v as typeof valid[number]);
+                    }
+                  }}
+                >
                   <SelectTrigger className="w-[160px]" data-testid="select-user-sort">
                     <SelectValue />
                   </SelectTrigger>
@@ -717,6 +727,7 @@ export default function AdminAnalyticsPage() {
                     <SelectItem value="lastActive">Last Active</SelectItem>
                     <SelectItem value="downloads">Downloads</SelectItem>
                     <SelectItem value="applications">Applications</SelectItem>
+                    <SelectItem value="screenings">Screenings</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -727,7 +738,8 @@ export default function AdminAnalyticsPage() {
               const sorted = [...userEngagement].sort((a, b) => {
                 if (userEngagementSort === "downloads") return Number(b.templateDownloads) - Number(a.templateDownloads);
                 if (userEngagementSort === "applications") return Number(b.applicationsSent) - Number(a.applicationsSent);
-                // lastActive
+                if (userEngagementSort === "screenings") return Number(b.screeningRequests) - Number(a.screeningRequests);
+                // lastActive (default)
                 if (!a.lastActiveAt && !b.lastActiveAt) return 0;
                 if (!a.lastActiveAt) return 1;
                 if (!b.lastActiveAt) return -1;
