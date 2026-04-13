@@ -2790,42 +2790,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
           SELECT id FROM users WHERE subscription_status = 'active' AND is_admin IS NOT TRUE
         ),
         with_property AS (
-          SELECT DISTINCT user_id AS id FROM properties
+          SELECT DISTINCT user_id AS id FROM rental_properties
           WHERE user_id IN (SELECT id FROM active_subs)
         ),
         with_link AS (
-          SELECT DISTINCT p.user_id AS id
+          SELECT DISTINCT rp.user_id AS id
           FROM rental_application_links ral
-          JOIN units u ON u.id = ral.unit_id
-          JOIN properties p ON p.id = u.property_id
-          WHERE p.user_id IN (SELECT id FROM active_subs)
+          JOIN rental_units ru ON ru.id = ral.unit_id
+          JOIN rental_properties rp ON rp.id = ru.property_id
+          WHERE rp.user_id IN (SELECT id FROM active_subs)
         ),
         with_submission AS (
-          SELECT DISTINCT p.user_id AS id
+          SELECT DISTINCT rp.user_id AS id
           FROM rental_submissions rs
           JOIN rental_application_links ral ON ral.id = rs.application_link_id
-          JOIN units u ON u.id = ral.unit_id
-          JOIN properties p ON p.id = u.property_id
-          WHERE p.user_id IN (SELECT id FROM active_subs)
+          JOIN rental_units ru ON ru.id = ral.unit_id
+          JOIN rental_properties rp ON rp.id = ru.property_id
+          WHERE rp.user_id IN (SELECT id FROM active_subs)
             AND rs.status IN ('submitted','screening_requested','in_progress','complete')
         ),
         with_screening AS (
-          SELECT DISTINCT p.user_id AS id
+          SELECT DISTINCT rp.user_id AS id
           FROM rental_screening_orders rso
           JOIN rental_submissions rs ON rs.id = rso.submission_id
           JOIN rental_application_links ral ON ral.id = rs.application_link_id
-          JOIN units u ON u.id = ral.unit_id
-          JOIN properties p ON p.id = u.property_id
-          WHERE p.user_id IN (SELECT id FROM active_subs)
+          JOIN rental_units ru ON ru.id = ral.unit_id
+          JOIN rental_properties rp ON rp.id = ru.property_id
+          WHERE rp.user_id IN (SELECT id FROM active_subs)
         ),
         with_decision AS (
-          SELECT DISTINCT p.user_id AS id
+          SELECT DISTINCT rp.user_id AS id
           FROM rental_decisions rd
           JOIN rental_submissions rs ON rs.id = rd.submission_id
           JOIN rental_application_links ral ON ral.id = rs.application_link_id
-          JOIN units u ON u.id = ral.unit_id
-          JOIN properties p ON p.id = u.property_id
-          WHERE p.user_id IN (SELECT id FROM active_subs)
+          JOIN rental_units ru ON ru.id = ral.unit_id
+          JOIN rental_properties rp ON rp.id = ru.property_id
+          WHERE rp.user_id IN (SELECT id FROM active_subs)
         )
         SELECT
           (SELECT COUNT(*) FROM base) AS total_users,
@@ -2878,9 +2878,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
           (
             SELECT COUNT(DISTINCT ral.id)
             FROM rental_application_links ral
-            JOIN units un ON un.id = ral.unit_id
-            JOIN properties pp ON pp.id = un.property_id
-            WHERE pp.user_id = u.id
+            JOIN rental_units ru ON ru.id = ral.unit_id
+            JOIN rental_properties rp ON rp.id = ru.property_id
+            WHERE rp.user_id = u.id
           ) AS "applicationsSent",
           -- Screening requests
           COUNT(ae.id) FILTER (WHERE ae.event_type IN ('screening_request', 'western_verify_click')) AS "screeningRequests"
@@ -2922,11 +2922,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
           const result = await db.execute(sql`
             SELECT
-              COUNT(*) FILTER (WHERE billing_interval = 'year') AS annual_count,
-              COUNT(*) FILTER (WHERE billing_interval = 'month' OR billing_interval IS NULL) AS monthly_count
+              COUNT(*) FILTER (WHERE billing_interval IN ('year', 'yearly')) AS annual_count,
+              COUNT(*) FILTER (WHERE billing_interval IN ('month', 'monthly') OR billing_interval IS NULL) AS monthly_count
             FROM users
             WHERE is_admin IS NOT TRUE
-              AND subscribed_at <= ${end.toISOString()}
+              AND COALESCE(subscribed_at, created_at) <= ${end.toISOString()}
               AND (
                 subscription_expires_at IS NULL
                 OR subscription_expires_at >= ${start.toISOString()}
