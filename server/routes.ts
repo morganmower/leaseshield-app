@@ -2780,14 +2780,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Admin: Subscriber funnel drop-off
-  app.get('/api/admin/analytics/funnel', isAuthenticated, requireAdmin, async (_req, res) => {
+  app.get('/api/admin/analytics/funnel', isAuthenticated, requireAdmin, async (req, res) => {
     try {
+      const { from, to } = req.query as { from?: string; to?: string };
+      const fromDate = from ? new Date(from) : null;
+      const toDate = to ? new Date(to) : null;
+
+      // Build the active_subs filter fragment
+      const dateFilter = fromDate && toDate
+        ? sql`AND COALESCE(subscribed_at, created_at) >= ${fromDate.toISOString()} AND COALESCE(subscribed_at, created_at) <= ${toDate.toISOString()}`
+        : fromDate
+        ? sql`AND COALESCE(subscribed_at, created_at) >= ${fromDate.toISOString()}`
+        : toDate
+        ? sql`AND COALESCE(subscribed_at, created_at) <= ${toDate.toISOString()}`
+        : sql``;
+
       const rows = await db.execute(sql`
         WITH base AS (
           SELECT id FROM users WHERE is_admin IS NOT TRUE
         ),
         active_subs AS (
-          SELECT id FROM users WHERE subscription_status = 'active' AND is_admin IS NOT TRUE
+          SELECT id FROM users WHERE subscription_status = 'active' AND is_admin IS NOT TRUE ${dateFilter}
         ),
         with_property AS (
           SELECT DISTINCT user_id AS id FROM rental_properties
@@ -2842,6 +2855,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       const r = rows.rows[0] as FunnelRow;
       res.json({
+        from: fromDate ? fromDate.toISOString() : null,
+        to: toDate ? toDate.toISOString() : null,
         stages: [
           { label: "All Users", count: Number(r.total_users) },
           { label: "Active Subscribers", count: Number(r.active_subscribers) },

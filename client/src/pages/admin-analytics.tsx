@@ -1,10 +1,12 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { DollarSign, Users, TrendingUp, Download, MousePointerClick, FileText, ChevronRight, Calendar } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, Legend, LineChart, Line } from "recharts";
 import { Badge } from "@/components/ui/badge";
-import { format } from "date-fns";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { format, subDays, subMonths, startOfYear } from "date-fns";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -91,6 +93,14 @@ interface FunnelStage {
   count: number;
 }
 
+interface FunnelResponse {
+  stages: FunnelStage[];
+  from: string | null;
+  to: string | null;
+}
+
+type FunnelPreset = "all" | "30d" | "90d" | "12m" | "ytd" | "custom";
+
 interface UserEngagementRow {
   id: string;
   email: string | null;
@@ -115,6 +125,27 @@ export default function AdminAnalyticsPage() {
   const [viewMode, setViewMode] = useState<"monthly" | "yearly">("monthly");
   const [userEngagementSort, setUserEngagementSort] = useState<"lastActive" | "downloads" | "applications" | "screenings">("lastActive");
 
+  // Funnel date filter
+  const [funnelPreset, setFunnelPreset] = useState<FunnelPreset>("all");
+  const [funnelCustomFrom, setFunnelCustomFrom] = useState<string>("");
+  const [funnelCustomTo, setFunnelCustomTo] = useState<string>("");
+
+  const funnelDateParams = useMemo(() => {
+    const today = new Date();
+    const toISO = (d: Date) => d.toISOString().slice(0, 10);
+    switch (funnelPreset) {
+      case "30d":  return { from: toISO(subDays(today, 30)), to: toISO(today) };
+      case "90d":  return { from: toISO(subDays(today, 90)), to: toISO(today) };
+      case "12m":  return { from: toISO(subMonths(today, 12)), to: toISO(today) };
+      case "ytd":  return { from: toISO(startOfYear(today)), to: toISO(today) };
+      case "custom": return {
+        from: funnelCustomFrom || null,
+        to: funnelCustomTo || null,
+      };
+      default: return { from: null, to: null };
+    }
+  }, [funnelPreset, funnelCustomFrom, funnelCustomTo]);
+
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
   });
@@ -131,10 +162,14 @@ export default function AdminAnalyticsPage() {
     },
   });
 
-  const { data: funnelData } = useQuery<{ stages: FunnelStage[] }>({
-    queryKey: ["/api/admin/analytics/funnel"],
+  const { data: funnelData } = useQuery<FunnelResponse>({
+    queryKey: ["/api/admin/analytics/funnel", funnelDateParams],
     queryFn: async () => {
-      const res = await apiRequest("GET", "/api/admin/analytics/funnel");
+      const params = new URLSearchParams();
+      if (funnelDateParams.from) params.set("from", funnelDateParams.from);
+      if (funnelDateParams.to) params.set("to", funnelDateParams.to);
+      const qs = params.toString();
+      const res = await apiRequest("GET", `/api/admin/analytics/funnel${qs ? `?${qs}` : ""}`);
       return res.json();
     },
   });
@@ -654,10 +689,72 @@ export default function AdminAnalyticsPage() {
         {/* Subscriber Funnel */}
         <Card>
           <CardHeader>
-            <CardTitle>Subscriber Funnel</CardTitle>
-            <CardDescription>
-              Drop-off at each activation stage for current active subscribers
-            </CardDescription>
+            <div className="flex flex-row items-start justify-between gap-3 flex-wrap">
+              <div>
+                <CardTitle>Subscriber Funnel</CardTitle>
+                <CardDescription>
+                  Drop-off at each activation stage
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2 flex-wrap" data-testid="funnel-date-filter">
+                <Select
+                  value={funnelPreset}
+                  onValueChange={(v) => setFunnelPreset(v as FunnelPreset)}
+                >
+                  <SelectTrigger className="w-40" data-testid="select-funnel-preset">
+                    <SelectValue placeholder="Date range" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All time</SelectItem>
+                    <SelectItem value="30d">Last 30 days</SelectItem>
+                    <SelectItem value="90d">Last 90 days</SelectItem>
+                    <SelectItem value="12m">Last 12 months</SelectItem>
+                    <SelectItem value="ytd">Year to date</SelectItem>
+                    <SelectItem value="custom">Custom range</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            {funnelPreset === "custom" && (
+              <div className="flex items-center gap-2 flex-wrap pt-2" data-testid="funnel-custom-dates">
+                <Input
+                  type="date"
+                  value={funnelCustomFrom}
+                  onChange={(e) => setFunnelCustomFrom(e.target.value)}
+                  className="w-40"
+                  data-testid="input-funnel-from"
+                />
+                <span className="text-muted-foreground text-sm">to</span>
+                <Input
+                  type="date"
+                  value={funnelCustomTo}
+                  onChange={(e) => setFunnelCustomTo(e.target.value)}
+                  className="w-40"
+                  data-testid="input-funnel-to"
+                />
+                {(funnelCustomFrom || funnelCustomTo) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => { setFunnelCustomFrom(""); setFunnelCustomTo(""); }}
+                    data-testid="button-funnel-clear-custom"
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            )}
+            {/* Date context label */}
+            <p className="text-xs text-muted-foreground pt-1" data-testid="funnel-date-label">
+              {funnelDateParams.from && funnelDateParams.to
+                ? `Subscribers who joined ${format(new Date(funnelDateParams.from), "MMM d, yyyy")} – ${format(new Date(funnelDateParams.to), "MMM d, yyyy")}`
+                : funnelDateParams.from
+                ? `Subscribers who joined on or after ${format(new Date(funnelDateParams.from), "MMM d, yyyy")}`
+                : funnelDateParams.to
+                ? `Subscribers who joined on or before ${format(new Date(funnelDateParams.to), "MMM d, yyyy")}`
+                : `All active subscribers · as of ${format(new Date(), "MMM d, yyyy")}`
+              }
+            </p>
           </CardHeader>
           <CardContent>
             {funnelData?.stages && funnelData.stages.length > 0 ? (() => {
