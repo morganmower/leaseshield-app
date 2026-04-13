@@ -117,6 +117,8 @@ interface UserEngagementRow {
   screeningRequests: number | string;
 }
 
+const ANALYTICS_STALE = 5 * 60 * 1000; // 5 minutes — analytics data is not real-time
+
 export default function AdminAnalyticsPage() {
   const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
   const [eventTypeFilter, setEventTypeFilter] = useState<string>("all");
@@ -150,10 +152,12 @@ export default function AdminAnalyticsPage() {
 
   const { data: analytics, isLoading } = useQuery<AnalyticsSummary>({
     queryKey: ["/api/admin/analytics"],
+    staleTime: ANALYTICS_STALE,
   });
 
   const { data: users, isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+    staleTime: ANALYTICS_STALE,
   });
 
   const { data: mrrHistory } = useQuery<MrrHistoryEntry[]>({
@@ -162,6 +166,7 @@ export default function AdminAnalyticsPage() {
       const res = await apiRequest("GET", "/api/admin/analytics/mrr-history");
       return res.json();
     },
+    staleTime: ANALYTICS_STALE,
   });
 
   const { data: funnelData } = useQuery<FunnelResponse>({
@@ -174,6 +179,7 @@ export default function AdminAnalyticsPage() {
       const res = await apiRequest("GET", `/api/admin/analytics/funnel${qs ? `?${qs}` : ""}`);
       return res.json();
     },
+    staleTime: ANALYTICS_STALE,
   });
 
   const { data: userEngagement } = useQuery<UserEngagementRow[]>({
@@ -182,6 +188,7 @@ export default function AdminAnalyticsPage() {
       const res = await apiRequest("GET", "/api/admin/analytics/users");
       return res.json();
     },
+    staleTime: ANALYTICS_STALE,
   });
 
   // Fetch monthly summary for selected year

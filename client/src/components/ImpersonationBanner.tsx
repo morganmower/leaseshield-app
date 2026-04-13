@@ -20,7 +20,7 @@ export function ImpersonationBanner() {
   
   const { data: status } = useQuery<ImpersonationStatus>({
     queryKey: ['/api/admin/impersonation-status'],
-    refetchInterval: 10000,
+    refetchInterval: 60000,
     enabled: !!user?.isAdmin,
   });
 
