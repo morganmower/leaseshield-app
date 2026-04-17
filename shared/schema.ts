@@ -2,6 +2,7 @@ import { sql } from 'drizzle-orm';
 import { relations } from 'drizzle-orm';
 import {
   index,
+  uniqueIndex,
   jsonb,
   pgTable,
   timestamp,
@@ -244,6 +245,10 @@ export const legalUpdates = pgTable("legal_updates", {
   index("idx_legal_updates_state_id").on(table.stateId),
   index("idx_legal_updates_created_at").on(table.createdAt),
   index("idx_legal_updates_is_active").on(table.isActive),
+  // Prevent duplicate rows for the same state + title. The ingest path
+  // upserts on this key, so the same federal/state notice can't be
+  // re-published multiple times.
+  uniqueIndex("legal_updates_state_title_unique").on(table.stateId, table.title),
 ]);
 
 export const legalUpdatesRelations = relations(legalUpdates, ({ one }) => ({

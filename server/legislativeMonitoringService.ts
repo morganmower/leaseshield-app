@@ -1320,10 +1320,15 @@ Respond in this exact JSON format:
       // Pause between AI calls to avoid hitting rate limits
       await new Promise(resolve => setTimeout(resolve, 3000));
       
-      // Create legal update for landlords to see (WITH before/after text)
+      // Upsert legal update for landlords to see (WITH before/after text).
+      // Conflict target = (state_id, title): the same notice/bill ingested
+      // again on a later run replaces the row instead of duplicating it.
+      // Trim title so leading/trailing whitespace can't bypass the index.
+      const normalizedTitle = (item.title ?? '').trim();
+      if (!normalizedTitle) continue; // skip items with no title — index needs it
       await db.insert(legalUpdates).values({
         stateId,
-        title: item.title,
+        title: normalizedTitle,
         summary: item.summary || item.title,
         beforeText: analysis.beforeText,
         afterText: analysis.afterText,
@@ -1334,6 +1339,21 @@ Respond in this exact JSON format:
         affectedTemplateIds: item.affectedTemplateIds || [],
         isActive: true,
         effectiveDate: analysis.effectiveDate || item.effectiveDate,
+      }).onConflictDoUpdate({
+        target: [legalUpdates.stateId, legalUpdates.title],
+        set: {
+          summary: item.summary || normalizedTitle,
+          beforeText: analysis.beforeText,
+          afterText: analysis.afterText,
+          whyItMatters: analysis.whyItMatters || item.aiAnalysis || 'This legislative update may affect your rental properties.',
+          impactLevel: item.severity || 'medium',
+          category,
+          sourceBillId: item.id,
+          affectedTemplateIds: item.affectedTemplateIds || [],
+          isActive: true,
+          effectiveDate: analysis.effectiveDate || item.effectiveDate,
+          updatedAt: new Date(),
+        },
       });
       
       publishedCount++;

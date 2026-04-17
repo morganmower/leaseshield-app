@@ -835,7 +835,22 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createLegalUpdate(updateData: InsertLegalUpdate): Promise<LegalUpdate> {
-    const [update] = await db.insert(legalUpdates).values(updateData).returning();
+    // Normalize title (trim) so case-insensitive whitespace variants don't
+    // bypass the (state_id, title) unique index. Upsert so admin re-submits
+    // and seed re-runs replace the row instead of throwing a 23505 conflict.
+    const normalized = {
+      ...updateData,
+      title: (updateData.title ?? '').trim(),
+    };
+    const { stateId, title, ...rest } = normalized;
+    const [update] = await db
+      .insert(legalUpdates)
+      .values(normalized)
+      .onConflictDoUpdate({
+        target: [legalUpdates.stateId, legalUpdates.title],
+        set: { ...rest, updatedAt: new Date() },
+      })
+      .returning();
     return update;
   }
 

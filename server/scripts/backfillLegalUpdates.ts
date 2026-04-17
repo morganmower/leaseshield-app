@@ -160,10 +160,15 @@ async function backfillLegalUpdates() {
       category
     );
 
+    const normalizedTitle = (item.title ?? '').trim();
+    if (!normalizedTitle) {
+      console.log(' (skipped: empty title)');
+      continue;
+    }
     await db.insert(legalUpdates).values({
       stateId,
-      title: item.title,
-      summary: item.summary || item.title,
+      title: normalizedTitle,
+      summary: item.summary || normalizedTitle,
       beforeText: enrichment.beforeText,
       afterText: enrichment.afterText,
       whyItMatters: enrichment.whyItMatters || item.aiAnalysis || 'This legislative update may affect your rental properties.',
@@ -173,6 +178,21 @@ async function backfillLegalUpdates() {
       affectedTemplateIds: item.affectedTemplateIds || [],
       isActive: true,
       effectiveDate: enrichment.effectiveDate || item.effectiveDate,
+    }).onConflictDoUpdate({
+      target: [legalUpdates.stateId, legalUpdates.title],
+      set: {
+        summary: item.summary || item.title,
+        beforeText: enrichment.beforeText,
+        afterText: enrichment.afterText,
+        whyItMatters: enrichment.whyItMatters || item.aiAnalysis || 'This legislative update may affect your rental properties.',
+        impactLevel: item.severity || 'medium',
+        category,
+        sourceBillId: item.id,
+        affectedTemplateIds: item.affectedTemplateIds || [],
+        isActive: true,
+        effectiveDate: enrichment.effectiveDate || item.effectiveDate,
+        updatedAt: new Date(),
+      },
     });
 
     console.log(' ✓');
