@@ -13,6 +13,7 @@ import {
   TopicTag 
 } from "../types";
 import { registerAdapter } from "../registry";
+import { fetchWithRetry } from "../httpUtil";
 
 interface FederalRegisterDocument {
   document_number: string;
@@ -210,7 +211,7 @@ class FederalRegisterAdapter implements LegislationSourceAdapter {
 
       const url = `${this.baseUrl}/documents.json?${searchParams.toString()}`;
       
-      const response = await fetch(url, {
+      const response = await fetchWithRetry(url, {
         headers: {
           'Accept': 'application/json',
           ...(this.apiKey && { 'X-Api-Key': this.apiKey }),

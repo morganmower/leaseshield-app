@@ -14,6 +14,7 @@ import {
   TopicTag 
 } from "../types";
 import { registerAdapter } from "../registry";
+import { fetchWithRetry } from "../httpUtil";
 
 interface EcfrVersionChange {
   date: string;
@@ -123,7 +124,7 @@ class EcfrAdapter implements LegislationSourceAdapter {
           `on_or_after=${fromDate.toISOString().split('T')[0]}&` +
           `on_or_before=${toDate.toISOString().split('T')[0]}`;
         
-        const response = await fetch(url, {
+        const response = await fetchWithRetry(url, {
           headers: { 'Accept': 'application/json' },
         });
 
