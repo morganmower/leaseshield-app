@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { RecurringPaymentsPanel } from "@/components/recurring-payments-panel";
 
 export default function RentLedger() {
   const { user } = useAuth();
@@ -292,13 +293,18 @@ export default function RentLedger() {
         <TabsList className="grid w-full max-w-3xl grid-cols-4">
           <TabsTrigger value="online" data-testid="tab-online-payments">Requests</TabsTrigger>
           <TabsTrigger value="track" data-testid="tab-track-entries">History</TabsTrigger>
-          <TabsTrigger value="recurring" data-testid="tab-recurring" disabled>Recurring (soon)</TabsTrigger>
+          <TabsTrigger value="recurring" data-testid="tab-recurring">Recurring</TabsTrigger>
           <TabsTrigger value="export" data-testid="tab-export-report">Export</TabsTrigger>
         </TabsList>
 
         {/* Online Payments (Stripe Connect ACH) */}
         <TabsContent value="online">
           <OnlinePaymentsPanel properties={properties} />
+        </TabsContent>
+
+        {/* Recurring auto-pay (Plan B) */}
+        <TabsContent value="recurring">
+          <RecurringPaymentsPanel properties={properties} />
         </TabsContent>
 
         {/* Export Report */}

@@ -2941,12 +2941,18 @@ export const rentPaymentRequests = pgTable("rent_payment_requests", {
   reminderDaysBefore: integer("reminder_days_before").default(5).notNull(),
   reminderSentAt: timestamp("reminder_sent_at"),
   // Status
-  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending | reminded | processing | paid | overdue | canceled
+  // Enum: pending | reminded | processing | paid | overdue | canceled
+  //       | auto_scheduled | failed   (last two added for recurring auto-bill)
+  status: varchar("status", { length: 32 }).notNull().default("pending"),
   paidAt: timestamp("paid_at"),
   // Stripe references
   stripeCheckoutSessionId: varchar("stripe_checkout_session_id"),
   stripePaymentIntentId: varchar("stripe_payment_intent_id"),
   ledgerEntryId: varchar("ledger_entry_id"),
+  // Recurring auto-bill linkage. NULL for legacy/one-time requests.
+  // No FK at the DB level (application-layer reference only) to keep the
+  // additive migration zero-risk.
+  rentSubscriptionId: varchar("rent_subscription_id"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 }, (table) => [
@@ -2954,7 +2960,104 @@ export const rentPaymentRequests = pgTable("rent_payment_requests", {
   index("idx_rent_payment_status").on(table.status),
   index("idx_rent_payment_due_date").on(table.dueDate),
   index("idx_rent_payment_token").on(table.publicToken),
+  index("idx_rent_payment_subscription").on(table.rentSubscriptionId),
 ]);
+
+// =====================================================================
+// Rent Subscriptions - Recurring auto-bill ACH (Plan B from architecture report)
+// SetupIntent + saved us_bank_account PaymentMethod on the platform side +
+// cron-driven PaymentIntents using transfer_data.destination = landlord acct.
+// =====================================================================
+export const rentSubscriptions = pgTable("rent_subscriptions", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rentalPropertyId: varchar("rental_property_id").references(() => rentalProperties.id, { onDelete: 'set null' }),
+  tenantName: text("tenant_name").notNull(),
+  tenantEmail: varchar("tenant_email").notNull(),
+  // Schedule
+  amount: integer("amount").notNull(), // monthly rent in cents
+  dayOfMonth: integer("day_of_month").notNull().default(1), // 1-28 (skip 29-31 for safety)
+  startDate: date("start_date").notNull(),
+  endDate: date("end_date"), // optional lease end
+  nextScheduledDate: date("next_scheduled_date"), // null until activated
+  // Late fee config (mirror of rent_payment_requests so each generated debit inherits)
+  lateFeeAmount: integer("late_fee_amount").default(0).notNull(),
+  gracePeriodDays: integer("grace_period_days").default(5).notNull(),
+  // Tenant authorization link
+  publicToken: varchar("public_token", { length: 64 }).notNull().unique(),
+  // Status: pending_authorization | active | paused | revoked_by_tenant | failed | canceled | completed
+  status: varchar("status", { length: 32 }).notNull().default("pending_authorization"),
+  // Stripe references (platform-side, since this is Option B)
+  stripeCustomerId: varchar("stripe_customer_id"),
+  stripeSetupIntentId: varchar("stripe_setup_intent_id"),
+  stripeSetupCheckoutSessionId: varchar("stripe_setup_checkout_session_id"),
+  stripePaymentMethodId: varchar("stripe_payment_method_id"),
+  stripeMandateId: varchar("stripe_mandate_id"),
+  // NACHA mandate audit trail (we snapshot the disclosure text at acceptance time
+  // so prior mandates remain governed by the wording shown when accepted).
+  mandateAcceptedAt: timestamp("mandate_accepted_at"),
+  mandateAcceptedIp: varchar("mandate_accepted_ip", { length: 64 }),
+  mandateAcceptedUserAgent: text("mandate_accepted_user_agent"),
+  mandateAuthorizationText: text("mandate_authorization_text"),
+  // Bank hint for tenant UI ("Chase ••8765")
+  bankAccountLast4: varchar("bank_account_last4", { length: 8 }),
+  bankAccountBankName: text("bank_account_bank_name"),
+  // Lifecycle
+  activatedAt: timestamp("activated_at"),
+  revokedAt: timestamp("revoked_at"),
+  revokedReason: text("revoked_reason"),
+  lastDebitAttemptAt: timestamp("last_debit_attempt_at"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_rent_sub_user").on(table.userId),
+  index("idx_rent_sub_status").on(table.status),
+  index("idx_rent_sub_next_date").on(table.nextScheduledDate),
+  index("idx_rent_sub_token").on(table.publicToken),
+  // Guarantee one active subscription per (property, tenant) — prevents accidental
+  // double mandates if a landlord re-sends the auth link to the same tenant.
+  uniqueIndex("rent_sub_one_active_per_lease")
+    .on(table.rentalPropertyId, table.tenantEmail)
+    .where(sql`status = 'active'`),
+]);
+
+export const rentSubscriptionsRelations = relations(rentSubscriptions, ({ one }) => ({
+  user: one(users, {
+    fields: [rentSubscriptions.userId],
+    references: [users.id],
+  }),
+  property: one(rentalProperties, {
+    fields: [rentSubscriptions.rentalPropertyId],
+    references: [rentalProperties.id],
+  }),
+}));
+
+export const insertRentSubscriptionSchema = createInsertSchema(rentSubscriptions).omit({
+  id: true,
+  publicToken: true,
+  status: true,
+  stripeCustomerId: true,
+  stripeSetupIntentId: true,
+  stripeSetupCheckoutSessionId: true,
+  stripePaymentMethodId: true,
+  stripeMandateId: true,
+  mandateAcceptedAt: true,
+  mandateAcceptedIp: true,
+  mandateAcceptedUserAgent: true,
+  mandateAuthorizationText: true,
+  bankAccountLast4: true,
+  bankAccountBankName: true,
+  activatedAt: true,
+  revokedAt: true,
+  revokedReason: true,
+  lastDebitAttemptAt: true,
+  nextScheduledDate: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentSubscription = z.infer<typeof insertRentSubscriptionSchema>;
+export type RentSubscription = typeof rentSubscriptions.$inferSelect;
 
 export const rentPaymentRequestsRelations = relations(rentPaymentRequests, ({ one }) => ({
   user: one(users, {

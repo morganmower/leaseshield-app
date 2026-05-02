@@ -135,6 +135,7 @@ export class ScheduledJobs {
   private caseLawRefreshInterval: NodeJS.Timeout | null = null;
   private rentRemindersInterval: NodeJS.Timeout | null = null;
   private rentLateFeesInterval: NodeJS.Timeout | null = null;
+  private rentRecurringDebitsInterval: NodeJS.Timeout | null = null;
 
   // =========================================================================
   // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
@@ -1552,6 +1553,14 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.processRentLateFees(), 14 * 60 * 1000);
 
+    // Recurring auto-pay debits (Plan B). Runs nightly; processes any active
+    // subscription whose next_scheduled_date <= today.
+    this.rentRecurringDebitsInterval = setInterval(
+      () => this.processRecurringRentDebits(),
+      24 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.processRecurringRentDebits(), 15 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1644,7 +1653,162 @@ Manage preferences: ${baseUrl}/settings
       this.rentLateFeesInterval = null;
     }
 
+    if (this.rentRecurringDebitsInterval) {
+      clearInterval(this.rentRecurringDebitsInterval);
+      this.rentRecurringDebitsInterval = null;
+    }
+
     console.log('✅ Scheduled jobs stopped');
+  }
+
+  // =====================================================================
+  // Recurring auto-pay debits (Plan B from architecture report)
+  // For each active rent subscription whose nextScheduledDate <= today:
+  //   1. Create a rent_payment_requests row (status 'auto_scheduled')
+  //   2. Create an off-session PaymentIntent (transfer_data.destination = landlord)
+  //   3. Advance nextScheduledDate by one calendar month
+  //   4. If past endDate, mark subscription completed
+  // We anchor the schedule to the calendar — webhook events handle settle/fail.
+  // =====================================================================
+  async processRecurringRentDebits(): Promise<void> {
+    try {
+      const { storage } = await import('./storage');
+      const { rentPaymentRequests } = await import('@shared/schema');
+      const { db } = await import('./db');
+      const { and, eq } = await import('drizzle-orm');
+      const Stripe = (await import('stripe')).default;
+      const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2024-06-20' as any });
+
+      const due = await storage.getRentSubscriptionsDueForDebit();
+      if (due.length === 0) return;
+      console.log(`🔁 Processing ${due.length} recurring rent debit(s)`);
+
+      const addOneMonth = (dateStr: string, dom: number): string => {
+        const [y, m] = dateStr.split('-').map(Number);
+        const nm = m === 12 ? 1 : m + 1;
+        const ny = m === 12 ? y + 1 : y;
+        const d = String(Math.min(28, Math.max(1, dom))).padStart(2, '0');
+        return `${ny}-${String(nm).padStart(2, '0')}-${d}`;
+      };
+      const generateToken = (): string => {
+        const { randomBytes } = require('crypto');
+        return randomBytes(32).toString('hex');
+      };
+
+      for (const sub of due) {
+        try {
+          // Past lease end?
+          if (sub.endDate && sub.nextScheduledDate && sub.nextScheduledDate > sub.endDate) {
+            await storage.updateRentSubscription(sub.id, {
+              status: 'completed',
+              nextScheduledDate: null,
+            });
+            console.log(`✓ Subscription ${sub.id} completed (past endDate)`);
+            continue;
+          }
+
+          if (!sub.stripePaymentMethodId || !sub.stripeCustomerId) {
+            console.warn(`Skipping sub ${sub.id} — missing PM or customer`);
+            continue;
+          }
+
+          // Validate landlord still has Connect enabled
+          const landlord = await storage.getUser(sub.userId);
+          if (!landlord?.stripeConnectChargesEnabled || !landlord.stripeConnectAccountId) {
+            console.warn(`Skipping sub ${sub.id} — landlord ${sub.userId} Connect inactive`);
+            continue;
+          }
+
+          const dueDate = sub.nextScheduledDate!;
+
+          // Dedupe: did we already create a debit row for this sub+date?
+          const existing = await db
+            .select({ id: rentPaymentRequests.id })
+            .from(rentPaymentRequests)
+            .where(and(
+              eq(rentPaymentRequests.rentSubscriptionId, sub.id),
+              eq(rentPaymentRequests.dueDate, dueDate),
+            ))
+            .limit(1);
+          if (existing.length > 0) {
+            console.log(`Sub ${sub.id} already has a debit row for ${dueDate}, advancing date`);
+            await storage.updateRentSubscription(sub.id, {
+              nextScheduledDate: addOneMonth(dueDate, sub.dayOfMonth),
+            });
+            continue;
+          }
+
+          // 1. Create the rent payment request row
+          const tenantToken = generateToken();
+          const paymentRequest = await storage.createRentPaymentRequest({
+            userId: sub.userId,
+            rentalPropertyId: sub.rentalPropertyId,
+            tenantName: sub.tenantName,
+            tenantEmail: sub.tenantEmail,
+            amount: sub.amount,
+            dueDate,
+            description: sub.description || `Recurring rent - ${dueDate}`,
+            lateFeeAmount: sub.lateFeeAmount,
+            gracePeriodDays: sub.gracePeriodDays,
+            publicToken: tenantToken,
+            status: 'auto_scheduled',
+            rentSubscriptionId: sub.id,
+          } as any);
+
+          // 2. Create off-session PaymentIntent
+          let pi: Stripe.PaymentIntent | null = null;
+          try {
+            pi = await stripe.paymentIntents.create({
+              amount: sub.amount,
+              currency: 'usd',
+              customer: sub.stripeCustomerId,
+              payment_method: sub.stripePaymentMethodId,
+              payment_method_types: ['us_bank_account'],
+              confirm: true,
+              off_session: true,
+              transfer_data: {
+                destination: landlord.stripeConnectAccountId,
+              },
+              description: `Rent ${dueDate} - ${sub.tenantName}`,
+              metadata: {
+                leaseshield_kind: 'rent_payment_recurring',
+                rent_payment_request_id: paymentRequest.id,
+                rent_subscription_id: sub.id,
+                landlord_user_id: sub.userId,
+                due_date: dueDate,
+              },
+              ...(sub.stripeMandateId ? { mandate: sub.stripeMandateId } : {}),
+            });
+
+            await storage.updateRentPaymentRequest(paymentRequest.id, {
+              stripePaymentIntentId: pi.id,
+              status: 'processing',
+            });
+            console.log(`✓ Recurring debit PI ${pi.id} created for sub ${sub.id} (${dueDate})`);
+          } catch (piErr: any) {
+            console.error(`Recurring debit PI failed for sub ${sub.id}:`, piErr?.message);
+            await storage.updateRentPaymentRequest(paymentRequest.id, { status: 'failed' });
+            // Mark sub failed if Stripe says auth is required (mandate revoked)
+            if (piErr?.code === 'authentication_required' || piErr?.code === 'payment_method_unactivated') {
+              await storage.updateRentSubscription(sub.id, {
+                status: 'failed',
+                revokedReason: `Stripe error: ${piErr.code} — ${piErr.message}`,
+              });
+            }
+          }
+
+          // 3. Advance nextScheduledDate
+          await storage.updateRentSubscription(sub.id, {
+            lastDebitAttemptAt: new Date(),
+            nextScheduledDate: addOneMonth(dueDate, sub.dayOfMonth),
+          });
+        } catch (subErr: any) {
+          console.error(`Error processing recurring sub ${sub.id}:`, subErr?.message);
+        }
+      }
+    } catch (err: any) {
+      console.error('processRecurringRentDebits failed:', err?.message);
+    }
   }
 }
 

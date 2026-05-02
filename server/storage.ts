@@ -20,6 +20,7 @@ import {
   communicationTemplates,
   rentLedgerEntries,
   rentPaymentRequests,
+  rentSubscriptions,
   emailSequences,
   emailSequenceSteps,
   emailSequenceEnrollments,
@@ -66,6 +67,8 @@ import {
   type InsertRentLedgerEntry,
   type RentPaymentRequest,
   type InsertRentPaymentRequest,
+  type RentSubscription,
+  type InsertRentSubscription,
   type TrainingInterest,
   type InsertTrainingInterest,
   type EmailSequence,
@@ -404,6 +407,19 @@ export interface IStorage {
   deleteRentPaymentRequest(id: string, userId: string): Promise<boolean>;
   getRentPaymentRequestsDueForReminder(): Promise<RentPaymentRequest[]>;
   getRentPaymentRequestsDueForLateFee(): Promise<RentPaymentRequest[]>;
+
+  // Rent Subscriptions (recurring auto-bill ACH)
+  getRentSubscriptions(userId: string): Promise<RentSubscription[]>;
+  getRentSubscription(id: string, userId: string): Promise<RentSubscription | undefined>;
+  getRentSubscriptionById(id: string): Promise<RentSubscription | undefined>;
+  getRentSubscriptionByToken(token: string): Promise<RentSubscription | undefined>;
+  getRentSubscriptionByCheckoutSessionId(sessionId: string): Promise<RentSubscription | undefined>;
+  getRentSubscriptionByPaymentMethodId(pmId: string): Promise<RentSubscription | undefined>;
+  getRentSubscriptionByMandateId(mandateId: string): Promise<RentSubscription | undefined>;
+  createRentSubscription(data: typeof rentSubscriptions.$inferInsert): Promise<RentSubscription>;
+  updateRentSubscription(id: string, data: Partial<RentSubscription>): Promise<RentSubscription | null>;
+  deleteRentSubscription(id: string, userId: string): Promise<boolean>;
+  getRentSubscriptionsDueForDebit(): Promise<RentSubscription[]>;
 
   // Training interest operations
   getTrainingInterest(userId: string): Promise<TrainingInterest | undefined>;
@@ -2116,6 +2132,94 @@ export class DatabaseStorage implements IStorage {
           sql`${rentPaymentRequests.dueDate}::date >= CURRENT_DATE`,
         ),
       );
+  }
+
+  // ===== Rent Subscriptions (recurring auto-bill) =====
+  async getRentSubscriptions(userId: string): Promise<RentSubscription[]> {
+    return await db
+      .select()
+      .from(rentSubscriptions)
+      .where(eq(rentSubscriptions.userId, userId))
+      .orderBy(desc(rentSubscriptions.createdAt));
+  }
+
+  async getRentSubscription(id: string, userId: string): Promise<RentSubscription | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentSubscriptions)
+      .where(and(eq(rentSubscriptions.id, id), eq(rentSubscriptions.userId, userId)));
+    return r;
+  }
+
+  async getRentSubscriptionById(id: string): Promise<RentSubscription | undefined> {
+    const [r] = await db.select().from(rentSubscriptions).where(eq(rentSubscriptions.id, id));
+    return r;
+  }
+
+  async getRentSubscriptionByToken(token: string): Promise<RentSubscription | undefined> {
+    const [r] = await db.select().from(rentSubscriptions).where(eq(rentSubscriptions.publicToken, token));
+    return r;
+  }
+
+  async getRentSubscriptionByCheckoutSessionId(sessionId: string): Promise<RentSubscription | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentSubscriptions)
+      .where(eq(rentSubscriptions.stripeSetupCheckoutSessionId, sessionId));
+    return r;
+  }
+
+  async getRentSubscriptionByPaymentMethodId(pmId: string): Promise<RentSubscription | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentSubscriptions)
+      .where(eq(rentSubscriptions.stripePaymentMethodId, pmId));
+    return r;
+  }
+
+  async getRentSubscriptionByMandateId(mandateId: string): Promise<RentSubscription | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentSubscriptions)
+      .where(eq(rentSubscriptions.stripeMandateId, mandateId));
+    return r;
+  }
+
+  async createRentSubscription(data: typeof rentSubscriptions.$inferInsert): Promise<RentSubscription> {
+    const [r] = await db.insert(rentSubscriptions).values(data).returning();
+    return r;
+  }
+
+  async updateRentSubscription(id: string, data: Partial<RentSubscription>): Promise<RentSubscription | null> {
+    const [r] = await db
+      .update(rentSubscriptions)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(rentSubscriptions.id, id))
+      .returning();
+    return r || null;
+  }
+
+  async deleteRentSubscription(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(rentSubscriptions)
+      .where(and(eq(rentSubscriptions.id, id), eq(rentSubscriptions.userId, userId)))
+      .returning({ id: rentSubscriptions.id });
+    return result.length > 0;
+  }
+
+  // Find active subs whose next scheduled date is today or earlier — to be debited
+  // by the cron. Excludes subs that have already had a debit row created for the
+  // current scheduled date (the cron checks per-row before creating PIs).
+  async getRentSubscriptionsDueForDebit(): Promise<RentSubscription[]> {
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    return await db
+      .select()
+      .from(rentSubscriptions)
+      .where(and(
+        eq(rentSubscriptions.status, 'active'),
+        sql`${rentSubscriptions.nextScheduledDate} IS NOT NULL`,
+        sql`${rentSubscriptions.nextScheduledDate} <= ${today}`,
+      ));
   }
 
   async getRentPaymentRequestsDueForLateFee(): Promise<RentPaymentRequest[]> {

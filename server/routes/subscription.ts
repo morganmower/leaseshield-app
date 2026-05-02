@@ -909,6 +909,16 @@ export async function registerSubscriptionRoutes(app: Express) {
         case 'checkout.session.completed': {
           const session = event.data.object as Stripe.Checkout.Session;
           const meta = session.metadata || {};
+
+          // Recurring auto-pay setup (mode: 'setup'). The PaymentMethod attaches via
+          // setup_intent.succeeded — this case just records that the session completed
+          // so we have a paper trail even if the SI event arrives out of order.
+          if (meta.leaseshield_kind === 'rent_auto_pay_setup' && session.mode === 'setup') {
+            console.log(`🏦 Auto-pay setup session completed: ${session.id}`);
+            // Heavy lifting (PM activation, mandate capture) happens in setup_intent.succeeded.
+            break;
+          }
+
           if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
             const requestId = meta.rent_payment_request_id;
             const r = await storage.getRentPaymentRequestById(requestId);
@@ -954,7 +964,13 @@ export async function registerSubscriptionRoutes(app: Express) {
         case 'payment_intent.payment_failed': {
           const pi = event.data.object as Stripe.PaymentIntent;
           const meta = pi.metadata || {};
-          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+          if ((meta.leaseshield_kind === 'rent_payment' || meta.leaseshield_kind === 'rent_payment_recurring')
+              && meta.rent_payment_request_id) {
+            if (meta.leaseshield_kind === 'rent_payment_recurring' && meta.rent_subscription_id) {
+              await storage.updateRentSubscription(meta.rent_subscription_id, {
+                lastDebitAttemptAt: new Date(),
+              });
+            }
             const r = await storage.getRentPaymentRequestById(meta.rent_payment_request_id);
             if (r && r.status !== 'paid') {
               await storage.updateRentPaymentRequest(r.id, {
@@ -989,10 +1005,16 @@ export async function registerSubscriptionRoutes(app: Express) {
           const invoiceId = paymentIntent.invoice;
           const meta = paymentIntent.metadata || {};
 
-          // Rent payment via Stripe Connect
-          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+          // Rent payment via Stripe Connect (one-time + recurring share the finalizer)
+          if ((meta.leaseshield_kind === 'rent_payment' || meta.leaseshield_kind === 'rent_payment_recurring')
+              && meta.rent_payment_request_id) {
             try {
               await finalizeRentPaymentSuccess(meta.rent_payment_request_id, paymentIntent);
+              if (meta.leaseshield_kind === 'rent_payment_recurring' && meta.rent_subscription_id) {
+                await storage.updateRentSubscription(meta.rent_subscription_id, {
+                  lastDebitAttemptAt: new Date(),
+                });
+              }
             } catch (e: any) {
               console.error('Failed to record rent payment:', e?.message);
             }
@@ -1033,6 +1055,110 @@ export async function registerSubscriptionRoutes(app: Express) {
             } catch (err: any) {
               console.error(`Failed to process payment_intent.succeeded for invoice ${invoiceId}:`, err.message);
             }
+          }
+          break;
+        }
+
+        // ===== Recurring auto-pay (Plan B) lifecycle events =====
+
+        case 'setup_intent.succeeded': {
+          const si = event.data.object as Stripe.SetupIntent;
+          const meta = si.metadata || {};
+          if (meta.leaseshield_kind !== 'rent_auto_pay_setup' || !meta.rent_subscription_id) break;
+          try {
+            const sub = await storage.getRentSubscriptionById(meta.rent_subscription_id);
+            if (!sub) {
+              console.warn(`setup_intent.succeeded: subscription ${meta.rent_subscription_id} not found`);
+              break;
+            }
+            const pmId = typeof si.payment_method === 'string' ? si.payment_method : si.payment_method?.id;
+            const mandateId = typeof si.mandate === 'string' ? si.mandate : (si.mandate as any)?.id || null;
+            if (!pmId) {
+              console.warn(`setup_intent.succeeded for ${sub.id} has no payment_method`);
+              break;
+            }
+            // Pull bank info for the tenant-facing UI
+            let last4: string | null = null;
+            let bankName: string | null = null;
+            try {
+              const pm = await stripe.paymentMethods.retrieve(pmId);
+              if (pm.us_bank_account) {
+                last4 = pm.us_bank_account.last4 || null;
+                bankName = pm.us_bank_account.bank_name || null;
+              }
+            } catch (pmErr: any) {
+              console.warn(`Could not retrieve PM ${pmId}:`, pmErr?.message);
+            }
+
+            // Snapshot the mandate text shown to the tenant. We rebuild it here
+            // so it matches the most recent disclosure shown on the auth page.
+            const landlord = await storage.getUser(sub.userId);
+            const property = sub.rentalPropertyId
+              ? await storage.getRentalPropertyById(sub.rentalPropertyId)
+              : null;
+            const landlordName =
+              [landlord?.firstName, landlord?.lastName].filter(Boolean).join(' ').trim() ||
+              landlord?.email || 'your landlord';
+
+            // Compute initial nextScheduledDate = max(startDate, today aligned to dayOfMonth)
+            const today = new Date().toISOString().slice(0, 10);
+            const initialNext = sub.startDate > today ? sub.startDate : today;
+
+            await storage.updateRentSubscription(sub.id, {
+              status: 'active',
+              stripeSetupIntentId: si.id,
+              stripePaymentMethodId: pmId,
+              stripeMandateId: mandateId,
+              bankAccountLast4: last4 ?? sub.bankAccountLast4 ?? null,
+              bankAccountBankName: bankName ?? sub.bankAccountBankName ?? null,
+              mandateAcceptedAt: new Date(),
+              activatedAt: new Date(),
+              nextScheduledDate: initialNext,
+            });
+            console.log(`✅ Auto-pay activated for subscription ${sub.id} (PM ${pmId})`);
+          } catch (err: any) {
+            console.error('Failed to handle setup_intent.succeeded:', err?.message);
+          }
+          break;
+        }
+
+        case 'payment_method.detached': {
+          const pm = event.data.object as Stripe.PaymentMethod;
+          try {
+            const sub = await storage.getRentSubscriptionByPaymentMethodId(pm.id);
+            if (!sub) break;
+            if (sub.status === 'active' || sub.status === 'paused') {
+              await storage.updateRentSubscription(sub.id, {
+                status: 'revoked_by_tenant',
+                revokedAt: new Date(),
+                revokedReason: sub.revokedReason || 'Bank PaymentMethod detached',
+                nextScheduledDate: null,
+              });
+              console.log(`🚫 Auto-pay subscription ${sub.id} marked revoked (PM detached)`);
+            }
+          } catch (err: any) {
+            console.error('Failed to handle payment_method.detached:', err?.message);
+          }
+          break;
+        }
+
+        case 'mandate.updated': {
+          const mandate = event.data.object as Stripe.Mandate;
+          if (mandate.status === 'active') break;
+          try {
+            const sub = await storage.getRentSubscriptionByMandateId(mandate.id);
+            if (!sub) break;
+            if (sub.status === 'active' || sub.status === 'paused') {
+              await storage.updateRentSubscription(sub.id, {
+                status: 'revoked_by_tenant',
+                revokedAt: new Date(),
+                revokedReason: `Stripe mandate became ${mandate.status}`,
+                nextScheduledDate: null,
+              });
+              console.log(`🚫 Auto-pay subscription ${sub.id} marked revoked (mandate ${mandate.status})`);
+            }
+          } catch (err: any) {
+            console.error('Failed to handle mandate.updated:', err?.message);
           }
           break;
         }

@@ -2040,6 +2040,94 @@ The LeaseShield Team
     const textBody = `Hi ${to.tenantName || 'there'},\n\nWe received your rent payment of $${opts.amountDollars} on ${opts.paidDate}.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}\n\nACH payments take 3-5 business days to clear.\n${opts.receiptUrl ? `Receipt: ${opts.receiptUrl}\n` : ''}\nThank you,\n${opts.landlordName}`;
     return this.sendEmail({ email: to.email, firstName: to.tenantName }, { subject, htmlBody, textBody });
   }
+
+  /**
+   * Send the auto-pay authorization link to a tenant. Includes plain-language
+   * disclosure of the recurring debit terms — the formal NACHA mandate text
+   * is shown on the authorization page itself.
+   */
+  async sendRentAutoPayAuthorizationEmail(
+    to: { email: string; tenantName: string },
+    opts: {
+      landlordName: string;
+      amountDollars: string;
+      dayOfMonth: number;
+      startDate: string;
+      propertyName?: string | null;
+      authorizationLink: string;
+    }
+  ): Promise<boolean> {
+    const ord = (n: number) => {
+      const s = ['th', 'st', 'nd', 'rd'];
+      const v = n % 100;
+      return n + (s[(v - 20) % 10] || s[v] || s[0]);
+    };
+    const propertyLine = opts.propertyName
+      ? `<p style="margin: 4px 0; color: #555;">Property: ${opts.propertyName}</p>` : '';
+    const subject = `Authorize automatic rent payments for ${opts.landlordName}`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #111;">Set up automatic rent payments</h2>
+        <p>Hi ${to.tenantName || 'there'},</p>
+        <p>${opts.landlordName} would like to set up automatic monthly rent debits from your bank account.</p>
+        ${propertyLine}
+        <ul style="color: #333; line-height: 1.6;">
+          <li>Amount: <strong>$${opts.amountDollars}</strong> per month</li>
+          <li>Charged on the <strong>${ord(opts.dayOfMonth)}</strong> of each month</li>
+          <li>Starting: <strong>${opts.startDate}</strong></li>
+          <li>Paid by bank transfer (ACH) — no card processing fees</li>
+        </ul>
+        <p style="margin: 24px 0;">
+          <a href="${opts.authorizationLink}" style="background: #2DD4BF; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 600;">Review & Authorize Auto-Pay</a>
+        </p>
+        <p style="color: #666; font-size: 13px;">You can cancel auto-pay any time from this page. NACHA rules apply to all ACH debits, and you have the right to dispute unauthorized debits with your bank.</p>
+        <p style="color: #555; font-size: 14px;">Thanks,<br/>${opts.landlordName}</p>
+      </div>
+    `;
+    const textBody = `Hi ${to.tenantName || 'there'},
+
+${opts.landlordName} would like to set up automatic monthly rent debits from your bank account.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}
+
+- Amount: $${opts.amountDollars}/month
+- Charged on the ${ord(opts.dayOfMonth)} of each month
+- Starting: ${opts.startDate}
+- Paid by bank transfer (ACH) - no card processing fees
+
+Review & authorize: ${opts.authorizationLink}
+
+You can cancel any time from the authorization page.
+
+Thanks,
+${opts.landlordName}`;
+    return this.sendEmail({ email: to.email, firstName: to.tenantName }, { subject, htmlBody, textBody });
+  }
+
+  /**
+   * Notify the landlord when a tenant revokes an auto-pay mandate.
+   */
+  async sendRentAutoPayRevokedEmail(
+    to: { email: string; firstName?: string },
+    opts: { tenantName: string; tenantEmail: string; amountDollars: string }
+  ): Promise<boolean> {
+    const subject = `${opts.tenantName} canceled auto-pay`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #b45309;">Auto-pay canceled</h2>
+        <p>Hi ${to.firstName || 'there'},</p>
+        <p><strong>${opts.tenantName}</strong> (${opts.tenantEmail}) just canceled their automatic rent payments of $${opts.amountDollars}/month through LeaseShield.</p>
+        <p>No more debits will be attempted under this authorization. You'll need to invoice them manually or send a new auto-pay authorization link.</p>
+        <p style="color: #555; font-size: 14px;">— LeaseShield</p>
+      </div>
+    `;
+    const textBody = `Hi ${to.firstName || 'there'},
+
+${opts.tenantName} (${opts.tenantEmail}) just canceled their automatic rent payments of $${opts.amountDollars}/month through LeaseShield.
+
+No more debits will be attempted under this authorization. You'll need to invoice them manually or send a new auto-pay authorization link.
+
+- LeaseShield`;
+    return this.sendEmail({ email: to.email, firstName: to.firstName || '' }, { subject, htmlBody, textBody });
+  }
 }
 
 export const emailService = new EmailService();
