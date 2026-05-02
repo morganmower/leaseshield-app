@@ -1,4 +1,4 @@
-import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale, CreditCard } from "lucide-react";
+import { Shield, ShieldCheck, FileText, Search, Users, CheckCircle2, ArrowRight, Star, TrendingUp, Clock, Award, DollarSign, AlertCircle, BadgeCheck, X, XCircle, MessageCircle, Send, Minimize2, Building2, Sparkles, UserPlus, MapPin, FileCheck, Lightbulb, Menu, Scale, CreditCard, Banknote, Repeat } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -312,8 +312,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="LeaseShield — State-Specific Lease Templates, Compliance & Screening Help for Landlords"
-        description="State-specific lease templates, official court forms, compliance updates, and AI-powered screening help for landlords in 16 US states. $10/month, cancel anytime."
+        title="LeaseShield — Lease Templates, Online Rent Collection & Compliance for Landlords"
+        description="State-specific lease templates, official court forms, online rent collection (ACH + recurring auto-pay), compliance updates, and AI-powered screening help for landlords in 16 US states. $10/month, cancel anytime."
         canonical="/"
       />
       {/* Header */}
@@ -1064,6 +1064,7 @@ export default function Landing() {
                   {[
                     { title: "Decode Screening Reports", desc: "Plain-English explanations + risk flags.", tag: "Most used", accent: true },
                     { title: "State-Specific Templates", desc: `${templateCount}+ leases, notices, letters, kept current.`, tag: `${templateCount}+ docs`, accent: false },
+                    { title: "Online Rent Collection", desc: "Bank-to-bank ACH payments + monthly auto-pay. No card fees.", tag: "New", accent: false },
                     { title: "Compliance Alerts", desc: "Important updates explained without noise.", tag: "Monthly", accent: false },
                     { title: "Application + Screening", desc: "Send applications → screen via Western Verify.", tag: "Integrated", accent: false },
                   ].map((m, i) => (
@@ -1427,28 +1428,116 @@ export default function Landing() {
                   <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
                     <DollarSign className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Ledger</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rent Collection & Ledger</h3>
                   <p className="text-muted-foreground mb-4">
-                    Track rental payments and income simply. Excel template for quick setup or in-app tracking with payment status overview.
+                    Stop chasing checks. Send a payment link, get paid by bank-to-bank ACH, and set up monthly auto-pay so rent shows up on its own.
                   </p>
                   <ul className="space-y-2 text-sm">
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
-                      <span>Excel/CSV download template</span>
+                      <span>One-click ACH payment links</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
-                      <span>In-app tracking table</span>
+                      <span>Recurring monthly auto-pay (NACHA-compliant)</span>
                     </li>
                     <li className="flex items-start gap-2">
                       <CheckCircle2 className="h-4 w-4 text-brand-600 mt-0.5 flex-shrink-0" />
-                      <span>Payment status at a glance</span>
+                      <span>Automatic ledger + late-fee tracking</span>
                     </li>
                   </ul>
                 </div>
               </Card>
             </motion.div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Online Rent Collection — feature spotlight */}
+      <section className="py-16 sm:py-20 bg-gradient-to-br from-brand-500/5 via-background to-brand-500/5">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center mb-10 md:mb-12"
+          >
+            <Badge variant="outline" className="mb-3" data-testid="badge-rent-new">New</Badge>
+            <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
+              Get Rent Paid On Time, Automatically
+            </h2>
+            <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
+              Online rent collection is now built into LeaseShield. Send a link, get paid by bank transfer,
+              or set up monthly auto-pay so you never have to ask again.
+            </p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-5 md:gap-6"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 md:p-6 h-full" data-testid="card-rent-onetime">
+                <div className="rounded-lg bg-brand-50 w-11 h-11 flex items-center justify-center mb-4">
+                  <Send className="h-5 w-5 text-brand-600" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">One-Click Payment Links</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Email your tenant a secure link. They pay directly from their bank — no app to download, no card fees.
+                </p>
+                <ul className="text-sm space-y-1.5 text-muted-foreground">
+                  <li>• ACH bank-to-bank transfer</li>
+                  <li>• Receipts emailed automatically</li>
+                  <li>• Late fees applied per your rules</li>
+                </ul>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 md:p-6 h-full border-brand-500/30" data-testid="card-rent-autopay">
+                <div className="rounded-lg bg-brand-500/15 w-11 h-11 flex items-center justify-center mb-4">
+                  <Repeat className="h-5 w-5 text-brand-600" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <h3 className="font-display text-lg font-semibold">Recurring Auto-Pay</h3>
+                  <Badge variant="default" className="text-xs">New</Badge>
+                </div>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Tenant authorizes once with a NACHA-compliant ACH mandate. Rent is debited automatically every month — no chasing, no reminders.
+                </p>
+                <ul className="text-sm space-y-1.5 text-muted-foreground">
+                  <li>• Monthly bank-to-bank debits</li>
+                  <li>• Tenant can cancel anytime</li>
+                  <li>• Landlord can pause, resume, or end at lease close</li>
+                </ul>
+              </Card>
+            </motion.div>
+
+            <motion.div variants={fadeInUp}>
+              <Card className="p-5 md:p-6 h-full" data-testid="card-rent-ledger">
+                <div className="rounded-lg bg-brand-50 w-11 h-11 flex items-center justify-center mb-4">
+                  <Banknote className="h-5 w-5 text-brand-600" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2">Automatic Ledger</h3>
+                <p className="text-sm text-muted-foreground mb-3">
+                  Every successful payment, failed attempt, and late fee logs to your rent ledger. Export to CSV at tax time.
+                </p>
+                <ul className="text-sm space-y-1.5 text-muted-foreground">
+                  <li>• Running balance per tenant</li>
+                  <li>• Payment status at a glance</li>
+                  <li>• CSV/Excel export anytime</li>
+                </ul>
+              </Card>
+            </motion.div>
+          </motion.div>
+
+          <div className="mt-8 text-center text-sm text-muted-foreground">
+            Powered by Stripe Connect · NACHA-compliant ACH · Funds deposit straight to your bank
+          </div>
         </div>
       </section>
 
