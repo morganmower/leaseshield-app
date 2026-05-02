@@ -22,16 +22,16 @@ import NotFound from "@/pages/not-found";
 import Landing from "@/pages/landing";
 import Login from "@/pages/login";
 import Signup from "@/pages/signup";
-import ForgotPassword from "@/pages/forgot-password";
-import ResetPassword from "@/pages/reset-password";
-import Privacy from "@/pages/privacy";
-import Terms from "@/pages/terms";
-import RefundPolicy from "@/pages/refund-policy";
-import Disclaimers from "@/pages/disclaimers";
-import Contact from "@/pages/contact";
-import HelpCenter from "@/pages/help-center";
+const ForgotPassword = lazy(() => import("@/pages/forgot-password"));
+const ResetPassword = lazy(() => import("@/pages/reset-password"));
+const Privacy = lazy(() => import("@/pages/privacy"));
+const Terms = lazy(() => import("@/pages/terms"));
+const RefundPolicy = lazy(() => import("@/pages/refund-policy"));
+const Disclaimers = lazy(() => import("@/pages/disclaimers"));
+const Contact = lazy(() => import("@/pages/contact"));
+const HelpCenter = lazy(() => import("@/pages/help-center"));
 import Blog from "@/pages/blog";
-import BlogPost from "@/pages/blog-post";
+const BlogPost = lazy(() => import("@/pages/blog-post"));
 import Dashboard from "@/pages/dashboard";
 import Templates from "@/pages/templates";
 import DocumentWizard from "@/pages/document-wizard";
@@ -59,21 +59,21 @@ const AdminTips = lazy(() => import("@/pages/admin-tips"));
 const AdminApplicationsActivity = lazy(() => import("@/pages/admin-applications-activity"));
 const AdminStateNotes = lazy(() => import("@/pages/admin-state-notes"));
 const AdminNoticeForms = lazy(() => import("@/pages/admin-notice-forms"));
-import LegalUpdatesPage from "@/pages/legal-updates";
+const LegalUpdatesPage = lazy(() => import("@/pages/legal-updates"));
 import Messages from "@/pages/messages";
-import AuditHistory from "@/pages/audit-history";
-import LogoPicker from "@/pages/logo-picker";
-import LogoColors from "@/pages/logo-colors";
+const AuditHistory = lazy(() => import("@/pages/audit-history"));
+const LogoPicker = lazy(() => import("@/pages/logo-picker"));
+const LogoColors = lazy(() => import("@/pages/logo-colors"));
 import RentalApplications from "@/pages/rental-applications";
 import RentalSubmissions from "@/pages/rental-submissions";
 import Apply from "@/pages/apply";
 import PropertyDetail from "@/pages/property-detail";
-import TxTenantSelectionCriteria from "@/pages/tx-tenant-selection-criteria";
+const TxTenantSelectionCriteria = lazy(() => import("@/pages/tx-tenant-selection-criteria"));
 import ScreeningExplain from "@/pages/screening-explain";
-import DashboardPreview from "@/pages/dashboard-preview";
-import Activate from "@/pages/activate";
-import DenialDecisionAssistant from "@/pages/denial-decision-assistant";
-import Reupload from "@/pages/reupload";
+const DashboardPreview = lazy(() => import("@/pages/dashboard-preview"));
+const Activate = lazy(() => import("@/pages/activate"));
+const DenialDecisionAssistant = lazy(() => import("@/pages/denial-decision-assistant"));
+const Reupload = lazy(() => import("@/pages/reupload"));
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -103,6 +103,7 @@ function Router() {
 
   if (!isAuthenticated) {
     return (
+      <Suspense fallback={null}>
       <Switch>
         <Route path="/" component={Landing} />
         <Route path="/login" component={Login} />
@@ -151,10 +152,12 @@ function Router() {
         <Route path="/messages">{() => <Redirect to="/login" />}</Route>
         <Route component={NotFound} />
       </Switch>
+      </Suspense>
     );
   }
 
   return (
+    <Suspense fallback={null}>
     <Switch>
       <Route path="/" component={Dashboard} />
       <Route path="/dashboard" component={Dashboard} />
@@ -217,6 +220,7 @@ function Router() {
       <Route path="/admin/notice-forms">{() => <AdminRoute component={AdminNoticeForms} />}</Route>
       <Route component={NotFound} />
     </Switch>
+    </Suspense>
   );
 }
 
