@@ -932,8 +932,8 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
   const [gracePeriodDays, setGracePeriodDays] = useState("5");
   const [reminderDaysBefore, setReminderDaysBefore] = useState("5");
   const [rentalPropertyId, setRentalPropertyId] = useState("");
-  // Per-request fee override controls (default to "use account default")
-  const [serviceFeePayer, setServiceFeePayer] = useState<"default" | "tenant" | "landlord" | "none">("default");
+  // Per-request service fee override (always tenant-paid; only the amount
+  // can be tweaked per-request).
   const [serviceFeeDollars, setServiceFeeDollars] = useState("");
 
   type ApiError = Error & { body?: { message?: string } };
@@ -942,6 +942,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     defaultServiceFeeEnabled: boolean;
     defaultServiceFeeAmount: number;
     platformFeeAmount: number;
+    minServiceFeeAmount: number;
     maxServiceFeeAmount: number;
   };
 
@@ -949,18 +950,17 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     queryKey: ["/api/rent-payments/fee-settings"],
   });
 
-  // Local state for the fee-defaults settings panel.
-  const [feeEnabled, setFeeEnabled] = useState(false);
+  // Local state for the fee-defaults settings panel (amount only — tenant-paid
+  // service fee is mandatory and not landlord-toggleable).
   const [feeDefaultDollars, setFeeDefaultDollars] = useState("4.95");
   useEffect(() => {
     if (feeSettings) {
-      setFeeEnabled(feeSettings.defaultServiceFeeEnabled);
       setFeeDefaultDollars((feeSettings.defaultServiceFeeAmount / 100).toFixed(2));
     }
   }, [feeSettings]);
 
   const updateFeeSettingsMutation = useMutation({
-    mutationFn: async (payload: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeDollars?: number }) =>
+    mutationFn: async (payload: { defaultServiceFeeDollars?: number }) =>
       apiRequest("PATCH", "/api/rent-payments/fee-settings", payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/rent-payments/fee-settings"] });
@@ -1014,7 +1014,6 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     gracePeriodDays: number;
     reminderDaysBefore: number;
     rentalPropertyId?: string | null;
-    serviceFeePayer?: "tenant" | "landlord" | "none";
     serviceFeeAmountDollars?: number;
   };
 
@@ -1032,7 +1031,6 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
       setDescription("");
       setLateFeeDollars("0");
       setRentalPropertyId("");
-      setServiceFeePayer("default");
       setServiceFeeDollars("");
       if (data?.paymentLink) {
         try {
@@ -1072,7 +1070,6 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
   const [editGracePeriodDays, setEditGracePeriodDays] = useState("5");
   const [editReminderDaysBefore, setEditReminderDaysBefore] = useState("5");
   const [editRentalPropertyId, setEditRentalPropertyId] = useState("");
-  const [editServiceFeePayer, setEditServiceFeePayer] = useState<"tenant" | "landlord" | "none">("none");
   const [editServiceFeeDollars, setEditServiceFeeDollars] = useState("");
 
   const openEditDialog = (p: RentPaymentRequest) => {
@@ -1086,7 +1083,6 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     setEditGracePeriodDays(String(p.gracePeriodDays ?? 5));
     setEditReminderDaysBefore(String(p.reminderDaysBefore ?? 5));
     setEditRentalPropertyId(p.rentalPropertyId || "");
-    setEditServiceFeePayer((p.serviceFeePayer as "tenant" | "landlord" | "none") || "none");
     setEditServiceFeeDollars(((p.serviceFeeAmount || 0) / 100).toFixed(2));
   };
 
@@ -1130,8 +1126,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
         gracePeriodDays: parseInt(editGracePeriodDays) || 0,
         reminderDaysBefore: parseInt(editReminderDaysBefore) || 0,
         rentalPropertyId: editRentalPropertyId || null,
-        serviceFeePayer: editServiceFeePayer,
-        serviceFeeAmountDollars: editServiceFeePayer === "none" ? 0 : parseFloat(editServiceFeeDollars || "0"),
+        serviceFeeAmountDollars: parseFloat(editServiceFeeDollars || "0"),
       },
     });
   };
@@ -1164,11 +1159,8 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
       reminderDaysBefore: parseInt(reminderDaysBefore) || 5,
       rentalPropertyId: rentalPropertyId || null,
     };
-    if (serviceFeePayer !== "default") {
-      payload.serviceFeePayer = serviceFeePayer;
-      if (serviceFeePayer !== "none" && serviceFeeDollars.trim() !== "") {
-        payload.serviceFeeAmountDollars = parseFloat(serviceFeeDollars);
-      }
+    if (serviceFeeDollars.trim() !== "") {
+      payload.serviceFeeAmountDollars = parseFloat(serviceFeeDollars);
     }
     createPaymentMutation.mutate(payload);
   };
@@ -1249,48 +1241,34 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
 
   const platformFeeDollars = ((feeSettings?.platformFeeAmount ?? 150) / 100).toFixed(2);
   const maxFeeDollars = ((feeSettings?.maxServiceFeeAmount ?? 5000) / 100).toFixed(2);
+  const minFeeDollars = ((feeSettings?.minServiceFeeAmount ?? 350) / 100).toFixed(2);
   const platformFeeCents = feeSettings?.platformFeeAmount ?? 150;
   const defaultFeeCents = feeSettings?.defaultServiceFeeAmount ?? 495;
-  const defaultFeeEnabled = !!feeSettings?.defaultServiceFeeEnabled;
 
-  // Live breakdown helper used by both create and edit dialogs.
-  // Mirrors server-side `computeRentFees()` so landlords see exactly what
-  // the tenant will pay and what they (the landlord) will net.
-  const buildBreakdown = (
-    rentDollarsStr: string,
-    payer: "default" | "tenant" | "landlord" | "none",
-    feeDollarsStr: string,
-  ) => {
+  // Live breakdown helper used by both create and edit dialogs. Mirrors
+  // server-side `computeRentFees()` so landlords see exactly what the tenant
+  // will pay and what they (the landlord) will net. Service fee is always
+  // tenant-paid now, so the only inputs are rent and fee amount.
+  const buildBreakdown = (rentDollarsStr: string, feeDollarsStr: string) => {
     const rentCents = Math.max(0, Math.round((parseFloat(rentDollarsStr || "0") || 0) * 100));
-    const effectivePayer: "tenant" | "landlord" | "none" =
-      payer === "default" ? (defaultFeeEnabled ? "tenant" : "none") : payer;
-    let serviceFeeCents = 0;
-    if (effectivePayer !== "none") {
-      const customCents = feeDollarsStr.trim() === ""
-        ? defaultFeeCents
-        : Math.round((parseFloat(feeDollarsStr) || 0) * 100);
-      serviceFeeCents = Math.max(0, customCents);
-    }
-    const tenantTotal = rentCents + (effectivePayer === "tenant" ? serviceFeeCents : 0);
-    const applicationFee = (effectivePayer !== "none" ? serviceFeeCents : 0) + platformFeeCents;
-    const landlordNet = Math.max(0, tenantTotal - applicationFee);
-    return { rentCents, serviceFeeCents, effectivePayer, tenantTotal, applicationFee, landlordNet };
+    const customCents = feeDollarsStr.trim() === ""
+      ? defaultFeeCents
+      : Math.round((parseFloat(feeDollarsStr) || 0) * 100);
+    const serviceFeeCents = Math.max(0, customCents);
+    const tenantTotal = rentCents + serviceFeeCents;
+    const landlordNet = Math.max(0, tenantTotal - serviceFeeCents - platformFeeCents);
+    return { rentCents, serviceFeeCents, tenantTotal, landlordNet };
   };
 
-  const renderBreakdown = (
-    rentDollarsStr: string,
-    payer: "default" | "tenant" | "landlord" | "none",
-    feeDollarsStr: string,
-    testIdPrefix: string,
-  ) => {
-    const b = buildBreakdown(rentDollarsStr, payer, feeDollarsStr);
+  const renderBreakdown = (rentDollarsStr: string, feeDollarsStr: string, testIdPrefix: string) => {
+    const b = buildBreakdown(rentDollarsStr, feeDollarsStr);
     const fmt = (c: number) => `$${(c / 100).toFixed(2)}`;
     return (
       <div className="md:col-span-2 rounded-md bg-muted/40 p-3 text-sm space-y-1" data-testid={`${testIdPrefix}-breakdown`}>
         <div className="font-semibold mb-1">Breakdown</div>
         <div className="flex justify-between"><span className="text-muted-foreground">Rent</span><span data-testid={`${testIdPrefix}-breakdown-rent`}>{fmt(b.rentCents)}</span></div>
         <div className="flex justify-between">
-          <span className="text-muted-foreground">Service fee {b.effectivePayer === 'tenant' ? '(tenant pays)' : b.effectivePayer === 'landlord' ? '(you absorb)' : '(none)'}</span>
+          <span className="text-muted-foreground">Service fee (tenant pays)</span>
           <span data-testid={`${testIdPrefix}-breakdown-service-fee`}>{fmt(b.serviceFeeCents)}</span>
         </div>
         <div className="flex justify-between border-t pt-1 mt-1">
@@ -1301,12 +1279,6 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
           <span>LeaseShield platform fee</span>
           <span data-testid={`${testIdPrefix}-breakdown-platform-fee`}>− {fmt(platformFeeCents)}</span>
         </div>
-        {b.effectivePayer === 'landlord' && b.serviceFeeCents > 0 && (
-          <div className="flex justify-between text-xs text-muted-foreground">
-            <span>Service fee (you absorb)</span>
-            <span>− {fmt(b.serviceFeeCents)}</span>
-          </div>
-        )}
         <div className="flex justify-between border-t pt-1 mt-1">
           <span className="font-semibold">You receive</span>
           <span className="font-semibold" data-testid={`${testIdPrefix}-breakdown-landlord-net`}>{fmt(b.landlordNet)}</span>
@@ -1323,40 +1295,32 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
           <div>
             <h2 className="text-xl font-bold">Payment Fees</h2>
             <p className="text-sm text-muted-foreground">
-              Set your default convenience fee for online rent payments. A flat ${platformFeeDollars} LeaseShield platform fee
-              also applies per online payment and is taken at settlement (you don't see it as a separate transaction).
+              Online rent payments include a small convenience fee that the tenant pays on top of rent —
+              this covers bank-transfer (ACH) processing so you receive the full rent amount. A flat
+              ${platformFeeDollars} LeaseShield platform fee is also deducted at settlement
+              (you don't see it as a separate transaction). Minimum fee ${minFeeDollars}, max ${maxFeeDollars}.
             </p>
           </div>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-end gap-3">
-          <div className="flex items-center gap-2">
-            <input
-              id="fee-enabled"
-              type="checkbox"
-              className="h-4 w-4"
-              checked={feeEnabled}
-              onChange={(e) => setFeeEnabled(e.target.checked)}
-              data-testid="checkbox-default-service-fee"
-            />
-            <Label htmlFor="fee-enabled">Charge tenants a service fee by default</Label>
-          </div>
           <div className="flex-1 min-w-[160px]">
-            <Label htmlFor="fee-default">Default service fee (USD, max ${maxFeeDollars})</Label>
+            <Label htmlFor="fee-default">Tenant convenience fee (USD)</Label>
             <Input
               id="fee-default"
               type="number"
               step="0.01"
-              min="0"
+              min={minFeeDollars}
               max={maxFeeDollars}
               value={feeDefaultDollars}
               onChange={(e) => setFeeDefaultDollars(e.target.value)}
-              disabled={!feeEnabled}
               data-testid="input-default-service-fee"
             />
+            <p className="text-xs text-muted-foreground mt-1" data-testid="text-fee-preview">
+              Tenant pays rent + ${parseFloat(feeDefaultDollars || "0").toFixed(2)} · You receive the full rent amount minus a ${platformFeeDollars} platform fee.
+            </p>
           </div>
           <Button
             onClick={() => updateFeeSettingsMutation.mutate({
-              defaultServiceFeeEnabled: feeEnabled,
               defaultServiceFeeDollars: parseFloat(feeDefaultDollars || "0"),
             })}
             disabled={updateFeeSettingsMutation.isPending}
@@ -1600,38 +1564,21 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
               />
             </div>
             <div>
-              <Label htmlFor="rp-fee-payer">Service fee</Label>
-              <Select value={serviceFeePayer} onValueChange={(v) => setServiceFeePayer(v as typeof serviceFeePayer)}>
-                <SelectTrigger id="rp-fee-payer" data-testid="select-rp-fee-payer">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="default">
-                    Use account default ({feeSettings?.defaultServiceFeeEnabled ? `tenant pays $${((feeSettings.defaultServiceFeeAmount || 0) / 100).toFixed(2)}` : "no fee"})
-                  </SelectItem>
-                  <SelectItem value="tenant">Tenant pays</SelectItem>
-                  <SelectItem value="landlord">I absorb the fee</SelectItem>
-                  <SelectItem value="none">No service fee</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="rp-fee-amount">Tenant convenience fee (USD)</Label>
+              <Input
+                id="rp-fee-amount"
+                type="number"
+                step="0.01"
+                min={minFeeDollars}
+                max={maxFeeDollars}
+                value={serviceFeeDollars}
+                onChange={(e) => setServiceFeeDollars(e.target.value)}
+                placeholder={((feeSettings?.defaultServiceFeeAmount ?? 495) / 100).toFixed(2)}
+                data-testid="input-rp-fee-amount"
+              />
+              <p className="text-xs text-muted-foreground mt-1">Leave blank to use your default (${((feeSettings?.defaultServiceFeeAmount ?? 495) / 100).toFixed(2)}).</p>
             </div>
-            {serviceFeePayer !== "default" && serviceFeePayer !== "none" && (
-              <div>
-                <Label htmlFor="rp-fee-amount">Service fee amount (USD)</Label>
-                <Input
-                  id="rp-fee-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={maxFeeDollars}
-                  value={serviceFeeDollars}
-                  onChange={(e) => setServiceFeeDollars(e.target.value)}
-                  placeholder={((feeSettings?.defaultServiceFeeAmount ?? 495) / 100).toFixed(2)}
-                  data-testid="input-rp-fee-amount"
-                />
-              </div>
-            )}
-            {renderBreakdown(amountDollars, serviceFeePayer, serviceFeeDollars, "rp")}
+            {renderBreakdown(amountDollars, serviceFeeDollars, "rp")}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowCreate(false)} data-testid="button-cancel-rp">Cancel</Button>
@@ -1765,34 +1712,19 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
               />
             </div>
             <div>
-              <Label htmlFor="ep-fee-payer">Service fee</Label>
-              <Select value={editServiceFeePayer} onValueChange={(v) => setEditServiceFeePayer(v as typeof editServiceFeePayer)}>
-                <SelectTrigger id="ep-fee-payer" data-testid="select-ep-fee-payer">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="tenant">Tenant pays</SelectItem>
-                  <SelectItem value="landlord">I absorb the fee</SelectItem>
-                  <SelectItem value="none">No service fee</SelectItem>
-                </SelectContent>
-              </Select>
+              <Label htmlFor="ep-fee-amount">Tenant convenience fee (USD)</Label>
+              <Input
+                id="ep-fee-amount"
+                type="number"
+                step="0.01"
+                min={minFeeDollars}
+                max={maxFeeDollars}
+                value={editServiceFeeDollars}
+                onChange={(e) => setEditServiceFeeDollars(e.target.value)}
+                data-testid="input-ep-fee-amount"
+              />
             </div>
-            {editServiceFeePayer !== "none" && (
-              <div>
-                <Label htmlFor="ep-fee-amount">Service fee amount (USD)</Label>
-                <Input
-                  id="ep-fee-amount"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  max={maxFeeDollars}
-                  value={editServiceFeeDollars}
-                  onChange={(e) => setEditServiceFeeDollars(e.target.value)}
-                  data-testid="input-ep-fee-amount"
-                />
-              </div>
-            )}
-            {renderBreakdown(editAmountDollars, editServiceFeePayer, editServiceFeeDollars, "ep")}
+            {renderBreakdown(editAmountDollars, editServiceFeeDollars, "ep")}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setEditing(null)} data-testid="button-cancel-ep">Cancel</Button>

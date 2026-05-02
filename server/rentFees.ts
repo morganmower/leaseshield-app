@@ -7,6 +7,16 @@ export const PLATFORM_FEE_CENTS = 150; // $1.50
 // Cap on the tenant convenience fee a landlord can configure (sanity check).
 export const MAX_SERVICE_FEE_CENTS = 5000; // $50.00
 
+// Minimum tenant convenience fee — set so that serviceFee + platformFee >= the
+// worst-case Stripe ACH fee ($5.00 cap), guaranteeing LeaseShield never loses
+// money on a rent payment. With PLATFORM_FEE_CENTS=150, the floor is $3.50,
+// but we hold the user-facing minimum at the original $4.95 default to keep
+// the breakdown clean and leave a small margin.
+export const MIN_SERVICE_FEE_CENTS = 350; // $3.50
+
+// Default tenant convenience fee charged when a landlord hasn't customized it.
+export const DEFAULT_SERVICE_FEE_CENTS = 495; // $4.95
+
 export type ServiceFeePayer = "tenant" | "landlord" | "none";
 
 export function isServiceFeePayer(v: unknown): v is ServiceFeePayer {

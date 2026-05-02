@@ -10,10 +10,19 @@ import { stripe, getUserId } from "./_shared";
 import {
   PLATFORM_FEE_CENTS,
   MAX_SERVICE_FEE_CENTS,
+  MIN_SERVICE_FEE_CENTS,
+  DEFAULT_SERVICE_FEE_CENTS,
   computeRentFees,
-  isServiceFeePayer,
   type ServiceFeePayer,
 } from "../rentFees";
+
+// Resolve a landlord's effective default service fee in cents. Treats any
+// stored value below MIN_SERVICE_FEE_CENTS (including 0 from legacy rows
+// where the toggle was off) as "use the platform default".
+function resolveDefaultServiceFeeCents(stored: number | null | undefined): number {
+  const v = stored ?? 0;
+  return v >= MIN_SERVICE_FEE_CENTS ? v : DEFAULT_SERVICE_FEE_CENTS;
+}
 
 export async function registerRentPaymentsRoutes(app: Express) {
   // ----- Landlord fee settings (defaults applied when creating new requests) -----
@@ -23,9 +32,13 @@ export async function registerRentPaymentsRoutes(app: Express) {
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: 'User not found' });
       res.json({
-        defaultServiceFeeEnabled: !!user.defaultServiceFeeEnabled,
-        defaultServiceFeeAmount: user.defaultServiceFeeAmount ?? 495,
+        // Tenant-paid convenience fee is always on — landlords cannot opt out
+        // (would put LeaseShield in the red on Stripe ACH fees). The flag is
+        // kept in the response shape for back-compat but is hard-coded true.
+        defaultServiceFeeEnabled: true,
+        defaultServiceFeeAmount: resolveDefaultServiceFeeCents(user.defaultServiceFeeAmount),
         platformFeeAmount: PLATFORM_FEE_CENTS,
+        minServiceFeeAmount: MIN_SERVICE_FEE_CENTS,
         maxServiceFeeAmount: MAX_SERVICE_FEE_CENTS,
       });
     } catch (error) {
@@ -38,10 +51,12 @@ export async function registerRentPaymentsRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const body = req.body || {};
-      const updates: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number } = {};
-      if (typeof body.defaultServiceFeeEnabled === 'boolean') {
-        updates.defaultServiceFeeEnabled = body.defaultServiceFeeEnabled;
-      }
+      // The "enabled" flag is ignored — tenant-paid service fee is mandatory.
+      // Always persist `defaultServiceFeeEnabled = true` so any legacy reader
+      // sees the new behavior; landlords can only customize the amount.
+      const updates: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number } = {
+        defaultServiceFeeEnabled: true,
+      };
       // Accept either dollars (preferred from UI) or raw cents.
       let cents: number | undefined;
       if (body.defaultServiceFeeDollars !== undefined) {
@@ -50,17 +65,19 @@ export async function registerRentPaymentsRoutes(app: Express) {
         cents = parseInt(body.defaultServiceFeeAmount);
       }
       if (cents !== undefined) {
-        if (!Number.isFinite(cents) || cents < 0 || cents > MAX_SERVICE_FEE_CENTS) {
-          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
+        if (!Number.isFinite(cents) || cents < MIN_SERVICE_FEE_CENTS || cents > MAX_SERVICE_FEE_CENTS) {
+          return res.status(400).json({
+            message: `Service fee must be between $${(MIN_SERVICE_FEE_CENTS/100).toFixed(2)} and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}`,
+          });
         }
         updates.defaultServiceFeeAmount = cents;
       }
-      if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No changes provided' });
       const user = await storage.updateUserFeeDefaults(userId, updates);
       res.json({
-        defaultServiceFeeEnabled: !!user?.defaultServiceFeeEnabled,
-        defaultServiceFeeAmount: user?.defaultServiceFeeAmount ?? 495,
+        defaultServiceFeeEnabled: true,
+        defaultServiceFeeAmount: resolveDefaultServiceFeeCents(user?.defaultServiceFeeAmount),
         platformFeeAmount: PLATFORM_FEE_CENTS,
+        minServiceFeeAmount: MIN_SERVICE_FEE_CENTS,
         maxServiceFeeAmount: MAX_SERVICE_FEE_CENTS,
       });
     } catch (error: any) {
@@ -114,29 +131,21 @@ export async function registerRentPaymentsRoutes(app: Express) {
         rentalPropertyId = p.id;
       }
 
-      // Resolve fee config: per-request body overrides, falling back to the
-      // landlord's saved defaults from their user record.
-      let serviceFeePayer: ServiceFeePayer = "none";
-      let serviceFeeAmount = 0;
-      if (body.serviceFeePayer !== undefined) {
-        if (!isServiceFeePayer(body.serviceFeePayer)) {
-          return res.status(400).json({ message: "serviceFeePayer must be 'tenant', 'landlord', or 'none'" });
-        }
-        serviceFeePayer = body.serviceFeePayer;
-      } else if (user.defaultServiceFeeEnabled) {
-        serviceFeePayer = "tenant";
+      // Tenant-paid service fee is mandatory on every rent request. Body
+      // overrides for `serviceFeePayer` are ignored — Stripe ACH fees would
+      // exceed our $1.50 platform margin if any other payer was allowed.
+      const serviceFeePayer: ServiceFeePayer = "tenant";
+      const requestedCents = body.serviceFeeAmountCents !== undefined
+        ? parseInt(body.serviceFeeAmountCents)
+        : (body.serviceFeeAmountDollars !== undefined
+            ? Math.round(parseFloat(body.serviceFeeAmountDollars) * 100)
+            : resolveDefaultServiceFeeCents(user.defaultServiceFeeAmount));
+      if (!Number.isFinite(requestedCents) || requestedCents < MIN_SERVICE_FEE_CENTS || requestedCents > MAX_SERVICE_FEE_CENTS) {
+        return res.status(400).json({
+          message: `Service fee must be between $${(MIN_SERVICE_FEE_CENTS/100).toFixed(2)} and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}`,
+        });
       }
-      if (serviceFeePayer !== "none") {
-        const overrideCents = body.serviceFeeAmountCents !== undefined
-          ? parseInt(body.serviceFeeAmountCents)
-          : (body.serviceFeeAmountDollars !== undefined
-              ? Math.round(parseFloat(body.serviceFeeAmountDollars) * 100)
-              : (user.defaultServiceFeeAmount ?? 495));
-        if (!Number.isFinite(overrideCents) || overrideCents < 0 || overrideCents > MAX_SERVICE_FEE_CENTS) {
-          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
-        }
-        serviceFeeAmount = overrideCents;
-      }
+      const serviceFeeAmount = requestedCents;
 
       const insertData = {
         userId,
@@ -233,18 +242,20 @@ export async function registerRentPaymentsRoutes(app: Express) {
         }
         updates.reminderDaysBefore = r;
       }
-      if (body.serviceFeePayer !== undefined) {
-        if (!isServiceFeePayer(body.serviceFeePayer)) {
-          return res.status(400).json({ message: "serviceFeePayer must be 'tenant', 'landlord', or 'none'" });
-        }
-        updates.serviceFeePayer = body.serviceFeePayer;
+      // serviceFeePayer is no longer landlord-controlled — every active
+      // request must be tenant-paid. Silently ignore stale clients sending
+      // the field, but never let it switch to 'landlord' or 'none'.
+      if (existing.serviceFeePayer !== 'tenant') {
+        updates.serviceFeePayer = 'tenant';
       }
       if (body.serviceFeeAmountCents !== undefined || body.serviceFeeAmountDollars !== undefined) {
         const cents = body.serviceFeeAmountCents !== undefined
           ? parseInt(body.serviceFeeAmountCents)
           : Math.round(parseFloat(body.serviceFeeAmountDollars) * 100);
-        if (!Number.isFinite(cents) || cents < 0 || cents > MAX_SERVICE_FEE_CENTS) {
-          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
+        if (!Number.isFinite(cents) || cents < MIN_SERVICE_FEE_CENTS || cents > MAX_SERVICE_FEE_CENTS) {
+          return res.status(400).json({
+            message: `Service fee must be between $${(MIN_SERVICE_FEE_CENTS/100).toFixed(2)} and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}`,
+          });
         }
         updates.serviceFeeAmount = cents;
       }
