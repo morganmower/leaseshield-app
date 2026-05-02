@@ -273,7 +273,6 @@ export default function Properties() {
     setDocRequirements(DEFAULT_DOCUMENT_REQUIREMENTS);
     setAutoScreening(false);
     setScreeningInvitationId("");
-    setScreeningClientId("");
     setPropertyTerms(DEFAULT_PROPERTY_TERMS);
     setFieldSettings(DEFAULT_FIELD_SETTINGS);
     setEditingProperty(null);
