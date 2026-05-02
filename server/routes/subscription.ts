@@ -664,15 +664,40 @@ export async function registerSubscriptionRoutes(app: Express) {
     const { request: r, ledgerEntry } = result;
     console.log(`✅ Rent payment finalized: request ${r.id}, ledger ${ledgerEntry.id}`);
 
-    // Send tenant receipt email (best-effort, runs after the transaction commits)
+    // Send tenant receipt + landlord notification emails (best-effort, runs after the transaction commits).
+    // Both emails itemize the rent / service fee / total breakdown so tenants
+    // have a clean record for tax or expense reporting and landlords have
+    // full visibility into what came in vs. what nets to their account.
+    const landlord = await storage.getUser(r.userId).catch(() => null);
+    const landlordName = landlord
+      ? (landlord.firstName && landlord.lastName
+          ? `${landlord.firstName} ${landlord.lastName}`
+          : (landlord.businessName || landlord.email || 'Your Landlord'))
+      : 'Your Landlord';
+
+    const tenantPaidServiceFeeAmount =
+      r.serviceFeePayer === 'tenant' ? (r.serviceFeeAmount || 0) : 0;
+    const landlordPaidServiceFeeAmount =
+      r.serviceFeePayer === 'landlord' ? (r.serviceFeeAmount || 0) : 0;
+    const platformFee = r.platformFeeAmount || 0;
+    const rentDollars = (r.amount / 100).toFixed(2);
+    const tenantTotalDollars = (amountReceived / 100).toFixed(2);
+    const tenantServiceFeeDollars = (tenantPaidServiceFeeAmount / 100).toFixed(2);
+    const platformFeeDollars = (platformFee / 100).toFixed(2);
+    // Net to landlord = rent - any service fee they absorbed - platform fee
+    const netToLandlordCents = Math.max(
+      0,
+      r.amount - landlordPaidServiceFeeAmount - platformFee,
+    );
+    const netToLandlordDollars = (netToLandlordCents / 100).toFixed(2);
+    const paidDateStr = new Date().toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    });
+
     if (r.tenantEmail) {
       try {
-        const landlord = await storage.getUser(r.userId);
-        const landlordName = landlord
-          ? (landlord.firstName && landlord.lastName
-              ? `${landlord.firstName} ${landlord.lastName}`
-              : (landlord.businessName || landlord.email || 'Your Landlord'))
-          : 'Your Landlord';
         let receiptUrl: string | null = null;
         if (paymentIntent.latest_charge) {
           try {
@@ -687,14 +712,39 @@ export async function registerSubscriptionRoutes(app: Express) {
           { email: r.tenantEmail, tenantName: r.tenantName },
           {
             landlordName,
-            amountDollars: (amountReceived / 100).toFixed(2),
-            paidDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            amountDollars: tenantTotalDollars,
+            paidDate: paidDateStr,
             propertyName: property?.name || null,
             receiptUrl,
+            rentDollars,
+            serviceFeeDollars: tenantServiceFeeDollars,
           },
         );
       } catch (emailErr) {
         console.error('Failed to send rent receipt email:', emailErr);
+      }
+    }
+
+    if (landlord?.email) {
+      try {
+        const landlordServiceFeeDollars =
+          (((r.serviceFeePayer === 'landlord' ? r.serviceFeeAmount : tenantPaidServiceFeeAmount) || 0) / 100).toFixed(2);
+        await emailService.sendLandlordRentPaymentNotification(
+          { email: landlord.email, firstName: landlord.firstName || undefined },
+          {
+            tenantName: r.tenantName,
+            paidDate: paidDateStr,
+            propertyName: property?.name || null,
+            rentDollars,
+            serviceFeeDollars: landlordServiceFeeDollars,
+            serviceFeePayer: (r.serviceFeePayer as 'tenant' | 'landlord' | 'none') || 'none',
+            platformFeeDollars,
+            tenantTotalDollars,
+            netToLandlordDollars,
+          },
+        );
+      } catch (emailErr) {
+        console.error('Failed to send landlord rent payment notification:', emailErr);
       }
     }
   }

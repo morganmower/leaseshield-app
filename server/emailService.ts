@@ -2021,24 +2021,162 @@ The LeaseShield Team
       paidDate: string;
       propertyName?: string | null;
       receiptUrl?: string | null;
+      rentDollars?: string | null;
+      serviceFeeDollars?: string | null;
     }
   ): Promise<boolean> {
     const subject = `Payment received: $${opts.amountDollars}`;
     const propertyLine = opts.propertyName ? `<p style="margin: 4px 0; color: #555;">Property: ${opts.propertyName}</p>` : '';
     const receiptLink = opts.receiptUrl ? `<p style="margin: 16px 0;"><a href="${opts.receiptUrl}" style="color: #2563eb;">View Stripe receipt</a></p>` : '';
+
+    const showItemization = opts.rentDollars != null;
+    const showServiceFeeRow =
+      showItemization &&
+      opts.serviceFeeDollars != null &&
+      Number(opts.serviceFeeDollars) > 0;
+
+    const serviceFeeRowHtml = showServiceFeeRow
+      ? `
+          <tr>
+            <td style="padding: 6px 0; color: #555;">Service fee</td>
+            <td style="padding: 6px 0; text-align: right; color: #111;">$${opts.serviceFeeDollars}</td>
+          </tr>`
+      : '';
+
+    const itemizationHtml = showItemization
+      ? `
+        <table style="width: 100%; max-width: 420px; margin: 16px 0; border-collapse: collapse; font-size: 14px;">
+          <tr>
+            <td style="padding: 6px 0; color: #555;">Rent</td>
+            <td style="padding: 6px 0; text-align: right; color: #111;">$${opts.rentDollars}</td>
+          </tr>${serviceFeeRowHtml}
+          <tr>
+            <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; color: #111; font-weight: 600;">Total paid</td>
+            <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; text-align: right; color: #111; font-weight: 600;">$${opts.amountDollars}</td>
+          </tr>
+        </table>
+      `
+      : '';
+
+    const itemizationText = showItemization
+      ? `\nRent:        $${opts.rentDollars}\n${showServiceFeeRow ? `Service fee: $${opts.serviceFeeDollars}\n` : ''}Total paid:  $${opts.amountDollars}\n`
+      : '';
+
     const htmlBody = `
       <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
         <h2 style="color: #047857;">Payment Received</h2>
         <p>Hi ${to.tenantName || 'there'},</p>
         <p>We received your rent payment of <strong>$${opts.amountDollars}</strong> on ${opts.paidDate}.</p>
         ${propertyLine}
+        ${itemizationHtml}
         <p style="color: #555;">ACH payments typically take 3-5 business days to fully clear. We'll mark your account paid in full once funds settle.</p>
         ${receiptLink}
+        <p style="color: #555; font-size: 14px;">Keep this receipt for your records — it itemizes the rent and any service fee for tax or expense reporting.</p>
         <p style="color: #555; font-size: 14px;">Thank you,<br/>${opts.landlordName}</p>
       </div>
     `;
-    const textBody = `Hi ${to.tenantName || 'there'},\n\nWe received your rent payment of $${opts.amountDollars} on ${opts.paidDate}.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}\n\nACH payments take 3-5 business days to clear.\n${opts.receiptUrl ? `Receipt: ${opts.receiptUrl}\n` : ''}\nThank you,\n${opts.landlordName}`;
+    const textBody = `Hi ${to.tenantName || 'there'},\n\nWe received your rent payment of $${opts.amountDollars} on ${opts.paidDate}.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}\n${itemizationText}\nACH payments take 3-5 business days to clear.\n${opts.receiptUrl ? `Receipt: ${opts.receiptUrl}\n` : ''}\nKeep this receipt for your records.\n\nThank you,\n${opts.landlordName}`;
     return this.sendEmail({ email: to.email, firstName: to.tenantName }, { subject, htmlBody, textBody });
+  }
+
+  /**
+   * Notify the landlord that a tenant rent payment succeeded, with an
+   * itemized breakdown of rent, service fee (and who paid it), platform fee,
+   * and the net amount expected to land in their bank account.
+   */
+  async sendLandlordRentPaymentNotification(
+    to: { email: string; firstName?: string },
+    opts: {
+      tenantName: string;
+      paidDate: string;
+      propertyName?: string | null;
+      rentDollars: string;
+      serviceFeeDollars: string;
+      serviceFeePayer: 'tenant' | 'landlord' | 'none';
+      platformFeeDollars: string;
+      tenantTotalDollars: string;
+      netToLandlordDollars: string;
+    }
+  ): Promise<boolean> {
+    const subject = `Rent payment received from ${opts.tenantName}: $${opts.rentDollars}`;
+    const propertyLine = opts.propertyName
+      ? `<p style="margin: 4px 0; color: #555;">Property: ${opts.propertyName}</p>` : '';
+
+    const feePayerLabel =
+      opts.serviceFeePayer === 'tenant'
+        ? 'Service fee (paid by tenant)'
+        : opts.serviceFeePayer === 'landlord'
+          ? 'Service fee (paid by you)'
+          : 'Service fee';
+
+    const showServiceFee = Number(opts.serviceFeeDollars) > 0;
+    const showPlatformFee = Number(opts.platformFeeDollars) > 0;
+
+    const rows: string[] = [];
+    rows.push(`
+      <tr>
+        <td style="padding: 6px 0; color: #555;">Rent</td>
+        <td style="padding: 6px 0; text-align: right; color: #111;">$${opts.rentDollars}</td>
+      </tr>`);
+    if (showServiceFee) {
+      rows.push(`
+      <tr>
+        <td style="padding: 6px 0; color: #555;">${feePayerLabel}</td>
+        <td style="padding: 6px 0; text-align: right; color: #111;">$${opts.serviceFeeDollars}</td>
+      </tr>`);
+    }
+    rows.push(`
+      <tr>
+        <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; color: #111; font-weight: 600;">Tenant paid</td>
+        <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; text-align: right; color: #111; font-weight: 600;">$${opts.tenantTotalDollars}</td>
+      </tr>`);
+    if (showPlatformFee) {
+      rows.push(`
+      <tr>
+        <td style="padding: 6px 0; color: #555;">LeaseShield platform fee</td>
+        <td style="padding: 6px 0; text-align: right; color: #111;">−$${opts.platformFeeDollars}</td>
+      </tr>`);
+    }
+    rows.push(`
+      <tr>
+        <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; color: #047857; font-weight: 600;">Net to your account</td>
+        <td style="padding: 8px 0; border-top: 1px solid #e5e7eb; text-align: right; color: #047857; font-weight: 600;">$${opts.netToLandlordDollars}</td>
+      </tr>`);
+
+    const htmlBody = `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #047857;">Rent Payment Received</h2>
+        <p>Hi ${to.firstName || 'there'},</p>
+        <p><strong>${opts.tenantName}</strong> just paid rent on ${opts.paidDate}.</p>
+        ${propertyLine}
+        <table style="width: 100%; max-width: 460px; margin: 16px 0; border-collapse: collapse; font-size: 14px;">
+          ${rows.join('')}
+        </table>
+        <p style="color: #555; font-size: 14px;">ACH payments typically take 3-5 business days to settle into your bank account.</p>
+        <p style="color: #555; font-size: 14px;">— LeaseShield</p>
+      </div>
+    `;
+    const textLines: string[] = [];
+    textLines.push(`Hi ${to.firstName || 'there'},`);
+    textLines.push('');
+    textLines.push(`${opts.tenantName} just paid rent on ${opts.paidDate}.`);
+    if (opts.propertyName) textLines.push(`Property: ${opts.propertyName}`);
+    textLines.push('');
+    textLines.push(`Rent:                    $${opts.rentDollars}`);
+    if (showServiceFee) textLines.push(`${feePayerLabel}: $${opts.serviceFeeDollars}`);
+    textLines.push(`Tenant paid:             $${opts.tenantTotalDollars}`);
+    if (showPlatformFee) textLines.push(`LeaseShield platform fee: -$${opts.platformFeeDollars}`);
+    textLines.push(`Net to your account:     $${opts.netToLandlordDollars}`);
+    textLines.push('');
+    textLines.push('ACH payments typically settle in 3-5 business days.');
+    textLines.push('');
+    textLines.push('— LeaseShield');
+    const textBody = textLines.join('\n');
+
+    return this.sendEmail(
+      { email: to.email, firstName: to.firstName },
+      { subject, htmlBody, textBody },
+    );
   }
 
   /**
