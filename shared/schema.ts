@@ -39,6 +39,11 @@ export const users = pgTable("users", {
   renewalReminderSentAt: timestamp("renewal_reminder_sent_at"), // Track when we sent renewal reminder
   paymentFailedAt: timestamp("payment_failed_at"), // Track when payment failed for banner display
   subscribedAt: timestamp("subscribed_at"), // When first payment succeeded (official subscription start)
+  // Stripe Connect (for landlord to receive tenant rent payments via ACH)
+  stripeConnectAccountId: varchar("stripe_connect_account_id"),
+  stripeConnectChargesEnabled: boolean("stripe_connect_charges_enabled").default(false),
+  stripeConnectPayoutsEnabled: boolean("stripe_connect_payouts_enabled").default(false),
+  stripeConnectDetailsSubmitted: boolean("stripe_connect_details_submitted").default(false),
   // User preferences
   preferredState: varchar("preferred_state", { length: 2 }), // UT, TX, ND, SD
   preferredCity: varchar("preferred_city"), // City ID for denial decision rules
@@ -2912,3 +2917,70 @@ export type GeneratedNoticeDocument = typeof generatedNoticeDocuments.$inferSele
 export const insertNoticeAuditEventSchema = createInsertSchema(noticeAuditEvents).omit({ id: true, createdAt: true });
 export type InsertNoticeAuditEvent = z.infer<typeof insertNoticeAuditEventSchema>;
 export type NoticeAuditEvent = typeof noticeAuditEvents.$inferSelect;
+
+// =====================================================================
+// Rent Payment Requests - Online rent collection via Stripe Connect ACH
+// =====================================================================
+export const rentPaymentRequests = pgTable("rent_payment_requests", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull().references(() => users.id, { onDelete: 'cascade' }),
+  rentalPropertyId: varchar("rental_property_id").references(() => rentalProperties.id, { onDelete: 'set null' }),
+  tenantName: text("tenant_name").notNull(),
+  tenantEmail: varchar("tenant_email"),
+  amount: integer("amount").notNull(), // base rent in cents
+  amountPaid: integer("amount_paid").default(0).notNull(), // total paid in cents
+  dueDate: date("due_date").notNull(),
+  description: text("description"),
+  publicToken: varchar("public_token", { length: 64 }).notNull().unique(),
+  // Late fee config (per lease terms)
+  lateFeeAmount: integer("late_fee_amount").default(0).notNull(), // cents
+  gracePeriodDays: integer("grace_period_days").default(5).notNull(),
+  lateFeeAppliedAt: timestamp("late_fee_applied_at"),
+  lateFeeLedgerEntryId: varchar("late_fee_ledger_entry_id"),
+  // Auto-reminder config
+  reminderDaysBefore: integer("reminder_days_before").default(5).notNull(),
+  reminderSentAt: timestamp("reminder_sent_at"),
+  // Status
+  status: varchar("status", { length: 20 }).notNull().default("pending"), // pending | reminded | processing | paid | overdue | canceled
+  paidAt: timestamp("paid_at"),
+  // Stripe references
+  stripeCheckoutSessionId: varchar("stripe_checkout_session_id"),
+  stripePaymentIntentId: varchar("stripe_payment_intent_id"),
+  ledgerEntryId: varchar("ledger_entry_id"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => [
+  index("idx_rent_payment_user").on(table.userId),
+  index("idx_rent_payment_status").on(table.status),
+  index("idx_rent_payment_due_date").on(table.dueDate),
+  index("idx_rent_payment_token").on(table.publicToken),
+]);
+
+export const rentPaymentRequestsRelations = relations(rentPaymentRequests, ({ one }) => ({
+  user: one(users, {
+    fields: [rentPaymentRequests.userId],
+    references: [users.id],
+  }),
+  property: one(rentalProperties, {
+    fields: [rentPaymentRequests.rentalPropertyId],
+    references: [rentalProperties.id],
+  }),
+}));
+
+export const insertRentPaymentRequestSchema = createInsertSchema(rentPaymentRequests).omit({
+  id: true,
+  publicToken: true,
+  amountPaid: true,
+  paidAt: true,
+  reminderSentAt: true,
+  lateFeeAppliedAt: true,
+  lateFeeLedgerEntryId: true,
+  stripeCheckoutSessionId: true,
+  stripePaymentIntentId: true,
+  ledgerEntryId: true,
+  status: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertRentPaymentRequest = z.infer<typeof insertRentPaymentRequestSchema>;
+export type RentPaymentRequest = typeof rentPaymentRequests.$inferSelect;

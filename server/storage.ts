@@ -19,6 +19,7 @@ import {
   uploadedDocuments,
   communicationTemplates,
   rentLedgerEntries,
+  rentPaymentRequests,
   emailSequences,
   emailSequenceSteps,
   emailSequenceEnrollments,
@@ -63,6 +64,8 @@ import {
   type InsertCommunicationTemplate,
   type RentLedgerEntry,
   type InsertRentLedgerEntry,
+  type RentPaymentRequest,
+  type InsertRentPaymentRequest,
   type TrainingInterest,
   type InsertTrainingInterest,
   type EmailSequence,
@@ -198,6 +201,7 @@ export interface IStorage {
     phoneNumber?: string | null;
   }): Promise<User>;
   updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User>;
+  updateUserStripeConnect(id: string, data: { stripeConnectAccountId?: string | null; stripeConnectChargesEnabled?: boolean; stripeConnectPayoutsEnabled?: boolean; stripeConnectDetailsSubmitted?: boolean }): Promise<User>;
   getUsersNeedingRenewalReminder(): Promise<User[]>;
   getUsersWithPaymentFailed(): Promise<User[]>;
   getAllActiveUsers(): Promise<User[]>;
@@ -358,6 +362,48 @@ export interface IStorage {
   createRentLedgerEntry(entry: InsertRentLedgerEntry): Promise<RentLedgerEntry>;
   updateRentLedgerEntry(id: string, userId: string, data: Partial<InsertRentLedgerEntry>): Promise<RentLedgerEntry | null>;
   deleteRentLedgerEntry(id: string, userId: string): Promise<boolean>;
+
+  // Online rent payment request operations
+  getRentPaymentRequests(userId: string): Promise<RentPaymentRequest[]>;
+  getRentPaymentRequest(id: string, userId: string): Promise<RentPaymentRequest | undefined>;
+  getRentPaymentRequestById(id: string): Promise<RentPaymentRequest | undefined>;
+  getRentPaymentRequestByToken(token: string): Promise<RentPaymentRequest | undefined>;
+  getRentPaymentRequestByPaymentIntent(paymentIntentId: string): Promise<RentPaymentRequest | undefined>;
+  createRentPaymentRequest(data: typeof rentPaymentRequests.$inferInsert): Promise<RentPaymentRequest>;
+  updateRentPaymentRequest(id: string, data: Partial<RentPaymentRequest>): Promise<RentPaymentRequest | null>;
+  /**
+   * Atomically finalizes a successful rent payment in a single DB transaction:
+   *   1. SELECT FOR UPDATE locks the rent_payment_requests row.
+   *   2. If the request already has a ledgerEntryId (truly finalized), returns null.
+   *   3. Otherwise INSERTs the rent_ledger entry AND UPDATEs the request
+   *      (status='paid', paidAt, stripePaymentIntentId, amountPaid, ledgerEntryId)
+   *      in the same transaction, so the two writes either both commit or both roll back.
+   * This makes the operation idempotent and recovery-safe: if the transaction fails,
+   * the request is NOT left in 'paid' state without a ledger entry, and a webhook
+   * retry will safely re-attempt the full finalization.
+   */
+  finalizeRentPaymentInTransaction(
+    requestId: string,
+    paymentIntentId: string,
+    amountPaid: number,
+    ledgerEntryData: InsertRentLedgerEntry,
+  ): Promise<{ request: RentPaymentRequest; ledgerEntry: RentLedgerEntry } | null>;
+  /**
+   * Atomically apply a late fee: insert a Late Fee charge into rent_ledger,
+   * update the rent payment request (status, lateFeeAppliedAt,
+   * lateFeeLedgerEntryId, increased amount, cleared stripeCheckoutSessionId)
+   * — all in one DB transaction with a SELECT FOR UPDATE row lock.
+   * Idempotent: if the request is already marked with lateFeeAppliedAt, the
+   * call is a no-op and returns null. Recovery-safe: if any step fails, no
+   * partial state is committed.
+   */
+  applyRentLateFeeInTransaction(
+    requestId: string,
+    ledgerEntryData: InsertRentLedgerEntry,
+  ): Promise<{ request: RentPaymentRequest; ledgerEntry: RentLedgerEntry } | null>;
+  deleteRentPaymentRequest(id: string, userId: string): Promise<boolean>;
+  getRentPaymentRequestsDueForReminder(): Promise<RentPaymentRequest[]>;
+  getRentPaymentRequestsDueForLateFee(): Promise<RentPaymentRequest[]>;
 
   // Training interest operations
   getTrainingInterest(userId: string): Promise<TrainingInterest | undefined>;
@@ -634,6 +680,22 @@ export class DatabaseStorage implements IStorage {
 
       return user;
     }, 'updateUserStripeInfo');
+  }
+
+  async updateUserStripeConnect(id: string, data: { stripeConnectAccountId?: string | null; stripeConnectChargesEnabled?: boolean; stripeConnectPayoutsEnabled?: boolean; stripeConnectDetailsSubmitted?: boolean }): Promise<User> {
+    return handleDbOperation(async () => {
+      const [user] = await db
+        .update(users)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+
+      if (!user) {
+        throw new Error(`User not found: ${id}`);
+      }
+
+      return user;
+    }, 'updateUserStripeConnect');
   }
 
   async getUsersNeedingRenewalReminder(): Promise<User[]> {
@@ -1855,6 +1917,220 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(rentLedgerEntries.id, id), eq(rentLedgerEntries.userId, userId)))
       .returning();
     return result.length > 0;
+  }
+
+  // Online rent payment request operations
+  async getRentPaymentRequests(userId: string): Promise<RentPaymentRequest[]> {
+    return await db
+      .select()
+      .from(rentPaymentRequests)
+      .where(eq(rentPaymentRequests.userId, userId))
+      .orderBy(desc(rentPaymentRequests.dueDate));
+  }
+
+  async getRentPaymentRequest(id: string, userId: string): Promise<RentPaymentRequest | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentPaymentRequests)
+      .where(and(eq(rentPaymentRequests.id, id), eq(rentPaymentRequests.userId, userId)));
+    return r;
+  }
+
+  async getRentPaymentRequestById(id: string): Promise<RentPaymentRequest | undefined> {
+    const [r] = await db.select().from(rentPaymentRequests).where(eq(rentPaymentRequests.id, id));
+    return r;
+  }
+
+  async getRentPaymentRequestByToken(token: string): Promise<RentPaymentRequest | undefined> {
+    const [r] = await db.select().from(rentPaymentRequests).where(eq(rentPaymentRequests.publicToken, token));
+    return r;
+  }
+
+  async getRentPaymentRequestByPaymentIntent(paymentIntentId: string): Promise<RentPaymentRequest | undefined> {
+    const [r] = await db
+      .select()
+      .from(rentPaymentRequests)
+      .where(eq(rentPaymentRequests.stripePaymentIntentId, paymentIntentId));
+    return r;
+  }
+
+  async createRentPaymentRequest(data: typeof rentPaymentRequests.$inferInsert): Promise<RentPaymentRequest> {
+    const [r] = await db.insert(rentPaymentRequests).values(data).returning();
+    return r;
+  }
+
+  async updateRentPaymentRequest(id: string, data: Partial<RentPaymentRequest>): Promise<RentPaymentRequest | null> {
+    const [r] = await db
+      .update(rentPaymentRequests)
+      .set({ ...data, updatedAt: new Date() })
+      .where(eq(rentPaymentRequests.id, id))
+      .returning();
+    return r || null;
+  }
+
+  async finalizeRentPaymentInTransaction(
+    requestId: string,
+    paymentIntentId: string,
+    amountPaid: number,
+    ledgerEntryData: InsertRentLedgerEntry,
+  ): Promise<{ request: RentPaymentRequest; ledgerEntry: RentLedgerEntry } | null> {
+    return await db.transaction(async (tx) => {
+      // Lock the row for the duration of the transaction so concurrent
+      // webhook deliveries serialize on this single rent_payment_requests row.
+      const [locked] = await tx
+        .select()
+        .from(rentPaymentRequests)
+        .where(eq(rentPaymentRequests.id, requestId))
+        .for('update');
+      if (!locked) return null;
+      // Truly finalized — ledger linkage already present. Skip safely.
+      if (locked.ledgerEntryId) return null;
+
+      // Ensure month is set, mirroring createRentLedgerEntry's logic.
+      const entryWithMonth = {
+        ...ledgerEntryData,
+        month: ledgerEntryData.month || (ledgerEntryData.effectiveDate
+          ? new Date(ledgerEntryData.effectiveDate).toISOString().slice(0, 7)
+          : new Date().toISOString().slice(0, 7)),
+      };
+
+      const [ledgerEntry] = await tx
+        .insert(rentLedgerEntries)
+        .values(entryWithMonth)
+        .returning();
+
+      // Defense-in-depth: if the actual amount received is less than what was
+      // owed at the time of finalization (would only happen if a stale checkout
+      // session was somehow used despite our amount-drift check), do NOT mark
+      // the request as `paid`. Record the partial payment in the ledger and
+      // leave the request in `overdue` for landlord reconciliation.
+      const partial = amountPaid < locked.amount;
+      if (partial) {
+        console.warn(
+          `⚠️  Rent payment ${requestId} received less than owed: $${(amountPaid / 100).toFixed(2)} of $${(locked.amount / 100).toFixed(2)}. Marking overdue for landlord reconciliation.`,
+        );
+      }
+
+      const now = new Date();
+      const [request] = await tx
+        .update(rentPaymentRequests)
+        .set({
+          status: partial ? 'overdue' : 'paid',
+          // Only stamp paidAt when the request is genuinely settled. For partial
+          // payments we leave paidAt null so reporting/UI doesn't treat the
+          // request as fully paid; landlords can still see the recorded
+          // payment via the linked rent_ledger entry.
+          paidAt: partial ? null : now,
+          stripePaymentIntentId: paymentIntentId,
+          amountPaid,
+          ledgerEntryId: ledgerEntry.id,
+          updatedAt: now,
+        })
+        .where(eq(rentPaymentRequests.id, requestId))
+        .returning();
+
+      // If the request update somehow failed, throw to roll back the ledger insert.
+      if (!request) {
+        throw new Error(`Failed to update rent_payment_request ${requestId} after ledger insert`);
+      }
+
+      return { request, ledgerEntry };
+    });
+  }
+
+  async applyRentLateFeeInTransaction(
+    requestId: string,
+    ledgerEntryData: InsertRentLedgerEntry,
+  ): Promise<{ request: RentPaymentRequest; ledgerEntry: RentLedgerEntry } | null> {
+    return await db.transaction(async (tx) => {
+      // Lock the rent_payment_requests row so concurrent late-fee runs (or a
+      // late-fee run racing with a webhook finalization) serialize here.
+      const [locked] = await tx
+        .select()
+        .from(rentPaymentRequests)
+        .where(eq(rentPaymentRequests.id, requestId))
+        .for('update');
+      if (!locked) return null;
+      // Idempotency guard: if the late fee has already been applied (or the
+      // request was paid/canceled in the meantime), skip — no duplicate
+      // ledger charge will be created.
+      if (locked.lateFeeAppliedAt || locked.lateFeeLedgerEntryId) return null;
+      if (locked.status === 'paid' || locked.status === 'canceled' || locked.status === 'processing') return null;
+
+      const entryWithMonth = {
+        ...ledgerEntryData,
+        month: ledgerEntryData.month || (ledgerEntryData.effectiveDate
+          ? new Date(ledgerEntryData.effectiveDate).toISOString().slice(0, 7)
+          : new Date().toISOString().slice(0, 7)),
+      };
+
+      const [ledgerEntry] = await tx
+        .insert(rentLedgerEntries)
+        .values(entryWithMonth)
+        .returning();
+
+      const now = new Date();
+      const [request] = await tx
+        .update(rentPaymentRequests)
+        .set({
+          lateFeeAppliedAt: now,
+          lateFeeLedgerEntryId: ledgerEntry.id,
+          status: 'overdue',
+          amount: locked.amount + locked.lateFeeAmount,
+          // Clear any stale checkout session so the next checkout creates a
+          // fresh session with the new (post-late-fee) amount.
+          stripeCheckoutSessionId: null,
+          updatedAt: now,
+        })
+        .where(eq(rentPaymentRequests.id, requestId))
+        .returning();
+
+      if (!request) {
+        throw new Error(`Failed to update rent_payment_request ${requestId} after late-fee ledger insert`);
+      }
+
+      return { request, ledgerEntry };
+    });
+  }
+
+  async deleteRentPaymentRequest(id: string, userId: string): Promise<boolean> {
+    const result = await db
+      .delete(rentPaymentRequests)
+      .where(and(eq(rentPaymentRequests.id, id), eq(rentPaymentRequests.userId, userId)))
+      .returning();
+    return result.length > 0;
+  }
+
+  async getRentPaymentRequestsDueForReminder(): Promise<RentPaymentRequest[]> {
+    // Find unpaid pending requests where due date is within reminderDaysBefore from today and reminderSentAt is null
+    return await db
+      .select()
+      .from(rentPaymentRequests)
+      .where(
+        and(
+          eq(rentPaymentRequests.status, 'pending'),
+          isNull(rentPaymentRequests.reminderSentAt),
+          // dueDate <= today + reminderDaysBefore (interval days)
+          sql`${rentPaymentRequests.dueDate}::date <= (CURRENT_DATE + (${rentPaymentRequests.reminderDaysBefore} || ' days')::interval)`,
+          // dueDate >= today (don't remind for already-overdue items here)
+          sql`${rentPaymentRequests.dueDate}::date >= CURRENT_DATE`,
+        ),
+      );
+  }
+
+  async getRentPaymentRequestsDueForLateFee(): Promise<RentPaymentRequest[]> {
+    // Find unpaid requests past due + grace period, with a configured late fee, not yet applied
+    return await db
+      .select()
+      .from(rentPaymentRequests)
+      .where(
+        and(
+          inArray(rentPaymentRequests.status, ['pending', 'reminded']),
+          isNull(rentPaymentRequests.lateFeeAppliedAt),
+          gt(rentPaymentRequests.lateFeeAmount, 0),
+          sql`${rentPaymentRequests.dueDate}::date + (${rentPaymentRequests.gracePeriodDays} || ' days')::interval < CURRENT_DATE`,
+        ),
+      );
   }
 
   // Training interest operations

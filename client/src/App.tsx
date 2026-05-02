@@ -74,6 +74,7 @@ const DashboardPreview = lazy(() => import("@/pages/dashboard-preview"));
 const Activate = lazy(() => import("@/pages/activate"));
 const DenialDecisionAssistant = lazy(() => import("@/pages/denial-decision-assistant"));
 const Reupload = lazy(() => import("@/pages/reupload"));
+const PayRent = lazy(() => import("@/pages/pay-rent"));
 
 // Admin route wrapper - redirects non-admin users to dashboard
 function AdminRoute({ component: Component }: { component: React.ComponentType }) {
@@ -133,6 +134,8 @@ function Router() {
         <Route path="/apply/person/:token" component={Apply} />
         {/* Document re-upload */}
         <Route path="/reupload/:token" component={Reupload} />
+        {/* Public tenant rent payment */}
+        <Route path="/pay-rent/:token" component={PayRent} />
         {/* Redirect protected routes to login */}
         <Route path="/dashboard">{() => <Redirect to="/login" />}</Route>
         <Route path="/templates">{() => <Redirect to="/login" />}</Route>
@@ -189,6 +192,8 @@ function Router() {
       <Route path="/apply/person/:token" component={Apply} />
       {/* Document re-upload (also accessible when logged in) */}
       <Route path="/reupload/:token" component={Reupload} />
+      {/* Public tenant rent payment (also accessible when logged in) */}
+      <Route path="/pay-rent/:token" component={PayRent} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening" component={Screening} />

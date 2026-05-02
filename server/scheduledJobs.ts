@@ -9,6 +9,12 @@ import { users, analyticsEvents } from "@shared/schema";
 import { and, eq, lt, gte, sql, not } from "drizzle-orm";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
+import { getAppBaseUrl } from "./utils/appUrl";
+import Stripe from "stripe";
+
+const stripeForJobs = process.env.STRIPE_SECRET_KEY
+  ? new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: "2025-10-29.clover" })
+  : null;
 // Note: Legislative monitoring methods now imported dynamically via legislativeMonitoringService
 
 // Landlord tips pool - rotates biweekly (every 2 weeks)
@@ -127,6 +133,8 @@ export class ScheduledJobs {
   private biweeklyDigestInterval: NodeJS.Timeout | null = null;
   private autoArchiveInterval: NodeJS.Timeout | null = null;
   private caseLawRefreshInterval: NodeJS.Timeout | null = null;
+  private rentRemindersInterval: NodeJS.Timeout | null = null;
+  private rentLateFeesInterval: NodeJS.Timeout | null = null;
 
   // =========================================================================
   // LIFECYCLE EMAILS (3-email strategy based on signup date, not trial)
@@ -1307,6 +1315,124 @@ Manage preferences: ${baseUrl}/settings
     }
   }
 
+  // ===== Online rent collection: reminders + late fees =====
+  async processRentReminders(): Promise<void> {
+    try {
+      console.log('💰 Processing rent payment reminders...');
+      const due = await storage.getRentPaymentRequestsDueForReminder();
+      if (due.length === 0) {
+        console.log('  No rent reminders to send');
+        return;
+      }
+
+      const baseUrl = getAppBaseUrl();
+
+      for (const r of due) {
+        if (!r.tenantEmail) continue;
+        try {
+          const landlord = await storage.getUser(r.userId);
+          const property = r.rentalPropertyId ? await storage.getRentalPropertyById(r.rentalPropertyId) : null;
+          const landlordName = landlord
+            ? (landlord.firstName && landlord.lastName ? `${landlord.firstName} ${landlord.lastName}` : (landlord.businessName || landlord.email || 'Your Landlord'))
+            : 'Your Landlord';
+          const dueDateStr = new Date(r.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+          const sent = await emailService.sendRentReminderEmail(
+            { email: r.tenantEmail, tenantName: r.tenantName },
+            {
+              landlordName,
+              amountDollars: (r.amount / 100).toFixed(2),
+              dueDate: dueDateStr,
+              propertyName: property?.name || null,
+              paymentLink: `${baseUrl}/pay-rent/${r.publicToken}`,
+              lateFeeDollars: r.lateFeeAmount > 0 ? (r.lateFeeAmount / 100).toFixed(2) : undefined,
+              gracePeriodDays: r.gracePeriodDays,
+            }
+          );
+          if (sent) {
+            await storage.updateRentPaymentRequest(r.id, {
+              reminderSentAt: new Date(),
+              status: 'reminded',
+            });
+          }
+        } catch (e) {
+          console.error(`  Failed to send rent reminder for request ${r.id}:`, e);
+        }
+      }
+      console.log(`✅ Sent ${due.length} rent reminders`);
+    } catch (error) {
+      console.error('❌ Error processing rent reminders:', error);
+    }
+  }
+
+  async processRentLateFees(): Promise<void> {
+    try {
+      console.log('💰 Processing rent late fees...');
+      const overdue = await storage.getRentPaymentRequestsDueForLateFee();
+      if (overdue.length === 0) {
+        console.log('  No late fees to apply');
+        return;
+      }
+
+      let appliedCount = 0;
+      for (const r of overdue) {
+        try {
+          // Apply the late fee atomically: ledger insert + request update in
+          // a single DB transaction with row lock + idempotency guard. If the
+          // transaction fails, no partial state is committed and the next
+          // run will safely retry.
+          const result = await storage.applyRentLateFeeInTransaction(r.id, {
+            userId: r.userId,
+            propertyId: null,
+            tenantName: r.tenantName,
+            month: new Date(r.dueDate).toISOString().slice(0, 7),
+            effectiveDate: new Date(),
+            type: 'charge',
+            category: 'Late Fee',
+            description: `Auto-applied late fee for rent due ${new Date(r.dueDate).toLocaleDateString()}`,
+            amountExpected: r.lateFeeAmount,
+            amountReceived: 0,
+            paymentMethod: null,
+            referenceNumber: null,
+            notes: `Auto-applied after ${r.gracePeriodDays}-day grace period`,
+          });
+
+          if (!result) {
+            // Late fee was already applied (or the request was paid/canceled
+            // since the selector ran). Idempotent skip.
+            continue;
+          }
+          appliedCount++;
+
+          // After the DB transaction succeeds, expire any open Stripe Checkout
+          // Session for this request so the tenant cannot pay the stale
+          // pre-late-fee amount. This is a best-effort side-effect; failure
+          // here does not roll back the late fee (a fresh checkout will still
+          // be forced by the amount-drift guard in the public checkout route).
+          if (r.stripeCheckoutSessionId && stripeForJobs) {
+            try {
+              const session = await stripeForJobs.checkout.sessions.retrieve(r.stripeCheckoutSessionId);
+              if (session.status === 'open') {
+                await stripeForJobs.checkout.sessions.expire(r.stripeCheckoutSessionId);
+                console.log(`  Expired stale checkout session ${r.stripeCheckoutSessionId} after late-fee application`);
+              }
+            } catch (sessionErr: any) {
+              if (sessionErr?.code !== 'resource_missing') {
+                console.error(`  Failed to expire stale checkout session for request ${r.id}:`, sessionErr?.message);
+              }
+            }
+          }
+
+          console.log(`  Applied late fee $${(r.lateFeeAmount / 100).toFixed(2)} to request ${r.id}`);
+        } catch (e) {
+          console.error(`  Failed to apply late fee for request ${r.id}:`, e);
+        }
+      }
+      console.log(`✅ Applied ${appliedCount} late fees`);
+    } catch (error) {
+      console.error('❌ Error processing late fees:', error);
+    }
+  }
+
   async autoArchiveOldSubmissions(): Promise<void> {
     try {
       const count = await storage.autoArchiveOldSubmissions();
@@ -1413,6 +1539,19 @@ Manage preferences: ${baseUrl}/settings
     );
     setTimeout(() => this.runWeeklyCaseLawRefresh(), 12 * 60 * 1000);
 
+    // Online rent collection - run reminders + late fees daily
+    this.rentRemindersInterval = setInterval(
+      () => this.processRentReminders(),
+      24 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.processRentReminders(), 13 * 60 * 1000);
+
+    this.rentLateFeesInterval = setInterval(
+      () => this.processRentLateFees(),
+      24 * 60 * 60 * 1000
+    );
+    setTimeout(() => this.processRentLateFees(), 14 * 60 * 1000);
+
     console.log('✅ Scheduled jobs started');
   }
 
@@ -1493,6 +1632,16 @@ Manage preferences: ${baseUrl}/settings
     if (this.caseLawRefreshInterval) {
       clearInterval(this.caseLawRefreshInterval);
       this.caseLawRefreshInterval = null;
+    }
+
+    if (this.rentRemindersInterval) {
+      clearInterval(this.rentRemindersInterval);
+      this.rentRemindersInterval = null;
+    }
+
+    if (this.rentLateFeesInterval) {
+      clearInterval(this.rentLateFeesInterval);
+      this.rentLateFeesInterval = null;
     }
 
     console.log('✅ Scheduled jobs stopped');

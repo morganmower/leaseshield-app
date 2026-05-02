@@ -8,6 +8,13 @@
       "when": 1766026893114,
       "tag": "0000_tense_green_goblin",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778126400000,
+      "tag": "0001_rent_payment_requests",
+      "breakpoints": true
     }
   ]
 }

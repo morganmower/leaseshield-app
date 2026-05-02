@@ -56,4 +56,4 @@ JWT_REFRESH_SECRET = "bfce295236b24a8b58dfe2abcd535f29b5b144a6f75de1569951373d5d
 
 [postMerge]
 path = "scripts/post-merge.sh"
-timeoutMs = 20000
+timeoutMs = 180000

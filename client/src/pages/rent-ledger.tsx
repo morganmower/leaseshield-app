@@ -6,10 +6,12 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus, Trash2, DollarSign, Edit2, Building2 } from "lucide-react";
+import { Download, Plus, Trash2, DollarSign, Edit2, Building2, CreditCard, Send, Copy, Link as LinkIcon, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { useState } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
-import type { RentLedgerEntry, RentalProperty } from "@shared/schema";
+import type { RentLedgerEntry, RentalProperty, RentPaymentRequest } from "@shared/schema";
+import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -240,10 +242,16 @@ export default function RentLedger() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
+        <TabsList className="grid w-full max-w-2xl grid-cols-3">
           <TabsTrigger value="track" data-testid="tab-track-entries">Track Entries</TabsTrigger>
+          <TabsTrigger value="online" data-testid="tab-online-payments">Online Payments</TabsTrigger>
           <TabsTrigger value="export" data-testid="tab-export-report">Export Report</TabsTrigger>
         </TabsList>
+
+        {/* Online Payments (Stripe Connect ACH) */}
+        <TabsContent value="online">
+          <OnlinePaymentsPanel properties={properties} />
+        </TabsContent>
 
         {/* Export Report */}
         <TabsContent value="export">
@@ -797,6 +805,456 @@ export default function RentLedger() {
               data-testid="button-save-edit"
             >
               Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// =====================================================================
+// Online Payments Panel - Stripe Connect ACH rent collection
+// =====================================================================
+interface ConnectStatus {
+  accountId: string | null;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  detailsSubmitted: boolean;
+}
+
+function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
+  const { toast } = useToast();
+  const [showCreate, setShowCreate] = useState(false);
+  const [tenantName, setTenantName] = useState("");
+  const [tenantEmail, setTenantEmail] = useState("");
+  const [amountDollars, setAmountDollars] = useState("");
+  const [dueDate, setDueDate] = useState(() => {
+    const d = new Date();
+    d.setDate(1);
+    d.setMonth(d.getMonth() + 1);
+    return d.toISOString().split('T')[0];
+  });
+  const [description, setDescription] = useState("");
+  const [lateFeeDollars, setLateFeeDollars] = useState("0");
+  const [gracePeriodDays, setGracePeriodDays] = useState("5");
+  const [reminderDaysBefore, setReminderDaysBefore] = useState("5");
+  const [rentalPropertyId, setRentalPropertyId] = useState("");
+
+  const { data: status, isLoading: statusLoading } = useQuery<ConnectStatus>({
+    queryKey: ["/api/stripe-connect/status"],
+  });
+
+  const { data: payments = [], isLoading: paymentsLoading } = useQuery<RentPaymentRequest[]>({
+    queryKey: ["/api/rent-payments"],
+  });
+
+  type ApiError = Error & { body?: { message?: string } };
+
+  const onboardMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", "/api/stripe-connect/onboard", {}),
+    onSuccess: async (response: Response) => {
+      const data = (await response.json()) as { url?: string };
+      if (data?.url) window.location.href = data.url;
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || e?.message || "Failed to start onboarding",
+      variant: "destructive",
+    }),
+  });
+
+  const dashboardLinkMutation = useMutation({
+    mutationFn: async () => apiRequest("POST", "/api/stripe-connect/login-link", {}),
+    onSuccess: async (response: Response) => {
+      const data = (await response.json()) as { url?: string };
+      if (data?.url) window.open(data.url, "_blank");
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || "Failed to open Stripe dashboard",
+      variant: "destructive",
+    }),
+  });
+
+  type CreateRentPaymentPayload = {
+    tenantName: string;
+    tenantEmail: string | null;
+    amountDollars: number;
+    dueDate: string;
+    description: string | null;
+    lateFeeDollars: number;
+    gracePeriodDays: number;
+    reminderDaysBefore: number;
+    rentalPropertyId?: string | null;
+  };
+
+  const createPaymentMutation = useMutation({
+    mutationFn: async (payload: CreateRentPaymentPayload) =>
+      apiRequest("POST", "/api/rent-payments", payload),
+    onSuccess: async (response: Response) => {
+      const data = (await response.json()) as RentPaymentRequest & { paymentLink?: string };
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-payments"] });
+      toast({ description: "Payment request created. Tenant link is ready to share." });
+      setShowCreate(false);
+      setTenantName("");
+      setTenantEmail("");
+      setAmountDollars("");
+      setDescription("");
+      setLateFeeDollars("0");
+      setRentalPropertyId("");
+      if (data?.paymentLink) {
+        try {
+          await navigator.clipboard.writeText(data.paymentLink);
+          toast({ description: "Payment link copied to clipboard" });
+        } catch {}
+      }
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || "Failed to create payment request",
+      variant: "destructive",
+    }),
+  });
+
+  const deletePaymentMutation = useMutation({
+    mutationFn: async (id: string) => apiRequest("DELETE", `/api/rent-payments/${id}`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-payments"] });
+      toast({ description: "Payment request deleted" });
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || "Failed to delete",
+      variant: "destructive",
+    }),
+  });
+
+  const reminderMutation = useMutation({
+    mutationFn: async (id: string) => apiRequest("POST", `/api/rent-payments/${id}/send-reminder`, {}),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-payments"] });
+      toast({ description: "Reminder email sent" });
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || "Failed to send reminder",
+      variant: "destructive",
+    }),
+  });
+
+  const handleCreate = () => {
+    if (!tenantName || !amountDollars || !dueDate) {
+      toast({ description: "Tenant name, amount, and due date are required", variant: "destructive" });
+      return;
+    }
+    createPaymentMutation.mutate({
+      tenantName,
+      tenantEmail: tenantEmail || null,
+      amountDollars: parseFloat(amountDollars),
+      dueDate,
+      description: description || null,
+      lateFeeDollars: parseFloat(lateFeeDollars || "0"),
+      gracePeriodDays: parseInt(gracePeriodDays) || 5,
+      reminderDaysBefore: parseInt(reminderDaysBefore) || 5,
+      rentalPropertyId: rentalPropertyId || null,
+    });
+  };
+
+  const copyLink = async (token: string) => {
+    const url = `${window.location.origin}/pay-rent/${token}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast({ description: "Link copied to clipboard" });
+    } catch {
+      toast({ description: url });
+    }
+  };
+
+  const statusBadge = (s: string) => {
+    type BadgeVariant = "default" | "secondary" | "destructive" | "outline";
+    const map: Record<string, { label: string; variant: BadgeVariant }> = {
+      pending: { label: "Pending", variant: "secondary" },
+      reminded: { label: "Reminded", variant: "secondary" },
+      processing: { label: "Processing", variant: "outline" },
+      paid: { label: "Paid", variant: "default" },
+      overdue: { label: "Overdue", variant: "destructive" },
+      canceled: { label: "Canceled", variant: "outline" },
+    };
+    const m = map[s] || { label: s, variant: "secondary" as BadgeVariant };
+    return <Badge variant={m.variant} data-testid={`status-payment-${s}`}>{m.label}</Badge>;
+  };
+
+  // Connect onboarding gate
+  if (statusLoading) {
+    return <Card className="p-6"><p className="text-sm text-muted-foreground">Loading…</p></Card>;
+  }
+
+  if (!status?.chargesEnabled) {
+    const hasAccount = !!status?.accountId;
+    return (
+      <Card className="p-6 space-y-4">
+        <div className="flex items-start gap-3">
+          <CreditCard className="h-6 w-6 text-primary mt-1" />
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold">Accept rent online via ACH</h2>
+            <p className="text-muted-foreground">
+              Connect your Stripe account so tenants can pay rent by bank transfer (ACH) — no credit card processing fees for you or your tenants.
+              Funds are paid out directly to your bank.
+            </p>
+          </div>
+        </div>
+        <div className="bg-muted/40 rounded-md p-4 text-sm space-y-1">
+          <p className="font-semibold">What you'll need to complete onboarding:</p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-1">
+            <li>Your business or personal info (name, address, DOB, SSN/EIN)</li>
+            <li>Bank account routing & account numbers (for payouts)</li>
+          </ul>
+        </div>
+        {hasAccount && !status?.detailsSubmitted && (
+          <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4 mt-0.5" />
+            <p>Your onboarding is incomplete. Continue where you left off.</p>
+          </div>
+        )}
+        {hasAccount && status?.detailsSubmitted && !status?.chargesEnabled && (
+          <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
+            <AlertTriangle className="h-4 w-4 mt-0.5" />
+            <p>Your account is under review by Stripe. Charges aren't enabled yet.</p>
+          </div>
+        )}
+        <Button
+          onClick={() => onboardMutation.mutate()}
+          disabled={onboardMutation.isPending}
+          data-testid="button-stripe-connect-onboard"
+        >
+          <CreditCard className="h-4 w-4 mr-2" />
+          {hasAccount ? "Continue Stripe Onboarding" : "Connect Stripe Account"}
+        </Button>
+      </Card>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <Card className="p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3 mb-4">
+          <div className="flex items-start gap-3">
+            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400 mt-1" />
+            <div>
+              <h2 className="text-xl font-bold">Stripe Connected</h2>
+              <p className="text-sm text-muted-foreground">
+                You can accept ACH bank transfers from tenants. Payouts go directly to your linked bank.
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button
+              variant="outline"
+              onClick={() => dashboardLinkMutation.mutate()}
+              disabled={dashboardLinkMutation.isPending}
+              data-testid="button-stripe-dashboard"
+            >
+              Stripe Dashboard
+            </Button>
+            <Button
+              onClick={() => setShowCreate(true)}
+              data-testid="button-create-rent-request"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Request Rent Payment
+            </Button>
+          </div>
+        </div>
+
+        {paymentsLoading ? (
+          <p className="text-sm text-muted-foreground">Loading payment requests…</p>
+        ) : payments.length === 0 ? (
+          <p className="text-sm text-muted-foreground" data-testid="text-no-payments">
+            No rent payment requests yet. Create one to send your tenant a payment link.
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Tenant</TableHead>
+                <TableHead>Property</TableHead>
+                <TableHead>Amount</TableHead>
+                <TableHead>Due</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {payments.map((p) => {
+                const property = properties.find((rp) => rp.id === p.rentalPropertyId);
+                return (
+                  <TableRow key={p.id} data-testid={`row-payment-${p.id}`}>
+                    <TableCell>
+                      <div className="font-medium" data-testid={`text-tenant-${p.id}`}>{p.tenantName}</div>
+                      {p.tenantEmail && <div className="text-xs text-muted-foreground">{p.tenantEmail}</div>}
+                    </TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{property?.name || "—"}</TableCell>
+                    <TableCell className="font-medium" data-testid={`text-amount-${p.id}`}>
+                      ${(p.amount / 100).toFixed(2)}
+                    </TableCell>
+                    <TableCell className="text-sm">
+                      {new Date(p.dueDate).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>{statusBadge(p.status)}</TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex items-center justify-end gap-1 flex-wrap">
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => copyLink(p.publicToken)}
+                          data-testid={`button-copy-link-${p.id}`}
+                        >
+                          <LinkIcon className="h-4 w-4" />
+                        </Button>
+                        {p.tenantEmail && p.status !== "paid" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => reminderMutation.mutate(p.id)}
+                            disabled={reminderMutation.isPending}
+                            data-testid={`button-send-reminder-${p.id}`}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {p.status !== "paid" && p.status !== "processing" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => deletePaymentMutation.mutate(p.id)}
+                            disabled={deletePaymentMutation.isPending}
+                            data-testid={`button-delete-payment-${p.id}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        )}
+      </Card>
+
+      <Dialog open={showCreate} onOpenChange={setShowCreate}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Request Rent Payment</DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div>
+              <Label htmlFor="rp-tenant">Tenant Name *</Label>
+              <Input
+                id="rp-tenant"
+                value={tenantName}
+                onChange={(e) => setTenantName(e.target.value)}
+                data-testid="input-rp-tenant-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-email">Tenant Email (for reminders)</Label>
+              <Input
+                id="rp-email"
+                type="email"
+                value={tenantEmail}
+                onChange={(e) => setTenantEmail(e.target.value)}
+                data-testid="input-rp-tenant-email"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-amount">Amount (USD) *</Label>
+              <Input
+                id="rp-amount"
+                type="number"
+                step="0.01"
+                value={amountDollars}
+                onChange={(e) => setAmountDollars(e.target.value)}
+                placeholder="0.00"
+                data-testid="input-rp-amount"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-due">Due Date *</Label>
+              <Input
+                id="rp-due"
+                type="date"
+                value={dueDate}
+                onChange={(e) => setDueDate(e.target.value)}
+                data-testid="input-rp-due-date"
+              />
+            </div>
+            {properties.length > 0 && (
+              <div className="md:col-span-2">
+                <Label htmlFor="rp-property">Property (Optional)</Label>
+                <Select value={rentalPropertyId || "none"} onValueChange={(v) => setRentalPropertyId(v === "none" ? "" : v)}>
+                  <SelectTrigger id="rp-property" data-testid="select-rp-property">
+                    <SelectValue placeholder="No property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No property</SelectItem>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>{property.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="md:col-span-2">
+              <Label htmlFor="rp-desc">Description / Memo</Label>
+              <Textarea
+                id="rp-desc"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={2}
+                placeholder="e.g., December rent for 123 Main St"
+                data-testid="input-rp-description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-late">Late Fee (USD)</Label>
+              <Input
+                id="rp-late"
+                type="number"
+                step="0.01"
+                value={lateFeeDollars}
+                onChange={(e) => setLateFeeDollars(e.target.value)}
+                data-testid="input-rp-late-fee"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-grace">Grace Period (days)</Label>
+              <Input
+                id="rp-grace"
+                type="number"
+                min="0"
+                value={gracePeriodDays}
+                onChange={(e) => setGracePeriodDays(e.target.value)}
+                data-testid="input-rp-grace-days"
+              />
+            </div>
+            <div>
+              <Label htmlFor="rp-remind">Send reminder N days before due</Label>
+              <Input
+                id="rp-remind"
+                type="number"
+                min="0"
+                value={reminderDaysBefore}
+                onChange={(e) => setReminderDaysBefore(e.target.value)}
+                data-testid="input-rp-reminder-days"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowCreate(false)} data-testid="button-cancel-rp">Cancel</Button>
+            <Button
+              onClick={handleCreate}
+              disabled={createPaymentMutation.isPending}
+              data-testid="button-submit-rp"
+            >
+              Create & Get Payment Link
             </Button>
           </DialogFooter>
         </DialogContent>

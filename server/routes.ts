@@ -5,7 +5,8 @@ import { storage } from "./storage";
 import { isAuthenticated, requireAccess, requireAdmin, startImpersonation, stopImpersonation, getImpersonationStatus } from "./jwtAuth";
 import authRoutes from "./authRoutes";
 import Stripe from "stripe";
-import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema } from "@shared/schema";
+import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSchema, insertBlogPostSchema, users, insertUploadedDocumentSchema, insertCommunicationTemplateSchema, insertRentLedgerEntrySchema, insertPropertySchema, insertSavedDocumentSchema, screeningFeedback, insertScreeningFeedbackSchema, insertRentPaymentRequestSchema, type RentPaymentRequest } from "@shared/schema";
+import crypto from "crypto";
 import { z } from "zod";
 import { db } from "./db";
 import { eq, desc, sql } from "drizzle-orm";
@@ -15,6 +16,7 @@ import { getUncachableResendClient } from "./resend";
 import { generateLegalUpdateEmail } from "./email-templates";
 import { notifyUsersOfTemplateUpdate } from "./templateNotifications";
 import { asyncHandler, RateLimiter } from "./utils/validation";
+import { getAppBaseUrl } from "./utils/appUrl";
 import { sendBinaryDownload, assertLooksLikeDocx, assertLooksLikePdf, assertValidDocx, CONTENT_TYPES } from "./utils/download";
 import { getActiveStateIds } from "./states/getActiveStates";
 import multer from "multer";
@@ -1174,6 +1176,99 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Idempotently finalize a successful rent payment: create the rent_ledger
+  // entry exactly once, mark the request paid, and email the receipt.
+  // Safe to call from both `checkout.session.completed` and `payment_intent.succeeded`.
+  async function finalizeRentPaymentSuccess(
+    requestId: string,
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
+    // Cheap pre-check: skip if already truly finalized (ledger linkage present).
+    // Note: we deliberately do NOT short-circuit on `status === 'paid'` alone,
+    // because a previous attempt could have failed mid-way and left the row
+    // marked paid without a ledger entry. The transactional finalize below
+    // handles that case correctly by re-creating the ledger entry.
+    const existing = await storage.getRentPaymentRequestById(requestId);
+    if (!existing) return;
+    if (existing.ledgerEntryId) return;
+
+    const property = existing.rentalPropertyId
+      ? await storage.getRentalPropertyById(existing.rentalPropertyId)
+      : null;
+    const monthStr = new Date(existing.dueDate).toISOString().slice(0, 7);
+    const amountReceived = paymentIntent.amount_received || paymentIntent.amount;
+
+    // Atomically insert the ledger entry AND mark the request paid in a single
+    // DB transaction with row-level locking. Either both writes commit or both
+    // roll back — guaranteeing eventual consistency even on partial failures.
+    const result = await storage.finalizeRentPaymentInTransaction(
+      requestId,
+      paymentIntent.id,
+      amountReceived,
+      {
+        userId: existing.userId,
+        // NOTE: rent_ledger_entries.propertyId FK still references the legacy
+        // `properties` table; new rental_properties IDs cannot be set directly
+        // here without a separate schema migration. Property name is preserved
+        // in description/notes for visibility and is rendered in the UI.
+        propertyId: null,
+        tenantName: existing.tenantName,
+        month: monthStr,
+        effectiveDate: new Date(),
+        type: 'payment',
+        category: 'Rent',
+        description: `Online ACH payment via Stripe (req ${existing.id.slice(0, 8)})`,
+        amountExpected: existing.amount,
+        amountReceived,
+        paymentMethod: 'ACH (Stripe)',
+        referenceNumber: paymentIntent.id,
+        notes: property ? `Property: ${property.name}` : null,
+      },
+    );
+
+    if (!result) {
+      console.log(`⏭️  Rent payment ${requestId} already finalized by another worker — skipping.`);
+      return;
+    }
+
+    const { request: r, ledgerEntry } = result;
+    console.log(`✅ Rent payment finalized: request ${r.id}, ledger ${ledgerEntry.id}`);
+
+    // Send tenant receipt email (best-effort, runs after the transaction commits)
+    if (r.tenantEmail) {
+      try {
+        const landlord = await storage.getUser(r.userId);
+        const landlordName = landlord
+          ? (landlord.firstName && landlord.lastName
+              ? `${landlord.firstName} ${landlord.lastName}`
+              : (landlord.businessName || landlord.email || 'Your Landlord'))
+          : 'Your Landlord';
+        let receiptUrl: string | null = null;
+        if (paymentIntent.latest_charge) {
+          try {
+            const chargeId = typeof paymentIntent.latest_charge === 'string'
+              ? paymentIntent.latest_charge
+              : paymentIntent.latest_charge.id;
+            const charge = await stripe.charges.retrieve(chargeId);
+            receiptUrl = charge.receipt_url || null;
+          } catch {}
+        }
+        await emailService.sendRentReceiptEmail(
+          { email: r.tenantEmail, tenantName: r.tenantName },
+          {
+            landlordName,
+            amountDollars: (amountReceived / 100).toFixed(2),
+            paidDate: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+            propertyName: property?.name || null,
+            receiptUrl,
+          },
+        );
+      } catch (emailErr) {
+        console.error('Failed to send rent receipt email:', emailErr);
+      }
+    }
+  }
+
   // Stripe webhook handler for subscription lifecycle events
   app.post('/api/stripe-webhook', async (req: any, res) => {
     const sig = req.headers['stripe-signature'];
@@ -1344,12 +1439,98 @@ export async function registerRoutes(app: Express): Promise<Server> {
           break;
         }
 
+        case 'checkout.session.completed': {
+          const session = event.data.object as Stripe.Checkout.Session;
+          const meta = session.metadata || {};
+          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+            const requestId = meta.rent_payment_request_id;
+            const r = await storage.getRentPaymentRequestById(requestId);
+            if (r) {
+              const piId = typeof session.payment_intent === 'string' ? session.payment_intent : session.payment_intent?.id;
+              await storage.updateRentPaymentRequest(r.id, {
+                stripePaymentIntentId: piId || r.stripePaymentIntentId,
+                ...(r.status === 'paid' ? {} : { status: 'processing' as const }),
+              });
+              console.log(`💰 Rent checkout session completed for request ${r.id} (payment_status=${session.payment_status})`);
+
+              // If the session already shows paid (e.g., card-style instant settle),
+              // retrieve the PaymentIntent and finalize so we never miss the ledger entry.
+              if (session.payment_status === 'paid' && piId) {
+                try {
+                  const pi = await stripe.paymentIntents.retrieve(piId);
+                  await finalizeRentPaymentSuccess(r.id, pi);
+                } catch (err: any) {
+                  console.error(`Failed to finalize rent payment from checkout session for ${r.id}:`, err?.message);
+                }
+              }
+            }
+          }
+          break;
+        }
+
+        case 'payment_intent.processing': {
+          const pi = event.data.object as Stripe.PaymentIntent;
+          const meta = pi.metadata || {};
+          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+            const r = await storage.getRentPaymentRequestById(meta.rent_payment_request_id);
+            if (r && r.status !== 'paid') {
+              await storage.updateRentPaymentRequest(r.id, {
+                stripePaymentIntentId: pi.id,
+                status: 'processing',
+              });
+              console.log(`⏳ Rent payment processing (ACH initiated) for request ${r.id}`);
+            }
+          }
+          break;
+        }
+
+        case 'payment_intent.payment_failed': {
+          const pi = event.data.object as Stripe.PaymentIntent;
+          const meta = pi.metadata || {};
+          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+            const r = await storage.getRentPaymentRequestById(meta.rent_payment_request_id);
+            if (r && r.status !== 'paid') {
+              await storage.updateRentPaymentRequest(r.id, {
+                status: r.lateFeeAppliedAt ? 'overdue' : 'pending',
+              });
+              console.log(`❌ Rent payment failed for request ${r.id}: ${pi.last_payment_error?.message || 'unknown'}`);
+            }
+          }
+          break;
+        }
+
+        case 'account.updated': {
+          const acct = event.data.object as Stripe.Account;
+          // Find user by connected account id
+          const userResults = await db.select().from(users).where(eq(users.stripeConnectAccountId, acct.id)).limit(1);
+          if (userResults.length > 0) {
+            await storage.updateUserStripeConnect(userResults[0].id, {
+              stripeConnectChargesEnabled: !!acct.charges_enabled,
+              stripeConnectPayoutsEnabled: !!acct.payouts_enabled,
+              stripeConnectDetailsSubmitted: !!acct.details_submitted,
+            });
+            console.log(`🔗 Connect account updated for user ${userResults[0].id}: charges=${acct.charges_enabled}, payouts=${acct.payouts_enabled}`);
+          }
+          break;
+        }
+
         case 'payment_intent.succeeded': {
           const paymentIntent = event.data.object as Stripe.PaymentIntent & { invoice?: string };
           const invoiceId = paymentIntent.invoice;
-          
+          const meta = paymentIntent.metadata || {};
+
+          // Rent payment via Stripe Connect
+          if (meta.leaseshield_kind === 'rent_payment' && meta.rent_payment_request_id) {
+            try {
+              await finalizeRentPaymentSuccess(meta.rent_payment_request_id, paymentIntent);
+            } catch (e: any) {
+              console.error('Failed to record rent payment:', e?.message);
+            }
+            break;
+          }
+
           console.log(`💰 Payment intent succeeded: ${paymentIntent.id}, invoiceId: ${invoiceId}`);
-          
+
           // For subscription payments, the invoice will tell us which subscription
           if (invoiceId) {
             try {
@@ -2537,6 +2718,393 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting rent ledger entry:", error);
       res.status(500).json({ message: "Failed to delete entry" });
+    }
+  });
+
+  // =====================================================================
+  // Stripe Connect onboarding (landlord receives tenant rent payments)
+  // =====================================================================
+  // Canonical app-origin helper lives in server/utils/appUrl.ts so background
+  // jobs (scheduledJobs.ts) and route handlers resolve URLs identically.
+
+  app.get('/api/stripe-connect/status', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      let acctInfo: {
+        accountId: string | null;
+        chargesEnabled: boolean;
+        payoutsEnabled: boolean;
+        detailsSubmitted: boolean;
+      } = {
+        accountId: user.stripeConnectAccountId || null,
+        chargesEnabled: !!user.stripeConnectChargesEnabled,
+        payoutsEnabled: !!user.stripeConnectPayoutsEnabled,
+        detailsSubmitted: !!user.stripeConnectDetailsSubmitted,
+      };
+
+      // If we have an account, refresh state from Stripe
+      if (user.stripeConnectAccountId) {
+        try {
+          const acct = await stripe.accounts.retrieve(user.stripeConnectAccountId);
+          acctInfo = {
+            accountId: acct.id,
+            chargesEnabled: !!acct.charges_enabled,
+            payoutsEnabled: !!acct.payouts_enabled,
+            detailsSubmitted: !!acct.details_submitted,
+          };
+          // Persist any drift (map response keys → DB column keys)
+          if (
+            acctInfo.chargesEnabled !== user.stripeConnectChargesEnabled ||
+            acctInfo.payoutsEnabled !== user.stripeConnectPayoutsEnabled ||
+            acctInfo.detailsSubmitted !== user.stripeConnectDetailsSubmitted
+          ) {
+            await storage.updateUserStripeConnect(userId, {
+              stripeConnectChargesEnabled: acctInfo.chargesEnabled,
+              stripeConnectPayoutsEnabled: acctInfo.payoutsEnabled,
+              stripeConnectDetailsSubmitted: acctInfo.detailsSubmitted,
+            });
+          }
+        } catch (e: any) {
+          console.error('Failed to retrieve connected account:', e?.message);
+        }
+      }
+
+      res.json(acctInfo);
+    } catch (error: any) {
+      console.error('Stripe Connect status error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to load Connect status' });
+    }
+  });
+
+  app.post('/api/stripe-connect/onboard', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+
+      let accountId = user.stripeConnectAccountId;
+      if (!accountId) {
+        const acct = await stripe.accounts.create({
+          type: 'express',
+          email: user.email || undefined,
+          capabilities: {
+            transfers: { requested: true },
+            us_bank_account_ach_payments: { requested: true },
+          },
+          business_type: 'individual',
+          metadata: { leaseshield_user_id: userId },
+        });
+        accountId = acct.id;
+        await storage.updateUserStripeConnect(userId, { stripeConnectAccountId: accountId });
+      }
+
+      const baseUrl = getAppBaseUrl(req);
+      const link = await stripe.accountLinks.create({
+        account: accountId!,
+        refresh_url: `${baseUrl}/rent-ledger?connect=refresh`,
+        return_url: `${baseUrl}/rent-ledger?connect=return`,
+        type: 'account_onboarding',
+      });
+      res.json({ url: link.url });
+    } catch (error: any) {
+      console.error('Stripe Connect onboard error:', error);
+      const msg = error?.message || 'Failed to start Stripe Connect onboarding';
+      res.status(500).json({ message: msg });
+    }
+  });
+
+  app.post('/api/stripe-connect/login-link', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user?.stripeConnectAccountId) {
+        return res.status(400).json({ message: 'No connected account yet' });
+      }
+      const link = await stripe.accounts.createLoginLink(user.stripeConnectAccountId);
+      res.json({ url: link.url });
+    } catch (error: any) {
+      console.error('Stripe Connect login link error:', error);
+      res.status(500).json({ message: error?.message || 'Failed to create login link' });
+    }
+  });
+
+  // =====================================================================
+  // Rent payment requests (landlord-managed)
+  // =====================================================================
+  app.get('/api/rent-payments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const list = await storage.getRentPaymentRequests(userId);
+      res.json(list);
+    } catch (error) {
+      console.error('Error fetching rent payments:', error);
+      res.status(500).json({ message: 'Failed to fetch rent payments' });
+    }
+  });
+
+  app.post('/api/rent-payments', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      if (!user.stripeConnectChargesEnabled || !user.stripeConnectAccountId) {
+        return res.status(400).json({
+          message: 'Connect your Stripe account before creating rent payment requests.',
+        });
+      }
+
+      const body = req.body || {};
+      const amountDollars = parseFloat(body.amountDollars ?? '0');
+      const lateFeeDollars = parseFloat(body.lateFeeDollars ?? '0');
+      const amount = Math.round(amountDollars * 100);
+      const lateFeeAmount = Math.max(0, Math.round(lateFeeDollars * 100));
+      if (!amount || amount < 100) {
+        return res.status(400).json({ message: 'Amount must be at least $1.00' });
+      }
+      if (!body.tenantName || !body.dueDate) {
+        return res.status(400).json({ message: 'tenantName and dueDate are required' });
+      }
+
+      // Validate property ownership if provided
+      let rentalPropertyId: string | null = null;
+      if (body.rentalPropertyId) {
+        const p = await storage.getRentalPropertyById(body.rentalPropertyId);
+        if (!p || p.userId !== userId) {
+          return res.status(400).json({ message: 'Invalid property' });
+        }
+        rentalPropertyId = p.id;
+      }
+
+      const insertData = {
+        userId,
+        rentalPropertyId,
+        tenantName: String(body.tenantName).trim(),
+        tenantEmail: body.tenantEmail ? String(body.tenantEmail).trim() : null,
+        amount,
+        dueDate: body.dueDate,
+        description: body.description || null,
+        lateFeeAmount,
+        gracePeriodDays: Number.isFinite(parseInt(body.gracePeriodDays)) ? parseInt(body.gracePeriodDays) : 5,
+        reminderDaysBefore: Number.isFinite(parseInt(body.reminderDaysBefore)) ? parseInt(body.reminderDaysBefore) : 5,
+      };
+      const validated = insertRentPaymentRequestSchema.parse(insertData);
+      const publicToken = crypto.randomBytes(24).toString('hex');
+      const created = await storage.createRentPaymentRequest({ ...validated, publicToken });
+
+      const baseUrl = getAppBaseUrl(req);
+      res.json({ ...created, paymentLink: `${baseUrl}/pay-rent/${publicToken}` });
+    } catch (error: any) {
+      console.error('Error creating rent payment request:', error);
+      if (error?.issues) {
+        return res.status(400).json({ message: 'Validation failed', issues: error.issues });
+      }
+      res.status(500).json({ message: error?.message || 'Failed to create rent payment request' });
+    }
+  });
+
+  app.delete('/api/rent-payments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const existing = await storage.getRentPaymentRequest(req.params.id, userId);
+      if (!existing) return res.status(404).json({ message: 'Not found' });
+      if (existing.status === 'paid' || existing.status === 'processing') {
+        return res.status(400).json({ message: 'Cannot delete a payment that is paid or processing' });
+      }
+
+      // If there is an active (open) Stripe Checkout Session, expire it first
+      // so the tenant cannot complete payment against a deleted request and
+      // leave us with an unreconciled webhook.
+      if (existing.stripeCheckoutSessionId) {
+        try {
+          const session = await stripe.checkout.sessions.retrieve(existing.stripeCheckoutSessionId);
+          if (session.status === 'open') {
+            await stripe.checkout.sessions.expire(existing.stripeCheckoutSessionId);
+          }
+        } catch (err: any) {
+          // If the session no longer exists or is already complete/expired,
+          // continue — but if it was open and expire failed, abort the delete
+          // so the user can retry rather than risk a charge against a deleted request.
+          if (err?.code !== 'resource_missing') {
+            console.error(`Failed to expire checkout session for rent request ${existing.id}:`, err?.message);
+            return res.status(409).json({
+              message: 'Could not cancel the active checkout session. Please try again in a moment.',
+            });
+          }
+        }
+      }
+
+      await storage.deleteRentPaymentRequest(req.params.id, userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error('Error deleting rent payment request:', error);
+      res.status(500).json({ message: 'Failed to delete' });
+    }
+  });
+
+  app.post('/api/rent-payments/:id/send-reminder', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const r = await storage.getRentPaymentRequest(req.params.id, userId);
+      if (!r) return res.status(404).json({ message: 'Not found' });
+      if (!r.tenantEmail) return res.status(400).json({ message: 'Tenant has no email on file' });
+
+      const landlord = await storage.getUser(userId);
+      const property = r.rentalPropertyId ? await storage.getRentalPropertyById(r.rentalPropertyId) : null;
+      const baseUrl = getAppBaseUrl(req);
+      const landlordName = landlord
+        ? (landlord.firstName && landlord.lastName ? `${landlord.firstName} ${landlord.lastName}` : (landlord.businessName || landlord.email || 'Your Landlord'))
+        : 'Your Landlord';
+
+      const sent = await emailService.sendRentReminderEmail(
+        { email: r.tenantEmail, tenantName: r.tenantName },
+        {
+          landlordName,
+          amountDollars: (r.amount / 100).toFixed(2),
+          dueDate: new Date(r.dueDate).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+          propertyName: property?.name || null,
+          paymentLink: `${baseUrl}/pay-rent/${r.publicToken}`,
+          lateFeeDollars: r.lateFeeAmount > 0 ? (r.lateFeeAmount / 100).toFixed(2) : undefined,
+          gracePeriodDays: r.gracePeriodDays,
+        }
+      );
+      if (sent) {
+        await storage.updateRentPaymentRequest(r.id, { reminderSentAt: new Date(), status: r.status === 'pending' ? 'reminded' : r.status });
+      }
+      res.json({ sent });
+    } catch (error: any) {
+      console.error('Error sending reminder:', error);
+      res.status(500).json({ message: error?.message || 'Failed to send reminder' });
+    }
+  });
+
+  // ===== Public tenant-facing endpoints =====
+  app.get('/api/rent-payments/public/:token', async (req, res) => {
+    try {
+      const r = await storage.getRentPaymentRequestByToken(req.params.token);
+      if (!r) return res.status(404).json({ message: 'Payment request not found' });
+      const landlord = await storage.getUser(r.userId);
+      const property = r.rentalPropertyId ? await storage.getRentalPropertyById(r.rentalPropertyId) : null;
+      res.json({
+        id: r.id,
+        tenantName: r.tenantName,
+        amount: r.amount,
+        amountPaid: r.amountPaid,
+        dueDate: r.dueDate,
+        description: r.description,
+        status: r.status,
+        lateFeeAmount: r.lateFeeAmount,
+        gracePeriodDays: r.gracePeriodDays,
+        landlordName: landlord
+          ? (landlord.firstName && landlord.lastName ? `${landlord.firstName} ${landlord.lastName}` : (landlord.businessName || 'Your Landlord'))
+          : 'Your Landlord',
+        propertyName: property?.name || null,
+        propertyAddress: property?.address || null,
+      });
+    } catch (error) {
+      console.error('Error fetching public rent payment:', error);
+      res.status(500).json({ message: 'Failed to load payment request' });
+    }
+  });
+
+  app.post('/api/rent-payments/public/:token/checkout', async (req, res) => {
+    try {
+      const r = await storage.getRentPaymentRequestByToken(req.params.token);
+      if (!r) return res.status(404).json({ message: 'Payment request not found' });
+      if (r.status === 'paid') return res.status(400).json({ message: 'This rent has already been paid' });
+      // Note: a `canceled` status is reserved in the schema for future
+      // soft-cancel semantics. Today, deletion is a hard delete (the row is
+      // removed via DELETE /api/rent-payments/:id), so a canceled request
+      // would 404 above before reaching this check. The branch is kept as a
+      // defensive guard for the future when soft-cancel is introduced.
+      if (r.status === 'canceled') return res.status(400).json({ message: 'This payment request has been canceled' });
+      if (r.status === 'processing') {
+        return res.status(409).json({
+          message: 'A payment for this rent is already in progress. ACH transfers take 3-5 business days to settle. If your previous attempt failed, please contact your landlord.',
+        });
+      }
+
+      const landlord = await storage.getUser(r.userId);
+      if (!landlord?.stripeConnectAccountId || !landlord.stripeConnectChargesEnabled) {
+        return res.status(400).json({ message: 'Landlord cannot accept online payments yet.' });
+      }
+
+      // If we already have an open Checkout Session for this request, reuse it
+      // instead of creating a duplicate (prevents accidental double-payments
+      // from page reloads/retries) — but ONLY if the session amount still
+      // matches the request amount. If the request amount changed (e.g. a late
+      // fee was applied), expire the stale session so the tenant cannot pay
+      // the old, lower amount.
+      if (r.stripeCheckoutSessionId) {
+        try {
+          const existing = await stripe.checkout.sessions.retrieve(r.stripeCheckoutSessionId);
+          if (existing.status === 'open' && existing.url) {
+            if (existing.amount_total === r.amount) {
+              return res.json({ url: existing.url });
+            }
+            // Amount drift detected — expire the stale session before creating a new one.
+            try {
+              await stripe.checkout.sessions.expire(r.stripeCheckoutSessionId);
+              console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amount drift: ${existing.amount_total} → ${r.amount})`);
+            } catch (expireErr: any) {
+              console.warn(`Could not expire stale session ${r.stripeCheckoutSessionId}:`, expireErr?.message);
+            }
+          }
+        } catch (lookupErr) {
+          console.warn(`Existing checkout session ${r.stripeCheckoutSessionId} could not be retrieved; creating new one.`);
+        }
+      }
+
+      const baseUrl = getAppBaseUrl(req);
+      const successUrl = `${baseUrl}/pay-rent/${r.publicToken}?paid=1`;
+      const cancelUrl = `${baseUrl}/pay-rent/${r.publicToken}?canceled=1`;
+
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['us_bank_account'],
+        customer_email: r.tenantEmail || undefined,
+        line_items: [{
+          price_data: {
+            currency: 'usd',
+            unit_amount: r.amount,
+            product_data: {
+              name: `Rent payment - ${r.tenantName}`,
+              description: r.description || (r.dueDate ? `Due ${new Date(r.dueDate).toLocaleDateString()}` : undefined),
+            },
+          },
+          quantity: 1,
+        }],
+        payment_intent_data: {
+          transfer_data: { destination: landlord.stripeConnectAccountId },
+          metadata: {
+            leaseshield_kind: 'rent_payment',
+            rent_payment_request_id: r.id,
+            landlord_user_id: r.userId,
+          },
+        },
+        metadata: {
+          leaseshield_kind: 'rent_payment',
+          rent_payment_request_id: r.id,
+          landlord_user_id: r.userId,
+        },
+        success_url: successUrl,
+        cancel_url: cancelUrl,
+      }, {
+        // Idempotency key prevents duplicate session creation if this endpoint
+        // is hit twice in quick succession (network retry, double-click).
+        idempotencyKey: `rent-checkout-${r.id}-${r.amount}-${r.updatedAt instanceof Date ? r.updatedAt.getTime() : new Date(r.updatedAt as unknown as string).getTime()}`,
+      });
+
+      await storage.updateRentPaymentRequest(r.id, {
+        stripeCheckoutSessionId: session.id,
+      });
+
+      res.json({ url: session.url });
+    } catch (error: any) {
+      console.error('Error creating checkout session:', error);
+      res.status(500).json({ message: error?.message || 'Failed to create checkout session' });
     }
   });
 

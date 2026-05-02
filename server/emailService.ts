@@ -1971,6 +1971,75 @@ The LeaseShield Team
 
     return this.sendEmail(user, template);
   }
+
+  /**
+   * Send rent reminder email to tenant N days before due date
+   */
+  async sendRentReminderEmail(
+    to: { email: string; tenantName: string },
+    opts: {
+      landlordName: string;
+      amountDollars: string;
+      dueDate: string;
+      propertyName?: string | null;
+      paymentLink: string;
+      lateFeeDollars?: string;
+      gracePeriodDays?: number;
+    }
+  ): Promise<boolean> {
+    const lateFeeNote = opts.lateFeeDollars && Number(opts.lateFeeDollars) > 0
+      ? `<p style="margin: 16px 0; color: #b45309;"><strong>Heads up:</strong> A late fee of $${opts.lateFeeDollars} applies if rent is not paid within ${opts.gracePeriodDays || 5} days of the due date.</p>`
+      : '';
+    const propertyLine = opts.propertyName ? `<p style="margin: 4px 0; color: #555;">Property: ${opts.propertyName}</p>` : '';
+    const subject = `Rent reminder: $${opts.amountDollars} due ${opts.dueDate}`;
+    const htmlBody = `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #111;">Rent Reminder</h2>
+        <p>Hi ${to.tenantName || 'there'},</p>
+        <p>This is a friendly reminder that your rent payment of <strong>$${opts.amountDollars}</strong> is due on <strong>${opts.dueDate}</strong>.</p>
+        ${propertyLine}
+        <p style="margin: 24px 0;">
+          <a href="${opts.paymentLink}" style="background: #2563eb; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; display: inline-block;">Pay Rent Online (ACH - No Card Fees)</a>
+        </p>
+        ${lateFeeNote}
+        <p style="color: #555; font-size: 14px;">Paying by bank transfer (ACH) is free — no credit card processing fees.</p>
+        <p style="color: #555; font-size: 14px;">Thank you,<br/>${opts.landlordName}</p>
+      </div>
+    `;
+    const textBody = `Hi ${to.tenantName || 'there'},\n\nReminder: rent of $${opts.amountDollars} is due on ${opts.dueDate}.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}\n\nPay online (ACH, no card fees): ${opts.paymentLink}\n\n${opts.lateFeeDollars && Number(opts.lateFeeDollars) > 0 ? `Late fee of $${opts.lateFeeDollars} applies after ${opts.gracePeriodDays || 5} day grace period.\n\n` : ''}Thank you,\n${opts.landlordName}`;
+    return this.sendEmail({ email: to.email, firstName: to.tenantName }, { subject, htmlBody, textBody });
+  }
+
+  /**
+   * Send rent payment receipt email to tenant when payment succeeds
+   */
+  async sendRentReceiptEmail(
+    to: { email: string; tenantName: string },
+    opts: {
+      landlordName: string;
+      amountDollars: string;
+      paidDate: string;
+      propertyName?: string | null;
+      receiptUrl?: string | null;
+    }
+  ): Promise<boolean> {
+    const subject = `Payment received: $${opts.amountDollars}`;
+    const propertyLine = opts.propertyName ? `<p style="margin: 4px 0; color: #555;">Property: ${opts.propertyName}</p>` : '';
+    const receiptLink = opts.receiptUrl ? `<p style="margin: 16px 0;"><a href="${opts.receiptUrl}" style="color: #2563eb;">View Stripe receipt</a></p>` : '';
+    const htmlBody = `
+      <div style="font-family: -apple-system, Helvetica, Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 24px;">
+        <h2 style="color: #047857;">Payment Received</h2>
+        <p>Hi ${to.tenantName || 'there'},</p>
+        <p>We received your rent payment of <strong>$${opts.amountDollars}</strong> on ${opts.paidDate}.</p>
+        ${propertyLine}
+        <p style="color: #555;">ACH payments typically take 3-5 business days to fully clear. We'll mark your account paid in full once funds settle.</p>
+        ${receiptLink}
+        <p style="color: #555; font-size: 14px;">Thank you,<br/>${opts.landlordName}</p>
+      </div>
+    `;
+    const textBody = `Hi ${to.tenantName || 'there'},\n\nWe received your rent payment of $${opts.amountDollars} on ${opts.paidDate}.${opts.propertyName ? `\nProperty: ${opts.propertyName}` : ''}\n\nACH payments take 3-5 business days to clear.\n${opts.receiptUrl ? `Receipt: ${opts.receiptUrl}\n` : ''}\nThank you,\n${opts.landlordName}`;
+    return this.sendEmail({ email: to.email, firstName: to.tenantName }, { subject, htmlBody, textBody });
+  }
 }
 
 export const emailService = new EmailService();
