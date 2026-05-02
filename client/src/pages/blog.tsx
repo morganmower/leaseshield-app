@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { BookOpen, Calendar, Eye, Search, Filter } from "lucide-react";
 import { motion } from "framer-motion";
 import type { BlogPost } from "@shared/schema";
+import { SEO } from "@/components/seo";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -23,6 +24,14 @@ export default function Blog() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedState, setSelectedState] = useState<string>("all");
   const [selectedTag, setSelectedTag] = useState<string>("all");
+
+  const seoTag = (
+    <SEO
+      title="LeaseShield Blog — Landlord Guides, State Laws & Compliance Tips"
+      description="Practical, state-specific guidance for landlords on screening, evictions, security deposits, and lease compliance. Updated as laws change."
+      canonical="/blog"
+    />
+  );
 
   // Build query string for filters
   const buildQueryString = () => {
@@ -74,6 +83,7 @@ export default function Blog() {
 
   return (
     <div className="min-h-screen bg-background">
+      {seoTag}
       {/* Header */}
       <section className="border-b bg-muted/30 py-12 md:py-16">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

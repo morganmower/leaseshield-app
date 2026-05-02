@@ -33,6 +33,7 @@ import { useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { TrialValueMessage } from "@/components/trial-conversion-nudge";
 import { landingCopy } from "@/content/landingCopy";
+import { SEO } from "@/components/seo";
 
 const STATES = [
   "Utah", "Texas", "North Dakota", "South Dakota", "North Carolina",
@@ -309,6 +310,11 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="LeaseShield — State-Specific Lease Templates, Compliance & Screening Help for Landlords"
+        description="State-specific lease templates, official court forms, compliance updates, and AI-powered screening help for landlords in 16 US states. $10/month, cancel anytime."
+        canonical="/"
+      />
       {/* Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex items-center justify-between max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4">
@@ -526,6 +532,38 @@ export default function Landing() {
               </Button>
             </motion.div>
           </motion.div>
+        </div>
+      </section>
+
+      {/* Trust Strip — honest stats only */}
+      <section
+        className="border-y bg-muted/30 py-6 md:py-8"
+        data-testid="section-trust-strip"
+        aria-label="What's included with LeaseShield"
+      >
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
+            <div className="flex flex-col items-center" data-testid="trust-stat-states">
+              <MapPin className="h-5 w-5 text-brand-600 mb-2" />
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">{STATES.length}</p>
+              <p className="text-xs md:text-sm text-muted-foreground">States Covered</p>
+            </div>
+            <div className="flex flex-col items-center" data-testid="trust-stat-court-forms">
+              <Scale className="h-5 w-5 text-brand-600 mb-2" />
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">Official</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Court Forms</p>
+            </div>
+            <div className="flex flex-col items-center" data-testid="trust-stat-monitoring">
+              <Sparkles className="h-5 w-5 text-brand-600 mb-2" />
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">Daily</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Legal Updates</p>
+            </div>
+            <div className="flex flex-col items-center" data-testid="trust-stat-pricing">
+              <DollarSign className="h-5 w-5 text-brand-600 mb-2" />
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">$10<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+              <p className="text-xs md:text-sm text-muted-foreground">Cancel Anytime</p>
+            </div>
+          </div>
         </div>
       </section>
 

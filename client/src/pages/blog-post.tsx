@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { useMemo } from "react";
 import DOMPurify from "dompurify";
 import type { BlogPost } from "@shared/schema";
+import { SEO } from "@/components/seo";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -33,6 +34,14 @@ export default function BlogPostPage() {
       ALLOW_DATA_ATTR: false,
     });
   }, [post?.content]);
+
+  const postExcerpt = useMemo(() => {
+    if (!post) return undefined;
+    if (post.excerpt) return post.excerpt;
+    if (!post.content) return undefined;
+    const stripped = post.content.replace(/<[^>]+>/g, "").trim();
+    return stripped.length > 160 ? `${stripped.slice(0, 157)}...` : stripped;
+  }, [post]);
 
   const formatDate = (date: Date | string | null | undefined) => {
     if (!date) return "";
@@ -66,6 +75,7 @@ export default function BlogPostPage() {
   if (!post) {
     return (
       <div className="min-h-screen bg-background py-12">
+        <SEO title="Article not found" noIndex />
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-2xl font-semibold mb-4">Article not found</h1>
           <p className="text-muted-foreground mb-6">The article you're looking for doesn't exist or has been removed.</p>
@@ -82,6 +92,12 @@ export default function BlogPostPage() {
 
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title={post.metaTitle || post.title}
+        description={post.metaDescription || postExcerpt}
+        canonical={`/blog/${post.slug}`}
+        ogImage={post.featuredImageUrl ?? undefined}
+      />
       {/* Header */}
       <motion.section
         initial="hidden"

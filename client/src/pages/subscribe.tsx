@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { CheckCircle2, Shield, Lock, CreditCard, User } from "lucide-react";
 import { Logo } from "@/components/logo";
+import { SEO } from "@/components/seo";
 
 if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
   throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
@@ -185,6 +186,19 @@ function SubscribeForm({ billingPeriod }: SubscribeFormProps) {
           </>
         )}
       </Button>
+      <div
+        className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-xs text-muted-foreground"
+        data-testid="text-button-guarantee"
+      >
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+          30-day money-back guarantee
+        </span>
+        <span className="flex items-center gap-1">
+          <CheckCircle2 className="h-3.5 w-3.5 text-success" />
+          Cancel anytime
+        </span>
+      </div>
     </form>
   );
 }
@@ -294,6 +308,11 @@ export default function Subscribe() {
 
   return (
     <div className="min-h-screen bg-background py-6 sm:py-12">
+      <SEO
+        title="Subscribe to LeaseShield — $10/month, Cancel Anytime"
+        description="Subscribe to LeaseShield for $10/month or $100/year. State-specific templates, compliance updates, screening help, and a 30-day money-back guarantee."
+        canonical="/subscribe"
+      />
       <div className="container max-w-3xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
         {/* Header */}
         <div className="text-center mb-6 sm:mb-8">

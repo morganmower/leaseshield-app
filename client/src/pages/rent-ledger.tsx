@@ -614,7 +614,25 @@ export default function RentLedger() {
                   </Table>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-center py-8">No entries yet. Add one above to get started!</p>
+                <div
+                  className="flex flex-col items-center justify-center py-12 px-4 text-center"
+                  data-testid="empty-state-rent-ledger"
+                >
+                  <div className="rounded-full bg-primary/10 p-4 mb-4">
+                    <DollarSign className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold mb-2">Track your first rent payment</h3>
+                  <p className="text-sm text-muted-foreground max-w-md mb-4">
+                    A clean ledger is your best evidence in court. Log charges and payments here so you always have proof of what was owed and what was paid.
+                  </p>
+                  <Button
+                    onClick={() => setActiveTab("track")}
+                    data-testid="button-empty-add-entry"
+                  >
+                    <Plus className="h-4 w-4 mr-2" />
+                    Add your first entry
+                  </Button>
+                </div>
               )}
             </Card>
           </div>

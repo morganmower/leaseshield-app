@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Shield, Loader2 } from "lucide-react";
 import logoHorizontal from "@/assets/logo-horizontal.png";
+import { SEO } from "@/components/seo";
 
 const loginSchema = z.object({
   email: z.string().email("Please enter a valid email address"),
@@ -66,6 +67,12 @@ export default function Login() {
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <SEO
+        title="Log In to LeaseShield"
+        description="Log in to your LeaseShield account to access state-specific lease templates, compliance updates, and screening tools."
+        canonical="/login"
+        noIndex
+      />
       <Card className="w-full max-w-md">
         <CardHeader className="text-center space-y-4">
           <div className="flex justify-center">

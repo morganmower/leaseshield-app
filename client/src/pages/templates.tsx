@@ -7,6 +7,7 @@ import { getAccessToken } from "@/lib/queryClient";
 import { useStates } from "@/hooks/useStates";
 import type { LegalUpdate } from "@shared/schema";
 import { useIsActivated, ActivationPrompt } from "@/components/activation-gate";
+import { SEO } from "@/components/seo";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -468,6 +469,11 @@ export default function Templates() {
 
   return (
     <div className="flex-1 overflow-auto">
+      <SEO
+        title="Leases & Notices — State-Specific Templates"
+        description="Browse 150+ state-specific lease, notice, and compliance templates. Official court forms where available, attorney-reviewed templates everywhere else."
+        canonical="/templates"
+      />
       {/* Hero Header with Gradient */}
       <div className="bg-gradient-to-r from-primary/10 via-primary/5 to-transparent border-b">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

@@ -4,10 +4,16 @@ import { ArrowLeft, CreditCard, Scale } from "lucide-react";
 import { Link } from "wouter";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { SEO } from "@/components/seo";
 
 export default function ScreeningExplain() {
   return (
     <div className="min-h-screen bg-background">
+      <SEO
+        title="Explain a Screening Report — LeaseShield"
+        description="Decode credit reports and criminal/eviction screening reports in plain English. Get FCRA-compliant guidance for landlord decisions."
+        canonical="/screening/explain"
+      />
       {/* Simple Header */}
       <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
         <div className="container flex items-center justify-between max-w-4xl mx-auto px-4 py-4">
