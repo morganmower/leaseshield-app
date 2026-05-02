@@ -2,6 +2,9 @@ import { useEffect } from "react";
 
 const SITE_NAME = "LeaseShield";
 const SITE_URL = "https://leaseshieldapp.com";
+const DEFAULT_DESCRIPTION =
+  "LeaseShield helps small landlords stay legally compliant with state-specific leases, notices, and screening tools. $10/month, cancel anytime.";
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-image-v2.png`;
 
 interface SEOProps {
   title: string;
@@ -38,10 +41,10 @@ function setLinkRel(rel: string, href: string) {
 }
 
 /**
- * SEO component — additively updates document head per page.
- * Falls back to the static index.html tags when unmounted (does not reset),
- * so navigating to a page without SEO leaves the previous title in place.
- * That's acceptable: every public page should render its own <SEO /> tag.
+ * SEO component — updates document head per page.
+ * Always writes every meta tag (using sensible defaults when props are absent)
+ * so optional fields like description/og:image never carry over stale values
+ * from a previously-rendered page.
  */
 export function SEO({
   title,
@@ -57,14 +60,16 @@ export function SEO({
 
     document.title = fullTitle;
 
-    if (description) {
-      setMetaContent("name", "description", description);
-      setMetaContent("property", "og:description", description);
-      setMetaContent("name", "twitter:description", description);
-    }
+    const effectiveDescription = description || DEFAULT_DESCRIPTION;
+    setMetaContent("name", "description", effectiveDescription);
+    setMetaContent("property", "og:description", effectiveDescription);
+    setMetaContent("name", "twitter:description", effectiveDescription);
 
     setMetaContent("property", "og:title", fullTitle);
     setMetaContent("name", "twitter:title", fullTitle);
+    setMetaContent("property", "og:site_name", SITE_NAME);
+    setMetaContent("property", "og:type", "website");
+    setMetaContent("name", "twitter:card", "summary_large_image");
 
     const canonicalUrl = canonical
       ? canonical.startsWith("http")
@@ -74,19 +79,19 @@ export function SEO({
     setLinkRel("canonical", canonicalUrl);
     setMetaContent("property", "og:url", canonicalUrl);
 
-    if (ogImage) {
-      const fullImg = ogImage.startsWith("http")
+    const effectiveImage = ogImage
+      ? ogImage.startsWith("http")
         ? ogImage
-        : `${SITE_URL}${ogImage}`;
-      setMetaContent("property", "og:image", fullImg);
-      setMetaContent("name", "twitter:image", fullImg);
-    }
+        : `${SITE_URL}${ogImage}`
+      : DEFAULT_OG_IMAGE;
+    setMetaContent("property", "og:image", effectiveImage);
+    setMetaContent("name", "twitter:image", effectiveImage);
 
-    if (noIndex) {
-      setMetaContent("name", "robots", "noindex,nofollow");
-    } else {
-      setMetaContent("name", "robots", "index,follow");
-    }
+    setMetaContent(
+      "name",
+      "robots",
+      noIndex ? "noindex,nofollow" : "index,follow",
+    );
   }, [title, description, canonical, ogImage, noIndex]);
 
   return null;

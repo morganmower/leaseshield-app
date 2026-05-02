@@ -34,6 +34,7 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Multi-Property Management**: CRUD operations for properties, document association, and filtering.
 - **Document Upload/Re-Upload System**: Securely handles user document uploads (PDF, DOC, DOCX) and provides token-based links for applicants to re-upload missing documents.
 - **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements.
+- **SEO Infrastructure**: Static `client/public/robots.txt` and `client/public/sitemap.xml` served at `/robots.txt` and `/sitemap.xml`. Lightweight `<SEO>` component (`client/src/components/seo.tsx`) updates document head per page (title, description, canonical, og/twitter tags) — always writes every tag with sensible defaults so navigation never leaves stale meta values. Wired into landing, subscribe, blog, blog-post, screening-explain, templates, login, signup.
 
 ### Feature Specifications
 - **Subscription Management**: Integrated with Stripe.
