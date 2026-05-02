@@ -399,10 +399,40 @@ export default function Landing() {
             </motion.p>
             <motion.p 
               variants={fadeInUp}
-              className="text-sm text-muted-foreground font-medium mb-10"
+              className="text-sm text-muted-foreground font-medium mb-8"
             >
               {landingCopy.hero.reassurance}
             </motion.p>
+
+            {/* Trust Bar — honest stats only */}
+            <motion.div
+              variants={fadeInUp}
+              className="mb-10 mx-auto max-w-3xl rounded-xl border border-border/60 bg-card/60 backdrop-blur-sm px-4 py-4 sm:px-6"
+              data-testid="section-trust-bar"
+            >
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                <div className="flex flex-col items-center gap-1">
+                  <MapPin className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                  <div className="text-lg font-bold text-foreground" data-testid="stat-states">16 states</div>
+                  <div className="text-xs text-muted-foreground">covered today</div>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <Scale className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                  <div className="text-lg font-bold text-foreground" data-testid="stat-court-forms">Official forms</div>
+                  <div className="text-xs text-muted-foreground">court-issued PDFs</div>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <Sparkles className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                  <div className="text-lg font-bold text-foreground" data-testid="stat-ai">AI screening</div>
+                  <div className="text-xs text-muted-foreground">Fair Housing aware</div>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <ShieldCheck className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                  <div className="text-lg font-bold text-foreground" data-testid="stat-guarantee">30-day</div>
+                  <div className="text-xs text-muted-foreground">money-back guarantee</div>
+                </div>
+              </div>
+            </motion.div>
 
             {/* Dashboard Preview Card */}
             <motion.div 

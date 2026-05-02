@@ -15,6 +15,7 @@ import type { ComplianceCard } from "@shared/schema";
 import { Link, useLocation } from "wouter";
 import { format } from "date-fns";
 import { getAccessToken } from "@/lib/queryClient";
+import { SEO } from "@/components/seo";
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: any; color: string; bgColor: string }> = {
   deposits: { 
@@ -150,6 +151,11 @@ export default function Compliance() {
 
   return (
     <div className="flex-1 overflow-auto">
+      <SEO
+        title="Compliance Toolkit — State-Specific Landlord Requirements"
+        description="State-by-state compliance guidance for security deposits, notices, lease requirements, and habitability across 16 US states."
+        canonical="/compliance"
+      />
       {/* Hero Header with Gradient */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

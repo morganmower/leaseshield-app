@@ -12,6 +12,7 @@ import type { LegalUpdate, CaseLawMonitoring, Template } from "@shared/schema";
 import { format } from "date-fns";
 import { Link } from "wouter";
 import { getAccessToken } from "@/lib/queryClient";
+import { SEO } from "@/components/seo";
 
 export default function LegalUpdatesPage() {
   const { toast } = useToast();
@@ -244,6 +245,11 @@ export default function LegalUpdatesPage() {
 
   return (
     <div className="flex-1 overflow-auto">
+      <SEO
+        title="Legal Updates — New Landlord-Tenant Laws & Case Law"
+        description="Track new statutes, regulations, and court decisions affecting landlords across 16 US states. Plain-English summaries with source citations."
+        canonical="/legal-updates"
+      />
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
