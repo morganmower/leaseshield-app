@@ -75,7 +75,24 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
-      
+
+      // Validate column-length constraints up front so the client gets a
+      // human-readable 400 instead of a generic 500 on Postgres overflow.
+      const lengthChecks: Array<[string, unknown, number]> = [
+        ['state', state, 2],
+        ['zipCode', zipCode, 10],
+        ['propertyType', propertyType, 50],
+        ['screeningInvitationId', screeningInvitationId, 100],
+      ];
+      for (const [field, value, max] of lengthChecks) {
+        if (typeof value === 'string' && value.length > max) {
+          return res.status(400).json({
+            message: `${field} is too long (max ${max} characters, got ${value.length}).`,
+            field,
+          });
+        }
+      }
+
       const property = await storage.updateRentalProperty(req.params.id, userId, {
         name,
         address,
@@ -97,9 +114,21 @@ export async function registerRentalPropertiesRoutes(app: Express) {
       }
 
       res.json(property);
-    } catch (error) {
-      console.error("Error updating rental property:", error);
-      res.status(500).json({ message: "Failed to update property" });
+    } catch (error: any) {
+      // Log the full error server-side AND return the underlying message so
+      // we can diagnose the next failure instead of guessing. handleDbOperation
+      // wraps the original error; we strip its "Database operation failed:" prefix.
+      console.error("Error updating rental property:", {
+        userId: getUserId(req),
+        propertyId: req.params.id,
+        body: req.body,
+        error,
+      });
+      const raw = error?.cause?.message || error?.message || String(error);
+      const detail = raw.replace(/^Database operation failed:\s*/, '');
+      res.status(500).json({
+        message: `Failed to update property: ${detail}`,
+      });
     }
   });
 

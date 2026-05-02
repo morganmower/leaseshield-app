@@ -165,7 +165,14 @@ export default function Properties() {
         credentials: "include",
         body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, propertyTermsJson, defaultFieldSchemaJson }),
       });
-      if (!response.ok) throw new Error("Failed to update property");
+      if (!response.ok) {
+        let serverMessage = "Failed to update property";
+        try {
+          const body = await response.json();
+          if (body?.message) serverMessage = body.message;
+        } catch {}
+        throw new Error(serverMessage);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -175,8 +182,12 @@ export default function Properties() {
       resetForm();
       toast({ title: "Property Updated", description: "Your changes have been saved. Existing application links will show the new settings." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to update property. Please try again.", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to update property. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

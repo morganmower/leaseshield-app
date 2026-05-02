@@ -184,9 +184,16 @@ async function handleDbOperation<T>(
 ): Promise<T> {
   try {
     return await operation();
-  } catch (error) {
+  } catch (error: any) {
     console.error(`Database error in ${context}:`, error);
-    throw new Error(`Database operation failed: ${context}`);
+    // Preserve the underlying error message + cause so callers can surface
+    // a meaningful explanation (e.g. "value too long for type character varying(2)")
+    // rather than a generic "Database operation failed" string.
+    const wrapped = new Error(
+      `Database operation failed: ${context}: ${error?.message || String(error)}`,
+    );
+    (wrapped as any).cause = error;
+    throw wrapped;
   }
 }
 
