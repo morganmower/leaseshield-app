@@ -36,7 +36,7 @@ import { registerComplianceMatrixRoutes } from "./routes/complianceMatrix";
 import noticeGenerationRoutes from "./routes/noticeGeneration";
 import { getStateAdverseActionHtml } from "./states/adverseActionDisclosures";
 import { uploadApplicantBuffer, downloadApplicantStream, isObjstorePath, deleteApplicantObject } from "./applicantObjectStorage";
-import { rentalSubmissionFiles } from "@shared/schema";
+import { rentalSubmissionFiles, rentLedgerEntries } from "@shared/schema";
 import fsSync from "fs";
 
 // Stripe configuration - production uses STRIPE_SECRET_KEY.
@@ -1269,6 +1269,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   }
 
+  // Records a ledger entry for a failed/returned ACH payment attempt so the
+  // landlord has a complete audit trail (paid + failed events on one timeline).
+  // Idempotent: dedupes on referenceNumber = `failed:${paymentIntentId}`.
+  // Does NOT affect balance math — uses amountExpected:0 / amountReceived:0.
+  async function recordFailedRentPaymentAttempt(
+    requestId: string,
+    paymentIntent: Stripe.PaymentIntent,
+  ): Promise<void> {
+    try {
+      const r = await storage.getRentPaymentRequestById(requestId);
+      if (!r) return;
+
+      const refKey = `failed:${paymentIntent.id}`;
+      const existing = await db
+        .select({ id: rentLedgerEntries.id })
+        .from(rentLedgerEntries)
+        .where(and(
+          eq(rentLedgerEntries.userId, r.userId),
+          eq(rentLedgerEntries.referenceNumber, refKey),
+        ))
+        .limit(1);
+      if (existing.length > 0) {
+        console.log(`⏭️  Failed-payment ledger entry already exists for ${paymentIntent.id} — skipping.`);
+        return;
+      }
+
+      const property = r.rentalPropertyId
+        ? await storage.getRentalPropertyById(r.rentalPropertyId)
+        : null;
+      const monthStr = new Date(r.dueDate).toISOString().slice(0, 7);
+      const attemptedDollars = (r.amount / 100).toFixed(2);
+      const reason = paymentIntent.last_payment_error?.message
+        || paymentIntent.last_payment_error?.code
+        || 'Bank declined or returned the transfer';
+
+      await storage.createRentLedgerEntry({
+        userId: r.userId,
+        // Same FK caveat as the success path: rent_ledger_entries.propertyId
+        // references the legacy `properties` table; new rentalProperties IDs
+        // can't be set directly without a migration.
+        propertyId: null,
+        tenantName: r.tenantName,
+        month: monthStr,
+        effectiveDate: new Date(),
+        type: 'payment',
+        category: 'Failed Payment',
+        description: `ACH payment of $${attemptedDollars} failed: ${reason}`,
+        amountExpected: 0,
+        amountReceived: 0,
+        paymentMethod: 'ACH (Failed)',
+        referenceNumber: refKey,
+        notes: property ? `Property: ${property.name} • Request ${r.id.slice(0, 8)}` : `Request ${r.id.slice(0, 8)}`,
+      });
+
+      console.log(`📒 Failed rent payment logged to ledger: request ${r.id}, intent ${paymentIntent.id}`);
+    } catch (err: any) {
+      console.error('Failed to record failed-payment ledger entry:', err?.message);
+    }
+  }
+
   // Stripe webhook handler for subscription lifecycle events
   app.post('/api/stripe-webhook', async (req: any, res) => {
     const sig = req.headers['stripe-signature'];
@@ -1494,6 +1554,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
                 status: r.lateFeeAppliedAt ? 'overdue' : 'pending',
               });
               console.log(`❌ Rent payment failed for request ${r.id}: ${pi.last_payment_error?.message || 'unknown'}`);
+              // Auto-write a "Failed Payment" row to the ledger so the landlord
+              // sees both successful and failed attempts on one timeline.
+              await recordFailedRentPaymentAttempt(r.id, pi);
             }
           }
           break;

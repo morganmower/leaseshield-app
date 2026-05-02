@@ -44,10 +44,57 @@ export default function RentLedger() {
   const [propertyId, setPropertyId] = useState<string>("");
   const [editPropertyId, setEditPropertyId] = useState<string>("");
   const [filterPropertyId, setFilterPropertyId] = useState<string>("all");
+  const [filterYear, setFilterYear] = useState<string>("all");
+  const [filterMonth, setFilterMonth] = useState<string>("all");
+  const [filterDay, setFilterDay] = useState<string>("");
 
   const { data: entries, isLoading } = useQuery<RentLedgerEntry[]>({
     queryKey: ["/api/rent-ledger"],
   });
+
+  // Single source of truth for filtering — used by both Summary and Ledger
+  // History so they always agree. Date filter uses effectiveDate (falls back
+  // to createdAt). filterDay is a YYYY-MM-DD string from <input type="date">.
+  const matchesFilters = (entry: RentLedgerEntry) => {
+    if (filterPropertyId === "unassigned" && entry.propertyId) return false;
+    if (filterPropertyId !== "all" && filterPropertyId !== "unassigned" && entry.propertyId !== filterPropertyId) return false;
+    // Use UTC to keep "calendar day" filtering stable regardless of the
+    // viewer's timezone — the date input <input type="date"> returns a
+    // YYYY-MM-DD string with no tz, so comparing against UTC components
+    // gives consistent results for everyone.
+    const d = new Date(entry.effectiveDate || entry.createdAt);
+    if (filterYear !== "all" && String(d.getUTCFullYear()) !== filterYear) return false;
+    if (filterMonth !== "all" && String(d.getUTCMonth() + 1).padStart(2, "0") !== filterMonth) return false;
+    if (filterDay) {
+      const iso = `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`;
+      if (iso !== filterDay) return false;
+    }
+    return true;
+  };
+
+  // Years present in the dataset (for the year dropdown). Always include the
+  // current year so the user can filter to "this year" even with zero entries.
+  const availableYears = (() => {
+    const set = new Set<number>();
+    set.add(new Date().getUTCFullYear());
+    (entries || []).forEach((e) => {
+      const d = new Date(e.effectiveDate || e.createdAt);
+      if (!isNaN(d.getTime())) set.add(d.getUTCFullYear());
+    });
+    return Array.from(set).sort((a, b) => b - a);
+  })();
+
+  const monthOptions = [
+    { value: "01", label: "January" }, { value: "02", label: "February" },
+    { value: "03", label: "March" },   { value: "04", label: "April" },
+    { value: "05", label: "May" },     { value: "06", label: "June" },
+    { value: "07", label: "July" },    { value: "08", label: "August" },
+    { value: "09", label: "September" },{ value: "10", label: "October" },
+    { value: "11", label: "November" },{ value: "12", label: "December" },
+  ];
+
+  const hasActiveDateFilter = filterYear !== "all" || filterMonth !== "all" || !!filterDay;
+  const clearDateFilters = () => { setFilterYear("all"); setFilterMonth("all"); setFilterDay(""); };
 
   const { data: properties = [] } = useQuery<RentalProperty[]>({
     queryKey: ["/api/rental/properties"],
@@ -451,12 +498,8 @@ export default function RentLedger() {
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {(() => {
-                    // Filter entries for summary calculation
-                    const filteredEntries = entries.filter((entry) => {
-                      if (filterPropertyId === "all") return true;
-                      if (filterPropertyId === "unassigned") return !entry.propertyId;
-                      return entry.propertyId === filterPropertyId;
-                    });
+                    // Filter entries for summary calculation (property + date filters combined)
+                    const filteredEntries = entries.filter(matchesFilters);
                     
                     let totalCharges = 0;
                     let totalPayments = 0;
@@ -496,27 +539,73 @@ export default function RentLedger() {
 
             {/* Ledger Table */}
             <Card className="p-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-                <h2 className="text-xl font-bold">Ledger History</h2>
-                {properties.length > 0 && (
-                  <div className="flex items-center gap-2">
-                    <Building2 className="h-4 w-4 text-muted-foreground" />
-                    <Select value={filterPropertyId} onValueChange={setFilterPropertyId}>
-                      <SelectTrigger className="w-[200px]" data-testid="select-filter-property">
-                        <SelectValue placeholder="Filter by property" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Properties</SelectItem>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {properties.map((property) => (
-                          <SelectItem key={property.id} value={property.id}>
-                            {property.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <h2 className="text-xl font-bold">Ledger History</h2>
+                  {properties.length > 0 && (
+                    <div className="flex items-center gap-2">
+                      <Building2 className="h-4 w-4 text-muted-foreground" />
+                      <Select value={filterPropertyId} onValueChange={setFilterPropertyId}>
+                        <SelectTrigger className="w-[200px]" data-testid="select-filter-property">
+                          <SelectValue placeholder="Filter by property" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Properties</SelectItem>
+                          <SelectItem value="unassigned">Unassigned</SelectItem>
+                          {properties.map((property) => (
+                            <SelectItem key={property.id} value={property.id}>
+                              {property.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+                {/* Time-travel filters: drill down by year, month, or specific day */}
+                <div className="flex flex-wrap items-center gap-2 pt-1 border-t">
+                  <span className="text-xs font-medium text-muted-foreground pr-1">Look back:</span>
+                  <Select value={filterYear} onValueChange={setFilterYear}>
+                    <SelectTrigger className="w-[120px]" data-testid="select-filter-year">
+                      <SelectValue placeholder="Year" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All years</SelectItem>
+                      {availableYears.map((y) => (
+                        <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Select value={filterMonth} onValueChange={setFilterMonth}>
+                    <SelectTrigger className="w-[140px]" data-testid="select-filter-month">
+                      <SelectValue placeholder="Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All months</SelectItem>
+                      {monthOptions.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="date"
+                    value={filterDay}
+                    onChange={(e) => setFilterDay(e.target.value)}
+                    className="w-[160px]"
+                    data-testid="input-filter-day"
+                    aria-label="Filter by exact day"
+                  />
+                  {hasActiveDateFilter && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={clearDateFilters}
+                      data-testid="button-clear-date-filters"
+                    >
+                      Clear dates
+                    </Button>
+                  )}
+                </div>
               </div>
               {isLoading ? (
                 <p className="text-muted-foreground">Loading entries...</p>
@@ -539,12 +628,8 @@ export default function RentLedger() {
                     </TableHeader>
                     <TableBody>
                       {(() => {
-                        // Filter entries by property if filter is active
-                        const filteredEntries = entries.filter((entry) => {
-                          if (filterPropertyId === "all") return true;
-                          if (filterPropertyId === "unassigned") return !entry.propertyId;
-                          return entry.propertyId === filterPropertyId;
-                        });
+                        // Filter entries by property + date filters (shared helper)
+                        const filteredEntries = entries.filter(matchesFilters);
                         
                         // Sort chronologically (oldest first) to calculate correct running balances
                         const chronologicalEntries = [...filteredEntries].sort((a, b) => {
