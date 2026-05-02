@@ -1,0 +1,90 @@
+{
+  "id": "evt_3TSl3x2NBvTl7hWP0X5TBZrO",
+  "object": "event",
+  "api_version": "2025-10-29.clover",
+  "created": 1777757303,
+  "data": {
+    "object": {
+      "id": "pi_3TSl3x2NBvTl7hWP0rMySaZA",
+      "object": "payment_intent",
+      "amount": 100,
+      "amount_capturable": 0,
+      "amount_details": {
+        "shipping": {
+          "amount": 0,
+          "from_postal_code": null,
+          "to_postal_code": null
+        },
+        "tax": {
+          "total_tax_amount": 0
+        },
+        "tip": {}
+      },
+      "amount_received": 0,
+      "application": null,
+      "application_fee_amount": null,
+      "automatic_payment_methods": null,
+      "canceled_at": null,
+      "cancellation_reason": null,
+      "capture_method": "automatic_async",
+      "client_secret": "pi_3TSl3x2NBvTl7hWP0rMySaZA_secret_lnMvCq2UQsiw2PuexXOMtYFK4",
+      "confirmation_method": "automatic",
+      "created": 1777757221,
+      "currency": "usd",
+      "customer": null,
+      "customer_account": null,
+      "description": null,
+      "excluded_payment_method_types": null,
+      "last_payment_error": null,
+      "latest_charge": "py_3TSl3x2NBvTl7hWP0ozNmCv9",
+      "livemode": true,
+      "managed_payments": {
+        "enabled": false
+      },
+      "metadata": {
+        "rent_payment_request_id": "a30fbbf6-bbf1-4111-9cbc-53c0e8634a0b",
+        "landlord_user_id": "50032334",
+        "leaseshield_kind": "rent_payment"
+      },
+      "next_action": null,
+      "on_behalf_of": null,
+      "payment_details": {
+        "customer_reference": null,
+        "order_reference": "cs_live_a1jM73HapH8Pq1NebJ47yBHJETiivaNB4I68XooKsNfjTal8EFjilPgpWR"
+      },
+      "payment_method": "pm_1TSl5G2NBvTl7hWPZLFn1kn8",
+      "payment_method_configuration_details": null,
+      "payment_method_options": {
+        "us_bank_account": {
+          "mandate_options": {},
+          "transaction_purpose": "unspecified",
+          "verification_method": "automatic"
+        }
+      },
+      "payment_method_types": [
+        "us_bank_account"
+      ],
+      "processing": null,
+      "receipt_email": null,
+      "review": null,
+      "setup_future_usage": null,
+      "shared_payment_granted_token": null,
+      "shipping": null,
+      "source": null,
+      "statement_descriptor": null,
+      "statement_descriptor_suffix": null,
+      "status": "processing",
+      "transfer_data": {
+        "destination": "acct_1TSkPhRtbJCKaQHQ"
+      },
+      "transfer_group": null
+    }
+  },
+  "livemode": true,
+  "pending_webhooks": 1,
+  "request": {
+    "id": null,
+    "idempotency_key": "dcd72af3-f638-409f-bb79-48e3f7c4eafc"
+  },
+  "type": "payment_intent.processing"
+}
