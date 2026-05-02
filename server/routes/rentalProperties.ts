@@ -42,9 +42,24 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
-      
+
       if (!name) {
         return res.status(400).json({ message: "Property name is required" });
+      }
+
+      const lengthChecks: Array<[string, unknown, number]> = [
+        ['state', state, 2],
+        ['zipCode', zipCode, 10],
+        ['propertyType', propertyType, 50],
+        ['screeningInvitationId', screeningInvitationId, 100],
+      ];
+      for (const [field, value, max] of lengthChecks) {
+        if (typeof value === 'string' && value.length > max) {
+          return res.status(400).json({
+            message: `${field} is too long (max ${max} characters, got ${value.length}).`,
+            field,
+          });
+        }
       }
 
       const property = await storage.createRentalProperty({
@@ -65,9 +80,17 @@ export async function registerRentalPropertiesRoutes(app: Express) {
       });
 
       res.status(201).json(property);
-    } catch (error) {
-      console.error("Error creating rental property:", error);
-      res.status(500).json({ message: "Failed to create property" });
+    } catch (error: any) {
+      console.error("Error creating rental property:", {
+        userId: getUserId(req),
+        body: req.body,
+        error,
+      });
+      const raw = error?.cause?.message || error?.message || String(error);
+      const detail = raw.replace(/^Database operation failed:\s*/, '');
+      res.status(500).json({
+        message: `Failed to create property: ${detail}`,
+      });
     }
   });
 

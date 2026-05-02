@@ -139,7 +139,14 @@ export default function Properties() {
         credentials: "include",
         body: JSON.stringify({ ...data, requiredDocumentTypes, autoScreening, screeningInvitationId: screeningInvitationId || null, propertyTermsJson, defaultFieldSchemaJson }),
       });
-      if (!response.ok) throw new Error("Failed to create property");
+      if (!response.ok) {
+        let serverMessage = "Failed to create property";
+        try {
+          const body = await response.json();
+          if (body?.message) serverMessage = body.message;
+        } catch {}
+        throw new Error(serverMessage);
+      }
       return response.json();
     },
     onSuccess: () => {
@@ -148,8 +155,12 @@ export default function Properties() {
       resetForm();
       toast({ title: "Property Added", description: "Your property has been added successfully." });
     },
-    onError: () => {
-      toast({ title: "Error", description: "Failed to add property. Please try again.", variant: "destructive" });
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error?.message || "Failed to add property. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
