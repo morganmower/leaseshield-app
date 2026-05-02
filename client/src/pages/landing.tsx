@@ -6,7 +6,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
 import westernVerifyLogo from "@assets/western_verify_logo_official.png";
 import leaseShieldIcon from "@assets/image_1765210101470.png";
@@ -146,6 +146,7 @@ function VideoWalkthroughSection() {
 }
 
 export default function Landing() {
+  const [, setLocation] = useLocation();
   const [selectedFeature, setSelectedFeature] = useState<FeatureType>(null);
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
@@ -331,14 +332,14 @@ export default function Landing() {
             <ThemeToggle />
             <Button
               variant="ghost"
-              onClick={() => window.location.href = "/login"}
+              onClick={() => setLocation("/login")}
               data-testid="button-login"
               className="text-sm sm:text-base min-h-[48px]"
             >
               Log In
             </Button>
             <Button
-              onClick={() => window.location.href = "/signup"}
+              onClick={() => setLocation("/signup")}
               data-testid="button-start-trial"
               size="lg"
               className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
@@ -381,7 +382,7 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-4">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/screening/explain"}
+                onClick={() => setLocation("/screening/explain")}
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]"
                 data-testid="button-explain-report"
               >
@@ -451,21 +452,21 @@ export default function Landing() {
                     {/* Quick-start pills - clickable with hover effects */}
                     <div className="flex flex-wrap gap-2">
                       <button 
-                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does charge-off mean and should I be worried?")}
+                        onClick={() => setLocation("/screening?prompt=" + encodeURIComponent("What does charge-off mean and should I be worried?"))}
                         className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
                         data-testid="pill-chargeoff"
                       >
                         Charge-off?
                       </button>
                       <button 
-                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What does a low credit score mean for approving a tenant?")}
+                        onClick={() => setLocation("/screening?prompt=" + encodeURIComponent("What does a low credit score mean for approving a tenant?"))}
                         className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
                         data-testid="pill-lowscore"
                       >
                         Low score?
                       </button>
                       <button 
-                        onClick={() => window.location.href = "/screening?prompt=" + encodeURIComponent("What do collections on a credit report mean?")}
+                        onClick={() => setLocation("/screening?prompt=" + encodeURIComponent("What do collections on a credit report mean?"))}
                         className="px-4 py-2 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-full text-xs font-medium text-ink-700 dark:text-slate-300 hover:bg-brand-50 dark:hover:bg-brand-800/30 hover:border-brand-300 dark:hover:border-brand-600 hover:shadow-md transition-all cursor-pointer shadow-sm"
                         data-testid="pill-collections"
                       >
@@ -488,7 +489,7 @@ export default function Landing() {
                     
                     {/* Adverse Action Support Link */}
                     <button 
-                      onClick={() => window.location.href = "/screening/adverse-action"}
+                      onClick={() => setLocation("/screening/adverse-action")}
                       className="w-full text-left mt-2 px-3 py-2 rounded-lg border border-amber-200 dark:border-amber-800 bg-amber-50/50 dark:bg-amber-900/20 hover:bg-amber-100 dark:hover:bg-amber-800/30 transition-all cursor-pointer"
                       data-testid="link-adverse-action"
                     >
@@ -1721,7 +1722,7 @@ export default function Landing() {
               size="lg"
               className="bg-brand-500 hover:bg-brand-600 text-white text-lg min-h-[48px] px-8"
               onClick={() => {
-                window.location.href = "/signup";
+                setLocation("/signup");
               }}
               data-testid="button-pricing-get-started"
             >
@@ -1971,7 +1972,7 @@ export default function Landing() {
             </p>
             <Button
               size="lg"
-              onClick={() => window.location.href = "/signup"}
+              onClick={() => setLocation("/signup")}
               className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[48px]"
               data-testid="button-value-prop-cta"
             >
@@ -2000,7 +2001,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
                 size="lg"
-                onClick={() => window.location.href = "/signup"}
+                onClick={() => setLocation("/signup")}
                 data-testid="button-final-cta"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
@@ -2072,7 +2073,7 @@ export default function Landing() {
               <Button
                 size="lg"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
-                onClick={() => window.location.href = "/signup"}
+                onClick={() => setLocation("/signup")}
                 data-testid="button-features-dialog-trial"
               >
                 Get Started
@@ -2118,7 +2119,7 @@ export default function Landing() {
                 <Button
                   size="lg"
                   className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
-                  onClick={() => window.location.href = "/signup"}
+                  onClick={() => setLocation("/signup")}
                   data-testid="button-dialog-start-trial"
                 >
                   Get Started
@@ -2200,7 +2201,7 @@ export default function Landing() {
                 size="lg"
                 onClick={() => {
                   setShowBenefitsDialog(false);
-                  window.location.href = "/signup";
+                  setLocation("/signup");
                 }}
               >
                 Get Started
@@ -2311,7 +2312,7 @@ export default function Landing() {
                 className="bg-brand-500 hover:bg-brand-600 text-white text-lg w-full min-h-[48px]"
                 onClick={() => {
                   setShowTemplatePreview(false);
-                  window.location.href = "/signup";
+                  setLocation("/signup");
                 }}
                 data-testid="button-preview-trial"
               >
