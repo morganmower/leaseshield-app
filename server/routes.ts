@@ -9,7 +9,7 @@ import { insertTemplateSchema, insertComplianceCardSchema, insertLegalUpdateSche
 import crypto from "crypto";
 import { z } from "zod";
 import { db } from "./db";
-import { eq, desc, sql } from "drizzle-orm";
+import { eq, desc, sql, and } from "drizzle-orm";
 import { emailService } from "./emailService";
 import OpenAI from "openai";
 import { getUncachableResendClient } from "./resend";
@@ -2965,6 +2965,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ message: 'Validation failed', issues: error.issues });
       }
       res.status(500).json({ message: error?.message || 'Failed to create rent payment request' });
+    }
+  });
+
+  // PATCH: edit an unpaid rent payment request (amount, due date, late fee,
+  // grace period, reminder window, description, property, tenant info).
+  // Blocked when status is paid or processing. If the amount or due date
+  // changes AND there's an open Stripe Checkout session, expire it so the
+  // tenant can't pay against stale terms — they'll get a fresh session on
+  // their next click. Mirrors the DELETE endpoint's session-expiry pattern.
+  app.patch('/api/rent-payments/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const existing = await storage.getRentPaymentRequest(req.params.id, userId);
+      if (!existing) return res.status(404).json({ message: 'Not found' });
+      if (existing.status === 'paid' || existing.status === 'processing') {
+        return res.status(400).json({
+          message: 'This payment is already paid or processing and can no longer be edited.',
+        });
+      }
+
+      const body = req.body || {};
+      const updates: Partial<RentPaymentRequest> = {};
+
+      if (body.tenantName !== undefined) {
+        const t = String(body.tenantName).trim();
+        if (!t) return res.status(400).json({ message: 'tenantName cannot be empty' });
+        updates.tenantName = t;
+      }
+      if (body.tenantEmail !== undefined) {
+        updates.tenantEmail = body.tenantEmail ? String(body.tenantEmail).trim() : null;
+      }
+      if (body.amountDollars !== undefined) {
+        const parsed = parseFloat(body.amountDollars);
+        if (!Number.isFinite(parsed)) return res.status(400).json({ message: 'amountDollars must be a number' });
+        const amt = Math.round(parsed * 100);
+        if (!amt || amt < 100) return res.status(400).json({ message: 'Amount must be at least $1.00' });
+        updates.amount = amt;
+      }
+      if (body.dueDate !== undefined) {
+        if (!body.dueDate) return res.status(400).json({ message: 'dueDate is required' });
+        const d = new Date(body.dueDate);
+        if (isNaN(d.getTime())) return res.status(400).json({ message: 'dueDate is not a valid date' });
+        updates.dueDate = body.dueDate;
+      }
+      if (body.description !== undefined) {
+        updates.description = body.description || null;
+      }
+      if (body.lateFeeDollars !== undefined) {
+        const parsed = parseFloat(body.lateFeeDollars);
+        if (!Number.isFinite(parsed) || parsed < 0) {
+          return res.status(400).json({ message: 'lateFeeDollars must be a non-negative number' });
+        }
+        updates.lateFeeAmount = Math.round(parsed * 100);
+      }
+      if (body.gracePeriodDays !== undefined) {
+        const g = parseInt(body.gracePeriodDays);
+        if (!Number.isFinite(g) || g < 0) {
+          return res.status(400).json({ message: 'gracePeriodDays must be a non-negative integer' });
+        }
+        updates.gracePeriodDays = g;
+      }
+      if (body.reminderDaysBefore !== undefined) {
+        const r = parseInt(body.reminderDaysBefore);
+        if (!Number.isFinite(r) || r < 0) {
+          return res.status(400).json({ message: 'reminderDaysBefore must be a non-negative integer' });
+        }
+        updates.reminderDaysBefore = r;
+      }
+      if (body.rentalPropertyId !== undefined) {
+        if (body.rentalPropertyId) {
+          const p = await storage.getRentalPropertyById(body.rentalPropertyId);
+          if (!p || p.userId !== userId) return res.status(400).json({ message: 'Invalid property' });
+          updates.rentalPropertyId = p.id;
+        } else {
+          updates.rentalPropertyId = null;
+        }
+      }
+
+      if (Object.keys(updates).length === 0) {
+        return res.status(400).json({ message: 'No changes provided' });
+      }
+
+      // If amount or due date changed, expire any open checkout session so the
+      // tenant can't complete payment against the old terms.
+      const amountChanged = updates.amount !== undefined && updates.amount !== existing.amount;
+      const dueChanged = updates.dueDate !== undefined &&
+        new Date(updates.dueDate as any).toISOString() !== new Date(existing.dueDate).toISOString();
+      if ((amountChanged || dueChanged) && existing.stripeCheckoutSessionId) {
+        try {
+          const session = await stripe.checkout.sessions.retrieve(existing.stripeCheckoutSessionId);
+          if (session.status === 'open') {
+            await stripe.checkout.sessions.expire(existing.stripeCheckoutSessionId);
+          }
+        } catch (err: any) {
+          if (err?.code !== 'resource_missing') {
+            console.error(`Failed to expire checkout session for rent request ${existing.id}:`, err?.message);
+            return res.status(409).json({
+              message: 'Could not refresh the active checkout session. Please try again in a moment.',
+            });
+          }
+        }
+        // Clear the stale session id; a fresh one will be created on the next
+        // tenant click via /api/rent-payments/public/:token/checkout.
+        updates.stripeCheckoutSessionId = null;
+      }
+
+      const updated = await storage.updateRentPaymentRequest(existing.id, updates);
+      if (!updated) return res.status(500).json({ message: 'Update failed' });
+      res.json(updated);
+    } catch (error: any) {
+      console.error('Error updating rent payment request:', error);
+      res.status(500).json({ message: error?.message || 'Failed to update' });
     }
   });
 

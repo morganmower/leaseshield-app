@@ -107,7 +107,7 @@ const mainItems = [
     iconColor: "text-pink-500 dark:text-pink-400",
   },
   {
-    title: "Rent Ledger",
+    title: "Rent",
     url: "/rent-ledger",
     icon: DollarSign,
     iconColor: "text-green-600 dark:text-green-400",

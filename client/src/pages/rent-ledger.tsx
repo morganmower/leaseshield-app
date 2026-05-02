@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 export default function RentLedger() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("track");
+  const [activeTab, setActiveTab] = useState("online");
   const [tenantName, setTenantName] = useState("");
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState<"charge" | "payment">("charge");
@@ -289,10 +289,11 @@ export default function RentLedger() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full max-w-2xl grid-cols-3">
-          <TabsTrigger value="track" data-testid="tab-track-entries">Track Entries</TabsTrigger>
-          <TabsTrigger value="online" data-testid="tab-online-payments">Online Payments</TabsTrigger>
-          <TabsTrigger value="export" data-testid="tab-export-report">Export Report</TabsTrigger>
+        <TabsList className="grid w-full max-w-3xl grid-cols-4">
+          <TabsTrigger value="online" data-testid="tab-online-payments">Requests</TabsTrigger>
+          <TabsTrigger value="track" data-testid="tab-track-entries">History</TabsTrigger>
+          <TabsTrigger value="recurring" data-testid="tab-recurring" disabled>Recurring (soon)</TabsTrigger>
+          <TabsTrigger value="export" data-testid="tab-export-report">Export</TabsTrigger>
         </TabsList>
 
         {/* Online Payments (Stripe Connect ACH) */}
@@ -1011,6 +1012,77 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     }),
   });
 
+  // Edit-payment-request state + mutation. Opening the dialog seeds the
+  // local form fields from the row; saving sends a PATCH and reopens any
+  // expired Stripe session lazily on the tenant's next click.
+  const [editing, setEditing] = useState<RentPaymentRequest | null>(null);
+  const [editTenantName, setEditTenantNameLocal] = useState("");
+  const [editTenantEmail, setEditTenantEmailLocal] = useState("");
+  const [editAmountDollars, setEditAmountDollars] = useState("");
+  const [editDueDate, setEditDueDate] = useState("");
+  const [editDescription, setEditDescriptionLocal] = useState("");
+  const [editLateFeeDollars, setEditLateFeeDollars] = useState("0");
+  const [editGracePeriodDays, setEditGracePeriodDays] = useState("5");
+  const [editReminderDaysBefore, setEditReminderDaysBefore] = useState("5");
+  const [editRentalPropertyId, setEditRentalPropertyId] = useState("");
+
+  const openEditDialog = (p: RentPaymentRequest) => {
+    setEditing(p);
+    setEditTenantNameLocal(p.tenantName || "");
+    setEditTenantEmailLocal(p.tenantEmail || "");
+    setEditAmountDollars((p.amount / 100).toFixed(2));
+    setEditDueDate(p.dueDate ? new Date(p.dueDate).toISOString().slice(0, 10) : "");
+    setEditDescriptionLocal(p.description || "");
+    setEditLateFeeDollars(((p.lateFeeAmount || 0) / 100).toFixed(2));
+    setEditGracePeriodDays(String(p.gracePeriodDays ?? 5));
+    setEditReminderDaysBefore(String(p.reminderDaysBefore ?? 5));
+    setEditRentalPropertyId(p.rentalPropertyId || "");
+  };
+
+  const editPaymentMutation = useMutation({
+    mutationFn: async (payload: { id: string; data: Record<string, unknown> }) =>
+      apiRequest("PATCH", `/api/rent-payments/${payload.id}`, payload.data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-payments"] });
+      toast({ description: "Payment request updated. Tenant link still works." });
+      setEditing(null);
+    },
+    onError: (e: ApiError) => toast({
+      description: e?.body?.message || "Failed to update",
+      variant: "destructive",
+    }),
+  });
+
+  const handleEditSave = () => {
+    if (!editing) return;
+    if (!editTenantName.trim()) {
+      toast({ description: "Tenant name is required", variant: "destructive" });
+      return;
+    }
+    if (!editAmountDollars || parseFloat(editAmountDollars) < 1) {
+      toast({ description: "Amount must be at least $1.00", variant: "destructive" });
+      return;
+    }
+    if (!editDueDate) {
+      toast({ description: "Due date is required", variant: "destructive" });
+      return;
+    }
+    editPaymentMutation.mutate({
+      id: editing.id,
+      data: {
+        tenantName: editTenantName,
+        tenantEmail: editTenantEmail || null,
+        amountDollars: parseFloat(editAmountDollars),
+        dueDate: editDueDate,
+        description: editDescription || null,
+        lateFeeDollars: parseFloat(editLateFeeDollars || "0"),
+        gracePeriodDays: parseInt(editGracePeriodDays) || 0,
+        reminderDaysBefore: parseInt(editReminderDaysBefore) || 0,
+        rentalPropertyId: editRentalPropertyId || null,
+      },
+    });
+  };
+
   const reminderMutation = useMutation({
     mutationFn: async (id: string) => apiRequest("POST", `/api/rent-payments/${id}/send-reminder`, {}),
     onSuccess: () => {
@@ -1207,6 +1279,17 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
                           <Button
                             size="sm"
                             variant="ghost"
+                            onClick={() => openEditDialog(p)}
+                            data-testid={`button-edit-payment-${p.id}`}
+                            title="Edit this payment request"
+                          >
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                        {p.status !== "paid" && p.status !== "processing" && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
                             onClick={() => deletePaymentMutation.mutate(p.id)}
                             disabled={deletePaymentMutation.isPending}
                             data-testid={`button-delete-payment-${p.id}`}
@@ -1340,6 +1423,138 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
               data-testid="button-submit-rp"
             >
               Create & Get Payment Link
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit existing payment request — same fields as create dialog,
+          pre-filled. Tenant payment link (publicToken) is preserved so the
+          tenant doesn't need a new email; if amount or due date changed,
+          the server expires any open Stripe session and a fresh one is
+          created on their next click. */}
+      <Dialog open={!!editing} onOpenChange={(open) => !open && setEditing(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit Payment Request</DialogTitle>
+          </DialogHeader>
+          {editing && (
+            <p className="text-xs text-muted-foreground -mt-2 mb-1">
+              Status: {editing.status} • The existing payment link will continue to work after saving.
+            </p>
+          )}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-2">
+            <div>
+              <Label htmlFor="ep-tenant">Tenant Name *</Label>
+              <Input
+                id="ep-tenant"
+                value={editTenantName}
+                onChange={(e) => setEditTenantNameLocal(e.target.value)}
+                data-testid="input-ep-tenant-name"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-email">Tenant Email</Label>
+              <Input
+                id="ep-email"
+                type="email"
+                value={editTenantEmail}
+                onChange={(e) => setEditTenantEmailLocal(e.target.value)}
+                data-testid="input-ep-tenant-email"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-amount">Amount (USD) *</Label>
+              <Input
+                id="ep-amount"
+                type="number"
+                step="0.01"
+                value={editAmountDollars}
+                onChange={(e) => setEditAmountDollars(e.target.value)}
+                data-testid="input-ep-amount"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-due">Due Date *</Label>
+              <Input
+                id="ep-due"
+                type="date"
+                value={editDueDate}
+                onChange={(e) => setEditDueDate(e.target.value)}
+                data-testid="input-ep-due-date"
+              />
+            </div>
+            {properties.length > 0 && (
+              <div className="md:col-span-2">
+                <Label htmlFor="ep-property">Property (Optional)</Label>
+                <Select
+                  value={editRentalPropertyId || "none"}
+                  onValueChange={(v) => setEditRentalPropertyId(v === "none" ? "" : v)}
+                >
+                  <SelectTrigger id="ep-property" data-testid="select-ep-property">
+                    <SelectValue placeholder="No property" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">No property</SelectItem>
+                    {properties.map((property) => (
+                      <SelectItem key={property.id} value={property.id}>{property.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+            <div className="md:col-span-2">
+              <Label htmlFor="ep-desc">Description / Memo</Label>
+              <Textarea
+                id="ep-desc"
+                value={editDescription}
+                onChange={(e) => setEditDescriptionLocal(e.target.value)}
+                rows={2}
+                data-testid="input-ep-description"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-late">Late Fee (USD)</Label>
+              <Input
+                id="ep-late"
+                type="number"
+                step="0.01"
+                value={editLateFeeDollars}
+                onChange={(e) => setEditLateFeeDollars(e.target.value)}
+                data-testid="input-ep-late-fee"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-grace">Grace Period (days)</Label>
+              <Input
+                id="ep-grace"
+                type="number"
+                min="0"
+                value={editGracePeriodDays}
+                onChange={(e) => setEditGracePeriodDays(e.target.value)}
+                data-testid="input-ep-grace-days"
+              />
+            </div>
+            <div>
+              <Label htmlFor="ep-remind">Reminder N days before due</Label>
+              <Input
+                id="ep-remind"
+                type="number"
+                min="0"
+                value={editReminderDaysBefore}
+                onChange={(e) => setEditReminderDaysBefore(e.target.value)}
+                data-testid="input-ep-reminder-days"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditing(null)} data-testid="button-cancel-ep">Cancel</Button>
+            <Button
+              onClick={handleEditSave}
+              disabled={editPaymentMutation.isPending}
+              data-testid="button-submit-ep"
+            >
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
