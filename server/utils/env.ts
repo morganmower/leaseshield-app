@@ -60,6 +60,16 @@ export function validateEnv(): EnvConfig {
   // Check required variables
   for (const varName of REQUIRED_VARS) {
     if (!process.env[varName]) {
+      // In development only, allow TESTING_STRIPE_SECRET_KEY as a fallback
+      // for STRIPE_SECRET_KEY so local dev can start without a duplicate
+      // secret. Production behaviour is unchanged.
+      if (
+        varName === 'STRIPE_SECRET_KEY' &&
+        process.env.NODE_ENV !== 'production' &&
+        process.env.TESTING_STRIPE_SECRET_KEY
+      ) {
+        continue;
+      }
       errors.push(`Missing required environment variable: ${varName}`);
     }
   }

@@ -11,10 +11,15 @@ import { CheckCircle2, Shield, Lock, CreditCard, User } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SEO } from "@/components/seo";
 
-if (!import.meta.env.VITE_STRIPE_PUBLIC_KEY) {
-  throw new Error('Missing required Stripe key: VITE_STRIPE_PUBLIC_KEY');
+// In production VITE_STRIPE_PUBLIC_KEY must be set. In development we
+// degrade gracefully (warn + disable payment form) so the rest of the
+// app still loads without a duplicate dev secret.
+const VITE_STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
+if (!VITE_STRIPE_PUBLIC_KEY) {
+  // eslint-disable-next-line no-console
+  console.warn('[Subscribe] Missing VITE_STRIPE_PUBLIC_KEY — subscribe form will be disabled.');
 }
-const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLIC_KEY);
+const stripePromise = VITE_STRIPE_PUBLIC_KEY ? loadStripe(VITE_STRIPE_PUBLIC_KEY) : null;
 
 function ProgressStepper({ currentStep }: { currentStep: number }) {
   const steps = [

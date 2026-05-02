@@ -37,12 +37,19 @@ import { uploadApplicantBuffer, downloadApplicantStream, isObjstorePath, deleteA
 import { rentalSubmissionFiles } from "@shared/schema";
 import fsSync from "fs";
 
-// Stripe configuration - use STRIPE_SECRET_KEY for both test and live
-if (!process.env.STRIPE_SECRET_KEY) {
+// Stripe configuration - production uses STRIPE_SECRET_KEY.
+// In development only, fall back to TESTING_STRIPE_SECRET_KEY so local
+// dev can start without setting a duplicate secret. Production code path
+// is unchanged: it reads STRIPE_SECRET_KEY exactly as before.
+const stripeSecretKey =
+  process.env.STRIPE_SECRET_KEY ||
+  (process.env.NODE_ENV !== 'production' ? process.env.TESTING_STRIPE_SECRET_KEY : undefined);
+
+if (!stripeSecretKey) {
   throw new Error('Missing required Stripe secret: STRIPE_SECRET_KEY');
 }
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+const stripe = new Stripe(stripeSecretKey, {
   apiVersion: "2025-10-29.clover",
 });
 
