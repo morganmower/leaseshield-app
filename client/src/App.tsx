@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react";
 import { Switch, Route, Link, useLocation, Redirect } from "wouter";
 import { queryClient } from "./lib/queryClient";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -44,20 +45,20 @@ import RentLedger from "@/pages/rent-ledger";
 import Subscribe from "@/pages/subscribe";
 import Settings from "@/pages/settings";
 import Billing from "@/pages/billing";
-import Admin from "@/pages/admin";
-import AdminTemplates from "@/pages/admin-templates";
-import AdminCompliance from "@/pages/admin-compliance";
-import AdminLegalUpdates from "@/pages/admin-legal-updates";
-import AdminAnalytics from "@/pages/admin-analytics";
-import AdminDashboard from "@/pages/admin-dashboard";
-import AdminLegislativeMonitoring from "@/pages/admin-legislative-monitoring";
-import AdminBroadcasts from "@/pages/admin-broadcasts";
-import AdminDirectMessages from "@/pages/admin-direct-messages";
-import AdminScreeningCredentials from "@/pages/admin-screening-credentials";
-import AdminTips from "@/pages/admin-tips";
-import AdminApplicationsActivity from "@/pages/admin-applications-activity";
-import AdminStateNotes from "@/pages/admin-state-notes";
-import AdminNoticeForms from "@/pages/admin-notice-forms";
+const Admin = lazy(() => import("@/pages/admin"));
+const AdminTemplates = lazy(() => import("@/pages/admin-templates"));
+const AdminCompliance = lazy(() => import("@/pages/admin-compliance"));
+const AdminLegalUpdates = lazy(() => import("@/pages/admin-legal-updates"));
+const AdminAnalytics = lazy(() => import("@/pages/admin-analytics"));
+const AdminDashboard = lazy(() => import("@/pages/admin-dashboard"));
+const AdminLegislativeMonitoring = lazy(() => import("@/pages/admin-legislative-monitoring"));
+const AdminBroadcasts = lazy(() => import("@/pages/admin-broadcasts"));
+const AdminDirectMessages = lazy(() => import("@/pages/admin-direct-messages"));
+const AdminScreeningCredentials = lazy(() => import("@/pages/admin-screening-credentials"));
+const AdminTips = lazy(() => import("@/pages/admin-tips"));
+const AdminApplicationsActivity = lazy(() => import("@/pages/admin-applications-activity"));
+const AdminStateNotes = lazy(() => import("@/pages/admin-state-notes"));
+const AdminNoticeForms = lazy(() => import("@/pages/admin-notice-forms"));
 import LegalUpdatesPage from "@/pages/legal-updates";
 import Messages from "@/pages/messages";
 import AuditHistory from "@/pages/audit-history";
@@ -86,7 +87,11 @@ function AdminRoute({ component: Component }: { component: React.ComponentType }
     return <Redirect to="/dashboard" />;
   }
   
-  return <Component />;
+  return (
+    <Suspense fallback={null}>
+      <Component />
+    </Suspense>
+  );
 }
 
 function Router() {
