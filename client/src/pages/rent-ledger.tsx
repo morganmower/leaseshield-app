@@ -282,10 +282,10 @@ export default function RentLedger() {
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <DollarSign className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold">Rent Ledger</h1>
+          <h1 className="text-3xl font-bold" data-testid="text-page-title">Rent Payments</h1>
         </div>
         <p className="text-muted-foreground">
-          Professional rent tracking with detailed payments, fees, and documentation.
+          Send payment requests, track recurring auto-pay, and export records for tax time.
         </p>
       </div>
 
