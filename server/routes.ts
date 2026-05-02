@@ -3061,6 +3061,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const successUrl = `${baseUrl}/pay-rent/${r.publicToken}?paid=1`;
       const cancelUrl = `${baseUrl}/pay-rent/${r.publicToken}?canceled=1`;
 
+      const landlordDisplayName =
+        [landlord.firstName, landlord.lastName].filter(Boolean).join(' ').trim() ||
+        landlord.email ||
+        'your landlord';
+      const dueDateStr = r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '';
+      const productName = `Rent payment to ${landlordDisplayName}${dueDateStr ? ` — due ${dueDateStr}` : ''}`;
+      // Statement descriptors must be 5-22 chars, no special chars besides space/dot/dash
+      const safeDescriptorSuffix = `RENT ${landlordDisplayName}`
+        .replace(/[^A-Za-z0-9 .-]/g, '')
+        .slice(0, 22)
+        .trim() || 'RENT';
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['us_bank_account'],
@@ -3070,18 +3082,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
             currency: 'usd',
             unit_amount: r.amount,
             product_data: {
-              name: `Rent payment - ${r.tenantName}`,
-              description: r.description || (r.dueDate ? `Due ${new Date(r.dueDate).toLocaleDateString()}` : undefined),
+              name: productName,
+              description: r.description || (dueDateStr ? `Due ${dueDateStr}` : undefined),
             },
           },
           quantity: 1,
         }],
+        // Show the LANDLORD as merchant of record on the ACH mandate so the
+        // tenant sees "direct debits from [Landlord]" instead of "from LeaseShield".
+        // Required: this must be a connected account on our platform.
         payment_intent_data: {
           transfer_data: { destination: landlord.stripeConnectAccountId },
+          on_behalf_of: landlord.stripeConnectAccountId,
+          statement_descriptor_suffix: safeDescriptorSuffix,
           metadata: {
             leaseshield_kind: 'rent_payment',
             rent_payment_request_id: r.id,
             landlord_user_id: r.userId,
+          },
+        },
+        // Rent-specific framing shown above Stripe's NACHA mandate text.
+        custom_text: {
+          submit: {
+            message: `By authorizing, you'll pay $${(r.amount / 100).toFixed(2)} in rent${dueDateStr ? ` for ${dueDateStr}` : ''} to ${landlordDisplayName} via bank transfer (ACH). This is a one-time payment — your bank account will not be saved or auto-charged again. ACH transfers typically settle in 3-5 business days.`,
           },
         },
         metadata: {
