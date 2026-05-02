@@ -344,4 +344,21 @@ app.use((req, res, next) => {
 
   process.on('SIGTERM', () => shutdown('SIGTERM'));
   process.on('SIGINT', () => shutdown('SIGINT'));
+
+  // Prevent process crashes from transient third-party library errors.
+  // Specifically guards against the @neondatabase/serverless v0.10.x bug where
+  // a WebSocket error handler tries to mutate the read-only ErrorEvent.message
+  // property and throws an uncaught TypeError that kills the Node process.
+  // Individual failed queries will still surface to their callers via the pool's
+  // built-in error handling (see server/db.ts pool.on('error')).
+  process.on('uncaughtException', (err: Error) => {
+    log(`[uncaughtException] ${err?.name}: ${err?.message}`);
+    console.error('[uncaughtException] full error:', err);
+  });
+
+  process.on('unhandledRejection', (reason: unknown) => {
+    const message = reason instanceof Error ? reason.message : String(reason);
+    log(`[unhandledRejection] ${message}`);
+    console.error('[unhandledRejection] full reason:', reason);
+  });
 })();
