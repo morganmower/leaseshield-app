@@ -59,6 +59,7 @@ const AdminTips = lazy(() => import("@/pages/admin-tips"));
 const AdminApplicationsActivity = lazy(() => import("@/pages/admin-applications-activity"));
 const AdminStateNotes = lazy(() => import("@/pages/admin-state-notes"));
 const AdminNoticeForms = lazy(() => import("@/pages/admin-notice-forms"));
+const AdminPlatformFees = lazy(() => import("@/pages/admin-platform-fees"));
 const LegalUpdatesPage = lazy(() => import("@/pages/legal-updates"));
 import Messages from "@/pages/messages";
 const AuditHistory = lazy(() => import("@/pages/audit-history"));
@@ -232,6 +233,7 @@ function Router() {
       <Route path="/admin/state-notes">{() => <AdminRoute component={AdminStateNotes} />}</Route>
       <Route path="/admin/applications-activity">{() => <AdminRoute component={AdminApplicationsActivity} />}</Route>
       <Route path="/admin/notice-forms">{() => <AdminRoute component={AdminNoticeForms} />}</Route>
+      <Route path="/admin/platform-fees">{() => <AdminRoute component={AdminPlatformFees} />}</Route>
       <Route component={NotFound} />
     </Switch>
     </Suspense>

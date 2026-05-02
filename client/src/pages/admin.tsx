@@ -1,7 +1,7 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2, UserCog, LogOut } from "lucide-react";
+import { Plus, FileText, Shield, Bell, BarChart, AlertCircle, Scale, Send, Users, MessageSquare, Lightbulb, Database, Download, Loader2, UserCog, LogOut, DollarSign } from "lucide-react";
 import { Link } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useState } from "react";
@@ -380,6 +380,25 @@ export default function AdminPage() {
                   >
                     <Lightbulb className="h-4 w-4 mr-2" />
                     Manage Tips
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            <Card className="hover-elevate">
+              <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Platform Fees</CardTitle>
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <Link href="/admin/platform-fees" asChild>
+                  <Button
+                    size="sm"
+                    className="w-full"
+                    data-testid="button-platform-fees"
+                  >
+                    <DollarSign className="h-4 w-4 mr-2" />
+                    View Revenue
                   </Button>
                 </Link>
               </CardContent>

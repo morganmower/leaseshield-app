@@ -24,6 +24,7 @@ import { registerNotificationsRoutes } from "./routes/notifications";
 import { registerAnalyticsRoutes } from "./routes/analytics";
 import { registerAdminUsersRoutes } from "./routes/adminUsers";
 import { registerAdminAnalyticsRoutes } from "./routes/adminAnalytics";
+import { registerAdminPlatformFeesRoutes } from "./routes/adminPlatformFees";
 import { registerContactRoute } from "./routes/contact";
 import { registerStatesRoute } from "./routes/states";
 import { registerBlogRoutes } from "./routes/blog";
@@ -94,6 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await registerAnalyticsRoutes(app);
   await registerAdminUsersRoutes(app);
   await registerAdminAnalyticsRoutes(app);
+  await registerAdminPlatformFeesRoutes(app);
   await registerContactRoute(app);
   await registerStatesRoute(app);
   await registerBlogRoutes(app);
