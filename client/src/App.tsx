@@ -153,6 +153,10 @@ function Router() {
         <Route path="/settings">{() => <Redirect to="/login" />}</Route>
         <Route path="/notifications">{() => <Redirect to="/login" />}</Route>
         <Route path="/messages">{() => <Redirect to="/login" />}</Route>
+        <Route path="/rent-ledger">{() => <Redirect to="/login" />}</Route>
+        <Route path="/tenant-issues">{() => <Redirect to="/login" />}</Route>
+        <Route path="/communications">{() => <Redirect to="/login" />}</Route>
+        <Route path="/legal-updates">{() => <Redirect to="/login" />}</Route>
         <Route component={NotFound} />
       </Switch>
       </Suspense>
