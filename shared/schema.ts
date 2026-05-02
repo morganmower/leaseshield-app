@@ -61,6 +61,10 @@ export const users = pgTable("users", {
   passwordResetExpires: timestamp("password_reset_expires"),
   // Cleanup email tracking (for one-time trial cohort cleanup)
   cleanupEmailSentAt: timestamp("cleanup_email_sent_at"),
+  // Rent payment fee defaults — per-landlord defaults applied when creating
+  // new rent payment requests. The per-request value can override these.
+  defaultServiceFeeEnabled: boolean("default_service_fee_enabled").default(false).notNull(),
+  defaultServiceFeeAmount: integer("default_service_fee_amount").default(495).notNull(), // cents
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 }, (table) => [
@@ -2940,6 +2944,15 @@ export const rentPaymentRequests = pgTable("rent_payment_requests", {
   // Auto-reminder config
   reminderDaysBefore: integer("reminder_days_before").default(5).notNull(),
   reminderSentAt: timestamp("reminder_sent_at"),
+  // Fee config — convenience fee paid by tenant or absorbed by landlord, plus
+  // LeaseShield's per-transaction platform application fee. All amounts in
+  // cents. `serviceFeePayer` controls who pays the convenience fee:
+  //   tenant   — added on top of rent at checkout (tenant total = rent + fee)
+  //   landlord — deducted from landlord settlement (tenant pays just rent)
+  //   none     — no convenience fee (only platform fee deducted)
+  serviceFeeAmount: integer("service_fee_amount").default(0).notNull(),
+  serviceFeePayer: varchar("service_fee_payer", { length: 16 }).default("none").notNull(),
+  platformFeeAmount: integer("platform_fee_amount").default(0).notNull(),
   // Status
   // Enum: pending | reminded | processing | paid | overdue | canceled
   //       | auto_scheduled | failed   (last two added for recurring auto-bill)

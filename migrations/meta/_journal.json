@@ -15,6 +15,13 @@
       "when": 1778126400000,
       "tag": "0001_rent_payment_requests",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1788393600000,
+      "tag": "0002_rent_payment_fees",
+      "breakpoints": true
     }
   ]
 }

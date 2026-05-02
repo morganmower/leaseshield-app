@@ -604,14 +604,35 @@ export async function registerSubscriptionRoutes(app: Express) {
       : null;
     const monthStr = new Date(existing.dueDate).toISOString().slice(0, 7);
     const amountReceived = paymentIntent.amount_received || paymentIntent.amount;
+    // The rent ledger should record only the rent portion of what the tenant
+    // paid (not rent + tenant convenience fee). The convenience fee is
+    // routed to LeaseShield via application_fee_amount and is recorded on
+    // the request itself for landlord transparency.
+    const tenantPaidServiceFee =
+      existing.serviceFeePayer === 'tenant' ? (existing.serviceFeeAmount || 0) : 0;
+    const rentPortionReceived = Math.max(0, amountReceived - tenantPaidServiceFee);
 
     // Atomically insert the ledger entry AND mark the request paid in a single
     // DB transaction with row-level locking. Either both writes commit or both
     // roll back — guaranteeing eventual consistency even on partial failures.
+    // Build a fee-aware notes line so landlords have a clear audit trail of
+    // exactly how much went where: rent vs. convenience fee vs. platform fee.
+    const feeNotesParts: string[] = [];
+    if (property) feeNotesParts.push(`Property: ${property.name}`);
+    if (existing.serviceFeePayer === 'tenant' && (existing.serviceFeeAmount || 0) > 0) {
+      feeNotesParts.push(`Tenant paid $${(existing.serviceFeeAmount/100).toFixed(2)} service fee on top of rent`);
+    } else if (existing.serviceFeePayer === 'landlord' && (existing.serviceFeeAmount || 0) > 0) {
+      feeNotesParts.push(`Service fee $${(existing.serviceFeeAmount/100).toFixed(2)} absorbed by landlord`);
+    }
+    if ((existing.platformFeeAmount || 0) > 0) {
+      feeNotesParts.push(`LeaseShield platform fee $${(existing.platformFeeAmount/100).toFixed(2)} deducted at settlement`);
+    }
+    const feeNotes = feeNotesParts.length > 0 ? feeNotesParts.join(' • ') : null;
+
     const result = await storage.finalizeRentPaymentInTransaction(
       requestId,
       paymentIntent.id,
-      amountReceived,
+      rentPortionReceived,
       {
         userId: existing.userId,
         // NOTE: rent_ledger_entries.propertyId FK still references the legacy
@@ -625,11 +646,13 @@ export async function registerSubscriptionRoutes(app: Express) {
         type: 'payment',
         category: 'Rent',
         description: `Online ACH payment via Stripe (req ${existing.id.slice(0, 8)})`,
+        // Record the rent portion only — fees are separately accounted for on
+        // the request row and surfaced to the landlord as informational notes.
         amountExpected: existing.amount,
-        amountReceived,
+        amountReceived: rentPortionReceived,
         paymentMethod: 'ACH (Stripe)',
         referenceNumber: paymentIntent.id,
-        notes: property ? `Property: ${property.name}` : null,
+        notes: feeNotes,
       },
     );
 

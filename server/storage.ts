@@ -205,6 +205,7 @@ export interface IStorage {
   }): Promise<User>;
   updateUserStripeInfo(id: string, data: { stripeCustomerId?: string; stripeSubscriptionId?: string; subscriptionStatus?: string; billingInterval?: string; currentPeriodEnd?: Date; subscriptionEndsAt?: Date; renewalReminderSentAt?: Date; paymentFailedAt?: Date | null; subscribedAt?: Date }): Promise<User>;
   updateUserStripeConnect(id: string, data: { stripeConnectAccountId?: string | null; stripeConnectChargesEnabled?: boolean; stripeConnectPayoutsEnabled?: boolean; stripeConnectDetailsSubmitted?: boolean }): Promise<User>;
+  updateUserFeeDefaults(id: string, data: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number }): Promise<User>;
   getUsersNeedingRenewalReminder(): Promise<User[]>;
   getUsersWithPaymentFailed(): Promise<User[]>;
   getAllActiveUsers(): Promise<User[]>;
@@ -712,6 +713,18 @@ export class DatabaseStorage implements IStorage {
 
       return user;
     }, 'updateUserStripeConnect');
+  }
+
+  async updateUserFeeDefaults(id: string, data: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number }): Promise<User> {
+    return handleDbOperation(async () => {
+      const [user] = await db
+        .update(users)
+        .set({ ...data, updatedAt: new Date() })
+        .where(eq(users.id, id))
+        .returning();
+      if (!user) throw new Error(`User not found: ${id}`);
+      return user;
+    }, 'updateUserFeeDefaults');
   }
 
   async getUsersNeedingRenewalReminder(): Promise<User[]> {

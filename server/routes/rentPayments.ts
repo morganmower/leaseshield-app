@@ -7,8 +7,68 @@ import { insertRentPaymentRequestSchema, type RentPaymentRequest } from "@shared
 import { emailService } from "../emailService";
 import { getAppBaseUrl } from "../utils/appUrl";
 import { stripe, getUserId } from "./_shared";
+import {
+  PLATFORM_FEE_CENTS,
+  MAX_SERVICE_FEE_CENTS,
+  computeRentFees,
+  isServiceFeePayer,
+  type ServiceFeePayer,
+} from "../rentFees";
 
 export async function registerRentPaymentsRoutes(app: Express) {
+  // ----- Landlord fee settings (defaults applied when creating new requests) -----
+  app.get('/api/rent-payments/fee-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const user = await storage.getUser(userId);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+      res.json({
+        defaultServiceFeeEnabled: !!user.defaultServiceFeeEnabled,
+        defaultServiceFeeAmount: user.defaultServiceFeeAmount ?? 495,
+        platformFeeAmount: PLATFORM_FEE_CENTS,
+        maxServiceFeeAmount: MAX_SERVICE_FEE_CENTS,
+      });
+    } catch (error) {
+      console.error('Error fetching fee settings:', error);
+      res.status(500).json({ message: 'Failed to load fee settings' });
+    }
+  });
+
+  app.patch('/api/rent-payments/fee-settings', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const body = req.body || {};
+      const updates: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number } = {};
+      if (typeof body.defaultServiceFeeEnabled === 'boolean') {
+        updates.defaultServiceFeeEnabled = body.defaultServiceFeeEnabled;
+      }
+      // Accept either dollars (preferred from UI) or raw cents.
+      let cents: number | undefined;
+      if (body.defaultServiceFeeDollars !== undefined) {
+        cents = Math.round(parseFloat(body.defaultServiceFeeDollars) * 100);
+      } else if (body.defaultServiceFeeAmount !== undefined) {
+        cents = parseInt(body.defaultServiceFeeAmount);
+      }
+      if (cents !== undefined) {
+        if (!Number.isFinite(cents) || cents < 0 || cents > MAX_SERVICE_FEE_CENTS) {
+          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
+        }
+        updates.defaultServiceFeeAmount = cents;
+      }
+      if (Object.keys(updates).length === 0) return res.status(400).json({ message: 'No changes provided' });
+      const user = await storage.updateUserFeeDefaults(userId, updates);
+      res.json({
+        defaultServiceFeeEnabled: !!user?.defaultServiceFeeEnabled,
+        defaultServiceFeeAmount: user?.defaultServiceFeeAmount ?? 495,
+        platformFeeAmount: PLATFORM_FEE_CENTS,
+        maxServiceFeeAmount: MAX_SERVICE_FEE_CENTS,
+      });
+    } catch (error: any) {
+      console.error('Error updating fee settings:', error);
+      res.status(500).json({ message: error?.message || 'Failed to update fee settings' });
+    }
+  });
+
   // =====================================================================
   app.get('/api/rent-payments', isAuthenticated, async (req: any, res) => {
     try {
@@ -54,6 +114,30 @@ export async function registerRentPaymentsRoutes(app: Express) {
         rentalPropertyId = p.id;
       }
 
+      // Resolve fee config: per-request body overrides, falling back to the
+      // landlord's saved defaults from their user record.
+      let serviceFeePayer: ServiceFeePayer = "none";
+      let serviceFeeAmount = 0;
+      if (body.serviceFeePayer !== undefined) {
+        if (!isServiceFeePayer(body.serviceFeePayer)) {
+          return res.status(400).json({ message: "serviceFeePayer must be 'tenant', 'landlord', or 'none'" });
+        }
+        serviceFeePayer = body.serviceFeePayer;
+      } else if (user.defaultServiceFeeEnabled) {
+        serviceFeePayer = "tenant";
+      }
+      if (serviceFeePayer !== "none") {
+        const overrideCents = body.serviceFeeAmountCents !== undefined
+          ? parseInt(body.serviceFeeAmountCents)
+          : (body.serviceFeeAmountDollars !== undefined
+              ? Math.round(parseFloat(body.serviceFeeAmountDollars) * 100)
+              : (user.defaultServiceFeeAmount ?? 495));
+        if (!Number.isFinite(overrideCents) || overrideCents < 0 || overrideCents > MAX_SERVICE_FEE_CENTS) {
+          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
+        }
+        serviceFeeAmount = overrideCents;
+      }
+
       const insertData = {
         userId,
         rentalPropertyId,
@@ -65,6 +149,9 @@ export async function registerRentPaymentsRoutes(app: Express) {
         lateFeeAmount,
         gracePeriodDays: Number.isFinite(parseInt(body.gracePeriodDays)) ? parseInt(body.gracePeriodDays) : 5,
         reminderDaysBefore: Number.isFinite(parseInt(body.reminderDaysBefore)) ? parseInt(body.reminderDaysBefore) : 5,
+        serviceFeeAmount,
+        serviceFeePayer,
+        platformFeeAmount: PLATFORM_FEE_CENTS,
       };
       const validated = insertRentPaymentRequestSchema.parse(insertData);
       const publicToken = crypto.randomBytes(24).toString('hex');
@@ -146,6 +233,21 @@ export async function registerRentPaymentsRoutes(app: Express) {
         }
         updates.reminderDaysBefore = r;
       }
+      if (body.serviceFeePayer !== undefined) {
+        if (!isServiceFeePayer(body.serviceFeePayer)) {
+          return res.status(400).json({ message: "serviceFeePayer must be 'tenant', 'landlord', or 'none'" });
+        }
+        updates.serviceFeePayer = body.serviceFeePayer;
+      }
+      if (body.serviceFeeAmountCents !== undefined || body.serviceFeeAmountDollars !== undefined) {
+        const cents = body.serviceFeeAmountCents !== undefined
+          ? parseInt(body.serviceFeeAmountCents)
+          : Math.round(parseFloat(body.serviceFeeAmountDollars) * 100);
+        if (!Number.isFinite(cents) || cents < 0 || cents > MAX_SERVICE_FEE_CENTS) {
+          return res.status(400).json({ message: `Service fee must be between $0 and $${(MAX_SERVICE_FEE_CENTS/100).toFixed(2)}` });
+        }
+        updates.serviceFeeAmount = cents;
+      }
       if (body.rentalPropertyId !== undefined) {
         if (body.rentalPropertyId) {
           const p = await storage.getRentalPropertyById(body.rentalPropertyId);
@@ -160,12 +262,16 @@ export async function registerRentPaymentsRoutes(app: Express) {
         return res.status(400).json({ message: 'No changes provided' });
       }
 
-      // If amount or due date changed, expire any open checkout session so the
-      // tenant can't complete payment against the old terms.
+      // If amount, due date, OR fee config changed, expire any open checkout
+      // session so the tenant can't complete payment against the old terms or
+      // pay the wrong total.
       const amountChanged = updates.amount !== undefined && updates.amount !== existing.amount;
       const dueChanged = updates.dueDate !== undefined &&
         new Date(updates.dueDate as any).toISOString() !== new Date(existing.dueDate).toISOString();
-      if ((amountChanged || dueChanged) && existing.stripeCheckoutSessionId) {
+      const feeChanged =
+        (updates.serviceFeeAmount !== undefined && updates.serviceFeeAmount !== existing.serviceFeeAmount) ||
+        (updates.serviceFeePayer !== undefined && updates.serviceFeePayer !== existing.serviceFeePayer);
+      if ((amountChanged || dueChanged || feeChanged) && existing.stripeCheckoutSessionId) {
         try {
           const session = await stripe.checkout.sessions.retrieve(existing.stripeCheckoutSessionId);
           if (session.status === 'open') {
@@ -275,6 +381,12 @@ export async function registerRentPaymentsRoutes(app: Express) {
       if (!r) return res.status(404).json({ message: 'Payment request not found' });
       const landlord = await storage.getUser(r.userId);
       const property = r.rentalPropertyId ? await storage.getRentalPropertyById(r.rentalPropertyId) : null;
+      const fees = computeRentFees({
+        rent: r.amount,
+        serviceFee: r.serviceFeeAmount,
+        serviceFeePayer: (r.serviceFeePayer as ServiceFeePayer) || 'none',
+        platformFee: r.platformFeeAmount,
+      });
       res.json({
         id: r.id,
         tenantName: r.tenantName,
@@ -285,6 +397,11 @@ export async function registerRentPaymentsRoutes(app: Express) {
         status: r.status,
         lateFeeAmount: r.lateFeeAmount,
         gracePeriodDays: r.gracePeriodDays,
+        // Fee breakdown — tenant-facing line items rendered on /pay-rent/:token
+        serviceFeeAmount: fees.serviceFee,
+        serviceFeePayer: fees.serviceFeePayer,
+        // tenantTotal is the actual amount the tenant will be charged at checkout
+        tenantTotal: fees.tenantTotal,
         landlordName: landlord
           ? (landlord.firstName && landlord.lastName ? `${landlord.firstName} ${landlord.lastName}` : (landlord.businessName || 'Your Landlord'))
           : 'Your Landlord',
@@ -319,23 +436,30 @@ export async function registerRentPaymentsRoutes(app: Express) {
         return res.status(400).json({ message: 'Landlord cannot accept online payments yet.' });
       }
 
+      const fees = computeRentFees({
+        rent: r.amount,
+        serviceFee: r.serviceFeeAmount,
+        serviceFeePayer: (r.serviceFeePayer as ServiceFeePayer) || 'none',
+        platformFee: r.platformFeeAmount,
+      });
+
       // If we already have an open Checkout Session for this request, reuse it
       // instead of creating a duplicate (prevents accidental double-payments
       // from page reloads/retries) — but ONLY if the session amount still
-      // matches the request amount. If the request amount changed (e.g. a late
-      // fee was applied), expire the stale session so the tenant cannot pay
-      // the old, lower amount.
+      // matches the current tenant total (rent + tenant-paid service fee).
+      // If the rent OR fee config changed, expire the stale session so the
+      // tenant cannot pay the wrong total.
       if (r.stripeCheckoutSessionId) {
         try {
           const existing = await stripe.checkout.sessions.retrieve(r.stripeCheckoutSessionId);
           if (existing.status === 'open' && existing.url) {
-            if (existing.amount_total === r.amount) {
+            if (existing.amount_total === fees.tenantTotal) {
               return res.json({ url: existing.url });
             }
             // Amount drift detected — expire the stale session before creating a new one.
             try {
               await stripe.checkout.sessions.expire(r.stripeCheckoutSessionId);
-              console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amount drift: ${existing.amount_total} → ${r.amount})`);
+              console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amount drift: ${existing.amount_total} → ${fees.tenantTotal})`);
             } catch (expireErr: any) {
               console.warn(`Could not expire stale session ${r.stripeCheckoutSessionId}:`, expireErr?.message);
             }
@@ -361,51 +485,84 @@ export async function registerRentPaymentsRoutes(app: Express) {
         .slice(0, 22)
         .trim() || 'RENT';
 
+      // Build line items. When the tenant pays the convenience fee, render it
+      // as a separate Stripe Checkout line so the tenant sees "Service fee" on
+      // the hosted page (not just a higher rent number). When the landlord
+      // absorbs the fee, the tenant sees only the rent line and the fee is
+      // taken out of the landlord's settlement via application_fee_amount.
+      const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [{
+        price_data: {
+          currency: 'usd',
+          unit_amount: r.amount,
+          product_data: {
+            name: productName,
+            description: r.description || (dueDateStr ? `Due ${dueDateStr}` : undefined),
+          },
+        },
+        quantity: 1,
+      }];
+      if (fees.serviceFeePayer === 'tenant' && fees.serviceFee > 0) {
+        lineItems.push({
+          price_data: {
+            currency: 'usd',
+            unit_amount: fees.serviceFee,
+            product_data: {
+              name: 'Service fee',
+              description: 'Online payment processing fee',
+            },
+          },
+          quantity: 1,
+        });
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['us_bank_account'],
         customer_email: r.tenantEmail || undefined,
-        line_items: [{
-          price_data: {
-            currency: 'usd',
-            unit_amount: r.amount,
-            product_data: {
-              name: productName,
-              description: r.description || (dueDateStr ? `Due ${dueDateStr}` : undefined),
-            },
-          },
-          quantity: 1,
-        }],
+        line_items: lineItems,
         // Show the LANDLORD as merchant of record on the ACH mandate so the
         // tenant sees "direct debits from [Landlord]" instead of "from LeaseShield".
         // Required: this must be a connected account on our platform.
         payment_intent_data: {
           transfer_data: { destination: landlord.stripeConnectAccountId },
           on_behalf_of: landlord.stripeConnectAccountId,
+          // application_fee_amount is what gets routed to LeaseShield's Stripe
+          // account at settlement. It includes the convenience fee (covers our
+          // Stripe ACH cost) and the platform fee (LeaseShield's revenue).
+          // The remainder goes to the landlord's connected account.
+          ...(fees.applicationFee > 0 ? { application_fee_amount: fees.applicationFee } : {}),
           statement_descriptor_suffix: safeDescriptorSuffix,
           metadata: {
             leaseshield_kind: 'rent_payment',
             rent_payment_request_id: r.id,
             landlord_user_id: r.userId,
+            rent_amount_cents: String(r.amount),
+            service_fee_cents: String(fees.serviceFee),
+            service_fee_payer: fees.serviceFeePayer,
+            platform_fee_cents: String(fees.platformFee),
           },
         },
         // Rent-specific framing shown above Stripe's NACHA mandate text.
         custom_text: {
           submit: {
-            message: `By authorizing, you'll pay $${(r.amount / 100).toFixed(2)} in rent${dueDateStr ? ` for ${dueDateStr}` : ''} to ${landlordDisplayName} via bank transfer (ACH). This is a one-time payment — your bank account will not be saved or auto-charged again. ACH transfers typically settle in 3-5 business days.`,
+            message: `By authorizing, you'll pay $${(fees.tenantTotal / 100).toFixed(2)}${fees.serviceFeePayer === 'tenant' && fees.serviceFee > 0 ? ` (rent $${(r.amount/100).toFixed(2)} + $${(fees.serviceFee/100).toFixed(2)} service fee)` : ' in rent'}${dueDateStr ? ` for ${dueDateStr}` : ''} to ${landlordDisplayName} via bank transfer (ACH). This is a one-time payment — your bank account will not be saved or auto-charged again. ACH transfers typically settle in 3-5 business days.`,
           },
         },
         metadata: {
           leaseshield_kind: 'rent_payment',
           rent_payment_request_id: r.id,
           landlord_user_id: r.userId,
+          rent_amount_cents: String(r.amount),
+          service_fee_cents: String(fees.serviceFee),
+          service_fee_payer: fees.serviceFeePayer,
+          platform_fee_cents: String(fees.platformFee),
         },
         success_url: successUrl,
         cancel_url: cancelUrl,
       }, {
         // Idempotency key prevents duplicate session creation if this endpoint
         // is hit twice in quick succession (network retry, double-click).
-        idempotencyKey: `rent-checkout-${r.id}-${r.amount}-${r.updatedAt instanceof Date ? r.updatedAt.getTime() : new Date(r.updatedAt as unknown as string).getTime()}`,
+        idempotencyKey: `rent-checkout-${r.id}-${fees.tenantTotal}-${r.updatedAt instanceof Date ? r.updatedAt.getTime() : new Date(r.updatedAt as unknown as string).getTime()}`,
       });
 
       await storage.updateRentPaymentRequest(r.id, {

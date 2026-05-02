@@ -18,6 +18,9 @@ interface PublicRentPayment {
   status: string;
   lateFeeAmount: number;
   gracePeriodDays: number;
+  serviceFeeAmount: number;
+  serviceFeePayer: "tenant" | "landlord" | "none";
+  tenantTotal: number;
   landlordName: string;
   propertyName: string | null;
   propertyAddress: string | null;
@@ -90,6 +93,9 @@ export default function PayRent() {
   }
 
   const amountDollars = (data.amount / 100).toFixed(2);
+  const totalDollars = (data.tenantTotal / 100).toFixed(2);
+  const serviceFeeDollars = (data.serviceFeeAmount / 100).toFixed(2);
+  const tenantPaysServiceFee = data.serviceFeePayer === "tenant" && data.serviceFeeAmount > 0;
   const dueDateStr = new Date(data.dueDate).toLocaleDateString("en-US", {
     year: "numeric",
     month: "long",
@@ -134,8 +140,22 @@ export default function PayRent() {
 
           <div className="border rounded-md p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Amount Due</span>
-              <span className="text-2xl font-bold" data-testid="text-amount-due">${amountDollars}</span>
+              <span className="text-sm text-muted-foreground">Rent</span>
+              <span className="text-base font-medium" data-testid="text-amount-due">${amountDollars}</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Service fee</span>
+              <span className="text-base font-medium" data-testid="text-service-fee">
+                {tenantPaysServiceFee
+                  ? `$${serviceFeeDollars}`
+                  : data.serviceFeePayer === "landlord" && data.serviceFeeAmount > 0
+                    ? "Paid by landlord"
+                    : "$0.00"}
+              </span>
+            </div>
+            <div className="flex items-center justify-between border-t pt-2 mt-1">
+              <span className="text-sm font-semibold">Total due</span>
+              <span className="text-2xl font-bold" data-testid="text-tenant-total">${totalDollars}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Due Date</span>
@@ -191,7 +211,7 @@ export default function PayRent() {
                 data-testid="button-pay-now"
               >
                 <CreditCard className="h-4 w-4 mr-2" />
-                {checkoutMutation.isPending ? "Redirecting…" : `Pay $${amountDollars} via Bank Transfer (ACH)`}
+                {checkoutMutation.isPending ? "Redirecting…" : `Pay $${totalDollars} via Bank Transfer (ACH)`}
               </Button>
               <p className="text-xs text-muted-foreground text-center">
                 Secure payment powered by Stripe. ACH transfers have no card processing fees.
