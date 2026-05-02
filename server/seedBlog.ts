@@ -1,5 +1,6 @@
 import { db } from "./db";
 import { blogPosts } from "@shared/schema";
+import { seedStateBlogPosts } from "./seedStateBlogPosts";
 
 async function seedBlogPosts() {
   console.log("Seeding blog posts...");
@@ -70,7 +71,7 @@ async function seedBlogPosts() {
         <p>LeaseShield App provides Utah-specific legal templates, compliance guides, and step-by-step workflows to help you avoid these costly mistakes. Start your free 7-day trial today and protect your investment.</p>
       `,
       author: "Sarah Mitchell, Legal Content Specialist",
-      status: "published" as const,
+      isPublished: true,
       stateIds: ["UT"],
       tags: ["legal-compliance", "utah", "evictions", "security-deposits"],
       metaTitle: "7 Legal Mistakes Utah Landlords Make | LeaseShield App",
@@ -156,7 +157,7 @@ async function seedBlogPosts() {
         <p>Start your free 7-day trial and access all Texas landlord forms today.</p>
       `,
       author: "Michael Rodriguez, Texas Property Law Expert",
-      status: "published" as const,
+      isPublished: true,
       stateIds: ["TX"],
       tags: ["security-deposits", "texas", "legal-compliance"],
       metaTitle: "Texas Security Deposit Law Guide for Landlords | LeaseShield App",
@@ -265,7 +266,7 @@ async function seedBlogPosts() {
         <p>Try it free for 7 days and protect your screening process.</p>
       `,
       author: "Jennifer Thompson, Fair Housing Specialist",
-      status: "published" as const,
+      isPublished: true,
       stateIds: ["ND"],
       tags: ["tenant-screening", "fair-housing", "north-dakota", "compliance"],
       metaTitle: "North Dakota Tenant Screening & Fair Housing Guide | LeaseShield App",
@@ -392,7 +393,7 @@ async function seedBlogPosts() {
         <p>Get instant access with a 7-day free trial.</p>
       `,
       author: "David Chen, South Dakota Property Law Attorney",
-      status: "published" as const,
+      isPublished: true,
       stateIds: ["SD"],
       tags: ["evictions", "south-dakota", "legal-process"],
       metaTitle: "South Dakota Eviction Process Guide | LeaseShield App",
@@ -516,7 +517,7 @@ async function seedBlogPosts() {
         <p>Start your 7-day free trial and handle late payments professionally.</p>
       `,
       author: "Amanda Foster, Property Management Consultant",
-      status: "published" as const,
+      isPublished: true,
       stateIds: ["UT", "TX", "ND", "SD"],
       tags: ["rent-collection", "late-fees", "tenant-relations", "best-practices"],
       metaTitle: "How to Handle Late Rent Payments | Landlord Guide | LeaseShield App",
@@ -526,11 +527,26 @@ async function seedBlogPosts() {
   ];
 
   for (const post of posts) {
-    await db.insert(blogPosts).values(post);
-    console.log(`✓ Created blog post: ${post.title}`);
+    const result = await db
+      .insert(blogPosts)
+      .values(post)
+      .onConflictDoNothing({ target: blogPosts.slug })
+      .returning({ id: blogPosts.id });
+    if (result.length > 0) {
+      console.log(`✓ Created blog post: ${post.title}`);
+    } else {
+      console.log(`↺ Already exists, skipped: ${post.title}`);
+    }
   }
 
-  console.log("\n✅ Blog posts seeded successfully!");
+  console.log("\n✅ Core blog posts seeded.\n");
+
+  // Chain the state-by-state SEO blog (64+ articles across all 16 states).
+  // This makes `tsx server/seedBlog.ts` the single reproducible entrypoint
+  // for shipping blog content to a fresh deployment.
+  await seedStateBlogPosts();
+
+  console.log("\n✅ All blog posts seeded successfully!");
 }
 
 seedBlogPosts()
