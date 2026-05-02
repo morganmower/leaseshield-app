@@ -214,9 +214,9 @@ export default function Dashboard() {
                   <Users className="h-6 w-6 text-muted-foreground" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-foreground mb-1">Start a New Application + Screening</h3>
+                  <h3 className="font-semibold text-lg text-foreground mb-1">Create Application Link + Screening</h3>
                   <p className="text-sm text-muted-foreground">
-                    Send an application and connect screening
+                    Generate a link to send applicants — screening included
                   </p>
                 </div>
                 <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
@@ -353,7 +353,7 @@ export default function Dashboard() {
               <Link to="/rental-applications">
                 <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-6 min-h-[48px]" data-testid="button-hero-start-application">
                   <ClipboardList className="h-5 w-5 mr-2" />
-                  Start an Application
+                  Create Application Link
                 </Button>
               </Link>
               <Link to="/screening">
@@ -375,84 +375,6 @@ export default function Dashboard() {
               <Lightbulb className="h-4 w-4 text-amber-500 flex-shrink-0" />
               <span>Tip: Most landlords misinterpret at least one item on every screening report. The decoder highlights what matters and what to ask next.</span>
             </p>
-          </div>
-        </div>
-
-        {/* Start Here (Recommended) Section */}
-        <div className="mb-10">
-          <div className="mb-4">
-            <h2 className="text-xl font-display font-semibold text-foreground flex items-center gap-2">
-              <CheckCircle2 className="h-5 w-5 text-primary" />
-              Start Here (Recommended)
-            </h2>
-            <p className="text-sm text-muted-foreground mt-1">If you do nothing else today, follow this flow.</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            {/* Step 1: Applications */}
-            <Card className="p-5 border-l-4 border-l-emerald-500" data-testid="card-step-1">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="rounded-full bg-emerald-500/20 w-8 h-8 flex items-center justify-center flex-shrink-0 text-emerald-600 dark:text-emerald-500 font-bold text-sm">
-                  1
-                </div>
-                <h3 className="font-semibold text-foreground">Collect an application + route screening through Western Verify</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                One link to the applicant → authorization captured → screening runs → status updates inside LeaseShield.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/rental-applications">
-                  <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white" data-testid="button-create-application-link">
-                    Create Application Link
-                  </Button>
-                </Link>
-                <Link to="/rental-submissions">
-                  <Button size="sm" variant="outline" data-testid="button-view-app-status">
-                    View Application Status
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Step 2: AI Screening Helpers */}
-            <Card className="p-5 border-l-4 border-l-cyan-500" data-testid="card-step-2">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="rounded-full bg-cyan-500/20 w-8 h-8 flex items-center justify-center flex-shrink-0 text-cyan-600 dark:text-cyan-500 font-bold text-sm">
-                  2
-                </div>
-                <h3 className="font-semibold text-foreground">Review results using AI Screening Helpers</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Paste/upload report text. Get plain-English explanations, risk flags, and the best follow-up questions.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/screening">
-                  <Button size="sm" className="bg-cyan-600 hover:bg-cyan-700 text-white" data-testid="button-open-screening-decoder">
-                    Open Screening Decoder
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Step 3: Documents */}
-            <Card className="p-5 border-l-4 border-l-amber-500" data-testid="card-step-3">
-              <div className="flex items-start gap-3 mb-3">
-                <div className="rounded-full bg-amber-500/20 w-8 h-8 flex items-center justify-center flex-shrink-0 text-amber-600 dark:text-amber-500 font-bold text-sm">
-                  3
-                </div>
-                <h3 className="font-semibold text-foreground">Use updated state-specific documents when you need to act</h3>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Leases and notices updated as legislation changes: late rent, violations, non-renewal, and more.
-              </p>
-              <div className="flex flex-wrap gap-2">
-                <Link to="/templates">
-                  <Button size="sm" className="bg-amber-600 hover:bg-amber-700 text-white" data-testid="button-browse-leases-notices">
-                    Browse Leases & Notices
-                  </Button>
-                </Link>
-              </div>
-            </Card>
           </div>
         </div>
 

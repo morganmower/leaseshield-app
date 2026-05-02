@@ -53,13 +53,13 @@ const mainItems = [
     iconColor: "text-primary",
   },
   {
-    title: "Leases & Notices",
+    title: "Document Templates",
     url: "/templates",
     icon: FileText,
     iconColor: "text-blue-500 dark:text-blue-400",
   },
   {
-    title: "My Documents",
+    title: "Document Library",
     url: "/my-documents",
     icon: FolderOpen,
     iconColor: "text-amber-500 dark:text-amber-400",
@@ -71,7 +71,7 @@ const mainItems = [
     iconColor: "text-indigo-500 dark:text-indigo-400",
   },
   {
-    title: "Applications",
+    title: "Application Inbox",
     url: "/rental-submissions",
     icon: FileCheck2,
     iconColor: "text-emerald-500 dark:text-emerald-400",
@@ -209,7 +209,7 @@ export function AppSidebar() {
                     <Link href={item.url} onClick={handleNavClick} data-testid={`link-${item.title.toLowerCase().replace(' ', '-')}`}>
                       <item.icon className={`h-5 w-5 ${item.iconColor}`} />
                       <span className="font-medium flex-1">{item.title}</span>
-                      {item.title === "Applications" && pendingAppsCount > 0 && (
+                      {item.title === "Application Inbox" && pendingAppsCount > 0 && (
                         <Badge 
                           variant="destructive" 
                           className="ml-auto h-5 min-w-5 px-1.5 text-xs"

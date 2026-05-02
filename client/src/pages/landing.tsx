@@ -1982,8 +1982,8 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Scarcity & Final CTA */}
-      <section className="py-20 md:py-28 bg-amber-50 dark:bg-amber-950/20 border-y border-amber-200 dark:border-amber-800">
+      {/* Final CTA */}
+      <section className="py-20 md:py-28 bg-muted/30 border-y">
         <div className="container max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <motion.div
             initial="hidden"
@@ -1992,10 +1992,10 @@ export default function Landing() {
             variants={fadeInUp}
           >
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              Only 43 Founders Spots Left at <strong>$10/mo or $100/year (save $20)</strong>
+              Ready to protect your rentals?
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto px-4">
-              Price increases to $15 next week
+              $10/month. Cancel anytime. 30-day money-back guarantee.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button
@@ -2004,12 +2004,12 @@ export default function Landing() {
                 data-testid="button-final-cta"
                 className="bg-brand-500 hover:bg-brand-600 text-white text-xl px-10 py-6 min-h-[56px]"
               >
-                Lock In My Spot Before It's Gone
+                Get Started
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
             <p className="text-base text-muted-foreground">
-              Only $10/month. Instant access to leases, decoder, and all tools.
+              Instant access to leases, decoder, and all tools.
             </p>
             <p className="text-xs text-muted-foreground/70 mt-3">
               *Not legal advice. See disclaimer below.
