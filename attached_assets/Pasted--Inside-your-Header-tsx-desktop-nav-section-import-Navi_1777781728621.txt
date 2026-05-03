@@ -1,0 +1,48 @@
+// Inside your Header.tsx (desktop nav section)
+import {
+  NavigationMenu,
+  NavigationMenuContent,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  NavigationMenuTrigger,
+} from "@/components/ui/navigation-menu"; // or DropdownMenu if you prefer simpler
+
+{/* Replace or add inside your nav */}
+<NavigationMenu>
+  <NavigationMenuList>
+    <NavigationMenuItem>
+      <NavigationMenuTrigger className="text-base font-medium hover:text-[#2DD4BF]">
+        Solutions
+      </NavigationMenuTrigger>
+      <NavigationMenuContent className="w-[420px] p-4">
+        <div className="grid grid-cols-2 gap-4">
+          <NavigationMenuLink href="/rental-management-system" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Rental Management System</div>
+            <div className="text-sm text-slate-500">All-in-one workflow</div>
+          </NavigationMenuLink>
+          <NavigationMenuLink href="/tenant-screening-services" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Tenant Screening</div>
+            <div className="text-sm text-slate-500">County-level + Western Verify</div>
+          </NavigationMenuLink>
+          <NavigationMenuLink href="/screening-report-decoder" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Screening Report Decoder</div>
+            <div className="text-sm text-slate-500">Plain-English risk flags</div>
+          </NavigationMenuLink>
+          <NavigationMenuLink href="/rental-application-software" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Rental Applications</div>
+            <div className="text-sm text-slate-500">Screening-ready forms</div>
+          </NavigationMenuLink>
+          <NavigationMenuLink href="/rent-collection-software" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Online Rent Collection</div>
+            <div className="text-sm text-slate-500">ACH tied to leases</div>
+          </NavigationMenuLink>
+          <NavigationMenuLink href="/landlord-forms-and-notices" className="block p-3 hover:bg-slate-100 rounded-2xl">
+            <div className="font-medium">Forms &amp; Notices</div>
+            <div className="text-sm text-slate-500">157+ state-compliant</div>
+          </NavigationMenuLink>
+        </div>
+      </NavigationMenuContent>
+    </NavigationMenuItem>
+  </NavigationMenuList>
+</NavigationMenu>

@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
+import { SolutionsNav } from "@/components/marketing/solutions-nav";
 
 interface MarketingLayoutProps {
   children: ReactNode;
@@ -18,13 +19,9 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
           <Link to="/" className="flex items-center hover:opacity-80 transition-opacity" data-testid="link-home">
             <Logo variant="horizontal" size="lg" />
           </Link>
-          <nav className="hidden lg:flex items-center gap-5 ml-6 text-sm font-medium">
-            <Link to="/rental-management-system" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-system">System</Link>
-            <Link to="/tenant-screening-services" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-screening">Screening</Link>
-            <Link to="/screening-report-decoder" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-decoder">Decoder</Link>
-            <Link to="/rental-application-software" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-applications">Applications</Link>
-            <Link to="/rent-collection-software" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-rent">Rent</Link>
-            <Link to="/landlord-forms-and-notices" className="text-muted-foreground hover:text-foreground transition-colors" data-testid="nav-forms">Forms</Link>
+          <nav className="hidden md:flex items-center gap-2 ml-6 text-sm font-medium">
+            <SolutionsNav />
+            <Link to="/blog" className="text-muted-foreground hover:text-foreground transition-colors px-3" data-testid="nav-blog">Blog</Link>
           </nav>
           <div className="flex items-center gap-2 sm:gap-3 ml-2">
             <ThemeToggle />
