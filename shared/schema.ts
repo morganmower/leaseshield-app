@@ -409,7 +409,7 @@ export const insertScreeningFeedbackSchema = createInsertSchema(screeningFeedbac
 export type InsertScreeningFeedback = z.infer<typeof insertScreeningFeedbackSchema>;
 export type ScreeningFeedback = typeof screeningFeedback.$inferSelect;
 
-// Screening toolkit content
+// Screening content
 export const screeningContent = pgTable("screening_content", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   slug: varchar("slug", { length: 100 }).notNull().unique(),

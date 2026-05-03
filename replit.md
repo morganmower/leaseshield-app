@@ -30,19 +30,19 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **Auto-Default Applicant Link Per Property**: Automatically generates a shareable applicant link for every property, with per-link analytics, QR code download, pause/resume functionality, and slug auto-suggest.
 - **Landlord Email on New Application**: Sends email notifications to landlords upon new application submission.
 - **Per-Unit Security Deposit Override**: Allows individual rental units to override the property-level security deposit.
-- **Compliance Toolkit**: Interactive cards displaying state-specific legal requirements.
+- **Compliance Center**: Interactive cards displaying state-specific legal requirements.
 - **SEO Infrastructure**: Includes server-generated `/sitemap.xml` and a lightweight `<SEO>` component for dynamic meta-tag updates.
 - **Marketing Enhancements**: Landing page prominently surfaces rent collection features, including online rent collection, ACH, and recurring auto-pay.
 - **State-by-State Landlord Blog**: SEO-optimized articles across supported states covering key landlord topics, with inline CTAs.
 - **Marketing FAQ Sections**: Each of the 5 dedicated SEO sub-pages (`/screening-report-decoder`, `/tenant-screening-services`, `/rental-application-software`, `/rent-collection-software`, `/landlord-forms-and-notices`) ships a 6-question FAQ block in semantic h3+p markup, targeting long-tail intent (e.g. "what does charge-off mean", "how long does ACH take", "are these templates state-compliant") for direct indexing by search engines without JavaScript.
 - **Rent Benefits Module**: Dedicated "Why rent collection matters" 3-card module on the landing page (after system-flow, before Premium Decision Cards) and on `/rent-collection-software`, surfacing the emotional/business benefits — reduces late payments, creates payment history that holds up in court, simplifies disputes — to anchor rent collection as the retention engine.
-- **Internal Page Naming**: Post-login operational page H1s renamed away from "Toolkit" terminology to match public positioning — `/compliance` → "Compliance Center", `/tenant-issues` → "Tenant Issue Workflows", `/screening` route header → "Tenant Screening", `gated-feature` day-5 unlock → "Full System & Comms", and dashboard tour copy ("Complete System", "Quick Access Tools").
+- **Internal Page Naming**: Post-login operational page H1s align with public "rental management system" positioning — `/compliance` is "Compliance Center", `/tenant-issues` is "Tenant Issue Workflows", `/screening` route header is "Tenant Screening", `gated-feature` day-5 unlock is "Full System & Comms", and dashboard tour copy uses "Complete System" / "Quick Access Tools". The legacy "toolkit" term has been fully removed from the codebase, including internal Shepherd tour ids and DOM testids, to eliminate the category-confusion risk flagged in the product audit.
 
 ### Feature Specifications
 - **Subscription Management**: Integrated with Stripe.
 - **Template Library**: State-specific legal documents with form fields and statute references.
 - **Compliance Cards**: Detailed state-specific guidance.
-- **Screening Toolkit**: Guides for credit reports, background checks, and Fair Housing.
+- **Tenant Screening**: Guides for credit reports, background checks, and Fair Housing.
 - **Tenant Issue Workflows**: Step-by-step resolution guides.
 - **User Preferences**: Allows setting a preferred state for personalized content.
 - **Admin Interfaces**: For legislative monitoring and resource management.

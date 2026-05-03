@@ -72,7 +72,7 @@ export const useDashboardTour = (shouldShow: boolean) => {
 
       // Step 3: Complete System
       tour.addStep({
-        id: 'complete-toolkit',
+        id: 'complete-system',
         title: '🛠️ Your Complete System',
         text: 'Everything organized for you: Document Assembly Wizard, Legislative Monitoring, Property Management, and more',
         buttons: [
@@ -111,7 +111,7 @@ export const useDashboardTour = (shouldShow: boolean) => {
           },
         ],
         attachTo: {
-          element: '[data-testid="card-leasing-toolkit"]',
+          element: '[data-testid="card-leasing-tools"]',
           on: 'bottom',
         },
       });

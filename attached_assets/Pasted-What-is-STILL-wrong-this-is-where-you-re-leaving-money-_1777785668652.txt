@@ -1,0 +1,309 @@
+What is STILL wrong (this is where you’re leaving money)
+
+3.1 You still have a positioning contradiction
+
+You say BOTH:
+
+* “rental management system” ✅
+* “toolkit” ❌  
+
+⸻
+
+Why this is not small
+
+This creates category instability.
+
+User now thinks:
+
+* “Is this real software?”
+* “Or just helpful tools?”
+
+That hesitation:
+
+* reduces conversion
+* weakens authority
+* hurts pricing confidence
+
+⸻
+
+Direct fix:
+
+Delete “toolkit” everywhere. No exceptions.
+
+⸻
+
+3.2 Your workflow is correct—but not anchored
+
+You show:
+
+Application → Screening → Decoder → Lease → Rent
+
+⸻
+
+The problem:
+
+It’s presented as a sequence, not a system center
+
+⸻
+
+What’s missing:
+
+Right now:
+
+* Rent is just the last step
+
+But in reality:
+
+* Rent is the ongoing engine
+
+⸻
+
+Why this matters:
+
+Users don’t think:
+
+“I need a workflow”
+
+They think:
+
+“I need to collect rent and manage tenants”
+
+⸻
+
+Your current model:
+
+Linear
+
+Required model:
+
+Gravity-based
+
+Everything flows INTO:
+
+* tenant
+* lease
+* rent
+
+⸻
+
+3.3 You still haven’t chosen a dominant entry point
+
+Right now, your product has 3 strong hooks:
+
+1. Screening
+2. Decoder
+3. Rent collection
+
+⸻
+
+But your homepage doesn’t commit to one.
+
+That creates:
+
+* diluted attention
+* slower decision-making
+
+⸻
+
+Reality:
+
+You need a primary hook.
+
+Based on your product:
+
+Best option:
+
+Decoder (for acquisition)
+
+Then expand into:
+
+* screening
+* rent
+
+⸻
+
+3.4 Your strongest advantage is still under-positioned
+
+The decoder is:
+
+* unique
+* defensible
+* high-intent
+
+But currently:
+
+* treated like a feature
+
+⸻
+
+This is a strategic miss
+
+You could own:
+
+* “how to read tenant screening report”
+* “what does eviction record mean”
+
+Right now you’re not claiming that territory.
+
+⸻
+
+3.5 SEO structure is still flat
+
+Everything is still presented on one page.
+
+⸻
+
+Problem:
+
+Google doesn’t rank “systems” well on one page.
+
+It ranks:
+
+* specific intent pages
+
+⸻
+
+You need:
+
+Separate pages for:
+
+* rent collection software
+* tenant screening services
+* rental application software
+* screening decoder
+
+Right now:
+you’re bundling instead of dominating.
+
+⸻
+
+3.6 Your messaging is still slightly defensive
+
+You say:
+
+“none of the enterprise complexity”  
+
+⸻
+
+Problem:
+
+You are framing yourself as:
+
+* “not them”
+
+Instead of:
+
+* “this is what we ARE”
+
+⸻
+
+Subtle but important shift:
+
+From:
+
+anti-complex
+
+To:
+
+purpose-built simplicity
+
+⸻
+
+4. The biggest remaining miss (this is the one)
+
+You still haven’t fully committed to this identity:
+
+“This runs your rentals”
+
+⸻
+
+Right now it still feels like:
+
+“This helps you run rentals”
+
+That difference is:
+
+* conversion
+* retention
+* pricing power
+
+⸻
+
+5. What’s now holding you back (ranked)
+
+#1 — “toolkit” still exists
+
+→ creates confusion
+
+#2 — rent is not the anchor
+
+→ limits retention narrative
+
+#3 — no dominant entry point
+
+→ hurts conversion
+
+#4 — decoder under-leveraged
+
+→ wastes SEO advantage
+
+#5 — no page structure
+
+→ caps organic growth
+
+⸻
+
+6. What you should do next (tight, no fluff)
+
+1. Remove “toolkit” completely
+
+You’ve already outgrown it.
+
+⸻
+
+2. Reframe your system visually
+
+Instead of:
+Application → … → Rent
+
+Shift to:
+
+* Tenant + Lease at center
+* Everything feeds into rent + management
+
+⸻
+
+3. Pick ONE primary hook
+
+Best choice:
+
+* Decoder (top of funnel)
+
+⸻
+
+4. Build real SEO structure
+
+Create pages for:
+
+* rent collection
+* screening
+* application
+* decoder
+
+⸻
+
+5. Strengthen identity
+
+Everything should reinforce:
+
+“This is the simplest way to run rentals end-to-end”
+
+⸻
+
+7. Bottom line (direct)
+
+You improved meaningfully:
+
+* Category: fixed
+* Workflow: introduced
+* Product clarity: better
