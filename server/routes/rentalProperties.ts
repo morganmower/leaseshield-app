@@ -331,38 +331,45 @@ export async function registerRentalPropertiesRoutes(app: Express) {
         return res.status(403).json({ message: "Access denied" });
       }
 
-      const { unitLabel, rentAmount, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
-      
+      const { unitLabel, rentAmount, securityDepositAmount, coverPageOverrideEnabled, coverPageOverrideJson, fieldSchemaOverrideEnabled, fieldSchemaOverrideJson } = req.body;
+
       const unit = await storage.updateRentalUnit(req.params.id, {
         unitLabel,
         rentAmount,
+        securityDepositAmount,
         coverPageOverrideEnabled,
         coverPageOverrideJson,
         fieldSchemaOverrideEnabled,
         fieldSchemaOverrideJson,
       });
 
-      // Update active links with new unit label and rent amount
-      if (unit && (unitLabel !== undefined || rentAmount !== undefined)) {
+      // Update active links with new unit label, rent amount, and deposit
+      if (unit && (unitLabel !== undefined || rentAmount !== undefined || securityDepositAmount !== undefined)) {
         try {
           const links = await storage.getRentalApplicationLinksByUnitId(req.params.id);
           const activeLinks = links.filter(l => l.isActive);
-          
+
           for (const link of activeLinks) {
             const currentSchema = link.mergedSchemaJson as any || {};
             const currentPropertyTerms = currentSchema.propertyTerms || {};
-            
+
             const formattedRent = rentAmount !== undefined && rentAmount !== null
               ? `$${(rentAmount / 100).toLocaleString()}/mo`
               : currentPropertyTerms.monthlyRent;
-            
+
+            const formattedDeposit = securityDepositAmount !== undefined
+              ? (securityDepositAmount === null ? undefined : `$${(securityDepositAmount / 100).toLocaleString()}`)
+              : currentPropertyTerms.securityDeposit;
+
             const updatedSchema = {
               ...currentSchema,
               ...(unitLabel !== undefined && { unitLabel: unitLabel || "" }),
               ...(rentAmount !== undefined && { rentAmount }),
+              ...(securityDepositAmount !== undefined && { securityDepositAmount }),
               propertyTerms: {
                 ...currentPropertyTerms,
                 ...(rentAmount !== undefined && { monthlyRent: formattedRent }),
+                ...(securityDepositAmount !== undefined && { securityDeposit: formattedDeposit }),
               },
             };
             await storage.updateRentalApplicationLink(link.id, { mergedSchemaJson: updatedSchema });

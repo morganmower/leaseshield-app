@@ -59,6 +59,9 @@ export async function registerApplyRoutes(app: Express) {
           if (liveUnit.rentAmount != null) {
             livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
           }
+          if ((liveUnit as any).securityDepositAmount != null) {
+            livePropertyTerms.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
+          }
           if (liveUnit.unitLabel !== undefined) {
             (link.mergedSchemaJson as any).unitLabel = liveUnit.unitLabel || "";
           }

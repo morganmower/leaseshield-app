@@ -1234,6 +1234,7 @@ export const rentalUnits = pgTable("rental_units", {
   propertyId: varchar("property_id").notNull().references(() => rentalProperties.id, { onDelete: 'cascade' }),
   unitLabel: text("unit_label").notNull(), // e.g., "Unit A", "101", "Main House"
   rentAmount: integer("rent_amount"), // Monthly rent in cents (e.g., 150000 = $1,500.00)
+  securityDepositAmount: integer("security_deposit_amount"), // Security deposit in cents; null = use property default / not set
   coverPageOverrideEnabled: boolean("cover_page_override_enabled").default(false).notNull(),
   coverPageOverrideJson: jsonb("cover_page_override_json"), // Override cover page if enabled
   fieldSchemaOverrideEnabled: boolean("field_schema_override_enabled").default(false).notNull(),

@@ -1562,7 +1562,7 @@ function PropertyCard({
             ) : (
               <div className="space-y-2">
                 {units.map((unit) => (
-                  <UnitCard key={unit.id} unit={unit} propertyId={property.id} />
+                  <UnitCard key={unit.id} unit={unit} propertyId={property.id} property={property} />
                 ))}
               </div>
             )}
@@ -1573,19 +1573,34 @@ function PropertyCard({
   );
 }
 
-function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }) {
+function UnitCard({ unit, propertyId, property }: { unit: RentalUnit; propertyId: string; property: RentalProperty }) {
   const { toast } = useToast();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [editLabel, setEditLabel] = useState(unit.unitLabel || "");
   const [editRent, setEditRent] = useState(unit.rentAmount ? (unit.rentAmount / 100).toFixed(2) : "");
+  const [editDeposit, setEditDeposit] = useState(
+    (unit as any).securityDepositAmount != null ? ((unit as any).securityDepositAmount / 100).toFixed(2) : ""
+  );
+
+  // Parse the property-level deposit string (e.g. "$1,500" or "1500.00") into a plain numeric string for the unit field.
+  const propertyTerms = ((property as any).propertyTermsJson || {}) as { monthlyRent?: string; securityDeposit?: string };
+  const parseMoneyString = (s?: string): string => {
+    if (!s) return "";
+    const cleaned = s.replace(/[^0-9.]/g, "");
+    if (!cleaned) return "";
+    const n = parseFloat(cleaned);
+    return Number.isFinite(n) ? n.toFixed(2) : "";
+  };
+  const propertyDepositParsed = parseMoneyString(propertyTerms.securityDeposit);
+  const propertyRentParsed = parseMoneyString(propertyTerms.monthlyRent);
   
   const { data: links = [] } = useQuery<RentalApplicationLink[]>({
     queryKey: ["/api/rental/units", unit.id, "links"],
   });
 
   const updateUnitMutation = useMutation({
-    mutationFn: async ({ unitLabel, rentAmount }: { unitLabel: string; rentAmount: number | null }) => {
+    mutationFn: async ({ unitLabel, rentAmount, securityDepositAmount }: { unitLabel: string; rentAmount: number | null; securityDepositAmount: number | null }) => {
       const token = getAccessToken();
       const response = await fetch(`/api/rental/units/${unit.id}`, {
         method: "PATCH",
@@ -1594,7 +1609,7 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         credentials: "include",
-        body: JSON.stringify({ unitLabel, rentAmount }),
+        body: JSON.stringify({ unitLabel, rentAmount, securityDepositAmount }),
       });
       if (!response.ok) throw new Error("Failed to update unit");
       return response.json();
@@ -1673,59 +1688,116 @@ function UnitCard({ unit, propertyId }: { unit: RentalUnit; propertyId: string }
         <div className="flex items-center gap-2">
           <Home className="h-4 w-4 text-muted-foreground" />
           {isEditing ? (
-            <div className="flex items-center gap-1 flex-wrap">
-              <Input
-                value={editLabel}
-                onChange={(e) => setEditLabel(e.target.value)}
-                placeholder="e.g., Apt A, Unit 101"
-                className="h-7 w-28 text-sm"
-                autoFocus
-                data-testid={`input-edit-unit-${unit.id}`}
-              />
-              <div className="flex items-center gap-1">
-                <span className="text-sm text-muted-foreground">$</span>
-                <Input
-                  value={editRent}
-                  onChange={(e) => setEditRent(e.target.value)}
-                  placeholder="Rent"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  className="h-7 w-24 text-sm"
-                  data-testid={`input-edit-rent-${unit.id}`}
-                />
-                <span className="text-sm text-muted-foreground">/mo</span>
+            <div className="flex flex-col gap-2 w-full">
+              <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs text-muted-foreground">Unit name</Label>
+                  <Input
+                    value={editLabel}
+                    onChange={(e) => setEditLabel(e.target.value)}
+                    placeholder="e.g., Apt A, Unit 101"
+                    className="h-8 w-32 text-sm"
+                    autoFocus
+                    data-testid={`input-edit-unit-${unit.id}`}
+                  />
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-muted-foreground">Monthly rent</Label>
+                    {propertyRentParsed && (
+                      <button
+                        type="button"
+                        onClick={() => setEditRent(propertyRentParsed)}
+                        className="text-xs text-primary hover:underline"
+                        data-testid={`button-copy-rent-from-property-${unit.id}`}
+                      >
+                        Use property rent (${propertyRentParsed})
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      value={editRent}
+                      onChange={(e) => setEditRent(e.target.value)}
+                      placeholder="0.00"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="h-8 w-24 text-sm"
+                      data-testid={`input-edit-rent-${unit.id}`}
+                    />
+                    <span className="text-sm text-muted-foreground">/mo</span>
+                  </div>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label className="text-xs text-muted-foreground">Security deposit</Label>
+                    {propertyDepositParsed && (
+                      <button
+                        type="button"
+                        onClick={() => setEditDeposit(propertyDepositParsed)}
+                        className="text-xs text-primary hover:underline"
+                        data-testid={`button-copy-deposit-from-property-${unit.id}`}
+                      >
+                        Use property deposit (${propertyDepositParsed})
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm text-muted-foreground">$</span>
+                    <Input
+                      value={editDeposit}
+                      onChange={(e) => setEditDeposit(e.target.value)}
+                      placeholder="Leave blank for none"
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      className="h-8 w-32 text-sm"
+                      data-testid={`input-edit-deposit-${unit.id}`}
+                    />
+                  </div>
+                </div>
               </div>
-              <Button
-                size="sm"
-                onClick={() => {
-                  const rentCents = editRent ? Math.round(parseFloat(editRent) * 100) : null;
-                  updateUnitMutation.mutate({ unitLabel: editLabel, rentAmount: rentCents });
-                }}
-                disabled={updateUnitMutation.isPending}
-                data-testid={`button-save-unit-${unit.id}`}
-              >
-                Save
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => {
-                  setIsEditing(false);
-                  setEditLabel(unit.unitLabel || "");
-                  setEditRent(unit.rentAmount ? (unit.rentAmount / 100).toFixed(2) : "");
-                }}
-                data-testid={`button-cancel-edit-unit-${unit.id}`}
-              >
-                Cancel
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    const rentCents = editRent ? Math.round(parseFloat(editRent) * 100) : null;
+                    const depositCents = editDeposit ? Math.round(parseFloat(editDeposit) * 100) : null;
+                    updateUnitMutation.mutate({ unitLabel: editLabel, rentAmount: rentCents, securityDepositAmount: depositCents });
+                  }}
+                  disabled={updateUnitMutation.isPending}
+                  data-testid={`button-save-unit-${unit.id}`}
+                >
+                  Save
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditLabel(unit.unitLabel || "");
+                    setEditRent(unit.rentAmount ? (unit.rentAmount / 100).toFixed(2) : "");
+                    setEditDeposit((unit as any).securityDepositAmount != null ? ((unit as any).securityDepositAmount / 100).toFixed(2) : "");
+                  }}
+                  data-testid={`button-cancel-edit-unit-${unit.id}`}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-medium text-sm">{unit.unitLabel || "Default"}</span>
-              {unit.rentAmount && (
+              {unit.rentAmount != null && (
                 <Badge variant="outline" className="text-xs">
                   ${(unit.rentAmount / 100).toLocaleString()}/mo
+                </Badge>
+              )}
+              {(unit as any).securityDepositAmount != null && (
+                <Badge variant="outline" className="text-xs" data-testid={`badge-deposit-${unit.id}`}>
+                  Deposit: ${((unit as any).securityDepositAmount / 100).toLocaleString()}
                 </Badge>
               )}
               <Button
