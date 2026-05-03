@@ -1,6 +1,7 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { prerenderMiddleware } from "./prerender";
 import { scheduledJobs } from "./scheduledJobs";
 import { startScreeningPoller, stopScreeningPoller } from "./screeningPoller";
 import { closePool } from "./db";
@@ -277,6 +278,12 @@ app.use((req, res, next) => {
       ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
     });
   });
+
+  // Prerender middleware for SEO &mdash; intercepts marketing-cluster routes and
+  // injects static HTML into the SPA shell so crawlers/audit tools see real
+  // content. Must run before setupVite/serveStatic so it gets first crack at
+  // the catch-all routes. Falls through cleanly for any path not in its map.
+  app.use(prerenderMiddleware);
 
   // importantly only setup vite in development and after
   // setting up all the other routes so the catch-all route
