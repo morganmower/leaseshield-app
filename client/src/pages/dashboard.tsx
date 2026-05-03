@@ -174,18 +174,18 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
-        <div className="mb-6 flex items-start justify-between gap-4">
+        <div className="mb-8 flex items-start justify-between gap-4">
           <div>
             <h1
-              className="text-2xl sm:text-3xl font-display font-semibold text-foreground"
+              className="text-3xl sm:text-4xl font-display font-semibold text-foreground"
               data-testid="text-welcome"
             >
               Welcome back{user.firstName ? `, ${user.firstName}` : ""}
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              Here's what needs you today.
+            <p className="text-sm sm:text-base text-muted-foreground mt-2">
+              Here's what needs your attention today.
             </p>
           </div>
           <ThemeToggle />
@@ -217,12 +217,12 @@ export default function Dashboard() {
         )}
 
         {/* Stats strip */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
             label="Properties"
             value={stats?.propertiesCount}
             loading={dataLoading}
-            icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
+            icon={<Building2 className="h-10 w-10 text-primary/30" />}
             href="/properties"
             testId="stat-properties"
           />
@@ -230,7 +230,7 @@ export default function Dashboard() {
             label="Active applications"
             value={stats?.activeApplicationsCount}
             loading={dataLoading}
-            icon={<ClipboardList className="h-4 w-4 text-muted-foreground" />}
+            icon={<ClipboardList className="h-10 w-10 text-primary/30" />}
             href="/rental-applications"
             testId="stat-applications"
           />
@@ -239,7 +239,7 @@ export default function Dashboard() {
             value={stats?.reportsToReviewCount}
             loading={dataLoading}
             highlight={(stats?.reportsToReviewCount ?? 0) > 0}
-            icon={<Search className="h-4 w-4 text-muted-foreground" />}
+            icon={<Search className="h-10 w-10 text-primary/30" />}
             href="/rental-applications"
             testId="stat-reports"
           />
@@ -247,7 +247,7 @@ export default function Dashboard() {
             label="Updates this month"
             value={stats?.updatesThisMonthCount}
             loading={dataLoading}
-            icon={<Scale className="h-4 w-4 text-muted-foreground" />}
+            icon={<Scale className="h-10 w-10 text-primary/30" />}
             href="/legal-updates"
             testId="stat-updates"
           />
@@ -347,33 +347,33 @@ export default function Dashboard() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <QuickAction
               href="/screening"
-              icon={<Search className="h-5 w-5" />}
+              icon={<Search className="h-7 w-7" />}
               label="Decode a report"
               primary
               testId="quick-decode"
             />
             <QuickAction
               href="/rental-applications"
-              icon={<ClipboardList className="h-5 w-5" />}
+              icon={<ClipboardList className="h-7 w-7" />}
               label="New application"
               primary
               testId="quick-application"
             />
             <QuickAction
               href="/templates"
-              icon={<FileText className="h-5 w-5" />}
+              icon={<FileText className="h-7 w-7" />}
               label="Browse templates"
               testId="quick-templates"
             />
             <QuickAction
               href="/templates?type=notices"
-              icon={<Send className="h-5 w-5" />}
+              icon={<Send className="h-7 w-7" />}
               label="Send a notice"
               testId="quick-notice"
             />
             <QuickAction
               href="/rent-ledger"
-              icon={<Receipt className="h-5 w-5" />}
+              icon={<Receipt className="h-7 w-7" />}
               label="Log rent"
               testId="quick-rent"
             />
@@ -447,21 +447,27 @@ function StatCard({
   return (
     <Link to={href} data-testid={testId}>
       <Card
-        className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-all ${
+        className={`p-6 hover-elevate active-elevate-2 cursor-pointer transition-all h-full ${
           highlight ? "border-amber-500/40" : ""
         }`}
       >
-        <div className="flex items-center justify-between mb-1">
-          <span className="text-xs text-muted-foreground">{label}</span>
-          {icon}
-        </div>
-        {loading ? (
-          <Skeleton className="h-7 w-12" />
-        ) : (
-          <div className="text-2xl font-semibold text-foreground tabular-nums">
-            {value ?? 0}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm text-muted-foreground">{label}</p>
+            {loading ? (
+              <Skeleton className="h-10 w-16 mt-2" />
+            ) : (
+              <p
+                className={`text-4xl font-semibold tabular-nums mt-2 ${
+                  highlight ? "text-amber-600 dark:text-amber-500" : "text-foreground"
+                }`}
+              >
+                {value ?? 0}
+              </p>
+            )}
           </div>
-        )}
+          <div className="flex-shrink-0">{icon}</div>
+        </div>
       </Card>
     </Link>
   );
@@ -483,11 +489,11 @@ function QuickAction({
   return (
     <Link to={href} data-testid={testId}>
       <Card
-        className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-2 min-h-[96px] ${
+        className={`p-6 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-3 min-h-[120px] h-full ${
           primary ? "border-primary/40 bg-primary/5" : ""
         }`}
       >
-        <div className={primary ? "text-primary" : "text-foreground"}>{icon}</div>
+        <div className={primary ? "text-primary" : "text-primary/80"}>{icon}</div>
         <span className="text-sm font-medium text-foreground">{label}</span>
       </Card>
     </Link>
