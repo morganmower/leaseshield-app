@@ -58,7 +58,7 @@ async function main() {
     `);
     console.log(`✓ MI Demand for Possession template linked to output_template ${outputTemplateId}`);
   } else {
-    console.log('⚠ MI DC 100a output_template not found — skipping template link');
+    console.log('⚠ MI DC 100a output_template not found - skipping template link');
   }
 
   console.log('\nMigration complete.');

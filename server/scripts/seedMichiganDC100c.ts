@@ -19,7 +19,7 @@ const SERVICE_METHOD_IDS = {
 };
 
 async function seed() {
-  console.log('Seeding Michigan DC 100c — Complaint for Land Contract Forfeiture / Termination...');
+  console.log('Seeding Michigan DC 100c - Complaint for Land Contract Forfeiture / Termination...');
 
   const existing = await db.select().from(noticeForms).where(eq(noticeForms.key, 'mi_dc_100c_complaint_land_contract'));
   if (existing.length > 0) {
@@ -34,7 +34,7 @@ async function seed() {
     id: formId,
     stateId: 'MI',
     key: 'mi_dc_100c_complaint_land_contract',
-    displayName: 'Complaint — Land Contract Forfeiture / Termination (DC 100c)',
+    displayName: 'Complaint - Land Contract Forfeiture / Termination (DC 100c)',
     category: 'eviction',
     localOverlayRisk: 'med',
     disclaimerText: 'Land contract forfeiture proceedings have specific timing requirements. Some Michigan jurisdictions may have additional local requirements. Consult with legal counsel.',
@@ -49,7 +49,7 @@ async function seed() {
     effectiveStart: '2024-01-01',
     effectiveEnd: null,
     statuteSourceCitation: 'MCL 600.5726; MCL 600.5728; MCL 554.134',
-    approvalNotes: 'Initial version — Michigan SCAO DC 100c form for land contract forfeiture',
+    approvalNotes: 'Initial version - Michigan SCAO DC 100c form for land contract forfeiture',
   } as any);
 
   await db.insert(formDayRules).values({

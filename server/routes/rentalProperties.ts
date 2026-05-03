@@ -184,7 +184,7 @@ export async function registerRentalPropertiesRoutes(app: Express) {
   });
 
   // Get-or-create the property's default application link (idempotent).
-  // The "default" unit is the one with an empty/null unitLabel — auto-created
+  // The "default" unit is the one with an empty/null unitLabel - auto-created
   // so every property always has one ready-to-share applicant link without
   // requiring the landlord to manually add a unit.
   //

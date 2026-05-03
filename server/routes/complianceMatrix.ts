@@ -23,7 +23,7 @@ import {
 export function registerComplianceMatrixRoutes(app: Express) {
 
   // ============================================================================
-  // NOTICE FORMS — CRUD
+  // NOTICE FORMS - CRUD
   // ============================================================================
 
   app.get('/api/admin/notice-forms', isAuthenticated, requireAdmin, async (_req: any, res) => {
@@ -78,7 +78,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // FORM VERSIONS — CRUD + status workflow
+  // FORM VERSIONS - CRUD + status workflow
   // ============================================================================
 
   app.get('/api/admin/notice-forms/:formId/versions', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -152,7 +152,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // HOLIDAY CALENDARS + DATES — CRUD
+  // HOLIDAY CALENDARS + DATES - CRUD
   // ============================================================================
 
   app.get('/api/admin/holiday-calendars', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -249,7 +249,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // DAY RULES — per form version
+  // DAY RULES - per form version
   // ============================================================================
 
   app.get('/api/admin/form-versions/:versionId/day-rules', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -292,7 +292,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // SERVICE METHODS — master list
+  // SERVICE METHODS - master list
   // ============================================================================
 
   app.get('/api/admin/service-methods', isAuthenticated, requireAdmin, async (_req: any, res) => {
@@ -334,7 +334,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // SERVICE RULES — per form version
+  // SERVICE RULES - per form version
   // ============================================================================
 
   app.get('/api/admin/form-versions/:versionId/service-rules', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -378,7 +378,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // LEASE GATES — per form version
+  // LEASE GATES - per form version
   // ============================================================================
 
   app.get('/api/admin/form-versions/:versionId/lease-gates', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -421,7 +421,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // LANGUAGE BLOCKS — master list + form binding
+  // LANGUAGE BLOCKS - master list + form binding
   // ============================================================================
 
   app.get('/api/admin/language-blocks', isAuthenticated, requireAdmin, async (_req: any, res) => {
@@ -506,7 +506,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // FORM FIELDS + VALIDATIONS — per form version
+  // FORM FIELDS + VALIDATIONS - per form version
   // ============================================================================
 
   app.get('/api/admin/form-versions/:versionId/fields', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -690,7 +690,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // HYDRATED FORM DEFINITION — Matrix Resolver read endpoint
+  // HYDRATED FORM DEFINITION - Matrix Resolver read endpoint
   // ============================================================================
 
   app.get('/api/admin/form-versions/:versionId/full', isAuthenticated, requireAdmin, async (req: any, res) => {
@@ -755,7 +755,7 @@ export function registerComplianceMatrixRoutes(app: Express) {
   });
 
   // ============================================================================
-  // AUDIT EVENTS — read-only for admin
+  // AUDIT EVENTS - read-only for admin
   // ============================================================================
 
   app.get('/api/admin/notice-audit-events', isAuthenticated, requireAdmin, async (req: any, res) => {

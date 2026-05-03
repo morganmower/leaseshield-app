@@ -228,7 +228,7 @@ export default function AdminPlatformFees() {
                       {l.name}
                     </TableCell>
                     <TableCell className="text-muted-foreground" data-testid={`text-landlord-email-${l.userId}`}>
-                      {l.email ?? "—"}
+                      {l.email ?? "-"}
                     </TableCell>
                     <TableCell className="text-right" data-testid={`text-landlord-count-${l.userId}`}>
                       {l.paymentCount.toLocaleString()}

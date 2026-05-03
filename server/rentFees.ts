@@ -1,13 +1,13 @@
 // Rent payment fee configuration
 // LeaseShield's per-transaction platform fee, deducted from every rent payment
 // via Stripe Connect's `application_fee_amount`. Held as a server-side constant
-// for now — no per-landlord override.
+// for now - no per-landlord override.
 export const PLATFORM_FEE_CENTS = 150; // $1.50
 
 // Cap on the tenant convenience fee a landlord can configure (sanity check).
 export const MAX_SERVICE_FEE_CENTS = 5000; // $50.00
 
-// Minimum tenant convenience fee — set so that serviceFee + platformFee >= the
+// Minimum tenant convenience fee - set so that serviceFee + platformFee >= the
 // worst-case Stripe ACH fee ($5.00 cap), guaranteeing LeaseShield never loses
 // money on a rent payment. With PLATFORM_FEE_CENTS=150, the floor is $3.50,
 // but we hold the user-facing minimum at the original $4.95 default to keep
@@ -28,9 +28,9 @@ export interface RentFeeBreakdown {
   serviceFee: number;      // cents (0 if payer === 'none')
   serviceFeePayer: ServiceFeePayer;
   platformFee: number;     // cents (always PLATFORM_FEE_CENTS for now)
-  tenantTotal: number;     // cents — what the tenant is charged at checkout
-  applicationFee: number;  // cents — routed to LeaseShield via Stripe Connect
-  landlordNet: number;     // cents — what lands in the landlord's account
+  tenantTotal: number;     // cents - what the tenant is charged at checkout
+  applicationFee: number;  // cents - routed to LeaseShield via Stripe Connect
+  landlordNet: number;     // cents - what lands in the landlord's account
 }
 
 export function computeRentFees(input: {

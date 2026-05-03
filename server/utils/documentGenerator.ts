@@ -1022,7 +1022,7 @@ function getRentalApplicationContent(fieldValues: FieldValue, stateId: string): 
   `;
 }
 
-// Michigan DC 100a: Standalone court form — returns complete content including its own
+// Michigan DC 100a: Standalone court form - returns complete content including its own
 // signature block and certificate of service. Do NOT append state disclosures or
 // generic signature page. Future enhancement: use official SCAO PDF as base with
 // pdf-lib overlay for typed values at fixed coordinates (true "official form" mode).
@@ -1051,7 +1051,7 @@ function getMichiganDemandForPossessionContent(fieldValues: FieldValue): string 
   return `
     <h1 style="font-size: 16pt; margin-bottom: 2pt;">DEMAND FOR POSSESSION</h1>
     <h2 style="text-align: center; border: none; margin-top: 0; font-size: 13pt;">NONPAYMENT OF RENT</h2>
-    <p style="text-align: center; font-size: 9pt; color: #555; margin-bottom: 16pt;">Michigan SCAO Form DC 100a &mdash; MCL &sect; 600.5714(1)(a); MCR 4.201</p>
+    <p style="text-align: center; font-size: 9pt; color: #555; margin-bottom: 16pt;">Michigan SCAO Form DC 100a - MCL &sect; 600.5714(1)(a); MCR 4.201</p>
 
     <div style="border: 1px solid #333; padding: 10pt; margin-bottom: 16pt;">
       <p style="margin: 3pt 0;"><strong>Case No.:</strong> ${blank}</p>
@@ -1110,7 +1110,7 @@ function getNoticeContent(fieldValues: FieldValue, stateId: string, noticeType: 
   let noticeContent = '';
   
   // Michigan Seven-Day Demand for Possession (DC 100a / MCL 600.5714)
-  // Returns standalone court form content — do NOT append state disclosures or generic signature page
+  // Returns standalone court form content - do NOT append state disclosures or generic signature page
   if (titleLower.includes('demand for possession') || 
       (stateId === 'MI' && titleLower.includes('demand') && titleLower.includes('seven'))) {
     return getMichiganDemandForPossessionContent(fieldValues);

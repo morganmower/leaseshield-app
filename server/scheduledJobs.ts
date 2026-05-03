@@ -1668,7 +1668,7 @@ Manage preferences: ${baseUrl}/settings
   //   2. Create an off-session PaymentIntent (transfer_data.destination = landlord)
   //   3. Advance nextScheduledDate by one calendar month
   //   4. If past endDate, mark subscription completed
-  // We anchor the schedule to the calendar — webhook events handle settle/fail.
+  // We anchor the schedule to the calendar - webhook events handle settle/fail.
   // =====================================================================
   async processRecurringRentDebits(): Promise<void> {
     try {
@@ -1708,14 +1708,14 @@ Manage preferences: ${baseUrl}/settings
           }
 
           if (!sub.stripePaymentMethodId || !sub.stripeCustomerId) {
-            console.warn(`Skipping sub ${sub.id} — missing PM or customer`);
+            console.warn(`Skipping sub ${sub.id} - missing PM or customer`);
             continue;
           }
 
           // Validate landlord still has Connect enabled
           const landlord = await storage.getUser(sub.userId);
           if (!landlord?.stripeConnectChargesEnabled || !landlord.stripeConnectAccountId) {
-            console.warn(`Skipping sub ${sub.id} — landlord ${sub.userId} Connect inactive`);
+            console.warn(`Skipping sub ${sub.id} - landlord ${sub.userId} Connect inactive`);
             continue;
           }
 
@@ -1792,7 +1792,7 @@ Manage preferences: ${baseUrl}/settings
             if (piErr?.code === 'authentication_required' || piErr?.code === 'payment_method_unactivated') {
               await storage.updateRentSubscription(sub.id, {
                 status: 'failed',
-                revokedReason: `Stripe error: ${piErr.code} — ${piErr.message}`,
+                revokedReason: `Stripe error: ${piErr.code} - ${piErr.message}`,
               });
             }
           }

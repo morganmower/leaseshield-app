@@ -32,7 +32,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
       const user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: 'User not found' });
       res.json({
-        // Tenant-paid convenience fee is always on — landlords cannot opt out
+        // Tenant-paid convenience fee is always on - landlords cannot opt out
         // (would put LeaseShield in the red on Stripe ACH fees). The flag is
         // kept in the response shape for back-compat but is hard-coded true.
         defaultServiceFeeEnabled: true,
@@ -51,7 +51,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const body = req.body || {};
-      // The "enabled" flag is ignored — tenant-paid service fee is mandatory.
+      // The "enabled" flag is ignored - tenant-paid service fee is mandatory.
       // Always persist `defaultServiceFeeEnabled = true` so any legacy reader
       // sees the new behavior; landlords can only customize the amount.
       const updates: { defaultServiceFeeEnabled?: boolean; defaultServiceFeeAmount?: number } = {
@@ -132,7 +132,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
       }
 
       // Tenant-paid service fee is mandatory on every rent request. Body
-      // overrides for `serviceFeePayer` are ignored — Stripe ACH fees would
+      // overrides for `serviceFeePayer` are ignored - Stripe ACH fees would
       // exceed our $1.50 platform margin if any other payer was allowed.
       const serviceFeePayer: ServiceFeePayer = "tenant";
       const requestedCents = body.serviceFeeAmountCents !== undefined
@@ -181,7 +181,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
   // grace period, reminder window, description, property, tenant info).
   // Blocked when status is paid or processing. If the amount or due date
   // changes AND there's an open Stripe Checkout session, expire it so the
-  // tenant can't pay against stale terms — they'll get a fresh session on
+  // tenant can't pay against stale terms - they'll get a fresh session on
   // their next click. Mirrors the DELETE endpoint's session-expiry pattern.
   app.patch('/api/rent-payments/:id', isAuthenticated, async (req: any, res) => {
     try {
@@ -242,7 +242,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         }
         updates.reminderDaysBefore = r;
       }
-      // serviceFeePayer is no longer landlord-controlled — every active
+      // serviceFeePayer is no longer landlord-controlled - every active
       // request must be tenant-paid. Silently ignore stale clients sending
       // the field, but never let it switch to 'landlord' or 'none'.
       if (existing.serviceFeePayer !== 'tenant') {
@@ -330,7 +330,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
           }
         } catch (err: any) {
           // If the session no longer exists or is already complete/expired,
-          // continue — but if it was open and expire failed, abort the delete
+          // continue - but if it was open and expire failed, abort the delete
           // so the user can retry rather than risk a charge against a deleted request.
           if (err?.code !== 'resource_missing') {
             console.error(`Failed to expire checkout session for rent request ${existing.id}:`, err?.message);
@@ -408,7 +408,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         status: r.status,
         lateFeeAmount: r.lateFeeAmount,
         gracePeriodDays: r.gracePeriodDays,
-        // Fee breakdown — tenant-facing line items rendered on /pay-rent/:token
+        // Fee breakdown - tenant-facing line items rendered on /pay-rent/:token
         serviceFeeAmount: fees.serviceFee,
         serviceFeePayer: fees.serviceFeePayer,
         // tenantTotal is the actual amount the tenant will be charged at checkout
@@ -456,7 +456,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
 
       // If we already have an open Checkout Session for this request, reuse it
       // instead of creating a duplicate (prevents accidental double-payments
-      // from page reloads/retries) — but ONLY if the session amount still
+      // from page reloads/retries) - but ONLY if the session amount still
       // matches the current tenant total (rent + tenant-paid service fee).
       // If the rent OR fee config changed, expire the stale session so the
       // tenant cannot pay the wrong total.
@@ -467,7 +467,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
             if (existing.amount_total === fees.tenantTotal) {
               return res.json({ url: existing.url });
             }
-            // Amount drift detected — expire the stale session before creating a new one.
+            // Amount drift detected - expire the stale session before creating a new one.
             try {
               await stripe.checkout.sessions.expire(r.stripeCheckoutSessionId);
               console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amount drift: ${existing.amount_total} → ${fees.tenantTotal})`);
@@ -489,7 +489,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         landlord.email ||
         'your landlord';
       const dueDateStr = r.dueDate ? new Date(r.dueDate).toLocaleDateString() : '';
-      const productName = `Rent payment to ${landlordDisplayName}${dueDateStr ? ` — due ${dueDateStr}` : ''}`;
+      const productName = `Rent payment to ${landlordDisplayName}${dueDateStr ? ` - due ${dueDateStr}` : ''}`;
       // Statement descriptors must be 5-22 chars, no special chars besides space/dot/dash
       const safeDescriptorSuffix = `RENT ${landlordDisplayName}`
         .replace(/[^A-Za-z0-9 .-]/g, '')
@@ -556,7 +556,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         // Rent-specific framing shown above Stripe's NACHA mandate text.
         custom_text: {
           submit: {
-            message: `By authorizing, you'll pay $${(fees.tenantTotal / 100).toFixed(2)}${fees.serviceFeePayer === 'tenant' && fees.serviceFee > 0 ? ` (rent $${(r.amount/100).toFixed(2)} + $${(fees.serviceFee/100).toFixed(2)} service fee)` : ' in rent'}${dueDateStr ? ` for ${dueDateStr}` : ''} to ${landlordDisplayName} via bank transfer (ACH). This is a one-time payment — your bank account will not be saved or auto-charged again. ACH transfers typically settle in 3-5 business days.`,
+            message: `By authorizing, you'll pay $${(fees.tenantTotal / 100).toFixed(2)}${fees.serviceFeePayer === 'tenant' && fees.serviceFee > 0 ? ` (rent $${(r.amount/100).toFixed(2)} + $${(fees.serviceFee/100).toFixed(2)} service fee)` : ' in rent'}${dueDateStr ? ` for ${dueDateStr}` : ''} to ${landlordDisplayName} via bank transfer (ACH). This is a one-time payment - your bank account will not be saved or auto-charged again. ACH transfers typically settle in 3-5 business days.`,
           },
         },
         metadata: {

@@ -293,12 +293,12 @@ export default function TenantIssues() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Tenant Issue Workflows — Step-by-step landlord guidance"
+        title="Tenant Issue Workflows - Step-by-step landlord guidance"
         description="Step-by-step workflows for late rent, lease violations, ESAs, rent increases, property damage, and move-outs. Includes downloadable templates."
         canonical="/tenant-issues"
       />
 
-      {/* Hero Header — matches Compliance page */}
+      {/* Hero Header - matches Compliance page */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">

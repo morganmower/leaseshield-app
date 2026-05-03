@@ -90,7 +90,7 @@ function assert(label: string, condition: boolean, detail?: string) {
     console.log(`  PASS  ${label}`);
     passed++;
   } else {
-    console.error(`  FAIL  ${label}${detail ? ` — ${detail}` : ''}`);
+    console.error(`  FAIL  ${label}${detail ? ` - ${detail}` : ''}`);
     failed++;
   }
 }

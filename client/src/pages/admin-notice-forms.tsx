@@ -390,7 +390,7 @@ function FormsListPanel({ onSelectForm }: { onSelectForm: (id: string) => void }
 }
 
 // ============================================================================
-// FORM DETAIL — versions list
+// FORM DETAIL - versions list
 // ============================================================================
 
 function FormDetail({ formId, onBack, onSelectVersion }: {
@@ -527,7 +527,7 @@ function FormDetail({ formId, onBack, onSelectVersion }: {
               <Badge className={`text-xs ${STATUS_COLORS[version.status] || ''}`}>{version.status.replace('_', ' ')}</Badge>
               {version.effectiveStart && (
                 <span className="text-xs text-muted-foreground">
-                  {version.effectiveStart}{version.effectiveEnd ? ` — ${version.effectiveEnd}` : ' — present'}
+                  {version.effectiveStart}{version.effectiveEnd ? ` - ${version.effectiveEnd}` : ' - present'}
                 </span>
               )}
             </div>
@@ -554,7 +554,7 @@ function FormDetail({ formId, onBack, onSelectVersion }: {
 }
 
 // ============================================================================
-// FORM VERSION DETAIL — the mega-editor
+// FORM VERSION DETAIL - the mega-editor
 // ============================================================================
 
 function FormVersionDetail({ versionId, onBack }: { versionId: string; onBack: () => void }) {
@@ -1455,7 +1455,7 @@ function OutputPanel({ versionId, templates: initialTemplates }: { versionId: st
 }
 
 // ============================================================================
-// SERVICE METHODS — master list tab
+// SERVICE METHODS - master list tab
 // ============================================================================
 
 function ServiceMethodsPanel() {
@@ -1539,7 +1539,7 @@ function ServiceMethodsPanel() {
 }
 
 // ============================================================================
-// LANGUAGE BLOCKS — master list tab
+// LANGUAGE BLOCKS - master list tab
 // ============================================================================
 
 function LanguageBlocksPanel() {
@@ -1637,7 +1637,7 @@ function LanguageBlocksPanel() {
 }
 
 // ============================================================================
-// HOLIDAY CALENDARS — master tab
+// HOLIDAY CALENDARS - master tab
 // ============================================================================
 
 function HolidayCalendarsPanel() {

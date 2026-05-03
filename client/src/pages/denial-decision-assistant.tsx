@@ -991,7 +991,7 @@ export default function DenialDecisionAssistant() {
                       </div>
                       <div className="pt-2 border-t border-green-200 dark:border-green-700">
                         <p className="text-sm text-green-700 dark:text-green-300">
-                          <span className="font-medium">What this means:</span> This record shows which rules applied, what information you relied on, and the exact notice provided — in case the decision is ever questioned.
+                          <span className="font-medium">What this means:</span> This record shows which rules applied, what information you relied on, and the exact notice provided - in case the decision is ever questioned.
                         </p>
                       </div>
                     </CardContent>

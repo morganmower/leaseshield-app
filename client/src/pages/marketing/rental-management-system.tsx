@@ -10,9 +10,9 @@ export default function RentalManagementSystem() {
   const [, setLocation] = useLocation();
 
   const features = [
-    { icon: Building2, title: "Multi-property management", body: "CRUD properties, attach documents, filter by status — without enterprise overhead." },
+    { icon: Building2, title: "Multi-property management", body: "CRUD properties, attach documents, filter by status - without enterprise overhead." },
     { icon: FileText, title: "State-compliant lease library", body: "Attorney-style templates for 16 states, plus official court forms when you need them." },
-    { icon: Search, title: "AI screening helpers", body: "Plain-English decoder for credit, criminal, and eviction reports — Fair Housing built in." },
+    { icon: Search, title: "AI screening helpers", body: "Plain-English decoder for credit, criminal, and eviction reports - Fair Housing built in." },
     { icon: Receipt, title: "Online rent collection", body: "ACH payments, recurring auto-pay, late fees, and a clean rent ledger tied to your lease." },
     { icon: Scale, title: "Compliance guidance", body: "State-specific deposit limits, notice timelines, and disclosure requirements." },
     { icon: ShieldCheck, title: "Legislative monitoring", body: "Approval-gated alerts when state landlord-tenant law changes." },
@@ -20,7 +20,7 @@ export default function RentalManagementSystem() {
 
   const comparison = [
     { feature: "Built for small landlords (1–50 units)", us: true, them: false },
-    { feature: "Flat $10/month — no per-unit pricing", us: true, them: false },
+    { feature: "Flat $10/month - no per-unit pricing", us: true, them: false },
     { feature: "AI screening report decoder", us: true, them: false },
     { feature: "State-specific compliance guidance (16 states)", us: true, them: false },
     { feature: "Official court form overlays", us: true, them: false },
@@ -32,7 +32,7 @@ export default function RentalManagementSystem() {
     <MarketingLayout>
       <SEO
         title="Simple Rental Management System for Small Landlords"
-        description="Application, screening, decoder, leases, rent collection, and compliance — in one workflow built for small landlords. $10/month, cancel anytime."
+        description="Application, screening, decoder, leases, rent collection, and compliance - in one workflow built for small landlords. $10/month, cancel anytime."
         canonical="/rental-management-system"
       />
 
@@ -41,10 +41,10 @@ export default function RentalManagementSystem() {
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
           <Badge variant="secondary" className="mb-6" data-testid="badge-product"><Sparkles className="h-3.5 w-3.5 mr-1.5" />For independent landlords</Badge>
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight mb-6" data-testid="text-hero-title">Simple rental management system for landlords</h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed max-w-3xl mx-auto" data-testid="text-hero-sub">One simpler system built for independent landlords — application, screening, leases, rent collection, and compliance, all flowing into reliable monthly rent.</p>
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed max-w-3xl mx-auto" data-testid="text-hero-sub">One simpler system built for independent landlords - application, screening, leases, rent collection, and compliance, all flowing into reliable monthly rent.</p>
           <p className="text-sm sm:text-base text-muted-foreground mb-10 max-w-2xl mx-auto">Most landlords only face these decisions a few times per year. LeaseShield is there when they do.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-get-started">Get started — $10/month</Button>
+            <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-get-started">Get started - $10/month</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/screening/explain")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-try-decoder">Try the screening decoder</Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-unit fees • 30-day money-back guarantee</p>
@@ -133,7 +133,7 @@ export default function RentalManagementSystem() {
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" data-testid="text-final-cta-title">One workflow. One subscription. One protective mentor.</h2>
           <p className="text-base md:text-lg text-muted-foreground mb-8">Stop stitching together five tools to manage three properties.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
-            <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started — $10/month</Button>
+            <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started - $10/month</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/contact")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-contact">Talk to us first</Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • 30-day money-back guarantee</p>

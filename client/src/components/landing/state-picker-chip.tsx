@@ -112,7 +112,7 @@ export function StatePickerChip() {
               data-testid={`chip-state-${state.id}`}
               data-active={isActive}
               data-selected={isSelected}
-              title={isActive ? `${state.name} — Supported` : `${state.name} — Coming soon`}
+              title={isActive ? `${state.name} - Supported` : `${state.name} - Coming soon`}
               className={[
                 "min-w-[44px] h-8 px-2.5 rounded-md text-xs font-semibold tabular-nums transition-colors",
                 "border hover-elevate active-elevate-2",
@@ -164,7 +164,7 @@ export function StatePickerChip() {
             <div className="flex items-center gap-2 text-sm justify-center">
               <Check className="h-4 w-4 text-primary shrink-0" />
               <span className="text-foreground">
-                Got it — we'll email you when {selected.name} is ready.
+                Got it - we'll email you when {selected.name} is ready.
               </span>
             </div>
           ) : (

@@ -2,7 +2,7 @@
  * Seed MI DC 100c Library Template
  *
  * Creates the library template row in the `templates` table for the
- * Michigan SCAO DC 100c (Complaint — Land Contract Forfeiture / Termination)
+ * Michigan SCAO DC 100c (Complaint - Land Contract Forfeiture / Termination)
  * and links it to the existing output_template row.
  *
  * Run: npx tsx server/scripts/seedMiDC100cLibraryTemplate.ts
@@ -42,8 +42,8 @@ async function seed() {
       key, generation_mode, output_template_id, is_active, version, sort_order
     ) VALUES (
       ${id},
-      'Complaint — Land Contract Forfeiture (MI DC 100c)',
-      'Official Michigan SCAO DC 100c form. Used by land contract sellers (landlords) to initiate forfeiture proceedings when the buyer defaults on payments. Fills the official court form directly — zero LeaseShield branding.',
+      'Complaint - Land Contract Forfeiture (MI DC 100c)',
+      'Official Michigan SCAO DC 100c form. Used by land contract sellers (landlords) to initiate forfeiture proceedings when the buyer defaults on payments. Fills the official court form directly - zero LeaseShield branding.',
       'evictions',
       'eviction_complaint',
       'MI',

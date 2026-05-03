@@ -49,19 +49,19 @@ const OVERLAY_FIELDS: FieldDef[] = [
   // "Defendant/Tenant(s)" label at pdf_y=538; blank line ~20pt above
   { fieldKey: 'defendant_names',     pageNumber: 2, x: 63,   y: 558, fontSize: 10, maxWidth: 450, wrap: true },
 
-  // ── PAGE 2: Section 1 — Property address ─────────────────────────────────
+  // ── PAGE 2: Section 1 - Property address ─────────────────────────────────
   // After "1. The Plaintiff/Landlord is the owner of real property located at:"
   // Approximate position based on page layout (section starts ~pdf_y=466)
   { fieldKey: 'property_street',     pageNumber: 2, x: 152,  y: 445, fontSize: 10, maxWidth: 310 },
   { fieldKey: 'property_city_state_zip', pageNumber: 2, x: 152, y: 428, fontSize: 10, maxWidth: 310 },
 
-  // ── PAGE 2: Section 2 — Lease dates ──────────────────────────────────────
+  // ── PAGE 2: Section 2 - Lease dates ──────────────────────────────────────
   // "...leased the property described above to the Defendant/Tenant(s) beginning ___"
   { fieldKey: 'lease_start_date',    pageNumber: 2, x: 335,  y: 402, fontSize: 10, maxWidth: 120 },
   // "for a period of ___ months/years (circle one)"
   { fieldKey: 'lease_period_months', pageNumber: 2, x: 175,  y: 386, fontSize: 10, maxWidth: 70 },
 
-  // ── PAGE 2: Section 4 — Rent amount (failure to pay) ─────────────────────
+  // ── PAGE 2: Section 4 - Rent amount (failure to pay) ─────────────────────
   // "☐ Failure to pay rent in the amount of $___"
   // "$" is at xMin=350.52, pdf_y=127 (pdftotext yMax=664.28 → 792-664.28=127.72)
   { fieldKey: 'rent_amount_monthly', pageNumber: 2, x: 360,  y: 128, fontSize: 10, maxWidth: 50 },

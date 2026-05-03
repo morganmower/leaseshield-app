@@ -127,7 +127,7 @@ export default function Signup() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8">
       <SEO
-        title="Sign Up — Start with LeaseShield"
+        title="Sign Up - Start with LeaseShield"
         description="Create your LeaseShield account and get instant access to state-specific lease templates, screening help, and compliance tools. $10/month, cancel anytime."
         canonical="/signup"
       />

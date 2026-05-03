@@ -25,7 +25,7 @@ export default function DashboardPreview() {
             </h1>
             <p className="mt-3 max-w-2xl text-base text-ink-700 dark:text-slate-300">
               Everything in one place: report explanations, templates, compliance alerts, and
-              applications — organized for fast decisions.
+              applications - organized for fast decisions.
             </p>
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
@@ -64,7 +64,7 @@ export default function DashboardPreview() {
               </div>
             </div>
             <div className="mt-4 rounded-lg border border-slate-200 dark:border-slate-800 bg-panel-50 dark:bg-slate-900 p-3 text-xs text-ink-700 dark:text-slate-300">
-              Tip: Most landlords start by explaining a screening report — then generate the right
+              Tip: Most landlords start by explaining a screening report - then generate the right
               state forms.
             </div>
           </Card>
@@ -116,7 +116,7 @@ export default function DashboardPreview() {
                         </h3>
                       </div>
                       <p className="mt-2 text-sm text-ink-700 dark:text-slate-300">
-                        Leases, notices, checklists — kept current by state.
+                        Leases, notices, checklists - kept current by state.
                       </p>
                     </div>
                     <Badge className="bg-panel-100 dark:bg-slate-800 text-ink-700 dark:text-slate-300 hover:bg-panel-100 dark:hover:bg-slate-700">

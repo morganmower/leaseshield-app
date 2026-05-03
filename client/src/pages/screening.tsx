@@ -47,49 +47,49 @@ import { Label } from "@/components/ui/label";
 // State-aware quick chips: surfaces a state-specific prompt when the user
 // has a preferredState matching one of our vetted state-notes topics.
 // Keeps suggestions on the same shortlist of legally-sensitive areas the
-// state_notes table is curated around — no AI-generated state law.
+// state_notes table is curated around - no AI-generated state law.
 const STATE_AWARE_CHIPS: Record<string, {
   credit?: { label: string; prompt: string };
   criminal?: { label: string; prompt: string };
 }> = {
   CA: {
-    credit: { label: "CA: credit-history limits?", prompt: "California limits on using credit history for housing decisions — what should I know?" },
-    criminal: { label: "CA: fair-chance housing?", prompt: "California Fair Chance Act for housing — when can I consider a criminal record?" },
+    credit: { label: "CA: credit-history limits?", prompt: "California limits on using credit history for housing decisions - what should I know?" },
+    criminal: { label: "CA: fair-chance housing?", prompt: "California Fair Chance Act for housing - when can I consider a criminal record?" },
   },
   IL: {
-    criminal: { label: "IL: fair-chance housing?", prompt: "Illinois fair-chance housing rules — how do I evaluate a criminal record correctly?" },
+    criminal: { label: "IL: fair-chance housing?", prompt: "Illinois fair-chance housing rules - how do I evaluate a criminal record correctly?" },
   },
   MI: {
-    criminal: { label: "MI: arrest vs conviction?", prompt: "Michigan arrest vs conviction — can I consider an arrest with no conviction?" },
+    criminal: { label: "MI: arrest vs conviction?", prompt: "Michigan arrest vs conviction - can I consider an arrest with no conviction?" },
   },
   NV: {
-    criminal: { label: "NV: sealed records?", prompt: "Nevada sealed criminal records — am I allowed to consider these?" },
+    criminal: { label: "NV: sealed records?", prompt: "Nevada sealed criminal records - am I allowed to consider these?" },
   },
   AZ: {
-    criminal: { label: "AZ: set-aside convictions?", prompt: "Arizona set-aside convictions — how should I treat these on a screening report?" },
+    criminal: { label: "AZ: set-aside convictions?", prompt: "Arizona set-aside convictions - how should I treat these on a screening report?" },
   },
   UT: {
-    criminal: { label: "UT: expunged records?", prompt: "Utah expunged criminal records — can I consider these in screening?" },
+    criminal: { label: "UT: expunged records?", prompt: "Utah expunged criminal records - can I consider these in screening?" },
   },
   NC: {
-    criminal: { label: "NC: criminal-record limits?", prompt: "North Carolina criminal record consideration in housing — what's allowed?" },
+    criminal: { label: "NC: criminal-record limits?", prompt: "North Carolina criminal record consideration in housing - what's allowed?" },
   },
   VA: {
-    criminal: { label: "VA: barrier crimes?", prompt: "Virginia barrier crimes and housing screening — how do I apply these correctly?" },
+    criminal: { label: "VA: barrier crimes?", prompt: "Virginia barrier crimes and housing screening - how do I apply these correctly?" },
   },
   FL: {
-    criminal: { label: "FL: eviction record use?", prompt: "Florida eviction record usage — what are the limits and best practices?" },
+    criminal: { label: "FL: eviction record use?", prompt: "Florida eviction record usage - what are the limits and best practices?" },
   },
   OH: {
-    criminal: { label: "OH: sealed records?", prompt: "Ohio sealed records and housing — am I allowed to consider them?" },
+    criminal: { label: "OH: sealed records?", prompt: "Ohio sealed records and housing - am I allowed to consider them?" },
   },
   TX: {
-    criminal: { label: "TX: criminal-record screening?", prompt: "Texas tenant selection criteria for criminal records — what should I document?" },
+    criminal: { label: "TX: criminal-record screening?", prompt: "Texas tenant selection criteria for criminal records - what should I document?" },
   },
 };
 
 // Split a long pasted "section" into individual findings so we can decode
-// each one and triage by caution level. Heuristic-only and conservative —
+// each one and triage by caution level. Heuristic-only and conservative -
 // when in doubt we treat the whole input as one segment so the user still
 // gets one coherent answer instead of nonsense fragments.
 export function splitFindingsForBatchDecode(text: string): string[] {
@@ -107,10 +107,10 @@ export function splitFindingsForBatchDecode(text: string): string[] {
   if (looksLikeList) {
     segments = listMatches.map((l) => l.replace(/^(\d+[\.\)]|[•\-\*])\s+/, "").trim());
   } else if (listMatches.length >= 2) {
-    // Multi-line free text — split on blank-line paragraphs (already done above)
+    // Multi-line free text - split on blank-line paragraphs (already done above)
     segments = listMatches;
   } else {
-    // Single line — try splitting on semicolons only if there are at least 2
+    // Single line - try splitting on semicolons only if there are at least 2
     const semis = raw.split(/;\s+/).map((s) => s.trim()).filter(Boolean);
     segments = semis.length >= 2 ? semis : [raw];
   }
@@ -299,7 +299,7 @@ function AskTheApplicantCard({ questions, decoderType }: { questions: string[]; 
   const handleCopy = () => {
     const text = questions.map((q, i) => `${i + 1}. ${q}`).join("\n");
     navigator.clipboard.writeText(text);
-    toast({ title: "Copied!", description: "Questions copied — paste them into your applicant email or text." });
+    toast({ title: "Copied!", description: "Questions copied - paste them into your applicant email or text." });
   };
 
   if (!questions.length) return null;
@@ -739,7 +739,7 @@ export default function Screening() {
   const [showCreditActivationPrompt, setShowCreditActivationPrompt] = useState(false);
   const [showCriminalActivationPrompt, setShowCriminalActivationPrompt] = useState(false);
 
-  // Batch decode mode — when on, the helper splits the input into individual
+  // Batch decode mode - when on, the helper splits the input into individual
   // findings and decodes each one separately so the landlord gets a triaged
   // list instead of one mashed-together answer.
   const [creditBatchMode, setCreditBatchMode] = useState(false);
@@ -809,7 +809,7 @@ export default function Screening() {
       setResults([...working]);
     };
 
-    // Concurrency = 3 — enough to feel fast, low enough to stay under the
+    // Concurrency = 3 - enough to feel fast, low enough to stay under the
     // chat rate limiter shared with the AI assistant.
     const CONCURRENCY = 3;
     let cursor = 0;
@@ -849,7 +849,7 @@ export default function Screening() {
           setIsExplaining(false);
           return;
         }
-        // Fewer than 2 segments — fall through to single-call mode below.
+        // Fewer than 2 segments - fall through to single-call mode below.
       } catch (e) {
         console.error('Batch decode failed, falling back to single mode:', e);
       }
@@ -1291,7 +1291,7 @@ export default function Screening() {
               <Textarea
                 id="credit-helper-input"
                 placeholder={creditBatchMode
-                  ? "Paste multiple findings — one per line or as a numbered list (e.g.\n1. Charge-off from 2022\n2. 3 collections totaling $2,400\n3. Late payment 18 months ago)"
+                  ? "Paste multiple findings - one per line or as a numbered list (e.g.\n1. Charge-off from 2022\n2. 3 collections totaling $2,400\n3. Late payment 18 months ago)"
                   : "Type or paste anything confusing from the report here (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400')."}
                 value={userQuestion}
                 onChange={(e) => setUserQuestion(e.target.value)}
@@ -1585,7 +1585,7 @@ export default function Screening() {
               <Textarea
                 id="criminal-helper-input"
                 placeholder={criminalBatchMode
-                  ? "Paste multiple findings — one per line or as a numbered list (e.g.\n1. Misdemeanor theft 2019\n2. Eviction filed 2021 but dismissed\n3. DUI conviction 2017)"
+                  ? "Paste multiple findings - one per line or as a numbered list (e.g.\n1. Misdemeanor theft 2019\n2. Eviction filed 2021 but dismissed\n3. DUI conviction 2017)"
                   : "Type or paste anything confusing from the report here (e.g., 'Misdemeanor theft from 2019' or 'Eviction filed but dismissed')."}
                 value={criminalUserQuestion}
                 onChange={(e) => setCriminalUserQuestion(e.target.value)}

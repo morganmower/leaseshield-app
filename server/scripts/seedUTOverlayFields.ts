@@ -2,7 +2,7 @@
  * Seed UT Complaint for Unlawful Detainer Overlay Fields + Link Library Template
  *
  * Creates overlay_fields (coordinate-based) for the Utah Courts
- * Form 1100EVJ — Complaint for Unlawful Detainer (Eviction), 9-page flat PDF.
+ * Form 1100EVJ - Complaint for Unlawful Detainer (Eviction), 9-page flat PDF.
  * Also links the library template to the output_template.
  *
  * Coordinates derived from pdftotext -bbox analysis of UT_complaint_unlawful_detainer.pdf.
@@ -30,7 +30,7 @@ type FieldDef = {
   wrap?: boolean;
 };
 
-// UT form 1100EVJ — 9 pages (612x792 each).
+// UT form 1100EVJ - 9 pages (612x792 each).
 // Page 1: Filer info (top-left box) + Court header + Case caption
 // Page 2: Items 2–5 (defendants, property, agreement, notices)
 // Pages 3–9: Additional claims, relief, signature, etc.
@@ -52,12 +52,12 @@ const OVERLAY_FIELDS: FieldDef[] = [
   { fieldKey: 'filer_email',         pageNumber: 1, x: 95,  y: 560, fontSize: 10, maxWidth: 230 },
 
   // ── PAGE 1: Court header ──────────────────────────────────────────────────
-  // "__________ Judicial District" — blank before "Judicial"
+  // "__________ Judicial District" - blank before "Judicial"
   // "Judicial District" label at xMin=224.82, yMax=372.42 → pdf_y=419.58
   { fieldKey: 'judicial_district',   pageNumber: 1, x: 155, y: 420, fontSize: 10, maxWidth: 65 },
-  // "________________ County" — blank before "County" at xMin=418.20
+  // "________________ County" - blank before "County" at xMin=418.20
   { fieldKey: 'ut_county',           pageNumber: 1, x: 310, y: 420, fontSize: 10, maxWidth: 100 },
-  // "Court Address ______" — estimate after court header line
+  // "Court Address ______" - estimate after court header line
   { fieldKey: 'court_address',       pageNumber: 1, x: 155, y: 402, fontSize: 10, maxWidth: 380 },
 
   // ── PAGE 1: Case caption ──────────────────────────────────────────────────
@@ -65,14 +65,14 @@ const OVERLAY_FIELDS: FieldDef[] = [
   //           [long blank for defendant] / "Defendant" label / Case No. / Judge
   // Plaintiff blank is above "Plaintiff" label (~pdf_y=330); estimated at pdf_y=348
   { fieldKey: 'plaintiff_name',      pageNumber: 1, x: 72,  y: 348, fontSize: 10, maxWidth: 380 },
-  // Case Number — right column, estimated x=460, same y as "v." area (~pdf_y=305)
+  // Case Number - right column, estimated x=460, same y as "v." area (~pdf_y=305)
   { fieldKey: 'case_number',         pageNumber: 1, x: 458, y: 305, fontSize: 10, maxWidth: 130 },
   // Defendant blank above "Defendant" label (~pdf_y=252); estimated at pdf_y=268
   { fieldKey: 'defendant_name',      pageNumber: 1, x: 72,  y: 268, fontSize: 10, maxWidth: 380 },
-  // Judge — right column, same y as defendant area
+  // Judge - right column, same y as defendant area
   { fieldKey: 'judge',               pageNumber: 1, x: 458, y: 268, fontSize: 10, maxWidth: 130 },
 
-  // ── PAGE 2: Item 2 — Defendants and property ─────────────────────────────
+  // ── PAGE 2: Item 2 - Defendants and property ─────────────────────────────
   // "2. Defendants, _______________ (names) are"
   // "Defendants," ends at xMax=172.18, baseline yMax=87.18 → pdf_y=704.82
   { fieldKey: 'defendant_names',     pageNumber: 2, x: 175, y: 705, fontSize: 10, maxWidth: 340, wrap: true },
@@ -80,8 +80,8 @@ const OVERLAY_FIELDS: FieldDef[] = [
   // "at:" ends at xMax=172.84, yMax=107.88 → pdf_y=684.12
   { fieldKey: 'property_address',    pageNumber: 2, x: 178, y: 684, fontSize: 10, maxWidth: 345 },
 
-  // ── PAGE 2: Item 4b — Rent amount ─────────────────────────────────────────
-  // "b. To pay rent of $______" — estimated position
+  // ── PAGE 2: Item 4b - Rent amount ─────────────────────────────────────────
+  // "b. To pay rent of $______" - estimated position
   { fieldKey: 'rent_amount_monthly', pageNumber: 2, x: 212, y: 498, fontSize: 10, maxWidth: 80 },
   // Rent start date for lease "starting on ___"
   { fieldKey: 'lease_start_date',    pageNumber: 2, x: 318, y: 542, fontSize: 10, maxWidth: 130 },

@@ -51,7 +51,7 @@ function assert(label: string, condition: boolean, detail?: string) {
     console.log(`  PASS  ${label}`);
     passed++;
   } else {
-    console.error(`  FAIL  ${label}${detail ? ` — ${detail}` : ''}`);
+    console.error(`  FAIL  ${label}${detail ? ` - ${detail}` : ''}`);
     failed++;
   }
 }
@@ -85,7 +85,7 @@ async function main() {
     console.log(`Render strategy used: ${result.strategyUsed}`);
     console.log(`Output pages: ${result.pageCount}\n`);
   } catch (err: any) {
-    console.error(`ABORT: Render failed — ${err.message}`);
+    console.error(`ABORT: Render failed - ${err.message}`);
     process.exit(1);
   }
 
@@ -112,7 +112,7 @@ async function main() {
   assert('Output SHA-256 differs from base (content was written)',
     computeSha256(outputBuffer) !== baseSha256);
 
-  console.log('\n--- Banned Content Scan (raw bytes — Latin-1 + UTF-16 scan) ---');
+  console.log('\n--- Banned Content Scan (raw bytes - Latin-1 + UTF-16 scan) ---');
 
   const rawLatin1 = outputBuffer.toString('latin1');
   for (const banned of BANNED_STRINGS) {

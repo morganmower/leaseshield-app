@@ -2,7 +2,7 @@
  * MI DC 100c Overlay Smoke Test
  *
  * Verifies the official_pdf_overlay rendering for the Michigan SCAO DC 100c
- * (Complaint — Land Contract Forfeiture) using the generic DB-driven field_map_json path.
+ * (Complaint - Land Contract Forfeiture) using the generic DB-driven field_map_json path.
  *
  * Run: npx tsx server/scripts/testDc100cOutput.ts
  */
@@ -47,7 +47,7 @@ const DC100C_FIELD_MAP: Record<string, string> = {
   other_reason_fill: 'other fill',
 };
 
-// Test inputs — seller is plaintiff (land contract seller), buyer is defendant
+// Test inputs - seller is plaintiff (land contract seller), buyer is defendant
 const TEST_FIELDS = [
   { fieldKey: 'seller_name',              value: 'ALICE SELLER',         pageNumber: 1, x: 0, y: 0, font: 'Helvetica', fontSize: 9, maxWidth: null, align: 'left', wrap: false },
   { fieldKey: 'seller_address',           value: '789 Vendor Blvd',      pageNumber: 1, x: 0, y: 0, font: 'Helvetica', fontSize: 9, maxWidth: null, align: 'left', wrap: false },
@@ -88,7 +88,7 @@ function assert(label: string, condition: boolean, detail?: string) {
     console.log(`  PASS  ${label}`);
     passed++;
   } else {
-    console.error(`  FAIL  ${label}${detail ? ` — ${detail}` : ''}`);
+    console.error(`  FAIL  ${label}${detail ? ` - ${detail}` : ''}`);
     failed++;
   }
 }
@@ -123,7 +123,7 @@ async function main() {
     console.log(`Render strategy used: ${result.strategyUsed}`);
     console.log(`Output pages: ${result.pageCount}\n`);
   } catch (err: any) {
-    console.error(`ABORT: Render failed — ${err.message}`);
+    console.error(`ABORT: Render failed - ${err.message}`);
     process.exit(1);
   }
 
@@ -149,7 +149,7 @@ async function main() {
   assert('Output SHA-256 differs from base (content was written)',
     computeSha256(outputBuffer) !== baseSha256);
 
-  console.log('\n--- Banned Content Scan (raw bytes — Latin-1 + UTF-16 scan) ---');
+  console.log('\n--- Banned Content Scan (raw bytes - Latin-1 + UTF-16 scan) ---');
   const rawLatin1 = outputBuffer.toString('latin1');
   for (const banned of BANNED_STRINGS) {
     const inLatin1 = rawLatin1.includes(banned);

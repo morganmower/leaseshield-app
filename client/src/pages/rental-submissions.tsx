@@ -2519,7 +2519,7 @@ Best regards`;
                         {group.submissions.map((sub) => (
                           <TableRow key={sub.id} data-testid={`row-submission-${sub.id}`}>
                             <TableCell>
-                              <p className="font-medium" data-testid={`text-unit-${sub.id}`}>{sub.unitLabel || '—'}</p>
+                              <p className="font-medium" data-testid={`text-unit-${sub.id}`}>{sub.unitLabel || '-'}</p>
                             </TableCell>
                             <TableCell>
                               {sub.primaryApplicant ? (
@@ -2535,7 +2535,7 @@ Best regards`;
                                   )}
                                 </div>
                               ) : (
-                                <span className="text-muted-foreground">—</span>
+                                <span className="text-muted-foreground">-</span>
                               )}
                             </TableCell>
                             <TableCell>

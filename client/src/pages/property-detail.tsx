@@ -64,7 +64,7 @@ export default function PropertyDetail() {
   };
 
   const formatDate = (date: string | Date | null | undefined) => {
-    if (!date) return "—";
+    if (!date) return "-";
     return new Date(date).toLocaleDateString("en-US", {
       year: "numeric",
       month: "short",
@@ -404,15 +404,15 @@ export default function PropertyDetail() {
                             {formatDate(entry.effectiveDate)}
                           </TableCell>
                           <TableCell>{entry.tenantName}</TableCell>
-                          <TableCell>{entry.description || "—"}</TableCell>
+                          <TableCell>{entry.description || "-"}</TableCell>
                           <TableCell>
                             <Badge variant="outline">{entry.category || "Rent"}</Badge>
                           </TableCell>
                           <TableCell className="text-right text-red-600">
-                            {entry.amountExpected > 0 ? formatCurrency(entry.amountExpected) : "—"}
+                            {entry.amountExpected > 0 ? formatCurrency(entry.amountExpected) : "-"}
                           </TableCell>
                           <TableCell className="text-right text-green-600">
-                            {(entry.amountReceived || 0) > 0 ? formatCurrency(entry.amountReceived || 0) : "—"}
+                            {(entry.amountReceived || 0) > 0 ? formatCurrency(entry.amountReceived || 0) : "-"}
                           </TableCell>
                         </TableRow>
                       ))}

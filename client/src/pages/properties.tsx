@@ -535,7 +535,7 @@ export default function Properties() {
               <Building2 className="h-16 w-16 text-primary mx-auto mb-6" />
               <h3 className="text-2xl font-display font-semibold mb-3">Add your first property</h3>
               <p className="text-muted-foreground mb-6">
-                Properties are where everything else lives — applications, screening, lease documents, and rent collection all start here.
+                Properties are where everything else lives - applications, screening, lease documents, and rent collection all start here.
               </p>
               <Button size="lg" onClick={() => { resetForm(); setEditingProperty(null); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
                 <Plus className="h-4 w-4 mr-2" />
@@ -1528,7 +1528,7 @@ function PropertyCard({
     ? `${window.location.origin}/apply/${linkSlugOrToken}`
     : null;
 
-  // Per-link stats (views, started, submitted) — only fetched once we have a linkId
+  // Per-link stats (views, started, submitted) - only fetched once we have a linkId
   const { data: linkStats } = useQuery<{ views: number; started: number; submitted: number }>({
     queryKey: ["/api/rental/links", defaultLinkData?.linkId, "stats"],
     enabled: !!defaultLinkData?.linkId,
@@ -1686,7 +1686,7 @@ function PropertyCard({
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{(property as any).notes}</p>
         )}
         
-        {/* Default applicant link — always shown, ready to share */}
+        {/* Default applicant link - always shown, ready to share */}
         <div className="mb-3 rounded-md border border-border bg-background p-3" data-testid={`default-link-${property.id}`}>
           <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 min-w-0">

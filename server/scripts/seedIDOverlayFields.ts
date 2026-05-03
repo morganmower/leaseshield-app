@@ -7,7 +7,7 @@
  * Pages: 2
  *
  * Field keys use camelCase to match the existing fillable_form_data IDs in the
- * library template — no frontend wizard changes needed.
+ * library template - no frontend wizard changes needed.
  *
  * Run: npx tsx server/scripts/seedIDOverlayFields.ts
  */
@@ -40,7 +40,7 @@ const FIELD_MAP: Record<string, string> = {
   fullNameFiling:      'Full Name of Party Filing',
 };
 
-// Overlay field metadata — coordinates are placeholders (form_fields strategy
+// Overlay field metadata - coordinates are placeholders (form_fields strategy
 // uses AcroForm fill, not coordinate-based drawing)
 const OVERLAY_FIELDS = Object.keys(FIELD_MAP).map((key, i) => ({
   fieldKey: key,
@@ -52,7 +52,7 @@ const OVERLAY_FIELDS = Object.keys(FIELD_MAP).map((key, i) => ({
 }));
 
 async function main() {
-  console.log('=== Idaho Complaint for Eviction — Official Overlay Seed ===');
+  console.log('=== Idaho Complaint for Eviction - Official Overlay Seed ===');
 
   // 1. Check if notice_form already exists (idempotent)
   const existing = await db.execute(sql`SELECT id FROM notice_forms WHERE key = ${NOTICE_FORM_KEY}`);
@@ -62,7 +62,7 @@ async function main() {
   let outputTemplateId: string;
 
   if (existing.rows.length) {
-    console.log('  notice_form already exists — looking up IDs...');
+    console.log('  notice_form already exists - looking up IDs...');
     formId = (existing.rows[0] as any).id;
 
     const ver = await db.execute(sql`SELECT id FROM notice_form_versions WHERE form_id = ${formId} LIMIT 1`);
@@ -118,7 +118,7 @@ async function main() {
   `);
   console.log('  output_template refreshed');
 
-  // 3. Create form_fields (idempotent — skip if already exist for this version)
+  // 3. Create form_fields (idempotent - skip if already exist for this version)
   const FORM_FIELDS = [
     { key: 'plaintiffName',        label: 'Plaintiff/Landlord Name',         type: 'text',     required: true,  sortOrder: 1  },
     { key: 'plaintiffAddress',     label: 'Plaintiff Mailing Address',        type: 'text',     required: true,  sortOrder: 2  },

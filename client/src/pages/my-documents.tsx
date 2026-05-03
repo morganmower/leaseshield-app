@@ -324,7 +324,7 @@ export default function MyDocuments() {
   return (
     <div className="h-full overflow-y-auto">
       <SEO
-        title="My Documents — Generated leases, notices, and uploads"
+        title="My Documents - Generated leases, notices, and uploads"
         description="All your generated legal documents and uploaded files in one place. Download as PDF or Word, organize by property, and edit any time."
         canonical="/my-documents"
       />

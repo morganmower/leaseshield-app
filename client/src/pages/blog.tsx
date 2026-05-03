@@ -27,7 +27,7 @@ export default function Blog() {
 
   const seoTag = (
     <SEO
-      title="LeaseShield Blog — Landlord Guides, State Laws & Compliance Tips"
+      title="LeaseShield Blog - Landlord Guides, State Laws & Compliance Tips"
       description="Practical, state-specific guidance for landlords on screening, evictions, security deposits, and lease compliance. Updated as laws change."
       canonical="/blog"
     />

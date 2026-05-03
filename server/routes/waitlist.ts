@@ -49,7 +49,7 @@ export async function registerWaitlistRoutes(app: Express) {
           text: `State waitlist request\n\nState: ${safeStateName} (${safeStateId})\nEmail: ${safeEmail}\nSource: state-picker chip on landing page hero`,
         });
       } catch (emailErr: any) {
-        // Don't fail the request if email is misconfigured — we already logged it.
+        // Don't fail the request if email is misconfigured - we already logged it.
         console.error("[waitlist] resend send failed:", emailErr?.message || emailErr);
       }
 

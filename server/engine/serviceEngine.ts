@@ -72,7 +72,7 @@ export function enforceServiceHierarchy(
         if (!autoSelected.includes(addId)) {
           autoSelected.push(addId);
           const addName = def.serviceRules.find(r => r.methodId === addId)?.methodDisplayName || addId;
-          warnings.push(`${rule.methodDisplayName} requires ${addName} — automatically added`);
+          warnings.push(`${rule.methodDisplayName} requires ${addName} - automatically added`);
         }
       }
     }

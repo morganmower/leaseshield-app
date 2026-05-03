@@ -198,7 +198,7 @@ export default function PayRent() {
             <div className="text-center py-4">
               <p className="text-sm text-muted-foreground">
                 Your ACH bank transfer is in progress. This typically takes 3-5 business days to clear.
-                {banner === "paid" && " You'll see the status update here once it clears — no further action needed."}
+                {banner === "paid" && " You'll see the status update here once it clears - no further action needed."}
               </p>
             </div>
           ) : (

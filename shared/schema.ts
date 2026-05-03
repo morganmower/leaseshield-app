@@ -61,7 +61,7 @@ export const users = pgTable("users", {
   passwordResetExpires: timestamp("password_reset_expires"),
   // Cleanup email tracking (for one-time trial cohort cleanup)
   cleanupEmailSentAt: timestamp("cleanup_email_sent_at"),
-  // Rent payment fee defaults — per-landlord defaults applied when creating
+  // Rent payment fee defaults - per-landlord defaults applied when creating
   // new rent payment requests. The per-request value can override these.
   defaultServiceFeeEnabled: boolean("default_service_fee_enabled").default(false).notNull(),
   defaultServiceFeeAmount: integer("default_service_fee_amount").default(495).notNull(), // cents
@@ -1719,7 +1719,7 @@ export const defaultApprovalLetterTemplate = `Subject: Application Approved – 
 
 Hello {{applicantName}},
 
-Good news — your rental application for {{unitLabel}} at {{propertyName}} has been approved.
+Good news - your rental application for {{unitLabel}} at {{propertyName}} has been approved.
 
 Next steps:
 • Please review and sign the lease by {{leaseSignDueDate}}
@@ -2461,7 +2461,7 @@ export type InsertDocumentReuploadToken = z.infer<typeof insertDocumentReuploadT
 export type DocumentReuploadToken = typeof documentReuploadTokens.$inferSelect;
 
 // ============================================================================
-// COMPLIANCE MATRIX — State-Specific Legal Notice Forms
+// COMPLIANCE MATRIX - State-Specific Legal Notice Forms
 // ============================================================================
 // Engine code MUST NOT branch on state_code or form keys.
 // All behavior is derived from matrix-provided enums and rules.
@@ -2724,7 +2724,7 @@ export const outputTemplates = pgTable("output_templates", {
   docxTemplateAttachmentPath: text("docx_template_attachment_path"),
   pageCount: integer("page_count"),
   // For form_fields strategy: JSON mapping of field_key → exact pdf_field_name
-  // Preferred over any in-code field map constant — enables new forms without code changes
+  // Preferred over any in-code field map constant - enables new forms without code changes
   fieldMapJson: jsonb("field_map_json").$type<Record<string, string>>(),
 }, (table) => [
   index("idx_output_templates_version").on(table.formVersionId),
@@ -2947,12 +2947,12 @@ export const rentPaymentRequests = pgTable("rent_payment_requests", {
   // Auto-reminder config
   reminderDaysBefore: integer("reminder_days_before").default(5).notNull(),
   reminderSentAt: timestamp("reminder_sent_at"),
-  // Fee config — convenience fee paid by tenant or absorbed by landlord, plus
+  // Fee config - convenience fee paid by tenant or absorbed by landlord, plus
   // LeaseShield's per-transaction platform application fee. All amounts in
   // cents. `serviceFeePayer` controls who pays the convenience fee:
-  //   tenant   — added on top of rent at checkout (tenant total = rent + fee)
-  //   landlord — deducted from landlord settlement (tenant pays just rent)
-  //   none     — no convenience fee (only platform fee deducted)
+  //   tenant   - added on top of rent at checkout (tenant total = rent + fee)
+  //   landlord - deducted from landlord settlement (tenant pays just rent)
+  //   none     - no convenience fee (only platform fee deducted)
   serviceFeeAmount: integer("service_fee_amount").default(0).notNull(),
   serviceFeePayer: varchar("service_fee_payer", { length: 16 }).default("none").notNull(),
   platformFeeAmount: integer("platform_fee_amount").default(0).notNull(),
@@ -3031,7 +3031,7 @@ export const rentSubscriptions = pgTable("rent_subscriptions", {
   index("idx_rent_sub_status").on(table.status),
   index("idx_rent_sub_next_date").on(table.nextScheduledDate),
   index("idx_rent_sub_token").on(table.publicToken),
-  // Guarantee one active subscription per (property, tenant) — prevents accidental
+  // Guarantee one active subscription per (property, tenant) - prevents accidental
   // double mandates if a landlord re-sends the auth link to the same tenant.
   uniqueIndex("rent_sub_one_active_per_lease")
     .on(table.rentalPropertyId, table.tenantEmail)

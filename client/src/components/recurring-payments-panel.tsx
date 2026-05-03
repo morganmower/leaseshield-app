@@ -243,7 +243,7 @@ export function RecurringPaymentsPanel({ properties }: Props) {
                                 <AlertDialogHeader>
                                   <AlertDialogTitle>Cancel auto-pay for {sub.tenantName}?</AlertDialogTitle>
                                   <AlertDialogDescription>
-                                    No more debits will be attempted. The tenant's bank PaymentMethod will be detached. This cannot be undone — they'll need a new authorization link to set up auto-pay again.
+                                    No more debits will be attempted. The tenant's bank PaymentMethod will be detached. This cannot be undone - they'll need a new authorization link to set up auto-pay again.
                                   </AlertDialogDescription>
                                 </AlertDialogHeader>
                                 <AlertDialogFooter>

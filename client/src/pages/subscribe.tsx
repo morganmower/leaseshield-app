@@ -17,7 +17,7 @@ import { SEO } from "@/components/seo";
 const VITE_STRIPE_PUBLIC_KEY = import.meta.env.VITE_STRIPE_PUBLIC_KEY;
 if (!VITE_STRIPE_PUBLIC_KEY) {
   // eslint-disable-next-line no-console
-  console.warn('[Subscribe] Missing VITE_STRIPE_PUBLIC_KEY — subscribe form will be disabled.');
+  console.warn('[Subscribe] Missing VITE_STRIPE_PUBLIC_KEY - subscribe form will be disabled.');
 }
 const stripePromise = VITE_STRIPE_PUBLIC_KEY ? loadStripe(VITE_STRIPE_PUBLIC_KEY) : null;
 
@@ -314,7 +314,7 @@ export default function Subscribe() {
   return (
     <div className="min-h-screen bg-background py-6 sm:py-12">
       <SEO
-        title="Subscribe to LeaseShield — $10/month, Cancel Anytime"
+        title="Subscribe to LeaseShield - $10/month, Cancel Anytime"
         description="Subscribe to LeaseShield for $10/month or $100/year. State-specific templates, compliance updates, screening help, and a 30-day money-back guarantee."
         canonical="/subscribe"
       />

@@ -20,7 +20,7 @@ const SERVICE_METHOD_IDS = {
 };
 
 async function seed() {
-  console.log('Seeding Michigan DC 100a — Demand for Possession (Nonpayment of Rent)...');
+  console.log('Seeding Michigan DC 100a - Demand for Possession (Nonpayment of Rent)...');
 
   const existing = await db.select().from(noticeForms).where(eq(noticeForms.key, 'mi_dc_100a_demand_possession_nonpayment'));
   if (existing.length > 0) {
@@ -73,7 +73,7 @@ async function seed() {
     id: formId,
     stateId: 'MI',
     key: 'mi_dc_100a_demand_possession_nonpayment',
-    displayName: 'Demand for Possession — Nonpayment of Rent (DC 100a)',
+    displayName: 'Demand for Possession - Nonpayment of Rent (DC 100a)',
     category: 'eviction',
     localOverlayRisk: 'med',
     disclaimerText: 'Some Michigan cities (e.g., Detroit, Ann Arbor) may have local ordinances that require additional notice or cure periods beyond state law. Consult local requirements before serving this notice.',
@@ -89,10 +89,10 @@ async function seed() {
     effectiveStart: '2024-01-01',
     effectiveEnd: null,
     statuteSourceCitation: 'MCL 600.5714(1)(a); MCL 554.134; MCR 4.201',
-    approvalNotes: 'Initial version — Michigan SCAO DC 100a form',
+    approvalNotes: 'Initial version - Michigan SCAO DC 100a form',
   } as any);
 
-  // 4. Day rules — Michigan uses 7-day notice for nonpayment
+  // 4. Day rules - Michigan uses 7-day notice for nonpayment
   await db.insert(formDayRules).values({
     id: randomUUID(),
     formVersionId: versionId,
@@ -102,7 +102,7 @@ async function seed() {
     holidayCalendarId: null,
   } as any);
 
-  // 5. Service rules — Michigan MCL 600.5714 allows personal, substitute, posting
+  // 5. Service rules - Michigan MCL 600.5714 allows personal, substitute, posting
   for (const rule of [
     {
       methodId: SERVICE_METHOD_IDS.personal,
@@ -178,7 +178,7 @@ async function seed() {
     } as any);
   }
 
-  // 6. Lease gates — Michigan requires lease clause check for nonpayment
+  // 6. Lease gates - Michigan requires lease clause check for nonpayment
   await db.insert(formServiceLeaseGates).values({
     id: randomUUID(),
     formVersionId: versionId,
@@ -205,7 +205,7 @@ async function seed() {
     affectedMethodIds: [],
   } as any);
 
-  // 7. Language blocks — required statutory language
+  // 7. Language blocks - required statutory language
   const langBlocks = [
     {
       key: 'mi_demand_possession_header',
@@ -258,7 +258,7 @@ async function seed() {
     } as any);
   }
 
-  // 9. Form fields — wizard fields for the DC 100a
+  // 9. Form fields - wizard fields for the DC 100a
   const fields = [
     { key: 'plaintiff_name', label: 'Plaintiff (Landlord) Name', type: 'text', required: true, group: 'Parties', helpText: 'Enter the full legal name of the landlord or property owner' },
     { key: 'plaintiff_address', label: 'Plaintiff Address', type: 'text', required: true, group: 'Parties', helpText: 'Street address of the landlord' },
@@ -323,7 +323,7 @@ async function seed() {
     } as any);
   }
 
-  // 11. Output template — formatted HTML mode for now (overlay mode can be added later with SCAO PDF)
+  // 11. Output template - formatted HTML mode for now (overlay mode can be added later with SCAO PDF)
   await db.insert(outputTemplates).values({
     id: randomUUID(),
     formVersionId: versionId,

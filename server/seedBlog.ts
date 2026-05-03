@@ -12,7 +12,7 @@ async function seedBlogPosts() {
       excerpt: "From security deposit violations to improper eviction notices, learn the most common legal pitfalls Utah landlords face and how to protect yourself.",
       content: `
         <h2>Introduction</h2>
-        <p>As a Utah landlord, navigating the complex web of state and federal housing laws can feel overwhelming. But making legal mistakes isn't just stressful—it can cost you thousands of dollars in fines, legal fees, and lost rental income.</p>
+        <p>As a Utah landlord, navigating the complex web of state and federal housing laws can feel overwhelming. But making legal mistakes isn't just stressful-it can cost you thousands of dollars in fines, legal fees, and lost rental income.</p>
         
         <p>In this guide, we'll walk through the seven most common legal mistakes Utah landlords make and show you exactly how to avoid them.</p>
 
@@ -33,7 +33,7 @@ async function seedBlogPosts() {
         <h2>3. Improper Eviction Procedures</h2>
         <p>Utah requires specific notice periods and procedures for different types of evictions. Skipping steps or using the wrong form can void your entire eviction.</p>
         
-        <p><strong>The Risk:</strong> Your eviction case gets dismissed, and you have to start over—losing months of rent.</p>
+        <p><strong>The Risk:</strong> Your eviction case gets dismissed, and you have to start over-losing months of rent.</p>
         
         <p><strong>How to Avoid It:</strong> Follow the exact process: serve proper notice, file the correct court forms, and document everything. Our Utah Eviction Guide provides step-by-step instructions.</p>
 
@@ -332,7 +332,7 @@ async function seedBlogPosts() {
           <li>Notice of court hearing date</li>
         </ul>
         
-        <p>Service must be done by a sheriff, deputy, or process server—not by you.</p>
+        <p>Service must be done by a sheriff, deputy, or process server-not by you.</p>
 
         <h2>Step 4: Attend the Court Hearing</h2>
         <p>The court will schedule a hearing, typically within 10-21 days. At the hearing:</p>

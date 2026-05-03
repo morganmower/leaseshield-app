@@ -76,7 +76,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Notice form generation engine routes (matrix-driven, zero state branching)
   app.use(noticeGenerationRoutes);
 
-  // Domain route modules — each handles a single concern. Awaited because
+  // Domain route modules - each handles a single concern. Awaited because
   // some modules use top-level dynamic imports (await import(...)).
   await registerSitemapRoute(app);
   await registerUserSettingsRoutes(app);

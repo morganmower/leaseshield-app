@@ -160,7 +160,7 @@ export async function registerRentSubscriptionsRoutes(app: Express) {
   });
 
   // Landlord-side update: pause / resume / cancel; or edit amount/lateFee/dayOfMonth
-  // (only allowed while pending_authorization or paused — never on active to
+  // (only allowed while pending_authorization or paused - never on active to
   // avoid changing the authorized amount without a fresh mandate).
   app.patch('/api/rent-subscriptions/:id', isAuthenticated, async (req: any, res) => {
     try {
@@ -201,13 +201,13 @@ export async function registerRentSubscriptionsRoutes(app: Express) {
         }
       }
 
-      // Amount / fee / day-of-month edits — only allowed pre-authorization or while paused
+      // Amount / fee / day-of-month edits - only allowed pre-authorization or while paused
       const editFields: string[] = ['amountDollars', 'lateFeeDollars', 'dayOfMonth', 'gracePeriodDays', 'endDate', 'description'];
       const wantsEdit = editFields.some((k) => body[k] !== undefined);
       if (wantsEdit) {
         if (sub.status === 'active') {
           return res.status(400).json({
-            message: 'Cannot edit an active subscription. Pause it first, then edit, then resume — the tenant will need to re-authorize if the amount changes.',
+            message: 'Cannot edit an active subscription. Pause it first, then edit, then resume - the tenant will need to re-authorize if the amount changes.',
           });
         }
         if (body.amountDollars !== undefined) {
@@ -447,7 +447,7 @@ export async function registerRentSubscriptionsRoutes(app: Express) {
     }
   });
 
-  // Tenant self-cancel — NACHA right-to-revoke.
+  // Tenant self-cancel - NACHA right-to-revoke.
   app.post('/api/rent-subscriptions/public/:token/cancel', async (req, res) => {
     try {
       const sub = await storage.getRentSubscriptionByToken(req.params.token);

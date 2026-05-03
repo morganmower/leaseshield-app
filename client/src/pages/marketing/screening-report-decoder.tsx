@@ -22,9 +22,9 @@ export default function ScreeningReportDecoder() {
   const [, setLocation] = useLocation();
 
   const breakdowns = [
-    { icon: CreditCard, title: "Credit reports", body: "Translates trade lines, collections, charge-offs, and utilization into plain-English risk signals — without telling you who to deny." },
+    { icon: CreditCard, title: "Credit reports", body: "Translates trade lines, collections, charge-offs, and utilization into plain-English risk signals - without telling you who to deny." },
     { icon: Gavel, title: "Criminal records", body: "Surfaces what each charge actually means, how old it is, and the Fair Housing factors you should weigh before deciding." },
-    { icon: Scale, title: "Eviction history", body: "Distinguishes filings, dismissals, and judgments — and flags ambiguous entries that warrant a follow-up question." },
+    { icon: Scale, title: "Eviction history", body: "Distinguishes filings, dismissals, and judgments - and flags ambiguous entries that warrant a follow-up question." },
   ];
 
   const steps = [
@@ -36,7 +36,7 @@ export default function ScreeningReportDecoder() {
   return (
     <MarketingLayout>
       <SEO
-        title="Screening Report Decoder — Plain-English Tenant Screening Explained"
+        title="Screening Report Decoder - Plain-English Tenant Screening Explained"
         description="Paste any tenant screening report and get plain-English explanations, risk flags, and Fair Housing guidance. Built for small landlords. $10/month, cancel anytime."
         canonical="/screening-report-decoder"
       />
@@ -46,7 +46,7 @@ export default function ScreeningReportDecoder() {
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
           <Badge variant="secondary" className="mb-6" data-testid="badge-tool"><Sparkles className="h-3.5 w-3.5 mr-1.5" />AI-powered tool</Badge>
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight mb-6" data-testid="text-hero-title">Screening Report Decoder</h1>
-          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed max-w-3xl mx-auto" data-testid="text-hero-sub">Paste any tenant screening report and get plain-English explanations, triaged risk flags, and Fair Housing guidance — in seconds.</p>
+          <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed max-w-3xl mx-auto" data-testid="text-hero-sub">Paste any tenant screening report and get plain-English explanations, triaged risk flags, and Fair Housing guidance - in seconds.</p>
           <p className="text-sm sm:text-base text-muted-foreground mb-10 max-w-2xl mx-auto">Built for the moments small landlords rarely face but can't afford to get wrong.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Button size="lg" onClick={() => setLocation("/screening/explain")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-try-decoder"><Search className="mr-2 h-5 w-5" />Try the decoder</Button>
@@ -108,7 +108,7 @@ export default function ScreeningReportDecoder() {
               </div>
             </div>
           </Card>
-          <p className="mt-6 text-xs text-muted-foreground text-center max-w-2xl mx-auto">Educational information only — not legal advice. Decisions should follow your written tenant-selection criteria and applicable federal, state, and local fair-housing law.</p>
+          <p className="mt-6 text-xs text-muted-foreground text-center max-w-2xl mx-auto">Educational information only - not legal advice. Decisions should follow your written tenant-selection criteria and applicable federal, state, and local fair-housing law.</p>
         </div>
       </section>
 
@@ -130,14 +130,14 @@ export default function ScreeningReportDecoder() {
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center max-w-2xl mx-auto mb-12">
             <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
-            <p className="text-base md:text-lg text-muted-foreground">The questions landlords ask before — and right after — running their first decode.</p>
+            <p className="text-base md:text-lg text-muted-foreground">The questions landlords ask before - and right after - running their first decode.</p>
           </div>
           <div className="space-y-4">
-            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What does &ldquo;charge-off&rdquo; or &ldquo;collection&rdquo; actually mean on a credit report?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">A charge-off is a debt the original creditor has written off as a loss after roughly 180 days unpaid — it doesn&rsquo;t mean the debt is gone. A collection is that debt sold or assigned to a collection agency. The decoder explains the age, balance, and what to weigh, without telling you to deny.</p></Card>
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What does &ldquo;charge-off&rdquo; or &ldquo;collection&rdquo; actually mean on a credit report?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">A charge-off is a debt the original creditor has written off as a loss after roughly 180 days unpaid - it doesn&rsquo;t mean the debt is gone. A collection is that debt sold or assigned to a collection agency. The decoder explains the age, balance, and what to weigh, without telling you to deny.</p></Card>
             <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">How do I read an eviction record on a screening report?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Eviction records range from a filing (the case was opened) to a dismissal (resolved without a judgment) to a money or possession judgment against the tenant. Each tells you something very different. The decoder distinguishes them and flags ambiguous entries that warrant a follow-up question.</p></Card>
-            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Does the decoder tell me whether to approve or deny an applicant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No — and intentionally so. Approve/deny is your call, made against your written tenant-selection criteria and applicable Fair Housing law. The decoder explains what each finding means, surfaces follow-up questions, and reminds you of the factors that protect you when you decide.</p></Card>
-            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What screening providers does the decoder work with?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">It works on the report text from any major US screening provider — TransUnion SmartMove, RentPrep, MyRental, Western Verify, and others. You paste the findings (or list them one per line); the decoder doesn&rsquo;t need a specific file format.</p></Card>
-            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is the decoder a substitute for legal advice?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. The decoder is educational — it explains common findings and reminds you of FCRA and Fair Housing factors. For specific legal questions about a tenant decision, consult a licensed attorney in your state.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Does the decoder tell me whether to approve or deny an applicant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No - and intentionally so. Approve/deny is your call, made against your written tenant-selection criteria and applicable Fair Housing law. The decoder explains what each finding means, surfaces follow-up questions, and reminds you of the factors that protect you when you decide.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What screening providers does the decoder work with?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">It works on the report text from any major US screening provider - TransUnion SmartMove, RentPrep, MyRental, Western Verify, and others. You paste the findings (or list them one per line); the decoder doesn&rsquo;t need a specific file format.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is the decoder a substitute for legal advice?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. The decoder is educational - it explains common findings and reminds you of FCRA and Fair Housing factors. For specific legal questions about a tenant decision, consult a licensed attorney in your state.</p></Card>
             <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is my applicant&rsquo;s data stored?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">The decoder processes the text you paste to generate explanations. We don&rsquo;t resell screening data, and you can clear a decode session at any time. For long-term applicant records, store them on the application itself inside LeaseShield.</p></Card>
           </div>
         </div>
@@ -149,7 +149,7 @@ export default function ScreeningReportDecoder() {
           <p className="text-base md:text-lg text-muted-foreground mb-8">Most landlords only face these decisions a few times per year. LeaseShield is there when they do.</p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Button size="lg" onClick={() => setLocation("/screening/explain")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-try"><Search className="mr-2 h-5 w-5" />Try the decoder</Button>
-            <Button size="lg" variant="outline" onClick={() => setLocation("/signup")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started — $10/month</Button>
+            <Button size="lg" variant="outline" onClick={() => setLocation("/signup")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started - $10/month</Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-report fees • 30-day money-back guarantee</p>
         </div>

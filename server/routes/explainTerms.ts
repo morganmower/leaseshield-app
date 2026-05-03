@@ -151,10 +151,10 @@ Factors that reduce weight:
 
 **WHAT THIS DOES NOT MEAN**
 ${cautionResult.level === 'high' ? `• CAUTION: ${cautionResult.toneGuidance}
-• This doesn't automatically require denial, but this pattern is a real risk flag—don't ignore it
+• This doesn't automatically require denial, but this pattern is a real risk flag-don't ignore it
 • [Specific clarification based on the credit item]
 • Apply your written criteria consistently to reduce fair-housing risk` : 
-cautionResult.level === 'medium' ? `• This is a real risk flag—don't ignore it, but context matters
+cautionResult.level === 'medium' ? `• This is a real risk flag-don't ignore it, but context matters
 • [Clarification to prevent over-reaction while acknowledging the concern]
 • Apply your written criteria consistently to reduce fair-housing risk` :
 `• [Clarification to prevent over-reaction - e.g., "Does not automatically mean they will miss rent"]
@@ -405,10 +405,10 @@ Factors that reduce weight:
 
 **WHAT THIS DOES NOT MEAN**
 ${cautionResult.level === 'high' ? `• CAUTION: ${cautionResult.toneGuidance}
-• A criminal or eviction record does not automatically require denial, but this appears to be a significant concern—individualized assessment is critical
+• A criminal or eviction record does not automatically require denial, but this appears to be a significant concern-individualized assessment is critical
 • [Specific clarification based on the record type]
 • Apply your written criteria consistently and document your reasoning` : 
-cautionResult.level === 'medium' ? `• This is a real consideration—don't ignore it, but context and outcomes matter
+cautionResult.level === 'medium' ? `• This is a real consideration-don't ignore it, but context and outcomes matter
 • A criminal or eviction record does not automatically require denial
 • [Specific clarification based on the record type]
 • Apply your written criteria consistently` :

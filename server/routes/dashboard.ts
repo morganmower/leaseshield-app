@@ -52,7 +52,7 @@ export async function registerDashboardRoutes(app: Express) {
         storage.getRentLedgerEntries(userId).catch(() => []),
         // State-scoped fetch so we never miss a relevant update by being
         // truncated out of a global "recent" window. Empty array if no
-        // preferred state — matches the gating logic below.
+        // preferred state - matches the gating logic below.
         userState
           ? storage.getLegalUpdatesByState(userState).catch(() => [])
           : Promise.resolve([] as any[]),
@@ -184,7 +184,7 @@ export async function registerDashboardRoutes(app: Express) {
 
       // Recent legal updates this month for user's state.
       // If user has not set a preferred state, do NOT surface updates from
-      // every state — that would defeat the "all caught up" empty state and
+      // every state - that would defeat the "all caught up" empty state and
       // create noise.
       const monthAgo = new Date();
       monthAgo.setDate(monthAgo.getDate() - 30);

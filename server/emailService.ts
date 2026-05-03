@@ -1382,7 +1382,7 @@ Email: ${applicantEmail}
 
 View it in your Application Inbox: ${inboxUrl}
 
-— LeaseShield App
+- LeaseShield App
 `,
       htmlBody: `
 <!DOCTYPE html>
@@ -2074,7 +2074,7 @@ The LeaseShield Team
           <a href="${opts.paymentLink}" style="background: #2563eb; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; display: inline-block;">Pay Rent Online (ACH - No Card Fees)</a>
         </p>
         ${lateFeeNote}
-        <p style="color: #555; font-size: 14px;">Paying by bank transfer (ACH) is free — no credit card processing fees.</p>
+        <p style="color: #555; font-size: 14px;">Paying by bank transfer (ACH) is free - no credit card processing fees.</p>
         <p style="color: #555; font-size: 14px;">Thank you,<br/>${opts.landlordName}</p>
       </div>
     `;
@@ -2143,7 +2143,7 @@ The LeaseShield Team
         ${itemizationHtml}
         <p style="color: #555;">ACH payments typically take 3-5 business days to fully clear. We'll mark your account paid in full once funds settle.</p>
         ${receiptLink}
-        <p style="color: #555; font-size: 14px;">Keep this receipt for your records — it itemizes the rent and any service fee for tax or expense reporting.</p>
+        <p style="color: #555; font-size: 14px;">Keep this receipt for your records - it itemizes the rent and any service fee for tax or expense reporting.</p>
         <p style="color: #555; font-size: 14px;">Thank you,<br/>${opts.landlordName}</p>
       </div>
     `;
@@ -2225,7 +2225,7 @@ The LeaseShield Team
           ${rows.join('')}
         </table>
         <p style="color: #555; font-size: 14px;">ACH payments typically take 3-5 business days to settle into your bank account.</p>
-        <p style="color: #555; font-size: 14px;">— LeaseShield</p>
+        <p style="color: #555; font-size: 14px;">- LeaseShield</p>
       </div>
     `;
     const textLines: string[] = [];
@@ -2242,7 +2242,7 @@ The LeaseShield Team
     textLines.push('');
     textLines.push('ACH payments typically settle in 3-5 business days.');
     textLines.push('');
-    textLines.push('— LeaseShield');
+    textLines.push('- LeaseShield');
     const textBody = textLines.join('\n');
 
     return this.sendEmail(
@@ -2253,7 +2253,7 @@ The LeaseShield Team
 
   /**
    * Send the auto-pay authorization link to a tenant. Includes plain-language
-   * disclosure of the recurring debit terms — the formal NACHA mandate text
+   * disclosure of the recurring debit terms - the formal NACHA mandate text
    * is shown on the authorization page itself.
    */
   async sendRentAutoPayAuthorizationEmail(
@@ -2285,7 +2285,7 @@ The LeaseShield Team
           <li>Amount: <strong>$${opts.amountDollars}</strong> per month</li>
           <li>Charged on the <strong>${ord(opts.dayOfMonth)}</strong> of each month</li>
           <li>Starting: <strong>${opts.startDate}</strong></li>
-          <li>Paid by bank transfer (ACH) — no card processing fees</li>
+          <li>Paid by bank transfer (ACH) - no card processing fees</li>
         </ul>
         <p style="margin: 24px 0;">
           <a href="${opts.authorizationLink}" style="background: #2DD4BF; color: #fff; padding: 12px 20px; border-radius: 6px; text-decoration: none; display: inline-block; font-weight: 600;">Review & Authorize Auto-Pay</a>
@@ -2326,7 +2326,7 @@ ${opts.landlordName}`;
         <p>Hi ${to.firstName || 'there'},</p>
         <p><strong>${opts.tenantName}</strong> (${opts.tenantEmail}) just canceled their automatic rent payments of $${opts.amountDollars}/month through LeaseShield.</p>
         <p>No more debits will be attempted under this authorization. You'll need to invoice them manually or send a new auto-pay authorization link.</p>
-        <p style="color: #555; font-size: 14px;">— LeaseShield</p>
+        <p style="color: #555; font-size: 14px;">- LeaseShield</p>
       </div>
     `;
     const textBody = `Hi ${to.firstName || 'there'},

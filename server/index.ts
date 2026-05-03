@@ -279,7 +279,7 @@ app.use((req, res, next) => {
     });
   });
 
-  // Prerender middleware for SEO &mdash; intercepts marketing-cluster routes and
+  // Prerender middleware for SEO - intercepts marketing-cluster routes and
   // injects static HTML into the SPA shell so crawlers/audit tools see real
   // content. Must run before setupVite/serveStatic so it gets first crack at
   // the catch-all routes. Falls through cleanly for any path not in its map.
@@ -308,7 +308,7 @@ app.use((req, res, next) => {
 
     if (existsSync("uploads/applicants")) {
       const n = readdirSync("uploads/applicants").length;
-      if (n > 0) console.warn(`[WARN] Found ${n} files in uploads/applicants — uploads should be object-storage only now.`);
+      if (n > 0) console.warn(`[WARN] Found ${n} files in uploads/applicants - uploads should be object-storage only now.`);
     }
 
     

@@ -5,7 +5,7 @@ export const landingCopy = {
   hero: {
     h1: "The simple rental management system for independent landlords",
     subheadline:
-      "Applications, tenant screening, plain-English report explanations, state-specific lease and notice templates, and online rent collection — one system for landlords who only need depth where it matters.",
+      "Applications, tenant screening, plain-English report explanations, state-specific lease and notice templates, and online rent collection - one system for landlords who only need depth where it matters.",
     reassurance: "Only $10/month. Cancel anytime. 30-day money-back guarantee.",
     primaryCta: "Explain My Screening Report",
     primaryCtaHref: "/signup",

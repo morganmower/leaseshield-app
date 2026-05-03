@@ -10,7 +10,7 @@ export default function ScreeningExplain() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Explain a Screening Report — LeaseShield"
+        title="Explain a Screening Report - LeaseShield"
         description="Decode credit reports and criminal/eviction screening reports in plain English. Get FCRA-compliant guidance for landlord decisions."
         canonical="/screening/explain"
       />

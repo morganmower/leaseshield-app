@@ -1590,7 +1590,7 @@ export async function registerRentalScreeningRoutes(app: Express) {
     }
   });
 
-  // Get available screening invitations (packages) — uses landlord's own credentials
+  // Get available screening invitations (packages) - uses landlord's own credentials
   app.get('/api/rental/screening/invitations', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = req.user.id;

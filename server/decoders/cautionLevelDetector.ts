@@ -147,7 +147,7 @@ export function detectCautionLevel(
     toneGuidance = 'This is a higher-risk indicator. Be measured, verify carefully, and apply your written criteria consistently.';
   } else if (score >= 3) {
     level = 'medium';
-    toneGuidance = 'This is a real risk flag—don\'t ignore it, but context matters. Verify and apply consistent standards.';
+    toneGuidance = 'This is a real risk flag-don\'t ignore it, but context matters. Verify and apply consistent standards.';
   } else {
     level = 'low';
     toneGuidance = 'This is generally manageable. Many landlords handle this routinely with consistent criteria.';
@@ -203,7 +203,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Medical providers, utilities, phone carriers, or credit cards each have different context'
       }
     ],
-    generalTip: 'In the Collection Accounts table, pink/highlighted rows indicate active negative items. Check both the dates AND the balance—a $0 balance means it was paid.'
+    generalTip: 'In the Collection Accounts table, pink/highlighted rows indicate active negative items. Check both the dates AND the balance-a $0 balance means it was paid.'
   },
   charge_off: {
     topic: 'charge_off',
@@ -216,7 +216,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Opened/Clsd PD columns',
         whatItTells: 'When account opened and when it was charged off',
-        lookFor: 'The "Clsd" date shows when the charge-off occurred—recent is more concerning'
+        lookFor: 'The "Clsd" date shows when the charge-off occurred-recent is more concerning'
       },
       {
         fieldName: '$Bal column',
@@ -229,14 +229,14 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Codes like "I9" or "O9" indicate serious derogatory status'
       }
     ],
-    generalTip: 'Look for "Profit and loss writeoff" in Remarks. The Rating column shows severity—I9 is a charge-off. Check the Hist Status columns (30 60 90) for payment history leading up to it.'
+    generalTip: 'Look for "Profit and loss writeoff" in Remarks. The Rating column shows severity-I9 is a charge-off. Check the Hist Status columns (30 60 90) for payment history leading up to it.'
   },
   late_payments: {
     topic: 'late_payments',
     fields: [
       {
         fieldName: 'Hist Status columns (Date Mths 30 60 90)',
-        whatItTells: 'Payment history—how many months at each delinquency level',
+        whatItTells: 'Payment history-how many months at each delinquency level',
         lookFor: 'Numbers in the 30, 60, 90 columns show how many times payments were that many days late'
       },
       {
@@ -247,7 +247,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Pmt Term column',
         whatItTells: 'Monthly payment amount and term',
-        lookFor: 'Shows like "006MO" for 6-month term—helps understand payment obligations'
+        lookFor: 'Shows like "006MO" for 6-month term-helps understand payment obligations'
       },
       {
         fieldName: 'Rating column',
@@ -255,7 +255,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'I1 = current; I2-I4 = 30-90 days late; I5+ = serious delinquency'
       }
     ],
-    generalTip: 'The Hist Status columns are key—they show the pattern. One "1" in the 30 column is minor; multiple across 60/90 shows a pattern. Pink highlighting means current problems.'
+    generalTip: 'The Hist Status columns are key-they show the pattern. One "1" in the 30 column is minor; multiple across 60/90 shows a pattern. Pink highlighting means current problems.'
   },
   repossession: {
     topic: 'repossession',
@@ -263,7 +263,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Remarks column',
         whatItTells: 'Shows "Repossession" when vehicle was taken back',
-        lookFor: 'This confirms the vehicle was repossessed—usually after 90+ days late'
+        lookFor: 'This confirms the vehicle was repossessed-usually after 90+ days late'
       },
       {
         fieldName: 'Loan Type column',
@@ -281,7 +281,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Recent repos are more concerning; older repos with no other issues show recovery'
       }
     ],
-    generalTip: 'Look for "Repossession" in Remarks under Installment Accounts. Check if there\'s a remaining balance—many repos leave a deficiency the borrower still owes.'
+    generalTip: 'Look for "Repossession" in Remarks under Installment Accounts. Check if there\'s a remaining balance-many repos leave a deficiency the borrower still owes.'
   },
   credit_score: {
     topic: 'credit_score',
@@ -302,7 +302,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Lower scorecard numbers generally indicate lower risk profiles'
       }
     ],
-    generalTip: 'The Scoring section shows both the number AND the factors. Factor 87 "Too many unpaid agency collections accounts" is a major red flag. Read the factor descriptions—they tell you exactly what\'s wrong.'
+    generalTip: 'The Scoring section shows both the number AND the factors. Factor 87 "Too many unpaid agency collections accounts" is a major red flag. Read the factor descriptions-they tell you exactly what\'s wrong.'
   },
   inquiries: {
     topic: 'inquiries',
@@ -323,7 +323,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: '"I" usually means installment (auto, personal); multiple types may indicate shopping around'
       }
     ],
-    generalTip: 'The Inquiries table shows who pulled credit. Many recent inquiries from lenders (not landlords) may indicate they\'re actively seeking credit—which could mean financial pressure.'
+    generalTip: 'The Inquiries table shows who pulled credit. Many recent inquiries from lenders (not landlords) may indicate they\'re actively seeking credit-which could mean financial pressure.'
   },
   default: {
     topic: 'general',
@@ -349,7 +349,7 @@ export const CREDIT_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Highlighted rows in the tables indicate active problems vs resolved history'
       }
     ],
-    generalTip: 'Read the Remarks column first—it tells you in plain English what happened. Then check dates and balances. Pink highlighting = current problem.'
+    generalTip: 'Read the Remarks column first-it tells you in plain English what happened. Then check dates and balances. Pink highlighting = current problem.'
   }
 };
 
@@ -366,7 +366,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Offense Level field',
         whatItTells: 'Severity classification',
-        lookFor: '"FELONY" is more serious than "MISDEMEANOR"—directly impacts your screening criteria'
+        lookFor: '"FELONY" is more serious than "MISDEMEANOR"-directly impacts your screening criteria'
       },
       {
         fieldName: 'Disposition field',
@@ -376,12 +376,12 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Offense Date and Disposition Date',
         whatItTells: 'When the offense occurred and when resolved',
-        lookFor: 'Calculate time elapsed—7+ years is often a relevant threshold; recent is more concerning'
+        lookFor: 'Calculate time elapsed-7+ years is often a relevant threshold; recent is more concerning'
       },
       {
         fieldName: 'Sentence field',
         whatItTells: 'What punishment was given',
-        lookFor: '"Jail X DAYS", "Prison X YEARS, SUSPENDED", "Probation X MONTHS"—shows severity and if they served time'
+        lookFor: '"Jail X DAYS", "Prison X YEARS, SUSPENDED", "Probation X MONTHS"-shows severity and if they served time'
       },
       {
         fieldName: 'Statute field',
@@ -389,7 +389,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Statute numbers like "76-5-103(1)" identify the exact offense under state law'
       }
     ],
-    generalTip: 'Focus on Disposition first—"GUILTY" is a conviction, anything else is not. Then check Offense Level (felony vs misdemeanor) and calculate how long ago using the Disposition Date. "SUSPENDED" sentences mean prison time was given but not served.'
+    generalTip: 'Focus on Disposition first-"GUILTY" is a conviction, anything else is not. Then check Offense Level (felony vs misdemeanor) and calculate how long ago using the Disposition Date. "SUSPENDED" sentences mean prison time was given but not served.'
   },
   eviction: {
     topic: 'eviction',
@@ -415,7 +415,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
         lookFor: 'Money judgments suggest unpaid rent; cases without money amounts may have been technical or disputed'
       }
     ],
-    generalTip: 'An eviction FILING is not the same as being evicted. Look at the Disposition—only "Judgment for Plaintiff" means the landlord won. Dismissed cases often mean the tenant paid or the landlord made errors.'
+    generalTip: 'An eviction FILING is not the same as being evicted. Look at the Disposition-only "Judgment for Plaintiff" means the landlord won. Dismissed cases often mean the tenant paid or the landlord made errors.'
   },
   felony: {
     topic: 'felony',
@@ -423,7 +423,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Offense Level: FELONY',
         whatItTells: 'This is a serious crime',
-        lookFor: 'Felonies are more serious than misdemeanors—but still check disposition, nature, and time elapsed'
+        lookFor: 'Felonies are more serious than misdemeanors-but still check disposition, nature, and time elapsed'
       },
       {
         fieldName: 'Disposition field',
@@ -438,7 +438,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Disposition Date',
         whatItTells: 'When the case concluded',
-        lookFor: 'Calculate years elapsed—more time with no new offenses shows stability'
+        lookFor: 'Calculate years elapsed-more time with no new offenses shows stability'
       }
     ],
     generalTip: 'Felony = serious, but HUD guidance requires individualized assessment. Check: Was there a conviction? How long ago? Was it violent? Is the person on active probation/parole? What evidence of rehabilitation exists?'
@@ -449,7 +449,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Offense Level: MISDEMEANOR',
         whatItTells: 'This is a less serious crime',
-        lookFor: 'Misdemeanors are generally minor offenses—context and pattern matter more'
+        lookFor: 'Misdemeanors are generally minor offenses-context and pattern matter more'
       },
       {
         fieldName: 'Disposition field',
@@ -464,7 +464,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Sentence field',
         whatItTells: 'Punishment given',
-        lookFor: 'Jail days (usually served), fines, probation—shows how seriously court treated it'
+        lookFor: 'Jail days (usually served), fines, probation-shows how seriously court treated it'
       }
     ],
     generalTip: 'Single old misdemeanors are often routine. Focus on: Is it relevant to being a tenant? Is there a pattern of similar charges? Was it recent? Many landlords treat old misdemeanors as minor factors.'
@@ -480,7 +480,7 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Offense Level field',
         whatItTells: 'Severity of the charge',
-        lookFor: 'FELONY vs MISDEMEANOR—directly impacts how to weigh it'
+        lookFor: 'FELONY vs MISDEMEANOR-directly impacts how to weigh it'
       },
       {
         fieldName: 'Dates (Offense Date, File Date, Disposition Date)',
@@ -490,10 +490,10 @@ export const CRIMINAL_EVICTION_FIELD_GUIDES: Record<string, TopicFieldGuide> = {
       {
         fieldName: 'Sentence field',
         whatItTells: 'What consequences were given',
-        lookFor: 'Jail/prison time, probation, fines—indicates how seriously the court treated the offense'
+        lookFor: 'Jail/prison time, probation, fines-indicates how seriously the court treated the offense'
       }
     ],
-    generalTip: 'Always check Disposition first—only convictions/judgments should factor heavily. Then consider: How long ago? How serious? Is there a pattern? What does the Sentence tell you about severity?'
+    generalTip: 'Always check Disposition first-only convictions/judgments should factor heavily. Then consider: How long ago? How serious? Is there a pattern? What does the Sentence tell you about severity?'
   }
 };
 

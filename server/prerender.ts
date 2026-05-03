@@ -14,12 +14,12 @@ const CLUSTER_LINKS = `
   <nav aria-label="LeaseShield solutions">
     <h2>Explore the LeaseShield system</h2>
     <ul>
-      <li><a href="/rental-management-system">Rental Management System</a> &mdash; the full landlord workflow in one place.</li>
-      <li><a href="/tenant-screening-services">Tenant Screening Services</a> &mdash; complete background, credit, and eviction checks.</li>
-      <li><a href="/screening-report-decoder">Screening Report Decoder</a> &mdash; AI explains every finding in plain English.</li>
-      <li><a href="/rental-application-software">Rental Application Software</a> &mdash; one shareable link per property.</li>
-      <li><a href="/rent-collection-software">Rent Collection Software</a> &mdash; ACH auto-pay with NACHA compliance.</li>
-      <li><a href="/landlord-forms-and-notices">Landlord Forms &amp; Notices</a> &mdash; state-specific templates for 16 states.</li>
+      <li><a href="/rental-management-system">Rental Management System</a> - the full landlord workflow in one place.</li>
+      <li><a href="/tenant-screening-services">Tenant Screening Services</a> - complete background, credit, and eviction checks.</li>
+      <li><a href="/screening-report-decoder">Screening Report Decoder</a> - AI explains every finding in plain English.</li>
+      <li><a href="/rental-application-software">Rental Application Software</a> - one shareable link per property.</li>
+      <li><a href="/rent-collection-software">Rent Collection Software</a> - ACH auto-pay with NACHA compliance.</li>
+      <li><a href="/landlord-forms-and-notices">Landlord Forms &amp; Notices</a> - state-specific templates for 16 states.</li>
     </ul>
   </nav>
 `;
@@ -37,7 +37,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     bodyHtml: `
       <header>
         <h1>Simple rental management system for landlords</h1>
-        <p>One simpler system built for independent landlords &mdash; application, screening, lease forms, rent collection, and compliance, all in one workflow.</p>
+        <p>One simpler system built for independent landlords - application, screening, lease forms, rent collection, and compliance, all in one workflow.</p>
         <p><em>Most landlords only face these decisions a few times per year. LeaseShield is there when they do.</em></p>
       </header>
       <section>
@@ -53,7 +53,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/screening-report-decoder": {
-    title: "Screening Report Decoder &mdash; AI Explains Credit, Criminal, and Eviction Findings",
+    title: "Screening Report Decoder - AI Explains Credit, Criminal, and Eviction Findings",
     description:
       "Paste any tenant screening finding and our AI decoder explains it in plain English with Fair Housing-safe next steps. Built into LeaseShield, $10/month.",
     bodyHtml: `
@@ -66,7 +66,7 @@ const PAGES: Record<string, PrerenderEntry> = {
         <ol>
           <li>Paste a finding from your tenant screening report (single line or full list).</li>
           <li>The AI returns a plain-English explanation, caution level (high / medium / low), and follow-up questions.</li>
-          <li>State-aware notes pull from a curated, attorney-reviewed database &mdash; never AI-generated state law.</li>
+          <li>State-aware notes pull from a curated, attorney-reviewed database - never AI-generated state law.</li>
         </ol>
       </section>
       <section>
@@ -78,7 +78,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/rental-management-system": {
-    title: "Rental Management System for Small Landlords &mdash; LeaseShield",
+    title: "Rental Management System for Small Landlords - LeaseShield",
     description:
       "A simple rental management system covering applications, screening, leases, rent collection, and compliance for landlords in 16 US states. $10/month.",
     bodyHtml: `
@@ -89,11 +89,11 @@ const PAGES: Record<string, PrerenderEntry> = {
       <section>
         <h2>The five-step workflow, one tool</h2>
         <ol>
-          <li><strong>Application</strong> &mdash; one shareable link per property, branded landlord page.</li>
-          <li><strong>Screening</strong> &mdash; complete background, credit, and eviction reports.</li>
-          <li><strong>Decoder</strong> &mdash; AI explains every screening finding in plain English.</li>
-          <li><strong>Lease</strong> &mdash; state-specific templates and official court forms.</li>
-          <li><strong>Rent</strong> &mdash; recurring ACH auto-pay with NACHA compliance.</li>
+          <li><strong>Application</strong> - one shareable link per property, branded landlord page.</li>
+          <li><strong>Screening</strong> - complete background, credit, and eviction reports.</li>
+          <li><strong>Decoder</strong> - AI explains every screening finding in plain English.</li>
+          <li><strong>Lease</strong> - state-specific templates and official court forms.</li>
+          <li><strong>Rent</strong> - recurring ACH auto-pay with NACHA compliance.</li>
         </ol>
       </section>
       <section>
@@ -105,20 +105,20 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/tenant-screening-services": {
-    title: "Tenant Screening Services for Landlords &mdash; Background, Credit, Eviction",
+    title: "Tenant Screening Services for Landlords - Background, Credit, Eviction",
     description:
       "Complete tenant screening with county-level criminal records, real eviction history, and credit. Plus the AI decoder that explains every finding. $10/month.",
     bodyHtml: `
       <header>
         <h1>Tenant Screening Services for Landlords</h1>
-        <p>Most background checks are incomplete. Ours surface what the cheap reports miss &mdash; and our AI decoder explains every finding in plain English.</p>
+        <p>Most background checks are incomplete. Ours surface what the cheap reports miss - and our AI decoder explains every finding in plain English.</p>
       </header>
       <section>
         <h2>Why most screening misses records</h2>
         <ul>
-          <li><strong>County-level verification</strong> &mdash; national databases miss 30&ndash;50% of records that only show up at the county level.</li>
-          <li><strong>Real eviction history</strong> &mdash; court records, not just collection accounts.</li>
-          <li><strong>What the report doesn't say</strong> &mdash; a clean report doesn't always mean a clean record. The decoder flags gaps.</li>
+          <li><strong>County-level verification</strong> - national databases miss 30&ndash;50% of records that only show up at the county level.</li>
+          <li><strong>Real eviction history</strong> - court records, not just collection accounts.</li>
+          <li><strong>What the report doesn't say</strong> - a clean report doesn't always mean a clean record. The decoder flags gaps.</li>
         </ul>
       </section>
       <section>
@@ -130,7 +130,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/rental-application-software": {
-    title: "Rental Application Software for Landlords &mdash; One Link per Property",
+    title: "Rental Application Software for Landlords - One Link per Property",
     description:
       "Send one branded application link per property. LeaseShield captures applicants, runs screening, and notifies you on every submission. $10/month, cancel anytime.",
     bodyHtml: `
@@ -158,21 +158,21 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/rent-collection-software": {
-    title: "Rent Collection Software with ACH Auto-Pay &mdash; LeaseShield",
+    title: "Rent Collection Software with ACH Auto-Pay - LeaseShield",
     description:
       "NACHA-compliant ACH auto-debit, recurring rent collection, tenant-paid service fees, and a full ledger that holds up in court. $10/month, no per-unit fees.",
     bodyHtml: `
       <header>
         <h1>Rent Collection Software for Landlords</h1>
-        <p>Recurring monthly ACH auto-pay with full NACHA compliance. Mandatory tenant-paid service fee &mdash; you keep 100% of rent.</p>
+        <p>Recurring monthly ACH auto-pay with full NACHA compliance. Mandatory tenant-paid service fee - you keep 100% of rent.</p>
       </header>
       <section>
         <h2>Built for landlords, not enterprise property managers</h2>
         <ul>
-          <li><strong>Recurring auto-pay</strong> &mdash; tenants set it once, you stop chasing checks.</li>
-          <li><strong>Tenant-paid service fee</strong> &mdash; the platform fee is paid by the tenant, not deducted from rent.</li>
-          <li><strong>Tabbed dashboard</strong> &mdash; Requests, History, Recurring, and Export views.</li>
-          <li><strong>Court-ready ledger</strong> &mdash; clean record of what was owed and what was paid.</li>
+          <li><strong>Recurring auto-pay</strong> - tenants set it once, you stop chasing checks.</li>
+          <li><strong>Tenant-paid service fee</strong> - the platform fee is paid by the tenant, not deducted from rent.</li>
+          <li><strong>Tabbed dashboard</strong> - Requests, History, Recurring, and Export views.</li>
+          <li><strong>Court-ready ledger</strong> - clean record of what was owed and what was paid.</li>
         </ul>
       </section>
       <section>
@@ -184,7 +184,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     `,
   },
   "/landlord-forms-and-notices": {
-    title: "Landlord Forms and Notices &mdash; State-Specific Templates for 16 States",
+    title: "Landlord Forms and Notices - State-Specific Templates for 16 States",
     description:
       "Lease agreements, notices to pay or quit, and official court forms for 16 US states. Generated as PDF or DOCX. Compliance-reviewed and statute-referenced.",
     bodyHtml: `
@@ -222,7 +222,7 @@ function injectIntoTemplate(
   // Title
   html = html.replace(
     /<title>[^<]*<\/title>/i,
-    `<title>${entry.title.replace(/&mdash;/g, "—").replace(/&amp;/g, "&")}</title>`,
+    `<title>${entry.title.replace(/-/g, "-").replace(/&amp;/g, "&")}</title>`,
   );
 
   // Description
@@ -238,7 +238,7 @@ function injectIntoTemplate(
   );
   html = html.replace(
     /<meta\s+property="og:title"\s+content="[^"]*"\s*\/?>/i,
-    `<meta property="og:title" content="${entry.title.replace(/&mdash;/g, "—").replace(/&amp;/g, "&")}">`,
+    `<meta property="og:title" content="${entry.title.replace(/-/g, "-").replace(/&amp;/g, "&")}">`,
   );
   html = html.replace(
     /<meta\s+property="og:description"\s+content="[^"]*"\s*\/?>/i,
@@ -266,7 +266,7 @@ function injectIntoTemplate(
 /**
  * Express middleware that serves prerendered HTML for the marketing route cluster.
  * Crawlers and SEO audit tools see real content (h1, h2, paragraphs, internal links).
- * Real users get the same SPA shell + bundle &mdash; React's createRoot replaces the
+ * Real users get the same SPA shell + bundle - React's createRoot replaces the
  * prerendered body on mount, so there is no hydration mismatch and no UX impact.
  *
  * The injected content is visually hidden (clip:rect 0 0 0 0) but fully accessible
@@ -289,7 +289,7 @@ export function prerenderMiddleware(
   const entry = PAGES[req.path];
   if (!entry) return next();
 
-  // Only intercept HTML requests &mdash; never assets or API
+  // Only intercept HTML requests - never assets or API
   const accept = req.headers.accept || "";
   if (!accept.includes("text/html")) return next();
 

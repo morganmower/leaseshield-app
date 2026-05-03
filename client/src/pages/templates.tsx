@@ -467,7 +467,7 @@ export default function Templates() {
     { key: 'move_in_out', label: 'Move-In/Out', icon: Home },
   ];
 
-  // Short orienting copy per category — shown when a chip is selected.
+  // Short orienting copy per category - shown when a chip is selected.
   // Keeps users grounded without drowning them in legal text.
   const categoryDescriptions: Record<string, string> = {
     leasing: "Lease agreements, addenda, and renewals.",
@@ -478,7 +478,7 @@ export default function Templates() {
     move_in_out: "Move-in/out checklists, walkthrough forms, and condition reports.",
   };
 
-  // Scenario shortcuts — research shows landlords frame their needs as
+  // Scenario shortcuts - research shows landlords frame their needs as
   // problems, not categories. These map each common problem to the right
   // category + (optional) keyword pre-filter, so users skip the browse step.
   const scenarios: {
@@ -539,7 +539,7 @@ export default function Templates() {
   const handleScenarioClick = (s: (typeof scenarios)[number]) => {
     setSelectedCategory(s.category);
     setSearchQuery(s.search || "");
-    // Default state should never be "all" when picking a scenario — the
+    // Default state should never be "all" when picking a scenario - the
     // wrong state's notice can be unenforceable. Snap back to the user's
     // preferred state if they happen to be browsing All States.
     if (selectedState === "all") {
@@ -551,7 +551,7 @@ export default function Templates() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Leases & Notices — State-Specific Templates"
+        title="Leases & Notices - State-Specific Templates"
         description="Browse 150+ state-specific lease, notice, and compliance templates. Official court forms where available, attorney-reviewed templates everywhere else."
         canonical="/templates"
       />
@@ -606,7 +606,7 @@ export default function Templates() {
           </div>
         )}
         
-        {/* Scenario shortcuts — "I need to..." */}
+        {/* Scenario shortcuts - "I need to..." */}
         <div className="mb-6">
           <h2 className="text-sm font-medium text-muted-foreground mb-3" data-testid="text-scenarios-heading">
             What do you need to do?
@@ -639,7 +639,7 @@ export default function Templates() {
           </div>
         </div>
 
-        {/* All States warning — wrong-state forms can be unenforceable */}
+        {/* All States warning - wrong-state forms can be unenforceable */}
         {selectedState === "all" && (
           <div
             className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3"
@@ -779,7 +779,7 @@ export default function Templates() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    // Reset state to user's preferred state (not "all") —
+                    // Reset state to user's preferred state (not "all") -
                     // the wrong state's form can be legally invalid.
                     setSelectedState(user?.preferredState || "UT");
                     setSelectedCategory("all");

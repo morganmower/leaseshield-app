@@ -202,7 +202,7 @@ export default function Dashboard() {
 
       <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-        {/* Single contextual banner — only one, never stacked */}
+        {/* Single contextual banner - only one, never stacked */}
         {needsSubscription && user.subscriptionStatus !== "active" && (
           <Card
             className="mb-6 p-4 bg-primary/10 border-primary/20"
@@ -263,7 +263,7 @@ export default function Dashboard() {
             loading={dataLoading}
             icon={<Scale className="h-10 w-10 text-primary/30" />}
             href="/legal-updates"
-            zeroHint="No new laws — you're current"
+            zeroHint="No new laws - you're current"
             testId="stat-updates"
           />
         </div>
@@ -354,7 +354,7 @@ export default function Dashboard() {
           )}
         </Card>
 
-        {/* Quick actions — applications + decoder lead */}
+        {/* Quick actions - applications + decoder lead */}
         <Card className="mb-6 p-6" data-testid="section-quick-actions">
           <h2 className="text-xl font-display font-semibold text-foreground mb-1">
             Quick actions
@@ -398,7 +398,7 @@ export default function Dashboard() {
           </div>
         </Card>
 
-        {/* Compliance snapshot — uses real updates count, links to /compliance */}
+        {/* Compliance snapshot - uses real updates count, links to /compliance */}
         <Card className="mb-6 p-6" data-testid="section-compliance-snapshot">
           <div className="flex items-start justify-between gap-4 flex-wrap">
             <div className="flex items-start gap-4 min-w-0">
@@ -412,7 +412,7 @@ export default function Dashboard() {
                 <p className="text-sm text-muted-foreground mt-1">
                   {(stats?.updatesThisMonthCount ?? 0) === 0 ? (
                     <>
-                      No new {user.preferredState ? `${user.preferredState} ` : ""}laws this month — you're current with state requirements.
+                      No new {user.preferredState ? `${user.preferredState} ` : ""}laws this month - you're current with state requirements.
                     </>
                   ) : (
                     <>

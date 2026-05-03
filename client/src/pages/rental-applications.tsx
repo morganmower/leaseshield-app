@@ -1177,7 +1177,7 @@ function PropertyCard({
                   No additional units configured.
                 </p>
                 <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                  This property already has a default applicant link — visit the Properties page to copy it. Add a unit here only if you have multiple apartments with different rent or terms.
+                  This property already has a default applicant link - visit the Properties page to copy it. Add a unit here only if you have multiple apartments with different rent or terms.
                 </p>
                 <Button
                   size="sm"

@@ -110,7 +110,7 @@ async function runTest() {
   let passed = true;
   for (const a of assertions) {
     const icon = a.ok ? '✓' : '✗';
-    console.log(`  ${icon} ${a.name}${a.detail ? ` — ${a.detail}` : ''}`);
+    console.log(`  ${icon} ${a.name}${a.detail ? ` - ${a.detail}` : ''}`);
     if (!a.ok) passed = false;
   }
 

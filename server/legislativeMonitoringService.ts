@@ -1041,7 +1041,7 @@ ${relevantBills + relevantCases > 0 ? `- ${relevantBills} bill(s) and ${relevant
     
     // Determine which group to use by looking at the last run's state_group
     // and toggling to the opposite group. This ensures strict alternation.
-    // NOTE: Include 'partial' status — runs are frequently partial due to minor
+    // NOTE: Include 'partial' status - runs are frequently partial due to minor
     // API warnings (e.g. CourtListener rate limits) and should still count for rotation.
     const [lastRun] = await db.select({ stateGroup: monitoringRuns.stateGroup })
       .from(monitoringRuns)
@@ -1325,7 +1325,7 @@ Respond in this exact JSON format:
       // again on a later run replaces the row instead of duplicating it.
       // Trim title so leading/trailing whitespace can't bypass the index.
       const normalizedTitle = (item.title ?? '').trim();
-      if (!normalizedTitle) continue; // skip items with no title — index needs it
+      if (!normalizedTitle) continue; // skip items with no title - index needs it
       await db.insert(legalUpdates).values({
         stateId,
         title: normalizedTitle,

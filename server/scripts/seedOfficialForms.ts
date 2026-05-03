@@ -2,9 +2,9 @@
  * Seed script: Update DB records for official court form overlays.
  *
  * Covers:
- *  1. MI DC 100c — Complaint for Land Contract Forfeiture (form_fields strategy)
- *  2. SD UJS 112  — Verified Complaint for Eviction (coordinates strategy — infrastructure only)
- *  3. UT 1100EV   — Complaint for Unlawful Detainer (coordinates strategy — infrastructure only)
+ *  1. MI DC 100c - Complaint for Land Contract Forfeiture (form_fields strategy)
+ *  2. SD UJS 112  - Verified Complaint for Eviction (coordinates strategy - infrastructure only)
+ *  3. UT 1100EV   - Complaint for Unlawful Detainer (coordinates strategy - infrastructure only)
  *
  * OH has no statewide standardized eviction complaint form (county-level only).
  * ID: now implemented via seedIDOverlayFields.ts (courtselfhelp.idaho.gov CAO UD 1-1).
@@ -40,7 +40,7 @@ const MI_DC100C_FIELD_MAP: Record<string, string> = {
   other_reason_fill: 'other fill',
 };
 
-// overlay_fields rows for DC 100c — field_key list (x/y are placeholders for form_fields strategy;
+// overlay_fields rows for DC 100c - field_key list (x/y are placeholders for form_fields strategy;
 // they are not used for drawing but are required by the schema).
 const DC100C_OVERLAY_FIELDS = [
   { fieldKey: 'seller_name', pageNumber: 1, x: 168, y: 528, fontSize: 9, maxWidth: 153 },
@@ -65,7 +65,7 @@ const DC100C_OVERLAY_FIELDS = [
 ];
 
 async function seedMiDc100c() {
-  console.log('\n=== MI DC 100c — Complaint: Land Contract Forfeiture ===');
+  console.log('\n=== MI DC 100c - Complaint: Land Contract Forfeiture ===');
 
   const OUTPUT_TEMPLATE_ID = '65e4bfa5-3fe5-4852-825e-86c2e6510c57';
   const FORM_VERSION_ID = '047db11e-b296-4dc4-a6be-44db433520f3';
@@ -112,7 +112,7 @@ async function seedMiDc100c() {
 }
 
 async function seedSdVerifiedComplaint() {
-  console.log('\n=== SD UJS 112 — Verified Complaint for Eviction ===');
+  console.log('\n=== SD UJS 112 - Verified Complaint for Eviction ===');
 
   const FORM_ID_KEY = 'sd_verified_complaint_eviction';
   const STATE_ID = 'SD';
@@ -171,11 +171,11 @@ async function seedSdVerifiedComplaint() {
   // To link: UPDATE templates SET output_template_id = '<outputTemplateId>' WHERE id = '<LIBRARY_TEMPLATE_ID>'
   console.log(`  SD infrastructure ready. output_template_id = ${outputTemplateId}`);
   console.log(`  PENDING: overlay_fields calibration needed before linking library template ${LIBRARY_TEMPLATE_ID}`);
-  console.log('  SD UJS 112 ✓ (infrastructure created — coordinates pending)');
+  console.log('  SD UJS 112 ✓ (infrastructure created - coordinates pending)');
 }
 
 async function seedUtComplaint() {
-  console.log('\n=== UT 1100EV — Complaint for Unlawful Detainer ===');
+  console.log('\n=== UT 1100EV - Complaint for Unlawful Detainer ===');
 
   const FORM_ID_KEY = 'ut_complaint_unlawful_detainer';
   const STATE_ID = 'UT';
@@ -225,13 +225,13 @@ async function seedUtComplaint() {
 
   console.log(`  UT infrastructure ready. output_template_id = ${outputTemplateId}`);
   console.log(`  PENDING: overlay_fields calibration needed before linking library template ${LIBRARY_TEMPLATE_ID}`);
-  console.log('  UT 1100EV ✓ (infrastructure created — coordinates pending)');
+  console.log('  UT 1100EV ✓ (infrastructure created - coordinates pending)');
 }
 
 async function main() {
   console.log('=== Official Court Form Seed Script ===');
-  console.log('OH: no statewide eviction form (county-level only) — remains leaseshield_formatted');
-  console.log('ID: implemented separately — run seedIDOverlayFields.ts\n');
+  console.log('OH: no statewide eviction form (county-level only) - remains leaseshield_formatted');
+  console.log('ID: implemented separately - run seedIDOverlayFields.ts\n');
 
   await seedMiDc100c();
   await seedSdVerifiedComplaint();

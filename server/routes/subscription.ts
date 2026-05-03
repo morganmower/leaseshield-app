@@ -614,7 +614,7 @@ export async function registerSubscriptionRoutes(app: Express) {
 
     // Atomically insert the ledger entry AND mark the request paid in a single
     // DB transaction with row-level locking. Either both writes commit or both
-    // roll back — guaranteeing eventual consistency even on partial failures.
+    // roll back - guaranteeing eventual consistency even on partial failures.
     // Build a fee-aware notes line so landlords have a clear audit trail of
     // exactly how much went where: rent vs. convenience fee vs. platform fee.
     const feeNotesParts: string[] = [];
@@ -646,7 +646,7 @@ export async function registerSubscriptionRoutes(app: Express) {
         type: 'payment',
         category: 'Rent',
         description: `Online ACH payment via Stripe (req ${existing.id.slice(0, 8)})`,
-        // Record the rent portion only — fees are separately accounted for on
+        // Record the rent portion only - fees are separately accounted for on
         // the request row and surfaced to the landlord as informational notes.
         amountExpected: existing.amount,
         amountReceived: rentPortionReceived,
@@ -657,7 +657,7 @@ export async function registerSubscriptionRoutes(app: Express) {
     );
 
     if (!result) {
-      console.log(`⏭️  Rent payment ${requestId} already finalized by another worker — skipping.`);
+      console.log(`⏭️  Rent payment ${requestId} already finalized by another worker - skipping.`);
       return;
     }
 
@@ -752,7 +752,7 @@ export async function registerSubscriptionRoutes(app: Express) {
   // Records a ledger entry for a failed/returned ACH payment attempt so the
   // landlord has a complete audit trail (paid + failed events on one timeline).
   // Idempotent: dedupes on referenceNumber = `failed:${paymentIntentId}`.
-  // Does NOT affect balance math — uses amountExpected:0 / amountReceived:0.
+  // Does NOT affect balance math - uses amountExpected:0 / amountReceived:0.
   async function recordFailedRentPaymentAttempt(
     requestId: string,
     paymentIntent: Stripe.PaymentIntent,
@@ -771,7 +771,7 @@ export async function registerSubscriptionRoutes(app: Express) {
         ))
         .limit(1);
       if (existing.length > 0) {
-        console.log(`⏭️  Failed-payment ledger entry already exists for ${paymentIntent.id} — skipping.`);
+        console.log(`⏭️  Failed-payment ledger entry already exists for ${paymentIntent.id} - skipping.`);
         return;
       }
 
@@ -984,7 +984,7 @@ export async function registerSubscriptionRoutes(app: Express) {
           const meta = session.metadata || {};
 
           // Recurring auto-pay setup (mode: 'setup'). The PaymentMethod attaches via
-          // setup_intent.succeeded — this case just records that the session completed
+          // setup_intent.succeeded - this case just records that the session completed
           // so we have a paper trail even if the SI event arrives out of order.
           if (meta.leaseshield_kind === 'rent_auto_pay_setup' && session.mode === 'setup') {
             console.log(`🏦 Auto-pay setup session completed: ${session.id}`);

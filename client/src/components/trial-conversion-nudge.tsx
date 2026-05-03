@@ -148,7 +148,7 @@ export function ActivationReminder() {
   return (
     <div className="mb-4 py-2 px-4 bg-muted/50 border border-border rounded-md">
       <p className="text-sm text-muted-foreground text-center">
-        LeaseShield is inactive —{' '}
+        LeaseShield is inactive -{' '}
         <Link to="/activate" className="text-primary hover:underline font-medium" data-testid="link-activate-reminder">
           activate when you're ready
         </Link>

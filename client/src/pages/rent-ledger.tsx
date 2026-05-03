@@ -54,14 +54,14 @@ export default function RentLedger() {
     queryKey: ["/api/rent-ledger"],
   });
 
-  // Single source of truth for filtering — used by both Summary and Ledger
+  // Single source of truth for filtering - used by both Summary and Ledger
   // History so they always agree. Date filter uses effectiveDate (falls back
   // to createdAt). filterDay is a YYYY-MM-DD string from <input type="date">.
   const matchesFilters = (entry: RentLedgerEntry) => {
     if (filterPropertyId === "unassigned" && entry.propertyId) return false;
     if (filterPropertyId !== "all" && filterPropertyId !== "unassigned" && entry.propertyId !== filterPropertyId) return false;
     // Use UTC to keep "calendar day" filtering stable regardless of the
-    // viewer's timezone — the date input <input type="date"> returns a
+    // viewer's timezone - the date input <input type="date"> returns a
     // YYYY-MM-DD string with no tz, so comparing against UTC components
     // gives consistent results for everyone.
     const d = new Date(entry.effectiveDate || entry.createdAt);
@@ -281,7 +281,7 @@ export default function RentLedger() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Rent Payments — ACH collection, recurring auto-pay, and ledger"
+        title="Rent Payments - ACH collection, recurring auto-pay, and ledger"
         description="Send rent payment requests, set up recurring ACH auto-pay, and keep an audit-ready ledger. Tenants pay rent online by bank transfer."
         canonical="/rent-ledger"
       />
@@ -985,7 +985,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
     queryKey: ["/api/rent-payments/fee-settings"],
   });
 
-  // Local state for the fee-defaults settings panel (amount only — tenant-paid
+  // Local state for the fee-defaults settings panel (amount only - tenant-paid
   // service fee is mandatory and not landlord-toggleable).
   const [feeDefaultDollars, setFeeDefaultDollars] = useState("4.95");
   useEffect(() => {
@@ -1238,7 +1238,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
           <div className="space-y-1">
             <h2 className="text-2xl font-bold">Accept rent online via ACH</h2>
             <p className="text-muted-foreground">
-              Connect your Stripe account so tenants can pay rent by bank transfer (ACH) — no credit card processing fees for you or your tenants.
+              Connect your Stripe account so tenants can pay rent by bank transfer (ACH) - no credit card processing fees for you or your tenants.
               Funds are paid out directly to your bank.
             </p>
           </div>
@@ -1330,7 +1330,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
           <div>
             <h2 className="text-xl font-bold">Payment Fees</h2>
             <p className="text-sm text-muted-foreground">
-              Online rent payments include a small convenience fee that the tenant pays on top of rent —
+              Online rent payments include a small convenience fee that the tenant pays on top of rent -
               this covers bank-transfer (ACH) processing so you receive the full rent amount. A flat
               ${platformFeeDollars} LeaseShield platform fee is also deducted at settlement
               (you don't see it as a separate transaction). Minimum fee ${minFeeDollars}, max ${maxFeeDollars}.
@@ -1439,7 +1439,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
                       <div className="font-medium" data-testid={`text-tenant-${p.id}`}>{p.tenantName}</div>
                       {p.tenantEmail && <div className="text-xs text-muted-foreground">{p.tenantEmail}</div>}
                     </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">{property?.name || "—"}</TableCell>
+                    <TableCell className="text-sm text-muted-foreground">{property?.name || "-"}</TableCell>
                     <TableCell className="font-medium" data-testid={`text-amount-${p.id}`}>
                       <div>${(p.amount / 100).toFixed(2)}</div>
                       {(p.serviceFeeAmount || 0) > 0 && p.serviceFeePayer !== 'none' && (
@@ -1644,7 +1644,7 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
         </DialogContent>
       </Dialog>
 
-      {/* Edit existing payment request — same fields as create dialog,
+      {/* Edit existing payment request - same fields as create dialog,
           pre-filled. Tenant payment link (publicToken) is preserved so the
           tenant doesn't need a new email; if amount or due date changed,
           the server expires any open Stripe session and a fresh one is

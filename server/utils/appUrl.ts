@@ -9,7 +9,7 @@ import type { Request } from "express";
  *   1. APP_ORIGIN env var (preferred, immune to host-header poisoning)
  *   2. REPLIT_DOMAINS env var (first comma-separated entry, https)
  *   3. Request headers (X-Forwarded-Proto/Host, then req.headers.host)
- *      — only available when a Request is passed in (i.e. inside a route
+ *      - only available when a Request is passed in (i.e. inside a route
  *      handler). For background jobs/webhooks pass nothing and rely on
  *      one of the env vars above.
  */
@@ -30,7 +30,7 @@ export function getAppBaseUrl(req?: Request): string {
       req.headers.host;
     if (host) return `${proto}://${host}`;
   }
-  // Final fallback — production hostname so emails/links sent from cron jobs
+  // Final fallback - production hostname so emails/links sent from cron jobs
   // still go somewhere valid if neither env var is configured.
   return "https://leaseshieldapp.com";
 }

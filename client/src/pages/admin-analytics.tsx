@@ -117,7 +117,7 @@ interface UserEngagementRow {
   screeningRequests: number | string;
 }
 
-const ANALYTICS_STALE = 5 * 60 * 1000; // 5 minutes — analytics data is not real-time
+const ANALYTICS_STALE = 5 * 60 * 1000; // 5 minutes - analytics data is not real-time
 
 export default function AdminAnalyticsPage() {
   const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
@@ -617,7 +617,7 @@ export default function AdminAnalyticsPage() {
                               {event.userName || "Anonymous"}
                             </td>
                             <td className="py-3 px-2 text-muted-foreground">
-                              {event.userEmail || "—"}
+                              {event.userEmail || "-"}
                             </td>
                             <td className="py-3 px-2">
                               <Badge variant="secondary">
@@ -632,12 +632,12 @@ export default function AdminAnalyticsPage() {
                                   event.eventData.cardTitle ||
                                   JSON.stringify(event.eventData).slice(0, 50)
                                 ) : String(event.eventData).slice(0, 50)
-                              ) : "—"}
+                              ) : "-"}
                             </td>
                             <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
                               {event.createdAt
                                 ? format(new Date(event.createdAt), "MMM d, yyyy h:mm a")
-                                : "—"}
+                                : "-"}
                             </td>
                           </tr>
                         ))}
@@ -657,7 +657,7 @@ export default function AdminAnalyticsPage() {
         {/* MRR Trend Line Chart */}
         <Card>
           <CardHeader>
-            <CardTitle>MRR Trend — Last 12 Months</CardTitle>
+            <CardTitle>MRR Trend - Last 12 Months</CardTitle>
             <CardDescription>
               Monthly Recurring Revenue (monthly subscribers × $10 + annual × $8.33)
             </CardDescription>
@@ -881,7 +881,7 @@ export default function AdminAnalyticsPage() {
                               <span className="font-medium">
                                 {[u.firstName, u.lastName].filter(Boolean).join(" ") || u.email || "Anonymous"}
                               </span>
-                              <span className="text-xs text-muted-foreground">{u.email || "—"}</span>
+                              <span className="text-xs text-muted-foreground">{u.email || "-"}</span>
                             </div>
                           </td>
                           <td className="py-3 px-2">
@@ -948,7 +948,7 @@ export default function AdminAnalyticsPage() {
                                 : user.firstName || user.lastName || user.email || "Anonymous"}
                             </td>
                             <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
-                              {user.email || "—"}
+                              {user.email || "-"}
                             </td>
                             <td className="py-3 px-2">
                               <Badge variant="secondary">Inactive</Badge>
@@ -1018,7 +1018,7 @@ export default function AdminAnalyticsPage() {
                             </div>
                           </td>
                           <td className="py-3 px-2" data-testid={`text-email-${user.id}`}>
-                            {user.email || "—"}
+                            {user.email || "-"}
                           </td>
                           <td className="py-3 px-2" data-testid={`text-status-${user.id}`}>
                             {(() => {
@@ -1038,14 +1038,14 @@ export default function AdminAnalyticsPage() {
                               ? format(new Date(user.currentPeriodEnd), "MMM d, yyyy")
                               : user.subscriptionEndsAt
                                 ? format(new Date(user.subscriptionEndsAt), "MMM d, yyyy")
-                                : "—"}
+                                : "-"}
                           </td>
                           <td className="py-3 px-2 text-muted-foreground" data-testid={`text-joined-${user.id}`}>
                             {(user as any).subscribedAt 
                               ? format(new Date((user as any).subscribedAt), "MMM d, yyyy")
                               : user.createdAt
                                 ? format(new Date(user.createdAt), "MMM d, yyyy")
-                                : "—"}
+                                : "-"}
                           </td>
                         </tr>
                       ))}

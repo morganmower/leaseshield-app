@@ -147,7 +147,7 @@ const comprehensiveComplianceCards = [
         },
         {
           title: "Fast Court Process",
-          content: "Texas evictions move quickly—often 2-3 weeks from filing to writ of possession if tenant doesn't respond.",
+          content: "Texas evictions move quickly-often 2-3 weeks from filing to writ of possession if tenant doesn't respond.",
         },
       ],
     },
@@ -199,7 +199,7 @@ const comprehensiveComplianceCards = [
         },
         {
           title: "Lead-Based Paint (Pre-1978)",
-          content: "Federal requirement for older properties—must provide EPA pamphlet and disclosure form.",
+          content: "Federal requirement for older properties-must provide EPA pamphlet and disclosure form.",
         },
       ],
     },
@@ -297,7 +297,7 @@ const comprehensiveComplianceCards = [
         },
         {
           title: "Lead-Based Paint Disclosure",
-          content: "Required for pre-1978 properties—provide EPA pamphlet and signed disclosure form.",
+          content: "Required for pre-1978 properties-provide EPA pamphlet and signed disclosure form.",
         },
       ],
     },
@@ -312,7 +312,7 @@ const comprehensiveComplianceCards = [
       sections: [
         {
           title: "14-Day Quick Return",
-          content: "Return full deposit within 14 days with no itemization required—cleanest option for undamaged units.",
+          content: "Return full deposit within 14 days with no itemization required-cleanest option for undamaged units.",
         },
         {
           title: "45-Day Itemized Return",
@@ -343,7 +343,7 @@ const comprehensiveComplianceCards = [
         },
         {
           title: "Proper Written Notice",
-          content: "All notices must be in writing and properly served—verbal notices have no legal standing.",
+          content: "All notices must be in writing and properly served-verbal notices have no legal standing.",
         },
       ],
     },
@@ -528,7 +528,7 @@ const comprehensiveComplianceCards = [
         },
         {
           title: "Rent Control Considerations",
-          content: "Many cities have additional rent control and eviction protections—check local ordinances.",
+          content: "Many cities have additional rent control and eviction protections-check local ordinances.",
         },
       ],
     },
@@ -1015,7 +1015,7 @@ const comprehensiveComplianceCards = [
       sections: [
         {
           title: "No Statewide Rent Control",
-          content: "Illinois preempts local rent control ordinances—no municipal rent caps allowed.",
+          content: "Illinois preempts local rent control ordinances-no municipal rent caps allowed.",
         },
         {
           title: "30-Day Notice Required",
@@ -1152,7 +1152,7 @@ const comprehensiveComplianceCards = [
       sections: [
         {
           title: "No Statewide Rent Control",
-          content: "New Mexico does not have rent control laws—landlords can set rent at market rates.",
+          content: "New Mexico does not have rent control laws-landlords can set rent at market rates.",
         },
         {
           title: "30-Day Notice Required",

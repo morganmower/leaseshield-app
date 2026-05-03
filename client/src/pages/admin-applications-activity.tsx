@@ -233,7 +233,7 @@ export default function AdminApplicationsActivity() {
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Applications Activity</h1>
         <p className="text-muted-foreground">
-          Track all rental applications across all landlords — every stage from link sent to final decision
+          Track all rental applications across all landlords - every stage from link sent to final decision
         </p>
       </div>
 
@@ -273,7 +273,7 @@ export default function AdminApplicationsActivity() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {appStats ? `${appStats.approvalRate}%` : "—"}
+              {appStats ? `${appStats.approvalRate}%` : "-"}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
               {appStats?.totalDecided ? `of ${appStats.totalDecided} decided` : "No decisions yet"}
@@ -303,7 +303,7 @@ export default function AdminApplicationsActivity() {
             </CardHeader>
             <CardContent>
               <p className="text-lg font-semibold">
-                {appStats.avgDays > 0 ? `${appStats.avgDays} days` : "—"}
+                {appStats.avgDays > 0 ? `${appStats.avgDays} days` : "-"}
               </p>
               <p className="text-xs text-muted-foreground">From submission to final decision</p>
             </CardContent>
@@ -386,7 +386,7 @@ export default function AdminApplicationsActivity() {
                       </td>
                       <td className="py-3 px-2">
                         <div className="flex flex-col">
-                          <span>{app.property?.name || "—"}</span>
+                          <span>{app.property?.name || "-"}</span>
                           <span className="text-xs text-muted-foreground">
                             {app.unit?.label}
                             {app.property?.city && `, ${app.property.city}`}
@@ -400,7 +400,7 @@ export default function AdminApplicationsActivity() {
                             <span>
                               {[app.applicant.firstName, app.applicant.lastName]
                                 .filter(Boolean)
-                                .join(" ") || "—"}
+                                .join(" ") || "-"}
                             </span>
                             <span className="text-xs text-muted-foreground">
                               {app.applicant.email || app.applicant.phone || "No contact"}
@@ -445,7 +445,7 @@ export default function AdminApplicationsActivity() {
           <DialogHeader>
             <DialogTitle>Application Details</DialogTitle>
             <DialogDescription>
-              Full lifecycle view — from link sent to final decision
+              Full lifecycle view - from link sent to final decision
             </DialogDescription>
           </DialogHeader>
           {selectedApplication && (
@@ -546,12 +546,12 @@ export default function AdminApplicationsActivity() {
                         </div>
                         <div>
                           <p className="text-xs text-muted-foreground">Unit</p>
-                          <p>{selectedApplication.unit?.label || "—"}</p>
+                          <p>{selectedApplication.unit?.label || "-"}</p>
                         </div>
                       </div>
                       <div>
                         <p className="text-xs text-muted-foreground">Address</p>
-                        <p>{[selectedApplication.property.address, selectedApplication.property.city, selectedApplication.property.state].filter(Boolean).join(", ") || "—"}</p>
+                        <p>{[selectedApplication.property.address, selectedApplication.property.city, selectedApplication.property.state].filter(Boolean).join(", ") || "-"}</p>
                       </div>
                     </div>
                   ) : (
@@ -570,7 +570,7 @@ export default function AdminApplicationsActivity() {
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <p className="text-xs text-muted-foreground">Name</p>
-                            <p className="font-medium">{[selectedApplication.applicant.firstName, selectedApplication.applicant.lastName].filter(Boolean).join(" ") || "—"}</p>
+                            <p className="font-medium">{[selectedApplication.applicant.firstName, selectedApplication.applicant.lastName].filter(Boolean).join(" ") || "-"}</p>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">Status</p>
@@ -582,11 +582,11 @@ export default function AdminApplicationsActivity() {
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">Email</p>
-                            <p>{selectedApplication.applicant.email || "—"}</p>
+                            <p>{selectedApplication.applicant.email || "-"}</p>
                           </div>
                           <div>
                             <p className="text-xs text-muted-foreground">Phone</p>
-                            <p>{selectedApplication.applicant.phone || "—"}</p>
+                            <p>{selectedApplication.applicant.phone || "-"}</p>
                           </div>
                         </div>
                       </div>
@@ -694,7 +694,7 @@ export default function AdminApplicationsActivity() {
                         {selectedApplication.coApplicants.map((co) => (
                           <div key={co.id} className="bg-muted/50 rounded-md p-3 flex justify-between items-center gap-4">
                             <div>
-                              <p className="font-medium">{[co.firstName, co.lastName].filter(Boolean).join(" ") || "—"}</p>
+                              <p className="font-medium">{[co.firstName, co.lastName].filter(Boolean).join(" ") || "-"}</p>
                               <p className="text-sm text-muted-foreground">{co.email || "No email"}</p>
                             </div>
                             {co.isCompleted ? <Badge variant="default">Completed</Badge> : <Badge variant="secondary">Pending</Badge>}
@@ -717,7 +717,7 @@ export default function AdminApplicationsActivity() {
                         {selectedApplication.guarantors.map((g) => (
                           <div key={g.id} className="bg-muted/50 rounded-md p-3 flex justify-between items-center gap-4">
                             <div>
-                              <p className="font-medium">{[g.firstName, g.lastName].filter(Boolean).join(" ") || "—"}</p>
+                              <p className="font-medium">{[g.firstName, g.lastName].filter(Boolean).join(" ") || "-"}</p>
                               <p className="text-sm text-muted-foreground">{g.email || "No email"}</p>
                             </div>
                             {g.isCompleted ? <Badge variant="default">Completed</Badge> : <Badge variant="secondary">Pending</Badge>}

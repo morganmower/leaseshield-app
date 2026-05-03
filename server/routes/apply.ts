@@ -357,7 +357,7 @@ export async function registerApplyRoutes(app: Express) {
       });
 
       // Notify landlord by email when an application is fully submitted (best-effort, non-fatal).
-      // Idempotent — re-submits won't double-send: we check for and log a
+      // Idempotent - re-submits won't double-send: we check for and log a
       // 'landlord_notified' event so retries are safely skipped.
       if (allCompleted) {
         try {

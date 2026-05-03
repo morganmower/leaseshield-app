@@ -55,7 +55,7 @@ export async function fetchWithRetry(
       lastResponse = response;
       if (attempt < maxRetries) {
         console.warn(
-          `[fetchWithRetry] ${response.status} from ${new URL(url).host} — retrying in ${retryDelayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})`
+          `[fetchWithRetry] ${response.status} from ${new URL(url).host} - retrying in ${retryDelayMs / 1000}s (attempt ${attempt + 1}/${maxRetries})`
         );
         await delay(retryDelayMs);
       }
@@ -63,7 +63,7 @@ export async function fetchWithRetry(
       lastError = err;
       if (attempt < maxRetries) {
         console.warn(
-          `[fetchWithRetry] Network error from ${new URL(url).host} — retrying in ${retryDelayMs / 1000}s (attempt ${attempt + 1}/${maxRetries}): ${(err as Error).message}`
+          `[fetchWithRetry] Network error from ${new URL(url).host} - retrying in ${retryDelayMs / 1000}s (attempt ${attempt + 1}/${maxRetries}): ${(err as Error).message}`
         );
         await delay(retryDelayMs);
       }

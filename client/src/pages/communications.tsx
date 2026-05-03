@@ -158,7 +158,7 @@ export default function Communications() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Communication Templates — Landlord-to-tenant messages"
+        title="Communication Templates - Landlord-to-tenant messages"
         description="Pre-written, state-specific landlord communication templates: rent reminders, welcome letters, lease renewals, late payment notices. Customize and download."
         canonical="/communications"
       />

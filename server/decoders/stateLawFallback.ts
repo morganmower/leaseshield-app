@@ -73,7 +73,7 @@ export function shouldTriggerStateLawFallback(
  * This is the ONLY state-law related statement the decoder should make when snippets are missing.
  */
 export const STATE_LAW_FALLBACK_TEXT =
-  "State-specific rules may apply — check your local requirements.";
+  "State-specific rules may apply - check your local requirements.";
 
 /**
  * Extracts the state code from a user's question if explicitly mentioned.

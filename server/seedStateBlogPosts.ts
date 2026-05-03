@@ -121,14 +121,14 @@ function evictionArticle(s: StateData, ctas: StateCtaIds) {
   return {
     title: `How to Evict a Tenant in ${s.name}: Step-by-Step Guide for Landlords`,
     slug: `how-to-evict-a-tenant-in-${s.slug}`,
-    excerpt: `A complete walkthrough of the ${s.name} eviction process — from serving the ${s.payQuitNoticeName} to obtaining a writ of possession.`,
+    excerpt: `A complete walkthrough of the ${s.name} eviction process - from serving the ${s.payQuitNoticeName} to obtaining a writ of possession.`,
     metaTitle: `How to Evict a Tenant in ${s.name} | ${s.payQuitNoticeName} | LeaseShield`,
     metaDescription: `${s.name} eviction guide: serve a ${s.payQuitNoticeName}, file the complaint, attend the hearing, and get a writ. Forms, timelines, and legal pitfalls explained.`,
     stateIds: [s.code],
     tags: ["evictions", "notices", s.slug, "legal-process"],
     featuredImageUrl: IMAGES.evict,
     content: `
-      <p>Evicting a tenant in ${s.name} is one of the most stressful tasks a landlord can face. The process is highly procedural — miss a deadline or use the wrong form, and the court will throw your case out. Use this guide to move through each step the right way.</p>
+      <p>Evicting a tenant in ${s.name} is one of the most stressful tasks a landlord can face. The process is highly procedural - miss a deadline or use the wrong form, and the court will throw your case out. Use this guide to move through each step the right way.</p>
 
       <h2>Step 1: Make sure you have legal cause</h2>
       <p>${s.name} courts grant evictions for specific reasons:</p>
@@ -138,7 +138,7 @@ function evictionArticle(s: StateData, ctas: StateCtaIds) {
         <li>Holdover after the lease term ends</li>
         <li>Owner move-in or substantial remodel (in jurisdictions that allow no-fault)</li>
       </ul>
-      <p>Self-help evictions — changing locks, removing belongings, or shutting off utilities — are illegal and can result in serious damages.</p>
+      <p>Self-help evictions - changing locks, removing belongings, or shutting off utilities - are illegal and can result in serious damages.</p>
 
       <h2>Step 2: Serve the proper notice</h2>
       <p>For non-payment, ${s.name} requires a <strong>${s.payQuitNoticeName}</strong>. The notice must include the exact amount owed, instructions for payment, and the date by which the tenant must comply or surrender possession.</p>
@@ -154,7 +154,7 @@ function evictionArticle(s: StateData, ctas: StateCtaIds) {
       </ul>
 
       <h2>Step 4: Serve the summons and complaint</h2>
-      <p>The court will issue a summons. A constable, sheriff, or licensed process server must deliver the summons and complaint to the tenant — you cannot serve it yourself. Keep the proof of service for your hearing.</p>
+      <p>The court will issue a summons. A constable, sheriff, or licensed process server must deliver the summons and complaint to the tenant - you cannot serve it yourself. Keep the proof of service for your hearing.</p>
 
       <h2>Step 5: Attend the hearing</h2>
       <p>Hearings in ${s.name} are typically scheduled within 10 to 21 days of filing. Bring everything you filed, plus photos and communication records. Be ready to answer questions about notice, lease terms, and any partial payments you accepted.</p>
@@ -191,13 +191,13 @@ function depositArticle(s: StateData, ctas: StateCtaIds) {
     tags: ["security-deposits", "compliance", s.slug, "move-out"],
     featuredImageUrl: IMAGES.deposit,
     content: `
-      <p>Security-deposit disputes are the single most common reason landlords end up in court. ${s.name} has clear rules — and the penalties for getting them wrong can be triple damages plus attorney's fees. Here's what every ${s.name} landlord needs to know.</p>
+      <p>Security-deposit disputes are the single most common reason landlords end up in court. ${s.name} has clear rules - and the penalties for getting them wrong can be triple damages plus attorney's fees. Here's what every ${s.name} landlord needs to know.</p>
 
       <h2>How much can you charge?</h2>
       <p>${s.name} caps security deposits at <strong>${s.depositCap}</strong>. Charging more than the legal maximum can void your right to keep any of it.</p>
 
       <h2>Hold the deposit correctly</h2>
-      <p>Best practice — and required in many jurisdictions — is to keep deposits in a separate account, not commingled with operating funds. Document where the deposit is held and disclose this in the lease.</p>
+      <p>Best practice - and required in many jurisdictions - is to keep deposits in a separate account, not commingled with operating funds. Document where the deposit is held and disclose this in the lease.</p>
 
       <h2>Return deadline</h2>
       <p>You must return the deposit (and any itemized accounting of deductions) within <strong>${s.depositReturnDays}</strong>. The clock starts when the tenant surrenders possession and provides a forwarding address.</p>
@@ -250,22 +250,22 @@ function leaseArticle(s: StateData, ctas: StateCtaIds) {
     tags: ["leases", "compliance", s.slug, "disclosures"],
     featuredImageUrl: IMAGES.lease,
     content: `
-      <p>A great ${s.name} lease does two things: it sets expectations clearly with the tenant, and it gives you the legal footing to enforce those expectations in court. A weak lease — or a generic out-of-state template — can leave you unable to collect unpaid rent or evict a problem tenant.</p>
+      <p>A great ${s.name} lease does two things: it sets expectations clearly with the tenant, and it gives you the legal footing to enforce those expectations in court. A weak lease - or a generic out-of-state template - can leave you unable to collect unpaid rent or evict a problem tenant.</p>
 
       <h2>Required clauses for every ${s.name} lease</h2>
       <ul>
-        <li><strong>Parties and property</strong> — full legal names of all adult occupants and the complete unit address</li>
-        <li><strong>Term</strong> — start and end date, or month-to-month designation</li>
-        <li><strong>Rent</strong> — amount, due date, accepted payment methods, and where to pay</li>
-        <li><strong>Late fees</strong> — amount and grace period (must be reasonable under ${s.name} law)</li>
-        <li><strong>Security deposit</strong> — amount (capped at ${s.depositCap}) and where it is held</li>
-        <li><strong>Maintenance and repairs</strong> — who is responsible for what</li>
-        <li><strong>Entry rights</strong> — at least 24 hours' written notice for non-emergency entry</li>
-        <li><strong>Termination</strong> — notice periods for ending the tenancy</li>
+        <li><strong>Parties and property</strong> - full legal names of all adult occupants and the complete unit address</li>
+        <li><strong>Term</strong> - start and end date, or month-to-month designation</li>
+        <li><strong>Rent</strong> - amount, due date, accepted payment methods, and where to pay</li>
+        <li><strong>Late fees</strong> - amount and grace period (must be reasonable under ${s.name} law)</li>
+        <li><strong>Security deposit</strong> - amount (capped at ${s.depositCap}) and where it is held</li>
+        <li><strong>Maintenance and repairs</strong> - who is responsible for what</li>
+        <li><strong>Entry rights</strong> - at least 24 hours' written notice for non-emergency entry</li>
+        <li><strong>Termination</strong> - notice periods for ending the tenancy</li>
       </ul>
 
       <h2>Mandatory disclosures</h2>
-      <p>Federal law requires a lead-paint disclosure for any property built before 1978. ${s.name} adds its own disclosures depending on the property — common ones include:</p>
+      <p>Federal law requires a lead-paint disclosure for any property built before 1978. ${s.name} adds its own disclosures depending on the property - common ones include:</p>
       <ul>
         <li>Owner / agent contact information for service of legal notices</li>
         <li>Existing damage at move-in</li>
@@ -286,7 +286,7 @@ function leaseArticle(s: StateData, ctas: StateCtaIds) {
       ${cta(ctas.leaseId, `${s.name} Residential Lease Agreement`)}
 
       <h2>Sign, date, and store</h2>
-      <p>Every adult occupant should sign. Provide each tenant with a fully-executed copy and keep your originals (or signed PDFs) in your tenant file. Re-sign — don't just verbally renew — at the end of every term.</p>
+      <p>Every adult occupant should sign. Provide each tenant with a fully-executed copy and keep your originals (or signed PDFs) in your tenant file. Re-sign - don't just verbally renew - at the end of every term.</p>
 
       ${subscribeCta}
     `,
@@ -298,14 +298,14 @@ function screeningArticle(s: StateData, ctas: StateCtaIds) {
   return {
     title: `Tenant Screening in ${s.name}: Fair Housing & Legal Compliance Guide`,
     slug: `tenant-screening-${s.slug}`,
-    excerpt: `Run a tight, defensible screening process in ${s.name} — from application and credit check to adverse-action notices.`,
+    excerpt: `Run a tight, defensible screening process in ${s.name} - from application and credit check to adverse-action notices.`,
     metaTitle: `Tenant Screening in ${s.name} | Fair Housing Compliance | LeaseShield`,
     metaDescription: `Screen ${s.name} rental applicants the right way. Application, credit and background checks, FCRA adverse-action notices, and Fair Housing rules explained.`,
     stateIds: [s.code],
     tags: ["tenant-screening", "fair-housing", s.slug, "compliance"],
     featuredImageUrl: IMAGES.screen,
     content: `
-      <p>Tenant screening is your single best risk-management tool — and your single biggest Fair Housing liability if you do it wrong. This guide walks through a compliant screening process for ${s.name} landlords.</p>
+      <p>Tenant screening is your single best risk-management tool - and your single biggest Fair Housing liability if you do it wrong. This guide walks through a compliant screening process for ${s.name} landlords.</p>
 
       <h2>Start with written screening criteria</h2>
       <p>Before you publish a listing, write down the standards every applicant must meet:</p>
@@ -334,7 +334,7 @@ function screeningArticle(s: StateData, ctas: StateCtaIds) {
         <li>Familial status (children under 18 in the household, pregnant tenants)</li>
         <li>Disability</li>
       </ul>
-      <p>${s.name} and many cities add additional protected classes — check your local ordinances before publishing screening criteria.</p>
+      <p>${s.name} and many cities add additional protected classes - check your local ordinances before publishing screening criteria.</p>
 
       <h2>Service and emotional support animals</h2>
       <p>Service and emotional support animals are not pets. You cannot charge pet rent, pet deposits, or apply a no-pet policy to them. You may request appropriate documentation when the disability or need is not obvious.</p>
@@ -356,7 +356,7 @@ export async function seedStateBlogPosts() {
 
   // 1. Resolve CTA template IDs dynamically from the templates table by
   // (state_id, template_type). This avoids hardcoding environment-specific
-  // UUIDs — any deployment that has run the standard templates seed will
+  // UUIDs - any deployment that has run the standard templates seed will
   // resolve the right link automatically.
   const stateCodes = STATES.map((s) => s.code);
   const allTemplates = await db
@@ -507,7 +507,7 @@ export async function seedStateBlogPosts() {
   return { inserted, alreadyExisted, errored, publishedCount };
 }
 
-// CLI entrypoint — only run when this file is executed directly, so that
+// CLI entrypoint - only run when this file is executed directly, so that
 // `seedBlog.ts` (and other callers) can import and chain `seedStateBlogPosts()`
 // without triggering a duplicate run / process.exit.
 const isCli =

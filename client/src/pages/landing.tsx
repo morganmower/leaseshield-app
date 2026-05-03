@@ -317,7 +317,7 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="LeaseShield — Simple Rental Management System for Independent Landlords"
+        title="LeaseShield - Simple Rental Management System for Independent Landlords"
         description="The simple rental management system for independent landlords. Online applications, tenant screening, AI-powered report explanations, state-specific leases and notices, and online rent collection with ACH auto-pay. $10/month, 30-day money-back guarantee."
         canonical="/"
       />
@@ -453,7 +453,7 @@ export default function Landing() {
               {landingCopy.hero.reassurance}
             </motion.p>
 
-            {/* State Picker Chip — answers "is my state covered?" in one click */}
+            {/* State Picker Chip - answers "is my state covered?" in one click */}
             <motion.div variants={fadeInUp} className="mb-10">
               <StatePickerChip />
             </motion.div>
@@ -590,7 +590,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Trust Strip — honest stats only */}
+      {/* Trust Strip - honest stats only */}
       <section
         className="border-y bg-muted/30 py-6 md:py-8"
         data-testid="section-trust-strip"
@@ -769,12 +769,12 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center text-xs md:text-sm text-muted-foreground mt-8"
           >
-            Use one piece, use all five — but the system pays off when rent shows up on time, every month.
+            Use one piece, use all five - but the system pays off when rent shows up on time, every month.
           </motion.p>
         </div>
       </section>
 
-      {/* Why rent collection is the engine — emotional benefits */}
+      {/* Why rent collection is the engine - emotional benefits */}
       <section className="py-16 md:py-20 bg-muted/30 border-y" data-testid="section-rent-benefits">
         <div className="max-w-6xl mx-auto px-6">
           <motion.div
@@ -789,7 +789,7 @@ export default function Landing() {
               The reason the system pays you back
             </h2>
             <p className="text-base md:text-lg text-muted-foreground">
-              Late payments, court disputes, and renewal conversations all turn on the same thing — a clean record of what happened, when. Rent collection is what builds it.
+              Late payments, court disputes, and renewal conversations all turn on the same thing - a clean record of what happened, when. Rent collection is what builds it.
             </p>
           </motion.div>
           <motion.div
@@ -806,7 +806,7 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Reduces late payments</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Auto-pay turns rent from a monthly negotiation into a non-event. Tenants enroll once; rent shows up the same day every month — without a text message from you.
+                  Auto-pay turns rent from a monthly negotiation into a non-event. Tenants enroll once; rent shows up the same day every month - without a text message from you.
                 </p>
               </Card>
             </motion.div>
@@ -817,7 +817,7 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Creates the payment history that protects you</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Every transaction is timestamped and tied to a lease. If a dispute lands in court — or you&rsquo;re renewing, raising rent, or selling — you don&rsquo;t reconstruct the year. You export it.
+                  Every transaction is timestamped and tied to a lease. If a dispute lands in court - or you&rsquo;re renewing, raising rent, or selling - you don&rsquo;t reconstruct the year. You export it.
                 </p>
               </Card>
             </motion.div>
@@ -828,7 +828,7 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Simplifies disputes</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  When a payment misses, the ledger shows exactly what&rsquo;s owed and when. No guessing, no he-said-she-said — just the record. The conversation gets shorter, and the relationship survives it.
+                  When a payment misses, the ledger shows exactly what&rsquo;s owed and when. No guessing, no he-said-she-said - just the record. The conversation gets shorter, and the relationship survives it.
                 </p>
               </Card>
             </motion.div>
@@ -1677,7 +1677,7 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Online Rent Collection — feature spotlight */}
+      {/* Online Rent Collection - feature spotlight */}
       <section className="py-16 sm:py-20 bg-gradient-to-br from-brand-500/5 via-background to-brand-500/5">
         <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
@@ -1711,7 +1711,7 @@ export default function Landing() {
                 </div>
                 <h3 className="font-display text-lg font-semibold mb-2">One-Click Payment Links</h3>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Email your tenant a secure link. They pay directly from their bank — no app to download, no card fees.
+                  Email your tenant a secure link. They pay directly from their bank - no app to download, no card fees.
                 </p>
                 <ul className="text-sm space-y-1.5 text-muted-foreground">
                   <li>• ACH bank-to-bank transfer</li>
@@ -1731,7 +1731,7 @@ export default function Landing() {
                   <Badge variant="default" className="text-xs">New</Badge>
                 </div>
                 <p className="text-sm text-muted-foreground mb-3">
-                  Tenant authorizes once with a NACHA-compliant ACH mandate. Rent is debited automatically every month — no chasing, no reminders.
+                  Tenant authorizes once with a NACHA-compliant ACH mandate. Rent is debited automatically every month - no chasing, no reminders.
                 </p>
                 <ul className="text-sm space-y-1.5 text-muted-foreground">
                   <li>• Monthly bank-to-bank debits</li>

@@ -96,7 +96,7 @@ export default function LegalUpdatesPage() {
     return dateB - dateA;
   });
 
-  // Tribal Housing updates — category='tribal' plus tribal-named section8 entries
+  // Tribal Housing updates - category='tribal' plus tribal-named section8 entries
   const tribalUpdates = (legalUpdates || []).filter(isTribalUpdate);
 
   // Section 8 / HUD specific updates (exclude items already in tribal tab)
@@ -246,7 +246,7 @@ export default function LegalUpdatesPage() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Legal Updates — New Landlord-Tenant Laws & Case Law"
+        title="Legal Updates - New Landlord-Tenant Laws & Case Law"
         description="Track new statutes, regulations, and court decisions affecting landlords across 16 US states. Plain-English summaries with source citations."
         canonical="/legal-updates"
       />

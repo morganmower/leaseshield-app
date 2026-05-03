@@ -41,7 +41,7 @@ function setLinkRel(rel: string, href: string) {
 }
 
 /**
- * SEO component — updates document head per page.
+ * SEO component - updates document head per page.
  * Always writes every meta tag (using sensible defaults when props are absent)
  * so optional fields like description/og:image never carry over stale values
  * from a previously-rendered page.

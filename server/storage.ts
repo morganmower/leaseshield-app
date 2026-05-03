@@ -403,7 +403,7 @@ export interface IStorage {
    * Atomically apply a late fee: insert a Late Fee charge into rent_ledger,
    * update the rent payment request (status, lateFeeAppliedAt,
    * lateFeeLedgerEntryId, increased amount, cleared stripeCheckoutSessionId)
-   * — all in one DB transaction with a SELECT FOR UPDATE row lock.
+   * - all in one DB transaction with a SELECT FOR UPDATE row lock.
    * Idempotent: if the request is already marked with lateFeeAppliedAt, the
    * call is a no-op and returns null. Recovery-safe: if any step fails, no
    * partial state is committed.
@@ -2023,7 +2023,7 @@ export class DatabaseStorage implements IStorage {
         .where(eq(rentPaymentRequests.id, requestId))
         .for('update');
       if (!locked) return null;
-      // Truly finalized — ledger linkage already present. Skip safely.
+      // Truly finalized - ledger linkage already present. Skip safely.
       if (locked.ledgerEntryId) return null;
 
       // Ensure month is set, mirroring createRentLedgerEntry's logic.
@@ -2092,7 +2092,7 @@ export class DatabaseStorage implements IStorage {
         .for('update');
       if (!locked) return null;
       // Idempotency guard: if the late fee has already been applied (or the
-      // request was paid/canceled in the meantime), skip — no duplicate
+      // request was paid/canceled in the meantime), skip - no duplicate
       // ledger charge will be created.
       if (locked.lateFeeAppliedAt || locked.lateFeeLedgerEntryId) return null;
       if (locked.status === 'paid' || locked.status === 'canceled' || locked.status === 'processing') return null;
@@ -2231,7 +2231,7 @@ export class DatabaseStorage implements IStorage {
     return result.length > 0;
   }
 
-  // Find active subs whose next scheduled date is today or earlier — to be debited
+  // Find active subs whose next scheduled date is today or earlier - to be debited
   // by the cron. Excludes subs that have already had a debit row created for the
   // current scheduled date (the cron checks per-row before creating PIs).
   async getRentSubscriptionsDueForDebit(): Promise<RentSubscription[]> {
@@ -2605,7 +2605,7 @@ export class DatabaseStorage implements IStorage {
   async getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined> {
     return handleDbOperation(async () => {
       // Match by public token first (the original short random token), then by
-      // landlord-chosen vanity slug (case-insensitive — slugs are stored lowercase).
+      // landlord-chosen vanity slug (case-insensitive - slugs are stored lowercase).
       const normalized = token.toLowerCase();
       const [byToken] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.publicToken, token));
       if (byToken) return byToken;
