@@ -28,7 +28,7 @@ export const useDashboardTour = (shouldShow: boolean) => {
       tour.addStep({
         id: 'welcome',
         title: 'Welcome to LeaseShield App',
-        text: 'Let\'s take a quick tour of your landlord protection toolkit (60 seconds)',
+        text: 'Let\'s take a quick tour of your rental management system (60 seconds)',
         buttons: [
           {
             action: tour.next,
@@ -70,10 +70,10 @@ export const useDashboardTour = (shouldShow: boolean) => {
         },
       });
 
-      // Step 3: Complete Toolkit
+      // Step 3: Complete System
       tour.addStep({
         id: 'complete-toolkit',
-        title: '🛠️ Your Complete Toolkit',
+        title: '🛠️ Your Complete System',
         text: 'Everything organized for you: Document Assembly Wizard, Legislative Monitoring, Property Management, and more',
         buttons: [
           {
@@ -93,10 +93,10 @@ export const useDashboardTour = (shouldShow: boolean) => {
         },
       });
 
-      // Step 4: Quick Access Toolkits
+      // Step 4: Quick Access Tools
       tour.addStep({
         id: 'quick-access',
-        title: '⚡ Quick Access Toolkits',
+        title: '⚡ Quick Access Tools',
         text: 'Fast shortcuts to the three most-used features: Leasing, Screening, and Compliance templates',
         buttons: [
           {

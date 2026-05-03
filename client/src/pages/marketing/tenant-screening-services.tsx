@@ -89,6 +89,23 @@ export default function TenantScreeningServices() {
         </div>
       </section>
 
+      <section className="py-16 md:py-20 border-t bg-muted/30">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
+            <p className="text-base md:text-lg text-muted-foreground">What landlords want to know before running their first screening through LeaseShield.</p>
+          </div>
+          <div className="space-y-4">
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">How long does a tenant background check take?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Credit and national criminal results typically come back in minutes. County-level criminal and eviction searches can take a few hours up to a business day depending on the courts involved. You&rsquo;ll see the report inside LeaseShield as soon as it&rsquo;s ready.</p></Card>
+            <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Who pays for the screening — me or the applicant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">You choose. Most landlords pass the screening fee to the applicant as part of the application; some absorb it as a cost of finding good tenants. LeaseShield supports either flow.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What&rsquo;s included in a full tenant screening?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Credit report and score, national and county criminal records, eviction history, sex offender registry, and SSN/identity verification. Applicants authorize the pull through a secure consent flow before any record is requested.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Why do county-level checks matter if there&rsquo;s a national database?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">National criminal databases are aggregated and incomplete — many counties don&rsquo;t feed in. Pulling the actual courts where the applicant has lived in the last 7 years is the only way to be confident a report is real, not just clean by omission.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Do I need an application before I can run a screening?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">For FCRA compliance you need the applicant&rsquo;s written consent to pull their credit and background. The cleanest way is to use the LeaseShield application — consent is captured automatically and the data flows into screening without re-keying.</p></Card>
+            <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">If I deny based on the report, do I have to send anything?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes — FCRA requires an adverse action notice to the applicant explaining the basis and naming the reporting agency. LeaseShield generates a compliant adverse action letter directly from the screening decision.</p></Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 md:py-24 border-t">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" data-testid="text-final-cta-title">Run a screening you can actually trust.</h2>

@@ -15,7 +15,7 @@ const routeMap: Record<string, RouteContext> = {
   "/my-documents": { title: "My Documents" },
   "/properties": { title: "Properties" },
   "/compliance": { title: "Compliance", showState: true },
-  "/screening": { title: "Screening Toolkit" },
+  "/screening": { title: "Tenant Screening" },
   "/tenant-issues": { title: "Tenant Issues", showState: true },
   "/billing": { title: "Billing & Subscription" },
   "/settings": { title: "Settings" },

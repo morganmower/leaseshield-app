@@ -126,6 +126,23 @@ export default function ScreeningReportDecoder() {
         </div>
       </section>
 
+      <section className="py-16 md:py-20 border-t">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
+            <p className="text-base md:text-lg text-muted-foreground">The questions landlords ask before — and right after — running their first decode.</p>
+          </div>
+          <div className="space-y-4">
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What does &ldquo;charge-off&rdquo; or &ldquo;collection&rdquo; actually mean on a credit report?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">A charge-off is a debt the original creditor has written off as a loss after roughly 180 days unpaid — it doesn&rsquo;t mean the debt is gone. A collection is that debt sold or assigned to a collection agency. The decoder explains the age, balance, and what to weigh, without telling you to deny.</p></Card>
+            <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">How do I read an eviction record on a screening report?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Eviction records range from a filing (the case was opened) to a dismissal (resolved without a judgment) to a money or possession judgment against the tenant. Each tells you something very different. The decoder distinguishes them and flags ambiguous entries that warrant a follow-up question.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Does the decoder tell me whether to approve or deny an applicant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No — and intentionally so. Approve/deny is your call, made against your written tenant-selection criteria and applicable Fair Housing law. The decoder explains what each finding means, surfaces follow-up questions, and reminds you of the factors that protect you when you decide.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What screening providers does the decoder work with?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">It works on the report text from any major US screening provider — TransUnion SmartMove, RentPrep, MyRental, Western Verify, and others. You paste the findings (or list them one per line); the decoder doesn&rsquo;t need a specific file format.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is the decoder a substitute for legal advice?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. The decoder is educational — it explains common findings and reminds you of FCRA and Fair Housing factors. For specific legal questions about a tenant decision, consult a licensed attorney in your state.</p></Card>
+            <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is my applicant&rsquo;s data stored?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">The decoder processes the text you paste to generate explanations. We don&rsquo;t resell screening data, and you can clear a decode session at any time. For long-term applicant records, store them on the application itself inside LeaseShield.</p></Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 md:py-24 border-t">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" data-testid="text-final-cta-title">Decode your next screening report in under a minute.</h2>

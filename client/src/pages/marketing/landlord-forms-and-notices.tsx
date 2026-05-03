@@ -111,6 +111,23 @@ export default function LandlordFormsAndNotices() {
         </div>
       </section>
 
+      <section className="py-16 md:py-20 border-t">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
+            <p className="text-base md:text-lg text-muted-foreground">What landlords ask before they trust a template with a real lease or eviction.</p>
+          </div>
+          <div className="space-y-4">
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Are these lease and notice templates actually state-compliant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Each template is built around the actual statutory requirements of the state — required disclosures, notice periods, service rules, and lease clauses. Templates are versioned and admin-reviewed before publishing, so you&rsquo;re always working from the current version. As always, a licensed attorney in your state should review final documents.</p></Card>
+            <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can I edit a template after generating it?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. Lease and notice templates can be exported as DOCX so you can adjust language, add custom clauses, or insert addenda. Court forms that require an exact format (see below) are exported as PDF to preserve the official layout.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="function-display text-base md:text-lg font-semibold mb-2">Do you support official court eviction forms?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. For evictions and disputes where courts require their exact form, LeaseShield overlays your data onto the real official PDF. Routing is deterministic — the system uses the right form based on jurisdiction and notice type, not a guess.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is this a substitute for an attorney?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. Templates are a strong starting point and reflect what the law requires, but every situation is different. For evictions, fair housing complaints, or any contested matter, retain a licensed attorney in your state.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What states are covered?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">16 states today: Utah, Texas, North Dakota, South Dakota, North Carolina, Ohio, Michigan, Idaho, Wyoming, California, Virginia, Nevada, Arizona, Florida, Illinois, and New Mexico. Each gets its own state-specific lease, notices, and disclosures.</p></Card>
+            <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can I save filled-in forms for re-use across properties?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. Forms generated against a property carry over the property and unit data, so re-issuing a similar notice (rent increase, late notice, lease renewal) is a few clicks instead of starting from scratch.</p></Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 md:py-24 border-t">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" data-testid="text-final-cta-title">Use the right form. Avoid the rework.</h2>

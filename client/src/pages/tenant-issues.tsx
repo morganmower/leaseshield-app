@@ -293,7 +293,7 @@ export default function TenantIssues() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Tenant Issue Toolkit — Step-by-step landlord workflows"
+        title="Tenant Issue Workflows — Step-by-step landlord guidance"
         description="Step-by-step workflows for late rent, lease violations, ESAs, rent increases, property damage, and move-outs. Includes downloadable templates."
         canonical="/tenant-issues"
       />
@@ -308,7 +308,7 @@ export default function TenantIssues() {
               </div>
               <div>
                 <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
-                  Tenant Issue Toolkit
+                  Tenant Issue Workflows
                 </h1>
                 <p className="text-sm sm:text-base text-muted-foreground">
                   Step-by-step workflows for handling common landlord challenges.

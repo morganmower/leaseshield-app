@@ -91,6 +91,23 @@ export default function RentalApplicationSoftware() {
         </div>
       </section>
 
+      <section className="py-16 md:py-20 border-t bg-muted/30">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
+            <p className="text-base md:text-lg text-muted-foreground">How LeaseShield handles applications, fees, and what tenants see on the other side.</p>
+          </div>
+          <div className="space-y-4">
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is there a per-application fee from LeaseShield?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. Applications are unlimited at the $10/month subscription. The only per-application charge is the screening fee, and that only applies if you choose to run a paid background check.</p></Card>
+            <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can applicants pay an application fee through LeaseShield?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes — the screening fee can be passed to the applicant at the time of application. They pay once, securely, and the fee covers the report you receive inside LeaseShield.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Do applicants need to create an account?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. Applicants fill out the application from the link or QR code you share — no account, no password. They can come back with a token-based link if you ask for an extra document.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can I require specific documents like pay stubs or photo ID?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. The application supports document upload for pay stubs, photo ID, references, and any custom file you ask for. If something&rsquo;s missing after submission, send a token-based re-upload link from inside LeaseShield.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What happens after an application is submitted?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">You get an email notification with a direct link. From the application you can run screening, decode the report, and — if you decide to deny — generate the adverse action letter, all in the same workflow.</p></Card>
+            <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Is the application form different per state?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">The core application is consistent across the 16 supported states. State-specific disclosures and requirements show up at the lease and notice stage, where the law actually differs.</p></Card>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 md:py-24 border-t">
         <div className="container max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="font-display text-3xl md:text-4xl font-bold mb-4" data-testid="text-final-cta-title">Take applications the modern way.</h2>

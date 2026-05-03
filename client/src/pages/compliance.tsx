@@ -152,7 +152,7 @@ export default function Compliance() {
   return (
     <div className="flex-1 overflow-auto">
       <SEO
-        title="Compliance Toolkit — State-Specific Landlord Requirements"
+        title="Compliance Center — State-Specific Landlord Requirements"
         description="State-by-state compliance guidance for security deposits, notices, lease requirements, and habitability across 16 US states."
         canonical="/compliance"
       />
@@ -166,7 +166,7 @@ export default function Compliance() {
               </div>
               <div>
                 <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
-                  Compliance Toolkit
+                  Compliance Center
                 </h1>
                 <p className="text-sm sm:text-base text-muted-foreground">
                   State-specific landlord requirements, updated as laws change.

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { Receipt, Banknote, Repeat, CheckCircle2, ArrowRight, Sparkles, FileText, Search, Scale } from "lucide-react";
+import { Receipt, Banknote, Repeat, CheckCircle2, ArrowRight, Sparkles, FileText, Search, Scale, ShieldCheck, FileClock, MessageCircleHeart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -56,6 +56,32 @@ export default function RentCollectionSoftware() {
       </section>
 
       <section className="py-16 md:py-20 border-t bg-muted/30">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-why-matters">Why this is the part that pays you back</h2>
+            <p className="text-base md:text-lg text-muted-foreground">Most landlord software treats rent collection as a feature. For an independent landlord, it&rsquo;s the entire business model.</p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="p-6" data-testid="card-benefit-late-payments">
+              <div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><ShieldCheck className="h-6 w-6 text-primary" /></div>
+              <h3 className="font-display text-lg font-semibold mb-2">Stop chasing late payments</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">Auto-pay turns rent collection from a monthly negotiation into a non-event. Tenants enroll once; rent shows up the same day every month, without a text message from you.</p>
+            </Card>
+            <Card className="p-6" data-testid="card-benefit-payment-history">
+              <div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><FileClock className="h-6 w-6 text-primary" /></div>
+              <h3 className="font-display text-lg font-semibold mb-2">Build the payment history that protects you</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">Every transaction is timestamped and tied to a lease. If a dispute lands in court — or you&rsquo;re renewing, raising rent, or selling — you don&rsquo;t reconstruct the year. You export it.</p>
+            </Card>
+            <Card className="p-6" data-testid="card-benefit-disputes">
+              <div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><MessageCircleHeart className="h-6 w-6 text-primary" /></div>
+              <h3 className="font-display text-lg font-semibold mb-2">Simplify the awkward conversations</h3>
+              <p className="text-sm text-muted-foreground leading-relaxed">When a payment misses, the ledger shows exactly what&rsquo;s owed and when. No guessing, no he-said-she-said — just the record. The conversation gets shorter, and the relationship survives it.</p>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-20 border-t">
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <Card className="p-8 md:p-10 border-brand-500/30">
             <div className="flex items-start gap-4">
@@ -83,6 +109,23 @@ export default function RentCollectionSoftware() {
             <Link href="/landlord-forms-and-notices" data-testid="link-forms"><Card className="p-6 h-full hover-elevate cursor-pointer"><div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><FileText className="h-6 w-6 text-primary" /></div><h3 className="font-display text-lg font-semibold mb-2 flex items-center gap-2">Forms &amp; Notices <ArrowRight className="h-4 w-4" /></h3><p className="text-sm text-muted-foreground leading-relaxed">Late notices and pay-or-quit forms when rent collection breaks down.</p></Card></Link>
             <Link href="/rental-management-system" data-testid="link-system"><Card className="p-6 h-full hover-elevate cursor-pointer"><div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><Sparkles className="h-6 w-6 text-primary" /></div><h3 className="font-display text-lg font-semibold mb-2 flex items-center gap-2">Full System <ArrowRight className="h-4 w-4" /></h3><p className="text-sm text-muted-foreground leading-relaxed">Application → Screening → Lease → Rent Collection in one workflow.</p></Card></Link>
             <Link href="/tenant-screening-services" data-testid="link-screening"><Card className="p-6 h-full hover-elevate cursor-pointer"><div className="p-3 bg-primary/10 rounded-md w-fit mb-4"><Search className="h-6 w-6 text-primary" /></div><h3 className="font-display text-lg font-semibold mb-2 flex items-center gap-2">Tenant Screening <ArrowRight className="h-4 w-4" /></h3><p className="text-sm text-muted-foreground leading-relaxed">Pick tenants who actually pay before they sign.</p></Card></Link>
+          </div>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-20 border-t bg-muted/30">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-faq">Frequently asked</h2>
+            <p className="text-base md:text-lg text-muted-foreground">Common questions about ACH timing, fees, and what tenants see when rent comes due.</p>
+          </div>
+          <div className="space-y-4">
+            <Card className="p-6" data-testid="card-faq-0"><h3 className="font-display text-base md:text-lg font-semibold mb-2">How long does an ACH rent payment take to clear?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Standard ACH typically settles in 2&ndash;3 business days from the day the tenant authorizes the payment (or the day auto-pay runs). The ledger inside LeaseShield reflects the status — initiated, settled, or returned — at every step.</p></Card>
+            <Card className="p-6" data-testid="card-faq-1"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Who pays the ACH service fee — me or the tenant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">The tenant pays a flat service fee on each ACH payment. You don&rsquo;t lose a percentage of rent the way you would with credit-card processing, and the fee is shown to the tenant before they confirm.</p></Card>
+            <Card className="p-6" data-testid="card-faq-2"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can I set up automatic late fees?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. Late fee amount, grace period, and trigger date come from the lease itself, not a generic default. When rent is past due, the late fee posts to the ledger automatically — no manual tracking.</p></Card>
+            <Card className="p-6" data-testid="card-faq-3"><h3 className="font-display text-base md:text-lg font-semibold mb-2">What happens if a tenant&rsquo;s ACH payment bounces?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">A returned payment shows up on the ledger as failed, with the reason from the bank (insufficient funds, account closed, etc.). You can re-request payment, send a late notice from the Forms library, or both.</p></Card>
+            <Card className="p-6" data-testid="card-faq-4"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Do tenants need to create an account?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">No. Tenants pay through token-based links — they enter their bank info once, optionally enroll in auto-pay, and never need a password. For one-off payments they don&rsquo;t even need to enroll.</p></Card>
+            <Card className="p-6" data-testid="card-faq-5"><h3 className="font-display text-base md:text-lg font-semibold mb-2">Can I export rent history for taxes or my accountant?</h3><p className="text-sm md:text-base text-muted-foreground leading-relaxed">Yes. The Export tab gives you a clean per-property and per-tenant ledger you can hand to an accountant or use directly on Schedule E. No screenshots of your inbox.</p></Card>
           </div>
         </div>
       </section>

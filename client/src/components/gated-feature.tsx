@@ -113,7 +113,7 @@ export function TrialProgressBanner() {
   const unlockedFeatures = [
     { day: 1, name: 'Basic Templates & Leases' },
     { day: 3, name: 'AI Credit Decoder' },
-    { day: 5, name: 'Full Toolkit & Comms' },
+    { day: 5, name: 'Full System & Comms' },
   ];
 
   return (
