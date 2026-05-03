@@ -1,7 +1,7 @@
-# LeaseShield App - SaaS Platform for Landlords
+# LeaseShield App - Simple Rental Management System for Independent Landlords
 
 ## Overview
-LeaseShield App is a subscription-based SaaS platform for small and midsize landlords, supporting 16 US states. It provides state-specific legal templates, compliance guidance, and tenant screening resources to protect landlord investments and ensure legal compliance. The project aims to be the go-to solution for landlords navigating legal complexities, offering clear, actionable advice and tools.
+LeaseShield is a subscription-based rental management system for small and midsize independent landlords across 16 US states. It covers the full landlord workflow — online applications, tenant screening, AI-powered plain-English report explanations (the "decoder"), state-specific lease and notice templates with official court forms, and online rent collection with ACH auto-pay. Positioned as a lighter, simpler alternative to enterprise PM software (AppFolio, Buildium) while offering more depth than free listing tools (Zillow, Rentler). The screening report decoder is the primary acquisition wedge; rent collection is the retention engine.
 
 ## User Preferences
 - No free trial language: Users are either "Active" (subscribed) or "Inactive" (not subscribed)

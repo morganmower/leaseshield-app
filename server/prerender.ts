@@ -31,7 +31,7 @@ const PRICING_FOOTER = `
 
 const PAGES: Record<string, PrerenderEntry> = {
   "/": {
-    title: "LeaseShield App – Rental Management System for Independent Landlords",
+    title: "LeaseShield – Simple Rental Management System for Independent Landlords",
     description:
       "Simple rental management for small landlords across 16 states. Application, screening, lease forms, rent collection, and compliance for $10/month.",
     bodyHtml: `

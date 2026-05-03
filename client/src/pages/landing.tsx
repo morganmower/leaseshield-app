@@ -314,8 +314,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="LeaseShield — Lease Templates, Online Rent Collection & Compliance for Landlords"
-        description="State-specific lease templates, official court forms, online rent collection (ACH + recurring auto-pay), compliance updates, and AI-powered screening help for landlords in 16 US states. $10/month, cancel anytime."
+        title="LeaseShield — Simple Rental Management System for Independent Landlords"
+        description="The simple rental management system for independent landlords. Online applications, tenant screening, AI-powered report explanations, state-specific leases and notices, and online rent collection with ACH auto-pay. $10/month, 30-day money-back guarantee."
         canonical="/"
       />
       {/* Header */}
@@ -646,6 +646,97 @@ export default function Landing() {
               {landingCopy.whenUsed.anchorLine}
             </motion.p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* SYSTEM FLOW: Application -> Screening -> Decoder -> Lease -> Rent */}
+      <section
+        id="system-flow"
+        className="py-14 md:py-20 bg-gradient-to-b from-background to-brand-500/5 border-y border-border/40"
+        data-testid="section-system-flow"
+      >
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="text-center mb-10 md:mb-12"
+          >
+            <motion.h2
+              variants={fadeInUp}
+              className="font-display text-2xl md:text-3xl lg:text-4xl font-extrabold tracking-tight text-foreground mb-3"
+            >
+              {landingCopy.workflow.title}
+            </motion.h2>
+            <motion.p
+              variants={fadeInUp}
+              className="text-base md:text-lg text-muted-foreground max-w-2xl mx-auto"
+            >
+              {landingCopy.workflow.subtitle}
+            </motion.p>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid grid-cols-2 md:grid-cols-5 gap-3 md:gap-4"
+          >
+            {landingCopy.workflow.steps.map((step, idx) => {
+              const stepIcons = {
+                application: UserPlus,
+                screening: Search,
+                decoder: Sparkles,
+                lease: FileText,
+                rent: DollarSign,
+              } as const;
+              const Icon = stepIcons[step.key as keyof typeof stepIcons];
+              return (
+                <motion.div
+                  key={step.key}
+                  variants={fadeInUp}
+                  className="relative"
+                  data-testid={`flow-step-${step.key}`}
+                >
+                  <Card className="p-4 md:p-5 h-full text-center border-brand-500/20 hover:border-brand-500/50 transition-colors">
+                    <div className="flex flex-col items-center gap-2 md:gap-3">
+                      <div className="flex items-center gap-2">
+                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-500/10 text-xs font-bold text-brand-600 dark:text-brand-400">
+                          {idx + 1}
+                        </span>
+                        <div className="rounded-lg bg-brand-500/10 w-9 h-9 flex items-center justify-center">
+                          <Icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                        </div>
+                      </div>
+                      <h3 className="font-display text-sm md:text-base font-semibold text-foreground">
+                        {step.label}
+                      </h3>
+                      <p className="text-xs md:text-sm text-muted-foreground leading-snug">
+                        {step.body}
+                      </p>
+                    </div>
+                  </Card>
+                  {idx < landingCopy.workflow.steps.length - 1 && (
+                    <div className="hidden md:flex absolute top-1/2 -right-2 -translate-y-1/2 z-10 pointer-events-none">
+                      <ArrowRight className="h-4 w-4 text-brand-500/60" />
+                    </div>
+                  )}
+                </motion.div>
+              );
+            })}
+          </motion.div>
+
+          <motion.p
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center text-xs md:text-sm text-muted-foreground mt-8"
+          >
+            Use one piece, use all five. Nothing here demands a learning curve.
+          </motion.p>
         </div>
       </section>
 
