@@ -34,9 +34,107 @@ import {
   ThumbsDown,
   ChevronRight,
   History,
+  MapPin,
+  Loader2,
+  ListChecks,
 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { Textarea } from "@/components/ui/textarea";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+
+// State-aware quick chips: surfaces a state-specific prompt when the user
+// has a preferredState matching one of our vetted state-notes topics.
+// Keeps suggestions on the same shortlist of legally-sensitive areas the
+// state_notes table is curated around — no AI-generated state law.
+const STATE_AWARE_CHIPS: Record<string, {
+  credit?: { label: string; prompt: string };
+  criminal?: { label: string; prompt: string };
+}> = {
+  CA: {
+    credit: { label: "CA: credit-history limits?", prompt: "California limits on using credit history for housing decisions — what should I know?" },
+    criminal: { label: "CA: fair-chance housing?", prompt: "California Fair Chance Act for housing — when can I consider a criminal record?" },
+  },
+  IL: {
+    criminal: { label: "IL: fair-chance housing?", prompt: "Illinois fair-chance housing rules — how do I evaluate a criminal record correctly?" },
+  },
+  MI: {
+    criminal: { label: "MI: arrest vs conviction?", prompt: "Michigan arrest vs conviction — can I consider an arrest with no conviction?" },
+  },
+  NV: {
+    criminal: { label: "NV: sealed records?", prompt: "Nevada sealed criminal records — am I allowed to consider these?" },
+  },
+  AZ: {
+    criminal: { label: "AZ: set-aside convictions?", prompt: "Arizona set-aside convictions — how should I treat these on a screening report?" },
+  },
+  UT: {
+    criminal: { label: "UT: expunged records?", prompt: "Utah expunged criminal records — can I consider these in screening?" },
+  },
+  NC: {
+    criminal: { label: "NC: criminal-record limits?", prompt: "North Carolina criminal record consideration in housing — what's allowed?" },
+  },
+  VA: {
+    criminal: { label: "VA: barrier crimes?", prompt: "Virginia barrier crimes and housing screening — how do I apply these correctly?" },
+  },
+  FL: {
+    criminal: { label: "FL: eviction record use?", prompt: "Florida eviction record usage — what are the limits and best practices?" },
+  },
+  OH: {
+    criminal: { label: "OH: sealed records?", prompt: "Ohio sealed records and housing — am I allowed to consider them?" },
+  },
+  TX: {
+    criminal: { label: "TX: criminal-record screening?", prompt: "Texas tenant selection criteria for criminal records — what should I document?" },
+  },
+};
+
+// Split a long pasted "section" into individual findings so we can decode
+// each one and triage by caution level. Heuristic-only and conservative —
+// when in doubt we treat the whole input as one segment so the user still
+// gets one coherent answer instead of nonsense fragments.
+export function splitFindingsForBatchDecode(text: string): string[] {
+  const raw = text.trim();
+  if (!raw) return [];
+  // 1) Numbered/bulleted list items: "1.", "2)", "•", "-", "*"
+  const listMatches = raw
+    .split(/\n+/)
+    .map((l) => l.trim())
+    .filter(Boolean);
+  const looksLikeList =
+    listMatches.length >= 2 &&
+    listMatches.filter((l) => /^(\d+[\.\)]|[•\-\*])\s+/.test(l)).length >= 2;
+  let segments: string[];
+  if (looksLikeList) {
+    segments = listMatches.map((l) => l.replace(/^(\d+[\.\)]|[•\-\*])\s+/, "").trim());
+  } else if (listMatches.length >= 2) {
+    // Multi-line free text — split on blank-line paragraphs (already done above)
+    segments = listMatches;
+  } else {
+    // Single line — try splitting on semicolons only if there are at least 2
+    const semis = raw.split(/;\s+/).map((s) => s.trim()).filter(Boolean);
+    segments = semis.length >= 2 ? semis : [raw];
+  }
+  // Filter out tiny fragments that won't produce useful decodes
+  const cleaned = segments
+    .map((s) => s.replace(/\s+/g, " ").trim())
+    .filter((s) => s.length >= 8);
+  // Cap at 8 to protect rate limits and the user's attention
+  return cleaned.slice(0, 8);
+}
+
+// Pull the bullet list out of the OPTIONAL FOLLOW-UP QUESTIONS section so
+// we can render it as a checkable "Ask the applicant" card instead of
+// burying it in the accordion.
+function extractFollowUpQuestions(content: string): string[] {
+  if (!content) return [];
+  return content
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean)
+    .map((l) => l.replace(/^(\d+[\.\)]|[•\-\*])\s*/, "").trim())
+    .map((l) => l.replace(/^["""]|["""]$/g, "").trim())
+    .filter((l) => l.length > 5 && l.endsWith("?"));
+}
 
 interface DecoderSection {
   id: string;
@@ -194,10 +292,184 @@ interface DecoderDisplayProps {
   fallbackText?: string | null;
 }
 
+function AskTheApplicantCard({ questions, decoderType }: { questions: string[]; decoderType: 'credit' | 'criminal' }) {
+  const { toast } = useToast();
+  const [checked, setChecked] = useState<boolean[]>(() => questions.map(() => false));
+
+  const handleCopy = () => {
+    const text = questions.map((q, i) => `${i + 1}. ${q}`).join("\n");
+    navigator.clipboard.writeText(text);
+    toast({ title: "Copied!", description: "Questions copied — paste them into your applicant email or text." });
+  };
+
+  if (!questions.length) return null;
+
+  return (
+    <div className="p-4 rounded-lg border bg-primary/5 border-primary/20" data-testid={`card-ask-applicant-${decoderType}`}>
+      <div className="flex items-center justify-between gap-3 mb-3 flex-wrap">
+        <div className="flex items-center gap-2">
+          <ListChecks className="h-5 w-5 text-primary" />
+          <h4 className="font-semibold text-foreground">Ask the applicant</h4>
+        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleCopy}
+          data-testid={`button-copy-questions-${decoderType}`}
+        >
+          <Copy className="h-3 w-3 mr-2" />
+          Copy questions
+        </Button>
+      </div>
+      <p className="text-xs text-muted-foreground mb-3 ml-7">
+        Use these to gather context before deciding. Tick them off as you go.
+      </p>
+      <div className="space-y-2 ml-7">
+        {questions.map((q, i) => (
+          <div key={i} className="flex items-start gap-2">
+            <Checkbox
+              id={`ask-${decoderType}-${i}`}
+              checked={checked[i]}
+              onCheckedChange={(v) => {
+                const next = [...checked];
+                next[i] = v === true;
+                setChecked(next);
+              }}
+              className="mt-0.5"
+              data-testid={`checkbox-ask-${decoderType}-${i}`}
+            />
+            <Label
+              htmlFor={`ask-${decoderType}-${i}`}
+              className={`text-sm leading-relaxed cursor-pointer ${checked[i] ? 'text-muted-foreground line-through' : 'text-foreground'}`}
+            >
+              {q}
+            </Label>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// One row in the batch decoder. Mirrors the fields the single-call
+// /api/explain-* endpoints return so we can render each finding through the
+// existing DecoderDisplay component without duplicating logic.
+interface BatchFindingResult {
+  id: string;
+  input: string;
+  status: 'pending' | 'done' | 'error';
+  explanation?: string;
+  userState?: string | null;
+  userStateName?: string | null;
+  stateNote?: StateNoteData | null;
+  fallbackText?: string | null;
+  cautionLevel?: 'low' | 'medium' | 'high' | null;
+  classifiedTopic?: string | null;
+  errorMessage?: string;
+}
+
+function cautionBadge(level: BatchFindingResult['cautionLevel']) {
+  if (level === 'high') {
+    return <Badge className="bg-destructive/15 text-destructive border-destructive/20" data-testid="badge-caution-high">High caution</Badge>;
+  }
+  if (level === 'medium') {
+    return <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20" data-testid="badge-caution-medium">Review carefully</Badge>;
+  }
+  if (level === 'low') {
+    return <Badge className="bg-success/15 text-success border-success/20" data-testid="badge-caution-low">Routine</Badge>;
+  }
+  return <Badge variant="outline" data-testid="badge-caution-unknown">Pending</Badge>;
+}
+
+function BatchDecoderResults({
+  results,
+  decoderType,
+}: {
+  results: BatchFindingResult[];
+  decoderType: 'credit' | 'criminal';
+}) {
+  // Sort: high → medium → low → unknown/pending → error, so the most important
+  // findings always sit at the top of the list.
+  const order: Record<string, number> = { high: 0, medium: 1, low: 2 };
+  const sorted = [...results].sort((a, b) => {
+    const ao = a.cautionLevel ? order[a.cautionLevel] : 3;
+    const bo = b.cautionLevel ? order[b.cautionLevel] : 3;
+    return ao - bo;
+  });
+
+  const summary = {
+    high: results.filter((r) => r.cautionLevel === 'high').length,
+    medium: results.filter((r) => r.cautionLevel === 'medium').length,
+    low: results.filter((r) => r.cautionLevel === 'low').length,
+    pending: results.filter((r) => r.status === 'pending').length,
+  };
+
+  return (
+    <div className="space-y-3" data-testid={`batch-results-${decoderType}`}>
+      <div className="flex items-center justify-between gap-3 flex-wrap p-3 rounded-md bg-muted/40 border">
+        <div className="flex items-center gap-2 text-sm text-foreground">
+          <ListChecks className="h-4 w-4 text-primary" />
+          <span className="font-medium">{results.length} finding{results.length === 1 ? '' : 's'}</span>
+          {summary.high > 0 && <span className="text-destructive">• {summary.high} high</span>}
+          {summary.medium > 0 && <span className="text-amber-600 dark:text-amber-400">• {summary.medium} review</span>}
+          {summary.low > 0 && <span className="text-success">• {summary.low} routine</span>}
+          {summary.pending > 0 && <span className="text-muted-foreground">• {summary.pending} loading…</span>}
+        </div>
+      </div>
+
+      <Accordion type="multiple" className="space-y-2">
+        {sorted.map((r) => (
+          <AccordionItem
+            key={r.id}
+            value={r.id}
+            className="border rounded-lg overflow-hidden"
+            data-testid={`batch-finding-${decoderType}-${r.id}`}
+          >
+            <AccordionTrigger className="px-4 py-3 hover:no-underline hover:bg-muted/40">
+              <div className="flex items-start gap-3 text-left flex-1 min-w-0">
+                <div className="flex-shrink-0 mt-0.5">{cautionBadge(r.cautionLevel)}</div>
+                <div className="text-sm text-foreground truncate flex-1">{r.input}</div>
+                {r.status === 'pending' && (
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground flex-shrink-0" />
+                )}
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="px-4 pb-4 pt-2">
+              {r.status === 'pending' && (
+                <p className="text-sm text-muted-foreground">Analyzing…</p>
+              )}
+              {r.status === 'error' && (
+                <p className="text-sm text-destructive">{r.errorMessage || 'Could not decode this finding.'}</p>
+              )}
+              {r.status === 'done' && r.explanation && (
+                <DecoderDisplay
+                  explanation={r.explanation}
+                  decoderType={decoderType}
+                  userState={r.userState}
+                  userStateName={r.userStateName}
+                  stateNote={r.stateNote}
+                  fallbackText={r.fallbackText}
+                />
+              )}
+            </AccordionContent>
+          </AccordionItem>
+        ))}
+      </Accordion>
+    </div>
+  );
+}
+
 function DecoderDisplay({ explanation, decoderType, userState, userStateName, stateNote, fallbackText }: DecoderDisplayProps) {
   const { toast } = useToast();
   const parsed = parseNewDecoderFormat(explanation);
   const legacy = parsed ? null : parseLegacyFormat(explanation);
+
+  // Pull follow-up questions out of the collapsible accordion and surface
+  // them as a dedicated "Ask the applicant" checklist above. We mutate a
+  // local copy so the original parsed object is untouched.
+  const questionsSection = parsed?.collapsible.find((s) => s.id === 'questions');
+  const followUps = questionsSection ? extractFollowUpQuestions(questionsSection.content) : [];
+  const collapsibleWithoutQuestions = parsed?.collapsible.filter((s) => s.id !== 'questions') ?? [];
   
   const [openSections, setOpenSections] = useState<string[]>(() => 
     getAccordionState(decoderType)
@@ -233,14 +505,21 @@ function DecoderDisplay({ explanation, decoderType, userState, userStateName, st
           </div>
         ))}
         
-        {parsed.collapsible.length > 0 && (
+        {/* Promoted: "Ask the Applicant" checklist surfaces follow-up questions
+            from the AI response above the accordion so landlords can act on them
+            without hunting. */}
+        {followUps.length > 0 && (
+          <AskTheApplicantCard questions={followUps} decoderType={decoderType} />
+        )}
+
+        {collapsibleWithoutQuestions.length > 0 && (
           <Accordion 
             type="multiple" 
             value={openSections}
             onValueChange={handleAccordionChange}
             className="space-y-2"
           >
-            {parsed.collapsible.map((section) => (
+            {collapsibleWithoutQuestions.map((section) => (
               <AccordionItem 
                 key={section.id} 
                 value={section.id} 
@@ -460,6 +739,90 @@ export default function Screening() {
   const [showCreditActivationPrompt, setShowCreditActivationPrompt] = useState(false);
   const [showCriminalActivationPrompt, setShowCriminalActivationPrompt] = useState(false);
 
+  // Batch decode mode — when on, the helper splits the input into individual
+  // findings and decodes each one separately so the landlord gets a triaged
+  // list instead of one mashed-together answer.
+  const [creditBatchMode, setCreditBatchMode] = useState(false);
+  const [criminalBatchMode, setCriminalBatchMode] = useState(false);
+  const [creditBatchResults, setCreditBatchResults] = useState<BatchFindingResult[] | null>(null);
+  const [criminalBatchResults, setCriminalBatchResults] = useState<BatchFindingResult[] | null>(null);
+
+  // State-aware chip pulled from the curated map. Kept on the same vetted
+  // shortlist of legally-sensitive topics so we never invent state law.
+  const preferredState = (user as any)?.preferredState as string | undefined;
+  const stateCreditChip = preferredState ? STATE_AWARE_CHIPS[preferredState]?.credit : undefined;
+  const stateCriminalChip = preferredState ? STATE_AWARE_CHIPS[preferredState]?.criminal : undefined;
+
+  // Run a batch of findings in parallel with a small concurrency cap to avoid
+  // hitting the chat rate limiter. Each completion patches the corresponding
+  // result entry so the UI streams in finding-by-finding.
+  const runBatchDecode = async (
+    text: string,
+    decoderType: 'credit' | 'criminal',
+    setResults: (r: BatchFindingResult[] | null) => void,
+  ): Promise<boolean> => {
+    const segments = splitFindingsForBatchDecode(text);
+    if (segments.length < 2) return false; // Caller should fall back to single mode.
+
+    const endpoint = decoderType === 'credit' ? '/api/explain-credit-term' : '/api/explain-criminal-eviction-term';
+    const initial: BatchFindingResult[] = segments.map((s, i) => ({
+      id: String(i),
+      input: s,
+      status: 'pending',
+    }));
+    setResults(initial);
+    // Mutable working copy so each completion can patch a single row.
+    const working = [...initial];
+
+    const runOne = async (idx: number) => {
+      try {
+        const token = getAccessToken();
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(token ? { 'Authorization': `Bearer ${token}` } : {}),
+          },
+          body: JSON.stringify({ term: working[idx].input }),
+          credentials: 'include',
+        });
+        if (!response.ok) {
+          const err = await response.json().catch(() => ({} as any));
+          working[idx] = { ...working[idx], status: 'error', errorMessage: err.message || err.explanation || `Error ${response.status}` };
+        } else {
+          const data = await response.json();
+          working[idx] = {
+            ...working[idx],
+            status: 'done',
+            explanation: data.explanation,
+            userState: data.userState ?? null,
+            userStateName: data.userStateName ?? null,
+            stateNote: data.stateNote ?? null,
+            fallbackText: data.fallbackText ?? null,
+            cautionLevel: data.cautionLevel ?? null,
+            classifiedTopic: data.classifiedTopic ?? null,
+          };
+        }
+      } catch (e: any) {
+        working[idx] = { ...working[idx], status: 'error', errorMessage: e?.message || 'Network error' };
+      }
+      setResults([...working]);
+    };
+
+    // Concurrency = 3 — enough to feel fast, low enough to stay under the
+    // chat rate limiter shared with the AI assistant.
+    const CONCURRENCY = 3;
+    let cursor = 0;
+    const workers = Array.from({ length: Math.min(CONCURRENCY, segments.length) }, async () => {
+      while (cursor < segments.length) {
+        const i = cursor++;
+        await runOne(i);
+      }
+    });
+    await Promise.all(workers);
+    return true;
+  };
+
   const handleExplain = async () => {
     if (!isActivated) {
       setShowCreditActivationPrompt(true);
@@ -475,6 +838,22 @@ export default function Screening() {
 
     setIsExplaining(true);
     setExplanation('');
+    setCreditBatchResults(null);
+
+    // Batch mode: split into findings and decode each separately when the
+    // input clearly contains multiple items.
+    if (creditBatchMode) {
+      try {
+        const ran = await runBatchDecode(input, 'credit', setCreditBatchResults);
+        if (ran) {
+          setIsExplaining(false);
+          return;
+        }
+        // Fewer than 2 segments — fall through to single-call mode below.
+      } catch (e) {
+        console.error('Batch decode failed, falling back to single mode:', e);
+      }
+    }
 
     try {
       const token = getAccessToken();
@@ -545,6 +924,19 @@ export default function Screening() {
 
     setIsCriminalExplaining(true);
     setCriminalExplanation('');
+    setCriminalBatchResults(null);
+
+    if (criminalBatchMode) {
+      try {
+        const ran = await runBatchDecode(input, 'criminal', setCriminalBatchResults);
+        if (ran) {
+          setIsCriminalExplaining(false);
+          return;
+        }
+      } catch (e) {
+        console.error('Batch decode failed, falling back to single mode:', e);
+      }
+    }
 
     try {
       const token = getAccessToken();
@@ -816,6 +1208,17 @@ export default function Screening() {
 
               {/* Quick-start chips - pill-shaped */}
               <div className="flex flex-wrap gap-3">
+                {stateCreditChip && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { setUserQuestion(stateCreditChip.prompt); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
+                    className="rounded-full shadow-sm px-5 bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-400"
+                    data-testid="chip-state-credit"
+                  >
+                    <MapPin className="h-3 w-3 mr-1.5" />
+                    {stateCreditChip.label}
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   onClick={() => { setUserQuestion("What does a charge-off mean and should I be worried?"); setTimeout(() => document.getElementById('credit-helper-input')?.focus(), 0); }}
@@ -882,12 +1285,30 @@ export default function Screening() {
 
               <Textarea
                 id="credit-helper-input"
-                placeholder="Type or paste anything confusing from the report here (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400')."
+                placeholder={creditBatchMode
+                  ? "Paste multiple findings — one per line or as a numbered list (e.g.\n1. Charge-off from 2022\n2. 3 collections totaling $2,400\n3. Late payment 18 months ago)"
+                  : "Type or paste anything confusing from the report here (e.g., 'Charge-off from 2022' or '3 collections totaling $2,400')."}
                 value={userQuestion}
                 onChange={(e) => setUserQuestion(e.target.value)}
                 className="min-h-[120px] text-base shadow-sm"
                 data-testid="textarea-credit-question"
               />
+
+              <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 flex-wrap">
+                <div className="flex items-start gap-2">
+                  <ListChecks className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <Label htmlFor="credit-batch-mode" className="text-sm font-medium cursor-pointer">Decode each finding separately</Label>
+                    <p className="text-xs text-muted-foreground">Splits a list into one decode per finding, sorted by caution level.</p>
+                  </div>
+                </div>
+                <Switch
+                  id="credit-batch-mode"
+                  checked={creditBatchMode}
+                  onCheckedChange={setCreditBatchMode}
+                  data-testid="switch-credit-batch-mode"
+                />
+              </div>
 
               <Button 
                 onClick={handleExplain}
@@ -897,7 +1318,7 @@ export default function Screening() {
                 data-testid="button-get-credit-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
+                {isExplaining ? 'Analyzing...' : creditBatchMode ? 'Decode Each Finding' : 'Explain This in Plain English'}
               </Button>
 
               {showCreditActivationPrompt && (
@@ -913,7 +1334,11 @@ export default function Screening() {
                 </div>
               )}
 
-              {!isExplaining && explanation && (
+              {creditBatchResults && creditBatchResults.length > 0 && (
+                <BatchDecoderResults results={creditBatchResults} decoderType="credit" />
+              )}
+
+              {!isExplaining && explanation && !creditBatchResults && (
                 <>
                   <DecoderDisplay 
                     explanation={explanation} 
@@ -1077,6 +1502,17 @@ export default function Screening() {
 
               {/* Quick-start chips - pill-shaped */}
               <div className="flex flex-wrap gap-3">
+                {stateCriminalChip && (
+                  <Button
+                    variant="outline"
+                    onClick={() => { setCriminalUserQuestion(stateCriminalChip.prompt); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
+                    className="rounded-full shadow-sm px-5 bg-blue-50 dark:bg-blue-950/30 border-blue-300 dark:border-blue-800 hover:bg-blue-100 dark:hover:bg-blue-900/40 hover:border-blue-400"
+                    data-testid="chip-state-criminal"
+                  >
+                    <MapPin className="h-3 w-3 mr-1.5" />
+                    {stateCriminalChip.label}
+                  </Button>
+                )}
                 <Button 
                   variant="outline" 
                   onClick={() => { setCriminalUserQuestion("Applicant has a misdemeanor from years ago - can I consider this?"); setTimeout(() => document.getElementById('criminal-helper-input')?.focus(), 0); }}
@@ -1143,12 +1579,30 @@ export default function Screening() {
 
               <Textarea
                 id="criminal-helper-input"
-                placeholder="Type or paste anything confusing from the report here (e.g., 'Misdemeanor theft from 2019' or 'Eviction filed but dismissed')."
+                placeholder={criminalBatchMode
+                  ? "Paste multiple findings — one per line or as a numbered list (e.g.\n1. Misdemeanor theft 2019\n2. Eviction filed 2021 but dismissed\n3. DUI conviction 2017)"
+                  : "Type or paste anything confusing from the report here (e.g., 'Misdemeanor theft from 2019' or 'Eviction filed but dismissed')."}
                 value={criminalUserQuestion}
                 onChange={(e) => setCriminalUserQuestion(e.target.value)}
                 className="min-h-[120px] text-base shadow-sm"
                 data-testid="textarea-criminal-question"
               />
+
+              <div className="flex items-center justify-between gap-3 rounded-md border bg-muted/30 px-3 py-2 flex-wrap">
+                <div className="flex items-start gap-2">
+                  <ListChecks className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
+                  <div>
+                    <Label htmlFor="criminal-batch-mode" className="text-sm font-medium cursor-pointer">Decode each finding separately</Label>
+                    <p className="text-xs text-muted-foreground">Splits a list into one decode per finding, sorted by caution level.</p>
+                  </div>
+                </div>
+                <Switch
+                  id="criminal-batch-mode"
+                  checked={criminalBatchMode}
+                  onCheckedChange={setCriminalBatchMode}
+                  data-testid="switch-criminal-batch-mode"
+                />
+              </div>
 
               <Button 
                 onClick={handleCriminalExplain}
@@ -1158,7 +1612,7 @@ export default function Screening() {
                 data-testid="button-get-criminal-explanation"
               >
                 <Lightbulb className="mr-2 h-4 w-4" />
-                {isCriminalExplaining ? 'Analyzing...' : 'Explain This in Plain English'}
+                {isCriminalExplaining ? 'Analyzing...' : criminalBatchMode ? 'Decode Each Finding' : 'Explain This in Plain English'}
               </Button>
 
               {showCriminalActivationPrompt && (
@@ -1174,7 +1628,11 @@ export default function Screening() {
                 </div>
               )}
 
-              {!isCriminalExplaining && criminalExplanation && (
+              {criminalBatchResults && criminalBatchResults.length > 0 && (
+                <BatchDecoderResults results={criminalBatchResults} decoderType="criminal" />
+              )}
+
+              {!isCriminalExplaining && criminalExplanation && !criminalBatchResults && (
                 <>
                   <DecoderDisplay 
                     explanation={criminalExplanation} 
