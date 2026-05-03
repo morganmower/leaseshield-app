@@ -600,8 +600,8 @@ export default function Landing() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6 text-center">
             <div className="flex flex-col items-center" data-testid="trust-stat-states">
               <MapPin className="h-5 w-5 text-brand-600 mb-2" />
-              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">{STATES.length}</p>
-              <p className="text-xs md:text-sm text-muted-foreground">States Covered</p>
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">All 50</p>
+              <p className="text-xs md:text-sm text-muted-foreground">States (apps, screening, rent)</p>
             </div>
             <div className="flex flex-col items-center" data-testid="trust-stat-guarantee">
               <ShieldCheck className="h-5 w-5 text-brand-600 mb-2" />
@@ -1431,9 +1431,9 @@ export default function Landing() {
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
                 <Shield className="h-4 w-4 sm:h-5 sm:w-5 text-brand-600" />
-                <div className="text-2xl sm:text-3xl font-bold text-foreground">{STATES.length}</div>
+                <div className="text-2xl sm:text-3xl font-bold text-foreground">All 50</div>
               </div>
-              <div className="text-xs sm:text-sm text-muted-foreground">States Supported</div>
+              <div className="text-xs sm:text-sm text-muted-foreground">Nationwide Coverage</div>
             </motion.div>
             <motion.div variants={fadeInUp} className="text-center">
               <div className="flex items-center justify-center gap-1.5 sm:gap-2 mb-1 sm:mb-2">
@@ -2167,7 +2167,7 @@ export default function Landing() {
             </div>
             <div className="flex items-center gap-2 bg-brand-50 border border-brand-200 rounded-lg px-4 py-3">
               <Shield className="h-5 w-5 text-brand-600" />
-              <span className="font-medium text-foreground">{STATES.length} States Covered</span>
+              <span className="font-medium text-foreground">Available Nationwide</span>
             </div>
             <div className="flex items-center gap-2 bg-amber-500/10 border border-amber-500/20 rounded-lg px-4 py-3">
               <BadgeCheck className="h-5 w-5 text-amber-600 dark:text-amber-400" />
@@ -2223,8 +2223,7 @@ export default function Landing() {
               <AccordionItem value="item-1">
                 <AccordionTrigger className="text-lg">What states does LeaseShield App currently support?</AccordionTrigger>
                 <AccordionContent className="text-lg">
-                  We currently serve landlords in <strong>{STATES.join(", ")}</strong> with
-                  comprehensive state-specific templates and compliance guidance. Each state's templates are updated monthly as laws change. We're continuing to expand to additional states. Let us know which state you'd like to see next!
+                  <strong>Applications, tenant screening, the screening report decoder, and online rent collection work nationwide</strong> - in all 50 states. State-specific lease templates, notices, and official court forms are currently available in <strong>{STATES.join(", ")}</strong>, with more states added as we review their statutes. Each state's forms are updated as laws change. Let us know which state you'd like to see next!
                 </AccordionContent>
               </AccordionItem>
               <AccordionItem value="item-2">
@@ -2338,7 +2337,7 @@ export default function Landing() {
           <DialogHeader>
             <DialogTitle className="text-3xl font-display">Everything You Get with LeaseShield App</DialogTitle>
             <DialogDescription className="text-base">
-              Comprehensive landlord protection for all {STATES.length} supported states
+              Available nationwide for applications, screening, and rent collection; state-specific forms in {STATES.length} states
             </DialogDescription>
           </DialogHeader>
           
@@ -2376,7 +2375,7 @@ export default function Landing() {
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-brand-600 mb-1">{STATES.length}</div>
-                  <div className="text-sm text-muted-foreground">States Covered</div>
+                  <div className="text-sm text-muted-foreground">States with Forms</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-brand-600 mb-1">$10</div>

@@ -194,7 +194,7 @@ const PAGES: Record<string, PrerenderEntry> = {
       </header>
       <section>
         <h2>Covered states</h2>
-        <p>Arizona, California, Colorado, Florida, Idaho, Illinois, Michigan, Nevada, New Mexico, North Carolina, North Dakota, Ohio, South Dakota, Texas, Utah, plus expanding coverage. Each state's forms are reviewed against current statutes and county filing requirements.</p>
+        <p>Arizona, California, Florida, Idaho, Illinois, Michigan, Nevada, New Mexico, North Carolina, North Dakota, Ohio, South Dakota, Texas, Utah, Virginia, and Wyoming. Each state's forms are reviewed against current statutes and county filing requirements. Applications, tenant screening, and online rent collection work nationwide.</p>
       </section>
       <section>
         <h2>What you get</h2>
