@@ -22,7 +22,7 @@ export default function RentalManagementSystem() {
     { feature: "Built for small landlords (1–50 units)", us: true, them: false },
     { feature: "Flat $10/month - no per-unit pricing", us: true, them: false },
     { feature: "AI screening report decoder", us: true, them: false },
-    { feature: "State-specific compliance guidance (16 states)", us: true, them: false },
+    { feature: "Available nationwide; state-specific forms in 16 states", us: true, them: false },
     { feature: "Official court form overlays", us: true, them: false },
     { feature: "Online rent collection (ACH + auto-pay)", us: true, them: true },
     { feature: "Multi-property management", us: true, them: true },

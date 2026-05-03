@@ -32,7 +32,7 @@ export default function LandlordFormsAndNotices() {
       <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-brand-500/5 via-background to-brand-500/5 pointer-events-none" />
         <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 relative text-center">
-          <Badge variant="secondary" className="mb-6" data-testid="badge-product"><Sparkles className="h-3.5 w-3.5 mr-1.5" />16 states covered</Badge>
+          <Badge variant="secondary" className="mb-6" data-testid="badge-product"><Sparkles className="h-3.5 w-3.5 mr-1.5" />State-specific forms in 16 states</Badge>
           <h1 className="font-display text-3xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-tight mb-6" data-testid="text-hero-title">Landlord Legal Forms &amp; Notices</h1>
           <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground mb-4 leading-relaxed max-w-3xl mx-auto" data-testid="text-hero-sub">Attorney-style leases, state-specific eviction notices, and adverse action letters - generated from your data, not a fillable PDF you found on Google.</p>
           <p className="text-sm sm:text-base text-muted-foreground mb-10 max-w-2xl mx-auto">Plus official court form overlays for the moments where the form has to be the real one.</p>

@@ -33,7 +33,7 @@ const PAGES: Record<string, PrerenderEntry> = {
   "/": {
     title: "LeaseShield – Simple Rental Management System for Independent Landlords",
     description:
-      "Simple rental management for small landlords across 16 states. Application, screening, lease forms, rent collection, and compliance for $10/month.",
+      "Simple rental management for small landlords. Available nationwide for applications, screening, and rent collection; state-specific lease and court forms in 16 states. $10/month.",
     bodyHtml: `
       <header>
         <h1>Simple rental management system for landlords</h1>
@@ -46,7 +46,7 @@ const PAGES: Record<string, PrerenderEntry> = {
         ${CLUSTER_LINKS}
       </section>
       <section>
-        <h2>Built for the 16 states landlords actually live in</h2>
+        <h2>Available nationwide. State-specific forms in 16 states.</h2>
         <p>State-specific lease templates, compliance cards, and official court forms for Arizona, California, Florida, Idaho, Illinois, Michigan, Nevada, New Mexico, North Carolina, North Dakota, Ohio, South Dakota, Texas, Utah, and more.</p>
       </section>
       ${PRICING_FOOTER}
@@ -80,7 +80,7 @@ const PAGES: Record<string, PrerenderEntry> = {
   "/rental-management-system": {
     title: "Rental Management System for Small Landlords - LeaseShield",
     description:
-      "A simple rental management system covering applications, screening, leases, rent collection, and compliance for landlords in 16 US states. $10/month.",
+      "A simple rental management system. Applications, tenant screening, and online rent collection work nationwide; state-specific lease and court forms in 16 states. $10/month.",
     bodyHtml: `
       <header>
         <h1>Rental management system for independent landlords</h1>

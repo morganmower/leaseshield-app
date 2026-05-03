@@ -113,16 +113,19 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
                 <li><Link to="/landlord-forms-and-notices" className="hover:text-foreground transition-colors" data-testid="footer-link-forms">Forms &amp; Notices</Link></li>
               </ul>
             </div>
-            <div>
-              <h4 className="font-semibold mb-3 text-sm">States</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li>Utah, Texas, North Dakota</li>
-                <li>South Dakota, North Carolina, Ohio</li>
-                <li>Michigan, Idaho, Wyoming</li>
-                <li>California, Virginia, Nevada</li>
-                <li>Arizona, Florida, Illinois</li>
-                <li>New Mexico</li>
-              </ul>
+            <div data-testid="footer-coverage">
+              <h4 className="font-semibold mb-3 text-sm">Coverage</h4>
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <div>
+                  <p className="font-medium text-foreground mb-1">Available nationwide</p>
+                  <p className="leading-relaxed">Applications, tenant screening, and online rent collection work in all 50 states.</p>
+                </div>
+                <div>
+                  <p className="font-medium text-foreground mb-1">State-specific legal forms</p>
+                  <p className="leading-relaxed">Lease templates, notices, and official court forms currently available in:</p>
+                  <p className="text-xs leading-relaxed mt-1">AZ, CA, FL, ID, IL, MI, NV, NM, NC, ND, OH, SD, TX, UT, VA, WY.</p>
+                </div>
+              </div>
             </div>
             <div>
               <h4 className="font-semibold mb-3 text-sm">Support &amp; Legal</h4>

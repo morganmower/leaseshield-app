@@ -93,10 +93,13 @@ export function StatePickerChip() {
 
   return (
     <div className="mx-auto max-w-3xl" data-testid="section-state-picker">
-      <div className="text-center mb-3">
-        <p className="text-xs sm:text-sm font-medium text-muted-foreground inline-flex items-center gap-1.5">
-          <MapPin className="h-3.5 w-3.5" />
-          Is your state covered? Tap to check.
+      <div className="text-center mb-3 space-y-1">
+        <p className="text-xs sm:text-sm font-semibold text-foreground inline-flex items-center gap-1.5">
+          <MapPin className="h-3.5 w-3.5 text-primary" />
+          Available nationwide. State-specific forms in select states.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Applications, screening, and rent collection work in all 50 states. Tap your state to see if local lease and court forms are ready.
         </p>
       </div>
 
