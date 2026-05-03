@@ -119,7 +119,7 @@ If you want to keep exploring before committing, you can continue your free tria
 What you get:
 ✓ State-specific legal templates for all 15 states
 ✓ Compliance cards keeping you up-to-date with landlord-tenant laws
-✓ AI credit report decoder and tenant screening toolkit
+✓ AI credit report decoder and tenant screening tools
 ✓ Step-by-step workflows for handling tenant issues
 ✓ 24/7 AI chat assistant
 
@@ -188,7 +188,7 @@ The LeaseShield App Team
         <ul style="margin-bottom: 0;">
           <li>State-specific legal templates for all 15 states</li>
           <li>Compliance cards keeping you up-to-date</li>
-          <li>AI credit report decoder and screening toolkit</li>
+          <li>AI credit report decoder and screening tools</li>
           <li>Step-by-step tenant issue workflows</li>
           <li>24/7 AI chat assistant for landlord questions</li>
         </ul>

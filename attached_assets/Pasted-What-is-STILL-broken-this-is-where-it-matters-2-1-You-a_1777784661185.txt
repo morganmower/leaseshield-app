@@ -1,0 +1,320 @@
+What is STILL broken (this is where it matters)
+
+2.1 You are still split between “system” and “toolkit”
+
+You say BOTH:
+
+* “Simple rental management system” ✅
+* “Explore the full LeaseShield toolkit” ❌  
+
+⸻
+
+Why this is a problem (not cosmetic)
+
+You are creating category conflict in the same page.
+
+User is forced to ask:
+
+* Is this software?
+* Or is this a set of tools?
+
+That hesitation reduces:
+
+* conversion
+* trust
+* pricing power
+
+⸻
+
+Fix:
+
+Remove “toolkit” entirely.
+
+There is no upside left to keeping it.
+
+⸻
+
+2.2 Rent collection is still NOT the anchor
+
+This is your biggest remaining miss.
+
+Current state:
+
+Rent collection is:
+
+* listed as a feature
+* equal weight to others
+
+⸻
+
+Market reality:
+
+Rent collection is the center of gravity in this category.
+
+Evidence:
+
+* Majority of renters prefer digital payments
+* It drives recurring usage and retention  
+
+⸻
+
+Your current positioning:
+
+“Application → Screening → Decoder → Lease → Rent”
+
+That’s linear.
+
+⸻
+
+What it should feel like:
+
+Everything flows into rent collection
+
+⸻
+
+Why:
+
+* Rent = monthly behavior
+* Rent = tenant interaction
+* Rent = retention engine
+
+⸻
+
+2.3 Your strongest differentiator is still under-leveraged
+
+The decoder is still your unfair advantage.
+
+But on the page:
+
+* It’s listed like a feature
+* Not framed like a primary entry point
+
+⸻
+
+This is a missed opportunity:
+
+You could dominate searches like:
+
+* “how to read tenant screening report”
+* “what does eviction record mean”
+
+Competitors don’t own this.
+
+⸻
+
+2.4 Weak SEO page separation (still a ceiling)
+
+Right now you present:
+
+* multiple features
+* on one page
+
+⸻
+
+Problem:
+
+Google ranks pages, not concepts.
+
+You need:
+
+* dedicated pages for each intent
+
+Because:
+
+High-intent queries exist for:
+
+* rent collection software
+* tenant screening services
+* rental application software
+
+⸻
+
+You currently bundle them instead of owning them individually.
+
+⸻
+
+2.5 Your positioning is still slightly defensive
+
+You say:
+
+“none of the enterprise complexity you don’t”  
+
+⸻
+
+Issue:
+
+You’re still framing against:
+
+* “complex software”
+
+Instead of owning:
+
+* your value
+
+⸻
+
+Subtle but important shift:
+
+From:
+
+“not complex”
+
+To:
+
+“simpler system built for landlords”
+
+⸻
+
+3. Competitive reality (updated based on your changes)
+
+You are now clearly positioned between:
+
+Zillow / Rentler
+
+* Strong UX
+* Weak depth
+* Weak compliance
+
+Buildium / AppFolio
+
+* Full systems
+* High complexity
+* Expensive
+
+⸻
+
+Your lane (now clearer than before):
+
+Simple system + deeper intelligence where it matters
+
+Specifically:
+
+* screening depth
+* decoder
+* compliance
+* rent collection
+
+⸻
+
+4. What still limits growth
+
+Limitation #1: No dominant entry point
+
+You still haven’t chosen:
+
+* Decoder-first
+* Rent-first
+* Screening-first
+
+⸻
+
+Limitation #2: No “system page” authority
+
+You say you’re a system…
+
+…but don’t fully prove it structurally across pages.
+
+⸻
+
+Limitation #3: Rent not emotionally positioned
+
+You show:
+
+* what rent collection does
+
+But not:
+
+* why it matters
+
+Example missed angle:
+
+* reduces late payments
+* creates payment history
+* simplifies disputes
+
+(All standard expectations in the category  )
+
+⸻
+
+5. What you should do next (only the highest leverage moves)
+
+1. Kill “toolkit” everywhere
+
+You’ve already outgrown it.
+
+⸻
+
+2. Reframe flow around rent
+
+Instead of:
+Application → … → Rent
+
+Shift perception to:
+
+Everything leads to rent collection and management
+
+⸻
+
+3. Turn decoder into a primary CTA
+
+Example direction:
+
+* “Explain my screening report”
+
+This becomes:
+
+* SEO engine
+* conversion hook
+
+⸻
+
+4. Break features into SEO pages
+
+You need standalone pages for:
+
+* rent collection
+* screening
+* application
+* decoder
+
+⸻
+
+5. Strengthen system identity
+
+You should feel like:
+
+a lightweight operating system
+
+Not:
+
+a bundle of tools
+
+⸻
+
+6. Bottom line (direct)
+
+You made real progress:
+
+* Category: fixed
+* Workflow: introduced
+* Product clarity: improved
+
+⸻
+
+But you are still leaving leverage on the table:
+
+* Rent is not fully capitalized
+* Decoder is under-positioned
+* SEO structure is incomplete
+* “Toolkit” is still diluting you
+
+⸻
+
+Final assessment
+
+You are now:
+
+~70% correctly positioned
+
+Before:
+~40%

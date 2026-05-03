@@ -13,8 +13,8 @@ export const landingCopy = {
   },
 
   workflow: {
-    title: "One system, five everyday jobs",
-    subtitle: "Application through rent collection — without piecing together five different tools.",
+    title: "Every step builds toward reliable monthly rent",
+    subtitle: "Application, screening, decoder, and lease forms all flow into the part that actually matters: rent showing up on time, every month.",
     steps: [
       { key: "application", label: "Application", body: "Send a property link. Applicants upload ID and paystubs." },
       { key: "screening", label: "Screening", body: "One-click order to Western Verify with applicant consent." },

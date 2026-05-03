@@ -12,7 +12,7 @@ const SITE = "https://leaseshieldapp.com";
 
 const CLUSTER_LINKS = `
   <nav aria-label="LeaseShield solutions">
-    <h2>Explore the full LeaseShield toolkit</h2>
+    <h2>Explore the LeaseShield system</h2>
     <ul>
       <li><a href="/rental-management-system">Rental Management System</a> &mdash; the full landlord workflow in one place.</li>
       <li><a href="/tenant-screening-services">Tenant Screening Services</a> &mdash; complete background, credit, and eviction checks.</li>
@@ -37,7 +37,7 @@ const PAGES: Record<string, PrerenderEntry> = {
     bodyHtml: `
       <header>
         <h1>Simple rental management system for landlords</h1>
-        <p>From application and screening to rent collection and compliance &mdash; everything you actually need, none of the enterprise complexity you don't.</p>
+        <p>One simpler system built for independent landlords &mdash; application, screening, lease forms, rent collection, and compliance, all in one workflow.</p>
         <p><em>Most landlords only face these decisions a few times per year. LeaseShield is there when they do.</em></p>
       </header>
       <section>

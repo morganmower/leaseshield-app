@@ -100,7 +100,7 @@ export function TrialConversionNudge() {
               </Badge>
             </div>
             <p className="text-sm text-muted-foreground">
-              You've unlocked the AI Credit Decoder! Subscribe now to keep access and unlock the full toolkit.
+              You've unlocked the AI Credit Decoder! Subscribe now to keep access and unlock the full system.
             </p>
           </div>
 

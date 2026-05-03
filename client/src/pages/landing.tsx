@@ -280,7 +280,7 @@ export default function Landing() {
       ]
     },
     screening: {
-      title: "Screening Toolkit",
+      title: "Tenant Screening",
       icon: Search,
       description: "Step-by-step guidance on tenant screening with checklists, red flag indicators, and resources to help you make informed decisions.",
       details: [
@@ -670,14 +670,26 @@ export default function Landing() {
                   className="relative"
                   data-testid={`flow-step-${step.key}`}
                 >
-                  <Card className="p-4 md:p-5 h-full text-center border-brand-500/20 hover:border-brand-500/50 transition-colors">
+                  <Card className={`p-4 md:p-5 h-full text-center transition-colors ${
+                    step.key === 'rent'
+                      ? 'border-brand-500 bg-brand-500/[0.06] shadow-md'
+                      : 'border-brand-500/20 hover:border-brand-500/50'
+                  }`}>
                     <div className="flex flex-col items-center gap-2 md:gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-brand-500/10 text-xs font-bold text-brand-600 dark:text-brand-400">
+                        <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold ${
+                          step.key === 'rent'
+                            ? 'bg-brand-500 text-white'
+                            : 'bg-brand-500/10 text-brand-600 dark:text-brand-400'
+                        }`}>
                           {idx + 1}
                         </span>
-                        <div className="rounded-lg bg-brand-500/10 w-9 h-9 flex items-center justify-center">
-                          <Icon className="h-4 w-4 text-brand-600 dark:text-brand-400" />
+                        <div className={`rounded-lg w-9 h-9 flex items-center justify-center ${
+                          step.key === 'rent' ? 'bg-brand-500' : 'bg-brand-500/10'
+                        }`}>
+                          <Icon className={`h-4 w-4 ${
+                            step.key === 'rent' ? 'text-white' : 'text-brand-600 dark:text-brand-400'
+                          }`} />
                         </div>
                       </div>
                       <h3 className="font-display text-sm md:text-base font-semibold text-foreground">
@@ -686,6 +698,11 @@ export default function Landing() {
                       <p className="text-xs md:text-sm text-muted-foreground leading-snug">
                         {step.body}
                       </p>
+                      {step.key === 'rent' && (
+                        <span className="inline-flex items-center rounded-full bg-brand-500/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-brand-700 dark:text-brand-400">
+                          Where it lands
+                        </span>
+                      )}
                     </div>
                   </Card>
                   {idx < landingCopy.workflow.steps.length - 1 && (
@@ -705,7 +722,7 @@ export default function Landing() {
             variants={fadeInUp}
             className="text-center text-xs md:text-sm text-muted-foreground mt-8"
           >
-            Use one piece, use all five. Nothing here demands a learning curve.
+            Use one piece, use all five — but the system pays off when rent shows up on time, every month.
           </motion.p>
         </div>
       </section>
@@ -1468,7 +1485,7 @@ export default function Landing() {
                   <div className="rounded-lg bg-brand-50 w-10 h-10 md:w-12 md:h-12 flex items-center justify-center mb-3 md:mb-4">
                     <Building2 className="h-5 w-5 md:h-6 md:w-6 text-brand-600" />
                   </div>
-                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Landlord Toolkit Dashboard</h3>
+                  <h3 className="font-display text-lg md:text-xl font-semibold mb-2 md:mb-3">Rental Management Dashboard</h3>
                   <p className="text-muted-foreground mb-4">
                     Everything in one place. Leases, notices, checklists, guides, and compliance resources. Organized by property for instant access.
                   </p>
@@ -2356,7 +2373,7 @@ export default function Landing() {
               <div className="flex items-start gap-3">
                 <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
-                  <p className="font-medium text-foreground">Tenant Screening Toolkit</p>
+                  <p className="font-medium text-foreground">Tenant Screening Tools</p>
                   <p className="text-sm text-muted-foreground">Red flags and best practices</p>
                 </div>
               </div>
@@ -2371,7 +2388,7 @@ export default function Landing() {
                 <CheckCircle2 className="h-5 w-5 text-brand-600 flex-shrink-0 mt-0.5" />
                 <div>
                   <p className="font-medium text-foreground">24/7 Access to All Resources</p>
-                  <p className="text-sm text-muted-foreground">Your complete landlord toolkit</p>
+                  <p className="text-sm text-muted-foreground">Your complete rental management system</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
