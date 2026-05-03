@@ -17,6 +17,7 @@ import {
   AlertTriangle,
   Inbox,
   Activity,
+  Home,
   Receipt,
   Scale,
   Send,
@@ -180,7 +181,7 @@ export default function Dashboard() {
           <div className="flex items-start justify-between gap-4">
             <div className="flex items-start gap-4">
               <div className="p-3 bg-primary/10 rounded-md">
-                <Activity className="h-8 w-8 text-primary" />
+                <Home className="h-8 w-8 text-primary" />
               </div>
               <div>
                 <h1
