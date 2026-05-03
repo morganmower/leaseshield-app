@@ -490,6 +490,7 @@ export interface IStorage {
   // Rental Application System - Application link operations
   getRentalApplicationLinksByUnitId(unitId: string): Promise<RentalApplicationLink[]>;
   getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined>;
+  updateRentalApplicationLinkVanitySlug(linkId: string, vanitySlug: string | null): Promise<RentalApplicationLink | undefined>;
   getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined>;
   createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
   updateRentalApplicationLink(id: string, data: Partial<InsertRentalApplicationLink>): Promise<RentalApplicationLink | null>;
@@ -2600,9 +2601,24 @@ export class DatabaseStorage implements IStorage {
 
   async getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined> {
     return handleDbOperation(async () => {
-      const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.publicToken, token));
-      return link;
+      // Match by public token first (the original short random token), then by
+      // landlord-chosen vanity slug (case-insensitive — slugs are stored lowercase).
+      const normalized = token.toLowerCase();
+      const [byToken] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.publicToken, token));
+      if (byToken) return byToken;
+      const [bySlug] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.vanitySlug, normalized));
+      return bySlug;
     }, 'getRentalApplicationLinkByToken');
+  }
+
+  async updateRentalApplicationLinkVanitySlug(linkId: string, vanitySlug: string | null): Promise<RentalApplicationLink | undefined> {
+    return handleDbOperation(async () => {
+      const [updated] = await db.update(rentalApplicationLinks)
+        .set({ vanitySlug })
+        .where(eq(rentalApplicationLinks.id, linkId))
+        .returning();
+      return updated;
+    }, 'updateRentalApplicationLinkVanitySlug');
   }
 
   async getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined> {

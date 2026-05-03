@@ -1264,6 +1264,7 @@ export const rentalApplicationLinks = pgTable("rental_application_links", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
   unitId: varchar("unit_id").notNull().references(() => rentalUnits.id, { onDelete: 'cascade' }),
   publicToken: varchar("public_token", { length: 64 }).notNull().unique(), // Public URL token
+  vanitySlug: varchar("vanity_slug", { length: 64 }).unique(), // Optional landlord-chosen vanity slug (lowercased)
   mergedSchemaJson: jsonb("merged_schema_json").notNull(), // Final merged cover page + fields
   isActive: boolean("is_active").default(true).notNull(),
   expiresAt: timestamp("expires_at"), // Optional expiration
