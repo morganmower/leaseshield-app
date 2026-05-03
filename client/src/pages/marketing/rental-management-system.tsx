@@ -1,5 +1,5 @@
 import { Link, useLocation } from "wouter";
-import { CheckCircle2, ArrowRight, Sparkles, Building2, FileText, Search, Receipt, Scale, ShieldCheck, X } from "lucide-react";
+import { CheckCircle2, ArrowRight, Sparkles, Building2, FileText, Search, Receipt, Scale, ShieldCheck, X, ClipboardList, FilePenLine } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +48,29 @@ export default function RentalManagementSystem() {
             <Button size="lg" variant="outline" onClick={() => setLocation("/screening/explain")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-try-decoder">Try the screening decoder</Button>
           </div>
           <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-unit fees • 30-day money-back guarantee</p>
+        </div>
+      </section>
+
+      <section className="py-16 md:py-20 border-t bg-muted/30">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center max-w-2xl mx-auto mb-12">
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4" data-testid="text-section-flow">Application → Screening → Decoder → Lease → Rent</h2>
+            <p className="text-base md:text-lg text-muted-foreground">One workflow, no re-keying between tools.</p>
+          </div>
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+            {[
+              { icon: ClipboardList, label: "Application" },
+              { icon: Search, label: "Screening" },
+              { icon: Sparkles, label: "Decoder" },
+              { icon: FilePenLine, label: "Lease" },
+              { icon: Receipt, label: "Rent" },
+            ].map((s, i) => (
+              <Card key={s.label} className="p-6 text-center" data-testid={`card-flow-step-${i + 1}`}>
+                <div className="p-3 bg-primary/10 rounded-md w-fit mx-auto mb-3"><s.icon className="h-6 w-6 text-primary" /></div>
+                <div className="font-display text-sm font-semibold">{s.label}</div>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
