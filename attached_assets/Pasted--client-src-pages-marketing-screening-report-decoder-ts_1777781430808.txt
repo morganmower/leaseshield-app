@@ -1,0 +1,51 @@
+// client/src/pages/marketing/screening-report-decoder.tsx
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+
+export default function ScreeningReportDecoder() {
+  return (
+    <>
+      <SEO 
+        title="Screening Report Decoder — Plain English Explained" 
+        description="Upload or paste any tenant screening report and get instant plain-English explanations, risk flags, and FCRA guidance." 
+      />
+      <Header />
+      <main className="pt-20">
+        <section className="bg-slate-950 text-white py-24 text-center">
+          <h1 className="text-5xl font-bold tracking-tighter">Screening Report Decoder</h1>
+          <p className="mt-6 text-2xl text-slate-300 max-w-2xl mx-auto">Upload or paste your report → get plain-English risk flags + next steps</p>
+          <Button asChild size="lg" className="mt-10 bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-slate-950">
+            <a href="/signup">Get started — only $10/month</a>
+          </Button>
+        </section>
+
+        <section className="py-20 max-w-7xl mx-auto px-6">
+          <h2 className="text-3xl font-semibold mb-8">What does this report actually mean?</h2>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-3xl">
+              <h3 className="font-semibold text-[#2DD4BF]">Credit Breakdown</h3>
+              <p className="mt-4">Score, accounts, collections — explained in plain English.</p>
+            </div>
+            <div className="bg-white p-8 rounded-3xl">
+              <h3 className="font-semibold text-[#2DD4BF]">Criminal Breakdown</h3>
+              <p className="mt-4">What actually matters for landlords + risk flags.</p>
+            </div>
+            <div className="bg-white p-8 rounded-3xl">
+              <h3 className="font-semibold text-[#2DD4BF]">Eviction Breakdown</h3>
+              <p className="mt-4">Court records decoded with compliance warnings.</p>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-sm text-slate-500">FCRA &amp; Fair Housing guidance built in • Links directly to your lease and rent collection tools</p>
+            <a href="/tenant-screening-services" className="mt-6 inline-block text-[#2DD4BF] hover:underline">← Back to Tenant Screening Services</a>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}

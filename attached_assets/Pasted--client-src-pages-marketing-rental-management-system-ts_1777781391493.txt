@@ -1,0 +1,91 @@
+// client/src/pages/marketing/rental-management-system.tsx
+import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
+import { SEO } from "@/components/SEO";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
+export default function RentalManagementSystem() {
+  return (
+    <>
+      <SEO 
+        title="Simple Rental Management System for Landlords" 
+        description="Application, tenant screening, report decoder, compliant leases & online rent collection — all in one simple workflow. No enterprise complexity." 
+      />
+      <Header />
+      <main className="pt-20 bg-slate-50">
+        {/* HERO */}
+        <section className="bg-slate-950 text-white py-24">
+          <div className="max-w-7xl mx-auto px-6 text-center">
+            <h1 className="text-5xl md:text-6xl font-bold tracking-tighter leading-none">
+              Simple rental management system for landlords
+            </h1>
+            <p className="mt-6 text-2xl text-slate-300 max-w-3xl mx-auto">
+              From application and screening to rent collection and compliance — without the complexity.
+            </p>
+            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
+              <Button asChild size="lg" className="bg-[#2DD4BF] hover:bg-[#2DD4BF]/90 text-slate-950 text-lg px-10">
+                <a href="/signup">Get started — only $10/month</a>
+              </Button>
+            </div>
+            <p className="mt-6 text-sm text-slate-400">Cancel anytime • No per-report fees</p>
+          </div>
+        </section>
+
+        {/* WORKFLOW */}
+        <section className="py-20 max-w-7xl mx-auto px-6">
+          <h2 className="text-center text-3xl font-semibold mb-12">Application → Screening → Decoder → Lease → Rent Collection</h2>
+          <div className="grid md:grid-cols-5 gap-6 text-center">
+            <div className="bg-white p-6 rounded-3xl shadow-sm">📋<p className="mt-4 font-medium">Start Application</p></div>
+            <div className="bg-white p-6 rounded-3xl shadow-sm">🔍<p className="mt-4 font-medium">Run Screening</p></div>
+            <div className="bg-white p-6 rounded-3xl shadow-sm">📊<p className="mt-4 font-medium">Decode Report</p></div>
+            <div className="bg-white p-6 rounded-3xl shadow-sm">📜<p className="mt-4 font-medium">Generate Lease</p></div>
+            <div className="bg-white p-6 rounded-3xl shadow-sm">💰<p className="mt-4 font-medium">Collect Rent</p></div>
+          </div>
+        </section>
+
+        {/* WHY LEASESHIELD */}
+        <section className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-semibold text-center mb-12">Everything in one workflow — no enterprise complexity</h2>
+            <div className="grid md:grid-cols-2 gap-8">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-[#2DD4BF]">Built for independent landlords</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <p>Simple, fast, and focused. No contracts, no bloat, no $100+/month enterprise tools.</p>
+                </CardContent>
+              </Card>
+              <Card>
+                <CardHeader>
+                  <CardTitle>vs Buildium / AppFolio</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                  <ul className="space-y-2 text-sm">
+                    <li>✓ You don’t need enterprise features</li>
+                    <li>✓ Faster onboarding</li>
+                    <li>✓ Only $10/month</li>
+                  </ul>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </section>
+
+        {/* QUICK LINKS TO OTHER PAGES */}
+        <section className="py-20 bg-slate-50">
+          <div className="max-w-7xl mx-auto px-6">
+            <h2 className="text-3xl font-semibold text-center mb-12">Explore the full system</h2>
+            <div className="grid md:grid-cols-3 gap-6">
+              <a href="/tenant-screening-services" className="block p-8 bg-white rounded-3xl hover:shadow-xl transition">Tenant Screening Services</a>
+              <a href="/screening-report-decoder" className="block p-8 bg-white rounded-3xl hover:shadow-xl transition">Screening Report Decoder</a>
+              <a href="/rent-collection-software" className="block p-8 bg-white rounded-3xl hover:shadow-xl transition">Online Rent Collection</a>
+            </div>
+          </div>
+        </section>
+      </main>
+      <Footer />
+    </>
+  );
+}
