@@ -25,6 +25,11 @@ export async function registerApplyRoutes(app: Express) {
         return res.status(410).json({ message: "This application link has expired" });
       }
 
+      // Track views (best-effort, fire-and-forget)
+      storage.incrementRentalApplicationLinkViewCount(link.id).catch(err =>
+        console.error("Failed to increment link view count:", err)
+      );
+
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
@@ -350,6 +355,48 @@ export async function registerApplyRoutes(app: Express) {
         eventType: "application_submitted",
         metadataJson: { personId: person.id },
       });
+
+      // Notify landlord by email when an application is fully submitted (best-effort, non-fatal).
+      // Idempotent — re-submits won't double-send: we check for and log a
+      // 'landlord_notified' event so retries are safely skipped.
+      if (allCompleted) {
+        try {
+          const priorEvents = await storage.getRentalApplicationEvents(person.submissionId);
+          const alreadyNotified = priorEvents.some(e => e.eventType === 'landlord_notified');
+          if (!alreadyNotified) {
+            const submission = await storage.getRentalSubmission(person.submissionId);
+            if (submission) {
+              const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+              if (link) {
+                const unit = await storage.getRentalUnit(link.unitId);
+                if (unit) {
+                  const property = await storage.getRentalPropertyById(unit.propertyId);
+                  if (property?.userId) {
+                    const landlord = await storage.getUser(property.userId);
+                    if (landlord?.email) {
+                      const primaryApplicant = allPeople.find(p => p.role === 'applicant') || person;
+                      const applicantName = `${primaryApplicant.firstName || ''} ${primaryApplicant.lastName || ''}`.trim() || 'New applicant';
+                      await emailService.sendNewApplicationNotification(
+                        { email: landlord.email, firstName: landlord.firstName },
+                        property.name || 'your property',
+                        applicantName,
+                        primaryApplicant.email || '',
+                      );
+                      await storage.logRentalApplicationEvent({
+                        submissionId: person.submissionId,
+                        eventType: 'landlord_notified',
+                        metadataJson: { channel: 'email', to: landlord.email },
+                      });
+                    }
+                  }
+                }
+              }
+            }
+          }
+        } catch (notifyError) {
+          console.error("Landlord notification email failed (non-fatal):", notifyError);
+        }
+      }
 
       // Auto-screening: If all completed and property has autoScreening enabled, trigger screening
       if (allCompleted) {

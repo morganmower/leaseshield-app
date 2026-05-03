@@ -17,7 +17,8 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search, UserCheck, Settings, Pencil, Check, X as XIcon } from "lucide-react";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search, UserCheck, Settings, Pencil, Check, X as XIcon, QrCode, Pause, Play, Eye, ClipboardList, Send } from "lucide-react";
+import QRCode from "qrcode";
 import type { RentalProperty, RentalUnit, RentalApplicationLink, SavedDocument, UploadedDocument } from "@shared/schema";
 import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 
@@ -1481,7 +1482,14 @@ function PropertyCard({
   });
 
   // Always-present default applicant link, auto-created on demand
-  const { data: defaultLinkData } = useQuery<{ publicToken: string; vanitySlug: string | null; linkId: string }>({
+  const { data: defaultLinkData } = useQuery<{
+    publicToken: string;
+    vanitySlug: string | null;
+    linkId: string;
+    isActive?: boolean;
+    expiresAt?: string | null;
+    viewCount?: number;
+  }>({
     queryKey: ["/api/rental/properties", property.id, "default-link"],
   });
   const linkSlugOrToken = defaultLinkData?.vanitySlug || defaultLinkData?.publicToken || null;
@@ -1489,18 +1497,83 @@ function PropertyCard({
     ? `${window.location.origin}/apply/${linkSlugOrToken}`
     : null;
 
+  // Per-link stats (views, started, submitted) — only fetched once we have a linkId
+  const { data: linkStats } = useQuery<{ views: number; started: number; submitted: number }>({
+    queryKey: ["/api/rental/links", defaultLinkData?.linkId, "stats"],
+    enabled: !!defaultLinkData?.linkId,
+  });
+
   const copyDefaultLink = () => {
     if (!defaultLinkUrl) return;
     navigator.clipboard.writeText(defaultLinkUrl);
     toast({ title: "Link Copied!", description: "Send this link to applicants for this property." });
   };
 
+  // Download a QR code PNG that points to the application link
+  const downloadQrCode = async () => {
+    if (!defaultLinkUrl) return;
+    try {
+      const dataUrl = await QRCode.toDataURL(defaultLinkUrl, { width: 512, margin: 2 });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      const safeName = (property.name || "property").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "property";
+      a.download = `apply-${safeName}-qr.png`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    } catch (err: any) {
+      toast({ title: "Couldn't generate QR code", description: err?.message || "Please try again.", variant: "destructive" });
+    }
+  };
+
+  // Slugify property name as a starting suggestion when the landlord first edits the URL
+  const suggestSlugFromPropertyName = (name: string | null | undefined): string => {
+    if (!name) return "";
+    return name
+      .toLowerCase()
+      .normalize("NFKD")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 40);
+  };
+
   // Inline vanity-slug editor
   const [isEditingSlug, setIsEditingSlug] = useState(false);
   const [slugDraft, setSlugDraft] = useState("");
   const startEditSlug = () => {
-    setSlugDraft(defaultLinkData?.vanitySlug || "");
+    const existing = defaultLinkData?.vanitySlug || "";
+    setSlugDraft(existing || suggestSlugFromPropertyName(property.name));
     setIsEditingSlug(true);
+  };
+
+  // Pause / resume / expiration controls
+  const isLinkActive = defaultLinkData?.isActive !== false;
+  const expiresAtIso = defaultLinkData?.expiresAt || null;
+  const expiresAtDateOnly = expiresAtIso ? new Date(expiresAtIso).toISOString().slice(0, 10) : "";
+  const isExpired = !!expiresAtIso && new Date(expiresAtIso) < new Date();
+  const updateLinkStatusMutation = useMutation({
+    mutationFn: async (data: { isActive?: boolean; expiresAt?: string | null }) => {
+      const res = await apiRequest("PATCH", `/api/rental/links/${defaultLinkData?.linkId}/status`, data);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to update link" }));
+        throw new Error(err.message || "Failed to update link");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", property.id, "default-link"] });
+    },
+    onError: (e: any) => {
+      toast({ title: "Couldn't update link", description: e.message, variant: "destructive" });
+    },
+  });
+  const togglePause = () => {
+    if (!defaultLinkData?.linkId) return;
+    updateLinkStatusMutation.mutate({ isActive: !isLinkActive });
+  };
+  const setExpiresAt = (value: string) => {
+    if (!defaultLinkData?.linkId) return;
+    updateLinkStatusMutation.mutate({ expiresAt: value === "" ? null : value });
   };
   const updateSlugMutation = useMutation({
     mutationFn: async (newSlug: string | null) => {
@@ -1584,10 +1657,16 @@ function PropertyCard({
         
         {/* Default applicant link — always shown, ready to share */}
         <div className="mb-3 rounded-md border border-border bg-background p-3" data-testid={`default-link-${property.id}`}>
-          <div className="flex items-center justify-between gap-2 mb-2">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
             <div className="flex items-center gap-2 min-w-0">
               <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
               <span className="text-sm font-medium">Application Link</span>
+              {!isLinkActive && (
+                <Badge variant="secondary" className="text-xs" data-testid={`badge-link-paused-${property.id}`}>Paused</Badge>
+              )}
+              {isLinkActive && isExpired && (
+                <Badge variant="destructive" className="text-xs" data-testid={`badge-link-expired-${property.id}`}>Expired</Badge>
+              )}
             </div>
             <span className="text-xs text-muted-foreground">Send to applicants</span>
           </div>
@@ -1659,6 +1738,15 @@ function PropertyCard({
                 </Button>
                 <Button
                   size="sm"
+                  variant="outline"
+                  onClick={downloadQrCode}
+                  data-testid={`button-download-qr-${property.id}`}
+                >
+                  <QrCode className="h-3.5 w-3.5 mr-1" />
+                  QR Code
+                </Button>
+                <Button
+                  size="sm"
                   variant="ghost"
                   asChild
                   data-testid={`button-open-default-link-${property.id}`}
@@ -1672,6 +1760,86 @@ function PropertyCard({
             )
           ) : (
             <p className="text-xs text-muted-foreground">Preparing your link…</p>
+          )}
+
+          {/* Stats + lifecycle controls */}
+          {defaultLinkData?.linkId && !isEditingSlug && (
+            <div className="mt-3 pt-3 border-t border-border space-y-3">
+              <div className="flex flex-wrap items-center gap-3 text-xs" data-testid={`link-stats-${property.id}`}>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Eye className="h-3.5 w-3.5" />
+                  <span>
+                    <span className="font-semibold text-foreground" data-testid={`stat-views-${property.id}`}>
+                      {linkStats?.views ?? 0}
+                    </span>{" "}
+                    views
+                  </span>
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <ClipboardList className="h-3.5 w-3.5" />
+                  <span>
+                    <span className="font-semibold text-foreground" data-testid={`stat-started-${property.id}`}>
+                      {linkStats?.started ?? 0}
+                    </span>{" "}
+                    started
+                  </span>
+                </span>
+                <span className="flex items-center gap-1 text-muted-foreground">
+                  <Send className="h-3.5 w-3.5" />
+                  <span>
+                    <span className="font-semibold text-foreground" data-testid={`stat-submitted-${property.id}`}>
+                      {linkStats?.submitted ?? 0}
+                    </span>{" "}
+                    submitted
+                  </span>
+                </span>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={togglePause}
+                  disabled={updateLinkStatusMutation.isPending}
+                  data-testid={`button-toggle-link-active-${property.id}`}
+                >
+                  {isLinkActive ? (
+                    <>
+                      <Pause className="h-3.5 w-3.5 mr-1" />
+                      Pause link
+                    </>
+                  ) : (
+                    <>
+                      <Play className="h-3.5 w-3.5 mr-1" />
+                      Resume link
+                    </>
+                  )}
+                </Button>
+                <Label htmlFor={`expires-${property.id}`} className="text-xs text-muted-foreground">
+                  Expires:
+                </Label>
+                <Input
+                  id={`expires-${property.id}`}
+                  type="date"
+                  value={expiresAtDateOnly}
+                  onChange={(e) => setExpiresAt(e.target.value)}
+                  disabled={updateLinkStatusMutation.isPending}
+                  className="h-9 w-[160px] text-xs"
+                  data-testid={`input-link-expires-${property.id}`}
+                />
+                {expiresAtDateOnly && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setExpiresAt("")}
+                    disabled={updateLinkStatusMutation.isPending}
+                    data-testid={`button-clear-expires-${property.id}`}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            </div>
           )}
         </div>
 

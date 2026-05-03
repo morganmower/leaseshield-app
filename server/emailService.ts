@@ -1359,6 +1359,78 @@ LeaseShield App
 
     return await this.sendEmail({ email: invitee.email, firstName: invitee.firstName }, template);
   }
+  async sendNewApplicationNotification(
+    landlord: { email: string; firstName?: string | null },
+    propertyName: string,
+    applicantName: string,
+    applicantEmail: string,
+  ): Promise<boolean> {
+    const baseUrl = process.env.REPLIT_DOMAINS
+      ? `https://${process.env.REPLIT_DOMAINS.split(',')[0]}`
+      : 'https://leaseshieldapp.com';
+    const inboxUrl = `${baseUrl}/rental-applications`;
+
+    const template: EmailTemplate = {
+      subject: `New rental application for ${propertyName}`,
+      textBody: `Hi${landlord.firstName ? ' ' + landlord.firstName : ''},
+
+You have a new rental application:
+
+Property: ${propertyName}
+Applicant: ${applicantName}
+Email: ${applicantEmail}
+
+View it in your Application Inbox: ${inboxUrl}
+
+— LeaseShield App
+`,
+      htmlBody: `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #334155; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #14b8a6 0%, #0d9488 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e2e8f0; border-radius: 0 0 8px 8px; }
+    .info-box { background: #f0fdfa; border: 1px solid #14b8a6; padding: 20px; border-radius: 8px; margin: 20px 0; }
+    .info-row { margin: 8px 0; }
+    .info-label { color: #64748b; font-size: 13px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .info-value { color: #0f172a; font-size: 16px; font-weight: 500; }
+    .cta-button { display: inline-block; background: #14b8a6; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1 style="margin:0;">New Rental Application</h1>
+    </div>
+    <div class="content">
+      <p>Hi${landlord.firstName ? ' ' + landlord.firstName : ''},</p>
+      <p>A new rental application was just submitted.</p>
+      <div class="info-box">
+        <div class="info-row"><div class="info-label">Property</div><div class="info-value">${propertyName}</div></div>
+        <div class="info-row"><div class="info-label">Applicant</div><div class="info-value">${applicantName}</div></div>
+        <div class="info-row"><div class="info-label">Email</div><div class="info-value">${applicantEmail}</div></div>
+      </div>
+      <div style="text-align:center;">
+        <a href="${inboxUrl}" class="cta-button">Open Application Inbox</a>
+      </div>
+      <div class="footer">
+        <p>LeaseShield App</p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+`,
+    };
+
+    return await this.sendEmail({ email: landlord.email, firstName: landlord.firstName || undefined }, template);
+  }
+
   async sendScreeningCompleteNotification(
     owner: { email: string; firstName?: string },
     personName: string,

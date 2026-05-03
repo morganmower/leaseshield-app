@@ -1268,6 +1268,7 @@ export const rentalApplicationLinks = pgTable("rental_application_links", {
   mergedSchemaJson: jsonb("merged_schema_json").notNull(), // Final merged cover page + fields
   isActive: boolean("is_active").default(true).notNull(),
   expiresAt: timestamp("expires_at"), // Optional expiration
+  viewCount: integer("view_count").default(0).notNull(), // Number of times the application page was opened
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 

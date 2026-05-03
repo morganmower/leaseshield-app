@@ -263,7 +263,16 @@ export async function registerRentalPropertiesRoutes(app: Express) {
       defaultLinkLocks.set(propertyId, work);
       try {
         const { unit, link } = await work;
-        res.json({ unit, link, publicToken: link.publicToken, vanitySlug: link.vanitySlug || null, linkId: link.id });
+        res.json({
+          unit,
+          link,
+          publicToken: link.publicToken,
+          vanitySlug: link.vanitySlug || null,
+          linkId: link.id,
+          isActive: link.isActive,
+          expiresAt: link.expiresAt,
+          viewCount: link.viewCount ?? 0,
+        });
       } finally {
         // Only clear if no newer work has chained on
         if (defaultLinkLocks.get(propertyId) === work) {
@@ -342,6 +351,74 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     } catch (error) {
       console.error("Error updating vanity slug:", error);
       res.status(500).json({ message: "Failed to update link URL" });
+    }
+  });
+
+  // Application link analytics: views + started + submitted counts
+  app.get('/api/rental/links/:linkId/stats', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const link = await storage.getRentalApplicationLink(req.params.linkId);
+      if (!link) return res.status(404).json({ message: "Link not found" });
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) return res.status(404).json({ message: "Link not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Not authorized" });
+
+      const stats = await storage.getRentalApplicationLinkStats(link.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error getting link stats:", error);
+      res.status(500).json({ message: "Failed to get link stats" });
+    }
+  });
+
+  // Pause / resume / set expiration on an application link.
+  // Body: { isActive?: boolean, expiresAt?: ISO date string | null }
+  app.patch('/api/rental/links/:linkId/status', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const link = await storage.getRentalApplicationLink(req.params.linkId);
+      if (!link) return res.status(404).json({ message: "Link not found" });
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) return res.status(404).json({ message: "Link not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Not authorized" });
+
+      const update: { isActive?: boolean; expiresAt?: Date | null } = {};
+      if (req.body?.isActive !== undefined) {
+        if (typeof req.body.isActive !== "boolean") {
+          return res.status(400).json({ message: "isActive must be a boolean" });
+        }
+        update.isActive = req.body.isActive;
+      }
+      if (req.body?.expiresAt !== undefined) {
+        if (req.body.expiresAt === null || req.body.expiresAt === "") {
+          update.expiresAt = null;
+        } else {
+          const raw = String(req.body.expiresAt);
+          // For bare YYYY-MM-DD inputs (date picker), interpret as end-of-day
+          // local time so a link "expires Sep 30" stays usable through 9/30.
+          const dateOnlyMatch = /^(\d{4})-(\d{2})-(\d{2})$/.exec(raw);
+          let d: Date;
+          if (dateOnlyMatch) {
+            const [, y, m, dd] = dateOnlyMatch;
+            d = new Date(Number(y), Number(m) - 1, Number(dd), 23, 59, 59, 999);
+          } else {
+            d = new Date(raw);
+          }
+          if (Number.isNaN(d.getTime())) {
+            return res.status(400).json({ message: "expiresAt must be a valid date or null" });
+          }
+          update.expiresAt = d;
+        }
+      }
+
+      const updated = await storage.updateRentalApplicationLinkStatus(link.id, update);
+      res.json({ link: updated });
+    } catch (error) {
+      console.error("Error updating link status:", error);
+      res.status(500).json({ message: "Failed to update link" });
     }
   });
 
@@ -663,6 +740,14 @@ export async function registerRentalPropertiesRoutes(app: Express) {
 
   app.post('/api/rental/links/:id/deactivate', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
+      const userId = getUserId(req);
+      const link = await storage.getRentalApplicationLink(req.params.id);
+      if (!link) return res.status(404).json({ message: "Link not found" });
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) return res.status(404).json({ message: "Link not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Not authorized" });
+
       await storage.deactivateRentalApplicationLink(req.params.id);
       res.json({ success: true });
     } catch (error) {

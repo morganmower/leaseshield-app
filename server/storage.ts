@@ -491,6 +491,9 @@ export interface IStorage {
   getRentalApplicationLinksByUnitId(unitId: string): Promise<RentalApplicationLink[]>;
   getRentalApplicationLinkByToken(token: string): Promise<RentalApplicationLink | undefined>;
   updateRentalApplicationLinkVanitySlug(linkId: string, vanitySlug: string | null): Promise<RentalApplicationLink | undefined>;
+  updateRentalApplicationLinkStatus(linkId: string, data: { isActive?: boolean; expiresAt?: Date | null }): Promise<RentalApplicationLink | undefined>;
+  incrementRentalApplicationLinkViewCount(linkId: string): Promise<void>;
+  getRentalApplicationLinkStats(linkId: string): Promise<{ views: number; started: number; submitted: number }>;
   getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined>;
   createRentalApplicationLink(link: InsertRentalApplicationLink): Promise<RentalApplicationLink>;
   updateRentalApplicationLink(id: string, data: Partial<InsertRentalApplicationLink>): Promise<RentalApplicationLink | null>;
@@ -2619,6 +2622,55 @@ export class DatabaseStorage implements IStorage {
         .returning();
       return updated;
     }, 'updateRentalApplicationLinkVanitySlug');
+  }
+
+  async updateRentalApplicationLinkStatus(
+    linkId: string,
+    data: { isActive?: boolean; expiresAt?: Date | null },
+  ): Promise<RentalApplicationLink | undefined> {
+    return handleDbOperation(async () => {
+      const update: Record<string, any> = {};
+      if (data.isActive !== undefined) update.isActive = data.isActive;
+      if (data.expiresAt !== undefined) update.expiresAt = data.expiresAt;
+      if (Object.keys(update).length === 0) {
+        const [link] = await db.select().from(rentalApplicationLinks).where(eq(rentalApplicationLinks.id, linkId));
+        return link;
+      }
+      const [updated] = await db.update(rentalApplicationLinks)
+        .set(update)
+        .where(eq(rentalApplicationLinks.id, linkId))
+        .returning();
+      return updated;
+    }, 'updateRentalApplicationLinkStatus');
+  }
+
+  async incrementRentalApplicationLinkViewCount(linkId: string): Promise<void> {
+    return handleDbOperation(async () => {
+      await db.update(rentalApplicationLinks)
+        .set({ viewCount: sql`${rentalApplicationLinks.viewCount} + 1` })
+        .where(eq(rentalApplicationLinks.id, linkId));
+    }, 'incrementRentalApplicationLinkViewCount');
+  }
+
+  async getRentalApplicationLinkStats(linkId: string): Promise<{ views: number; started: number; submitted: number }> {
+    return handleDbOperation(async () => {
+      const [link] = await db.select({ viewCount: rentalApplicationLinks.viewCount })
+        .from(rentalApplicationLinks)
+        .where(eq(rentalApplicationLinks.id, linkId));
+      const submissions = await db.select({ status: rentalSubmissions.status })
+        .from(rentalSubmissions)
+        .where(and(
+          eq(rentalSubmissions.applicationLinkId, linkId),
+          isNull(rentalSubmissions.deletedAt),
+        ));
+      let started = 0;
+      let submitted = 0;
+      for (const s of submissions) {
+        if (s.status === 'started') started++;
+        else submitted++; // submitted, screening_requested, in_progress, complete all count as submitted
+      }
+      return { views: link?.viewCount ?? 0, started, submitted };
+    }, 'getRentalApplicationLinkStats');
   }
 
   async getRentalApplicationLink(id: string): Promise<RentalApplicationLink | undefined> {
