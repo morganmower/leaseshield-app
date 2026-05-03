@@ -5,7 +5,7 @@ export const landingCopy = {
   hero: {
     h1: "The simple rental management system for independent landlords",
     subheadline:
-      "Applications, tenant screening, plain-English report explanations, state-specific lease and notice templates, and online rent collection - one system for landlords who only need depth where it matters.",
+      "Understand screening reports instantly. Send a state-specific lease in minutes. Collect rent automatically. One workflow, $10/month.",
     reassurance: "Only $10/month. Cancel anytime. 30-day money-back guarantee.",
     primaryCta: "Explain My Screening Report",
     primaryCtaHref: "/signup",
@@ -14,7 +14,7 @@ export const landingCopy = {
 
   workflow: {
     title: "Every step builds toward reliable monthly rent",
-    subtitle: "Application, screening, decoder, and lease forms all flow into the part that actually matters: rent showing up on time, every month.",
+    subtitle: "Application to screening to lease to rent - one workflow, no re-keying. Use one piece or all five.",
     steps: [
       { key: "application", label: "Application", body: "Send a property link. Applicants upload ID and paystubs." },
       { key: "screening", label: "Screening", body: "One-click order to Western Verify with applicant consent." },

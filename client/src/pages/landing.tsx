@@ -255,7 +255,7 @@ export default function Landing() {
       icon: FileText,
       description: "Access professional lease agreements and rental forms tailored to your state's exact legal requirements.",
       details: [
-        "Residential lease agreements compliant with all 15 supported state laws",
+        "Residential lease agreements compliant with all 16 supported state laws",
         "Rental application forms with fair housing compliance",
         "Move-in and move-out inspection checklists",
         "Lease addendums for pets, parking, utilities, and more",
@@ -786,10 +786,10 @@ export default function Landing() {
           >
             <Badge variant="secondary" className="mb-4">Why rent collection matters</Badge>
             <h2 className="font-display text-2xl md:text-4xl font-bold mb-4 text-foreground">
-              The reason the system pays you back
+              Collect rent automatically. Build the record that protects you.
             </h2>
             <p className="text-base md:text-lg text-muted-foreground">
-              Late payments, court disputes, and renewal conversations all turn on the same thing - a clean record of what happened, when. Rent collection is what builds it.
+              Every month of clean rent history is leverage in court, at renewal, and at sale.
             </p>
           </motion.div>
           <motion.div
@@ -804,9 +804,9 @@ export default function Landing() {
                 <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
                   <Repeat className="h-6 w-6 text-brand-600" />
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Reduces late payments</h3>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Fewer late payments</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Auto-pay turns rent from a monthly negotiation into a non-event. Tenants enroll once; rent shows up the same day every month - without a text message from you.
+                  Tenants enroll once in ACH auto-pay. Rent lands the same day every month - without you sending a reminder text.
                 </p>
               </Card>
             </motion.div>
@@ -815,9 +815,9 @@ export default function Landing() {
                 <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
                   <FileCheck className="h-6 w-6 text-brand-600" />
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Creates the payment history that protects you</h3>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Court-ready payment history</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  Every transaction is timestamped and tied to a lease. If a dispute lands in court - or you&rsquo;re renewing, raising rent, or selling - you don&rsquo;t reconstruct the year. You export it.
+                  Every payment is timestamped and tied to the lease. When you need it for court, renewal, or sale, you export it - you don't reconstruct it.
                 </p>
               </Card>
             </motion.div>
@@ -826,9 +826,9 @@ export default function Landing() {
                 <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
                   <ShieldCheck className="h-6 w-6 text-brand-600" />
                 </div>
-                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Simplifies disputes</h3>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Shorter disputes</h3>
                 <p className="text-sm text-muted-foreground leading-relaxed">
-                  When a payment misses, the ledger shows exactly what&rsquo;s owed and when. No guessing, no he-said-she-said - just the record. The conversation gets shorter, and the relationship survives it.
+                  The ledger shows exactly what's owed and when. No guesswork - just the record, and a much shorter conversation.
                 </p>
               </Card>
             </motion.div>
@@ -1486,10 +1486,10 @@ export default function Landing() {
             className="text-center mb-12 sm:mb-16"
           >
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              Everything You Need to Operate Confidently
+              Everything you need to run the rental
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              Simple, protective, state-specific guidance that prevents legal and financial mistakes
+              Five tools, one workflow. Use what you need today; the rest is there when the moment comes.
             </p>
           </motion.div>
 
@@ -1689,11 +1689,10 @@ export default function Landing() {
           >
             <Badge variant="outline" className="mb-3" data-testid="badge-rent-new">New</Badge>
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              Get Rent Paid On Time, Automatically
+              Get paid on time, automatically
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto">
-              Online rent collection is now built into LeaseShield. Send a link, get paid by bank transfer,
-              or set up monthly auto-pay so you never have to ask again.
+              Send a link, accept ACH, or set monthly auto-pay - rent shows up without the reminder text.
             </p>
           </motion.div>
 
@@ -1776,10 +1775,10 @@ export default function Landing() {
             className="text-center mb-12"
           >
             <h2 className="font-display text-3xl md:text-4xl font-extrabold tracking-tight text-foreground mb-4">
-              What Happens Without LeaseShield?
+              The cost of getting it wrong
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
-              One legal mistake can cost thousands. Here's what landlords face without proper protection:
+              One legal mistake costs thousands. Here's what's at stake.
             </p>
           </motion.div>
 

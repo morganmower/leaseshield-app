@@ -138,7 +138,7 @@ const HR = (): Paragraph =>
     spacing: { before: 200, after: 200 },
   });
 
-// NOTE: This function provides comprehensive state-specific disclosures for all 15 states.
+// NOTE: This function provides comprehensive state-specific disclosures for all 16 states.
 // Includes mold, radon, bed bugs, and all required statutory disclosures per state law.
 function getStateProvisionsParagraphs(stateId: string, depositDays: string): Paragraph[] {
   const stateName = STATE_NAMES[stateId] || stateId;
@@ -629,7 +629,7 @@ ${getStateProvisionsHtml(stateId, depositDays)}
 </html>`;
 }
 
-// NOTE: This function provides comprehensive state-specific disclosures for all 15 states (HTML version for PDF).
+// NOTE: This function provides comprehensive state-specific disclosures for all 16 states (HTML version for PDF).
 // Includes mold, radon, bed bugs, and all required statutory disclosures per state law.
 function getStateProvisionsHtml(stateId: string, depositDays: string): string {
   const provisions: Record<string, string> = {

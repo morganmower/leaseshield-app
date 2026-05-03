@@ -1,7 +1,7 @@
 // State law fallback helper for decoder safety
 // Pure functions for testing and deterministic behavior
 
-// All 15 supported states plus common city references
+// All 16 supported states plus common city references
 const STATE_SIGNALS = [
   // Full state names
   "california", "texas", "illinois", "new york", "utah", "north dakota", "south dakota",
