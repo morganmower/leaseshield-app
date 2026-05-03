@@ -72,6 +72,11 @@ import PropertyDetail from "@/pages/property-detail";
 const TxTenantSelectionCriteria = lazy(() => import("@/pages/tx-tenant-selection-criteria"));
 import ScreeningExplain from "@/pages/screening-explain";
 const ScreeningReportDecoder = lazy(() => import("@/pages/marketing/screening-report-decoder"));
+const RentalManagementSystem = lazy(() => import("@/pages/marketing/rental-management-system"));
+const TenantScreeningServices = lazy(() => import("@/pages/marketing/tenant-screening-services"));
+const RentalApplicationSoftware = lazy(() => import("@/pages/marketing/rental-application-software"));
+const RentCollectionSoftware = lazy(() => import("@/pages/marketing/rent-collection-software"));
+const LandlordFormsAndNotices = lazy(() => import("@/pages/marketing/landlord-forms-and-notices"));
 const DashboardPreview = lazy(() => import("@/pages/dashboard-preview"));
 const Activate = lazy(() => import("@/pages/activate"));
 const DenialDecisionAssistant = lazy(() => import("@/pages/denial-decision-assistant"));
@@ -131,8 +136,13 @@ function Router() {
         <Route path="/dashboard-preview" component={DashboardPreview} />
         {/* Unified decoder entry - accessible without login */}
         <Route path="/screening/explain" component={ScreeningExplain} />
-        {/* Marketing landing page for screening decoder (SEO) */}
+        {/* Marketing landing pages (SEO keyword cluster) */}
         <Route path="/screening-report-decoder" component={ScreeningReportDecoder} />
+        <Route path="/rental-management-system" component={RentalManagementSystem} />
+        <Route path="/tenant-screening-services" component={TenantScreeningServices} />
+        <Route path="/rental-application-software" component={RentalApplicationSoftware} />
+        <Route path="/rent-collection-software" component={RentCollectionSoftware} />
+        <Route path="/landlord-forms-and-notices" component={LandlordFormsAndNotices} />
         {/* Public application form */}
         <Route path="/apply/:token" component={Apply} />
         <Route path="/apply/join/:token" component={Apply} />
@@ -210,6 +220,11 @@ function Router() {
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
       <Route path="/screening-report-decoder" component={ScreeningReportDecoder} />
+      <Route path="/rental-management-system" component={RentalManagementSystem} />
+      <Route path="/tenant-screening-services" component={TenantScreeningServices} />
+      <Route path="/rental-application-software" component={RentalApplicationSoftware} />
+      <Route path="/rent-collection-software" component={RentCollectionSoftware} />
+      <Route path="/landlord-forms-and-notices" component={LandlordFormsAndNotices} />
       <Route path="/screening" component={Screening} />
       <Route path="/denial-decision" component={DenialDecisionAssistant} />
       <Route path="/audit-history" component={AuditHistory} />
