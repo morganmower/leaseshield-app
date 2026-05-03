@@ -71,6 +71,7 @@ import Apply from "@/pages/apply";
 import PropertyDetail from "@/pages/property-detail";
 const TxTenantSelectionCriteria = lazy(() => import("@/pages/tx-tenant-selection-criteria"));
 import ScreeningExplain from "@/pages/screening-explain";
+const ScreeningReportDecoder = lazy(() => import("@/pages/marketing/screening-report-decoder"));
 const DashboardPreview = lazy(() => import("@/pages/dashboard-preview"));
 const Activate = lazy(() => import("@/pages/activate"));
 const DenialDecisionAssistant = lazy(() => import("@/pages/denial-decision-assistant"));
@@ -130,6 +131,8 @@ function Router() {
         <Route path="/dashboard-preview" component={DashboardPreview} />
         {/* Unified decoder entry - accessible without login */}
         <Route path="/screening/explain" component={ScreeningExplain} />
+        {/* Marketing landing page for screening decoder (SEO) */}
+        <Route path="/screening-report-decoder" component={ScreeningReportDecoder} />
         {/* Public application form */}
         <Route path="/apply/:token" component={Apply} />
         <Route path="/apply/join/:token" component={Apply} />
@@ -206,6 +209,7 @@ function Router() {
       <Route path="/auto-pay/:token" component={AutoPay} />
       <Route path="/compliance" component={Compliance} />
       <Route path="/screening/explain" component={ScreeningExplain} />
+      <Route path="/screening-report-decoder" component={ScreeningReportDecoder} />
       <Route path="/screening" component={Screening} />
       <Route path="/denial-decision" component={DenialDecisionAssistant} />
       <Route path="/audit-history" component={AuditHistory} />

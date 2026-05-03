@@ -9,6 +9,7 @@ export async function registerSitemapRoute(app: Express) {
         { loc: '/', changefreq: 'weekly', priority: '1.0' },
         { loc: '/subscribe', changefreq: 'monthly', priority: '0.9' },
         { loc: '/screening/explain', changefreq: 'monthly', priority: '0.9' },
+        { loc: '/screening-report-decoder', changefreq: 'monthly', priority: '0.9' },
         { loc: '/blog', changefreq: 'weekly', priority: '0.8' },
         { loc: '/help', changefreq: 'monthly', priority: '0.6' },
         { loc: '/contact', changefreq: 'monthly', priority: '0.5' },
