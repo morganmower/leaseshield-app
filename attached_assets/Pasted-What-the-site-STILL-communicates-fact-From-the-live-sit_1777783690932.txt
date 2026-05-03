@@ -1,0 +1,424 @@
+What the site STILL communicates (fact)
+
+From the live site:
+
+* “Landlord protection toolkit”
+* Emphasis on:
+    * templates
+    * compliance alerts
+    * rent tracking
+    * tenant screening  
+
+From your own positioning content:
+
+* “simple toolkit”
+* “no expensive software”
+* “no learning curve”  
+
+⸻
+
+2. What changed (fact)
+
+* Rent payments added (new capability)
+* You now span:
+    * application
+    * screening
+    * decoding
+    * compliance
+    * rent collection
+
+⸻
+
+3. The core issue (interpretation)
+
+You have evolved into:
+
+a system
+
+But you are still marketing:
+
+a toolkit
+
+That gap is now bigger than before.
+
+Before, it was just a positioning inefficiency.
+Now, it’s actively holding back revenue and retention.
+
+⸻
+
+4. New problem introduced by rent payments
+
+Adding rent payments changes your product category whether you like it or not.
+
+Without rent:
+
+You were:
+
+* decision support (screening + decoder)
+* compliance support
+
+With rent:
+
+You are now:
+
+* operational infrastructure
+
+That’s a different buyer mindset:
+
+* higher willingness to pay
+* higher switching cost
+* higher retention
+
+⸻
+
+But your site does NOT reflect that shift
+
+Right now, rent payments appear (based on messaging) as:
+
+“another feature”
+
+Instead of:
+
+“the thing that makes this your daily system”
+
+⸻
+
+5. Funnel audit (updated)
+
+Step 1: Landing
+
+Still unclear entry point.
+
+User could be:
+
+* confused about screening
+* trying to collect rent
+* needing forms
+
+But the site does not clearly route them.
+
+⸻
+
+Step 2: Evaluation
+
+Your strongest differentiator:
+
+* decoder
+
+But:
+
+* still not clearly the primary hook
+
+⸻
+
+Step 3: Activation
+
+Big miss:
+
+You now have:
+
+* recurring behavior (rent collection)
+
+But:
+
+* no clear onboarding path tied to that
+
+⸻
+
+6. The structural flaw (this is the real issue)
+
+You are presenting:
+
+features side-by-side
+
+Instead of:
+
+a sequence (workflow)
+
+⸻
+
+Current mental model (bad):
+
+* tools
+* options
+* features
+
+Required mental model (correct):
+
+* steps
+* flow
+* process
+
+⸻
+
+7. SEO audit (updated reality)
+
+Right now your SEO footprint is constrained by language like:
+
+* “toolkit”
+* “templates”
+* “compliance”
+
+Those are:
+
+* low-volume
+* low-intent
+* low monetization keywords
+
+⸻
+
+You are NOT capturing:
+
+High-intent searches like:
+
+* “collect rent online”
+* “tenant screening and rent collection”
+* “simple property management software”
+
+⸻
+
+Why this matters
+
+Because:
+
+* those keywords convert
+* those keywords imply system ownership
+* those keywords increase LTV
+
+⸻
+
+8. Competitive position (more blunt)
+
+You are currently positioned like:
+
+* a helper tool
+
+But you should be positioned like:
+
+* a lighter alternative to full PM software
+
+⸻
+
+Competitor reality:
+
+Zillow / Rentler
+
+* win on UX + free
+* weak on depth
+
+AppFolio / Buildium
+
+* win on system
+* lose on simplicity
+
+⸻
+
+Your actual lane (but not claimed clearly):
+
+“simple system with depth where it matters”
+
+That’s powerful—but currently diluted.
+
+⸻
+
+9. Rent payments (deep audit)
+
+This is where I’m going to push back on your current approach.
+
+What you’re likely thinking:
+
+“Rent payments is an add-on feature”
+
+Reality:
+
+It is your retention engine
+
+⸻
+
+Why:
+
+* Screening = episodic
+* Forms = occasional
+* Decoder = situational
+
+But:
+
+* Rent = monthly behavior
+* Rent = tenant interaction
+* Rent = landlord habit loop
+
+⸻
+
+If under-positioned:
+
+You will:
+
+* lose stickiness
+* lose upsell potential
+* lose ability to compete with systems
+
+⸻
+
+10. Messaging problems (still present)
+
+Problem 1: “No expensive software”
+
+You are trying to:
+
+* differentiate from AppFolio
+
+But you are also:
+
+* lowering your perceived value
+
+This is dangerous.
+
+⸻
+
+Problem 2: Simplicity framed incorrectly
+
+You’re saying:
+
+“not software”
+
+You should be saying:
+
+“simpler software”
+
+⸻
+
+Problem 3: No dominant use case
+
+You currently have 3 strong ones:
+
+1. Explain my report
+2. Run screening properly
+3. Collect rent
+
+None is clearly primary.
+
+⸻
+
+11. What’s actually working (important)
+
+Don’t lose these:
+
+1. Decoder
+
+This is still your most defensible advantage.
+
+2. Compliance framing
+
+Most competitors avoid it. You lean into it.
+
+3. Simplicity
+
+Critical for your target segment.
+
+⸻
+
+12. What’s still broken
+
+1. Category confusion
+
+Toolkit vs system
+
+2. No unified workflow
+
+Everything feels modular
+
+3. Rent payments under-leveraged
+
+Biggest miss right now
+
+4. SEO ceiling
+
+Because of weak keyword targeting
+
+⸻
+
+13. What I would change immediately
+
+Change #1 (highest impact)
+
+Replace your positioning everywhere:
+
+From:
+
+“landlord toolkit”
+
+To:
+
+“simple rental management system”
+
+⸻
+
+Change #2
+
+Introduce ONE visual everywhere:
+
+Application → Screening → Decoder → Lease → Rent
+
+That becomes your identity.
+
+⸻
+
+Change #3
+
+Elevate rent payments:
+
+Not:
+
+“rent tracking”
+
+But:
+
+“collect rent and manage payments”
+
+⸻
+
+Change #4
+
+Make decoder the entry point for SEO:
+
+“Have a report you don’t understand?”
+
+That pulls in high-intent users.
+
+⸻
+
+Change #5
+
+Create one dominant CTA path:
+
+Right now you likely have multiple.
+
+You need:
+
+* ONE primary
+* ONE secondary
+
+⸻
+
+14. The uncomfortable truth
+
+You’re sitting between two categories:
+
+* too advanced to be a “toolkit”
+* not clearly positioned as a “system”
+
+That’s why:
+
+* conversion isn’t maximized
+* SEO isn’t compounding
+* retention isn’t fully unlocked
+
+⸻
+
+15. Bottom line
+
+Your product evolved faster than your positioning.
+
+And now:
+
+* messaging is lagging behind reality
