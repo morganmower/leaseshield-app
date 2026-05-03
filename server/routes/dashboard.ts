@@ -177,7 +177,7 @@ export async function registerDashboardRoutes(app: Express) {
           title: `Rent overdue from ${e.tenantName}`,
           description: `$${dollars} outstanding for ${e.description || e.month}.`,
           actionLabel: "Open rent ledger",
-          actionHref: "/rent-ledger",
+          actionHref: "/rent-ledger?tab=track",
           timestamp: e.effectiveDate ? new Date(e.effectiveDate).toISOString() : undefined,
         });
       }

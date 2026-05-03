@@ -21,7 +21,11 @@ import { SEO } from "@/components/seo";
 export default function RentLedger() {
   const { user } = useAuth();
   const { toast } = useToast();
-  const [activeTab, setActiveTab] = useState("online");
+  const [activeTab, setActiveTab] = useState(() => {
+    if (typeof window === "undefined") return "online";
+    const tab = new URLSearchParams(window.location.search).get("tab");
+    return tab && ["online", "track", "recurring", "export"].includes(tab) ? tab : "online";
+  });
   const [tenantName, setTenantName] = useState("");
   const [effectiveDate, setEffectiveDate] = useState(new Date().toISOString().split('T')[0]);
   const [type, setType] = useState<"charge" | "payment">("charge");
