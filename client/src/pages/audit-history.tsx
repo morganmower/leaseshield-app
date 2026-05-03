@@ -205,23 +205,43 @@ export default function AuditHistory() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="h-full overflow-y-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <ClipboardList className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-page-title">
+                  Screening Decision History
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Review your past screening decisions and compliance documentation.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-decisions-count">
+                  {logs.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Decisions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <div className="flex items-center gap-4 mb-6">
         <Link href="/denial-decision">
           <Button variant="ghost" size="sm" data-testid="button-back">
             <ArrowLeft className="h-4 w-4 mr-1" /> Back to Decision Assistant
           </Button>
         </Link>
-      </div>
-
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold mb-2 flex items-center gap-2" data-testid="text-page-title">
-          <ClipboardList className="h-6 w-6" />
-          Screening Decision History
-        </h1>
-        <p className="text-muted-foreground">
-          Review your past screening decisions and compliance documentation.
-        </p>
       </div>
 
       {logs.length === 0 ? (
@@ -590,6 +610,7 @@ export default function AuditHistory() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+      </div>
     </div>
   );
 }

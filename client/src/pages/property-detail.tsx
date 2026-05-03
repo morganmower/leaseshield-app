@@ -123,44 +123,53 @@ export default function PropertyDetail() {
   const totalDocuments = savedDocuments.length + uploadedDocuments.length;
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="mb-6">
-        <Link href="/properties">
-          <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back-properties">
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Properties
-          </Button>
-        </Link>
-
-        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2" data-testid="text-property-name">
-              <Building2 className="h-6 w-6" />
-              {property.name}
-            </h1>
-            <p className="text-muted-foreground flex items-center gap-1 mt-1">
-              <MapPin className="h-4 w-4" />
-              {property.address}
-              {property.city && property.state && `, ${property.city}, ${property.state}`}
-              {property.zipCode && ` ${property.zipCode}`}
-            </p>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Link href="/rent-ledger">
-              <Button variant="outline" size="sm" data-testid="button-add-ledger-entry">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Ledger Entry
-              </Button>
-            </Link>
-            <Link href="/my-documents">
-              <Button variant="outline" size="sm" data-testid="button-upload-document">
-                <Upload className="h-4 w-4 mr-2" />
-                Upload Document
-              </Button>
-            </Link>
+    <div className="h-full overflow-y-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <Link href="/properties">
+            <Button variant="ghost" size="sm" className="mb-4" data-testid="button-back-properties">
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Properties
+            </Button>
+          </Link>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Building2 className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-property-name">
+                  {property.name}
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  {property.address}
+                  {property.city && property.state && `, ${property.city}, ${property.state}`}
+                  {property.zipCode && ` ${property.zipCode}`}
+                </p>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/rent-ledger">
+                <Button variant="outline" size="sm" data-testid="button-add-ledger-entry">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Ledger Entry
+                </Button>
+              </Link>
+              <Link href="/my-documents">
+                <Button variant="outline" size="sm" data-testid="button-upload-document">
+                  <Upload className="h-4 w-4 mr-2" />
+                  Upload Document
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </div>
+
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
 
       {/* Summary Cards */}
       <div className="grid gap-4 md:grid-cols-3 mb-6">
@@ -538,6 +547,7 @@ export default function PropertyDetail() {
           </div>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

@@ -404,7 +404,34 @@ export default function DenialDecisionAssistant() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6 max-w-4xl">
+    <div className="h-full overflow-y-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Scale className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-page-title">
+                  Denial Decision Assistant
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Navigate tenant screening decisions while staying compliant with fair housing laws.
+                </p>
+              </div>
+            </div>
+            <Link href="/audit-history">
+              <Button variant="outline" size="sm" data-testid="button-view-history">
+                <ClipboardCheck className="h-4 w-4 mr-1" /> View History
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
       <Card className="mb-4 border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30">
         <CardContent className="py-3 px-4 flex items-start gap-3">
           <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
@@ -414,20 +441,6 @@ export default function DenialDecisionAssistant() {
           </p>
         </CardContent>
       </Card>
-
-      <div className="mb-6 flex items-start justify-between gap-4 flex-wrap">
-        <div>
-          <h1 className="text-2xl font-bold mb-2" data-testid="text-page-title">Denial Decision Assistant</h1>
-          <p className="text-muted-foreground">
-            Navigate tenant screening decisions while staying compliant with fair housing laws.
-          </p>
-        </div>
-        <Link href="/audit-history">
-          <Button variant="outline" size="sm" data-testid="button-view-history">
-            <ClipboardCheck className="h-4 w-4 mr-1" /> View History
-          </Button>
-        </Link>
-      </div>
 
       <div className="flex items-center gap-2 mb-6" data-testid="step-indicator">
         {[1, 2, 3, 4].map((step) => (
@@ -1004,6 +1017,7 @@ export default function DenialDecisionAssistant() {
           </CardContent>
         </Card>
       )}
+      </div>
     </div>
   );
 }
