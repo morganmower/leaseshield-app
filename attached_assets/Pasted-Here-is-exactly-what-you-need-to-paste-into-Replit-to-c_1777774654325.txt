@@ -1,0 +1,203 @@
+Here is exactly what you need to paste into Replit to create a working, close visual clone of the LeaseShield dashboard (ready for HTML/CSS/JS project).
+Step-by-Step for Replit:
+
+Create a new HTML, CSS, JS repl (or Node.js + static if preferred).
+Replace the default index.html with the code below.
+Add a style.css file if you want (or keep everything inline for speed).
+Run it — it will look very close to your screenshot.
+
+Full index.html Code (Copy Everything Below)
+HTML<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LeaseShield Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    body { font-family: system-ui, -apple-system, sans-serif; }
+    .sidebar { background: #f8fafc; }
+    .card { transition: all 0.2s; }
+    .card:hover { transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1); }
+  </style>
+</head>
+<body class="bg-gray-50">
+  <div class="flex h-screen">
+    <!-- Sidebar -->
+    <div class="w-64 border-r border-gray-200 sidebar flex flex-col">
+      <div class="p-6 border-b">
+        <div class="flex items-center gap-3">
+          <i class="fas fa-home text-green-600 text-2xl"></i>
+          <div>
+            <span class="font-bold text-xl text-gray-900">LEASHIELD</span>
+            <p class="text-xs text-gray-500 -mt-1">LANDLORD PROTECTION</p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="flex-1 p-4 text-sm">
+        <div class="space-y-1">
+          <a href="#" class="flex items-center gap-3 px-4 py-3 bg-green-50 text-green-700 rounded-xl font-medium">
+            <i class="fas fa-tachometer-alt"></i> Dashboard
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-file-alt"></i> Document Templates
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-folder"></i> Document Library
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-building"></i> Properties
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-inbox"></i> Application Inbox
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-shield-alt"></i> Compliance
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-search"></i> Screening Decoder
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-exclamation-triangle"></i> Tenant Issues
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-gavel"></i> Legislation Updates
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-comments"></i> Communications
+          </a>
+          <a href="#" class="flex items-center gap-3 px-4 py-3 hover:bg-gray-100 rounded-xl text-gray-700">
+            <i class="fas fa-dollar-sign"></i> Rent Payments
+          </a>
+        </div>
+      </nav>
+
+      <div class="p-4 border-t">
+        <div class="flex items-center gap-3 bg-white p-3 rounded-2xl shadow-sm">
+          <div class="w-8 h-8 bg-green-600 text-white rounded-full flex items-center justify-center text-sm font-bold">DD</div>
+          <div>
+            <p class="font-medium text-sm">Danella DeVries</p>
+            <p class="text-xs text-green-600">Active</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="flex-1 overflow-auto">
+      <header class="border-b bg-white px-8 py-5 flex items-center justify-between">
+        <div class="flex items-center gap-4">
+          <button class="text-gray-500"><i class="fas fa-bars text-xl"></i></button>
+          <div class="font-medium">Dashboard</div>
+        </div>
+        <div class="flex items-center gap-6 text-gray-600">
+          <i class="fas fa-bell text-xl cursor-pointer"></i>
+          <i class="fas fa-cog text-xl cursor-pointer"></i>
+          <i class="fas fa-credit-card text-xl cursor-pointer"></i>
+          <button class="flex items-center gap-2 border px-4 py-2 rounded-xl text-sm font-medium">
+            Log Out <i class="fas fa-arrow-right"></i>
+          </button>
+        </div>
+      </header>
+
+      <div class="p-8">
+        <h1 class="text-3xl font-semibold mb-1">Welcome back, Danella</h1>
+        <p class="text-gray-500 mb-8">Here's what needs your attention today.</p>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-4 gap-6 mb-10">
+          <div class="bg-white p-6 rounded-3xl card shadow-sm border border-gray-100">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Properties</p>
+                <p class="text-4xl font-semibold mt-2">2</p>
+              </div>
+              <i class="fas fa-building text-4xl text-green-100"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-3xl card shadow-sm border border-gray-100">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Active applications</p>
+                <p class="text-4xl font-semibold mt-2">0</p>
+              </div>
+              <i class="fas fa-clipboard-list text-4xl text-green-100"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-3xl card shadow-sm border border-gray-100">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Reports to review</p>
+                <p class="text-4xl font-semibold mt-2">0</p>
+              </div>
+              <i class="fas fa-search text-4xl text-green-100"></i>
+            </div>
+          </div>
+          <div class="bg-white p-6 rounded-3xl card shadow-sm border border-gray-100">
+            <div class="flex justify-between">
+              <div>
+                <p class="text-gray-500 text-sm">Updates this month</p>
+                <p class="text-4xl font-semibold mt-2 text-green-600">1</p>
+              </div>
+              <i class="fas fa-bell text-4xl text-green-100"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Needs Attention -->
+        <div class="bg-white rounded-3xl p-6 mb-8 border border-amber-200">
+          <div class="flex items-start justify-between">
+            <div class="flex gap-4">
+              <div class="w-10 h-10 bg-amber-100 text-amber-600 rounded-2xl flex items-center justify-center text-2xl">⚠️</div>
+              <div>
+                <p class="font-semibold">WY: State management-federal mineral leases</p>
+                <p class="text-sm text-gray-600 mt-1">Wyoming landlords should care because this change could impact their mineral rights and the management of their properties. If they do not comply with new regulations or fail to understand their rights under the new management structure, they may face legal challenges or financial losses related to their mineral leases.</p>
+              </div>
+            </div>
+            <button onclick="alert('Review update clicked!')" class="bg-green-600 text-white px-6 py-3 rounded-2xl text-sm font-medium flex items-center gap-2 hover:bg-green-700">
+              Review update <i class="fas fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="mb-8">
+          <h2 class="font-semibold text-lg mb-4">Quick actions</h2>
+          <div class="grid grid-cols-5 gap-4">
+            <button onclick="alert('Decode a report')" class="bg-white p-6 rounded-3xl text-center card shadow-sm hover:shadow border border-gray-100">
+              <i class="fas fa-search text-3xl text-green-600 mb-3"></i>
+              <p class="font-medium">Decode a report</p>
+            </button>
+            <button onclick="alert('New application')" class="bg-white p-6 rounded-3xl text-center card shadow-sm hover:shadow border border-gray-100">
+              <i class="fas fa-plus text-3xl text-green-600 mb-3"></i>
+              <p class="font-medium">New application</p>
+            </button>
+            <button onclick="alert('Browse templates')" class="bg-white p-6 rounded-3xl text-center card shadow-sm hover:shadow border border-gray-100">
+              <i class="fas fa-file-alt text-3xl text-green-600 mb-3"></i>
+              <p class="font-medium">Browse templates</p>
+            </button>
+            <button onclick="alert('Send a notice')" class="bg-white p-6 rounded-3xl text-center card shadow-sm hover:shadow border border-gray-100">
+              <i class="fas fa-paper-plane text-3xl text-green-600 mb-3"></i>
+              <p class="font-medium">Send a notice</p>
+            </button>
+            <button onclick="alert('Log rent')" class="bg-white p-6 rounded-3xl text-center card shadow-sm hover:shadow border border-gray-100">
+              <i class="fas fa-dollar-sign text-3xl text-green-600 mb-3"></i>
+              <p class="font-medium">Log rent</p>
+            </button>
+          </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="bg-white rounded-3xl p-6 border border-gray-100">
+          <h2 class="font-semibold text-lg mb-4 flex items-center gap-2">
+            <i class="fas fa-clock"></i> Recent activity
+          </h2>
+          <p class="text-gray-500 py-12 text-center">Nothing happened in the last week.<br>New activity will show up here.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

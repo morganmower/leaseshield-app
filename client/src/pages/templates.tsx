@@ -467,6 +467,87 @@ export default function Templates() {
     { key: 'move_in_out', label: 'Move-In/Out', icon: Home },
   ];
 
+  // Short orienting copy per category — shown when a chip is selected.
+  // Keeps users grounded without drowning them in legal text.
+  const categoryDescriptions: Record<string, string> = {
+    leasing: "Lease agreements, addenda, and renewals.",
+    notices: "Pay-or-quit, lease violation, entry, and termination notices.",
+    screening: "Application forms, screening criteria, and adverse-action letters.",
+    tenant_issues: "Complaint responses, repair requests, and dispute documentation.",
+    compliance: "Disclosures, security deposit accounting, and required notices.",
+    move_in_out: "Move-in/out checklists, walkthrough forms, and condition reports.",
+  };
+
+  // Scenario shortcuts — research shows landlords frame their needs as
+  // problems, not categories. These map each common problem to the right
+  // category + (optional) keyword pre-filter, so users skip the browse step.
+  const scenarios: {
+    key: string;
+    title: string;
+    subtitle: string;
+    icon: typeof Bell;
+    category: string;
+    search?: string;
+  }[] = [
+    {
+      key: "late-rent",
+      title: "Tenant didn't pay rent",
+      subtitle: "Pay-or-quit & late notices",
+      icon: Bell,
+      category: "notices",
+      search: "pay",
+    },
+    {
+      key: "eviction",
+      title: "Start an eviction",
+      subtitle: "Termination & court forms",
+      icon: Scale,
+      category: "notices",
+      search: "eviction",
+    },
+    {
+      key: "new-lease",
+      title: "Sign a new lease",
+      subtitle: "Lease agreements & renewals",
+      icon: ClipboardList,
+      category: "leasing",
+    },
+    {
+      key: "move-in-out",
+      title: "Move-in or move-out",
+      subtitle: "Walkthroughs & deposit accounting",
+      icon: Home,
+      category: "move_in_out",
+    },
+    {
+      key: "entry",
+      title: "Enter the property",
+      subtitle: "Notice of entry forms",
+      icon: Bell,
+      category: "notices",
+      search: "entry",
+    },
+    {
+      key: "issue",
+      title: "Lease violation or complaint",
+      subtitle: "Cure notices & dispute records",
+      icon: MessageSquareWarning,
+      category: "tenant_issues",
+    },
+  ];
+
+  const handleScenarioClick = (s: (typeof scenarios)[number]) => {
+    setSelectedCategory(s.category);
+    setSearchQuery(s.search || "");
+    // Default state should never be "all" when picking a scenario — the
+    // wrong state's notice can be unenforceable. Snap back to the user's
+    // preferred state if they happen to be browsing All States.
+    if (selectedState === "all") {
+      setSelectedState(user?.preferredState || "UT");
+    }
+  };
+
+
   return (
     <div className="flex-1 overflow-auto">
       <SEO
@@ -494,9 +575,9 @@ export default function Templates() {
             
             {/* Metrics */}
             <div className="flex flex-wrap gap-4 md:gap-6">
-              <div className="text-center min-w-[60px]">
-                <div className="text-2xl md:text-3xl font-bold text-primary">{templates?.length || 0}</div>
-                <div className="text-xs md:text-sm text-muted-foreground">Templates</div>
+              <div className="text-center min-w-[60px]" data-testid="stat-visible-templates">
+                <div className="text-2xl md:text-3xl font-bold text-primary">{filteredTemplates.length}</div>
+                <div className="text-xs md:text-sm text-muted-foreground">Visible</div>
               </div>
               <div className="text-center min-w-[60px]">
                 <div className="text-2xl md:text-3xl font-bold text-primary">{categoryCount}</div>
@@ -525,6 +606,63 @@ export default function Templates() {
           </div>
         )}
         
+        {/* Scenario shortcuts — "I need to..." */}
+        <div className="mb-6">
+          <h2 className="text-sm font-medium text-muted-foreground mb-3" data-testid="text-scenarios-heading">
+            What do you need to do?
+          </h2>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {scenarios.map((s) => {
+              const Icon = s.icon;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => handleScenarioClick(s)}
+                  data-testid={`button-scenario-${s.key}`}
+                  className="text-left rounded-md border bg-card p-3 hover-elevate active-elevate-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  <div className="flex items-center gap-2 mb-1">
+                    <div className="p-1.5 rounded-md bg-primary/10">
+                      <Icon className="h-3.5 w-3.5 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium text-foreground line-clamp-1">
+                      {s.title}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground line-clamp-2">
+                    {s.subtitle}
+                  </p>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* All States warning — wrong-state forms can be unenforceable */}
+        {selectedState === "all" && (
+          <div
+            className="mb-6 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg px-4 py-3"
+            data-testid="banner-all-states-warning"
+          >
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div className="flex-1 text-sm">
+                <strong className="text-foreground">You're browsing all states.</strong>
+                <span className="text-muted-foreground"> Forms from the wrong state may be legally invalid. </span>
+                <button
+                  type="button"
+                  onClick={() => setSelectedState(user?.preferredState || "UT")}
+                  className="text-primary hover:underline font-medium"
+                  data-testid="button-snap-to-preferred-state"
+                >
+                  Show {user?.preferredState || "UT"} only
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Legal Disclaimer - More Compact */}
         <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg px-4 py-3">
           <div className="flex items-center gap-3">
@@ -565,20 +703,23 @@ export default function Templates() {
                   ))}
                 </SelectContent>
               </Select>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger data-testid="select-category-filter">
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="leasing">Leasing</SelectItem>
-                  <SelectItem value="screening">Screening</SelectItem>
-                  <SelectItem value="compliance">Compliance</SelectItem>
-                  <SelectItem value="tenant_issues">Tenant Issues</SelectItem>
-                  <SelectItem value="notices">Notices</SelectItem>
-                  <SelectItem value="move_in_out">Move-In/Out</SelectItem>
-                </SelectContent>
-              </Select>
+              {/* Mobile-only: chips below act as the desktop control */}
+              <div className="md:hidden">
+                <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+                  <SelectTrigger data-testid="select-category-filter">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Categories</SelectItem>
+                    <SelectItem value="leasing">Leasing</SelectItem>
+                    <SelectItem value="screening">Screening</SelectItem>
+                    <SelectItem value="compliance">Compliance</SelectItem>
+                    <SelectItem value="tenant_issues">Tenant Issues</SelectItem>
+                    <SelectItem value="notices">Notices</SelectItem>
+                    <SelectItem value="move_in_out">Move-In/Out</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {/* Quick Filter Chips */}
@@ -601,6 +742,16 @@ export default function Templates() {
                 );
               })}
             </div>
+
+            {/* Category orienting copy */}
+            {selectedCategory !== "all" && categoryDescriptions[selectedCategory] && (
+              <p
+                className="text-sm text-muted-foreground"
+                data-testid={`text-category-description-${selectedCategory}`}
+              >
+                {categoryDescriptions[selectedCategory]}
+              </p>
+            )}
 
             {/* Active Filters & Results */}
             <div className="flex items-center justify-between pt-2 border-t">
@@ -628,7 +779,9 @@ export default function Templates() {
                   variant="ghost"
                   size="sm"
                   onClick={() => {
-                    setSelectedState("all");
+                    // Reset state to user's preferred state (not "all") —
+                    // the wrong state's form can be legally invalid.
+                    setSelectedState(user?.preferredState || "UT");
                     setSelectedCategory("all");
                     setSearchQuery("");
                   }}
@@ -672,7 +825,7 @@ export default function Templates() {
                   variant="outline"
                   onClick={() => {
                     setSearchQuery("");
-                    setSelectedState("all");
+                    setSelectedState(user?.preferredState || "UT");
                     setSelectedCategory("all");
                   }}
                   data-testid="button-reset-search"
