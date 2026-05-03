@@ -6,14 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { MessageCircle, Copy, Download, Calendar } from "lucide-react";
+import { MessageCircle, Copy, Download, Calendar, Mail, FileText, Inbox } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { useState, useEffect, useMemo } from "react";
 import type { CommunicationTemplate } from "@shared/schema";
 import { getAccessToken } from "@/lib/queryClient";
 import { useStates } from "@/hooks/useStates";
+import { SEO } from "@/components/seo";
 
 const TEMPLATE_LABELS: Record<string, string> = {
   rent_reminder: "Rent Reminder",
@@ -148,57 +150,99 @@ export default function Communications() {
     toast({ description: "Download started!" });
   };
 
+  const uniqueTemplates = (templates || []).filter(
+    (t, i, arr) => arr.findIndex((x) => x.templateType === t.templateType) === i,
+  );
+  const currentStateName = sortedStates.find((s) => s.id === selectedState)?.name || selectedState;
+
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <MessageCircle className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold">Communication Templates</h1>
+    <div className="flex-1 overflow-auto">
+      <SEO
+        title="Communication Templates — Landlord-to-tenant messages"
+        description="Pre-written, state-specific landlord communication templates: rent reminders, welcome letters, lease renewals, late payment notices. Customize and download."
+        canonical="/communications"
+      />
+
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <MessageCircle className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  Communication Templates
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Pre-written landlord-to-tenant messages. Customize, copy, download.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-template-count">
+                  {uniqueTemplates.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Templates</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-states-count">
+                  {sortedStates.length}
+                </p>
+                <p className="text-xs text-muted-foreground">States</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-muted-foreground">
-          Pre-written templates for landlord-to-tenant communication. Customize and download ready to send.
-        </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Templates List */}
-        <div className="lg:col-span-1">
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="state-select" className="text-base font-semibold">
-                Select State
-              </Label>
-              <select
-                id="state-select"
-                value={selectedState}
-                onChange={(e) => {
-                  setSelectedState(e.target.value);
-                  setSelectedTemplate(null);
-                  setMergeFields({});
-                }}
-                className="w-full mt-2 px-3 py-2 border rounded-md bg-background"
-                data-testid="select-state"
-              >
-                {sortedStates.map((state) => (
-                  <option key={state.id} value={state.id}>
-                    {state.name}
-                  </option>
-                ))}
-              </select>
-            </div>
+      <div className="container max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Templates List */}
+          <div className="lg:col-span-1">
+            <div className="space-y-5">
+              <div>
+                <Label htmlFor="state-select" className="text-sm font-medium mb-2 block">
+                  State
+                </Label>
+                <Select
+                  value={selectedState}
+                  onValueChange={(val) => {
+                    setSelectedState(val);
+                    setSelectedTemplate(null);
+                    setMergeFields({});
+                  }}
+                >
+                  <SelectTrigger id="state-select" data-testid="select-state">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sortedStates.map((state) => (
+                      <SelectItem key={state.id} value={state.id}>
+                        {state.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label className="text-base font-semibold mb-2 block">Available Templates</Label>
-              <div className="space-y-2">
-                {error && (
-                  <p className="text-sm text-destructive">Error: {error.message}</p>
-                )}
-                {isLoading ? (
-                  <p className="text-muted-foreground">Loading templates...</p>
-                ) : templates && templates.length > 0 ? (
-                  templates
-                    .filter((t, i, arr) => arr.findIndex((x) => x.templateType === t.templateType) === i)
-                    .map((template) => (
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Available templates</Label>
+                <div className="space-y-2">
+                  {error && (
+                    <p className="text-sm text-destructive">Error: {error.message}</p>
+                  )}
+                  {isLoading ? (
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((i) => (
+                        <div key={i} className="h-9 rounded-md bg-muted animate-pulse" />
+                      ))}
+                    </div>
+                  ) : uniqueTemplates.length > 0 ? (
+                    uniqueTemplates.map((template) => (
                       <Button
                         key={template.id}
                         variant={selectedTemplate?.id === template.id ? "default" : "outline"}
@@ -210,28 +254,34 @@ export default function Communications() {
                         }}
                         data-testid={`button-template-${template.id}`}
                       >
+                        <FileText className="h-4 w-4 mr-2 flex-shrink-0" />
                         {TEMPLATE_LABELS[template.templateType] || template.title}
                       </Button>
                     ))
-                ) : (
-                  <div>
-                    <p className="text-sm text-muted-foreground">No templates available for this state yet.</p>
-                    <p className="text-xs text-muted-foreground mt-1">(Templates: {templates?.length || 0}, State: {selectedState})</p>
-                  </div>
-                )}
+                  ) : (
+                    <div className="rounded-md border border-dashed p-6 text-center" data-testid="empty-state-no-templates">
+                      <Inbox className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                      <p className="text-sm font-medium text-foreground mb-1">
+                        No templates for {currentStateName} yet
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        We're rolling these out state by state. Try a different state above.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
 
-        {/* Template Editor */}
-        <div className="lg:col-span-2">
-          {selectedTemplate ? (
-            <Card className="p-6 space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{selectedTemplate.title}</h2>
-                <p className="text-sm text-muted-foreground">Fill in the fields below to customize this template</p>
-              </div>
+          {/* Template Editor */}
+          <div className="lg:col-span-2">
+            {selectedTemplate ? (
+              <Card className="p-6 space-y-6 shadow-sm">
+                <div>
+                  <h2 className="text-xl font-display font-semibold mb-1">{selectedTemplate.title}</h2>
+                  <p className="text-sm text-muted-foreground">Fill in the fields below to customize this template.</p>
+                </div>
 
               {/* Merge Fields Form */}
               {Object.keys(mergeFields).length > 0 && (
@@ -273,40 +323,49 @@ export default function Communications() {
                 </div>
               )}
 
-              {/* Template Preview */}
-              <div className="space-y-2">
-                <h3 className="font-semibold">Preview</h3>
-                <div className="p-4 bg-background border rounded-lg min-h-64 whitespace-pre-wrap text-sm leading-relaxed">
-                  {renderTemplate(selectedTemplate.bodyText, mergeFields)}
+                {/* Template Preview */}
+                <div className="space-y-2">
+                  <h3 className="text-sm font-medium">Preview</h3>
+                  <div className="p-4 bg-muted/30 border rounded-md min-h-64 whitespace-pre-wrap text-sm leading-relaxed">
+                    {renderTemplate(selectedTemplate.bodyText, mergeFields)}
+                  </div>
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button
-                  onClick={handleCopyToClipboard}
-                  variant="outline"
-                  className="flex-1"
-                  data-testid="button-copy-template"
-                >
-                  <Copy className="h-4 w-4 mr-2" />
-                  Copy to Clipboard
-                </Button>
-                <Button
-                  onClick={handleDownload}
-                  className="flex-1"
-                  data-testid="button-download-template"
-                >
-                  <Download className="h-4 w-4 mr-2" />
-                  Download as Text
-                </Button>
-              </div>
-            </Card>
-          ) : (
-            <Card className="p-6 flex items-center justify-center min-h-64">
-              <p className="text-muted-foreground">Select a template to get started</p>
-            </Card>
-          )}
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    onClick={handleCopyToClipboard}
+                    variant="outline"
+                    className="flex-1"
+                    data-testid="button-copy-template"
+                  >
+                    <Copy className="h-4 w-4 mr-2" />
+                    Copy to clipboard
+                  </Button>
+                  <Button
+                    onClick={handleDownload}
+                    className="flex-1"
+                    data-testid="button-download-template"
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Download as text
+                  </Button>
+                </div>
+              </Card>
+            ) : (
+              <Card className="p-12 flex flex-col items-center justify-center text-center min-h-[320px] shadow-sm" data-testid="empty-state-no-selection">
+                <div className="p-4 bg-primary/10 rounded-md mb-4">
+                  <Mail className="h-10 w-10 text-primary" />
+                </div>
+                <h3 className="text-lg font-display font-semibold text-foreground mb-2">
+                  Pick a template to start
+                </h3>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  Select a template from the list to preview, fill in tenant-specific details, and copy or download a ready-to-send message.
+                </p>
+              </Card>
+            )}
+          </div>
         </div>
       </div>
     </div>

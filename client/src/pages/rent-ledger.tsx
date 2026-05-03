@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Download, Plus, Trash2, DollarSign, Edit2, Building2, CreditCard, Send, Copy, Link as LinkIcon, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { Download, Plus, Trash2, DollarSign, Edit2, Building2, CreditCard, Send, Copy, Link as LinkIcon, AlertTriangle, CheckCircle2, Inbox } from "lucide-react";
 import { useState, useEffect } from "react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { RentLedgerEntry, RentalProperty, RentPaymentRequest } from "@shared/schema";
@@ -16,6 +16,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RecurringPaymentsPanel } from "@/components/recurring-payments-panel";
+import { SEO } from "@/components/seo";
 
 export default function RentLedger() {
   const { user } = useAuth();
@@ -278,17 +279,50 @@ export default function RentLedger() {
   };
 
   return (
-    <div className="container max-w-6xl mx-auto py-8 px-4">
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <DollarSign className="h-6 w-6 text-primary" />
-          <h1 className="text-3xl font-bold" data-testid="text-page-title">Rent Payments</h1>
+    <div className="flex-1 overflow-auto">
+      <SEO
+        title="Rent Payments — ACH collection, recurring auto-pay, and ledger"
+        description="Send rent payment requests, set up recurring ACH auto-pay, and keep an audit-ready ledger. Tenants pay rent online by bank transfer."
+        canonical="/rent-ledger"
+      />
+
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <DollarSign className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-page-title">
+                  Rent Payments
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Send payment requests, track recurring auto-pay, and export records for tax time.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-properties-count">
+                  {properties.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Properties</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-entries-count">
+                  {entries?.length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Ledger entries</p>
+              </div>
+            </div>
+          </div>
         </div>
-        <p className="text-muted-foreground">
-          Send payment requests, track recurring auto-pay, and export records for tax time.
-        </p>
       </div>
 
+      <div className="container max-w-6xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-3xl grid-cols-4">
           <TabsTrigger value="online" data-testid="tab-online-payments">Requests</TabsTrigger>
@@ -901,6 +935,7 @@ export default function RentLedger() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }
@@ -1364,9 +1399,25 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
         {paymentsLoading ? (
           <p className="text-sm text-muted-foreground">Loading payment requests…</p>
         ) : payments.length === 0 ? (
-          <p className="text-sm text-muted-foreground" data-testid="text-no-payments">
-            No rent payment requests yet. Create one to send your tenant a payment link.
-          </p>
+          <div
+            className="flex flex-col items-center justify-center py-10 px-4 text-center"
+            data-testid="text-no-payments"
+          >
+            <div className="rounded-full bg-primary/10 p-4 mb-4">
+              <Inbox className="h-8 w-8 text-primary" />
+            </div>
+            <h3 className="text-base font-semibold mb-1">No rent payment requests yet</h3>
+            <p className="text-sm text-muted-foreground max-w-md mb-4">
+              Create a request to send your tenant a secure ACH payment link. Funds land in your linked bank account.
+            </p>
+            <Button
+              onClick={() => setShowCreate(true)}
+              data-testid="button-empty-create-rent-request"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Request Rent Payment
+            </Button>
+          </div>
         ) : (
           <Table>
             <TableHeader>
