@@ -1096,29 +1096,34 @@ export default function Screening() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-start justify-between gap-4 flex-wrap">
-            <div>
-              <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-                Screening Decoder
-              </h1>
-              <p className="text-muted-foreground mb-2">
-                <span className="font-semibold text-foreground">This prevents misinterpretation, the most common screening mistake landlords make.</span>
-              </p>
-              <p className="text-muted-foreground">
-                Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
-              </p>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Search className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  Screening Decoder
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Describe what you see on your report. LeaseShield explains what matters, what doesn't, and what to ask next.
+                </p>
+              </div>
             </div>
             <Link to="/audit-history">
-              <Button variant="outline" className="flex items-center gap-2" data-testid="button-view-history">
+              <Button variant="outline" size="sm" className="flex items-center gap-2" data-testid="button-view-history">
                 <History className="h-4 w-4" />
                 View History
               </Button>
             </Link>
           </div>
         </div>
+      </div>
+
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Legal Disclaimer */}
         <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
