@@ -263,7 +263,7 @@ export async function registerRentalPropertiesRoutes(app: Express) {
       defaultLinkLocks.set(propertyId, work);
       try {
         const { unit, link } = await work;
-        res.json({ unit, link, publicToken: link.publicToken });
+        res.json({ unit, link, publicToken: link.publicToken, vanitySlug: link.vanitySlug || null, linkId: link.id });
       } finally {
         // Only clear if no newer work has chained on
         if (defaultLinkLocks.get(propertyId) === work) {
@@ -273,6 +273,75 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     } catch (error) {
       console.error("Error getting default link:", error);
       res.status(500).json({ message: "Failed to get default application link" });
+    }
+  });
+
+  // Set / clear the landlord-chosen vanity slug for an application link.
+  // Slug rules: 3–40 chars, lowercase letters / digits / hyphens, no leading or
+  // trailing hyphen, no consecutive hyphens, not in the reserved list. The slug
+  // is normalized to lowercase server-side and unique across all links.
+  // Send `{ vanitySlug: null }` (or empty string) to clear and revert to the random token URL.
+  const RESERVED_SLUGS = new Set([
+    "link", "join", "person", "admin", "api", "app", "auth",
+    "login", "signup", "subscribe", "pricing", "blog", "compliance",
+    "legal-updates", "how-it-works", "dashboard", "settings", "rent",
+    "rent-ledger", "templates", "properties", "applications",
+  ]);
+  app.patch('/api/rental/links/:linkId/vanity-slug', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const link = await storage.getRentalApplicationLink(req.params.linkId);
+      if (!link) return res.status(404).json({ message: "Link not found" });
+      const unit = await storage.getRentalUnit(link.unitId);
+      if (!unit) return res.status(404).json({ message: "Link not found" });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: "Not authorized to edit this link" });
+
+      const raw = req.body?.vanitySlug;
+      if (raw === null || raw === undefined || (typeof raw === "string" && raw.trim() === "")) {
+        const updated = await storage.updateRentalApplicationLinkVanitySlug(link.id, null);
+        return res.json({ link: updated, vanitySlug: null });
+      }
+      if (typeof raw !== "string") {
+        return res.status(400).json({ message: "vanitySlug must be a string" });
+      }
+
+      const slug = raw.trim().toLowerCase();
+      if (!/^[a-z0-9](?:[a-z0-9-]{1,38}[a-z0-9])$/.test(slug)) {
+        return res.status(400).json({
+          message: "Use 3–40 lowercase letters, numbers, and hyphens (no leading/trailing hyphen).",
+        });
+      }
+      if (slug.includes("--")) {
+        return res.status(400).json({ message: "Slug cannot contain consecutive hyphens." });
+      }
+      if (RESERVED_SLUGS.has(slug)) {
+        return res.status(400).json({ message: "That slug is reserved. Please choose another." });
+      }
+
+      // No-op if unchanged
+      if (link.vanitySlug === slug) {
+        return res.json({ link, vanitySlug: slug });
+      }
+
+      // Conflict check (covers both publicToken and vanitySlug spaces)
+      const existing = await storage.getRentalApplicationLinkByToken(slug);
+      if (existing && existing.id !== link.id) {
+        return res.status(409).json({ message: "That URL is already taken. Try another." });
+      }
+
+      try {
+        const updated = await storage.updateRentalApplicationLinkVanitySlug(link.id, slug);
+        return res.json({ link: updated, vanitySlug: slug });
+      } catch (e: any) {
+        if (e?.code === "23505") {
+          return res.status(409).json({ message: "That URL is already taken. Try another." });
+        }
+        throw e;
+      }
+    } catch (error) {
+      console.error("Error updating vanity slug:", error);
+      res.status(500).json({ message: "Failed to update link URL" });
     }
   });
 

@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Link } from "wouter";
-import { queryClient, getAccessToken } from "@/lib/queryClient";
+import { queryClient, getAccessToken, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useStates } from "@/hooks/useStates";
 import { Button } from "@/components/ui/button";
@@ -17,7 +17,7 @@ import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search, UserCheck, Settings } from "lucide-react";
+import { Building2, Edit, Trash2, Plus, MapPin, FileText, Upload, Home, Copy, ExternalLink, Users, Link as LinkIcon, ChevronRight, ChevronDown, Search, UserCheck, Settings, Pencil, Check, X as XIcon } from "lucide-react";
 import type { RentalProperty, RentalUnit, RentalApplicationLink, SavedDocument, UploadedDocument } from "@shared/schema";
 import { DEFAULT_DOCUMENT_REQUIREMENTS, type DocumentRequirementsConfig } from "@shared/schema";
 
@@ -1481,17 +1481,52 @@ function PropertyCard({
   });
 
   // Always-present default applicant link, auto-created on demand
-  const { data: defaultLinkData } = useQuery<{ publicToken: string }>({
+  const { data: defaultLinkData } = useQuery<{ publicToken: string; vanitySlug: string | null; linkId: string }>({
     queryKey: ["/api/rental/properties", property.id, "default-link"],
   });
-  const defaultLinkUrl = defaultLinkData?.publicToken
-    ? `${window.location.origin}/apply/${defaultLinkData.publicToken}`
+  const linkSlugOrToken = defaultLinkData?.vanitySlug || defaultLinkData?.publicToken || null;
+  const defaultLinkUrl = linkSlugOrToken
+    ? `${window.location.origin}/apply/${linkSlugOrToken}`
     : null;
 
   const copyDefaultLink = () => {
     if (!defaultLinkUrl) return;
     navigator.clipboard.writeText(defaultLinkUrl);
     toast({ title: "Link Copied!", description: "Send this link to applicants for this property." });
+  };
+
+  // Inline vanity-slug editor
+  const [isEditingSlug, setIsEditingSlug] = useState(false);
+  const [slugDraft, setSlugDraft] = useState("");
+  const startEditSlug = () => {
+    setSlugDraft(defaultLinkData?.vanitySlug || "");
+    setIsEditingSlug(true);
+  };
+  const updateSlugMutation = useMutation({
+    mutationFn: async (newSlug: string | null) => {
+      const res = await apiRequest(
+        "PATCH",
+        `/api/rental/links/${defaultLinkData?.linkId}/vanity-slug`,
+        { vanitySlug: newSlug },
+      );
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({ message: "Failed to update URL" }));
+        throw new Error(err.message || "Failed to update URL");
+      }
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/rental/properties", property.id, "default-link"] });
+      toast({ title: "Link URL updated" });
+      setIsEditingSlug(false);
+    },
+    onError: (e: any) => {
+      toast({ title: "Couldn't update URL", description: e.message, variant: "destructive" });
+    },
+  });
+  const saveSlug = () => {
+    const trimmed = slugDraft.trim();
+    updateSlugMutation.mutate(trimmed === "" ? null : trimmed);
   };
 
   const getPropertyTypeColor = (type: string | null | undefined) => {
@@ -1557,35 +1592,84 @@ function PropertyCard({
             <span className="text-xs text-muted-foreground">Send to applicants</span>
           </div>
           {defaultLinkUrl ? (
-            <div className="flex flex-wrap items-center gap-2">
-              <code
-                className="flex-1 min-w-0 truncate text-xs bg-muted px-2 py-1.5 rounded font-mono"
-                data-testid={`text-default-link-url-${property.id}`}
-                title={defaultLinkUrl}
-              >
-                {defaultLinkUrl}
-              </code>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={copyDefaultLink}
-                data-testid={`button-copy-default-link-${property.id}`}
-              >
-                <Copy className="h-3.5 w-3.5 mr-1" />
-                Copy
-              </Button>
-              <Button
-                size="sm"
-                variant="ghost"
-                asChild
-                data-testid={`button-open-default-link-${property.id}`}
-              >
-                <a href={defaultLinkUrl} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
-                  Open
-                </a>
-              </Button>
-            </div>
+            isEditingSlug ? (
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-xs text-muted-foreground font-mono whitespace-nowrap">
+                    {window.location.origin}/apply/
+                  </span>
+                  <Input
+                    autoFocus
+                    value={slugDraft}
+                    onChange={(e) => setSlugDraft(e.target.value)}
+                    placeholder="e.g. main-house"
+                    className="flex-1 min-w-[180px] h-9 font-mono text-sm"
+                    data-testid={`input-vanity-slug-${property.id}`}
+                  />
+                  <Button
+                    size="sm"
+                    onClick={saveSlug}
+                    disabled={updateSlugMutation.isPending}
+                    data-testid={`button-save-slug-${property.id}`}
+                  >
+                    <Check className="h-3.5 w-3.5 mr-1" />
+                    Save
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => setIsEditingSlug(false)}
+                    disabled={updateSlugMutation.isPending}
+                    data-testid={`button-cancel-slug-${property.id}`}
+                  >
+                    <XIcon className="h-3.5 w-3.5 mr-1" />
+                    Cancel
+                  </Button>
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  3–40 lowercase letters, numbers, hyphens. Leave blank to use the original random URL.
+                </p>
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
+                <code
+                  className="flex-1 min-w-0 truncate text-xs bg-muted px-2 py-1.5 rounded font-mono"
+                  data-testid={`text-default-link-url-${property.id}`}
+                  title={defaultLinkUrl}
+                >
+                  {defaultLinkUrl}
+                </code>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={startEditSlug}
+                  data-testid={`button-edit-slug-${property.id}`}
+                >
+                  <Pencil className="h-3.5 w-3.5 mr-1" />
+                  Edit URL
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={copyDefaultLink}
+                  data-testid={`button-copy-default-link-${property.id}`}
+                >
+                  <Copy className="h-3.5 w-3.5 mr-1" />
+                  Copy
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  asChild
+                  data-testid={`button-open-default-link-${property.id}`}
+                >
+                  <a href={defaultLinkUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                    Open
+                  </a>
+                </Button>
+              </div>
+            )
           ) : (
             <p className="text-xs text-muted-foreground">Preparing your link…</p>
           )}
