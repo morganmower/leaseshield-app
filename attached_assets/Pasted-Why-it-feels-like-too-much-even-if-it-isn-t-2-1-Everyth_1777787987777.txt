@@ -1,0 +1,224 @@
+Why it feels like too much (even if it isn’t)
+
+2.1 Everything is competing for attention
+
+Right now:
+
+* screening
+* decoder
+* rent
+* compliance
+* forms
+
+All get similar weight.
+
+⸻
+
+Result:
+
+User has to decide:
+
+“What matters most here?”
+
+That creates cognitive load.
+
+⸻
+
+2.2 Lack of clear “reading lanes”
+
+High-performing pages have:
+
+* skim layer (headlines only)
+* medium layer (short explanations)
+* deep layer (details)
+
+⸻
+
+Your issue:
+
+Too much content sits in the middle layer
+
+Not enough:
+
+* punchy headlines
+* scannable chunks
+
+⸻
+
+2.3 No dominant narrative thread
+
+You introduced the workflow (good), but:
+
+* content doesn’t consistently reinforce it
+* sections feel slightly independent
+
+⸻
+
+So instead of:
+
+“Step 1 → Step 2 → Step 3”
+
+It feels like:
+
+“Here are several important things”
+
+⸻
+
+3. Where you actually NEED more content
+
+This is where most people get it wrong.
+
+You don’t need less writing—you need:
+
+MORE in the right places:
+
+* rent collection benefits
+* decoder explanation (this is your edge)
+* “why this matters” sections
+
+LESS in the wrong places:
+
+* repeated general explanations
+* soft/neutral filler language
+
+⸻
+
+4. Specific issues on your page
+
+4.1 Headlines are not doing enough work
+
+They should allow someone to understand your product by reading ONLY headlines.
+
+Right now, they partially do—but not fully.
+
+⸻
+
+4.2 Sections are slightly too dense
+
+Some blocks:
+
+* require full reading
+* instead of quick scanning
+
+⸻
+
+4.3 Key differentiators are buried
+
+Your strongest pieces:
+
+* decoder
+* compliance safety
+* rent collection tied to lease
+
+These should stand out more.
+
+⸻
+
+5. The real standard you should use
+
+Ask this:
+
+“Can someone understand exactly what this does in 10 seconds without reading paragraphs?”
+
+Right now:
+
+* close
+* but not fully there
+
+⸻
+
+6. What NOT to do
+
+Do NOT:
+
+* aggressively cut content
+* remove explanation
+
+That would hurt:
+
+* SEO
+* trust
+* conversion for serious buyers
+
+⸻
+
+7. What to do instead (high leverage)
+
+7.1 Increase contrast between layers
+
+Top layer:
+
+* very short
+* very clear
+* outcome-focused
+
+Example style:
+
+* “Collect rent automatically”
+* “Understand screening instantly”
+* “Stay compliant without guessing”
+
+⸻
+
+7.2 Break paragraphs into sharper chunks
+
+Instead of:
+
+* 3–5 sentence blocks
+
+Use:
+
+* 1–2 sentence blocks
+* bullet-style clarity
+
+⸻
+
+7.3 Reinforce the workflow repeatedly
+
+Every section should tie back to:
+
+“This is part of how you run the rental”
+
+⸻
+
+7.4 Emphasize ONE idea per section
+
+Right now some sections carry:
+
+* multiple ideas
+
+Split them mentally, even if layout stays the same.
+
+⸻
+
+8. Direct answer to your question
+
+Is it too much writing?
+
+❌ No
+✅ It’s slightly under-structured writing
+
+⸻
+
+9. What happens if you fix this
+
+You’ll get:
+
+* faster comprehension
+* higher conversion
+* better retention of attention
+* stronger perceived simplicity (even with same content)
+
+⸻
+
+10. Bottom line
+
+You don’t have a content problem.
+You have a clarity hierarchy problem.
+
+⸻
+
+If you want next step, I can:
+
+* rewrite your homepage into a high-converting, scannable version
+* or mark up exactly what to cut, keep, and reposition
