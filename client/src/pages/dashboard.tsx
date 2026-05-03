@@ -224,6 +224,7 @@ export default function Dashboard() {
             loading={dataLoading}
             icon={<Building2 className="h-10 w-10 text-primary/30" />}
             href="/properties"
+            zeroHint="Add your first property"
             testId="stat-properties"
           />
           <StatCard
@@ -232,6 +233,7 @@ export default function Dashboard() {
             loading={dataLoading}
             icon={<ClipboardList className="h-10 w-10 text-primary/30" />}
             href="/rental-applications"
+            zeroHint="Start new screening"
             testId="stat-applications"
           />
           <StatCard
@@ -241,6 +243,7 @@ export default function Dashboard() {
             highlight={(stats?.reportsToReviewCount ?? 0) > 0}
             icon={<Search className="h-10 w-10 text-primary/30" />}
             href="/rental-applications"
+            zeroHint="Run your first decode"
             testId="stat-reports"
           />
           <StatCard
@@ -249,6 +252,7 @@ export default function Dashboard() {
             loading={dataLoading}
             icon={<Scale className="h-10 w-10 text-primary/30" />}
             href="/legal-updates"
+            zeroHint="No new laws — you're current"
             testId="stat-updates"
           />
         </div>
@@ -340,10 +344,13 @@ export default function Dashboard() {
         </Card>
 
         {/* Quick actions — applications + decoder lead */}
-        <Card className="mb-6 p-5" data-testid="section-quick-actions">
-          <h2 className="text-lg font-display font-semibold text-foreground mb-4">
+        <Card className="mb-6 p-6" data-testid="section-quick-actions">
+          <h2 className="text-xl font-display font-semibold text-foreground mb-1">
             Quick actions
           </h2>
+          <p className="text-sm text-muted-foreground mb-5">
+            Jump into the most common tasks.
+          </p>
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
             <QuickAction
               href="/screening"
@@ -380,23 +387,79 @@ export default function Dashboard() {
           </div>
         </Card>
 
+        {/* Compliance snapshot — uses real updates count, links to /compliance */}
+        <Card className="mb-6 p-6" data-testid="section-compliance-snapshot">
+          <div className="flex items-start justify-between gap-4 flex-wrap">
+            <div className="flex items-start gap-4 min-w-0">
+              <div className="p-3 rounded-md bg-primary/10 flex-shrink-0">
+                <Scale className="h-6 w-6 text-primary" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="text-xl font-display font-semibold text-foreground">
+                  Compliance snapshot
+                </h2>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {(stats?.updatesThisMonthCount ?? 0) === 0 ? (
+                    <>
+                      No new {user.preferredState ? `${user.preferredState} ` : ""}laws this month — you're current with state requirements.
+                    </>
+                  ) : (
+                    <>
+                      <span className="font-medium text-foreground">
+                        {stats?.updatesThisMonthCount} update{(stats?.updatesThisMonthCount ?? 0) === 1 ? "" : "s"}
+                      </span>{" "}
+                      this month{user.preferredState ? ` for ${user.preferredState}` : ""}. Review them to stay compliant.
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
+            <Link to="/compliance">
+              <Button variant="outline" size="sm" data-testid="button-view-compliance">
+                View compliance
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </Card>
+
         {/* Recent activity */}
-        <Card className="mb-6 p-5" data-testid="section-activity">
-          <div className="flex items-center gap-2 mb-4">
+        <Card className="mb-6 p-6" data-testid="section-activity">
+          <div className="flex items-center gap-2 mb-1">
             <Activity className="h-5 w-5 text-foreground" />
-            <h2 className="text-lg font-display font-semibold text-foreground">
+            <h2 className="text-xl font-display font-semibold text-foreground">
               Recent activity
             </h2>
           </div>
+          <p className="text-sm text-muted-foreground mb-5">
+            Updates from the last week.
+          </p>
           {dataLoading ? (
             <div className="space-y-2">
               <Skeleton className="h-10 w-full" />
               <Skeleton className="h-10 w-full" />
             </div>
           ) : activity.length === 0 ? (
-            <p className="text-sm text-muted-foreground py-2" data-testid="empty-activity">
-              Nothing happened in the last week. New activity will show up here.
-            </p>
+            <div className="text-center py-8" data-testid="empty-activity">
+              <Activity className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
+              <p className="text-sm text-muted-foreground mb-4">
+                No activity yet. Try decoding your first tenant report or logging rent to see updates here.
+              </p>
+              <div className="flex gap-2 justify-center flex-wrap">
+                <Link to="/screening">
+                  <Button variant="outline" size="sm" data-testid="button-empty-activity-decode">
+                    <Search className="mr-2 h-4 w-4" />
+                    Decode a report
+                  </Button>
+                </Link>
+                <Link to="/rent-ledger">
+                  <Button variant="outline" size="sm" data-testid="button-empty-activity-rent">
+                    <Receipt className="mr-2 h-4 w-4" />
+                    Log rent
+                  </Button>
+                </Link>
+              </div>
+            </div>
           ) : (
             <ul className="divide-y">
               {activity.map((a) => (
@@ -434,6 +497,7 @@ function StatCard({
   icon,
   href,
   highlight,
+  zeroHint,
   testId,
 }: {
   label: string;
@@ -442,8 +506,10 @@ function StatCard({
   icon: React.ReactNode;
   href: string;
   highlight?: boolean;
+  zeroHint?: string;
   testId: string;
 }) {
+  const isZero = !loading && (value ?? 0) === 0;
   return (
     <Link to={href} data-testid={testId}>
       <Card
@@ -463,6 +529,15 @@ function StatCard({
                 }`}
               >
                 {value ?? 0}
+              </p>
+            )}
+            {isZero && zeroHint && (
+              <p
+                className="text-xs text-primary mt-2 flex items-center gap-1"
+                data-testid={`${testId}-zero-hint`}
+              >
+                {zeroHint}
+                <ArrowRight className="h-3 w-3" />
               </p>
             )}
           </div>
@@ -489,11 +564,17 @@ function QuickAction({
   return (
     <Link to={href} data-testid={testId}>
       <Card
-        className={`p-6 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-3 min-h-[120px] h-full ${
+        className={`group p-6 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-3 min-h-[120px] h-full shadow-sm hover:shadow-md ${
           primary ? "border-primary/40 bg-primary/5" : ""
         }`}
       >
-        <div className={primary ? "text-primary" : "text-primary/80"}>{icon}</div>
+        <div
+          className={`p-2.5 rounded-md transition-colors ${
+            primary ? "bg-primary/15 text-primary" : "bg-primary/5 text-primary/80 group-hover:bg-primary/10"
+          }`}
+        >
+          {icon}
+        </div>
         <span className="text-sm font-medium text-foreground">{label}</span>
       </Card>
     </Link>
