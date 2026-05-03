@@ -34,6 +34,9 @@ The platform uses a teal/turquoise primary color (#2DD4BF) with navy blue text, 
 - **SEO Infrastructure**: Includes server-generated `/sitemap.xml` and a lightweight `<SEO>` component for dynamic meta-tag updates.
 - **Marketing Enhancements**: Landing page prominently surfaces rent collection features, including online rent collection, ACH, and recurring auto-pay.
 - **State-by-State Landlord Blog**: SEO-optimized articles across supported states covering key landlord topics, with inline CTAs.
+- **Marketing FAQ Sections**: Each of the 5 dedicated SEO sub-pages (`/screening-report-decoder`, `/tenant-screening-services`, `/rental-application-software`, `/rent-collection-software`, `/landlord-forms-and-notices`) ships a 6-question FAQ block in semantic h3+p markup, targeting long-tail intent (e.g. "what does charge-off mean", "how long does ACH take", "are these templates state-compliant") for direct indexing by search engines without JavaScript.
+- **Rent Benefits Module**: Dedicated "Why rent collection matters" 3-card module on the landing page (after system-flow, before Premium Decision Cards) and on `/rent-collection-software`, surfacing the emotional/business benefits — reduces late payments, creates payment history that holds up in court, simplifies disputes — to anchor rent collection as the retention engine.
+- **Internal Page Naming**: Post-login operational page H1s renamed away from "Toolkit" terminology to match public positioning — `/compliance` → "Compliance Center", `/tenant-issues` → "Tenant Issue Workflows", `/screening` route header → "Tenant Screening", `gated-feature` day-5 unlock → "Full System & Comms", and dashboard tour copy ("Complete System", "Quick Access Tools").
 
 ### Feature Specifications
 - **Subscription Management**: Integrated with Stripe.

@@ -727,6 +727,68 @@ export default function Landing() {
         </div>
       </section>
 
+      {/* Why rent collection is the engine — emotional benefits */}
+      <section className="py-16 md:py-20 bg-muted/30 border-y" data-testid="section-rent-benefits">
+        <div className="max-w-6xl mx-auto px-6">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeInUp}
+            className="text-center max-w-3xl mx-auto mb-12"
+          >
+            <Badge variant="secondary" className="mb-4">Why rent collection matters</Badge>
+            <h2 className="font-display text-2xl md:text-4xl font-bold mb-4 text-foreground">
+              The reason the system pays you back
+            </h2>
+            <p className="text-base md:text-lg text-muted-foreground">
+              Late payments, court disputes, and renewal conversations all turn on the same thing — a clean record of what happened, when. Rent collection is what builds it.
+            </p>
+          </motion.div>
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={staggerContainer}
+            className="grid md:grid-cols-3 gap-6"
+          >
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full" data-testid="card-rent-benefit-late">
+                <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
+                  <Repeat className="h-6 w-6 text-brand-600" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Reduces late payments</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Auto-pay turns rent from a monthly negotiation into a non-event. Tenants enroll once; rent shows up the same day every month — without a text message from you.
+                </p>
+              </Card>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full" data-testid="card-rent-benefit-history">
+                <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
+                  <FileCheck className="h-6 w-6 text-brand-600" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Creates the payment history that protects you</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Every transaction is timestamped and tied to a lease. If a dispute lands in court — or you&rsquo;re renewing, raising rent, or selling — you don&rsquo;t reconstruct the year. You export it.
+                </p>
+              </Card>
+            </motion.div>
+            <motion.div variants={fadeInUp}>
+              <Card className="p-6 h-full" data-testid="card-rent-benefit-disputes">
+                <div className="p-3 bg-brand-500/10 rounded-md w-fit mb-4">
+                  <ShieldCheck className="h-6 w-6 text-brand-600" />
+                </div>
+                <h3 className="font-display text-lg font-semibold mb-2 text-foreground">Simplifies disputes</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  When a payment misses, the ledger shows exactly what&rsquo;s owed and when. No guessing, no he-said-she-said — just the record. The conversation gets shorter, and the relationship survives it.
+                </p>
+              </Card>
+            </motion.div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* START HERE: Premium Decision Cards */}
       <section className="py-20 md:py-28 bg-white dark:bg-background">
         <div className="max-w-6xl mx-auto px-6">
