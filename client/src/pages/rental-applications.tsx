@@ -1152,31 +1152,20 @@ function PropertyCard({
             {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length === 0 ? (
               <div className="py-4 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">
-                  No units configured for this property.
+                  No additional units configured.
                 </p>
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={() => onAddUnit(true)}
-                    data-testid={`button-create-property-link-${property.id}`}
-                  >
-                    <LinkIcon className="h-4 w-4 mr-1" />
-                    Create Property Link
-                  </Button>
-                  <span className="text-xs text-muted-foreground">or</span>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => onAddUnit(false)}
-                    data-testid={`button-add-unit-multi-${property.id}`}
-                  >
-                    <Plus className="h-4 w-4 mr-1" />
-                    Add Individual Units
-                  </Button>
-                </div>
                 <p className="text-xs text-muted-foreground max-w-md mx-auto">
-                  Use "Create Property Link" for single-unit properties. Use "Add Individual Units" if this property has multiple apartments/units.
+                  This property already has a default applicant link — visit the Properties page to copy it. Add a unit here only if you have multiple apartments with different rent or terms.
                 </p>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onAddUnit(false)}
+                  data-testid={`button-add-unit-multi-${property.id}`}
+                >
+                  <Plus className="h-4 w-4 mr-1" />
+                  Add Unit
+                </Button>
               </div>
             ) : (
               <div className="space-y-2">
