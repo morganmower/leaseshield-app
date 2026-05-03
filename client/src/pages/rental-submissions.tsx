@@ -231,7 +231,12 @@ function formatFileSize(bytes: number): string {
 
 export default function RentalSubmissions() {
   const { toast } = useToast();
-  const [selectedSubmission, setSelectedSubmission] = useState<string | null>(null);
+  const initialSelectedId = (() => {
+    if (typeof window === "undefined") return null;
+    const params = new URLSearchParams(window.location.search);
+    return params.get("id");
+  })();
+  const [selectedSubmission, setSelectedSubmission] = useState<string | null>(initialSelectedId);
   const [isDecisionDialogOpen, setIsDecisionDialogOpen] = useState(false);
   const [decisionNotes, setDecisionNotes] = useState("");
   const [pendingDecision, setPendingDecision] = useState<string | null>(null);

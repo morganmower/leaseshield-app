@@ -1,48 +1,94 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { 
-  Shield, 
-  FileText, 
-  Search, 
-  AlertCircle,
+import { Skeleton } from "@/components/ui/skeleton";
+import {
+  Search,
   ArrowRight,
-  Download,
   Bell,
-  Lightbulb,
-  MessageCircle,
-  Sparkles,
+  ClipboardList,
+  FileText,
   Building2,
-  AlertTriangle,
-  Gavel,
   CheckCircle2,
-  Wand2,
-  GraduationCap,
-  Clock,
-  Users,
-  ClipboardList
+  AlertTriangle,
+  Inbox,
+  Activity,
+  Receipt,
+  Scale,
+  Send,
 } from "lucide-react";
-import type { LegalUpdate, Template, RentalProperty } from "@shared/schema";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { HelpCircle } from "lucide-react";
 import { Link } from "wouter";
-import { useDashboardTour } from "@/hooks/useDashboardTour";
 import { ThemeToggle } from "@/components/theme-toggle";
-import { TrialConversionNudge, ActivationReminder } from "@/components/trial-conversion-nudge";
-import leaseshieldIcon from "../assets/leaseshield-icon-v3.png";
+
+type AttentionItem = {
+  id: string;
+  type: string;
+  priority: "high" | "medium" | "low";
+  title: string;
+  description: string;
+  actionLabel: string;
+  actionHref: string;
+  timestamp?: string;
+};
+
+type ActivityItem = {
+  id: string;
+  type: string;
+  description: string;
+  timestamp: string;
+  href?: string;
+};
+
+type DashboardData = {
+  stats: {
+    propertiesCount: number;
+    activeApplicationsCount: number;
+    reportsToReviewCount: number;
+    updatesThisMonthCount: number;
+  };
+  attention: AttentionItem[];
+  activity: ActivityItem[];
+};
+
+function relativeTime(iso?: string) {
+  if (!iso) return "";
+  const d = new Date(iso).getTime();
+  if (!Number.isFinite(d)) return "";
+  const diff = Date.now() - d;
+  const min = Math.floor(diff / 60000);
+  if (min < 1) return "just now";
+  if (min < 60) return `${min}m ago`;
+  const hr = Math.floor(min / 60);
+  if (hr < 24) return `${hr}h ago`;
+  const day = Math.floor(hr / 24);
+  if (day < 7) return `${day}d ago`;
+  return new Date(iso).toLocaleDateString();
+}
+
+function priorityIcon(type: string) {
+  switch (type) {
+    case "report_ready":
+      return <Search className="h-4 w-4 text-emerald-600 dark:text-emerald-500" />;
+    case "needs_screening":
+      return <Send className="h-4 w-4 text-primary" />;
+    case "screening_in_progress":
+      return <ClipboardList className="h-4 w-4 text-cyan-600 dark:text-cyan-500" />;
+    case "overdue_rent":
+      return <Receipt className="h-4 w-4 text-amber-600 dark:text-amber-500" />;
+    case "legal_update":
+      return <Scale className="h-4 w-4 text-blue-600 dark:text-blue-500" />;
+    default:
+      return <Bell className="h-4 w-4 text-muted-foreground" />;
+  }
+}
 
 export default function Dashboard() {
   const { toast } = useToast();
   const { user, isAuthenticated, isLoading } = useAuth();
-  const [selectedUpdate, setSelectedUpdate] = useState<LegalUpdate | null>(null);
-  const [showTour, setShowTour] = useState(false);
-  const { restartTour } = useDashboardTour(showTour);
 
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
@@ -54,82 +100,46 @@ export default function Dashboard() {
       setTimeout(() => {
         window.location.href = "/login";
       }, 500);
-      return;
     }
   }, [isAuthenticated, isLoading, toast]);
 
   useEffect(() => {
     if (user && !isLoading) {
-      localStorage.setItem('leaseshield_tour_seen', 'true');
+      localStorage.setItem("leaseshield_tour_seen", "true");
     }
   }, [user, isLoading]);
 
-  const { data: recentUpdates, isLoading: updatesLoading } = useQuery<LegalUpdate[]>({
-    queryKey: ["/api/legal-updates/recent"],
+  const { data, isLoading: dataLoading, isError, refetch } = useQuery<DashboardData>({
+    queryKey: ["/api/dashboard/attention"],
     enabled: isAuthenticated,
-  });
-
-  const { data: unreadCount } = useQuery<{ count: number }>({
-    queryKey: ["/api/notifications/unread-count"],
-    enabled: isAuthenticated,
-  });
-
-  const { data: allTemplates } = useQuery<Template[]>({
-    queryKey: ["/api/templates"],
-    enabled: isAuthenticated,
-  });
-
-  // AI Training interest
-  const { data: trainingInterest } = useQuery<{ registered: boolean }>({
-    queryKey: ["/api/training-interest"],
-    enabled: isAuthenticated,
-  });
-
-  const registerTrainingInterest = useMutation({
-    mutationFn: async () => {
-      return apiRequest("POST", "/api/training-interest");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/training-interest"] });
-      toast({
-        title: "You're on the list!",
-        description: "We'll notify you when AI Training for Landlords launches.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Something went wrong",
-        description: "Please try again later.",
-        variant: "destructive",
-      });
-    },
   });
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full" aria-label="Loading" />
+        <div
+          className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"
+          aria-label="Loading"
+        />
       </div>
     );
   }
 
   if (!user) return null;
 
-  const isTrialing = user.subscriptionStatus === 'trialing';
-  const isIncomplete = user.subscriptionStatus === 'incomplete';
-  const isCancelAtPeriodEnd = user.subscriptionStatus === 'cancel_at_period_end';
-  const trialExpired = isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
-  const needsSubscription = isTrialing || isIncomplete || !user.stripeCustomerId || !user.subscriptionStatus;
-  const hasActiveSubscription = user.subscriptionStatus === 'active' || isCancelAtPeriodEnd || (isTrialing && !trialExpired);
+  const isTrialing = user.subscriptionStatus === "trialing";
+  const isIncomplete = user.subscriptionStatus === "incomplete";
+  const trialExpired =
+    isTrialing && user.trialEndsAt && new Date(user.trialEndsAt).getTime() < Date.now();
+  const needsSubscription =
+    isTrialing || isIncomplete || !user.stripeCustomerId || !user.subscriptionStatus;
 
-  // If trial has expired, show blocking screen
+  // Trial expired blocking screen kept (conversion gate)
   if (trialExpired) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center px-4">
         <div className="text-center max-w-md">
-          <div className="mb-6">
-            <Bell className="h-16 w-16 text-primary mx-auto mb-4" />
-          </div>
+          <Bell className="h-16 w-16 text-primary mx-auto mb-4" />
           <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
             Activate Your Account
           </h1>
@@ -143,7 +153,12 @@ export default function Dashboard() {
               </Button>
             </Link>
             <Link to="/subscribe?period=yearly">
-              <Button size="lg" variant="outline" className="w-full" data-testid="button-subscribe-yearly">
+              <Button
+                size="lg"
+                variant="outline"
+                className="w-full"
+                data-testid="button-subscribe-yearly"
+              >
                 Subscribe - $100/year
               </Button>
             </Link>
@@ -153,119 +168,47 @@ export default function Dashboard() {
     );
   }
 
+  const stats = data?.stats;
+  const attention = data?.attention || [];
+  const activity = data?.activity || [];
+
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Welcome Header with Help Button */}
-        <div className="mb-8 flex items-start justify-between gap-4">
+      <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Header */}
+        <div className="mb-6 flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-              Welcome back{user.firstName ? `, ${user.firstName}` : ''}
+            <h1
+              className="text-2xl sm:text-3xl font-display font-semibold text-foreground"
+              data-testid="text-welcome"
+            >
+              Welcome back{user.firstName ? `, ${user.firstName}` : ""}
             </h1>
-            <p className="text-muted-foreground">
-              Your protective toolkit for confident property management
+            <p className="text-sm text-muted-foreground mt-1">
+              Here's what needs you today.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <ThemeToggle />
-          </div>
+          <ThemeToggle />
         </div>
 
-        {/* What would you like to do first? - Primary orientation panel */}
-        <Card className="mb-8 p-6 bg-gradient-to-r from-muted/50 to-muted/30 border-2" data-testid="panel-start-here">
-          <div className="mb-4">
-            <h2 className="text-xl font-display font-semibold text-foreground mb-2">
-              What would you like to do first?
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              You make all final decisions. LeaseShield helps you interpret reports and flag compliance risks.
-            </p>
-          </div>
-          
-          <div className="grid md:grid-cols-2 gap-4">
-            {/* Option 1: Explain Report - Primary/Dominant */}
-            <div 
-              className="p-5 rounded-lg border-2 border-emerald-500/50 bg-emerald-50/50 dark:bg-emerald-950/20 cursor-pointer transition-all hover:border-emerald-500 hover:shadow-lg"
-              onClick={() => window.location.href = "/screening/explain"}
-              data-testid="card-explain-report"
-            >
-              <div className="flex items-start gap-4">
-                <div className="rounded-xl bg-emerald-500 p-3 flex-shrink-0">
-                  <Search className="h-6 w-6 text-white" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-foreground mb-1">Explain a Screening Report</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Credit, Criminal, Eviction: plain English explanations
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-emerald-600 flex-shrink-0 mt-1" />
-              </div>
-            </div>
-
-            {/* Option 2: New Application - Secondary */}
-            <div 
-              className="p-5 rounded-lg border bg-background cursor-pointer transition-all hover:border-primary/50 hover:shadow-lg"
-              onClick={() => window.location.href = "/rental-applications"}
-              data-testid="card-new-application"
-            >
-              <div className="flex items-start gap-4">
-                <div className="rounded-xl bg-muted p-3 flex-shrink-0">
-                  <Users className="h-6 w-6 text-muted-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg text-foreground mb-1">Create Application Link + Screening</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Generate a link to send applicants — screening included
-                  </p>
-                </div>
-                <ArrowRight className="h-5 w-5 text-muted-foreground flex-shrink-0 mt-1" />
-              </div>
-            </div>
-          </div>
-        </Card>
-
-        {/* Subscription Banner - for trial, incomplete, or no subscription */}
-        {needsSubscription && user.subscriptionStatus !== 'active' && (
-          <Card className="mb-8 p-4 bg-primary/10 border-primary/20">
-            <div className="flex items-start gap-3">
-              <Bell className="h-5 w-5 text-primary mt-0.5" />
-              <div className="flex-1">
-                {(isTrialing || user.subscriptionStatus === 'incomplete') && user.trialEndsAt ? (
-                  <>
-                    {(() => {
-                      const today = new Date();
-                      today.setHours(0, 0, 0, 0);
-                      const endDate = new Date(user.trialEndsAt);
-                      endDate.setHours(0, 0, 0, 0);
-                      const daysLeft = Math.round((endDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
-                      const trialExpired = daysLeft <= 0;
-                      
-                      return (
-                        <>
-                          <p className="font-medium text-foreground">
-                            Account Inactive
-                          </p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            Subscribe now to access all templates and compliance updates
-                          </p>
-                        </>
-                      );
-                    })()}
-                  </>
-                ) : (
-                  <>
-                    <p className="font-medium text-foreground">
-                      Complete Your Subscription
-                    </p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Subscribe to LeaseShield for $10/month and get access to all templates and compliance updates
-                    </p>
-                  </>
-                )}
+        {/* Single contextual banner — only one, never stacked */}
+        {needsSubscription && user.subscriptionStatus !== "active" && (
+          <Card
+            className="mb-6 p-4 bg-primary/10 border-primary/20"
+            data-testid="banner-subscription"
+          >
+            <div className="flex items-start gap-3 flex-wrap">
+              <Bell className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
+              <div className="flex-1 min-w-[200px]">
+                <p className="font-medium text-foreground">
+                  Subscribe to unlock everything
+                </p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  $10/month gets you all templates, compliance, and AI tools.
+                </p>
               </div>
               <Link to="/subscribe">
-                <Button size="sm" variant="default" data-testid="button-subscribe-now">
+                <Button size="sm" data-testid="button-subscribe-now">
                   Subscribe Now
                 </Button>
               </Link>
@@ -273,443 +216,280 @@ export default function Dashboard() {
           </Card>
         )}
 
-        {/* Active Subscription Banner - simple confirmation */}
-        {user.subscriptionStatus === 'active' && (
-          <Card className="mb-8 p-4 bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800">
-            <div className="flex items-start gap-3">
-              <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-500 mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-emerald-900 dark:text-emerald-100">
-                  Active Subscriber
-                </p>
-                <p className="text-sm text-emerald-700 dark:text-emerald-300 mt-1">
-                  You have full access to all LeaseShield features
-                </p>
-              </div>
-            </div>
-          </Card>
-        )}
-
-        {/* Activation Reminder for inactive users */}
-        <ActivationReminder />
-
-        {/* Trial Conversion Nudge - Day 3-6 reminders */}
-        <TrialConversionNudge />
-
-        {/* Legal Updates Alert */}
-        {unreadCount && unreadCount.count > 0 && (
-          <Card className="mb-8 p-4 bg-warning/10 border-warning/20">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="h-5 w-5 text-warning mt-0.5" />
-              <div className="flex-1">
-                <p className="font-medium text-foreground">
-                  {unreadCount.count} new legislation {unreadCount.count === 1 ? 'update' : 'updates'} for your state
-                </p>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Review important legal changes that could affect your leases
-                </p>
-              </div>
-              <Link to="/legal-updates">
-                <Button size="sm" variant="outline" data-testid="button-view-updates">
-                  View Updates
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
-            </div>
-          </Card>
-        )}
-
-        {/* Hero Panel - Protect Your Rentals in 3 Steps */}
-        <div className="mb-10">
-          <div className="bg-gradient-to-br from-primary/15 via-primary/8 to-primary/3 dark:from-primary/10 dark:via-primary/5 dark:to-transparent border-2 border-primary/30 dark:border-primary/20 rounded-xl p-6 sm:p-8" data-testid="section-hero-panel">
-            <div className="flex items-center gap-4 mb-3">
-              <img src={leaseshieldIcon} alt="LeaseShield" className="h-12 w-12 sm:h-14 sm:w-14 flex-shrink-0 object-contain" />
-              <h2 className="text-2xl sm:text-3xl font-display font-semibold text-foreground">
-                Protect your rentals in 3 steps.
-              </h2>
-            </div>
-            <p className="text-foreground/80 dark:text-foreground/90 mb-6 max-w-3xl">
-              Run applications through Western Verify, decode screening reports in plain English, and use updated state-specific leases & notices when legislation changes.
-            </p>
-
-            {/* Pill Badges */}
-            <div className="flex flex-wrap gap-2 mb-6">
-              <Badge className="bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 border-emerald-500/30 px-3 py-1">
-                <ClipboardList className="h-3 w-3 mr-1.5" />
-                Application → Western Verify Screening
-              </Badge>
-              <Badge className="bg-cyan-500/20 text-cyan-700 dark:text-cyan-400 border-cyan-500/30 px-3 py-1">
-                <Search className="h-3 w-3 mr-1.5" />
-                AI Screening Helpers
-              </Badge>
-              <Badge className="bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-500/30 px-3 py-1">
-                <FileText className="h-3 w-3 mr-1.5" />
-                Updated Leases & Notices
-              </Badge>
-            </div>
-
-            {/* CTA Buttons */}
-            <div className="flex flex-wrap gap-3 mb-4">
-              <Link to="/rental-applications">
-                <Button size="lg" className="bg-primary hover:bg-primary/90 text-lg px-6 min-h-[48px]" data-testid="button-hero-start-application">
-                  <ClipboardList className="h-5 w-5 mr-2" />
-                  Create Application Link
-                </Button>
-              </Link>
-              <Link to="/screening">
-                <Button size="lg" variant="outline" className="min-h-[48px]" data-testid="button-hero-use-decoder">
-                  <Search className="h-5 w-5 mr-2" />
-                  Use the Decoder
-                </Button>
-              </Link>
-              <Link to="/templates">
-                <Button size="lg" variant="outline" className="min-h-[48px]" data-testid="button-hero-open-documents">
-                  <FileText className="h-5 w-5 mr-2" />
-                  Open Leases & Notices
-                </Button>
-              </Link>
-            </div>
-
-            {/* Tip Line */}
-            <p className="text-sm text-muted-foreground flex items-center gap-2">
-              <Lightbulb className="h-4 w-4 text-amber-500 flex-shrink-0" />
-              <span>Tip: Most landlords misinterpret at least one item on every screening report. The decoder highlights what matters and what to ask next.</span>
-            </p>
-          </div>
+        {/* Stats strip */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+          <StatCard
+            label="Properties"
+            value={stats?.propertiesCount}
+            loading={dataLoading}
+            icon={<Building2 className="h-4 w-4 text-muted-foreground" />}
+            href="/properties"
+            testId="stat-properties"
+          />
+          <StatCard
+            label="Active applications"
+            value={stats?.activeApplicationsCount}
+            loading={dataLoading}
+            icon={<ClipboardList className="h-4 w-4 text-muted-foreground" />}
+            href="/rental-applications"
+            testId="stat-applications"
+          />
+          <StatCard
+            label="Reports to review"
+            value={stats?.reportsToReviewCount}
+            loading={dataLoading}
+            highlight={(stats?.reportsToReviewCount ?? 0) > 0}
+            icon={<Search className="h-4 w-4 text-muted-foreground" />}
+            href="/rental-applications"
+            testId="stat-reports"
+          />
+          <StatCard
+            label="Updates this month"
+            value={stats?.updatesThisMonthCount}
+            loading={dataLoading}
+            icon={<Scale className="h-4 w-4 text-muted-foreground" />}
+            href="/legal-updates"
+            testId="stat-updates"
+          />
         </div>
 
-        {/* Three Pillars */}
-        <div className="mb-10">
-          <div className="grid md:grid-cols-3 gap-6">
-            {/* Pillar A: Applications + Western Verify Screening */}
-            <Card className="p-6 flex flex-col" data-testid="card-pillar-applications">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-xl bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                  <Users className="h-6 w-6 text-emerald-600 dark:text-emerald-500" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display font-semibold text-foreground mb-1">Applications + Western Verify Screening</h3>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">Send one link to the applicant. Screening runs through Western Verify.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-2">
-                LeaseShield manages the workflow. Western Verify performs the screening.
-              </p>
-              <p className="text-sm text-muted-foreground mb-4">
-                The easiest compliant flow: apply → authorize → screen → decide.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
-                <li>Applicant completes application</li>
-                <li>Authorization captured</li>
-                <li>Screening runs through Western Verify</li>
-                <li>Status updates + reports ready</li>
-              </ul>
-              <div className="flex flex-wrap gap-2 mt-5">
-                <Link to="/rental-applications">
-                  <Button size="sm" data-testid="button-pillar-create-application">
-                    Create Application
-                  </Button>
-                </Link>
-                <Link to="/settings">
-                  <Button size="sm" variant="outline" data-testid="button-pillar-integration-settings">
-                    Integration Settings
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Pillar B: AI Screening Helpers */}
-            <Card className="p-6 flex flex-col" data-testid="card-pillar-ai-helpers">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-xl bg-gradient-to-br from-cyan-500/20 to-cyan-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                  <Search className="h-6 w-6 text-cyan-600 dark:text-cyan-500" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display font-semibold text-foreground mb-1">AI Screening Helpers</h3>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">Prevents misinterpretation of screening reports.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Badge variant="secondary" className="text-xs bg-primary/20 text-primary border-primary/30">
-                    <Sparkles className="h-3 w-3 mr-1" />
-                    AI Powered
-                  </Badge>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Credit, Criminal, and Eviction reports explained in plain English with the best follow-up questions.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
-                <li>Key risk flags (and what they mean)</li>
-                <li>Suggested questions to ask applicants</li>
-                <li>Decision notes you can save</li>
-              </ul>
-              <div className="flex flex-wrap gap-2 mt-5">
-                <Link to="/screening">
-                  <Button size="sm" data-testid="button-pillar-open-decoder">
-                    Open Decoder
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-
-            {/* Pillar C: Updated Leases & Notices */}
-            <Card className="p-6 flex flex-col" data-testid="card-pillar-documents">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="rounded-xl bg-gradient-to-br from-amber-500/20 to-amber-600/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
-                  <FileText className="h-6 w-6 text-amber-600 dark:text-amber-500" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-display font-semibold text-foreground mb-1">Updated Leases & Notices</h3>
-                    <Tooltip>
-                      <TooltipTrigger>
-                        <HelpCircle className="h-4 w-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p className="max-w-xs">State-specific documents updated when legislation changes.</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                </div>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                State-specific templates updated when laws change.
-              </p>
-              <ul className="text-sm text-muted-foreground space-y-1.5 list-disc list-inside flex-1">
-                <li>Leases</li>
-                <li>Late rent + violation notices</li>
-                <li>Move-in / move-out checklists</li>
-                <li>Adverse action letters</li>
-              </ul>
-              <div className="flex flex-wrap gap-2 mt-5">
-                <Link to="/templates">
-                  <Button size="sm" data-testid="button-pillar-browse-documents">
-                    Browse Documents
-                  </Button>
-                </Link>
-                <Link to="/legal-updates">
-                  <Button size="sm" variant="outline" data-testid="button-pillar-see-updates">
-                    See Recent Updates
-                  </Button>
-                </Link>
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Recent Legislation Updates */}
-        {!updatesLoading && recentUpdates && recentUpdates.length > 0 && (
-          <div className="mb-12" data-testid="card-recent-updates">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-display font-semibold text-foreground">
-                Recent Legislation Updates
+        {/* Needs your attention */}
+        <Card className="mb-6 p-5" data-testid="section-attention">
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <div className="flex items-center gap-2">
+              <Inbox className="h-5 w-5 text-foreground" />
+              <h2 className="text-lg font-display font-semibold text-foreground">
+                Needs your attention
               </h2>
-              <Link to="/legal-updates">
-                <Button variant="ghost" size="sm" data-testid="button-all-updates">
-                  View All
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-              </Link>
+              {attention.length > 0 && (
+                <Badge variant="secondary" className="ml-1">
+                  {attention.length}
+                </Badge>
+              )}
             </div>
-            <div className="space-y-4">
-              {recentUpdates.slice(0, 3).map((update) => (
-                <Card key={update.id} className="p-6 hover-elevate transition-all" data-testid={`card-update-${update.id}`}>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <Badge 
-                          variant={update.impactLevel === 'high' ? 'default' : 'secondary'}
-                          data-testid={`badge-impact-${update.impactLevel}`}
-                        >
-                          {update.impactLevel.toUpperCase()} IMPACT
-                        </Badge>
-                        <Badge variant="outline" data-testid={`badge-state-${update.stateId}`}>
-                          {update.stateId}
-                        </Badge>
-                        {update.effectiveDate && (
-                          <span className="text-sm text-muted-foreground">
-                            Effective {new Date(update.effectiveDate).toLocaleDateString()}
-                          </span>
+          </div>
+
+          {dataLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+              <Skeleton className="h-14 w-full" />
+            </div>
+          ) : isError ? (
+            <div className="text-center py-8" data-testid="error-attention">
+              <AlertTriangle className="h-10 w-10 text-amber-500 mx-auto mb-3" />
+              <p className="font-medium text-foreground">We couldn't load your inbox</p>
+              <p className="text-sm text-muted-foreground mt-1 mb-4">
+                Check your connection and try again.
+              </p>
+              <Button size="sm" variant="outline" onClick={() => refetch()} data-testid="button-retry-attention">
+                Try again
+              </Button>
+            </div>
+          ) : attention.length === 0 ? (
+            <div className="text-center py-8" data-testid="empty-attention">
+              <CheckCircle2 className="h-10 w-10 text-emerald-500 mx-auto mb-3" />
+              <p className="font-medium text-foreground">You're all caught up</p>
+              <p className="text-sm text-muted-foreground mt-1">
+                When applications come in or reports are ready, they'll show up here.
+              </p>
+            </div>
+          ) : (
+            <div className="space-y-2">
+              {attention.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.actionHref}
+                  data-testid={`attention-${item.id}`}
+                >
+                  <div className="flex items-start gap-3 p-3 rounded-md border bg-background hover-elevate active-elevate-2 cursor-pointer">
+                    <div className="mt-0.5 flex-shrink-0">{priorityIcon(item.type)}</div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <p className="font-medium text-foreground text-sm">
+                          {item.title}
+                        </p>
+                        {item.priority === "high" && (
+                          <Badge
+                            variant="secondary"
+                            className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/30 text-xs"
+                          >
+                            <AlertTriangle className="h-3 w-3 mr-1" />
+                            Action needed
+                          </Badge>
                         )}
                       </div>
-                      <h3 className="font-semibold text-foreground mb-2">{update.title}</h3>
-                      <p className="text-sm text-muted-foreground mb-3">{update.summary}</p>
-                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-                        <h4 className="font-semibold text-sm mb-1 text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                          <span className="w-2 h-2 rounded-full bg-blue-500" />
-                          Why It Matters
-                        </h4>
-                        <p className="text-sm text-muted-foreground">{update.whyItMatters}</p>
-                      </div>
+                      <p className="text-sm text-muted-foreground mt-0.5">
+                        {item.description}
+                      </p>
+                      {item.timestamp && (
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {relativeTime(item.timestamp)}
+                        </p>
+                      )}
                     </div>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
-                      onClick={() => setSelectedUpdate(update)}
-                      data-testid={`button-view-detail-${update.id}`}
-                    >
-                      View Details
-                    </Button>
+                    <div className="flex items-center gap-1 text-sm text-primary font-medium flex-shrink-0">
+                      <span className="hidden sm:inline">{item.actionLabel}</span>
+                      <ArrowRight className="h-4 w-4" />
+                    </div>
                   </div>
-                </Card>
+                </Link>
               ))}
             </div>
+          )}
+        </Card>
+
+        {/* Quick actions — applications + decoder lead */}
+        <Card className="mb-6 p-5" data-testid="section-quick-actions">
+          <h2 className="text-lg font-display font-semibold text-foreground mb-4">
+            Quick actions
+          </h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+            <QuickAction
+              href="/screening"
+              icon={<Search className="h-5 w-5" />}
+              label="Decode a report"
+              primary
+              testId="quick-decode"
+            />
+            <QuickAction
+              href="/rental-applications"
+              icon={<ClipboardList className="h-5 w-5" />}
+              label="New application"
+              primary
+              testId="quick-application"
+            />
+            <QuickAction
+              href="/templates"
+              icon={<FileText className="h-5 w-5" />}
+              label="Browse templates"
+              testId="quick-templates"
+            />
+            <QuickAction
+              href="/templates?type=notices"
+              icon={<Send className="h-5 w-5" />}
+              label="Send a notice"
+              testId="quick-notice"
+            />
+            <QuickAction
+              href="/rent-ledger"
+              icon={<Receipt className="h-5 w-5" />}
+              label="Log rent"
+              testId="quick-rent"
+            />
+          </div>
+        </Card>
+
+        {/* Recent activity */}
+        <Card className="mb-6 p-5" data-testid="section-activity">
+          <div className="flex items-center gap-2 mb-4">
+            <Activity className="h-5 w-5 text-foreground" />
+            <h2 className="text-lg font-display font-semibold text-foreground">
+              Recent activity
+            </h2>
+          </div>
+          {dataLoading ? (
+            <div className="space-y-2">
+              <Skeleton className="h-10 w-full" />
+              <Skeleton className="h-10 w-full" />
+            </div>
+          ) : activity.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-2" data-testid="empty-activity">
+              Nothing happened in the last week. New activity will show up here.
+            </p>
+          ) : (
+            <ul className="divide-y">
+              {activity.map((a) => (
+                <li key={a.id} className="py-2.5 flex items-center gap-3">
+                  <Activity className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                  <span className="flex-1 text-sm text-foreground">{a.description}</span>
+                  <span className="text-xs text-muted-foreground flex-shrink-0">
+                    {relativeTime(a.timestamp)}
+                  </span>
+                  {a.href && (
+                    <Link to={a.href} className="flex-shrink-0">
+                      <Button variant="ghost" size="sm" data-testid={`activity-link-${a.id}`}>
+                        Open
+                      </Button>
+                    </Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          )}
+        </Card>
+
+        <p className="text-xs text-muted-foreground text-center pt-4 border-t">
+          Built for compliance-minded landlords. Always confirm local requirements with counsel.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function StatCard({
+  label,
+  value,
+  loading,
+  icon,
+  href,
+  highlight,
+  testId,
+}: {
+  label: string;
+  value?: number;
+  loading?: boolean;
+  icon: React.ReactNode;
+  href: string;
+  highlight?: boolean;
+  testId: string;
+}) {
+  return (
+    <Link to={href} data-testid={testId}>
+      <Card
+        className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-all ${
+          highlight ? "border-amber-500/40" : ""
+        }`}
+      >
+        <div className="flex items-center justify-between mb-1">
+          <span className="text-xs text-muted-foreground">{label}</span>
+          {icon}
+        </div>
+        {loading ? (
+          <Skeleton className="h-7 w-12" />
+        ) : (
+          <div className="text-2xl font-semibold text-foreground tabular-nums">
+            {value ?? 0}
           </div>
         )}
+      </Card>
+    </Link>
+  );
+}
 
-        {/* Popular Templates */}
-        <div>
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-display font-semibold text-foreground">
-              Most Used Templates
-            </h2>
-            <Link to="/templates">
-              <Button variant="ghost" size="sm" data-testid="button-all-templates">
-                View All Templates
-                <ArrowRight className="ml-2 h-4 w-4" />
-              </Button>
-            </Link>
-          </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {[
-              { name: 'Residential Lease Agreement', state: user.preferredState || 'UT', type: 'lease' },
-              { name: 'Rental Application', state: user.preferredState || 'UT', type: 'application' },
-              { name: 'Move-In Checklist', state: user.preferredState || 'UT', type: 'move_in_out' },
-              { name: 'Late Rent Notice', state: user.preferredState || 'UT', type: 'notices' },
-              { name: 'Lease Violation Notice', state: user.preferredState || 'UT', type: 'notices' },
-              { name: 'Security Deposit Return', state: user.preferredState || 'UT', type: 'move_in_out' },
-            ].map((templateInfo, index) => {
-              // Find matching template from database
-              const matchedTemplate = allTemplates?.find(t => 
-                t.title.toLowerCase().includes(templateInfo.name.toLowerCase()) &&
-                t.stateId === templateInfo.state
-              );
-              
-              return (
-                <Link 
-                  key={index} 
-                  to={matchedTemplate ? `/templates/${matchedTemplate.id}/fill` : "/templates"}
-                >
-                  <Card 
-                    className="p-4 hover-elevate active-elevate-2 cursor-pointer transition-all" 
-                    data-testid={`template-card-${index}`}
-                  >
-                    <div className="flex items-start justify-between gap-3 mb-3">
-                      <div className="flex-1">
-                        <h3 className="font-medium text-foreground mb-1">{templateInfo.name}</h3>
-                        <Badge variant="secondary" className="text-xs">
-                          {templateInfo.state}
-                        </Badge>
-                      </div>
-                      <FileText className="h-5 w-5 text-muted-foreground" />
-                    </div>
-                    <Button variant="outline" size="sm" className="w-full" data-testid={`button-download-${index}`}>
-                      <Download className="mr-2 h-4 w-4" />
-                      View Template
-                    </Button>
-                  </Card>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Trust Line / Compliance Disclaimer */}
-        <div className="mt-12 pt-6 border-t text-center">
-          <p className="text-xs text-muted-foreground">
-            Built for compliance-minded landlords. Always confirm local requirements with counsel.
-          </p>
-        </div>
-      </div>
-
-      {/* Legal Update Details Modal */}
-      <Dialog open={!!selectedUpdate} onOpenChange={(open) => !open && setSelectedUpdate(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <Badge 
-                variant={selectedUpdate?.impactLevel === 'high' ? 'default' : 'secondary'}
-              >
-                {selectedUpdate?.impactLevel.toUpperCase()} IMPACT
-              </Badge>
-              <Badge variant="outline">
-                {selectedUpdate?.stateId}
-              </Badge>
-            </DialogTitle>
-            <DialogDescription className="text-lg font-semibold text-foreground pt-2">
-              {selectedUpdate?.title}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4 pt-4">
-            {selectedUpdate?.effectiveDate && (
-              <div>
-                <h4 className="text-sm font-semibold text-foreground mb-1">Effective Date</h4>
-                <p className="text-sm text-muted-foreground">
-                  {new Date(selectedUpdate.effectiveDate).toLocaleDateString('en-US', { 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </p>
-              </div>
-            )}
-
-            <div>
-              <h4 className="text-sm font-semibold text-foreground mb-1">Summary</h4>
-              <p className="text-sm text-muted-foreground">{selectedUpdate?.summary}</p>
-            </div>
-
-            <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-3">
-              <h4 className="font-semibold text-sm mb-2 text-blue-700 dark:text-blue-400 flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-blue-500" />
-                Why It Matters
-              </h4>
-              <p className="text-sm text-muted-foreground">{selectedUpdate?.whyItMatters}</p>
-            </div>
-
-            {(selectedUpdate?.beforeText || selectedUpdate?.afterText) && (
-              <div className="grid gap-4 md:grid-cols-2">
-                {selectedUpdate?.beforeText && (
-                  <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-3">
-                    <h4 className="font-semibold text-sm mb-2 text-amber-700 dark:text-amber-400 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-amber-500" />
-                      Before
-                    </h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.beforeText}</p>
-                  </div>
-                )}
-                {selectedUpdate?.afterText && (
-                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-3">
-                    <h4 className="font-semibold text-sm mb-2 text-green-700 dark:text-green-400 flex items-center gap-2">
-                      <span className="w-2 h-2 rounded-full bg-green-500" />
-                      After
-                    </h4>
-                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">{selectedUpdate.afterText}</p>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
-
-    </div>
+function QuickAction({
+  href,
+  icon,
+  label,
+  primary,
+  testId,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+  primary?: boolean;
+  testId: string;
+}) {
+  return (
+    <Link to={href} data-testid={testId}>
+      <Card
+        className={`p-4 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col items-center justify-center text-center gap-2 min-h-[96px] ${
+          primary ? "border-primary/40 bg-primary/5" : ""
+        }`}
+      >
+        <div className={primary ? "text-primary" : "text-foreground"}>{icon}</div>
+        <span className="text-sm font-medium text-foreground">{label}</span>
+      </Card>
+    </Link>
   );
 }
