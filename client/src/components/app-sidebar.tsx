@@ -55,13 +55,13 @@ const mainItems = [
   {
     title: "Document Templates",
     url: "/templates",
-    icon: FileText,
+    icon: FolderOpen,
     iconColor: "text-blue-500 dark:text-blue-400",
   },
   {
     title: "Document Library",
     url: "/my-documents",
-    icon: FolderOpen,
+    icon: FileText,
     iconColor: "text-amber-500 dark:text-amber-400",
   },
   {
