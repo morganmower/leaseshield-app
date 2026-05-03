@@ -1,9 +1,11 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { Link, useLocation } from "wouter";
+import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
-import { SolutionsNav } from "@/components/marketing/solutions-nav";
+import { SolutionsNav, SOLUTIONS_ITEMS } from "@/components/marketing/solutions-nav";
+import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 
 interface MarketingLayoutProps {
   children: ReactNode;
@@ -11,6 +13,7 @@ interface MarketingLayoutProps {
 
 export function MarketingLayout({ children }: MarketingLayoutProps) {
   const [, setLocation] = useLocation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
     <div className="min-h-screen bg-background">
@@ -29,7 +32,7 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
               variant="ghost"
               onClick={() => setLocation("/login")}
               data-testid="button-login"
-              className="text-sm sm:text-base min-h-[48px]"
+              className="hidden sm:inline-flex text-sm sm:text-base min-h-[48px]"
             >
               Log In
             </Button>
@@ -37,10 +40,51 @@ export function MarketingLayout({ children }: MarketingLayoutProps) {
               onClick={() => setLocation("/signup")}
               data-testid="button-signup-header"
               size="lg"
-              className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
+              className="hidden sm:inline-flex bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
               Get Started
             </Button>
+            <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" data-testid="button-mobile-menu">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85%] max-w-sm overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="text-left font-display">Solutions</SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 flex flex-col gap-1" aria-label="Mobile navigation">
+                  {SOLUTIONS_ITEMS.map((it) => (
+                    <Link
+                      key={it.to}
+                      to={it.to}
+                      onClick={() => setMobileOpen(false)}
+                      data-testid={`mobile-${it.testid}`}
+                      className="flex items-start gap-3 p-3 rounded-md hover-elevate"
+                    >
+                      <div className="p-2 bg-primary/10 rounded-md flex-shrink-0">
+                        <it.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-display text-sm font-semibold leading-snug">{it.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{it.desc}</div>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="border-t my-4" />
+                  <Link to="/blog" onClick={() => setMobileOpen(false)} data-testid="mobile-nav-blog" className="p-3 rounded-md hover-elevate text-sm font-medium">Blog</Link>
+                  <div className="border-t my-4" />
+                  <Button variant="outline" onClick={() => { setMobileOpen(false); setLocation("/login"); }} data-testid="mobile-button-login" className="min-h-[48px]">
+                    Log In
+                  </Button>
+                  <Button onClick={() => { setMobileOpen(false); setLocation("/signup"); }} data-testid="mobile-button-signup" className="bg-brand-500 hover:bg-brand-600 text-white min-h-[48px]">
+                    Get Started
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

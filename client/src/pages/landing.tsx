@@ -4,7 +4,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { Logo } from "@/components/logo";
-import { SolutionsNav } from "@/components/marketing/solutions-nav";
+import { SolutionsNav, SOLUTIONS_ITEMS } from "@/components/marketing/solutions-nav";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
@@ -29,6 +29,8 @@ import {
   Sheet,
   SheetContent,
   SheetTrigger,
+  SheetHeader,
+  SheetTitle,
 } from "@/components/ui/sheet";
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useRef, useEffect } from "react";
@@ -153,6 +155,7 @@ export default function Landing() {
   const [showAllFeatures, setShowAllFeatures] = useState(false);
   const [showTemplatePreview, setShowTemplatePreview] = useState(false);
   const [showBenefitsDialog, setShowBenefitsDialog] = useState(false);
+  const [landingMobileOpen, setLandingMobileOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
@@ -336,7 +339,7 @@ export default function Landing() {
               variant="ghost"
               onClick={() => setLocation("/login")}
               data-testid="button-login"
-              className="text-sm sm:text-base min-h-[48px]"
+              className="hidden sm:inline-flex text-sm sm:text-base min-h-[48px]"
             >
               Log In
             </Button>
@@ -344,10 +347,54 @@ export default function Landing() {
               onClick={() => setLocation("/signup")}
               data-testid="button-start-trial"
               size="lg"
-              className="bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
+              className="hidden md:inline-flex bg-brand-500 hover:bg-brand-600 text-white text-base sm:text-lg px-6 sm:px-8 py-3 min-h-[48px]"
             >
               Explain My Screening Report
             </Button>
+            <Sheet open={landingMobileOpen} onOpenChange={setLandingMobileOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="icon" className="md:hidden" data-testid="button-mobile-menu">
+                  <Menu className="h-6 w-6" />
+                  <span className="sr-only">Open menu</span>
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-[85%] max-w-sm overflow-y-auto">
+                <SheetHeader>
+                  <SheetTitle className="text-left font-display">Solutions</SheetTitle>
+                </SheetHeader>
+                <nav className="mt-6 flex flex-col gap-1" aria-label="Mobile navigation">
+                  {SOLUTIONS_ITEMS.map((it) => (
+                    <Link
+                      key={it.to}
+                      to={it.to}
+                      onClick={() => setLandingMobileOpen(false)}
+                      data-testid={`mobile-${it.testid}`}
+                      className="flex items-start gap-3 p-3 rounded-md hover-elevate"
+                    >
+                      <div className="p-2 bg-primary/10 rounded-md flex-shrink-0">
+                        <it.icon className="h-4 w-4 text-primary" />
+                      </div>
+                      <div className="min-w-0">
+                        <div className="font-display text-sm font-semibold leading-snug">{it.title}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{it.desc}</div>
+                      </div>
+                    </Link>
+                  ))}
+                  <div className="border-t my-4" />
+                  <a href="#features" onClick={() => setLandingMobileOpen(false)} data-testid="mobile-nav-features" className="p-3 rounded-md hover-elevate text-sm font-medium">Features</a>
+                  <a href="#how-it-works" onClick={() => setLandingMobileOpen(false)} data-testid="mobile-nav-how-it-works" className="p-3 rounded-md hover-elevate text-sm font-medium">How It Works</a>
+                  <a href="#pricing" onClick={() => setLandingMobileOpen(false)} data-testid="mobile-nav-pricing" className="p-3 rounded-md hover-elevate text-sm font-medium">Pricing</a>
+                  <Link to="/blog" onClick={() => setLandingMobileOpen(false)} data-testid="mobile-nav-blog" className="p-3 rounded-md hover-elevate text-sm font-medium">Blog</Link>
+                  <div className="border-t my-4" />
+                  <Button variant="outline" onClick={() => { setLandingMobileOpen(false); setLocation("/login"); }} data-testid="mobile-button-login" className="min-h-[48px]">
+                    Log In
+                  </Button>
+                  <Button onClick={() => { setLandingMobileOpen(false); setLocation("/signup"); }} data-testid="mobile-button-signup" className="bg-brand-500 hover:bg-brand-600 text-white min-h-[48px]">
+                    Explain My Screening Report
+                  </Button>
+                </nav>
+              </SheetContent>
+            </Sheet>
           </div>
         </div>
       </header>

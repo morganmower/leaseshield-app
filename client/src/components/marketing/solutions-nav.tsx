@@ -8,7 +8,7 @@ import {
 } from "@/components/ui/navigation-menu";
 import { Building2, Search, Sparkles, ClipboardList, Receipt, FileText } from "lucide-react";
 
-const items = [
+export const SOLUTIONS_ITEMS = [
   { to: "/rental-management-system", icon: Building2, title: "Rental Management System", desc: "All-in-one workflow", testid: "solutions-link-system" },
   { to: "/tenant-screening-services", icon: Search, title: "Tenant Screening", desc: "County-level verification", testid: "solutions-link-screening" },
   { to: "/screening-report-decoder", icon: Sparkles, title: "Screening Report Decoder", desc: "Plain-English risk flags", testid: "solutions-link-decoder" },
@@ -16,6 +16,8 @@ const items = [
   { to: "/rent-collection-software", icon: Receipt, title: "Online Rent Collection", desc: "ACH tied to your lease", testid: "solutions-link-rent" },
   { to: "/landlord-forms-and-notices", icon: FileText, title: "Forms & Notices", desc: "State-compliant templates", testid: "solutions-link-forms" },
 ];
+
+const items = SOLUTIONS_ITEMS;
 
 export function SolutionsNav() {
   return (
