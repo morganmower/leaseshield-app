@@ -2,7 +2,6 @@ import {
   Shield,
   FileText,
   Search,
-  AlertCircle,
   Settings,
   LayoutDashboard,
   BookOpen,
@@ -15,7 +14,9 @@ import {
   MessageCircle,
   DollarSign,
   Mail,
-  FileCheck2,
+  Users,
+  Wrench,
+  Gavel,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { Badge } from "@/components/ui/badge";
@@ -73,7 +74,7 @@ const mainItems = [
   {
     title: "Application Inbox",
     url: "/rental-submissions",
-    icon: FileCheck2,
+    icon: Users,
     iconColor: "text-emerald-500 dark:text-emerald-400",
   },
   {
@@ -91,13 +92,13 @@ const mainItems = [
   {
     title: "Tenant Issues",
     url: "/tenant-issues",
-    icon: AlertCircle,
+    icon: Wrench,
     iconColor: "text-orange-500 dark:text-orange-400",
   },
   {
     title: "Legislation Updates",
     url: "/legal-updates",
-    icon: BookOpen,
+    icon: Gavel,
     iconColor: "text-cyan-500 dark:text-cyan-400",
   },
   {
