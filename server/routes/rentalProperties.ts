@@ -183,6 +183,99 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     }
   });
 
+  // Get-or-create the property's default application link (idempotent).
+  // The "default" unit is the one with an empty/null unitLabel — auto-created
+  // so every property always has one ready-to-share applicant link without
+  // requiring the landlord to manually add a unit.
+  //
+  // Per-property in-process mutex prevents parallel GETs (e.g., react-query
+  // refetch on focus) from creating duplicate default units / links.
+  const defaultLinkLocks = new Map<string, Promise<any>>();
+
+  app.get('/api/rental/properties/:propertyId/default-link', isAuthenticated, requireAccess, async (req: any, res) => {
+    const propertyId = req.params.propertyId;
+    try {
+      const userId = getUserId(req);
+      const property = await storage.getRentalProperty(propertyId, userId);
+      if (!property) {
+        return res.status(404).json({ message: "Property not found" });
+      }
+
+      // Serialize concurrent get-or-create calls for the same property
+      const prior = defaultLinkLocks.get(propertyId);
+      const work = (async () => {
+        if (prior) { try { await prior; } catch {} }
+
+        const existingUnits = await storage.getRentalUnitsByPropertyId(propertyId);
+        // Prefer an existing "default" unit (empty/null label); if multiple exist
+        // (legacy/race), pick the oldest by createdAt so we converge deterministically.
+        const emptyLabelUnits = existingUnits
+          .filter(u => !u.unitLabel || u.unitLabel.trim() === "")
+          .sort((a, b) => new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime());
+        let defaultUnit = emptyLabelUnits[0]
+          || (existingUnits.length > 0 ? existingUnits.slice().sort((a, b) =>
+              new Date(a.createdAt as any).getTime() - new Date(b.createdAt as any).getTime()
+            )[0] : undefined);
+
+        if (!defaultUnit) {
+          defaultUnit = await storage.createRentalUnit({
+            propertyId,
+            unitLabel: "",
+            coverPageOverrideEnabled: false,
+            coverPageOverrideJson: null,
+            fieldSchemaOverrideEnabled: false,
+            fieldSchemaOverrideJson: null,
+          });
+        }
+
+        const links = await storage.getRentalApplicationLinksByUnitId(defaultUnit.id);
+        let activeLink = links.find(l => l.isActive);
+
+        if (!activeLink) {
+          const publicToken = shortToken();
+          const coverPage = property.defaultCoverPageJson;
+          const fieldSchema = property.defaultFieldSchemaJson;
+          const propertyTerms = property.propertyTermsJson || {};
+          const formattedRent = defaultUnit.rentAmount ? `$${(defaultUnit.rentAmount / 100).toLocaleString()}/mo` : null;
+          const updatedPropertyTerms = {
+            ...propertyTerms,
+            ...(formattedRent && { monthlyRent: formattedRent }),
+          };
+          activeLink = await storage.createRentalApplicationLink({
+            unitId: defaultUnit.id,
+            publicToken,
+            mergedSchemaJson: {
+              coverPage,
+              fieldSchema,
+              propertyName: property.name,
+              unitLabel: defaultUnit.unitLabel || "",
+              propertyTerms: updatedPropertyTerms,
+              rentAmount: defaultUnit.rentAmount,
+            },
+            isActive: true,
+            expiresAt: null,
+          });
+        }
+
+        return { unit: defaultUnit, link: activeLink };
+      })();
+
+      defaultLinkLocks.set(propertyId, work);
+      try {
+        const { unit, link } = await work;
+        res.json({ unit, link, publicToken: link.publicToken });
+      } finally {
+        // Only clear if no newer work has chained on
+        if (defaultLinkLocks.get(propertyId) === work) {
+          defaultLinkLocks.delete(propertyId);
+        }
+      }
+    } catch (error) {
+      console.error("Error getting default link:", error);
+      res.status(500).json({ message: "Failed to get default application link" });
+    }
+  });
+
   // Create application link at property level - reuses existing unit and link if available
   app.post('/api/rental/properties/:propertyId/quick-link', isAuthenticated, requireAccess, async (req: any, res) => {
     try {

@@ -1480,6 +1480,20 @@ function PropertyCard({
     queryKey: ["/api/rental/properties", property.id, "units"],
   });
 
+  // Always-present default applicant link, auto-created on demand
+  const { data: defaultLinkData } = useQuery<{ publicToken: string }>({
+    queryKey: ["/api/rental/properties", property.id, "default-link"],
+  });
+  const defaultLinkUrl = defaultLinkData?.publicToken
+    ? `${window.location.origin}/apply/${defaultLinkData.publicToken}`
+    : null;
+
+  const copyDefaultLink = () => {
+    if (!defaultLinkUrl) return;
+    navigator.clipboard.writeText(defaultLinkUrl);
+    toast({ title: "Link Copied!", description: "Send this link to applicants for this property." });
+  };
+
   const getPropertyTypeColor = (type: string | null | undefined) => {
     const colors: Record<string, string> = {
       "Single Family": "bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200",
@@ -1533,15 +1547,56 @@ function PropertyCard({
           <p className="text-sm text-muted-foreground mb-3 line-clamp-2">{(property as any).notes}</p>
         )}
         
+        {/* Default applicant link — always shown, ready to share */}
+        <div className="mb-3 rounded-md border border-border bg-background p-3" data-testid={`default-link-${property.id}`}>
+          <div className="flex items-center justify-between gap-2 mb-2">
+            <div className="flex items-center gap-2 min-w-0">
+              <LinkIcon className="h-4 w-4 text-primary flex-shrink-0" />
+              <span className="text-sm font-medium">Application Link</span>
+            </div>
+            <span className="text-xs text-muted-foreground">Send to applicants</span>
+          </div>
+          {defaultLinkUrl ? (
+            <div className="flex flex-wrap items-center gap-2">
+              <code
+                className="flex-1 min-w-0 truncate text-xs bg-muted px-2 py-1.5 rounded font-mono"
+                data-testid={`text-default-link-url-${property.id}`}
+                title={defaultLinkUrl}
+              >
+                {defaultLinkUrl}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={copyDefaultLink}
+                data-testid={`button-copy-default-link-${property.id}`}
+              >
+                <Copy className="h-3.5 w-3.5 mr-1" />
+                Copy
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                asChild
+                data-testid={`button-open-default-link-${property.id}`}
+              >
+                <a href={defaultLinkUrl} target="_blank" rel="noopener noreferrer">
+                  <ExternalLink className="h-3.5 w-3.5 mr-1" />
+                  Open
+                </a>
+              </Button>
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground">Preparing your link…</p>
+          )}
+        </div>
+
         <div className="flex flex-wrap items-center gap-2 mb-3">
-          <Button size="sm" variant="outline" onClick={() => onAddUnit(true)} data-testid={`button-create-link-${property.id}`}>
-            <LinkIcon className="h-4 w-4 mr-1" />
-            Create Application Link
-          </Button>
-          <Button size="sm" variant="ghost" onClick={() => onAddUnit(false)} data-testid={`button-add-unit-${property.id}`}>
+          <Button size="sm" variant="outline" onClick={() => onAddUnit(false)} data-testid={`button-add-unit-${property.id}`}>
             <Plus className="h-4 w-4 mr-1" />
             Add Unit
           </Button>
+          <span className="text-xs text-muted-foreground">Only needed if this property has multiple units with different terms.</span>
         </div>
 
         <Collapsible open={isExpanded} onOpenChange={onToggleExpand}>
@@ -1549,19 +1604,19 @@ function PropertyCard({
             <Button variant="ghost" size="sm" className="w-full justify-between" data-testid={`button-expand-${property.id}`}>
               <span className="flex items-center gap-2">
                 <Home className="h-4 w-4" />
-                {units.length} Unit{units.length !== 1 ? "s" : ""}
+                {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length} Additional Unit{units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length !== 1 ? "s" : ""}
               </span>
               {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
             </Button>
           </CollapsibleTrigger>
           <CollapsibleContent className="pt-2">
-            {units.length === 0 ? (
+            {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No units yet. Create an application link to add your first unit.
+                No additional units. Click "Add Unit" above if you have multiple units with different rent or deposits.
               </p>
             ) : (
               <div className="space-y-2">
-                {units.map((unit) => (
+                {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").map((unit) => (
                   <UnitCard key={unit.id} unit={unit} propertyId={property.id} property={property} />
                 ))}
               </div>

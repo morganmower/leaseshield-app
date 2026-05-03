@@ -1141,7 +1141,7 @@ function PropertyCard({
             <div className="flex items-center justify-between">
               <h4 className="font-medium flex items-center gap-2">
                 <Home className="h-4 w-4" />
-                Units ({units.length})
+                Units ({units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length})
               </h4>
               <Button size="sm" variant="outline" onClick={() => onAddUnit()} data-testid={`button-add-unit-${property.id}`}>
                 <Plus className="h-4 w-4 mr-1" />
@@ -1149,7 +1149,7 @@ function PropertyCard({
               </Button>
             </div>
 
-            {units.length === 0 ? (
+            {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").length === 0 ? (
               <div className="py-4 text-center space-y-3">
                 <p className="text-sm text-muted-foreground">
                   No units configured for this property.
@@ -1180,7 +1180,7 @@ function PropertyCard({
               </div>
             ) : (
               <div className="space-y-2">
-                {units.map((unit) => (
+                {units.filter(u => u.unitLabel && u.unitLabel.trim() !== "").map((unit) => (
                   <UnitRow key={unit.id} unit={unit} propertyId={property.id} />
                 ))}
               </div>
