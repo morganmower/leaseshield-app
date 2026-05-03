@@ -250,26 +250,51 @@ export default function LegalUpdatesPage() {
         description="Track new statutes, regulations, and court decisions affecting landlords across 16 US states. Plain-English summaries with source citations."
         canonical="/legal-updates"
       />
-      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Legal Updates
-          </h1>
-          <p className="text-muted-foreground">
-            Recent legislative changes and court decisions affecting landlord-tenant law
-          </p>
-        </div>
-
-        {/* Legal Disclaimer */}
-        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                <strong>Not Legal Advice:</strong> This information is educational only. Always verify current requirements with local authorities or consult a licensed attorney. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
-              </p>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Gavel className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  Legal Updates
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  New legislation and court decisions affecting landlord-tenant law.
+                </p>
+              </div>
             </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-updates-count">
+                  {legalUpdates?.length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Updates</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-cases-count">
+                  {caseLaw?.length ?? 0}
+                </p>
+                <p className="text-xs text-muted-foreground">Court decisions</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Legal Disclaimer - Compact */}
+        <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Educational only:</strong> Verify current requirements with local authorities or a licensed attorney.
+              <Link to="/disclaimers" className="text-primary hover:underline ml-1">Full disclaimers</Link>
+            </p>
           </div>
         </div>
 

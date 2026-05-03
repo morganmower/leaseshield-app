@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { FileText, Download, Trash2, Search, Calendar, Building2, Edit, Upload, File, ChevronDown } from "lucide-react";
+import { SEO } from "@/components/seo";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -322,14 +323,49 @@ export default function MyDocuments() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-foreground mb-2">My Documents</h1>
-          <p className="text-muted-foreground">
-            Access and manage all your generated legal documents
-          </p>
-        </div>
+      <SEO
+        title="My Documents — Generated leases, notices, and uploads"
+        description="All your generated legal documents and uploaded files in one place. Download as PDF or Word, organize by property, and edit any time."
+        canonical="/my-documents"
+      />
 
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <FileText className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  My Documents
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Access and manage all your generated leases, notices, and uploaded files.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-generated-count">
+                  {documents.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Generated</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-uploaded-count">
+                  {uploadedDocuments.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Uploaded</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="mb-6 flex flex-col sm:flex-row sm:items-end gap-4">
           <div className="relative flex-1 max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
