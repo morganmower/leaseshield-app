@@ -105,12 +105,27 @@ export default function Billing() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex items-center gap-3 mb-8">
-        <CreditCard className="h-8 w-8 text-primary" />
-        <h1 className="text-3xl font-bold text-foreground">Billing & Subscription</h1>
+    <div className="flex-1 overflow-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-primary/10 rounded-md">
+              <CreditCard className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                Billing & Subscription
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Manage your payment method, plan, and billing history.
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-4xl">
       <div className="space-y-6">
         {/* Payment Failed Alert */}
         {user.subscriptionStatus === 'past_due' && (
@@ -314,6 +329,7 @@ export default function Billing() {
             </p>
           </Card>
         )}
+      </div>
       </div>
     </div>
   );

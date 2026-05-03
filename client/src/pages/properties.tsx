@@ -475,12 +475,43 @@ export default function Properties() {
 
   return (
     <div className="h-full overflow-y-auto">
-      <div className="max-w-7xl mx-auto p-8">
-        <div className="mb-8">
-          <h1 className="text-4xl font-display font-bold mb-2">Properties</h1>
-          <p className="text-muted-foreground">Manage your rental properties, units, and application links</p>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Building2 className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  Properties
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Manage your rental properties, units, and application links.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-properties-count">
+                  {properties.length}
+                </p>
+                <p className="text-xs text-muted-foreground">Properties</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-units-count">
+                  {properties.reduce((sum, p: any) => sum + (p.units?.length || 0), 0)}
+                </p>
+                <p className="text-xs text-muted-foreground">Units</p>
+              </div>
+            </div>
+          </div>
         </div>
+      </div>
 
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="flex flex-col sm:flex-row gap-4 mb-6">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />

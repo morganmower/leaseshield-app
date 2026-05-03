@@ -311,17 +311,26 @@ export default function Settings() {
 
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Settings
-          </h1>
-          <p className="text-muted-foreground">
-            Manage your account, preferences, and notification settings
-          </p>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-start gap-4">
+            <div className="p-3 bg-primary/10 rounded-md">
+              <User className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                Settings
+              </h1>
+              <p className="text-sm sm:text-base text-muted-foreground">
+                Manage your account, preferences, and notification settings.
+              </p>
+            </div>
+          </div>
         </div>
+      </div>
 
+      <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
         <div className="space-y-6">
           {/* Account Information */}
           <Card>

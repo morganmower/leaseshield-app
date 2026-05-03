@@ -174,22 +174,32 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8 flex items-start justify-between gap-4">
-          <div>
-            <h1
-              className="text-3xl sm:text-4xl font-display font-semibold text-foreground"
-              data-testid="text-welcome"
-            >
-              Welcome back{user.firstName ? `, ${user.firstName}` : ""}
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-2">
-              Here's what needs your attention today.
-            </p>
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Activity className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1
+                  className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1"
+                  data-testid="text-welcome"
+                >
+                  Welcome back{user.firstName ? `, ${user.firstName}` : ""}
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Here's what needs your attention today.
+                </p>
+              </div>
+            </div>
+            <ThemeToggle />
           </div>
-          <ThemeToggle />
         </div>
+      </div>
+
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
         {/* Single contextual banner — only one, never stacked */}
         {needsSubscription && user.subscriptionStatus !== "active" && (

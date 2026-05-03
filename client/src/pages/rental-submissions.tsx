@@ -2269,18 +2269,44 @@ Best regards`;
   }
 
   return (
-    <div className="container max-w-6xl mx-auto py-6 px-4">
-      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-        <div>
-          <h1 className="text-2xl font-bold" data-testid="text-page-title">
-            Rental Applications
-          </h1>
-          <p className="text-muted-foreground">
-            Review and manage tenant applications for your properties
-          </p>
+    <div className="flex-1 overflow-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Users className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-page-title">
+                  Application Inbox
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Review and manage tenant applications for your properties.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-pending-count">
+                  {countByTab.pending}
+                </p>
+                <p className="text-xs text-muted-foreground">Pending</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-total-count">
+                  {countByTab.all}
+                </p>
+                <p className="text-xs text-muted-foreground">Total</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
+      <div className="container max-w-6xl mx-auto py-6 px-4">
       <Tabs value={filterTab} onValueChange={(v) => setFilterTab(v as typeof filterTab)} className="mb-4">
         <TabsList data-testid="tabs-filter">
           <TabsTrigger value="all" data-testid="tab-all">
@@ -2595,6 +2621,7 @@ Best regards`;
           })}
         </div>
       )}
+      </div>
     </div>
   );
 }

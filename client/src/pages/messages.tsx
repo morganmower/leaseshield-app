@@ -215,12 +215,44 @@ export default function Messages() {
   }
 
   return (
-    <div className="container mx-auto p-6 max-w-4xl">
-      <div className="flex items-center gap-3 mb-6">
-        <Mail className="h-6 w-6 text-primary" />
-        <h1 className="text-2xl font-semibold" data-testid="text-page-title">Messages</h1>
+    <div className="flex-1 overflow-auto">
+      {/* Hero Header */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Mail className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1" data-testid="text-page-title">
+                  Messages
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Direct messages and announcements from the LeaseShield team.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-direct-unread">
+                  {totalDirectUnread}
+                </p>
+                <p className="text-xs text-muted-foreground">Direct unread</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-announce-unread">
+                  {messages.filter(m => !m.isRead).length}
+                </p>
+                <p className="text-xs text-muted-foreground">Announcements</p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
 
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-6 max-w-4xl">
       <Tabs defaultValue="direct" className="w-full">
         <TabsList className="grid w-full grid-cols-2 mb-6">
           <TabsTrigger 
@@ -503,6 +535,7 @@ export default function Messages() {
           )}
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
