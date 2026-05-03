@@ -156,43 +156,32 @@ export default function Compliance() {
         description="State-by-state compliance guidance for security deposits, notices, lease requirements, and habitability across 16 US states."
         canonical="/compliance"
       />
-      {/* Hero Header with Gradient */}
+      {/* Hero Header */}
       <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
         <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-primary/10 rounded-xl">
+              <div className="p-3 bg-primary/10 rounded-md">
                 <Shield className="h-8 w-8 text-primary" />
               </div>
               <div>
-                <h1 className="text-3xl font-display font-bold text-foreground mb-1">
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
                   Compliance Toolkit
                 </h1>
-                <p className="text-muted-foreground">
-                  State-specific landlord requirements, updated as laws change
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  State-specific landlord requirements, updated as laws change.
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-emerald-100 dark:bg-emerald-900/30 rounded-md">
-                    <CheckCircle className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-foreground">{cardCount}</span>
-                    <span className="text-muted-foreground ml-1">Requirements</span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="p-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-md">
-                    <BookOpen className="h-4 w-4 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div>
-                    <span className="font-semibold text-foreground">{categoryCount}</span>
-                    <span className="text-muted-foreground ml-1">Categories</span>
-                  </div>
-                </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-requirements-count">{cardCount}</p>
+                <p className="text-xs text-muted-foreground">Requirements</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-categories-count">{categoryCount}</p>
+                <p className="text-xs text-muted-foreground">Categories</p>
               </div>
             </div>
           </div>
@@ -256,27 +245,6 @@ export default function Compliance() {
 
           {states.map((stateItem) => (
             <TabsContent key={stateItem.id} value={stateItem.id} className="space-y-6 mt-0">
-              {/* State Header Card */}
-              <Card className="p-4 bg-gradient-to-r from-primary/5 to-transparent border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <StateBadge stateId={stateItem.id} />
-                    <div>
-                      <h2 className="text-lg font-display font-semibold text-foreground">
-                        {stateItem.name} Compliance
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        {complianceCards?.length || 0} requirements across {categoryCount} categories
-                      </p>
-                    </div>
-                  </div>
-                  <div className="hidden sm:flex items-center gap-2 text-xs text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5" />
-                    <span>Updated {format(new Date(), 'MMM yyyy')}</span>
-                  </div>
-                </div>
-              </Card>
-
               {/* Compliance Cards Section */}
               <div>
 
@@ -463,10 +431,28 @@ export default function Compliance() {
                     })}
                   </div>
                 ) : (
-                  <Card className="p-12 text-center">
-                    <p className="text-muted-foreground">
-                      Compliance cards for {stateItem.name} are being prepared.
+                  <Card className="p-12 text-center" data-testid="empty-compliance">
+                    <Shield className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
+                    <h3 className="font-semibold text-foreground mb-2">
+                      {stateItem.name} compliance is coming soon
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                      We're finalizing requirements for this state. In the meantime, browse templates or check legal updates for general guidance.
                     </p>
+                    <div className="flex gap-2 justify-center flex-wrap">
+                      <Link to="/templates">
+                        <Button variant="outline" size="sm" data-testid="button-empty-templates">
+                          <FileText className="mr-2 h-4 w-4" />
+                          Browse templates
+                        </Button>
+                      </Link>
+                      <Link to="/legal-updates">
+                        <Button variant="outline" size="sm" data-testid="button-empty-updates">
+                          <Scale className="mr-2 h-4 w-4" />
+                          Legal updates
+                        </Button>
+                      </Link>
+                    </div>
                   </Card>
                 )}
               </div>

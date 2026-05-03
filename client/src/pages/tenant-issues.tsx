@@ -25,7 +25,9 @@ import {
   CheckCircle2,
   Download,
   Lock,
+  Wrench,
 } from "lucide-react";
+import { SEO } from "@/components/seo";
 import type { Template } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
@@ -37,9 +39,6 @@ const workflows = [
     description: "Step-by-step process for handling late rent, from first notice to legal action",
     icon: DollarSign,
     category: "Payment Issues",
-    color: "from-amber-500 to-orange-600",
-    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
-    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Late Rent Notice", "3-Day Pay or Quit Notice"],
     steps: [
       "Review your lease agreement for late fee policies and grace periods",
@@ -57,9 +56,6 @@ const workflows = [
     description: "Document and address lease violations while maintaining Fair Housing compliance",
     icon: AlertCircle,
     category: "Violations",
-    color: "from-blue-500 to-blue-600",
-    iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
-    iconColor: "text-blue-600 dark:text-blue-500",
     templates: ["5-Day Lease Violation Notice"],
     steps: [
       "Document the specific violation with photos, dates, and details",
@@ -77,9 +73,6 @@ const workflows = [
     description: "Document damage, communicate with tenants, and handle security deposit deductions",
     icon: Home,
     category: "Property Issues",
-    color: "from-amber-500 to-orange-600",
-    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
-    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Move-Out Inspection Checklist"],
     steps: [
       "Document damage with photos and detailed description",
@@ -97,9 +90,6 @@ const workflows = [
     description: "Verify emotional support animal requests and handle documentation requirements",
     icon: Home,
     category: "Animals",
-    color: "from-cyan-500 to-teal-600",
-    iconBg: "bg-gradient-to-br from-cyan-500/10 to-teal-600/10",
-    iconColor: "text-cyan-600 dark:text-cyan-500",
     templates: ["Residential Lease Agreement"],
     steps: [
       "Receive request for emotional support animal accommodation",
@@ -117,9 +107,6 @@ const workflows = [
     description: "Legally notify tenants of rent increases with proper timing and documentation",
     icon: TrendingUp,
     category: "Lease Changes",
-    color: "from-amber-500 to-orange-600",
-    iconBg: "bg-gradient-to-br from-amber-500/10 to-orange-600/10",
-    iconColor: "text-amber-600 dark:text-amber-500",
     templates: ["Month-to-Month Rental Agreement"],
     steps: [
       "Research local rent control laws and limitations",
@@ -137,9 +124,6 @@ const workflows = [
     description: "End tenancies properly with correct notices and move-out procedures",
     icon: UserX,
     category: "Lease Termination",
-    color: "from-blue-500 to-blue-600",
-    iconBg: "bg-gradient-to-br from-blue-500/10 to-blue-600/10",
-    iconColor: "text-blue-600 dark:text-blue-500",
     templates: ["Move-Out Inspection Checklist", "Move-In Checklist"],
     steps: [
       "Review lease end date and notice requirements",
@@ -299,43 +283,75 @@ export default function TenantIssues() {
 
   if (!user) return null;
 
+  const categories = ["All", ...Array.from(new Set(workflows.map(w => w.category)))];
+  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const visibleWorkflows = activeCategory === "All"
+    ? workflows
+    : workflows.filter(w => w.category === activeCategory);
+  const totalTemplates = Array.from(new Set(workflows.flatMap(w => w.templates))).length;
+
   return (
     <div className="flex-1 overflow-auto">
-      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-display font-semibold text-foreground mb-2">
-            Tenant Issue Toolkit
-          </h1>
-          <p className="text-muted-foreground">
-            Step-by-step workflows for handling common landlord challenges
-          </p>
-        </div>
+      <SEO
+        title="Tenant Issue Toolkit — Step-by-step landlord workflows"
+        description="Step-by-step workflows for late rent, lease violations, ESAs, rent increases, property damage, and move-outs. Includes downloadable templates."
+        canonical="/tenant-issues"
+      />
 
-        {/* Legal Disclaimer */}
-        <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5 flex-shrink-0" />
-            <div className="flex-1">
-              <p className="text-sm text-foreground">
-                <strong>Not Legal Advice:</strong> These workflows are general educational guidance and may not apply 
-                to your specific situation. Always verify procedures comply with your state and local laws. For legal 
-                actions like evictions, consult a licensed attorney. <Link to="/disclaimers" className="text-primary hover:underline">Read full disclaimers</Link>
-              </p>
+      {/* Hero Header — matches Compliance page */}
+      <div className="bg-gradient-to-br from-primary/10 via-primary/5 to-background border-b">
+        <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-start gap-4">
+              <div className="p-3 bg-primary/10 rounded-md">
+                <Wrench className="h-8 w-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl sm:text-4xl font-display font-semibold text-foreground mb-1">
+                  Tenant Issue Toolkit
+                </h1>
+                <p className="text-sm sm:text-base text-muted-foreground">
+                  Step-by-step workflows for handling common landlord challenges.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-6 text-sm">
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-workflows-count">{workflows.length}</p>
+                <p className="text-xs text-muted-foreground">Workflows</p>
+              </div>
+              <div className="h-10 w-px bg-border" />
+              <div>
+                <p className="text-2xl font-semibold text-foreground tabular-nums" data-testid="text-templates-count">{totalTemplates}</p>
+                <p className="text-xs text-muted-foreground">Templates</p>
+              </div>
             </div>
           </div>
         </div>
+      </div>
 
-        {/* Subscription CTA if user doesn't have active subscription or templates error */}
+      <div className="container max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {/* Legal Disclaimer - Compact */}
+        <div className="mb-6 bg-amber-50/50 dark:bg-amber-950/10 border border-amber-200/50 dark:border-amber-800/50 rounded-lg p-3">
+          <div className="flex items-center gap-2">
+            <AlertTriangle className="h-4 w-4 text-amber-600 flex-shrink-0" />
+            <p className="text-xs text-muted-foreground">
+              <strong className="text-foreground">Educational Only:</strong> Verify with local authorities or attorney for legal actions like evictions.
+              <Link to="/disclaimers" className="text-primary hover:underline ml-1">Full disclaimers</Link>
+            </p>
+          </div>
+        </div>
+
+        {/* Subscription CTA if user doesn't have access */}
         {!hasAccess && (
-          <Card className="p-8 bg-primary/10 border-primary/20 mb-8">
+          <Card className="p-8 bg-primary/10 border-primary/20 mb-6" data-testid="card-subscribe-gate">
             <div className="text-center">
-              <AlertTriangle className="h-12 w-12 text-primary mx-auto mb-4" />
+              <Lock className="h-12 w-12 text-primary mx-auto mb-4" />
               <h3 className="text-lg font-semibold text-foreground mb-2">
-                Subscribe to receive updates
+                Subscribe to access tenant issue workflows
               </h3>
               <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-                Get access to step-by-step tenant issue workflows, templates, and state-specific guidance
+                Get step-by-step guidance plus downloadable templates for $10/month.
               </p>
               <Link to="/subscribe">
                 <Button size="lg" data-testid="button-subscribe-tenant-issues">
@@ -346,38 +362,60 @@ export default function TenantIssues() {
           </Card>
         )}
 
-        {/* Workflows Grid - only shown to paying members */}
+        {/* Category filter pills */}
         {hasAccess && (
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {workflows.map((workflow) => {
+          <div className="mb-6 flex flex-wrap gap-2" data-testid="category-filter">
+            {categories.map((cat) => (
+              <Button
+                key={cat}
+                size="sm"
+                variant={activeCategory === cat ? "default" : "outline"}
+                onClick={() => setActiveCategory(cat)}
+                data-testid={`filter-${cat.toLowerCase().replace(/\s+/g, "-")}`}
+              >
+                {cat}
+                {cat !== "All" && (
+                  <span className="ml-2 text-xs opacity-70">
+                    {workflows.filter(w => w.category === cat).length}
+                  </span>
+                )}
+              </Button>
+            ))}
+          </div>
+        )}
+
+        {/* Workflows Grid */}
+        {hasAccess && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-5">
+          {visibleWorkflows.map((workflow) => {
             const Icon = workflow.icon;
             return (
               <Card
                 key={workflow.id}
-                className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all"
+                className="p-6 hover-elevate active-elevate-2 cursor-pointer transition-all flex flex-col h-full shadow-sm hover:shadow-md"
                 data-testid={`workflow-card-${workflow.id}`}
               >
                 <div className="flex items-start gap-4 mb-4">
-                  <div className={`rounded-lg ${workflow.iconBg} w-12 h-12 flex items-center justify-center flex-shrink-0`}>
-                    <Icon className={`h-6 w-6 ${workflow.iconColor}`} />
+                  <div className="rounded-md bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                    <Icon className="h-6 w-6 text-primary" />
                   </div>
                   <div className="flex-1 min-w-0">
                     <Badge variant="secondary" className="mb-2 text-xs">
                       {workflow.category}
                     </Badge>
-                    <h3 className="font-semibold text-foreground mb-2">
+                    <h3 className="font-semibold text-foreground">
                       {workflow.title}
                     </h3>
                   </div>
                 </div>
 
-                <p className="text-sm text-muted-foreground mb-4">
+                <p className="text-sm text-muted-foreground mb-4 flex-1">
                   {workflow.description}
                 </p>
 
                 <div className="mb-4">
                   <p className="text-xs font-medium text-muted-foreground mb-2">
-                    Included Templates:
+                    Included templates:
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {workflow.templates.slice(0, 2).map((template, idx) => (
@@ -401,7 +439,7 @@ export default function TenantIssues() {
                   onClick={() => handleViewWorkflow(workflow)}
                   data-testid={`button-view-workflow-${workflow.id}`}
                 >
-                  View Workflow
+                  View workflow
                   <ArrowRight className="ml-2 h-4 w-4" />
                 </Button>
               </Card>
@@ -411,24 +449,31 @@ export default function TenantIssues() {
         )}
 
         {/* Help Section */}
-        <Card className="mt-12 p-8 bg-muted/30">
-          <div className="max-w-3xl mx-auto text-center">
-            <h2 className="text-2xl font-display font-semibold text-foreground mb-4">
-              Need Help with a Specific Situation?
-            </h2>
-            <p className="text-muted-foreground mb-6">
-              Every landlord situation is unique. These workflows provide general guidance, but
-              for complex legal matters, consider consulting with an attorney in your state.
-            </p>
-            <Button 
-              variant="outline" 
-              data-testid="button-contact-support"
-              onClick={() => setLocation('/contact')}
-            >
-              Contact Support
-            </Button>
-          </div>
-        </Card>
+        {hasAccess && (
+          <Card className="mt-10 p-6 bg-muted/30">
+            <div className="flex items-start gap-4 flex-wrap">
+              <div className="p-3 rounded-md bg-primary/10 flex-shrink-0">
+                <AlertCircle className="h-6 w-6 text-primary" />
+              </div>
+              <div className="flex-1 min-w-[240px]">
+                <h2 className="text-lg font-display font-semibold text-foreground mb-1">
+                  Need help with a specific situation?
+                </h2>
+                <p className="text-sm text-muted-foreground">
+                  These workflows are general guidance. For complex legal matters, consult an attorney in your state.
+                </p>
+              </div>
+              <Button
+                variant="outline"
+                onClick={() => setLocation('/contact')}
+                data-testid="button-contact-support"
+              >
+                Contact Support
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Workflow Detail Dialog */}
         <Dialog open={showWorkflowDialog} onOpenChange={setShowWorkflowDialog}>
@@ -437,8 +482,8 @@ export default function TenantIssues() {
               <>
                 <DialogHeader>
                   <div className="flex items-center gap-3 mb-2">
-                    <div className={`rounded-lg ${selectedWorkflow.iconBg} w-12 h-12 flex items-center justify-center flex-shrink-0`}>
-                      <selectedWorkflow.icon className={`h-6 w-6 ${selectedWorkflow.iconColor}`} />
+                    <div className="rounded-md bg-primary/10 w-12 h-12 flex items-center justify-center flex-shrink-0">
+                      <selectedWorkflow.icon className="h-6 w-6 text-primary" />
                     </div>
                     <div>
                       <DialogTitle className="text-left">{selectedWorkflow.title}</DialogTitle>
@@ -456,13 +501,13 @@ export default function TenantIssues() {
                   {/* Steps */}
                   <div>
                     <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
-                      <CheckCircle2 className={`h-5 w-5 ${selectedWorkflow.iconColor}`} />
-                      Step-by-Step Guide
+                      <CheckCircle2 className="h-5 w-5 text-primary" />
+                      Step-by-step guide
                     </h3>
                     <ol className="space-y-3">
                       {selectedWorkflow.steps.map((step, idx) => (
                         <li key={idx} className="flex gap-3">
-                          <span className={`flex-shrink-0 w-6 h-6 rounded-full ${selectedWorkflow.iconBg} ${selectedWorkflow.iconColor} text-sm font-semibold flex items-center justify-center`}>
+                          <span className="flex-shrink-0 w-6 h-6 rounded-full bg-primary/10 text-primary text-sm font-semibold flex items-center justify-center">
                             {idx + 1}
                           </span>
                           <span className="text-sm text-foreground pt-0.5">{step}</span>
@@ -474,8 +519,8 @@ export default function TenantIssues() {
                   {/* Related Templates */}
                   <div className="pt-4 border-t">
                     <h3 className="font-semibold text-foreground mb-3 flex items-center gap-2">
-                      <FileText className={`h-5 w-5 ${selectedWorkflow.iconColor}`} />
-                      Related Templates
+                      <FileText className="h-5 w-5 text-primary" />
+                      Related templates
                     </h3>
                     <div className="space-y-2">
                       {selectedWorkflow.templates.map((template, idx) => (
