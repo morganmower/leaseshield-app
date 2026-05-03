@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Simple rental management system for landlords — application, tenant screening, report decoder, compliant leases & online rent collection.">
+  <title>LeaseShield — Simple Rental Management System for Landlords</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+  <style>
+    .tail-container { @apply bg-slate-50 text-slate-900; }
+    .hero-bg { background: linear-gradient(135deg, #0f172a 0%, #1e2937 100%); }
+  </style>
+</head>
+<body class="tail-container">
+  <!-- NAV -->
+  <nav class="bg-white border-b sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-6 py-4 flex justify-between items-center">
+      <a href="index.html" class="flex items-center gap-2 font-bold text-2xl text-slate-900">
+        <span class="text-emerald-600">Lease</span>Shield
+      </a>
+      <div class="hidden md:flex items-center gap-8 text-sm font-medium">
+        <a href="rental-management-system.html" class="hover:text-emerald-600">System</a>
+        <a href="tenant-screening-services.html" class="hover:text-emerald-600">Screening</a>
+        <a href="screening-report-decoder.html" class="hover:text-emerald-600">Decoder</a>
+        <a href="rental-application-software.html" class="hover:text-emerald-600">Applications</a>
+        <a href="rent-collection-software.html" class="hover:text-emerald-600">Rent Collection</a>
+        <a href="landlord-forms-and-notices.html" class="hover:text-emerald-600">Forms & Notices</a>
+      </div>
+      <div class="flex items-center gap-4">
+        <a href="https://dashboard.leaseshieldapp.com" class="text-sm font-medium">Log in</a>
+        <a href="https://dashboard.leaseshieldapp.com/signup" 
+           class="bg-emerald-600 text-white px-6 py-2.5 rounded-2xl text-sm font-semibold hover:bg-emerald-700">
+          Start Free Trial
+        </a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero-bg text-white py-20">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-2 gap-12 items-center">
+      <div>
+        <h1 class="text-5xl md:text-6xl font-bold leading-tight">
+          Simple rental management system for landlords
+        </h1>
+        <p class="mt-6 text-2xl text-slate-300">
+          From application and screening to rent collection and compliance — all in one place.
+        </p>
+        <div class="mt-10 flex flex-wrap gap-4">
+          <a href="https://dashboard.leaseshieldapp.com/signup" 
+             class="bg-white text-slate-900 px-8 py-4 rounded-3xl text-lg font-semibold flex items-center gap-2 hover:scale-105 transition">
+            <i class="fas fa-play"></i> Start 30-day free trial
+          </a>
+          <a href="screening-report-decoder.html" 
+             class="border border-white/70 text-white px-8 py-4 rounded-3xl text-lg font-semibold hover:bg-white/10 transition">
+            Explain My Screening Report →
+          </a>
+        </div>
+        <p class="mt-6 text-sm text-slate-400">Only $10/month • Cancel anytime • No per-report fees</p>
+      </div>
+      <div class="relative">
+        <img src="https://picsum.photos/id/1015/800/600" alt="LeaseShield Dashboard" 
+             class="rounded-3xl shadow-2xl">
+        <div class="absolute -bottom-6 -left-6 bg-white text-slate-900 rounded-2xl px-6 py-4 shadow-xl flex items-center gap-3">
+          <i class="fas fa-check-circle text-emerald-500 text-3xl"></i>
+          <div>
+            <p class="font-semibold">Works with Western Verify</p>
+            <p class="text-sm text-slate-500">Instant screening + decoder</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- WORKFLOW -->
+  <section class="py-20 max-w-7xl mx-auto px-6">
+    <h2 class="text-center text-3xl font-semibold mb-12">Application → Screening → Decoder → Lease → Rent Collection</h2>
+    <div class="grid md:grid-cols-5 gap-8">
+      <div class="text-center"><div class="text-6xl mb-4">📋</div><p class="font-medium">Start Application</p></div>
+      <div class="text-center"><div class="text-6xl mb-4">🔍</div><p class="font-medium">Run Screening</p></div>
+      <div class="text-center"><div class="text-6xl mb-4">📊</div><p class="font-medium">Decode Report</p></div>
+      <div class="text-center"><div class="text-6xl mb-4">📜</div><p class="font-medium">Generate Lease</p></div>
+      <div class="text-center"><div class="text-6xl mb-4">💰</div><p class="font-medium">Collect Rent</p></div>
+    </div>
+  </section>
+
+  <!-- QUICK LINKS TO FEATURE PAGES -->
+  <section class="bg-white py-20 border-t">
+    <div class="max-w-7xl mx-auto px-6">
+      <h2 class="text-3xl font-semibold text-center mb-12">Everything you need in one simple system</h2>
+      <div class="grid md:grid-cols-3 gap-8">
+        <a href="tenant-screening-services.html" class="block p-8 border rounded-3xl hover:border-emerald-600 hover:shadow-xl transition">
+          <h3 class="text-xl font-semibold">Tenant Screening Services</h3>
+          <p class="text-slate-600 mt-2">Deeper checks + county-level verification</p>
+        </a>
+        <a href="screening-report-decoder.html" class="block p-8 border rounded-3xl hover:border-emerald-600 hover:shadow-xl transition">
+          <h3 class="text-xl font-semibold">Screening Report Decoder</h3>
+          <p class="text-slate-600 mt-2">Plain-English explanations & risk flags</p>
+        </a>
+        <a href="rent-collection-software.html" class="block p-8 border rounded-3xl hover:border-emerald-600 hover:shadow-xl transition">
+          <h3 class="text-xl font-semibold">Online Rent Collection</h3>
+          <p class="text-slate-600 mt-2">ACH + auto-pay tied to your lease</p>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER (copy to every page) -->
+  <footer class="bg-slate-900 text-white py-16">
+    <div class="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-8">
+      <div>
+        <span class="text-emerald-500 font-bold text-2xl">LeaseShield</span>
+        <p class="text-slate-400 mt-4 text-sm">Simple rental management for independent landlords.</p>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Product</h4>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li><a href="rental-management-system.html" class="hover:text-white">Rental Management System</a></li>
+          <li><a href="tenant-screening-services.html" class="hover:text-white">Tenant Screening</a></li>
+          <li><a href="screening-report-decoder.html" class="hover:text-white">Report Decoder</a></li>
+          <li><a href="rent-collection-software.html" class="hover:text-white">Rent Collection</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-semibold mb-4">Resources</h4>
+        <ul class="space-y-2 text-sm text-slate-400">
+          <li><a href="landlord-forms-and-notices.html" class="hover:text-white">State-Specific Forms</a></li>
+          <li><a href="#" class="hover:text-white">Blog</a></li>
+          <li><a href="https://dashboard.leaseshieldapp.com/signup" class="hover:text-white">Free Trial</a></li>
+        </ul>
+      </div>
+      <div>
+        <p class="text-xs text-slate-500">© 2026 LeaseShield. All rights reserved.<br>157+ state-compliant templates • FCRA & Fair Housing built-in</p>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>

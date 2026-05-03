@@ -1,0 +1,384 @@
+Below is a structured site + SEO architecture that fixes your positioning problem, aligns with how landlords actually search, and creates separation from Zillow / Rentler / PM software.
+
+This is not theory—this is how you win both:
+
+* high-intent organic traffic
+* conversion once they land
+
+⸻
+
+1. Core positioning (lock this first)
+
+You need one clear category statement that everything ladders into:
+
+“Simple rental management system for landlords — from application and screening to rent collection and compliance.”
+
+This lets you rank for:
+
+* property management software (long-tail)
+* tenant screening
+* rent collection
+* landlord tools
+
+Without competing head-on with enterprise platforms.
+
+⸻
+
+2. Site architecture (SEO + conversion aligned)
+
+A. Homepage (conversion + broad keyword capture)
+
+Primary keyword targets:
+
+* landlord software
+* rental management system
+* tenant screening and rent collection
+
+Structure:
+
+Hero (choose one angle):
+
+* “Run your entire rental process in one place”
+    OR
+* “From application to rent collection—without the complexity”
+
+Immediately show workflow:
+Application → Screening → Decoder → Lease → Rent Collection
+
+Sections:
+
+1. “Start with an application”
+2. “Run a proper background check”
+3. “Understand the report (decoder)”
+4. “Generate compliant leases/notices”
+5. “Collect rent and track everything”
+
+Why this matters for SEO:
+
+* Covers multiple keyword clusters on one page
+* Signals topical authority to Google
+* Reduces bounce (clear path)
+
+⸻
+
+B. Feature Pages (THIS is where you win SEO)
+
+Each feature becomes its own ranking surface.
+
+⸻
+
+1. Tenant Screening Page
+
+URL:
+/tenant-screening-services
+
+Keywords:
+
+* tenant screening services
+* tenant background check for landlords
+* criminal background check tenants
+
+Angle vs competitors:
+Competitors: “fast and easy”
+You: “most background checks are incomplete”
+
+Key sections:
+
+* Why most screening misses records
+* County-level verification explanation
+* Integration with your application flow
+* CTA: run a screening
+
+⸻
+
+2. Screening Report Decoder Page (your unfair advantage)
+
+URL:
+/screening-report-decoder
+
+Keywords:
+
+* how to read a tenant screening report
+* understand background check results
+* credit report for landlords explained
+
+This is your SEO goldmine.
+
+Competitors don’t own this category.
+
+Content structure:
+
+* “What does this report actually mean?”
+* Credit breakdown
+* Criminal breakdown
+* Eviction breakdown
+* Compliance warnings (FCRA / fair housing)
+
+CTA:
+“Upload or paste your report → get explanation”
+
+⸻
+
+3. Rental Application Software Page
+
+URL:
+/rental-application-software
+
+Keywords:
+
+* rental application software
+* online rental application for landlords
+* tenant application form online
+
+Angle:
+Tie directly into screening + decoder
+
+Not:
+
+“collect applications”
+
+But:
+
+“Collect applications that flow directly into screening and decisions”
+
+⸻
+
+4. Rent Collection Software Page (THIS is critical now)
+
+URL:
+/rent-collection-software
+
+Keywords:
+
+* online rent collection
+* collect rent online for landlords
+* rent payment system
+
+Competitor positioning:
+Zillow / Avail → “free and easy”
+
+Your angle:
+
+“Collect rent tied to leases, screening, and compliance”
+
+That’s differentiation.
+
+Sections:
+
+* Automate payments
+* Track rent vs lease terms
+* Keep documentation aligned
+* Reduce disputes
+
+⸻
+
+5. Landlord Legal Forms & Notices
+
+URL:
+/landlord-forms-and-notices
+
+Keywords:
+
+* eviction notice template
+* landlord legal forms
+* lease agreements by state
+
+Angle:
+Not generic templates → state-compliant + guided
+
+⸻
+
+C. System Page (tie everything together)
+
+URL:
+
+/rental-management-system
+
+Keywords:
+
+* rental management system
+* simple property management software
+* landlord management software
+
+This is your bridge page that competes with:
+
+* Buildium
+* AppFolio (long-tail only)
+
+Positioning:
+
+“Everything in one workflow without enterprise complexity”
+
+⸻
+
+3. Blog strategy (how you actually rank)
+
+You don’t win SEO with product pages alone.
+
+You win with problem-based content tied to your features.
+
+⸻
+
+High-value blog clusters:
+
+Cluster 1: Screening confusion
+
+* “How to read a tenant background check”
+* “What shows up on a tenant screening report?”
+* “Do eviction records show up on background checks?”
+
+→ links to decoder page
+
+⸻
+
+Cluster 2: Risk + liability (your strongest sales angle)
+
+* “What happens if you rent to a tenant with a criminal record?”
+* “Landlord liability for tenant actions”
+* “Why most background checks miss records”
+
+→ links to screening page
+
+⸻
+
+Cluster 3: Rent collection
+
+* “Best way to collect rent online for small landlords”
+* “How to track rent payments without software”
+* “What to do if a tenant stops paying rent”
+
+→ links to rent collection page
+
+⸻
+
+Cluster 4: Compliance
+
+* “Pre-adverse action letter for landlords”
+* “FCRA rules for tenant screening”
+* “Fair housing mistakes landlords make”
+
+→ links to decoder + forms
+
+⸻
+
+4. Internal linking structure (most people mess this up)
+
+Every page should reinforce the system.
+
+Example flow:
+
+Blog → Decoder
+Decoder → Screening
+Screening → Application
+Application → Rent Collection
+
+This tells Google:
+
+“This is one unified system”
+
+Not random tools.
+
+⸻
+
+5. Competitor comparison (reality check)
+
+Zillow / Rentler
+
+Strength:
+
+* UX
+* free
+* speed
+
+Weakness:
+
+* shallow screening
+* no interpretation
+* no compliance depth
+
+Your edge:
+
+* deeper screening
+* decoder (huge)
+* compliance layer
+* now rent payments
+
+⸻
+
+AppFolio / Buildium
+
+Strength:
+
+* full system
+* enterprise features
+
+Weakness:
+
+* complex
+* expensive
+* overkill for small landlords
+
+Your edge:
+
+* simplicity
+* faster onboarding
+* no contracts
+* focused workflow
+
+⸻
+
+6. Critical SEO mistake to avoid
+
+Do NOT try to rank for:
+
+* “property management software” broadly
+
+You won’t win.
+
+Instead dominate:
+
+* “simple”
+* “for landlords”
+* “for small landlords”
+* “without software complexity”
+
+⸻
+
+7. Final structure (clean view)
+
+Core Pages:
+
+* /
+* /rental-management-system
+* /tenant-screening-services
+* /screening-report-decoder
+* /rental-application-software
+* /rent-collection-software
+* /landlord-forms-and-notices
+
+Blog:
+
+* /blog/* (clustered by intent)
+
+⸻
+
+8. If you only implement 3 things
+
+1. Create a dedicated rent collection page (not buried)
+2. Make decoder a primary SEO entry point
+3. Add a “system” page to unify everything
+
+⸻
+
+Bottom line
+
+Right now:
+
+* You have strong pieces
+* But weak structure
+
+With this:
+
+* You become searchable
+* Understandable
+* And differentiated
