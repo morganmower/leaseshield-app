@@ -7,6 +7,7 @@ import { Logo } from "@/components/logo";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { Link, useLocation } from "wouter";
+import { StatePickerChip } from "@/components/landing/state-picker-chip";
 import heroImage from "@assets/generated_images/LeaseShield_brand_hero_image_75141406.png";
 import westernVerifyLogo from "@assets/western_verify_logo_official.png";
 import leaseShieldIcon from "@assets/image_1765210101470.png";
@@ -403,6 +404,11 @@ export default function Landing() {
             >
               {landingCopy.hero.reassurance}
             </motion.p>
+
+            {/* State Picker Chip — answers "is my state covered?" in one click */}
+            <motion.div variants={fadeInUp} className="mb-10">
+              <StatePickerChip />
+            </motion.div>
 
             {/* Trust Bar — honest stats only */}
             <motion.div

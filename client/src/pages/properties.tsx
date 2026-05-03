@@ -533,9 +533,9 @@ export default function Properties() {
           <Card className="p-12 border-dashed">
             <div className="text-center max-w-md mx-auto">
               <Building2 className="h-16 w-16 text-primary mx-auto mb-6" />
-              <h3 className="text-2xl font-display font-semibold mb-3">Get Started</h3>
+              <h3 className="text-2xl font-display font-semibold mb-3">Add your first property</h3>
               <p className="text-muted-foreground mb-6">
-                Add your first property to send applications, route screening through Western Verify, and access state-specific leases and notices.
+                Properties are where everything else lives — applications, screening, lease documents, and rent collection all start here.
               </p>
               <Button size="lg" onClick={() => { resetForm(); setEditingProperty(null); setIsAddDialogOpen(true); }} data-testid="button-add-first-property">
                 <Plus className="h-4 w-4 mr-2" />

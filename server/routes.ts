@@ -55,6 +55,7 @@ import { registerStateNotesRoutes } from "./routes/stateNotes";
 import { registerDenialDecisionRoutes } from "./routes/denialDecision";
 import { registerRentSubscriptionsRoutes } from "./routes/rentSubscriptions";
 import { registerDashboardRoutes } from "./routes/dashboard";
+import { registerWaitlistRoutes } from "./routes/waitlist";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Trust proxy - required for secure cookies behind Replit's HTTPS proxy
@@ -127,6 +128,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await registerDenialDecisionRoutes(app);
   await registerRentSubscriptionsRoutes(app);
   await registerDashboardRoutes(app);
+  await registerWaitlistRoutes(app);
 
   const httpServer = createServer(app);
   return httpServer;
