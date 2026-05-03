@@ -2479,9 +2479,14 @@ export default function Landing() {
             <div>
               <h4 className="font-semibold mb-3 text-sm">Product</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#features" className="hover:text-foreground transition-colors">Features</a></li>
+                <li><Link to="/rental-management-system" className="hover:text-foreground transition-colors" data-testid="footer-link-system">Rental Management</Link></li>
+                <li><Link to="/tenant-screening-services" className="hover:text-foreground transition-colors" data-testid="footer-link-screening">Tenant Screening</Link></li>
+                <li><Link to="/screening-report-decoder" className="hover:text-foreground transition-colors" data-testid="footer-link-decoder">Screening Decoder</Link></li>
+                <li><Link to="/rental-application-software" className="hover:text-foreground transition-colors" data-testid="footer-link-applications">Applications</Link></li>
+                <li><Link to="/rent-collection-software" className="hover:text-foreground transition-colors" data-testid="footer-link-rent">Rent Collection</Link></li>
+                <li><Link to="/landlord-forms-and-notices" className="hover:text-foreground transition-colors" data-testid="footer-link-forms">Forms &amp; Notices</Link></li>
                 <li><a href="#pricing" className="hover:text-foreground transition-colors">Pricing</a></li>
-                <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog & Resources</Link></li>
+                <li><Link to="/blog" className="hover:text-foreground transition-colors">Blog &amp; Resources</Link></li>
               </ul>
             </div>
             <div>
