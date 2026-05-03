@@ -3,7 +3,7 @@ import {
   FileText,
   Search,
   Settings,
-  LayoutDashboard,
+  Activity,
   BookOpen,
   CreditCard,
   ShieldCheck,
@@ -50,7 +50,7 @@ const mainItems = [
   {
     title: "Dashboard",
     url: "/dashboard",
-    icon: LayoutDashboard,
+    icon: Activity,
     iconColor: "text-primary",
   },
   {
