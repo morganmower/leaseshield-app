@@ -1,9 +1,11 @@
 import type { Express } from "express";
 import { storage } from "../storage";
 import { isAuthenticated, requireAdmin } from "../jwtAuth";
-import { users } from "@shared/schema";
+import { users, templateReviewQueue } from "@shared/schema";
 import { notifyUsersOfTemplateUpdate } from "../templateNotifications";
 import { getUserId } from "./_shared";
+import { db } from "../db";
+import { and, eq, inArray } from "drizzle-orm";
 
 export async function registerTemplateReviewQueueRoutes(app: Express) {
   // Admin - Get template review queue (with enriched template data)
@@ -91,6 +93,52 @@ export async function registerTemplateReviewQueueRoutes(app: Express) {
       res.json({ success: true, reviewId: id, status: 'rejected' });
     } catch (error: any) {
       console.error("Error rejecting template update:", error);
+      res.status(500).json({ message: "Something went wrong. Please try again." });
+    }
+  });
+
+  // Admin - Bulk reject all pending entries for a single bill (normalizedUpdateId)
+  // OR a specific list of queue entry ids. Useful for HUD informational notices
+  // that don't require any template change.
+  app.post("/api/admin/template-review-queue/bulk-reject", isAuthenticated, requireAdmin, async (req, res) => {
+    try {
+      const { normalizedUpdateId, ids, approvalNotes } = req.body as {
+        normalizedUpdateId?: string;
+        ids?: string[];
+        approvalNotes?: string;
+      };
+
+      if (!approvalNotes || approvalNotes.trim().length < 3) {
+        return res.status(400).json({ message: "approvalNotes is required (min 3 chars)" });
+      }
+      if (!normalizedUpdateId && (!ids || ids.length === 0)) {
+        return res.status(400).json({ message: "Either normalizedUpdateId or ids[] is required" });
+      }
+
+      const filter = normalizedUpdateId
+        ? and(
+            eq(templateReviewQueue.status, 'pending' as any),
+            eq(templateReviewQueue.normalizedUpdateId, normalizedUpdateId),
+          )
+        : and(
+            eq(templateReviewQueue.status, 'pending' as any),
+            inArray(templateReviewQueue.id, ids as string[]),
+          );
+
+      const result = await db
+        .update(templateReviewQueue)
+        .set({
+          status: 'rejected' as any,
+          approvalNotes,
+          rejectedAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .where(filter)
+        .returning({ id: templateReviewQueue.id });
+
+      res.json({ success: true, rejectedCount: result.length });
+    } catch (error: any) {
+      console.error("Error bulk-rejecting template reviews:", error);
       res.status(500).json({ message: "Something went wrong. Please try again." });
     }
   });

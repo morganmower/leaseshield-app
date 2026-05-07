@@ -67,6 +67,7 @@ interface TemplateReview {
   id: string;
   templateId: string;
   billId: string;
+  normalizedUpdateId: string | null;
   reason: string;
   recommendedChanges: string;
   status: 'pending' | 'approved' | 'rejected';
@@ -265,6 +266,53 @@ export default function AdminLegislativeMonitoring() {
     } catch {
       return null;
     }
+  };
+
+  // Bulk-reject all pending entries that share the same normalized update (bill)
+  const bulkRejectByBillMutation = useMutation({
+    mutationFn: async (params: { normalizedUpdateId: string; approvalNotes: string }) => {
+      const res = await apiRequest('POST', '/api/admin/template-review-queue/bulk-reject', params);
+      return res.json();
+    },
+    onSuccess: (data: any) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
+      toast({
+        title: 'Bulk rejected',
+        description: `${data?.rejectedCount ?? 0} pending review entries marked as rejected.`,
+      });
+    },
+    onError: () => {
+      toast({
+        title: 'Error',
+        description: 'Failed to bulk reject. Please try again.',
+        variant: 'destructive',
+      });
+    },
+  });
+
+  const handleBulkRejectByBill = (normalizedUpdateId: string | null, count: number, billLabel: string) => {
+    if (!normalizedUpdateId) {
+      toast({
+        title: 'Cannot bulk reject',
+        description: 'This entry has no linked bill identifier.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    const notes = window.prompt(
+      `Reject all ${count} pending review${count === 1 ? '' : 's'} for "${billLabel}"?\n\nEnter a reason (required, will be saved as audit note):`,
+      'Informational only - no template change required',
+    );
+    if (notes === null) return;
+    if (notes.trim().length < 3) {
+      toast({
+        title: 'Reason required',
+        description: 'Please enter at least 3 characters explaining the bulk rejection.',
+        variant: 'destructive',
+      });
+      return;
+    }
+    bulkRejectByBillMutation.mutate({ normalizedUpdateId, approvalNotes: notes.trim() });
   };
 
   // One-click approve mutation
@@ -750,8 +798,17 @@ export default function AdminLegislativeMonitoring() {
                     </div>
                   </CardContent>
                 </Card>
-                {pendingDrafts.map((draft) => {
+                {(() => {
+                  const billCounts = pendingDrafts.reduce<Record<string, number>>((acc, d) => {
+                    if (d.normalizedUpdateId) {
+                      acc[d.normalizedUpdateId] = (acc[d.normalizedUpdateId] || 0) + 1;
+                    }
+                    return acc;
+                  }, {});
+                  return pendingDrafts.map((draft) => {
                   const changes = parseDraftedChanges(draft.recommendedChanges);
+                  const siblingCount = draft.normalizedUpdateId ? (billCounts[draft.normalizedUpdateId] || 1) : 1;
+                  const billLabel = draft.bill?.title || draft.reason.replace(/^Legislative update:\s*/, '').slice(0, 80);
                   return (
                     <Card key={draft.id} data-testid={`card-draft-${draft.id}`}>
                       <CardHeader>
@@ -832,20 +889,35 @@ export default function AdminLegislativeMonitoring() {
                             <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
                             Bumps version &amp; notifies landlords. Engineering must edit the generator for the new clause to appear in leases.
                           </p>
-                          <Button
-                            variant="default"
-                            onClick={() => quickApproveMutation.mutate(draft.id)}
-                            disabled={quickApproveMutation.isPending}
-                            data-testid={`button-apply-draft-${draft.id}`}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Apply Draft
-                          </Button>
+                          <div className="flex flex-wrap items-center gap-2">
+                            {siblingCount > 1 && (
+                              <Button
+                                variant="outline"
+                                onClick={() => handleBulkRejectByBill(draft.normalizedUpdateId, siblingCount, billLabel)}
+                                disabled={bulkRejectByBillMutation.isPending}
+                                data-testid={`button-bulk-reject-${draft.id}`}
+                                title="Reject every pending review entry for this bill across all templates"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                Reject all {siblingCount} for this bill
+                              </Button>
+                            )}
+                            <Button
+                              variant="default"
+                              onClick={() => quickApproveMutation.mutate(draft.id)}
+                              disabled={quickApproveMutation.isPending}
+                              data-testid={`button-apply-draft-${draft.id}`}
+                            >
+                              <CheckCircle className="h-4 w-4 mr-2" />
+                              Apply Draft
+                            </Button>
+                          </div>
                         </div>
                       </CardContent>
                     </Card>
                   );
-                })}
+                });
+                })()}
               </div>
             )}
           </TabsContent>
