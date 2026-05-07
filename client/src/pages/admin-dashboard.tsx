@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertCircle, CheckCircle, Clock, FileText, XCircle, Eye, History, RotateCcw } from "lucide-react";
+import { AlertCircle, AlertTriangle, CheckCircle, Clock, FileText, XCircle, Eye, History, RotateCcw } from "lucide-react";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 
@@ -87,9 +87,11 @@ export default function AdminDashboard() {
     },
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/template-review-queue"] });
+      const stateId = selectedReview?.template?.stateId || 'this state';
       toast({
-        title: "Template Updated!",
-        description: `Successfully published template update. ${data.notificationsSent} users notified.`,
+        title: "Version bumped — engineering action needed",
+        description: `Template version incremented for ${stateId} and ${data.notificationsSent ?? 0} landlord(s) notified. Lease body text is still hardcoded — forward the recommended changes to engineering to update server/utils/leaseAgreementGenerator.ts before the next release.`,
+        duration: 12000,
       });
       setShowApproveDialog(false);
       setSelectedReview(null);
@@ -246,7 +248,26 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           ) : (
-            pendingReviews.map((review: TemplateReview) => (
+            <>
+              <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800" data-testid="card-lease-text-warning">
+                <CardContent className="py-4">
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                    <div className="space-y-2 text-sm">
+                      <p className="font-semibold text-amber-900 dark:text-amber-100">
+                        Important: What "Approve &amp; Publish" actually does today
+                      </p>
+                      <p className="text-amber-900 dark:text-amber-100">
+                        Approving here bumps the template version number, records the change history, and notifies landlords that an update was published. <strong>It does not yet rewrite the legal clause text inside generated lease PDFs or DOCX files.</strong> Lease body text is currently hardcoded in the generator and requires an engineering deploy to change.
+                      </p>
+                      <p className="text-amber-900 dark:text-amber-100">
+                        <strong>Action required after approval:</strong> copy the recommended changes shown below and notify engineering to update <code className="text-xs bg-amber-100 dark:bg-amber-900/40 px-1 py-0.5 rounded">server/utils/leaseAgreementGenerator.ts</code> for that state. Until that ships, new leases will still use the previous clause text even though the version number has incremented.
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              {pendingReviews.map((review: TemplateReview) => (
               <Card key={review.id} data-testid={`review-card-${review.id}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-4">
@@ -320,7 +341,12 @@ export default function AdminDashboard() {
                   )}
                 </CardContent>
 
-                <CardFooter className="flex gap-2">
+                <CardFooter className="flex flex-col gap-3">
+                  <p className="text-xs text-muted-foreground flex items-center gap-1.5 self-start" data-testid={`text-engineering-reminder-${review.id}`}>
+                    <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                    Bumps version &amp; notifies landlords. Engineering must edit the generator for the new clause to appear in leases.
+                  </p>
+                  <div className="flex gap-2 w-full">
                   <Button
                     onClick={() => handleApprove(review)}
                     className="flex-1"
@@ -338,9 +364,11 @@ export default function AdminDashboard() {
                     <XCircle className="h-4 w-4 mr-2" />
                     Reject
                   </Button>
+                  </div>
                 </CardFooter>
               </Card>
-            ))
+            ))}
+            </>
           )}
         </TabsContent>
 

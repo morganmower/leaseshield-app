@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { AlertCircle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle, Calendar, RefreshCw } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle, Calendar, RefreshCw } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
 
 interface LegislativeBill {
@@ -275,8 +275,9 @@ export default function AdminLegislativeMonitoring() {
     onSuccess: (data: any) => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/template-review-queue'] });
       toast({
-        title: 'Template Updated',
-        description: data.message || 'Template has been updated and users notified.',
+        title: 'Version bumped — engineering action needed',
+        description: 'Template version incremented and landlords notified. Lease body text is still hardcoded — forward the drafted clause to engineering to update leaseAgreementGenerator.ts before the next release.',
+        duration: 12000,
       });
     },
     onError: () => {
@@ -731,11 +732,22 @@ export default function AdminLegislativeMonitoring() {
               </Card>
             ) : (
               <div className="space-y-4">
-                <Card className="bg-blue-50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800">
+                <Card className="bg-amber-50 dark:bg-amber-950/20 border-amber-300 dark:border-amber-800" data-testid="card-lease-text-warning">
                   <CardContent className="py-4">
-                    <p className="text-sm text-foreground">
-                      <strong>One-Click Approval:</strong> AI has drafted clause changes for these templates. Review the draft and click "Apply Draft" to update the template and notify landlords.
-                    </p>
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle aria-hidden="true" className="h-5 w-5 text-amber-700 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                      <div className="space-y-2 text-sm">
+                        <p className="font-semibold text-amber-900 dark:text-amber-100">
+                          Important: What "Apply Draft" actually does today
+                        </p>
+                        <p className="text-amber-900 dark:text-amber-100">
+                          Approving here bumps the template version number, records the change history, and notifies landlords that an update was published. <strong>It does not yet rewrite the legal clause text inside generated lease PDFs/DOCX files.</strong> Lease body text is currently hardcoded in the generator and requires an engineering deploy to change.
+                        </p>
+                        <p className="text-amber-900 dark:text-amber-100">
+                          <strong>Action required after approval:</strong> copy the drafted clause below and notify engineering to update <code className="text-xs bg-amber-100 dark:bg-amber-900/40 px-1 py-0.5 rounded">server/utils/leaseAgreementGenerator.ts</code> for this state. Until that ships, new leases will still use the previous clause text even though the version number has incremented.
+                        </p>
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
                 {pendingDrafts.map((draft) => {
@@ -815,7 +827,11 @@ export default function AdminLegislativeMonitoring() {
                           </div>
                         )}
 
-                        <div className="flex items-center justify-end gap-2 pt-2 border-t">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 pt-2 border-t">
+                          <p className="text-xs text-muted-foreground flex items-center gap-1.5" data-testid={`text-engineering-reminder-${draft.id}`}>
+                            <AlertTriangle aria-hidden="true" className="h-3.5 w-3.5 text-amber-600 dark:text-amber-400 flex-shrink-0" />
+                            Bumps version &amp; notifies landlords. Engineering must edit the generator for the new clause to appear in leases.
+                          </p>
                           <Button
                             variant="default"
                             onClick={() => quickApproveMutation.mutate(draft.id)}
