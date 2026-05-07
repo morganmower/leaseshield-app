@@ -1416,7 +1416,10 @@ Respond in this exact JSON format:
           if (!update.topics.includes(r.topic)) return false;
           if (r.jurisdictionLevel === 'tribal' && update.jurisdictionLevel !== 'tribal') return false;
           if (update.jurisdictionLevel === 'tribal' && r.jurisdictionLevel !== 'tribal' && r.jurisdictionLevel !== 'federal') return false;
-          if (r.jurisdictionState && update.jurisdictionState && r.jurisdictionState !== update.jurisdictionState) return false;
+          if (update.jurisdictionState && r.jurisdictionState && r.jurisdictionState !== update.jurisdictionState) return false;
+          if (update.jurisdictionState && !r.jurisdictionState) {
+            return false;
+          }
           return true;
         })
         .map(r => r.templateId);

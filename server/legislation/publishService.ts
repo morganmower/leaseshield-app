@@ -79,7 +79,10 @@ async function getAffectedTemplates(
         return false;
       }
       
-      if (r.jurisdictionState && jurisdictionState && r.jurisdictionState !== jurisdictionState) {
+      if (jurisdictionState && r.jurisdictionState && r.jurisdictionState !== jurisdictionState) {
+        return false;
+      }
+      if (jurisdictionState && !r.jurisdictionState) {
         return false;
       }
       
