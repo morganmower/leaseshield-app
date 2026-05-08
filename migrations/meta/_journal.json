@@ -22,6 +22,20 @@
       "when": 1788393600000,
       "tag": "0002_rent_payment_fees",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1788998400000,
+      "tag": "0003_link_view_count",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1778250000000,
+      "tag": "0004_state_clause_values",
+      "breakpoints": true
     }
   ]
 }
