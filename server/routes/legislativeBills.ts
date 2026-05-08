@@ -67,114 +67,24 @@ export async function registerLegislativeBillsRoutes(app: Express) {
       }
 
       const { id } = req.params;
-      
-      // Get the bill to find affected templates
       const bill = await storage.getLegislativeMonitoringByBillId(id);
       if (!bill) {
         return res.status(404).json({ message: 'Bill not found' });
       }
 
-      // Queue template reviews with AI-drafted clause changes
-      let templatesQueued = 0;
-      const draftResults: Array<{ templateId: string; changeSummary: string; draftedClause: string }> = [];
-      
-      if (bill.affectedTemplateIds && bill.affectedTemplateIds.length > 0) {
-        const { billAnalysisService } = await import("../billAnalysisService");
-        
-        for (const templateId of bill.affectedTemplateIds) {
-          // Check if a review already exists for this bill+template
-          const existing = await db.query.templateReviewQueue.findFirst({
-            where: (table, { eq, and }) => and(
-              eq(table.billId, id),
-              eq(table.templateId, templateId)
-            ),
-          });
-          
-          if (!existing) {
-            // Get template details for AI drafting
-            const template = await storage.getTemplate(templateId);
-            
-            let draftedChanges: {
-              draftedClause: string;
-              clauseLocation: string;
-              beforeText: string;
-              afterText: string;
-              changeType: string;
-              changeSummary: string;
-              legalReference: string;
-            } = {
-              draftedClause: 'Review bill for potential template changes',
-              clauseLocation: '',
-              beforeText: '',
-              afterText: '',
-              changeType: 'other',
-              changeSummary: 'Manual review required',
-              legalReference: '',
-            };
-            
-            // Generate AI-drafted clause changes
-            if (template) {
-              try {
-                const aiDraft = await billAnalysisService.generateDraftClauseChanges(
-                  template.title,
-                  template.description || '',
-                  template.templateType,
-                  template.stateId,
-                  bill.billNumber || '',
-                  bill.title,
-                  bill.description || '',
-                  bill.aiAnalysis || ''
-                );
-                draftedChanges = {
-                  draftedClause: aiDraft.draftedClause,
-                  clauseLocation: aiDraft.clauseLocation,
-                  beforeText: aiDraft.beforeText,
-                  afterText: aiDraft.afterText,
-                  changeType: aiDraft.changeType,
-                  changeSummary: aiDraft.changeSummary,
-                  legalReference: aiDraft.legalReference,
-                };
-              } catch (draftError) {
-                console.error('Error generating draft for template:', templateId, draftError);
-              }
-            }
-            
-            // Store the drafted changes as JSON in recommendedChanges
-            const recommendedChangesJson = JSON.stringify(draftedChanges);
-            
-            const { templateReviewQueue } = await import('@shared/schema');
-            await db.insert(templateReviewQueue).values({
-              templateId,
-              billId: id,
-              reason: `Legislative update: ${bill.billNumber} - ${bill.title}`,
-              recommendedChanges: recommendedChangesJson,
-              status: 'pending', // Pending admin approval of draft
-              queuedAt: new Date(),
-            });
-            
-            templatesQueued++;
-            draftResults.push({
-              templateId,
-              changeSummary: draftedChanges.changeSummary,
-              draftedClause: draftedChanges.draftedClause.substring(0, 200) + '...',
-            });
-          }
-        }
-      }
-
-      // Mark the bill as reviewed
-      await storage.updateLegislativeMonitoring(id, {
-        isReviewed: true,
+      const { approveBill } = await import('../legislativeApprovalService');
+      const result = await approveBill(bill.billId, {
         reviewedBy: userId,
-        reviewedAt: new Date(),
-        reviewNotes: `Approved by admin - ${templatesQueued} template drafts created`,
+        reviewNotes: undefined,
       });
 
-      res.json({ 
-        success: true, 
-        message: `Bill approved - ${templatesQueued} template drafts created for review`,
-        templatesQueued,
-        drafts: draftResults,
+      res.json({
+        success: true,
+        message: result.alreadyReviewed
+          ? 'Bill was already reviewed'
+          : `Bill approved - ${result.templatesQueued} template drafts created for review`,
+        templatesQueued: result.templatesQueued,
+        drafts: result.drafts,
       });
     } catch (error) {
       console.error('Error approving bill:', error);

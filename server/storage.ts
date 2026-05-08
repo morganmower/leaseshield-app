@@ -47,6 +47,9 @@ import {
   type InsertBlogPost,
   type LegislativeMonitoring,
   type InsertLegislativeMonitoring,
+  stateClauseValues,
+  type StateClauseValue,
+  type InsertStateClauseValue,
   type CaseLawMonitoring,
   type InsertCaseLawMonitoring,
   type TemplateReviewQueue,
@@ -310,6 +313,11 @@ export interface IStorage {
   getAllLegislativeMonitoring(filters?: { stateId?: string; relevanceLevel?: string; isReviewed?: boolean }): Promise<LegislativeMonitoring[]>;
   createLegislativeMonitoring(monitoring: InsertLegislativeMonitoring): Promise<LegislativeMonitoring>;
   updateLegislativeMonitoring(id: string, monitoring: Partial<InsertLegislativeMonitoring>): Promise<LegislativeMonitoring>;
+
+  // State clause values (numeric per-state legal limits used by the lease generator)
+  getStateClauseValues(stateId: string): Promise<StateClauseValue[]>;
+  upsertStateClauseValue(value: InsertStateClauseValue): Promise<StateClauseValue>;
+  listAllStateClauseValues(): Promise<StateClauseValue[]>;
 
   // Case law monitoring operations
   getCaseLawMonitoringByCaseId(caseId: string): Promise<CaseLawMonitoring | undefined>;
@@ -1525,6 +1533,13 @@ export class DatabaseStorage implements IStorage {
 
   async createLegislativeMonitoring(monitoringData: InsertLegislativeMonitoring): Promise<LegislativeMonitoring> {
     const [monitoring] = await db.insert(legislativeMonitoring).values(monitoringData).returning();
+    // Fire-and-forget auto-approve evaluation. Never blocks ingestion or throws.
+    try {
+      const { tryAutoApproveBill } = await import("./legislativeApprovalService");
+      void tryAutoApproveBill(monitoring);
+    } catch (err) {
+      console.error("Failed to schedule auto-approve evaluation (create):", err);
+    }
     return monitoring;
   }
 
@@ -1534,7 +1549,55 @@ export class DatabaseStorage implements IStorage {
       .set({ ...monitoringData, updatedAt: new Date() })
       .where(eq(legislativeMonitoring.id, id))
       .returning();
+    // Re-evaluate auto-approve on any non-review update. The criteria function
+    // is a no-op if the bill doesn't qualify, so this is safe to call broadly.
+    // Skip when this update is itself the approval write (reviewedBy set), to
+    // avoid recursion.
+    if (monitoring && monitoringData.reviewedBy === undefined) {
+      try {
+        const { tryAutoApproveBill } = await import("./legislativeApprovalService");
+        void tryAutoApproveBill(monitoring);
+      } catch (err) {
+        console.error("Failed to schedule auto-approve evaluation (update):", err);
+      }
+    }
     return monitoring;
+  }
+
+  async getStateClauseValues(stateId: string): Promise<StateClauseValue[]> {
+    return await db
+      .select()
+      .from(stateClauseValues)
+      .where(eq(stateClauseValues.stateId, stateId));
+  }
+
+  async upsertStateClauseValue(value: InsertStateClauseValue): Promise<StateClauseValue> {
+    const { clearStateClauseValueCache } = await import("./utils/stateClauseValues");
+    const [row] = await db
+      .insert(stateClauseValues)
+      .values(value)
+      .onConflictDoUpdate({
+        target: [stateClauseValues.stateId, stateClauseValues.clauseKey],
+        set: {
+          valueNumeric: value.valueNumeric ?? null,
+          valueText: value.valueText ?? null,
+          unit: value.unit ?? null,
+          statuteCitation: value.statuteCitation ?? null,
+          effectiveDate: value.effectiveDate ?? null,
+          sourceBillId: value.sourceBillId ?? null,
+          needsReview: value.needsReview ?? false,
+          notes: value.notes ?? null,
+          updatedBy: value.updatedBy ?? null,
+          updatedAt: new Date(),
+        },
+      })
+      .returning();
+    clearStateClauseValueCache();
+    return row;
+  }
+
+  async listAllStateClauseValues(): Promise<StateClauseValue[]> {
+    return await db.select().from(stateClauseValues);
   }
 
   // Case law monitoring operations

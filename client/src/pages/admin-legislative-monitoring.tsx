@@ -1062,6 +1062,15 @@ export default function AdminLegislativeMonitoring() {
                                 <span className="font-medium text-foreground">{bill.billNumber}</span>
                                 <Badge variant="outline">{bill.stateId}</Badge>
                                 {getRelevanceBadge(bill.relevanceLevel)}
+                                {bill.reviewedBy?.startsWith('system:') && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="bg-teal-100 text-teal-800 dark:bg-teal-900 dark:text-teal-200"
+                                    data-testid={`badge-auto-approved-${bill.id}`}
+                                  >
+                                    Auto
+                                  </Badge>
+                                )}
                                 {bill.dataSource && (
                                   <Badge 
                                     variant="secondary" 
@@ -1079,6 +1088,7 @@ export default function AdminLegislativeMonitoring() {
                               </div>
                               <p className="text-sm text-muted-foreground">
                                 Reviewed {bill.reviewedAt && safeFormatDate(bill.reviewedAt, 'MMM d, yyyy')}
+                                {bill.reviewedBy?.startsWith('system:') && ' — auto-approved by system'}
                               </p>
                             </div>
                           </div>

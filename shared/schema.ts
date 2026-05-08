@@ -662,7 +662,15 @@ export const templateReviewQueue = pgTable("template_review_queue", {
   publishedBy: varchar("published_by"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
-});
+}, (table) => [
+  // Prevent duplicate (bill, template) review rows when multiple approval calls
+  // race (manual approve + auto-approve, or two concurrent auto-approves).
+  // Partial because bill_id is nullable for review queue rows that come from
+  // the normalized_updates ingestion path instead of from a bill approval.
+  uniqueIndex("idx_template_review_queue_bill_template")
+    .on(table.billId, table.templateId)
+    .where(sql`${table.billId} IS NOT NULL`),
+]);
 
 export const insertTemplateReviewQueueSchema = createInsertSchema(templateReviewQueue).omit({
   id: true,
