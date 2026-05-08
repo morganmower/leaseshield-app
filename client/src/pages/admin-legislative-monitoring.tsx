@@ -6,8 +6,9 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useToast } from '@/hooks/use-toast';
 import { queryClient, apiRequest } from '@/lib/queryClient';
-import { AlertCircle, AlertTriangle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle, Calendar, RefreshCw } from 'lucide-react';
+import { AlertCircle, AlertTriangle, CheckCircle, XCircle, Clock, FileText, ExternalLink, PlayCircle, Calendar, RefreshCw, Settings2 } from 'lucide-react';
 import { format, formatDistanceToNow } from 'date-fns';
+import { ClauseValuesTab } from '@/components/admin/clause-values-tab';
 
 interface LegislativeBill {
   id: string;
@@ -490,6 +491,10 @@ export default function AdminLegislativeMonitoring() {
             </TabsTrigger>
             <TabsTrigger value="case-law" data-testid="tab-case-law">
               Case Law ({caseLaws.length})
+            </TabsTrigger>
+            <TabsTrigger value="clause-values" data-testid="tab-clause-values">
+              <Settings2 className="h-3.5 w-3.5 mr-1.5" />
+              Clause Values
             </TabsTrigger>
             <TabsTrigger value="history" data-testid="tab-history">
               History
@@ -996,6 +1001,10 @@ export default function AdminLegislativeMonitoring() {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="clause-values" className="space-y-4">
+            <ClauseValuesTab />
           </TabsContent>
 
           <TabsContent value="history" className="space-y-4">

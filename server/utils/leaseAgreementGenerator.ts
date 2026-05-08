@@ -14,6 +14,8 @@ import {
   BorderStyle,
   PageBreak,
 } from 'docx';
+import { CLAUSE_KEYS } from '@shared/clauseRegistry';
+import { getStateClauseValues, type CachedClauseValue } from './stateClauseValues';
 
 interface LeaseAgreementOptions {
   templateTitle: string;
@@ -65,6 +67,28 @@ const DEPOSIT_RETURN_DAYS: Record<string, string> = {
   IL: '30-45',
   NM: '30',
 };
+
+function formatLateFeeStateNote(
+  stateName: string,
+  pct: CachedClauseValue | undefined,
+  flat: CachedClauseValue | undefined,
+  graceMin: CachedClauseValue | undefined,
+): string {
+  const parts: string[] = [];
+  if (pct?.value != null) {
+    parts.push(`caps late fees at ${pct.value}% of monthly rent`);
+  }
+  if (flat?.value != null) {
+    parts.push(`caps late fees at $${flat.value}`);
+  }
+  if (graceMin?.value != null) {
+    parts.push(`requires a minimum grace period of ${graceMin.value} day${graceMin.value === 1 ? '' : 's'} before a late fee may be assessed`);
+  }
+  if (parts.length === 0) return '';
+  const cite = pct?.statuteCitation ?? flat?.statuteCitation ?? graceMin?.statuteCitation;
+  const citeStr = cite ? ` (${cite})` : '';
+  return `Note: ${stateName} law ${parts.join(' and ')}${citeStr}.`;
+}
 
 function escapeHtml(unsafe: string): string {
   return unsafe
@@ -280,7 +304,18 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
   const startTime = Date.now();
 
   const stateName = STATE_NAMES[stateId] || stateId;
-  const depositDays = DEPOSIT_RETURN_DAYS[stateId] || '30';
+  // Pull state-specific legal limits from the DB-backed clause cache (admin-editable).
+  // Falls back to the legacy hardcoded map if a row hasn't been populated yet.
+  const clauseValues = await getStateClauseValues(stateId);
+  const lateFeeCapPctClause = clauseValues.get(CLAUSE_KEYS.LATE_FEE_CAP_PCT);
+  const lateFeeCapFlatClause = clauseValues.get(CLAUSE_KEYS.LATE_FEE_CAP_FLAT_USD);
+  const lateFeeGraceMinClause = clauseValues.get(CLAUSE_KEYS.LATE_FEE_GRACE_DAYS);
+  const depositCapMonthsClause = clauseValues.get(CLAUSE_KEYS.DEPOSIT_CAP_MONTHS);
+  const noticeMtmDaysClause = clauseValues.get(CLAUSE_KEYS.NOTICE_TERMINATE_MTM_DAYS);
+  const depositReturnClause = clauseValues.get(CLAUSE_KEYS.DEPOSIT_RETURN_DAYS);
+  const depositDays = depositReturnClause?.value != null
+    ? String(depositReturnClause.value)
+    : (DEPOSIT_RETURN_DAYS[stateId] || '30');
   
   const landlordName = getFieldValue(fieldValues, 'landlordName');
   const landlordAddress = getFieldValue(fieldValues, 'landlordAddress');
@@ -330,11 +365,19 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
   children.push(H2("4. RENT AND PAYMENT"));
   children.push(LabelValue("Monthly Rent: ", `$${monthlyRent} payable on the ${rentDueDay} day of each month.`));
   children.push(LabelValue("Late Fee: ", `If rent is not received within ${lateFeeGracePeriod} days of the due date, a late fee of $${lateFeeAmount} shall be assessed.`));
+  const lateFeeNotes = formatLateFeeStateNote(stateName, lateFeeCapPctClause, lateFeeCapFlatClause, lateFeeGraceMinClause);
+  if (lateFeeNotes) {
+    children.push(P(lateFeeNotes, { italic: true }));
+  }
   children.push(LabelValue("NSF Check Fee: ", "$35 for any returned check."));
 
   children.push(H2("5. SECURITY DEPOSIT"));
   children.push(LabelValue("Amount: ", `$${securityDeposit}`));
   children.push(P(`The security deposit shall be returned within ${depositDays} days after lease termination, less any lawful deductions for damages, unpaid rent, or cleaning costs, with an itemized statement.`));
+  if (depositCapMonthsClause?.value != null) {
+    const cite = depositCapMonthsClause.statuteCitation ? ` (${depositCapMonthsClause.statuteCitation})` : '';
+    children.push(P(`Note: ${stateName} law caps the security deposit at ${depositCapMonthsClause.value} month${depositCapMonthsClause.value === 1 ? '' : 's'} of rent${cite}.`, { italic: true }));
+  }
 
   children.push(H2("6. MAINTENANCE AND REPAIRS"));
   children.push(P("Tenant shall maintain the Premises in clean condition and promptly report any needed repairs. Landlord shall maintain structural elements, roof, foundation, and major systems (electrical, plumbing, HVAC) in good repair."));
@@ -356,6 +399,10 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
 
   children.push(H2("12. TERMINATION"));
   children.push(P("Either party must provide at least 30 days written notice before the end of the lease term. Early termination constitutes a material breach."));
+  if (noticeMtmDaysClause?.value != null && noticeMtmDaysClause.value !== 30) {
+    const cite = noticeMtmDaysClause.statuteCitation ? ` (${noticeMtmDaysClause.statuteCitation})` : '';
+    children.push(P(`Note: For month-to-month tenancies, ${stateName} law requires at least ${noticeMtmDaysClause.value} days written notice to terminate${cite}.`, { italic: true }));
+  }
 
   children.push(H2("13. DEFAULT AND REMEDIES"));
   children.push(P("Default events include non-payment of rent, unauthorized occupants, lease violations, or illegal activity. Upon default, Landlord may pursue eviction and recover all unpaid amounts, attorney fees, and damages."));
@@ -450,7 +497,9 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
 export async function generateLeaseAgreementPdf(options: LeaseAgreementOptions): Promise<Buffer> {
   const { templateTitle, stateId, fieldValues, version = 1, updatedAt = new Date(), landlordInfo } = options;
 
-  const htmlContent = generateLeaseHTMLForPdf(templateTitle, stateId, fieldValues, version, updatedAt, landlordInfo);
+  // Pre-warm the clause-value cache so the sync HTML builder can read it.
+  const clauseValuesForPdf = await getStateClauseValues(stateId);
+  const htmlContent = generateLeaseHTMLForPdf(templateTitle, stateId, fieldValues, version, updatedAt, landlordInfo, clauseValuesForPdf);
 
   console.log('📄 Generating lease agreement PDF with Puppeteer...');
   const startTime = Date.now();
@@ -488,10 +537,19 @@ function generateLeaseHTMLForPdf(
   fieldValues: Record<string, string | number>,
   version: number,
   updatedAt: Date,
-  landlordInfo?: LeaseAgreementOptions['landlordInfo']
+  landlordInfo?: LeaseAgreementOptions['landlordInfo'],
+  clauseValues?: Map<string, CachedClauseValue>
 ): string {
   const stateName = STATE_NAMES[stateId] || stateId;
-  const depositDays = DEPOSIT_RETURN_DAYS[stateId] || '30';
+  const lateFeeCapPctClause = clauseValues?.get(CLAUSE_KEYS.LATE_FEE_CAP_PCT);
+  const lateFeeCapFlatClause = clauseValues?.get(CLAUSE_KEYS.LATE_FEE_CAP_FLAT_USD);
+  const lateFeeGraceMinClause = clauseValues?.get(CLAUSE_KEYS.LATE_FEE_GRACE_DAYS);
+  const depositCapMonthsClause = clauseValues?.get(CLAUSE_KEYS.DEPOSIT_CAP_MONTHS);
+  const noticeMtmDaysClause = clauseValues?.get(CLAUSE_KEYS.NOTICE_TERMINATE_MTM_DAYS);
+  const depositReturnClause = clauseValues?.get(CLAUSE_KEYS.DEPOSIT_RETURN_DAYS);
+  const depositDays = depositReturnClause?.value != null
+    ? String(depositReturnClause.value)
+    : (DEPOSIT_RETURN_DAYS[stateId] || '30');
   const safeTitle = escapeHtml(templateTitle);
   
   const landlordName = getFieldValue(fieldValues, 'landlordName');
@@ -557,11 +615,16 @@ function generateLeaseHTMLForPdf(
 <h2>4. RENT AND PAYMENT</h2>
 <p><strong>Monthly Rent:</strong> $${escapeHtml(monthlyRent)} payable on the ${escapeHtml(rentDueDay)} day of each month.</p>
 <p><strong>Late Fee:</strong> If rent is not received within ${escapeHtml(lateFeeGracePeriod)} days of the due date, a late fee of $${escapeHtml(lateFeeAmount)} shall be assessed.</p>
+${(() => {
+  const note = formatLateFeeStateNote(stateName, lateFeeCapPctClause, lateFeeCapFlatClause, lateFeeGraceMinClause);
+  return note ? `<p><em>${escapeHtml(note)}</em></p>` : '';
+})()}
 <p><strong>NSF Check Fee:</strong> $35 for any returned check.</p>
 
 <h2>5. SECURITY DEPOSIT</h2>
 <p><strong>Amount:</strong> $${escapeHtml(securityDeposit)}</p>
 <p>The security deposit shall be returned within ${depositDays} days after lease termination, less any lawful deductions for damages, unpaid rent, or cleaning costs, with an itemized statement.</p>
+${depositCapMonthsClause?.value != null ? `<p><em>Note: ${escapeHtml(stateName)} law caps the security deposit at ${depositCapMonthsClause.value} month${depositCapMonthsClause.value === 1 ? '' : 's'} of rent${depositCapMonthsClause.statuteCitation ? ` (${escapeHtml(depositCapMonthsClause.statuteCitation)})` : ''}.</em></p>` : ''}
 
 <h2>6. MAINTENANCE AND REPAIRS</h2>
 <p>Tenant shall maintain the Premises in clean condition and promptly report any needed repairs. Landlord shall maintain structural elements, roof, foundation, and major systems (electrical, plumbing, HVAC) in good repair.</p>
@@ -583,6 +646,7 @@ function generateLeaseHTMLForPdf(
 
 <h2>12. TERMINATION</h2>
 <p>Either party must provide at least 30 days written notice before the end of the lease term. Early termination constitutes a material breach.</p>
+${(noticeMtmDaysClause?.value != null && noticeMtmDaysClause.value !== 30) ? `<p><em>Note: For month-to-month tenancies, ${escapeHtml(stateName)} law requires at least ${noticeMtmDaysClause.value} days written notice to terminate${noticeMtmDaysClause.statuteCitation ? ` (${escapeHtml(noticeMtmDaysClause.statuteCitation)})` : ''}.</em></p>` : ''}
 
 <h2>13. DEFAULT AND REMEDIES</h2>
 <p>Default events include non-payment of rent, unauthorized occupants, lease violations, or illegal activity. Upon default, Landlord may pursue eviction and recover all unpaid amounts, attorney fees, and damages.</p>

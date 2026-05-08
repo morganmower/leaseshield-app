@@ -30,6 +30,7 @@ import { registerStatesRoute } from "./routes/states";
 import { registerBlogRoutes } from "./routes/blog";
 import { registerNotifyLegalUpdateRoute } from "./routes/notifyLegalUpdate";
 import { registerTemplateReviewQueueRoutes } from "./routes/templateReviewQueue";
+import { registerStateClauseValuesRoutes } from "./routes/stateClauseValues";
 import { registerTemplateVersionsRoutes } from "./routes/templateVersions";
 import { registerDocumentsGenerateRoutes } from "./routes/documentsGenerate";
 import { registerLegislativeBillsRoutes } from "./routes/legislativeBills";
@@ -103,6 +104,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await registerBlogRoutes(app);
   await registerNotifyLegalUpdateRoute(app);
   await registerTemplateReviewQueueRoutes(app);
+  await registerStateClauseValuesRoutes(app);
   await registerTemplateVersionsRoutes(app);
   await registerDocumentsGenerateRoutes(app);
   await registerLegislativeBillsRoutes(app);

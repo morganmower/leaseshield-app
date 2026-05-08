@@ -101,6 +101,40 @@ export const insertStateSchema = createInsertSchema(states).omit({
 export type InsertState = z.infer<typeof insertStateSchema>;
 export type State = typeof states.$inferSelect;
 
+// Per-state legal limit values for individual lease/notice clauses.
+// Populated and edited by admins. The lease generator reads these at render
+// time to append state-mandated compliance footnotes (and to override
+// defaults like deposit-return deadlines).
+// clauseKey values are constrained at the application layer via
+// shared/clauseRegistry.ts to prevent typo drift.
+export const stateClauseValues = pgTable("state_clause_values", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  stateId: varchar("state_id", { length: 2 }).notNull(),
+  clauseKey: varchar("clause_key", { length: 64 }).notNull(),
+  valueNumeric: doublePrecision("value_numeric"),
+  valueText: text("value_text"),
+  unit: varchar("unit", { length: 32 }),
+  statuteCitation: text("statute_citation"),
+  effectiveDate: timestamp("effective_date"),
+  sourceBillId: varchar("source_bill_id"),
+  needsReview: boolean("needs_review").default(false),
+  notes: text("notes"),
+  updatedBy: varchar("updated_by"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("idx_state_clause_unique").on(table.stateId, table.clauseKey),
+  index("idx_state_clause_state").on(table.stateId),
+]);
+
+export const insertStateClauseValueSchema = createInsertSchema(stateClauseValues).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+export type InsertStateClauseValue = z.infer<typeof insertStateClauseValueSchema>;
+export type StateClauseValue = typeof stateClauseValues.$inferSelect;
+
 // Template categories
 export const categoryEnum = pgEnum('category', [
   'leasing',
