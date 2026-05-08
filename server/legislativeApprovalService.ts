@@ -2,6 +2,7 @@ import { db } from "./db";
 import { storage } from "./storage";
 import { templateReviewQueue } from "@shared/schema";
 import type { LegislativeMonitoring } from "@shared/schema";
+import { sql } from "drizzle-orm";
 
 export interface ApproveBillOptions {
   reviewedBy: string;
@@ -86,6 +87,7 @@ export async function approveBill(
         })
         .onConflictDoNothing({
           target: [templateReviewQueue.billId, templateReviewQueue.templateId],
+          where: sql`${templateReviewQueue.billId} IS NOT NULL`,
         })
         .returning({ id: templateReviewQueue.id });
 
