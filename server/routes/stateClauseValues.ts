@@ -1,4 +1,5 @@
 import type { Express } from 'express';
+import { z } from 'zod';
 import { db } from '../db';
 import { stateClauseValues, states } from '@shared/schema';
 import { isAuthenticated, requireAdmin } from '../jwtAuth';
@@ -8,6 +9,23 @@ import { clearStateClauseValueCache } from '../utils/stateClauseValues';
 import { and, eq, sql } from 'drizzle-orm';
 
 const VALID_CLAUSE_KEYS = new Set<string>(Object.values(CLAUSE_KEYS));
+
+// Validate the PATCH payload — coerce numbers/dates and accept null for
+// nullable fields. Rejects junk before it reaches the DB or `new Date()`.
+const upsertClauseValueSchema = z.object({
+  valueNumeric: z.number().finite().nullable().optional(),
+  valueText: z.string().max(2000).nullable().optional(),
+  statuteCitation: z.string().max(500).nullable().optional(),
+  effectiveDate: z
+    .string()
+    .datetime({ offset: true })
+    .or(z.string().regex(/^\d{4}-\d{2}-\d{2}$/))
+    .nullable()
+    .optional(),
+  sourceBillId: z.string().max(128).nullable().optional(),
+  needsReview: z.boolean().optional(),
+  notes: z.string().max(2000).nullable().optional(),
+});
 
 export async function registerStateClauseValuesRoutes(app: Express) {
   // List all clause values, optionally filtered by stateId
@@ -46,6 +64,13 @@ export async function registerStateClauseValuesRoutes(app: Express) {
           return res.status(400).json({ message: `Unknown state: ${stateId}` });
         }
 
+        const parseResult = upsertClauseValueSchema.safeParse(req.body);
+        if (!parseResult.success) {
+          return res.status(400).json({
+            message: 'Invalid request body',
+            errors: parseResult.error.flatten(),
+          });
+        }
         const {
           valueNumeric,
           valueText,
@@ -54,15 +79,7 @@ export async function registerStateClauseValuesRoutes(app: Express) {
           sourceBillId,
           needsReview,
           notes,
-        } = req.body as {
-          valueNumeric?: number | null;
-          valueText?: string | null;
-          statuteCitation?: string | null;
-          effectiveDate?: string | null;
-          sourceBillId?: string | null;
-          needsReview?: boolean;
-          notes?: string | null;
-        };
+        } = parseResult.data;
 
         const userId = getUserId(req);
         const now = new Date();

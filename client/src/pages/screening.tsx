@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState, startTransition } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -461,14 +461,23 @@ function BatchDecoderResults({
 
 function DecoderDisplay({ explanation, decoderType, userState, userStateName, stateNote, fallbackText }: DecoderDisplayProps) {
   const { toast } = useToast();
-  const parsed = parseNewDecoderFormat(explanation);
-  const legacy = parsed ? null : parseLegacyFormat(explanation);
+  // Memoize regex parsing — it's expensive and was re-running on every render
+  // (e.g. when accordion state, parent re-renders, or unrelated state updates
+  // happen). With long AI responses this was a real freeze risk.
+  const parsed = useMemo(() => parseNewDecoderFormat(explanation), [explanation]);
+  const legacy = useMemo(
+    () => (parsed ? null : parseLegacyFormat(explanation)),
+    [parsed, explanation],
+  );
 
   // Pull follow-up questions out of the collapsible accordion and surface
   // them as a dedicated "Ask the applicant" checklist above. We mutate a
   // local copy so the original parsed object is untouched.
   const questionsSection = parsed?.collapsible.find((s) => s.id === 'questions');
-  const followUps = questionsSection ? extractFollowUpQuestions(questionsSection.content) : [];
+  const followUps = useMemo(
+    () => (questionsSection ? extractFollowUpQuestions(questionsSection.content) : []),
+    [questionsSection?.content],
+  );
   const collapsibleWithoutQuestions = parsed?.collapsible.filter((s) => s.id !== 'questions') ?? [];
   
   const [openSections, setOpenSections] = useState<string[]>(() => 
@@ -753,16 +762,42 @@ export default function Screening() {
   const stateCreditChip = preferredState ? STATE_AWARE_CHIPS[preferredState]?.credit : undefined;
   const stateCriminalChip = preferredState ? STATE_AWARE_CHIPS[preferredState]?.criminal : undefined;
 
+  // Hard cap on raw input length so a giant paste can't kick off many slow
+  // 7+ second AI calls and freeze the page with a render storm. Above this
+  // we trim and warn — well above any realistic single screening report
+  // section but small enough to keep the UI responsive.
+  const MAX_DECODER_INPUT_CHARS = 8000;
+
+  // AbortController for in-flight batch fetches. We cancel on new searches
+  // and on unmount so navigating away or starting a new decode doesn't leave
+  // 8 concurrent OpenAI calls churning the main thread with state updates.
+  const batchAbortRef = useRef<AbortController | null>(null);
+  useEffect(() => {
+    return () => {
+      batchAbortRef.current?.abort();
+    };
+  }, []);
+
   // Run a batch of findings in parallel with a small concurrency cap to avoid
   // hitting the chat rate limiter. Each completion patches the corresponding
-  // result entry so the UI streams in finding-by-finding.
+  // result entry so the UI streams in finding-by-finding. Returns:
+  //   'completed' - batch ran to completion; caller should NOT fall back.
+  //   'fallback'  - input had <2 segments; caller should run single-call mode.
+  //   'aborted'   - a newer search aborted us; caller MUST return immediately
+  //                 and NOT fall back, or it will overwrite the newer result.
+  type BatchOutcome = 'completed' | 'fallback' | 'aborted';
   const runBatchDecode = async (
     text: string,
     decoderType: 'credit' | 'criminal',
     setResults: (r: BatchFindingResult[] | null) => void,
-  ): Promise<boolean> => {
+  ): Promise<BatchOutcome> => {
     const segments = splitFindingsForBatchDecode(text);
-    if (segments.length < 2) return false; // Caller should fall back to single mode.
+    if (segments.length < 2) return 'fallback';
+
+    // Cancel any prior in-flight batch before starting a new one.
+    batchAbortRef.current?.abort();
+    const ctrl = new AbortController();
+    batchAbortRef.current = ctrl;
 
     const endpoint = decoderType === 'credit' ? '/api/explain-credit-term' : '/api/explain-criminal-eviction-term';
     const initial: BatchFindingResult[] = segments.map((s, i) => ({
@@ -775,6 +810,7 @@ export default function Screening() {
     const working = [...initial];
 
     const runOne = async (idx: number) => {
+      if (ctrl.signal.aborted) return;
       try {
         const token = getAccessToken();
         const response = await fetch(endpoint, {
@@ -785,6 +821,7 @@ export default function Screening() {
           },
           body: JSON.stringify({ term: working[idx].input }),
           credentials: 'include',
+          signal: ctrl.signal,
         });
         if (!response.ok) {
           const err = await response.json().catch(() => ({} as any));
@@ -804,9 +841,16 @@ export default function Screening() {
           };
         }
       } catch (e: any) {
+        if (e?.name === 'AbortError' || ctrl.signal.aborted) return;
         working[idx] = { ...working[idx], status: 'error', errorMessage: e?.message || 'Network error' };
       }
-      setResults([...working]);
+      // Mark per-finding state updates as transitions so React can interrupt
+      // them for user input — keeps the UI responsive while the batch streams.
+      if (!ctrl.signal.aborted) {
+        startTransition(() => {
+          setResults([...working]);
+        });
+      }
     };
 
     // Concurrency = 3 - enough to feel fast, low enough to stay under the
@@ -814,13 +858,13 @@ export default function Screening() {
     const CONCURRENCY = 3;
     let cursor = 0;
     const workers = Array.from({ length: Math.min(CONCURRENCY, segments.length) }, async () => {
-      while (cursor < segments.length) {
+      while (cursor < segments.length && !ctrl.signal.aborted) {
         const i = cursor++;
         await runOne(i);
       }
     });
     await Promise.all(workers);
-    return true;
+    return ctrl.signal.aborted ? 'aborted' : 'completed';
   };
 
   const handleExplain = async () => {
@@ -829,12 +873,23 @@ export default function Screening() {
       return;
     }
     
-    const input = userQuestion.trim();
+    let input = userQuestion.trim();
     
     if (!input) {
       setExplanation('Please type a word or phrase from your report first.');
       return;
     }
+
+    if (input.length > MAX_DECODER_INPUT_CHARS) {
+      input = input.slice(0, MAX_DECODER_INPUT_CHARS);
+      toast({
+        title: "Input trimmed",
+        description: `We trimmed your input to ${MAX_DECODER_INPUT_CHARS.toLocaleString()} characters so the decoder stays responsive. Try one report section at a time.`,
+      });
+    }
+
+    // Cancel any in-flight batch from a previous search before starting a new one.
+    batchAbortRef.current?.abort();
 
     setIsExplaining(true);
     setExplanation('');
@@ -844,12 +899,17 @@ export default function Screening() {
     // input clearly contains multiple items.
     if (creditBatchMode) {
       try {
-        const ran = await runBatchDecode(input, 'credit', setCreditBatchResults);
-        if (ran) {
+        const outcome = await runBatchDecode(input, 'credit', setCreditBatchResults);
+        if (outcome === 'completed') {
           setIsExplaining(false);
           return;
         }
-        // Fewer than 2 segments - fall through to single-call mode below.
+        if (outcome === 'aborted') {
+          // A newer search took over - bail out without touching state so
+          // we don't overwrite the newer result with this stale handler.
+          return;
+        }
+        // outcome === 'fallback': fewer than 2 segments, fall through.
       } catch (e) {
         console.error('Batch decode failed, falling back to single mode:', e);
       }
@@ -915,12 +975,23 @@ export default function Screening() {
       return;
     }
     
-    const input = criminalUserQuestion.trim();
+    let input = criminalUserQuestion.trim();
     
     if (!input) {
       setCriminalExplanation('Please type a term or question first.');
       return;
     }
+
+    if (input.length > MAX_DECODER_INPUT_CHARS) {
+      input = input.slice(0, MAX_DECODER_INPUT_CHARS);
+      toast({
+        title: "Input trimmed",
+        description: `We trimmed your input to ${MAX_DECODER_INPUT_CHARS.toLocaleString()} characters so the decoder stays responsive. Try one report section at a time.`,
+      });
+    }
+
+    // Cancel any in-flight batch from a previous search before starting a new one.
+    batchAbortRef.current?.abort();
 
     setIsCriminalExplaining(true);
     setCriminalExplanation('');
@@ -928,11 +999,16 @@ export default function Screening() {
 
     if (criminalBatchMode) {
       try {
-        const ran = await runBatchDecode(input, 'criminal', setCriminalBatchResults);
-        if (ran) {
+        const outcome = await runBatchDecode(input, 'criminal', setCriminalBatchResults);
+        if (outcome === 'completed') {
           setIsCriminalExplaining(false);
           return;
         }
+        if (outcome === 'aborted') {
+          // Newer search aborted us - don't overwrite its results.
+          return;
+        }
+        // outcome === 'fallback': fall through to single-call mode.
       } catch (e) {
         console.error('Batch decode failed, falling back to single mode:', e);
       }
