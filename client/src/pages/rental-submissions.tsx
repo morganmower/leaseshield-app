@@ -373,6 +373,23 @@ export default function RentalSubmissions() {
     },
   });
 
+  const markCompleteMutation = useMutation({
+    mutationFn: async (orderId: string) => {
+      const res = await apiRequest('POST', `/api/rental/screening/${orderId}/mark-complete`);
+      return await res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/rental/submissions'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rental/submissions', selectedSubmission] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rental/submissions', selectedSubmission, 'screening'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rental/submissions/pending-count'] });
+      toast({ title: 'Marked complete', description: 'Screening is now marked as complete.' });
+    },
+    onError: () => {
+      toast({ title: 'Error', description: 'Failed to mark screening complete.', variant: 'destructive' });
+    },
+  });
+
   const syncScreeningMutation = useMutation({
     mutationFn: async (orderId: string) => {
       const res = await apiRequest("POST", `/api/rental/screening/${orderId}/sync`);
@@ -1335,6 +1352,27 @@ Best regards`;
                                       <RefreshCw className="h-4 w-4" />
                                     )}
                                     <span className="ml-1">Sync Status</span>
+                                  </Button>
+                                )}
+                                {(personOrder.status === 'sent' || personOrder.status === 'in_progress') && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => {
+                                      if (confirm(`Mark this screening as complete? Only do this after you've confirmed on Western Verify that the report is ready. This bypasses LeaseShield's automatic completion check.`)) {
+                                        markCompleteMutation.mutate(personOrder.id);
+                                      }
+                                    }}
+                                    disabled={markCompleteMutation.isPending}
+                                    data-testid={`button-mark-complete-${person.id}`}
+                                    title="Manually mark as complete (use only after verifying on Western Verify)"
+                                  >
+                                    {markCompleteMutation.isPending ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      <CheckCircle className="h-4 w-4" />
+                                    )}
+                                    <span className="ml-1">Mark complete</span>
                                   </Button>
                                 )}
                                 {personOrder.status === 'complete' && (

@@ -1713,6 +1713,44 @@ export async function registerRentalScreeningRoutes(app: Express) {
 
   // Sync screening status by checking if report is available
   // This is useful when webhooks are missed or delayed
+  // Manual override: landlord marks a stuck screening as complete after
+  // verifying directly on Western Verify. Used when the result webhook
+  // never arrived (network issue, secret mismatch at the time, etc.).
+  app.post('/api/rental/screening/:orderId/mark-complete', isAuthenticated, requireAccess, async (req: any, res) => {
+    try {
+      const userId = getUserId(req);
+      const order = await storage.getRentalScreeningOrderById(req.params.orderId);
+      if (!order) {
+        return res.status(404).json({ message: 'Screening order not found' });
+      }
+
+      // Authorize: caller must own the property tied to this submission.
+      const submission = await storage.getRentalSubmission(order.submissionId);
+      if (!submission) return res.status(404).json({ message: 'Submission not found' });
+      const appLink = submission.applicationLinkId
+        ? await storage.getRentalApplicationLink(submission.applicationLinkId)
+        : null;
+      if (!appLink) return res.status(404).json({ message: 'Application link not found' });
+      const unit = await storage.getRentalUnit(appLink.unitId);
+      if (!unit) return res.status(404).json({ message: 'Unit not found' });
+      const property = await storage.getRentalProperty(unit.propertyId, userId);
+      if (!property) return res.status(403).json({ message: 'Access denied' });
+
+      if (order.status === 'complete') {
+        return res.json({ success: true, status: 'complete', alreadyComplete: true });
+      }
+
+      const updated = await storage.updateRentalScreeningOrder(order.id, {
+        status: 'complete',
+      });
+      console.log(`[Screening] Manual mark-complete by ${userId} for order ${order.id}`);
+      return res.json({ success: true, status: 'complete', order: updated });
+    } catch (error: any) {
+      console.error('Error marking screening complete:', error);
+      res.status(500).json({ message: 'Failed to mark complete' });
+    }
+  });
+
   app.post('/api/rental/screening/:orderId/sync', isAuthenticated, requireAccess, async (req: any, res) => {
     try {
       const userId = getUserId(req);
