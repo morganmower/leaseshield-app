@@ -4,6 +4,7 @@ import { Link } from "wouter";
 import { queryClient, getAccessToken, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useStates } from "@/hooks/useStates";
+import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -52,6 +53,9 @@ export default function Properties() {
     [states]
   );
   
+  const { user } = useAuth();
+  const isAdmin = !!user?.isAdmin;
+
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -756,17 +760,19 @@ export default function Properties() {
                 />
               </div>
 
-              <div className="space-y-1 pt-2">
-                <Label htmlFor="add-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
-                <Input
-                  id="add-screening-invitation-id"
-                  placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
-                  value={screeningInvitationId}
-                  onChange={(e) => setScreeningInvitationId(e.target.value)}
-                  data-testid="input-add-screening-invitation-id"
-                />
-                <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
-              </div>
+              {isAdmin && (
+                <div className="space-y-1 pt-2">
+                  <Label htmlFor="add-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
+                  <Input
+                    id="add-screening-invitation-id"
+                    placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
+                    value={screeningInvitationId}
+                    onChange={(e) => setScreeningInvitationId(e.target.value)}
+                    data-testid="input-add-screening-invitation-id"
+                  />
+                  <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+                </div>
+              )}
 
               <Separator className="my-4" />
 
@@ -1170,17 +1176,19 @@ export default function Properties() {
                 />
               </div>
 
-              <div className="space-y-1 pt-2">
-                <Label htmlFor="edit-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
-                <Input
-                  id="edit-screening-invitation-id"
-                  placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
-                  value={screeningInvitationId}
-                  onChange={(e) => setScreeningInvitationId(e.target.value)}
-                  data-testid="input-edit-screening-invitation-id"
-                />
-                <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
-              </div>
+              {isAdmin && (
+                <div className="space-y-1 pt-2">
+                  <Label htmlFor="edit-screening-invitation-id" className="text-sm">Screening Package ID (optional)</Label>
+                  <Input
+                    id="edit-screening-invitation-id"
+                    placeholder={credentialsStatus?.defaultInvitationId ? `Default: ${credentialsStatus.defaultInvitationId}` : "Leave blank to use account default"}
+                    value={screeningInvitationId}
+                    onChange={(e) => setScreeningInvitationId(e.target.value)}
+                    data-testid="input-edit-screening-invitation-id"
+                  />
+                  <p className="text-xs text-muted-foreground">Overrides your account-level default. Leave blank to use your account default.</p>
+                </div>
+              )}
 
               <Separator className="my-4" />
 

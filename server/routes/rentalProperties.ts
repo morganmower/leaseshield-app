@@ -47,6 +47,11 @@ export async function registerRentalPropertiesRoutes(app: Express) {
         return res.status(400).json({ message: "Property name is required" });
       }
 
+      // The per-property Screening Package ID override is an admin-only control.
+      // Non-admins never see the field; ignore any value they submit.
+      const currentUser = await storage.getUser(userId);
+      const isAdmin = !!currentUser?.isAdmin;
+
       const lengthChecks: Array<[string, unknown, number]> = [
         ['state', state, 2],
         ['zipCode', zipCode, 10],
@@ -75,7 +80,7 @@ export async function registerRentalPropertiesRoutes(app: Express) {
         defaultFieldSchemaJson: defaultFieldSchemaJson || defaultFieldSchemaTemplate,
         requiredDocumentTypes: requiredDocumentTypes || null,
         autoScreening: autoScreening ?? false,
-        screeningInvitationId: screeningInvitationId || null,
+        screeningInvitationId: isAdmin ? (screeningInvitationId || null) : null,
         propertyTermsJson: propertyTermsJson || null,
       });
 
@@ -98,6 +103,12 @@ export async function registerRentalPropertiesRoutes(app: Express) {
     try {
       const userId = getUserId(req);
       const { name, address, city, state, zipCode, propertyType, notes, defaultCoverPageJson, defaultFieldSchemaJson, requiredDocumentTypes, autoScreening, screeningInvitationId, propertyTermsJson } = req.body;
+
+      // The per-property Screening Package ID override is an admin-only control.
+      // Non-admins never see the field; ignore any value they submit and leave
+      // the existing stored value untouched (undefined is omitted by Drizzle).
+      const currentUser = await storage.getUser(userId);
+      const isAdmin = !!currentUser?.isAdmin;
 
       // Validate column-length constraints up front so the client gets a
       // human-readable 400 instead of a generic 500 on Postgres overflow.
@@ -128,7 +139,7 @@ export async function registerRentalPropertiesRoutes(app: Express) {
         defaultFieldSchemaJson,
         requiredDocumentTypes,
         autoScreening,
-        screeningInvitationId: screeningInvitationId || null,
+        screeningInvitationId: isAdmin ? (screeningInvitationId || null) : undefined,
         propertyTermsJson,
       });
 
