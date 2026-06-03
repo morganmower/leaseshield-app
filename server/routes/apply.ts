@@ -33,19 +33,39 @@ export async function registerApplyRoutes(app: Express) {
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Get the property state and current field schema via unit -> property chain
+      // Resolve live property/unit data so landlord edits propagate to existing
+      // links immediately (no need to recreate links). The mergedSchemaJson
+      // snapshot is only a fallback when the unit/property chain is unavailable.
+      const snapshot = (link.mergedSchemaJson as any) || {};
       let propertyState: string | null = null;
-      let currentFieldSchema: any = (link.mergedSchemaJson as any)?.fieldSchema;
+      let currentFieldSchema: any = snapshot.fieldSchema;
+      let livePropertyName: string = snapshot.propertyName || "Property";
+      let liveCoverPage: any = snapshot.coverPage;
+      let basePropertyTerms: any = snapshot.propertyTerms || {};
+      let liveUnit: any = null;
       if (link.unitId) {
-        const unit = await storage.getRentalUnit(link.unitId);
-        if (unit?.propertyId) {
-          const property = await storage.getRentalPropertyById(unit.propertyId);
-          propertyState = property?.state || null;
-          // Use fresh field schema from property (allows landlord to update settings without creating new links)
-          if (unit.fieldSchemaOverrideEnabled && unit.fieldSchemaOverrideJson) {
-            currentFieldSchema = unit.fieldSchemaOverrideJson;
-          } else if (property?.defaultFieldSchemaJson) {
-            currentFieldSchema = property.defaultFieldSchemaJson;
+        liveUnit = await storage.getRentalUnit(link.unitId);
+        if (liveUnit?.propertyId) {
+          const property = await storage.getRentalPropertyById(liveUnit.propertyId);
+          if (property) {
+            propertyState = property.state || null;
+            livePropertyName = property.name || livePropertyName;
+            // Field schema: unit override wins, else live property default
+            if (liveUnit.fieldSchemaOverrideEnabled && liveUnit.fieldSchemaOverrideJson) {
+              currentFieldSchema = liveUnit.fieldSchemaOverrideJson;
+            } else if (property.defaultFieldSchemaJson) {
+              currentFieldSchema = property.defaultFieldSchemaJson;
+            }
+            // Cover page: unit override wins, else live property default
+            if (liveUnit.coverPageOverrideEnabled && liveUnit.coverPageOverrideJson) {
+              liveCoverPage = liveUnit.coverPageOverrideJson;
+            } else if (property.defaultCoverPageJson) {
+              liveCoverPage = property.defaultCoverPageJson;
+            }
+            // Property-level terms (late fees, deposits, deadlines): read live.
+            // Authoritative even when cleared to null, so cleared terms don't
+            // fall back to the stale snapshot.
+            basePropertyTerms = property.propertyTermsJson ?? {};
           }
         }
       }
@@ -55,30 +75,27 @@ export async function registerApplyRoutes(app: Express) {
         ? await storage.getActiveComplianceRulesForState(propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
 
-      // Build propertyTerms with live rent from unit (authoritative when set)
-      const cachedTerms = (link.mergedSchemaJson as any)?.propertyTerms || {};
-      let livePropertyTerms = { ...cachedTerms };
-      if (link.unitId) {
-        const liveUnit = await storage.getRentalUnit(link.unitId);
-        if (liveUnit) {
-          if (liveUnit.rentAmount != null) {
-            livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
-          }
-          if ((liveUnit as any).securityDepositAmount != null) {
-            livePropertyTerms.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
-          }
-          if (liveUnit.unitLabel !== undefined) {
-            (link.mergedSchemaJson as any).unitLabel = liveUnit.unitLabel || "";
-          }
+      // Overlay live unit-level rent/deposit on top of the property terms
+      let livePropertyTerms = { ...basePropertyTerms };
+      let liveUnitLabel = snapshot.unitLabel || "";
+      if (liveUnit) {
+        if (liveUnit.rentAmount != null) {
+          livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
+        }
+        if ((liveUnit as any).securityDepositAmount != null) {
+          livePropertyTerms.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
+        }
+        if (liveUnit.unitLabel !== undefined) {
+          liveUnitLabel = liveUnit.unitLabel || "";
         }
       }
 
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
-        propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
-        unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
-        coverPage: (link.mergedSchemaJson as any)?.coverPage,
+        propertyName: livePropertyName,
+        unitLabel: liveUnitLabel,
+        coverPage: liveCoverPage,
         fieldSchema: currentFieldSchema,
         propertyTerms: livePropertyTerms,
         documentRequirements,
@@ -111,19 +128,39 @@ export async function registerApplyRoutes(app: Express) {
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Get the property state and current field schema via unit -> property chain
+      // Resolve live property/unit data so landlord edits propagate to existing
+      // links immediately (no need to recreate links). The mergedSchemaJson
+      // snapshot is only a fallback when the unit/property chain is unavailable.
+      const snapshot = (link.mergedSchemaJson as any) || {};
       let propertyState: string | null = null;
-      let currentFieldSchema: any = (link.mergedSchemaJson as any)?.fieldSchema;
+      let currentFieldSchema: any = snapshot.fieldSchema;
+      let livePropertyName: string = snapshot.propertyName || "Property";
+      let liveCoverPage: any = snapshot.coverPage;
+      let basePropertyTerms: any = snapshot.propertyTerms || {};
+      let liveUnit: any = null;
       if (link.unitId) {
-        const unit = await storage.getRentalUnit(link.unitId);
-        if (unit?.propertyId) {
-          const property = await storage.getRentalPropertyById(unit.propertyId);
-          propertyState = property?.state || null;
-          // Use fresh field schema from property (allows landlord to update settings without creating new links)
-          if (unit.fieldSchemaOverrideEnabled && unit.fieldSchemaOverrideJson) {
-            currentFieldSchema = unit.fieldSchemaOverrideJson;
-          } else if (property?.defaultFieldSchemaJson) {
-            currentFieldSchema = property.defaultFieldSchemaJson;
+        liveUnit = await storage.getRentalUnit(link.unitId);
+        if (liveUnit?.propertyId) {
+          const property = await storage.getRentalPropertyById(liveUnit.propertyId);
+          if (property) {
+            propertyState = property.state || null;
+            livePropertyName = property.name || livePropertyName;
+            // Field schema: unit override wins, else live property default
+            if (liveUnit.fieldSchemaOverrideEnabled && liveUnit.fieldSchemaOverrideJson) {
+              currentFieldSchema = liveUnit.fieldSchemaOverrideJson;
+            } else if (property.defaultFieldSchemaJson) {
+              currentFieldSchema = property.defaultFieldSchemaJson;
+            }
+            // Cover page: unit override wins, else live property default
+            if (liveUnit.coverPageOverrideEnabled && liveUnit.coverPageOverrideJson) {
+              liveCoverPage = liveUnit.coverPageOverrideJson;
+            } else if (property.defaultCoverPageJson) {
+              liveCoverPage = property.defaultCoverPageJson;
+            }
+            // Property-level terms (late fees, deposits, deadlines): read live.
+            // Authoritative even when cleared to null, so cleared terms don't
+            // fall back to the stale snapshot.
+            basePropertyTerms = property.propertyTermsJson ?? {};
           }
         }
       }
@@ -133,26 +170,26 @@ export async function registerApplyRoutes(app: Express) {
         ? await storage.getActiveComplianceRulesForState(propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
 
-      // Build propertyTerms with live rent from unit (authoritative when set)
-      const cachedTerms2 = (link.mergedSchemaJson as any)?.propertyTerms || {};
-      let livePropertyTerms2 = { ...cachedTerms2 };
-      if (link.unitId) {
-        const liveUnit = await storage.getRentalUnit(link.unitId);
-        if (liveUnit) {
-          if (liveUnit.rentAmount != null) {
-            livePropertyTerms2.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
-          }
-          if (liveUnit.unitLabel !== undefined) {
-            (link.mergedSchemaJson as any).unitLabel = liveUnit.unitLabel || "";
-          }
+      // Overlay live unit-level rent/deposit on top of the property terms
+      let livePropertyTerms2 = { ...basePropertyTerms };
+      let liveUnitLabel = snapshot.unitLabel || "";
+      if (liveUnit) {
+        if (liveUnit.rentAmount != null) {
+          livePropertyTerms2.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
+        }
+        if ((liveUnit as any).securityDepositAmount != null) {
+          livePropertyTerms2.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
+        }
+        if (liveUnit.unitLabel !== undefined) {
+          liveUnitLabel = liveUnit.unitLabel || "";
         }
       }
 
       res.json({
         id: link.id,
-        propertyName: (link.mergedSchemaJson as any)?.propertyName || "Property",
-        unitLabel: (link.mergedSchemaJson as any)?.unitLabel || "",
-        coverPage: (link.mergedSchemaJson as any)?.coverPage,
+        propertyName: livePropertyName,
+        unitLabel: liveUnitLabel,
+        coverPage: liveCoverPage,
         fieldSchema: currentFieldSchema,
         propertyTerms: livePropertyTerms2,
         documentRequirements,

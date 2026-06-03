@@ -1,0 +1,1 @@
+- [Apply link live-read](apply-link-live-read.md) — public apply endpoints must read property name/cover/terms/schema live; mergedSchemaJson is fallback-only.
