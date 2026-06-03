@@ -30,6 +30,7 @@ import {
   Eye,
   Download,
   X,
+  Scale,
 } from "lucide-react";
 import {
   Dialog,
