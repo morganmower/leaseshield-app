@@ -6,6 +6,81 @@ import { storage } from "../storage";
 import { emailService } from "../emailService";
 import { uploadApplicantBuffer, isObjstorePath, deleteApplicantObject } from "../applicantObjectStorage";
 import { upload, applicantUpload, shortToken } from "./_shared";
+import { hasDisplayableTerms, propertyTermsChanged, type PropertyTerms } from "@shared/propertyTerms";
+
+// Resolve the live property/unit data for an application link so landlord edits
+// propagate to existing links immediately. The link's mergedSchemaJson snapshot
+// is only a fallback when the unit/property chain is unavailable. Returns the
+// fields needed by the public apply endpoints plus the resolved propertyTerms,
+// which the start/submit flows compare against an applicant's acknowledged
+// snapshot to decide whether a re-acknowledgment is required.
+async function resolveLiveLinkData(link: any): Promise<{
+  propertyName: string;
+  unitLabel: string;
+  coverPage: any;
+  fieldSchema: any;
+  propertyTerms: PropertyTerms;
+  propertyState: string | null;
+}> {
+  const snapshot = (link.mergedSchemaJson as any) || {};
+  let propertyState: string | null = null;
+  let currentFieldSchema: any = snapshot.fieldSchema;
+  let livePropertyName: string = snapshot.propertyName || "Property";
+  let liveCoverPage: any = snapshot.coverPage;
+  let basePropertyTerms: any = snapshot.propertyTerms || {};
+  let liveUnit: any = null;
+
+  if (link.unitId) {
+    liveUnit = await storage.getRentalUnit(link.unitId);
+    if (liveUnit?.propertyId) {
+      const property = await storage.getRentalPropertyById(liveUnit.propertyId);
+      if (property) {
+        propertyState = property.state || null;
+        livePropertyName = property.name || livePropertyName;
+        // Field schema: unit override wins, else live property default
+        if (liveUnit.fieldSchemaOverrideEnabled && liveUnit.fieldSchemaOverrideJson) {
+          currentFieldSchema = liveUnit.fieldSchemaOverrideJson;
+        } else if (property.defaultFieldSchemaJson) {
+          currentFieldSchema = property.defaultFieldSchemaJson;
+        }
+        // Cover page: unit override wins, else live property default
+        if (liveUnit.coverPageOverrideEnabled && liveUnit.coverPageOverrideJson) {
+          liveCoverPage = liveUnit.coverPageOverrideJson;
+        } else if (property.defaultCoverPageJson) {
+          liveCoverPage = property.defaultCoverPageJson;
+        }
+        // Property-level terms (late fees, deposits, deadlines): read live.
+        // Authoritative even when cleared to null, so cleared terms don't fall
+        // back to the stale snapshot.
+        basePropertyTerms = property.propertyTermsJson ?? {};
+      }
+    }
+  }
+
+  // Overlay live unit-level rent/deposit on top of the property terms.
+  const livePropertyTerms: PropertyTerms = { ...basePropertyTerms };
+  let liveUnitLabel = snapshot.unitLabel || "";
+  if (liveUnit) {
+    if (liveUnit.rentAmount != null) {
+      livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
+    }
+    if ((liveUnit as any).securityDepositAmount != null) {
+      livePropertyTerms.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
+    }
+    if (liveUnit.unitLabel !== undefined) {
+      liveUnitLabel = liveUnit.unitLabel || "";
+    }
+  }
+
+  return {
+    propertyName: livePropertyName,
+    unitLabel: liveUnitLabel,
+    coverPage: liveCoverPage,
+    fieldSchema: currentFieldSchema,
+    propertyTerms: livePropertyTerms,
+    propertyState,
+  };
+}
 
 export async function registerApplyRoutes(app: Express) {
   // Get application link data by public token (for applicants)
@@ -33,73 +108,24 @@ export async function registerApplyRoutes(app: Express) {
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Resolve live property/unit data so landlord edits propagate to existing
-      // links immediately (no need to recreate links). The mergedSchemaJson
-      // snapshot is only a fallback when the unit/property chain is unavailable.
-      const snapshot = (link.mergedSchemaJson as any) || {};
-      let propertyState: string | null = null;
-      let currentFieldSchema: any = snapshot.fieldSchema;
-      let livePropertyName: string = snapshot.propertyName || "Property";
-      let liveCoverPage: any = snapshot.coverPage;
-      let basePropertyTerms: any = snapshot.propertyTerms || {};
-      let liveUnit: any = null;
-      if (link.unitId) {
-        liveUnit = await storage.getRentalUnit(link.unitId);
-        if (liveUnit?.propertyId) {
-          const property = await storage.getRentalPropertyById(liveUnit.propertyId);
-          if (property) {
-            propertyState = property.state || null;
-            livePropertyName = property.name || livePropertyName;
-            // Field schema: unit override wins, else live property default
-            if (liveUnit.fieldSchemaOverrideEnabled && liveUnit.fieldSchemaOverrideJson) {
-              currentFieldSchema = liveUnit.fieldSchemaOverrideJson;
-            } else if (property.defaultFieldSchemaJson) {
-              currentFieldSchema = property.defaultFieldSchemaJson;
-            }
-            // Cover page: unit override wins, else live property default
-            if (liveUnit.coverPageOverrideEnabled && liveUnit.coverPageOverrideJson) {
-              liveCoverPage = liveUnit.coverPageOverrideJson;
-            } else if (property.defaultCoverPageJson) {
-              liveCoverPage = property.defaultCoverPageJson;
-            }
-            // Property-level terms (late fees, deposits, deadlines): read live.
-            // Authoritative even when cleared to null, so cleared terms don't
-            // fall back to the stale snapshot.
-            basePropertyTerms = property.propertyTermsJson ?? {};
-          }
-        }
-      }
+      // Resolve live property/unit data so landlord edits propagate to existing links.
+      const live = await resolveLiveLinkData(link);
 
       // Get active compliance rules for this state
-      const complianceRules = propertyState 
-        ? await storage.getActiveComplianceRulesForState(propertyState)
+      const complianceRules = live.propertyState
+        ? await storage.getActiveComplianceRulesForState(live.propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
-
-      // Overlay live unit-level rent/deposit on top of the property terms
-      let livePropertyTerms = { ...basePropertyTerms };
-      let liveUnitLabel = snapshot.unitLabel || "";
-      if (liveUnit) {
-        if (liveUnit.rentAmount != null) {
-          livePropertyTerms.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
-        }
-        if ((liveUnit as any).securityDepositAmount != null) {
-          livePropertyTerms.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
-        }
-        if (liveUnit.unitLabel !== undefined) {
-          liveUnitLabel = liveUnit.unitLabel || "";
-        }
-      }
 
       // Return only the merged schema (cover page + fields) - no sensitive data
       res.json({
         id: link.id,
-        propertyName: livePropertyName,
-        unitLabel: liveUnitLabel,
-        coverPage: liveCoverPage,
-        fieldSchema: currentFieldSchema,
-        propertyTerms: livePropertyTerms,
+        propertyName: live.propertyName,
+        unitLabel: live.unitLabel,
+        coverPage: live.coverPage,
+        fieldSchema: live.fieldSchema,
+        propertyTerms: live.propertyTerms,
         documentRequirements,
-        propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
+        propertyState: live.propertyState, // For state-specific compliance (e.g., TX tenant selection criteria)
         complianceRules, // Dynamic compliance rules from database
       });
     } catch (error) {
@@ -128,72 +154,23 @@ export async function registerApplyRoutes(app: Express) {
       // Get document requirements for this link
       const documentRequirements = await storage.getEffectiveDocumentRequirements(link.id);
 
-      // Resolve live property/unit data so landlord edits propagate to existing
-      // links immediately (no need to recreate links). The mergedSchemaJson
-      // snapshot is only a fallback when the unit/property chain is unavailable.
-      const snapshot = (link.mergedSchemaJson as any) || {};
-      let propertyState: string | null = null;
-      let currentFieldSchema: any = snapshot.fieldSchema;
-      let livePropertyName: string = snapshot.propertyName || "Property";
-      let liveCoverPage: any = snapshot.coverPage;
-      let basePropertyTerms: any = snapshot.propertyTerms || {};
-      let liveUnit: any = null;
-      if (link.unitId) {
-        liveUnit = await storage.getRentalUnit(link.unitId);
-        if (liveUnit?.propertyId) {
-          const property = await storage.getRentalPropertyById(liveUnit.propertyId);
-          if (property) {
-            propertyState = property.state || null;
-            livePropertyName = property.name || livePropertyName;
-            // Field schema: unit override wins, else live property default
-            if (liveUnit.fieldSchemaOverrideEnabled && liveUnit.fieldSchemaOverrideJson) {
-              currentFieldSchema = liveUnit.fieldSchemaOverrideJson;
-            } else if (property.defaultFieldSchemaJson) {
-              currentFieldSchema = property.defaultFieldSchemaJson;
-            }
-            // Cover page: unit override wins, else live property default
-            if (liveUnit.coverPageOverrideEnabled && liveUnit.coverPageOverrideJson) {
-              liveCoverPage = liveUnit.coverPageOverrideJson;
-            } else if (property.defaultCoverPageJson) {
-              liveCoverPage = property.defaultCoverPageJson;
-            }
-            // Property-level terms (late fees, deposits, deadlines): read live.
-            // Authoritative even when cleared to null, so cleared terms don't
-            // fall back to the stale snapshot.
-            basePropertyTerms = property.propertyTermsJson ?? {};
-          }
-        }
-      }
+      // Resolve live property/unit data so landlord edits propagate to existing links.
+      const live = await resolveLiveLinkData(link);
 
       // Get active compliance rules for this state
-      const complianceRules = propertyState 
-        ? await storage.getActiveComplianceRulesForState(propertyState)
+      const complianceRules = live.propertyState
+        ? await storage.getActiveComplianceRulesForState(live.propertyState)
         : await storage.getActiveComplianceRulesForState('ALL');
-
-      // Overlay live unit-level rent/deposit on top of the property terms
-      let livePropertyTerms2 = { ...basePropertyTerms };
-      let liveUnitLabel = snapshot.unitLabel || "";
-      if (liveUnit) {
-        if (liveUnit.rentAmount != null) {
-          livePropertyTerms2.monthlyRent = `$${(liveUnit.rentAmount / 100).toLocaleString()}/mo`;
-        }
-        if ((liveUnit as any).securityDepositAmount != null) {
-          livePropertyTerms2.securityDeposit = `$${((liveUnit as any).securityDepositAmount / 100).toLocaleString()}`;
-        }
-        if (liveUnit.unitLabel !== undefined) {
-          liveUnitLabel = liveUnit.unitLabel || "";
-        }
-      }
 
       res.json({
         id: link.id,
-        propertyName: livePropertyName,
-        unitLabel: liveUnitLabel,
-        coverPage: liveCoverPage,
-        fieldSchema: currentFieldSchema,
-        propertyTerms: livePropertyTerms2,
+        propertyName: live.propertyName,
+        unitLabel: live.unitLabel,
+        coverPage: live.coverPage,
+        fieldSchema: live.fieldSchema,
+        propertyTerms: live.propertyTerms,
         documentRequirements,
-        propertyState,
+        propertyState: live.propertyState,
         complianceRules,
       });
     } catch (error) {
@@ -221,6 +198,15 @@ export async function registerApplyRoutes(app: Express) {
         return res.status(400).json({ message: "Email, first name, and last name are required" });
       }
 
+      // Resolve the live terms server-side and snapshot exactly what the applicant
+      // is acknowledging at start. Terms read live (they can change after start),
+      // so this snapshot is the baseline we compare against later to decide whether
+      // a re-acknowledgment is required before the applicant may submit. We trust
+      // the server-resolved terms, not anything the client sends.
+      const live = await resolveLiveLinkData(link);
+      const termsAreDisplayable = hasDisplayableTerms(live.propertyTerms);
+      const acknowledged = termsAreDisplayable && !!propertyTermsAcknowledgedAt;
+
       // Create submission
       const submission = await storage.createRentalSubmission({
         applicationLinkId: link.id,
@@ -236,7 +222,8 @@ export async function registerApplyRoutes(app: Express) {
         lastName,
         formJson: {},
         inviteToken: shortToken(),
-        propertyTermsAcknowledgedAt: propertyTermsAcknowledgedAt ? new Date(propertyTermsAcknowledgedAt) : null,
+        propertyTermsAcknowledgedAt: acknowledged ? new Date() : null,
+        propertyTermsAckSnapshotJson: acknowledged ? (live.propertyTerms as any) : null,
       });
 
       // Log event
@@ -279,6 +266,47 @@ export async function registerApplyRoutes(app: Express) {
     }
   });
 
+  // Re-acknowledge property terms after a landlord changed them mid-application.
+  // Records a fresh acknowledgment timestamp and snapshots the current live terms
+  // so subsequent drift is measured against what the applicant most recently saw.
+  app.post('/api/apply/person/:personToken/acknowledge-terms', async (req, res) => {
+    try {
+      const person = await storage.getRentalSubmissionPersonByToken(req.params.personToken);
+
+      if (!person) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const submission = await storage.getRentalSubmission(person.submissionId);
+      if (!submission) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+      if (!link) {
+        return res.status(404).json({ message: "Application link not found" });
+      }
+
+      const live = await resolveLiveLinkData(link);
+
+      await storage.updateRentalSubmissionPerson(person.id, {
+        propertyTermsAcknowledgedAt: new Date(),
+        propertyTermsAckSnapshotJson: (live.propertyTerms as any) ?? null,
+      });
+
+      await storage.logRentalApplicationEvent({
+        submissionId: person.submissionId,
+        eventType: "property_terms_reacknowledged",
+        metadataJson: { personId: person.id },
+      });
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error re-acknowledging terms:", error);
+      res.status(500).json({ message: "Failed to acknowledge updated terms" });
+    }
+  });
+
   // Get person's form data (for resuming)
   app.get('/api/apply/person/:personToken', async (req, res) => {
     try {
@@ -291,6 +319,20 @@ export async function registerApplyRoutes(app: Express) {
       // Get submission to check status
       const submission = await storage.getRentalSubmission(person.submissionId);
 
+      // Determine whether the live terms have drifted from what this applicant
+      // acknowledged. If so, the frontend must require a re-acknowledgment before
+      // the applicant can submit. Only the primary applicant acknowledges terms;
+      // co-applicants/guarantors have no snapshot and are unaffected.
+      const ackSnapshot = (person.propertyTermsAckSnapshotJson as PropertyTerms | null) || null;
+      let termsChanged = false;
+      if (ackSnapshot && submission) {
+        const link = await storage.getRentalApplicationLink(submission.applicationLinkId);
+        if (link) {
+          const live = await resolveLiveLinkData(link);
+          termsChanged = propertyTermsChanged(ackSnapshot, live.propertyTerms);
+        }
+      }
+
       res.json({
         personId: person.id,
         personType: person.role,
@@ -301,6 +343,8 @@ export async function registerApplyRoutes(app: Express) {
         submissionStatus: submission?.status || "started",
         isCompleted: person.isCompleted, // Person's individual completion status
         applicationLinkId: submission?.applicationLinkId || null, // For invite flows to fetch link data
+        propertyTermsAckSnapshot: ackSnapshot, // What the applicant acknowledged at start
+        termsChanged, // True when live terms differ from the acknowledged snapshot
       });
     } catch (error) {
       console.error("Error getting person data:", error);
@@ -315,6 +359,25 @@ export async function registerApplyRoutes(app: Express) {
       
       if (!person) {
         return res.status(404).json({ message: "Application not found" });
+      }
+
+      // Enforce property-terms re-acknowledgment server-side. Terms read live and
+      // can change after an applicant started; if the current live terms differ
+      // from what this applicant acknowledged, block submission until they
+      // re-acknowledge. This guarantees compliance even if the client UI is bypassed.
+      const submissionForTerms = await storage.getRentalSubmission(person.submissionId);
+      const ackSnapshot = (person.propertyTermsAckSnapshotJson as PropertyTerms | null) || null;
+      if (ackSnapshot && submissionForTerms) {
+        const link = await storage.getRentalApplicationLink(submissionForTerms.applicationLinkId);
+        if (link) {
+          const live = await resolveLiveLinkData(link);
+          if (propertyTermsChanged(ackSnapshot, live.propertyTerms)) {
+            return res.status(409).json({
+              code: "TERMS_CHANGED",
+              message: "The rental terms have changed since you started. Please review and acknowledge the updated terms before submitting.",
+            });
+          }
+        }
       }
 
       // Capture screening disclosure acknowledgment audit data

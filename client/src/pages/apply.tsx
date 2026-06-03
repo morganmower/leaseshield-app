@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
+import type { PropertyTerms } from "@shared/propertyTerms";
 
 interface DocumentRequirementsConfig {
   id: boolean;
@@ -119,6 +120,9 @@ interface PersonData {
   formData: Record<string, any>;
   submissionStatus: string;
   isCompleted?: boolean;
+  applicationLinkId?: string | null;
+  propertyTermsAckSnapshot?: PropertyTerms | null;
+  termsChanged?: boolean;
 }
 
 const STEPS = [
@@ -576,15 +580,52 @@ export default function Apply() {
           userAgent: navigator.userAgent, // Capture for screening disclosure audit
         }),
       });
-      if (!res.ok) throw new Error("Failed to submit");
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        // The landlord changed the rental terms after this applicant started.
+        // The server blocks submission until the new terms are re-acknowledged.
+        const error = new Error(err.message || "Failed to submit") as Error & { code?: string };
+        error.code = err.code;
+        throw error;
+      }
       return res.json();
     },
     onSuccess: () => {
       toast({ title: "Application Submitted Successfully", description: "The property manager will review your application using their standard screening criteria." });
       refetchPerson();
     },
-    onError: () => {
+    onError: (error: Error & { code?: string }) => {
+      if (error.code === "TERMS_CHANGED") {
+        refetchPerson(); // Surfaces the re-acknowledgment banner via personData.termsChanged
+        toast({
+          title: "Rental terms changed",
+          description: "The terms for this rental were updated. Please review and acknowledge them before submitting.",
+          variant: "destructive",
+        });
+        return;
+      }
       toast({ title: "Error", description: "Failed to submit application.", variant: "destructive" });
+    },
+  });
+
+  // Re-acknowledge terms mutation - used when the landlord changed the rental
+  // terms after the applicant started. Keeps live terms (they propagate
+  // immediately) while capturing a fresh acknowledgment of the current terms.
+  const reacknowledgeTermsMutation = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/apply/person/${personToken}/acknowledge-terms`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      });
+      if (!res.ok) throw new Error("Failed to acknowledge updated terms");
+      return res.json();
+    },
+    onSuccess: () => {
+      toast({ title: "Updated terms acknowledged", description: "Thanks - you can now continue your application." });
+      refetchPerson();
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to acknowledge updated terms.", variant: "destructive" });
     },
   });
 
@@ -764,6 +805,80 @@ export default function Apply() {
               ))}
             </div>
           </div>
+        )}
+
+        {/* Terms-changed re-acknowledgment banner. Property terms read live, so a
+            landlord can change them after this applicant started. When that happens
+            the server flags personData.termsChanged; the applicant must re-acknowledge
+            the current terms (shown below) before they can submit. */}
+        {personToken && !personData?.isCompleted && personData?.termsChanged && (
+          <Card className="mb-6 border-amber-300 dark:border-amber-700 bg-amber-50 dark:bg-amber-950/30">
+            <CardContent className="pt-6 space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertCircle className="h-5 w-5 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
+                <div className="space-y-1">
+                  <h3 className="font-semibold text-amber-900 dark:text-amber-100">The rental terms have changed</h3>
+                  <p className="text-sm text-amber-800 dark:text-amber-200">
+                    Since you started this application, the property manager updated the terms for this rental. Please review the current terms below and acknowledge them to continue.
+                  </p>
+                </div>
+              </div>
+
+              {hasDisplayableTerms(linkData?.propertyTerms) && (
+                <div className="border border-amber-200 dark:border-amber-800 rounded-lg p-4 bg-background/60 space-y-2">
+                  <h4 className="font-medium text-sm flex items-center gap-2">
+                    <DollarSign className="h-4 w-4 text-primary" />
+                    Current Terms &amp; Fees
+                  </h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+                    {!isNA(linkData?.propertyTerms?.monthlyRent) && (
+                      <div className="flex justify-between gap-2 border-b pb-1">
+                        <span className="text-muted-foreground">Monthly Rent:</span>
+                        <span className="font-medium">{linkData?.propertyTerms?.monthlyRent}</span>
+                      </div>
+                    )}
+                    {!isNA(linkData?.propertyTerms?.applicationFee) && (
+                      <div className="flex justify-between gap-2 border-b pb-1">
+                        <span className="text-muted-foreground">Application Fee:</span>
+                        <span className="font-medium">{linkData?.propertyTerms?.applicationFee}</span>
+                      </div>
+                    )}
+                    {!isNA(linkData?.propertyTerms?.securityDeposit) && (
+                      <div className="flex justify-between gap-2 border-b pb-1">
+                        <span className="text-muted-foreground">Security Deposit:</span>
+                        <span className="font-medium">{linkData?.propertyTerms?.securityDeposit}</span>
+                      </div>
+                    )}
+                    {!isNA(linkData?.propertyTerms?.adminFee) && (
+                      <div className="flex justify-between gap-2 border-b pb-1">
+                        <span className="text-muted-foreground">Admin/Lease Fee:</span>
+                        <span className="font-medium">{linkData?.propertyTerms?.adminFee}</span>
+                      </div>
+                    )}
+                    {!isNA(linkData?.propertyTerms?.leaseSignDeadlineHours) && (
+                      <div className="flex justify-between gap-2 border-b pb-1">
+                        <span className="text-muted-foreground">Lease Must Be Signed Within:</span>
+                        <span className="font-medium">{linkData?.propertyTerms?.leaseSignDeadlineHours} hours after approval</span>
+                      </div>
+                    )}
+                  </div>
+                  {!isNA(linkData?.propertyTerms?.additionalNotes) && (
+                    <p className="text-sm text-muted-foreground italic">{linkData?.propertyTerms?.additionalNotes}</p>
+                  )}
+                </div>
+              )}
+
+              <Button
+                onClick={() => reacknowledgeTermsMutation.mutate()}
+                disabled={reacknowledgeTermsMutation.isPending}
+                data-testid="button-reacknowledge-terms"
+              >
+                {reacknowledgeTermsMutation.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                <CheckCircle className="h-4 w-4 mr-2" />
+                I acknowledge the updated terms
+              </Button>
+            </CardContent>
+          </Card>
         )}
 
         <Card>
@@ -2577,6 +2692,8 @@ export default function Apply() {
                     !formData.certifyAccurate || 
                     !formData.acknowledgeScreeningDisclosure || 
                     !formData.typedSignature?.trim() ||
+                    // Block submission until updated rental terms are re-acknowledged
+                    personData?.termsChanged ||
                     // Check all dynamic compliance rules that require acknowledgment/authorization
                     (linkData?.complianceRules?.some(rule => 
                       (rule.ruleType === 'acknowledgment' || rule.ruleType === 'authorization') && 

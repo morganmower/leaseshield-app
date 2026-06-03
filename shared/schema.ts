@@ -1401,8 +1401,13 @@ export const rentalSubmissionPeople = pgTable("rental_submission_people", {
   // FCRA authorization (all states)
   fcraAuthorized: boolean("fcra_authorized").default(false),
   fcraAuthorizedTimestamp: timestamp("fcra_authorized_timestamp"),
-  // Property terms acknowledgment
+  // Property terms acknowledgment. propertyTermsAckSnapshotJson captures the
+  // exact displayable terms the applicant acknowledged at start (or last
+  // re-acknowledged). Live terms can change after start (they propagate to
+  // existing links); comparing live terms to this snapshot tells us whether a
+  // re-acknowledgment is required before the applicant may submit.
   propertyTermsAcknowledgedAt: timestamp("property_terms_acknowledged_at"),
+  propertyTermsAckSnapshotJson: jsonb("property_terms_ack_snapshot_json"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });

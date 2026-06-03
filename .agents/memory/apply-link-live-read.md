@@ -29,3 +29,13 @@ port (does NOT need the dev server), so any in-process test of public routes can
 follow this pattern. It asserts name/coverPage/fieldSchema/propertyTerms resolve
 live (not from the mergedSchemaJson snapshot) on both apply endpoints, including
 the null-clear edge case.
+
+**Terms-drift re-acknowledgment:** Because terms read live, a landlord can change them after
+an applicant started, but terms ack is captured once at start. Decision: keep live propagation,
+but require re-acknowledgment when live terms drift from the per-applicant ack snapshot
+(`rentalSubmissionPeople.propertyTermsAckSnapshotJson`). Drift = any displayable field differs
+(`propertyTermsChanged` in `shared/propertyTerms.ts`); missing snapshot or no live displayable
+terms = no drift. Enforced server-side (submit returns 409 `{code:"TERMS_CHANGED"}`; re-ack via
+POST `/api/apply/person/:personToken/acknowledge-terms`) AND client-side (banner + gated submit).
+The shared `resolveLiveLinkData(link)` helper in `server/routes/apply.ts` is the single source
+of live terms for all apply endpoints — reuse it rather than re-resolving the unit→property chain.
