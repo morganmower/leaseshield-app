@@ -18,3 +18,14 @@ property/unit (respecting unit-level overrides: `fieldSchemaOverride*`, `coverPa
 not from the snapshot. Treat live values as authoritative even when null/cleared
 (`property.propertyTermsJson ?? {}`), otherwise a cleared field falls back to stale snapshot.
 Unit-level rent/deposit are overlaid on top of property terms.
+
+## Regression test
+A self-contained regression test lives at `tests/apply-live-propagation.test.ts`.
+Run it with `npx tsx tests/apply-live-propagation.test.ts` (no jest/vitest is
+installed in this repo; standalone tsx scripts that log PASS/FAIL and
+`process.exit(1)` on failure are the convention — see `tests/integration-test.ts`).
+It spins up an in-process Express app with only the apply routes on an ephemeral
+port (does NOT need the dev server), so any in-process test of public routes can
+follow this pattern. It asserts name/coverPage/fieldSchema/propertyTerms resolve
+live (not from the mergedSchemaJson snapshot) on both apply endpoints, including
+the null-clear edge case.
