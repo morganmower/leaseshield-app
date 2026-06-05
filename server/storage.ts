@@ -37,6 +37,7 @@ import {
   type InsertUserNotification,
   type AnalyticsEvent,
   type InsertAnalyticsEvent,
+  emailSendDedup,
   type ScreeningContent,
   type InsertScreeningContent,
   type TenantIssueWorkflow,
@@ -261,6 +262,10 @@ export interface IStorage {
   getUnreadNotificationCount(userId: string): Promise<number>;
   markNotificationAsRead(id: string): Promise<void>;
   createUserNotification(notification: InsertUserNotification): Promise<UserNotification>;
+
+  // Atomic email dedup (prevents duplicate scheduled emails across instances)
+  claimEmailSend(userId: string, dedupKey: string): Promise<boolean>;
+  releaseEmailSend(userId: string, dedupKey: string): Promise<void>;
 
   // Analytics operations
   trackEvent(event: InsertAnalyticsEvent): Promise<AnalyticsEvent>;
@@ -1045,7 +1050,27 @@ export class DatabaseStorage implements IStorage {
     return notification;
   }
 
-  // Analytics operations
+  // Atomically claim the right to send one email to a user for a given key.
+  // Returns true if this caller won the claim (and should send), false if the
+  // email was already claimed by another run/instance. The unique
+  // (user_id, dedup_key) index makes this safe under concurrency.
+  async claimEmailSend(userId: string, dedupKey: string): Promise<boolean> {
+    const inserted = await db
+      .insert(emailSendDedup)
+      .values({ userId, dedupKey })
+      .onConflictDoNothing({ target: [emailSendDedup.userId, emailSendDedup.dedupKey] })
+      .returning({ id: emailSendDedup.id });
+    return inserted.length > 0;
+  }
+
+  // Release a previously-claimed email send so it can be retried later (used
+  // when the actual send fails after the claim was taken).
+  async releaseEmailSend(userId: string, dedupKey: string): Promise<void> {
+    await db
+      .delete(emailSendDedup)
+      .where(and(eq(emailSendDedup.userId, userId), eq(emailSendDedup.dedupKey, dedupKey)));
+  }
+
   async trackEvent(eventData: InsertAnalyticsEvent): Promise<AnalyticsEvent> {
     const [event] = await db.insert(analyticsEvents).values(eventData).returning();
     return event;

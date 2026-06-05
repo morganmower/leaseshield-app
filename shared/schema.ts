@@ -419,6 +419,26 @@ export const insertAnalyticsEventSchema = createInsertSchema(analyticsEvents).om
 export type InsertAnalyticsEvent = z.infer<typeof insertAnalyticsEventSchema>;
 export type AnalyticsEvent = typeof analyticsEvents.$inferSelect;
 
+// Atomic dedup guard for scheduled emails. A row is "claimed" via
+// INSERT ... ON CONFLICT DO NOTHING before an email is sent, and the unique
+// (user_id, dedup_key) index enforces at-most-once delivery even when multiple
+// scheduler instances run concurrently (e.g. on an autoscale deployment).
+export const emailSendDedup = pgTable("email_send_dedup", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  userId: varchar("user_id").notNull(),
+  dedupKey: varchar("dedup_key", { length: 100 }).notNull(),
+  sentAt: timestamp("sent_at").defaultNow(),
+}, (table) => [
+  uniqueIndex("idx_email_send_dedup_unique").on(table.userId, table.dedupKey),
+]);
+
+export const insertEmailSendDedupSchema = createInsertSchema(emailSendDedup).omit({
+  id: true,
+  sentAt: true,
+});
+export type InsertEmailSendDedup = z.infer<typeof insertEmailSendDedupSchema>;
+export type EmailSendDedup = typeof emailSendDedup.$inferSelect;
+
 // Screening decoder feedback for learning system
 export const screeningFeedback = pgTable("screening_feedback", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),

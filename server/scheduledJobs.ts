@@ -505,28 +505,29 @@ export class ScheduledJobs {
       for (const user of usersWantingTips) {
         if (!user.email) continue;
 
-        // Check if user already received this biweek's tip
-        const [existingTipEvent] = await db
-          .select()
-          .from(analyticsEvents)
-          .where(
-            and(
-              eq(analyticsEvents.userId, user.id),
-              eq(analyticsEvents.eventType, 'biweekly_tip_sent'),
-              sql`${analyticsEvents.eventData}->>'tipKey' = ${tipKey}`
-            )
-          )
-          .limit(1);
-
-        if (existingTipEvent) {
+        // Atomically claim the right to send this biweek's tip to this user.
+        // The unique (user_id, dedup_key) index means only ONE scheduler run
+        // wins the claim, so concurrent instances (e.g. on autoscale) cannot
+        // both send the same tip. If the claim is lost, someone else already
+        // sent (or is sending) it.
+        const dedupKey = `biweekly_tip:${tipKey}`;
+        const claimed = await storage.claimEmailSend(user.id, dedupKey);
+        if (!claimed) {
           console.log(`  Skipping ${user.email} - already received tip for ${tipKey}`);
-          continue; // Already sent this tip to this user
+          continue;
         }
 
-        // Send the tip email
-        await this.sendTipEmail(user, tip);
+        // Send the tip email. If it fails, release the claim so a later run
+        // can retry this user (otherwise the claim would permanently block it).
+        try {
+          await this.sendTipEmail(user, tip);
+        } catch (sendError) {
+          await storage.releaseEmailSend(user.id, dedupKey);
+          console.error(`  Failed to send tip to ${user.email}, released claim for retry:`, sendError);
+          continue;
+        }
 
-        // Track that we sent this tip
+        // Track that we sent this tip (for analytics/reporting).
         await storage.trackEvent({
           userId: user.id,
           eventType: 'biweekly_tip_sent',
@@ -718,23 +719,6 @@ Manage preferences: ${baseUrl}/settings
       for (const user of eligibleUsers) {
         if (!user.email || !user.preferredState) continue;
 
-        // Check if user already received this digest
-        const [existingDigest] = await db
-          .select()
-          .from(analyticsEvents)
-          .where(
-            and(
-              eq(analyticsEvents.userId, user.id),
-              eq(analyticsEvents.eventType, 'biweekly_legislative_digest_sent'),
-              sql`${analyticsEvents.eventData}->>'digestKey' = ${digestKey}`
-            )
-          )
-          .limit(1);
-
-        if (existingDigest) {
-          continue; // Already sent this digest to this user
-        }
-
         // Get state-specific updates for this user's state
         const stateUpdates = recentLegalUpdates.filter(u => 
           u.stateId === user.preferredState && (u as any).category !== 'section8'
@@ -756,6 +740,15 @@ Manage preferences: ${baseUrl}/settings
         const totalUpdates = stateUpdates.length + federalUpdates.length + templateChanges.length;
         if (totalUpdates === 0) {
           continue; // No updates relevant to this user
+        }
+
+        // Atomically claim this digest send so concurrent scheduler instances
+        // (e.g. on autoscale) can't double-send. Only claim once we know there
+        // is actually something to send to this user.
+        const digestDedupKey = `legislative_digest:${digestKey}`;
+        const claimedDigest = await storage.claimEmailSend(user.id, digestDedupKey);
+        if (!claimedDigest) {
+          continue; // Already sent (or being sent) by another run/instance
         }
 
         // Send the digest email
@@ -785,6 +778,9 @@ Manage preferences: ${baseUrl}/settings
             },
           });
           sentCount++;
+        } else {
+          // Send failed — release the claim so a later run can retry.
+          await storage.releaseEmailSend(user.id, digestDedupKey);
         }
       }
 
