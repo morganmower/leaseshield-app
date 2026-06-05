@@ -33,3 +33,22 @@ duplicate is the real harm.
 alternative — move scheduled jobs to a single always-on **Reserved VM**
 deployment — removes the multi-instance racing at the source but is the user's
 billing/deployment decision.
+
+## Deploy-rollover duplicates are a separate, expected transition artifact
+
+Even after the atomic-claim fix shipped, one more duplicate digest happened
+*during the deploy itself*: a draining **old-code** instance sent a batch
+(leaving NO row in `email_send_dedup` and no analytics row — old code used a
+different store and/or was SIGTERM'd mid-run), while the newly-deployed
+**new-code** instance ran the same job minutes later, found no claim, and sent
+again. Old and new code dedup against **different stores**, so they cannot see
+each other's sends — exactly one duplicate per send that straddles the rollover.
+
+**How to recognize:** in prod, the recorded run (analytics + `email_send_dedup`)
+shows exactly one send per user (new code is fine); the duplicate batch appears
+only in deployment logs with zero DB trace. Same recipients, ~minutes apart.
+
+**Conclusion:** this is a one-time transition cost, NOT a regression of the
+fix. It recurs only if a future deploy rolls over while a scheduled job is
+firing. The only way to eliminate it entirely is the Reserved VM single-instance
+scheduler above (user's call).
