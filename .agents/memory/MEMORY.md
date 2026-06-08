@@ -1,1 +1,2 @@
 - [Apply link live-read](apply-link-live-read.md) — public apply endpoints must read property name/cover/terms/schema live; mergedSchemaJson is fallback-only.
+- [Apply flow schema drift](apply-flow-schema-drift.md) — apply/submission 500 "column does not exist" = DB missing a schema column; fix dev (db:push or dev ALTER), then REPUBLISH for prod.
