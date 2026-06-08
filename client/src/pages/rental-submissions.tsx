@@ -191,7 +191,7 @@ const statusColors: Record<string, string> = {
 };
 
 const statusLabels: Record<string, string> = {
-  started: "In Progress",
+  started: "Incomplete",
   submitted: "Submitted",
   screening_requested: "Screening Requested",
   in_progress: "Screening In Progress",
