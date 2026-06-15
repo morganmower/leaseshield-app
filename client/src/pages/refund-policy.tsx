@@ -36,7 +36,7 @@ export default function RefundPolicy() {
             Refund & Cancellation Policy
           </h1>
           <p className="text-muted-foreground">
-            Last updated: November 19, 2024
+            Last updated: June 15, 2026
           </p>
         </div>
 
@@ -57,13 +57,14 @@ export default function RefundPolicy() {
                   <li>Step-by-step tenant issue workflows</li>
                 </ul>
                 <p>
-                  <strong>Auto-Renewal:</strong> Subscriptions automatically renew on a monthly basis unless 
+                  <strong>Auto-Renewal:</strong> Subscriptions automatically renew at the end of each billing
+                  cycle &mdash; monthly for the $10/month plan and annually for the $100/year plan &mdash; unless
                   canceled before the renewal date.
                 </p>
                 <p>
-                  <strong>Billing Date:</strong> You will be charged on the same day each month that you 
-                  subscribed. For example, if you subscribe on the 15th, you'll be billed on the 15th of each 
-                  subsequent month.
+                  <strong>Billing Date:</strong> You are charged on the same calendar day that you subscribed.
+                  On the monthly plan that means each month (subscribe on the 15th, billed on the 15th of each
+                  following month); on the annual plan that means once each year on your subscription date.
                 </p>
                 <p>
                   <strong>Payment Methods:</strong> We accept major credit cards and debit cards through our 
@@ -77,8 +78,9 @@ export default function RefundPolicy() {
               <h2 className="text-xl font-semibold text-foreground mb-3">Cancellation Policy</h2>
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p>
-                  You may cancel your subscription at any time, for any reason. There are no long-term 
-                  commitments or cancellation fees.
+                  You may cancel your subscription at any time, for any reason, with no cancellation fees.
+                  Canceling stops future renewals; it does not refund a payment that has already been billed
+                  for the current term (see our 30-Day Money-Back Guarantee below for the one exception).
                 </p>
                 <p>
                   <strong>How to Cancel:</strong>
@@ -108,36 +110,43 @@ export default function RefundPolicy() {
 
             {/* Refund Policy */}
             <section>
-              <h2 className="text-xl font-semibold text-foreground mb-3">Refund Policy</h2>
+              <h2 className="text-xl font-semibold text-foreground mb-3">30-Day Money-Back Guarantee</h2>
               <div className="space-y-3 text-muted-foreground leading-relaxed">
                 <p className="font-semibold">
-                  All subscription fees are non-refundable.
+                  New subscribers may request a full refund within 30 days of their first payment.
                 </p>
                 <p>
-                  We encourage you to review our features and documentation before subscribing. 
-                  Your subscription is billed monthly and can be canceled at any time with no penalties.
+                  If LeaseShield App isn't the right fit, email us within 30 days of your initial
+                  subscription charge and we'll refund that first payment in full. The 30-day money-back
+                  guarantee applies only to your first payment as a new subscriber.
                 </p>
                 <p>
-                  Because subscriptions can be canceled at any time with no penalties, we do not offer refunds for 
-                  subscription fees once they have been charged.
+                  <strong>After the first 30 days, all fees are non-refundable.</strong> This includes any
+                  charge made more than 30 days after you first subscribed and every renewal payment
+                  (monthly or annual) after your first one. Because you can cancel at any time to stop
+                  future charges, we do not refund past charges or renewals once they have been billed.
                 </p>
                 <p>
-                  <strong>Exceptions:</strong> We may consider refunds on a case-by-case basis for:
+                  <strong>Annual plans:</strong> The 30-day guarantee covers your first annual payment.
+                  After 30 days the annual fee is non-refundable for the remainder of that term, though you
+                  may cancel at any time to prevent the next year's renewal.
+                </p>
+                <p>
+                  <strong>Other exceptions:</strong> Outside the 30-day guarantee, we may still consider
+                  refunds on a case-by-case basis, at our sole discretion, for:
                 </p>
                 <ul className="list-disc list-inside space-y-2 ml-4">
                   <li>Billing errors or duplicate charges</li>
                   <li>Technical issues that prevented you from accessing the Service</li>
-                  <li>Extraordinary circumstances at our sole discretion</li>
                 </ul>
                 <p>
-                  To request a refund under exceptional circumstances, contact us at{" "}
+                  To request a refund, contact us at{" "}
                   <a 
                     href="mailto:support@leaseshieldapp.com" 
                     className="text-primary hover:underline"
                   >
                     support@leaseshieldapp.com
-                  </a>{" "}
-                  within 7 days of the charge.
+                  </a>.
                 </p>
               </div>
             </section>

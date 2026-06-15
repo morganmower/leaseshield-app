@@ -52,7 +52,7 @@ export default function ScreeningReportDecoder() {
             <Button size="lg" onClick={() => setLocation("/screening/explain")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-try-decoder"><Search className="mr-2 h-5 w-5" />Try the decoder</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/signup")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-start-account">Start an account</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">$10/month • Cancel anytime</p>
+          <p className="mt-6 text-sm text-muted-foreground">$10/month • Cancel anytime • 30-day money-back guarantee</p>
         </div>
       </section>
 
@@ -151,7 +151,7 @@ export default function ScreeningReportDecoder() {
             <Button size="lg" onClick={() => setLocation("/screening/explain")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-try"><Search className="mr-2 h-5 w-5" />Try the decoder</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/signup")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started - $10/month</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-report fees</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-report fees • 30-day money-back guarantee</p>
         </div>
       </section>
     </MarketingLayout>

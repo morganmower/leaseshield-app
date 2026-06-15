@@ -25,7 +25,7 @@ const CLUSTER_LINKS = `
 `;
 
 const PRICING_FOOTER = `
-  <p><strong>$10/month.</strong> Cancel anytime. No long-term contracts. No per-unit fees.</p>
+  <p><strong>$10/month.</strong> Cancel anytime. 30-day money-back guarantee. No per-unit fees.</p>
   <p><a href="/subscribe">Get started for $10/month</a> &middot; <a href="/screening/explain">Try the screening decoder</a></p>
 `;
 

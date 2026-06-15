@@ -47,7 +47,7 @@ export default function RentalManagementSystem() {
             <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-get-started">Get started - $10/month</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/screening/explain")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-try-decoder">Try the screening decoder</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-unit fees</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • No per-unit fees • 30-day money-back guarantee</p>
         </div>
       </section>
 
@@ -136,7 +136,7 @@ export default function RentalManagementSystem() {
             <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started - $10/month</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/contact")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-contact">Talk to us first</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • 30-day money-back guarantee</p>
         </div>
       </section>
     </MarketingLayout>
