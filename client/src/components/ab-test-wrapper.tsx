@@ -126,7 +126,7 @@ function PaywallVariant({ testId }: { testId: string }) {
         </Button>
 
         <p className="text-xs text-muted-foreground mt-4">
-          Cancel anytime. Money-back guarantee.
+          Cancel anytime. No long-term contracts.
         </p>
       </Card>
     </div>

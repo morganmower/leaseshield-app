@@ -318,7 +318,7 @@ export default function Landing() {
     <div className="min-h-screen bg-background">
       <SEO
         title="LeaseShield - Simple Rental Management System for Independent Landlords"
-        description="The simple rental management system for independent landlords. Online applications, tenant screening, AI-powered report explanations, state-specific leases and notices, and online rent collection with ACH auto-pay. $10/month, 30-day money-back guarantee."
+        description="The simple rental management system for independent landlords. Online applications, tenant screening, AI-powered report explanations, state-specific leases and notices, and online rent collection with ACH auto-pay. $10/month, cancel anytime."
         canonical="/"
       />
       {/* Header */}
@@ -603,10 +603,10 @@ export default function Landing() {
               <p className="text-2xl md:text-3xl font-display font-bold text-foreground">All 50</p>
               <p className="text-xs md:text-sm text-muted-foreground">States (apps, screening, rent)</p>
             </div>
-            <div className="flex flex-col items-center" data-testid="trust-stat-guarantee">
+            <div className="flex flex-col items-center" data-testid="trust-stat-no-fees">
               <ShieldCheck className="h-5 w-5 text-brand-600 mb-2" />
-              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">30-Day</p>
-              <p className="text-xs md:text-sm text-muted-foreground">Money-Back</p>
+              <p className="text-2xl md:text-3xl font-display font-bold text-foreground">No</p>
+              <p className="text-xs md:text-sm text-muted-foreground">Per-Unit Fees</p>
             </div>
             <div className="flex flex-col items-center" data-testid="trust-stat-monitoring">
               <Sparkles className="h-5 w-5 text-brand-600 mb-2" />
@@ -2307,7 +2307,7 @@ export default function Landing() {
               Ready to protect your rentals?
             </h2>
             <p className="text-lg sm:text-xl text-muted-foreground mb-8 max-w-xl mx-auto px-4">
-              $10/month. Cancel anytime. 30-day money-back guarantee.
+              $10/month. Cancel anytime. No long-term contracts.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-8">
               <Button

@@ -34,7 +34,7 @@ export default function RentCollectionSoftware() {
             <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-get-started">Get started - $10/month</Button>
             <Button size="lg" variant="outline" onClick={() => setLocation("/rental-management-system")} className="text-lg px-8 py-4 min-h-[52px]" data-testid="button-tour">See the full system</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • 30-day money-back guarantee</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime</p>
         </div>
       </section>
 
@@ -137,7 +137,7 @@ export default function RentCollectionSoftware() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
             <Button size="lg" onClick={() => setLocation("/signup")} className="bg-brand-500 hover:bg-brand-600 text-white text-lg px-8 py-4 min-h-[52px]" data-testid="button-final-signup">Get started - $10/month</Button>
           </div>
-          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime • 30-day money-back guarantee</p>
+          <p className="mt-6 text-sm text-muted-foreground">Cancel anytime</p>
         </div>
       </section>
     </MarketingLayout>

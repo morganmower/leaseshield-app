@@ -6,7 +6,7 @@ export const landingCopy = {
     h1: "The simple rental management system for independent landlords",
     subheadline:
       "Understand screening reports instantly. Send a state-specific lease in minutes. Collect rent automatically. One workflow, $10/month.",
-    reassurance: "Only $10/month. Cancel anytime. 30-day money-back guarantee.",
+    reassurance: "Only $10/month. Cancel anytime. No long-term contracts.",
     primaryCta: "Explain My Screening Report",
     primaryCtaHref: "/signup",
     support: "Most landlords start with the screening decoder, then activate the rest.",
