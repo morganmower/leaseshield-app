@@ -44,17 +44,21 @@ async function ensureWarm(): Promise<void> {
   if (cache) return;
   if (!warmupPromise) {
     warmupPromise = warmup().catch((err) => {
+      // Do NOT persist an empty cache on error. Leaving `cache` null means the
+      // next read retries the DB instead of silently serving an empty cache for
+      // the rest of the process lifetime (which would drop every state's
+      // compliance notes/overrides). This read degrades gracefully (callers
+      // fall back to legacy defaults) and the cache self-heals on the next read.
       console.error('[stateClauseValues] cache warmup failed:', err);
-      if (!cache) cache = new Map();
     }).finally(() => {
       warmupPromise = null;
     });
   }
   await warmupPromise;
-  // If a concurrent invalidation discarded our warmup, retry once.
-  if (!cache) {
-    await ensureWarm();
-  }
+  // `cache` may still be null here if a concurrent invalidation discarded this
+  // warmup, or if warmup errored. We intentionally do NOT recurse to retry: on a
+  // persistent DB error that would hammer the database. Callers treat a null
+  // cache as "no overrides" (graceful fallback) and the next read re-warms.
 }
 
 export function clearStateClauseValueCache(): void {

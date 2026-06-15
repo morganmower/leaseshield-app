@@ -4,7 +4,7 @@ import { db } from '../db';
 import { stateClauseValues, states } from '@shared/schema';
 import { isAuthenticated, requireAdmin } from '../jwtAuth';
 import { getUserId } from './_shared';
-import { CLAUSE_DEFINITIONS, CLAUSE_KEYS, getClauseDefinition } from '@shared/clauseRegistry';
+import { CLAUSE_DEFINITIONS, CLAUSE_KEYS, getClauseDefinition, validateClauseNumericValue } from '@shared/clauseRegistry';
 import { clearStateClauseValueCache } from '../utils/stateClauseValues';
 import { and, eq, sql } from 'drizzle-orm';
 
@@ -80,6 +80,13 @@ export async function registerStateClauseValuesRoutes(app: Express) {
           needsReview,
           notes,
         } = parseResult.data;
+
+        if (valueNumeric != null) {
+          const boundsErr = validateClauseNumericValue(clauseKey, valueNumeric);
+          if (boundsErr) {
+            return res.status(400).json({ message: boundsErr });
+          }
+        }
 
         const userId = getUserId(req);
         const now = new Date();

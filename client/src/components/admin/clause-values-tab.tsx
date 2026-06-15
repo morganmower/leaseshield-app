@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest, queryClient } from '@/lib/queryClient';
 import { AlertTriangle, Save } from 'lucide-react';
@@ -68,6 +69,7 @@ function ClauseRowEditor({ stateId, definition, existing }: ClauseRowEditorProps
   const [valueNumeric, setValueNumeric] = useState<string>(existing?.valueNumeric != null ? String(existing.valueNumeric) : '');
   const [statuteCitation, setStatuteCitation] = useState<string>(existing?.statuteCitation ?? '');
   const [notes, setNotes] = useState<string>(existing?.notes ?? '');
+  const [needsReview, setNeedsReview] = useState<boolean>(existing?.needsReview ?? (existing?.valueNumeric == null));
 
   // Re-sync local form state whenever the underlying row identity changes
   // (e.g. user switched the selected state).
@@ -75,7 +77,8 @@ function ClauseRowEditor({ stateId, definition, existing }: ClauseRowEditorProps
     setValueNumeric(existing?.valueNumeric != null ? String(existing.valueNumeric) : '');
     setStatuteCitation(existing?.statuteCitation ?? '');
     setNotes(existing?.notes ?? '');
-  }, [stateId, definition.key, existing?.valueNumeric, existing?.statuteCitation, existing?.notes]);
+    setNeedsReview(existing?.needsReview ?? (existing?.valueNumeric == null));
+  }, [stateId, definition.key, existing?.valueNumeric, existing?.statuteCitation, existing?.notes, existing?.needsReview]);
 
   const saveMutation = useMutation({
     mutationFn: async () => {
@@ -91,7 +94,7 @@ function ClauseRowEditor({ stateId, definition, existing }: ClauseRowEditorProps
           valueNumeric: parsed,
           statuteCitation: statuteCitation.trim() || null,
           notes: notes.trim() || null,
-          needsReview: parsed === null,
+          needsReview,
         },
       );
       return res.json();
@@ -167,12 +170,25 @@ function ClauseRowEditor({ stateId, definition, existing }: ClauseRowEditorProps
             data-testid={`input-notes-${definition.key}`}
           />
         </div>
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            {existing?.updatedAt
-              ? `Last updated ${new Date(existing.updatedAt).toLocaleString()}`
-              : 'Never saved'}
-          </p>
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex flex-col gap-1">
+            <div className="flex items-center gap-2">
+              <Switch
+                id={`needs-review-${definition.key}`}
+                checked={needsReview}
+                onCheckedChange={setNeedsReview}
+                data-testid={`switch-needs-review-${definition.key}`}
+              />
+              <Label htmlFor={`needs-review-${definition.key}`} className="text-xs cursor-pointer">
+                Needs review
+              </Label>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {existing?.updatedAt
+                ? `Last updated ${new Date(existing.updatedAt).toLocaleString()}`
+                : 'Never saved'}
+            </p>
+          </div>
           <Button
             size="sm"
             onClick={() => saveMutation.mutate()}

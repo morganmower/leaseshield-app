@@ -86,8 +86,37 @@ export const CLAUSE_DEFINITIONS: ClauseDefinition[] = [
   },
 ];
 
+// Sane domain bounds per clause. These guard against legally nonsensical
+// values (e.g. negative grace days, a 5000% late-fee cap) reaching the lease
+// generator. Bounds are intentionally generous — they reject obvious garbage,
+// not borderline-but-plausible statutory values.
+export const CLAUSE_BOUNDS: Record<ClauseKey, { min: number; max: number }> = {
+  [CLAUSE_KEYS.LATE_FEE_CAP_PCT]: { min: 0, max: 100 },
+  [CLAUSE_KEYS.LATE_FEE_CAP_FLAT_USD]: { min: 0, max: 10000 },
+  [CLAUSE_KEYS.LATE_FEE_GRACE_DAYS]: { min: 0, max: 365 },
+  [CLAUSE_KEYS.DEPOSIT_CAP_MONTHS]: { min: 0, max: 12 },
+  [CLAUSE_KEYS.DEPOSIT_RETURN_DAYS]: { min: 0, max: 365 },
+  [CLAUSE_KEYS.NOTICE_TO_ENTER_HOURS]: { min: 0, max: 168 },
+  [CLAUSE_KEYS.NOTICE_TERMINATE_MTM_DAYS]: { min: 0, max: 365 },
+  [CLAUSE_KEYS.NOTICE_RENT_INCREASE_DAYS]: { min: 0, max: 365 },
+};
+
 export function getClauseDefinition(key: string): ClauseDefinition | undefined {
   return CLAUSE_DEFINITIONS.find((d) => d.key === key);
+}
+
+/**
+ * Validate a numeric clause value against its domain bounds.
+ * Returns an error message string if invalid, or null if the value is acceptable.
+ */
+export function validateClauseNumericValue(key: string, value: number): string | null {
+  const def = getClauseDefinition(key);
+  if (!def) return `Unknown clause key: ${key}`;
+  if (!Number.isFinite(value)) return 'Value must be a finite number.';
+  const bounds = CLAUSE_BOUNDS[def.key];
+  if (value < bounds.min) return `${def.label} cannot be less than ${bounds.min}.`;
+  if (value > bounds.max) return `${def.label} cannot exceed ${bounds.max}.`;
+  return null;
 }
 
 export function formatClauseValue(value: number | null | undefined, unit: ClauseUnit | string | null | undefined): string {
