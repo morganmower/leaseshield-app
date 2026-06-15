@@ -63,6 +63,18 @@ export default function Settings() {
   const [screeningPassword, setScreeningPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
+  // Scroll to a section when navigated to via a hash (e.g. /settings#tenant-screening)
+  useEffect(() => {
+    if (typeof window === "undefined" || !window.location.hash) return;
+    const id = window.location.hash.replace("#", "");
+    const scrollToSection = () => {
+      const el = document.getElementById(id);
+      if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const timer = setTimeout(scrollToSection, 300);
+    return () => clearTimeout(timer);
+  }, []);
+
   useEffect(() => {
     if (!isLoading && !isAuthenticated) {
       toast({
@@ -599,17 +611,51 @@ export default function Settings() {
           </Card>
 
           {/* Tenant Screening Credentials */}
-          <Card>
+          <Card id="tenant-screening" className="scroll-mt-6">
             <CardHeader>
               <div className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5 text-primary" />
-                <CardTitle>Tenant Screening</CardTitle>
+                <CardTitle>Tenant Screening (Western Verify)</CardTitle>
               </div>
               <CardDescription>
-                Connect your Western Verify account for tenant screening
+                Connect your Western Verify account once, then request background and credit
+                checks on any applicant without leaving LeaseShield.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* Plain-language setup steps - only when not yet connected */}
+              {!credentialsLoading && !credentialsStatus?.configured && (
+                <div className="rounded-lg border bg-muted/40 p-4">
+                  <p className="font-medium text-foreground mb-3">How to connect (about 2 minutes)</p>
+                  <ol className="space-y-2.5 text-sm text-foreground">
+                    <li className="flex items-start gap-2.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">1</span>
+                      <span>
+                        Have a Western Verify account?{" "}
+                        <a
+                          href="https://www.westernverify.com"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline inline-flex items-center gap-0.5"
+                          data-testid="link-westernverify-create"
+                        >
+                          Create a free one
+                          <ExternalLink className="h-3 w-3" />
+                        </a>{" "}
+                        if you don't — it only takes a minute.
+                      </span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">2</span>
+                      <span>Enter the same username and password you use to log in to Western Verify in the boxes below, then press <span className="font-medium">Test Credentials</span> to confirm they work.</span>
+                    </li>
+                    <li className="flex items-start gap-2.5">
+                      <span className="flex-shrink-0 w-5 h-5 rounded-full bg-primary/15 text-primary text-xs font-semibold flex items-center justify-center mt-0.5">3</span>
+                      <span>Press <span className="font-medium">Save Credentials</span>. Our team finishes the connection on our end and emails you when screening goes live — usually within one business day.</span>
+                    </li>
+                  </ol>
+                </div>
+              )}
               {credentialsLoading ? (
                 <div className="flex items-center justify-center py-4">
                   <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { getAccessToken, apiRequest } from "@/lib/queryClient";
 import { useIsActivated, ActivationPrompt } from "@/components/activation-gate";
+import { ScreeningConnectionBanner } from "@/components/screening-connection-banner";
 import {
   Accordion,
   AccordionContent,
@@ -1200,6 +1201,9 @@ export default function Screening() {
       </div>
 
       <div className="container max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        {/* Western Verify connection status / setup */}
+        <ScreeningConnectionBanner className="mb-8" />
 
         {/* Legal Disclaimer */}
         <div className="mb-8 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4">
