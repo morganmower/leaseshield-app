@@ -399,4 +399,68 @@ export async function registerAdminAnalyticsRoutes(app: Express) {
       res.status(500).json({ message: "Failed to fetch applications activity" });
     }
   });
+
+  // Admin: Rent collection / Stripe activity per landlord
+  // Surfaces which landlords are transacting through Stripe (one-time rent
+  // requests + recurring ACH auto-pay) and their Stripe Connect onboarding
+  // status. All money amounts are returned in cents.
+  //   totalCollected     = SUM(amount_paid) over ALL requests (actual cash
+  //                        received, including partial payments).
+  //   totalPlatformFees  = SUM(platform_fee_amount) over status='paid' only
+  //                        (fees are realized when a request is fully paid).
+  app.get('/api/admin/analytics/rent-stripe', isAuthenticated, requireAdmin, async (_req, res) => {
+    try {
+      const rows = await db.execute(sql`
+        WITH pay AS (
+          SELECT
+            user_id,
+            COUNT(*) AS request_count,
+            COUNT(*) FILTER (WHERE status = 'paid') AS paid_count,
+            COALESCE(SUM(amount_paid), 0) AS total_collected,
+            COALESCE(SUM(platform_fee_amount) FILTER (WHERE status = 'paid'), 0) AS total_platform_fees,
+            MAX(paid_at) AS last_paid_at
+          FROM rent_payment_requests
+          GROUP BY user_id
+        ),
+        subs AS (
+          SELECT
+            user_id,
+            COUNT(*) FILTER (WHERE status = 'active') AS active_recurring,
+            COUNT(*) AS total_recurring
+          FROM rent_subscriptions
+          GROUP BY user_id
+        )
+        SELECT
+          u.id,
+          u.email,
+          u.first_name AS "firstName",
+          u.last_name AS "lastName",
+          u.business_name AS "businessName",
+          (u.stripe_connect_account_id IS NOT NULL) AS "hasConnect",
+          COALESCE(u.stripe_connect_charges_enabled, false) AS "chargesEnabled",
+          COALESCE(u.stripe_connect_payouts_enabled, false) AS "payoutsEnabled",
+          COALESCE(pay.request_count, 0) AS "requestCount",
+          COALESCE(pay.paid_count, 0) AS "paidCount",
+          COALESCE(pay.total_collected, 0) AS "totalCollected",
+          COALESCE(pay.total_platform_fees, 0) AS "totalPlatformFees",
+          pay.last_paid_at AS "lastPaidAt",
+          COALESCE(subs.active_recurring, 0) AS "activeRecurring",
+          COALESCE(subs.total_recurring, 0) AS "totalRecurring"
+        FROM users u
+        LEFT JOIN pay ON pay.user_id = u.id
+        LEFT JOIN subs ON subs.user_id = u.id
+        WHERE u.is_admin IS NOT TRUE
+          AND (
+            u.stripe_connect_account_id IS NOT NULL
+            OR pay.user_id IS NOT NULL
+            OR subs.user_id IS NOT NULL
+          )
+        ORDER BY "totalCollected" DESC, "requestCount" DESC, "hasConnect" DESC
+      `);
+      res.json(rows.rows);
+    } catch (error) {
+      console.error("Error fetching rent/Stripe activity:", error);
+      res.status(500).json({ message: "Failed to fetch rent/Stripe activity" });
+    }
+  });
 }

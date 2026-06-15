@@ -117,7 +117,29 @@ interface UserEngagementRow {
   screeningRequests: number | string;
 }
 
+interface RentStripeRow {
+  id: string;
+  email: string | null;
+  firstName: string | null;
+  lastName: string | null;
+  businessName: string | null;
+  hasConnect: boolean;
+  chargesEnabled: boolean;
+  payoutsEnabled: boolean;
+  requestCount: number | string;
+  paidCount: number | string;
+  totalCollected: number | string;
+  totalPlatformFees: number | string;
+  lastPaidAt: string | null;
+  activeRecurring: number | string;
+  totalRecurring: number | string;
+}
+
 const ANALYTICS_STALE = 5 * 60 * 1000; // 5 minutes - analytics data is not real-time
+
+function formatCents(cents: number): string {
+  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD" }).format((cents || 0) / 100);
+}
 
 export default function AdminAnalyticsPage() {
   const [engagementDialogOpen, setEngagementDialogOpen] = useState(false);
@@ -190,6 +212,26 @@ export default function AdminAnalyticsPage() {
     },
     staleTime: ANALYTICS_STALE,
   });
+
+  const { data: rentStripe, isLoading: rentStripeLoading } = useQuery<RentStripeRow[]>({
+    queryKey: ["/api/admin/analytics/rent-stripe"],
+    queryFn: async () => {
+      const res = await apiRequest("GET", "/api/admin/analytics/rent-stripe");
+      return res.json();
+    },
+    staleTime: ANALYTICS_STALE,
+  });
+
+  const rentStripeSummary = useMemo(() => {
+    const rows = rentStripe ?? [];
+    return {
+      connectedLandlords: rows.filter((r) => r.hasConnect).length,
+      transactingLandlords: rows.filter((r) => Number(r.paidCount) > 0).length,
+      totalCollected: rows.reduce((sum, r) => sum + Number(r.totalCollected), 0),
+      totalPlatformFees: rows.reduce((sum, r) => sum + Number(r.totalPlatformFees), 0),
+      activeRecurring: rows.reduce((sum, r) => sum + Number(r.activeRecurring), 0),
+    };
+  }, [rentStripe]);
 
   // Fetch monthly summary for selected year
   const { data: monthlySummary, isLoading: monthlySummaryLoading } = useQuery<MonthlySummary[]>({
@@ -812,6 +854,88 @@ export default function AdminAnalyticsPage() {
               );
             })() : (
               <p className="text-muted-foreground text-sm py-8 text-center">No funnel data available yet</p>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Rent Collection via Stripe */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Rent Collection via Stripe</CardTitle>
+            <CardDescription>
+              Landlords transacting through Stripe — one-time rent requests, recurring ACH auto-pay, and Stripe Connect onboarding status
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Connected Landlords</div>
+                <div className="text-2xl font-semibold" data-testid="stat-connected-landlords">{rentStripeSummary.connectedLandlords}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Actively Collecting</div>
+                <div className="text-2xl font-semibold" data-testid="stat-transacting-landlords">{rentStripeSummary.transactingLandlords}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Total Rent Collected</div>
+                <div className="text-2xl font-semibold" data-testid="stat-total-collected">{formatCents(rentStripeSummary.totalCollected)}</div>
+              </div>
+              <div className="rounded-md border p-3">
+                <div className="text-xs text-muted-foreground">Platform Fees Earned</div>
+                <div className="text-2xl font-semibold" data-testid="stat-total-platform-fees">{formatCents(rentStripeSummary.totalPlatformFees)}</div>
+              </div>
+            </div>
+
+            {rentStripeLoading ? (
+              <p className="text-muted-foreground text-sm py-8 text-center">Loading rent activity...</p>
+            ) : rentStripe && rentStripe.length > 0 ? (
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm" data-testid="table-rent-stripe">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="text-left py-3 px-2 font-medium">Landlord</th>
+                      <th className="text-left py-3 px-2 font-medium">Stripe Connect</th>
+                      <th className="text-right py-3 px-2 font-medium">Requests</th>
+                      <th className="text-right py-3 px-2 font-medium">Paid</th>
+                      <th className="text-right py-3 px-2 font-medium">Collected</th>
+                      <th className="text-right py-3 px-2 font-medium">Platform Fees</th>
+                      <th className="text-right py-3 px-2 font-medium">Active Auto-Pay</th>
+                      <th className="text-left py-3 px-2 font-medium">Last Payment</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rentStripe.map((r) => (
+                      <tr key={r.id} className="border-b hover-elevate" data-testid={`row-rent-stripe-${r.id}`}>
+                        <td className="py-3 px-2">
+                          <div className="flex flex-col">
+                            <span className="font-medium">
+                              {[r.firstName, r.lastName].filter(Boolean).join(" ") || r.businessName || r.email || "Anonymous"}
+                            </span>
+                            <span className="text-xs text-muted-foreground">{r.businessName ? `${r.businessName} · ` : ""}{r.email || "-"}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 px-2">
+                          {!r.hasConnect
+                            ? <Badge variant="secondary">Not connected</Badge>
+                            : r.chargesEnabled
+                              ? <Badge variant="default">Active</Badge>
+                              : <Badge variant="outline">Onboarding</Badge>}
+                        </td>
+                        <td className="py-3 px-2 text-right font-mono">{Number(r.requestCount)}</td>
+                        <td className="py-3 px-2 text-right font-mono">{Number(r.paidCount)}</td>
+                        <td className="py-3 px-2 text-right font-mono">{formatCents(Number(r.totalCollected))}</td>
+                        <td className="py-3 px-2 text-right font-mono">{formatCents(Number(r.totalPlatformFees))}</td>
+                        <td className="py-3 px-2 text-right font-mono">{Number(r.activeRecurring)}</td>
+                        <td className="py-3 px-2 text-muted-foreground whitespace-nowrap">
+                          {r.lastPaidAt ? format(new Date(r.lastPaidAt), "MMM d, yyyy") : "Never"}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            ) : (
+              <p className="text-center py-8 text-muted-foreground">No landlords are using Stripe for rent yet</p>
             )}
           </CardContent>
         </Card>
