@@ -1,3 +1,4 @@
 - [Apply link live-read](apply-link-live-read.md) — public apply endpoints must read property name/cover/terms/schema live; mergedSchemaJson is fallback-only.
 - [State clause values](state-clause-values.md) — per-state numeric legal values auto-patch lease generator; cache must never persist empty-on-error, bounds enforced server-side via clauseRegistry.
 - [Apply flow schema drift](apply-flow-schema-drift.md) — apply/submission 500 "column does not exist" = DB missing a schema column; fix dev (db:push or dev ALTER), then REPUBLISH for prod.
+- [Screening completion authority](screening-completion-authority.md) — only the WV result webhook may set order status 'complete'; SSO redirect URLs are portal landings, never completion.

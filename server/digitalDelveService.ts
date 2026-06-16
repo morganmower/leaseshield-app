@@ -670,8 +670,29 @@ export async function handleStatusWebhook(xml: string): Promise<{ success: boole
       return { success: false };
     }
     
+    // The STATUS webhook (StatusPostURL) carries intermediate progress only.
+    // Final completion + the report arrive via the RESULT webhook
+    // (ResultPostURL -> handleResultWebhook), which is the sole authority for
+    // marking an order "complete". Never let a status webhook flip an order to
+    // "complete" (that would show "Screening Complete" with no report). Map any
+    // incoming status to a safe intermediate value; unknown/normalized
+    // statuses fall back to "in_progress".
+    const normalized = data.status; // already lowercased + underscored by parseStatusWebhook
+    let mappedStatus: 'sent' | 'in_progress' | 'error';
+    if (normalized === 'error' || normalized === 'failed') {
+      mappedStatus = 'error';
+    } else if (normalized === 'sent' || normalized === 'invitation_sent' || normalized === 'not_sent') {
+      mappedStatus = 'sent';
+    } else {
+      // in_progress, complete, completed, pending, received, or anything else
+      mappedStatus = 'in_progress';
+    }
+    if (normalized === 'complete' || normalized === 'completed') {
+      console.warn(`[DigitalDelve] Status webhook reported "${data.status}" for ref ${data.referenceNumber}; recording as in_progress and waiting for the result webhook to confirm completion.`);
+    }
+
     await storage.updateRentalScreeningOrder(order.id, {
-      status: data.status === "in progress" ? "in_progress" : data.status as any,
+      status: mappedStatus,
       reportId: data.reportId || order.reportId,
       reportUrl: data.reportUrl || order.reportUrl,
       rawStatusXml: data.rawXml,
@@ -714,14 +735,16 @@ export async function handleResultWebhook(xml: string): Promise<{ success: boole
 }
 
 /**
- * Check screening status by attempting an SSO view-report request.
- * If SSO returns success with a redirect URL that points to a real report
- * (not the generic report_lookup.cfm fallback), the report is available and
- * the order is marked complete. If SSO returns "in_progress" or a generic
- * fallback URL, the order stays in its current state.
+ * Refresh the status-check timestamp for a pending screening order by pinging
+ * the SSO view-report endpoint.
  *
- * Webhooks remain the primary completion signal; this is the recovery path
- * for when webhooks are missed or delayed.
+ * IMPORTANT: This function NEVER changes the order status. Western Verify's SSO
+ * endpoint hands back a portal landing URL even for orders that are merely
+ * "invited" (the applicant may not have started), so an SSO redirect URL is NOT
+ * a reliable completion signal. Completion is determined SOLELY by the result
+ * webhook (ResultPostURL -> handleResultWebhook). If a webhook is genuinely
+ * missed, the landlord verifies on Western Verify and uses the explicit
+ * "Mark complete" action.
  */
 export async function syncScreeningStatus(
   orderId: string,
@@ -743,32 +766,18 @@ export async function syncScreeningStatus(
 
     console.log(`[DigitalDelve] Checking status for order ${orderId}, ref: ${order.referenceNumber}`);
 
+    // IMPORTANT: An SSO redirect URL is NOT a reliable completion signal.
+    // Western Verify's SSO endpoint returns a portal landing URL
+    // (e.g. ordersystem/default.cfm?param=...) for orders that are still
+    // pending or that have only had an invitation sent - the applicant may
+    // not have even started the report. Marking such orders "complete" based
+    // on the presence of a redirect URL produces false "Screening Complete"
+    // states. Completion is determined SOLELY by the result webhook
+    // (ResultPostURL -> handleResultWebhook). This sync only records that a
+    // status check happened; it never changes the order status. If a webhook
+    // is genuinely missed, the landlord can verify on Western Verify and use
+    // the explicit "Mark complete" action.
     const ssoResult = await performSsoViewReport(order.referenceNumber, credentials);
-
-    if (ssoResult.success && ssoResult.redirectUrl) {
-      // Western Verify hands out a generic "report_lookup.cfm" URL (with no
-      // reportId param) when the report is not yet ready. Any other redirect
-      // URL means the report exists and is viewable.
-      const isGenericFallback =
-        ssoResult.redirectUrl.includes('report_lookup.cfm') &&
-        !ssoResult.redirectUrl.includes('reportId');
-
-      if (isGenericFallback) {
-        console.log(`[DigitalDelve] Order ${orderId} got generic portal URL, not marking complete`);
-        await storage.updateRentalScreeningOrder(orderId, {
-          lastStatusCheckAt: new Date(),
-        });
-        return { success: true, status: order.status };
-      }
-
-      console.log(`[DigitalDelve] Report ready for order ${orderId} - marking COMPLETE`);
-      await storage.updateRentalScreeningOrder(orderId, {
-        status: 'complete',
-        reportUrl: ssoResult.redirectUrl,
-        lastStatusCheckAt: new Date(),
-      });
-      return { success: true, status: 'complete', newlyCompleted: true };
-    }
 
     await storage.updateRentalScreeningOrder(orderId, {
       lastStatusCheckAt: new Date(),
@@ -778,6 +787,8 @@ export async function syncScreeningStatus(
       console.log(`[DigitalDelve] Order ${orderId} still in progress at Western Verify`);
     } else if (ssoResult.error) {
       console.warn(`[DigitalDelve] SSO check returned error for ${orderId}: ${ssoResult.error}`);
+    } else if (ssoResult.success) {
+      console.log(`[DigitalDelve] Order ${orderId} SSO check ok; awaiting result webhook before marking complete`);
     }
 
     return { success: true, status: order.status };
