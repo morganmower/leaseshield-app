@@ -378,6 +378,100 @@ export default function RentalSubmissions() {
     return null;
   };
 
+  // ===== Application fee (one-click payment request) =====
+  // Payment setup status, used both for the inbox banner and the charge dialog.
+  const { data: connectStatus, isLoading: connectStatusLoading } = useQuery<{
+    accountId: string | null;
+    chargesEnabled: boolean;
+    payoutsEnabled: boolean;
+    detailsSubmitted: boolean;
+  }>({
+    queryKey: ["/api/stripe-connect/status"],
+    enabled: !!selectedSubmission,
+    staleTime: 60_000,
+  });
+  const paymentsReady = !!connectStatus?.chargesEnabled;
+  const paymentsStarted = !!connectStatus?.accountId;
+
+  // Landlord's default service fee (cents), shown so the applicant total is clear.
+  const { data: feeSettings } = useQuery<{ defaultServiceFeeAmount: number }>({
+    queryKey: ["/api/rent-payments/fee-settings"],
+    enabled: !!chargeFeePerson,
+    staleTime: 5 * 60_000,
+  });
+
+  const onboardMutation = useMutation({
+    mutationFn: async (returnTo: string) => {
+      const res = await apiRequest("POST", "/api/stripe-connect/onboard", { returnTo });
+      return res.json() as Promise<{ url?: string }>;
+    },
+    onSuccess: (data) => {
+      if (data?.url) {
+        window.location.href = data.url;
+      } else {
+        toast({ title: "Couldn't open setup", description: "Please try again.", variant: "destructive" });
+      }
+    },
+    onError: (error: Error) => {
+      toast({ title: "Couldn't start setup", description: error?.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
+  const chargeFeeMutation = useMutation({
+    mutationFn: async ({ person, amountDollars, email }: { person: SubmissionPerson; amountDollars: string; email: string }) => {
+      const today = new Date().toISOString().slice(0, 10);
+      const res = await apiRequest("POST", "/api/rent-payments", {
+        tenantName: `${person.firstName} ${person.lastName}`.trim(),
+        tenantEmail: email.trim() || undefined,
+        amountDollars,
+        dueDate: today,
+        description: "Application Fee",
+        requestType: "application_fee",
+      });
+      return res.json() as Promise<{ paymentLink: string }>;
+    },
+    onSuccess: (data) => {
+      setChargeFeeLink(data.paymentLink);
+      queryClient.invalidateQueries({ queryKey: ["/api/rent-payments"] });
+      toast({ title: "Payment link ready", description: "Copy it or email it to your applicant." });
+    },
+    onError: (error: Error) => {
+      toast({ title: "Couldn't create the payment link", description: error?.message || "Please try again.", variant: "destructive" });
+    },
+  });
+
+  const openChargeFeeDialog = (person: SubmissionPerson) => {
+    setChargeFeePerson(person);
+    setChargeFeeEmail(person.email || "");
+    setChargeFeeAmount("25");
+    setChargeFeeLink(null);
+    setChargeFeeCopied(false);
+  };
+
+  const startPaymentSetup = () => {
+    const returnTo = `/rental-submissions?id=${selectedSubmission}${chargeFeePerson ? `&chargeFee=${chargeFeePerson.id}` : ""}`;
+    onboardMutation.mutate(returnTo);
+  };
+
+  // After returning from Stripe onboarding we land back on this page with a
+  // ?chargeFee=<personId> param. Reopen the dialog for that applicant once the
+  // submission detail has loaded, then strip the param so a refresh won't reopen.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const params = new URLSearchParams(window.location.search);
+    const personId = params.get("chargeFee");
+    if (!personId || !submissionDetail?.people) return;
+    const person = submissionDetail.people.find((p) => p.id === personId);
+    if (person) {
+      openChargeFeeDialog(person);
+      params.delete("chargeFee");
+      params.delete("connect");
+      const qs = params.toString();
+      window.history.replaceState({}, "", `${window.location.pathname}${qs ? `?${qs}` : ""}`);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [submissionDetail]);
+
   const screeningMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId?: string }) => {
       return apiRequest("POST", `/api/rental/submissions/${submissionId}/screening`, { personId });
@@ -1297,6 +1391,22 @@ Best regards`;
                           </Button>
                         </div>
                       )}
+
+                      <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
+                        <div className="flex items-center gap-2">
+                          <DollarSign className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-sm">Application fee</span>
+                        </div>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => openChargeFeeDialog(person)}
+                          data-testid={`button-charge-app-fee-${person.id}`}
+                        >
+                          <DollarSign className="h-4 w-4 mr-1" />
+                          Charge fee
+                        </Button>
+                      </div>
 
                       {person.isCompleted && (
                         <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
@@ -2342,6 +2452,149 @@ Best regards`;
                 Send Email
               </Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        <Dialog open={!!chargeFeePerson} onOpenChange={(open) => { if (!open) setChargeFeePerson(null); }}>
+          <DialogContent className="max-w-md" data-testid="dialog-charge-app-fee">
+            <DialogHeader>
+              <DialogTitle>Charge application fee</DialogTitle>
+              <DialogDescription>
+                {chargeFeePerson ? `Send a one-time payment request to ${chargeFeePerson.firstName} ${chargeFeePerson.lastName}.` : ""}
+              </DialogDescription>
+            </DialogHeader>
+
+            {connectStatusLoading ? (
+              <div className="flex items-center justify-center py-8" data-testid="status-charge-fee-loading">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : !paymentsReady ? (
+              <div className="space-y-4">
+                <div className="rounded-md bg-muted p-4 space-y-2">
+                  <p className="text-sm font-medium text-foreground">
+                    {paymentsStarted ? "Finish setting up payments" : "Set up payments first"}
+                  </p>
+                  <p className="text-sm text-muted-foreground">
+                    {paymentsStarted
+                      ? "Your payment account isn't quite ready yet. Finishing the few remaining details with Stripe takes about a minute, then you can charge fees and collect rent."
+                      : "To collect an application fee, connect a free Stripe account. It's a quick, guided setup (about 2 minutes) and lets you accept payments directly to your bank."}
+                  </p>
+                </div>
+                <ol className="space-y-2 text-sm text-muted-foreground">
+                  <li className="flex gap-2"><span className="font-medium text-foreground">1.</span> Click the button below to open Stripe.</li>
+                  <li className="flex gap-2"><span className="font-medium text-foreground">2.</span> Enter your business and bank details.</li>
+                  <li className="flex gap-2"><span className="font-medium text-foreground">3.</span> You'll come right back here to finish charging the fee.</li>
+                </ol>
+                <Button
+                  className="w-full"
+                  onClick={startPaymentSetup}
+                  disabled={onboardMutation.isPending}
+                  data-testid="button-start-payment-setup"
+                >
+                  {onboardMutation.isPending ? (
+                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                  ) : (
+                    <DollarSign className="h-4 w-4 mr-1" />
+                  )}
+                  {paymentsStarted ? "Finish payment setup" : "Set up payments"}
+                </Button>
+              </div>
+            ) : chargeFeeLink ? (
+              <div className="space-y-4">
+                <div className="rounded-md bg-muted p-4 flex items-start gap-2">
+                  <Check className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                  <p className="text-sm text-foreground">Payment link created. Share it with your applicant.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs text-muted-foreground">Payment link</Label>
+                  <div className="flex items-center gap-2">
+                    <Input readOnly value={chargeFeeLink} className="text-xs" data-testid="input-charge-fee-link" />
+                    <Button
+                      size="icon"
+                      variant="outline"
+                      onClick={() => {
+                        navigator.clipboard.writeText(chargeFeeLink);
+                        setChargeFeeCopied(true);
+                        setTimeout(() => setChargeFeeCopied(false), 2000);
+                      }}
+                      data-testid="button-copy-charge-fee-link"
+                    >
+                      {chargeFeeCopied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                </div>
+                <div className="rounded-md border p-3 space-y-2">
+                  <p className="text-sm font-medium text-foreground">How this works</p>
+                  <ol className="space-y-1.5 text-sm text-muted-foreground">
+                    <li className="flex gap-2"><span className="font-medium text-foreground">1.</span> Send this link to your applicant (paste it into an email or text).</li>
+                    <li className="flex gap-2"><span className="font-medium text-foreground">2.</span> They open it and pay securely by card or bank.</li>
+                    <li className="flex gap-2"><span className="font-medium text-foreground">3.</span> The payment shows up under Rent → History.</li>
+                  </ol>
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setChargeFeePerson(null)} data-testid="button-close-charge-fee">
+                    Done
+                  </Button>
+                </DialogFooter>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="charge-fee-amount">Amount</Label>
+                  <div className="relative">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-sm">$</span>
+                    <Input
+                      id="charge-fee-amount"
+                      type="number"
+                      min="1"
+                      step="1"
+                      value={chargeFeeAmount}
+                      onChange={(e) => setChargeFeeAmount(e.target.value)}
+                      className="pl-7"
+                      data-testid="input-charge-fee-amount"
+                    />
+                  </div>
+                  <p className="text-xs text-muted-foreground">Labeled "Application Fee" on the applicant's payment page.</p>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="charge-fee-email">Applicant email (optional)</Label>
+                  <Input
+                    id="charge-fee-email"
+                    type="email"
+                    value={chargeFeeEmail}
+                    onChange={(e) => setChargeFeeEmail(e.target.value)}
+                    placeholder="applicant@email.com"
+                    data-testid="input-charge-fee-email"
+                  />
+                </div>
+                {feeSettings && feeSettings.defaultServiceFeeAmount > 0 && (
+                  <p className="text-xs text-muted-foreground" data-testid="text-charge-fee-service-note">
+                    A {`$${(feeSettings.defaultServiceFeeAmount / 100).toFixed(2)}`} service fee is added at checkout, so your applicant pays{" "}
+                    {`$${((parseFloat(chargeFeeAmount || "0") || 0) + feeSettings.defaultServiceFeeAmount / 100).toFixed(2)}`} total. You receive the full {`$${(parseFloat(chargeFeeAmount || "0") || 0).toFixed(2)}`}.
+                  </p>
+                )}
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setChargeFeePerson(null)} data-testid="button-cancel-charge-fee">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (!chargeFeePerson) return;
+                      chargeFeeMutation.mutate({ person: chargeFeePerson, amountDollars: chargeFeeAmount, email: chargeFeeEmail });
+                    }}
+                    disabled={chargeFeeMutation.isPending || !(parseFloat(chargeFeeAmount || "0") >= 1)}
+                    data-testid="button-create-charge-fee-link"
+                  >
+                    {chargeFeeMutation.isPending ? (
+                      <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                    ) : (
+                      <DollarSign className="h-4 w-4 mr-1" />
+                    )}
+                    Create payment link
+                  </Button>
+                </DialogFooter>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>

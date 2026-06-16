@@ -82,10 +82,18 @@ export async function registerStripeConnectRoutes(app: Express) {
       }
 
       const baseUrl = getAppBaseUrl(req);
+      // Allow the caller to come back to the page they started from (e.g. the
+      // application inbox), instead of always dumping them on the Rent page.
+      // Only same-origin relative paths are honored.
+      const rawReturn = typeof req.body?.returnTo === 'string' ? req.body.returnTo : '';
+      const safeReturn = rawReturn.startsWith('/') && !rawReturn.startsWith('//')
+        ? rawReturn
+        : '/rent-ledger';
+      const sep = safeReturn.includes('?') ? '&' : '?';
       const link = await stripe.accountLinks.create({
         account: accountId!,
-        refresh_url: `${baseUrl}/rent-ledger?connect=refresh`,
-        return_url: `${baseUrl}/rent-ledger?connect=return`,
+        refresh_url: `${baseUrl}${safeReturn}${sep}connect=refresh`,
+        return_url: `${baseUrl}${safeReturn}${sep}connect=return`,
         type: 'account_onboarding',
       });
       res.json({ url: link.url });
