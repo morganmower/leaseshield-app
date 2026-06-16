@@ -3005,6 +3005,10 @@ export const rentPaymentRequests = pgTable("rent_payment_requests", {
   amountPaid: integer("amount_paid").default(0).notNull(), // total paid in cents
   dueDate: date("due_date").notNull(),
   description: text("description"),
+  // Distinguishes a normal rent request from a one-time application fee so the
+  // public pay page can render the right wording. Defaults to "rent" so all
+  // existing rows and the rent flow are unaffected.
+  requestType: varchar("request_type", { length: 24 }).notNull().default("rent"),
   publicToken: varchar("public_token", { length: 64 }).notNull().unique(),
   // Late fee config (per lease terms)
   lateFeeAmount: integer("late_fee_amount").default(0).notNull(), // cents

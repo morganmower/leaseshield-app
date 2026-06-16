@@ -76,6 +76,9 @@ import {
   ArchiveRestore,
   ArrowUp,
   ArrowDown,
+  DollarSign,
+  Copy,
+  Check,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
@@ -260,6 +263,12 @@ export default function RentalSubmissions() {
   const [isReuploadDialogOpen, setIsReuploadDialogOpen] = useState(false);
   const [reuploadPersonId, setReuploadPersonId] = useState<string | null>(null);
   const [selectedReuploadTypes, setSelectedReuploadTypes] = useState<string[]>([]);
+  // One-click application fee
+  const [chargeFeePerson, setChargeFeePerson] = useState<SubmissionPerson | null>(null);
+  const [chargeFeeAmount, setChargeFeeAmount] = useState("25");
+  const [chargeFeeEmail, setChargeFeeEmail] = useState("");
+  const [chargeFeeLink, setChargeFeeLink] = useState<string | null>(null);
+  const [chargeFeeCopied, setChargeFeeCopied] = useState(false);
   const [sortColumn, setSortColumn] = useState<"unit" | "applicant" | "decision" | "screening" | "date">("date");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
 

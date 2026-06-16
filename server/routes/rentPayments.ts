@@ -101,8 +101,34 @@ export async function registerRentPaymentsRoutes(app: Express) {
   app.post('/api/rent-payments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = getUserId(req);
-      const user = await storage.getUser(userId);
+      let user = await storage.getUser(userId);
       if (!user) return res.status(404).json({ message: 'User not found' });
+
+      // Self-heal stale Connect status: if our DB says charges aren't enabled
+      // but the landlord has a connected account, re-check Stripe directly and
+      // persist any drift. The account.updated webhook can lag or be missed,
+      // which would otherwise wrongly block a fully-onboarded landlord from
+      // creating a request (e.g. a one-click application fee).
+      if (!user.stripeConnectChargesEnabled && user.stripeConnectAccountId) {
+        try {
+          const acct = await stripe.accounts.retrieve(user.stripeConnectAccountId);
+          if (
+            !!acct.charges_enabled !== user.stripeConnectChargesEnabled ||
+            !!acct.payouts_enabled !== user.stripeConnectPayoutsEnabled ||
+            !!acct.details_submitted !== user.stripeConnectDetailsSubmitted
+          ) {
+            await storage.updateUserStripeConnect(userId, {
+              stripeConnectChargesEnabled: !!acct.charges_enabled,
+              stripeConnectPayoutsEnabled: !!acct.payouts_enabled,
+              stripeConnectDetailsSubmitted: !!acct.details_submitted,
+            });
+            user = (await storage.getUser(userId)) || user;
+          }
+        } catch (e: any) {
+          console.error('Connect self-heal failed:', e?.message);
+        }
+      }
+
       if (!user.stripeConnectChargesEnabled || !user.stripeConnectAccountId) {
         return res.status(400).json({
           message: 'Connect your Stripe account before creating rent payment requests.',
@@ -147,6 +173,8 @@ export async function registerRentPaymentsRoutes(app: Express) {
       }
       const serviceFeeAmount = requestedCents;
 
+      const requestType = body.requestType === 'application_fee' ? 'application_fee' : 'rent';
+
       const insertData = {
         userId,
         rentalPropertyId,
@@ -155,6 +183,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         amount,
         dueDate: body.dueDate,
         description: body.description || null,
+        requestType,
         lateFeeAmount,
         gracePeriodDays: Number.isFinite(parseInt(body.gracePeriodDays)) ? parseInt(body.gracePeriodDays) : 5,
         reminderDaysBefore: Number.isFinite(parseInt(body.reminderDaysBefore)) ? parseInt(body.reminderDaysBefore) : 5,
@@ -405,6 +434,7 @@ export async function registerRentPaymentsRoutes(app: Express) {
         amountPaid: r.amountPaid,
         dueDate: r.dueDate,
         description: r.description,
+        requestType: r.requestType,
         status: r.status,
         lateFeeAmount: r.lateFeeAmount,
         gracePeriodDays: r.gracePeriodDays,

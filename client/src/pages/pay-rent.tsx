@@ -15,6 +15,7 @@ interface PublicRentPayment {
   amountPaid: number;
   dueDate: string;
   description: string | null;
+  requestType?: string;
   status: string;
   lateFeeAmount: number;
   gracePeriodDays: number;
@@ -103,6 +104,9 @@ export default function PayRent() {
   });
   const isPaid = data.status === "paid";
   const isProcessing = data.status === "processing";
+  const isApplicationFee = data.requestType === "application_fee";
+  const pageTitle = isApplicationFee ? "Application Fee" : "Rent Payment";
+  const lineItemLabel = isApplicationFee ? "Application fee" : "Rent";
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
@@ -110,7 +114,7 @@ export default function PayRent() {
         <Card className="p-6 space-y-5">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-2xl font-bold" data-testid="text-pay-title">Rent Payment</h1>
+              <h1 className="text-2xl font-bold" data-testid="text-pay-title">{pageTitle}</h1>
               <p className="text-sm text-muted-foreground">Pay {data.landlordName}</p>
             </div>
             <Badge
@@ -140,7 +144,7 @@ export default function PayRent() {
 
           <div className="border rounded-md p-4 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-sm text-muted-foreground">Rent</span>
+              <span className="text-sm text-muted-foreground">{lineItemLabel}</span>
               <span className="text-base font-medium" data-testid="text-amount-due">${amountDollars}</span>
             </div>
             <div className="flex items-center justify-between">
@@ -157,10 +161,12 @@ export default function PayRent() {
               <span className="text-sm font-semibold">Total due</span>
               <span className="text-2xl font-bold" data-testid="text-tenant-total">${totalDollars}</span>
             </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Due Date</span>
-              <span data-testid="text-due-date">{dueDateStr}</span>
-            </div>
+            {!isApplicationFee && (
+              <div className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Due Date</span>
+                <span data-testid="text-due-date">{dueDateStr}</span>
+              </div>
+            )}
             {data.propertyName && (
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground flex items-center gap-1">
