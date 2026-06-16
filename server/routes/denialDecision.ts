@@ -1,9 +1,8 @@
 import type { Express } from "express";
-import { execSync } from "child_process";
 import { storage } from "../storage";
 import { isAuthenticated, requireAdmin } from "../jwtAuth";
 import { asyncHandler } from "../utils/validation";
-import { getStateAdverseActionHtml } from "../states/adverseActionDisclosures";
+import { STATE_ADVERSE_ACTION_REGISTRY } from "../states/adverseActionDisclosures";
 
 export async function registerDenialDecisionRoutes(app: Express) {
   // Get cities by state
@@ -414,78 +413,48 @@ export async function registerDenialDecisionRoutes(app: Express) {
       jurisdictionDisclosure += stateInfo.name;
     }
 
-    // HTML escape helper to prevent injection
-    const escapeHtml = (str: string) => {
-      return str
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    };
-
-    // Sanitize user inputs
-    const safeApplicantName = escapeHtml(applicantName || 'Applicant');
-    const safeApplicantAddress = escapeHtml(applicantAddress || '');
-    
-    // For PRE-ADVERSE: Use a single ultra-defensive reason (no detailed text transformation)
-    // For ADVERSE/FINAL: Use the detailed specific reasons
-    let sanitizedReasons: string[] = [];
-    
+    // Plain-text reason hygiene for adverse action letters (rendered via pdf-lib, no HTML escaping)
+    let reasonsText: string[] = [];
     if (isPreAdverse) {
-      // PRE-ADVERSE: Single ultra-defensive reason - no detailed text transformation
-      // This avoids bad English from cascading replacements
-      sanitizedReasons = ['Certain information in the consumer report may not meet the qualification requirements for this property.'];
+      reasonsText = ['Certain information in the consumer report may not meet the qualification requirements for this property.'];
     } else {
-      // ADVERSE/FINAL: Parse and use specific reasons
       const reasonLines = denialReasons.split('\n').filter((r: string) => r.trim().length > 0).slice(0, 5);
-      sanitizedReasons = reasonLines.map((reason: string) => {
-        let sanitized = escapeHtml(reason.trim());
-        // Reason hygiene for adverse action letters
-        sanitized = sanitized.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
-        sanitized = sanitized.replace(/poor credit/gi, 'credit history did not meet minimum criteria');
-        sanitized = sanitized.replace(/low credit score/gi, 'credit score below required threshold');
-        sanitized = sanitized.replace(/insufficient credit/gi, 'insufficient credit history to verify');
-        sanitized = sanitized.replace(/too many late payments/gi, 'payment history did not meet criteria');
-        sanitized = sanitized.replace(/bankruptcy/gi, 'bankruptcy filing within specified timeframe');
-        sanitized = sanitized.replace(/criminal record/gi, 'criminal history pursuant to individualized assessment presents a documented risk to resident safety or property');
-        sanitized = sanitized.replace(/arrest record/gi, 'conviction record pursuant to individualized assessment');
-        sanitized = sanitized.replace(/eviction history/gi, 'prior eviction judgment within specified timeframe');
-        sanitized = sanitized.replace(/evicted before/gi, 'prior eviction judgment within specified timeframe');
-        sanitized = sanitized.replace(/not enough income/gi, 'income did not meet required threshold');
-        sanitized = sanitized.replace(/income too low/gi, 'income did not meet required threshold');
-        return sanitized;
+      reasonsText = reasonLines.map((reason: string) => {
+        let s = reason.trim();
+        s = s.replace(/bad credit/gi, 'credit history did not meet minimum criteria');
+        s = s.replace(/poor credit/gi, 'credit history did not meet minimum criteria');
+        s = s.replace(/low credit score/gi, 'credit score below required threshold');
+        s = s.replace(/insufficient credit/gi, 'insufficient credit history to verify');
+        s = s.replace(/too many late payments/gi, 'payment history did not meet criteria');
+        s = s.replace(/bankruptcy/gi, 'bankruptcy filing within specified timeframe');
+        s = s.replace(/criminal record/gi, 'criminal history pursuant to individualized assessment presents a documented risk to resident safety or property');
+        s = s.replace(/arrest record/gi, 'conviction record pursuant to individualized assessment');
+        s = s.replace(/eviction history/gi, 'prior eviction judgment within specified timeframe');
+        s = s.replace(/evicted before/gi, 'prior eviction judgment within specified timeframe');
+        s = s.replace(/not enough income/gi, 'income did not meet required threshold');
+        s = s.replace(/income too low/gi, 'income did not meet required threshold');
+        return s;
       });
+      if (reasonsText.length === 0) {
+        reasonsText = ['Information obtained during the screening process did not meet the qualification requirements for this property.'];
+      }
     }
 
-    // Get state and city info
     const state = await storage.getStateById(stateId);
     let city = null;
-    if (cityId) {
-      city = await storage.getCity(cityId);
-    }
-
+    if (cityId) city = await storage.getCity(cityId);
     const jurisdictionLabel = city ? `${city.name}, ${state?.name}` : state?.name || '';
     const today = new Date();
     const dateStr = today.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-    const pdfId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-    // Note: Audit log is already created by the denial decision wizard endpoint
-    // This endpoint only generates the PDF letter, not a new audit record
-
-    // CRA info
     const CRA = {
       name: 'Western Verify LLC',
       address: '489 W South Jordan Pkwy, Suite 200, South Jordan, UT 84095',
       phone: '(888) 610-WEST',
       website: 'www.westernverify.com',
-      email: 'support@westernverify.com'
+      email: 'support@westernverify.com',
     };
 
-    // Build reasons list HTML
-    const reasonsListHtml = sanitizedReasons.map((r: string) => `<li>${r}</li>`).join('\n');
-
-    // Generate clean single-page letter HTML based on letter type
     let letterTitle: string;
     let letterSubtitle: string;
     if (isPreAdverse) {
@@ -499,151 +468,93 @@ export async function registerDenialDecisionRoutes(app: Express) {
       letterSubtitle = '';
     }
 
-    const html = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <style>
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body {
-            font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 11pt;
-            line-height: 1.5;
-            color: #222;
-            padding: 0.75in;
-          }
-          .header {
-            text-align: center;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 2px solid #333;
-          }
-          .header h1 { font-size: 16pt; font-weight: bold; margin-bottom: 4px; }
-          .header p { font-size: 10pt; color: #555; }
-          .meta { display: flex; justify-content: space-between; margin-bottom: 20px; }
-          .meta .date { text-align: right; }
-          .recipient { margin-bottom: 16px; }
-          .section { margin-bottom: 16px; }
-          .section-title { font-size: 10pt; font-weight: bold; text-transform: uppercase; color: #444; margin-bottom: 6px; border-bottom: 1px solid #ddd; padding-bottom: 2px; }
-          .reasons-list { list-style-type: disc; margin-left: 20px; margin-top: 6px; }
-          .reasons-list li { margin-bottom: 4px; }
-          .cra-box { background: #f8f8f8; border: 1px solid #ddd; padding: 10px; margin-top: 6px; font-size: 10pt; }
-          .rights-box { background: #fff; border: 1px solid #ccc; padding: 10px; margin-top: 6px; font-size: 9.5pt; }
-          .rights-box ul { margin-left: 16px; margin-top: 4px; }
-          .rights-box li { margin-bottom: 3px; }
-          .signature { margin-top: 32px; }
-          .signature-line { border-top: 1px solid #333; width: 250px; margin-top: 40px; padding-top: 4px; font-size: 10pt; }
-          .footer { margin-top: 24px; font-size: 8pt; color: #666; text-align: center; border-top: 1px solid #ddd; padding-top: 8px; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <h1>${letterTitle}</h1>
-          ${letterSubtitle ? `<p>${letterSubtitle}</p>` : ''}
-        </div>
+    const recipientName = applicantName || 'Applicant';
+    const recipientAddress = applicantAddress || '';
 
-        <div class="meta">
-          <div class="recipient">
-            <strong>${safeApplicantName}</strong><br>
-            ${safeApplicantAddress ? safeApplicantAddress.replace(/,/g, '<br>') : ''}
-          </div>
-          <div class="date">${dateStr}</div>
-        </div>
+    // PDF built with pdf-lib (Puppeteer/Chromium hangs in prod)
+    const { PdfDocBuilder, PDF_COLORS } = await import('../utils/pdfDocBuilder');
+    const b = await PdfDocBuilder.create();
 
-        <div class="section">
-          <p>Dear ${safeApplicantName},</p>
-          ${isPreAdverse ? `
-          <p style="margin-top: 8px;">We are considering <strong>denying your rental application</strong> based, in whole or in part, on information obtained from a consumer reporting agency. This is not a final decision.</p>
-          <p style="margin-top: 8px;">If you believe the information in the consumer report is inaccurate or incomplete, you may contact the consumer reporting agency listed below as soon as possible.</p>
-          ` : `
-          <p style="margin-top: 8px;">We regret to inform you that your rental application has been denied${isFcra ? ' based, in whole or in part, on information obtained from a consumer reporting agency' : ''}.</p>
-          `}
-        </div>
+    b.paragraph(letterTitle, { size: 18, bold: true, center: true, color: PDF_COLORS.dark });
+    if (letterSubtitle) b.paragraph(letterSubtitle, { size: 11, center: true, color: PDF_COLORS.gray });
+    b.rule(PDF_COLORS.dark, 1.5);
 
-        <div class="section">
-          <div class="section-title">${isPreAdverse ? 'Reason(s) Under Consideration' : 'Reason(s) for Denial'}</div>
-          <ul class="reasons-list">
-            ${reasonsListHtml}
-          </ul>
-        </div>
-
-        ${isFcra || isPreAdverse ? `
-        <div class="section">
-          <div class="section-title">Consumer Reporting Agency</div>
-          <div class="cra-box">
-            <strong>${CRA.name}</strong><br>
-            ${CRA.address}<br>
-            Phone: ${CRA.phone}<br>
-            Email: ${CRA.email}<br>
-            Website: ${CRA.website}
-          </div>
-          <p style="margin-top: 6px; font-size: 9pt; font-style: italic;">The consumer reporting agency did not make this decision and cannot explain why it was made.</p>
-        </div>
-
-        <div class="section">
-          <div class="section-title">Your Rights</div>
-          <div class="rights-box">
-            <ul>
-              <li>You may obtain a <strong>free copy</strong> of your consumer report within 60 days by contacting the agency above.</li>
-              <li>You have the right to <strong>dispute</strong> the accuracy or completeness of any information in your report.</li>
-              ${isPreAdverse ? '<li>If you believe any information is inaccurate, please contact the consumer reporting agency as soon as possible before a final decision is made.</li>' : ''}
-              <li>You may have additional rights under ${jurisdictionLabel || 'state'} law.</li>
-            </ul>
-          </div>
-        </div>
-        ` : `
-        <div class="section">
-          <p style="font-size: 10pt;">If you have questions about this decision, please contact the property manager.</p>
-        </div>
-        `}
-
-        ${stateId ? getStateAdverseActionHtml(stateId) : ''}
-
-        <div class="signature">
-          <p>Sincerely,</p>
-          <div class="signature-line">
-            Property Manager / Owner
-          </div>
-        </div>
-
-        <div class="footer">
-          ${isPreAdverse ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m(a))' : isFcra ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. § 1681m)' : 'This notice is provided for your records'}
-          ${jurisdictionLabel ? ` and applicable ${jurisdictionLabel} fair housing laws` : ''}.
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Generate PDF using puppeteer with system Chromium
-    const puppeteer = await import('puppeteer');
-    const chromiumPath = execSync('which chromium').toString().trim();
-    const browser = await puppeteer.default.launch({
-      headless: true,
-      executablePath: chromiumPath,
-      args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
-    });
-    
-    try {
-      const page = await browser.newPage();
-      await page.setContent(html, { waitUntil: 'networkidle0' });
-      
-      const pdfBuffer = await page.pdf({
-        format: 'Letter',
-        margin: { top: '0.25in', right: '0.25in', bottom: '0.25in', left: '0.25in' },
-        printBackground: true,
-      });
-
-      const filename = isFcra 
-        ? `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`
-        : `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`;
-
-      res.setHeader('Content-Type', 'application/pdf');
-      res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-      res.send(Buffer.from(pdfBuffer));
-    } finally {
-      await browser.close();
+    b.moveDown(6);
+    b.paragraph(recipientName, { bold: true });
+    if (recipientAddress) {
+      for (const part of recipientAddress.split(',').map((s: string) => s.trim()).filter(Boolean)) {
+        b.paragraph(part, { size: 10 });
+      }
     }
+    b.paragraph(dateStr, { size: 10, color: PDF_COLORS.gray });
+
+    b.moveDown(6);
+    b.paragraph(`Dear ${recipientName},`);
+    if (isPreAdverse) {
+      b.paragraph('We are considering denying your rental application based, in whole or in part, on information obtained from a consumer reporting agency. This is not a final decision.');
+      b.paragraph('If you believe the information in the consumer report is inaccurate or incomplete, you may contact the consumer reporting agency listed below as soon as possible.');
+    } else {
+      b.paragraph(`We regret to inform you that your rental application has been denied${isFcra ? ' based, in whole or in part, on information obtained from a consumer reporting agency' : ''}.`);
+    }
+
+    b.sectionTitle(isPreAdverse ? 'Reason(s) Under Consideration' : 'Reason(s) for Denial');
+    for (const r of reasonsText) b.bullet(r);
+
+    if (isFcra || isPreAdverse) {
+      b.sectionTitle('Consumer Reporting Agency');
+      b.paragraph(CRA.name, { bold: true, size: 10 });
+      b.paragraph(CRA.address, { size: 10 });
+      b.paragraph(`Phone: ${CRA.phone}`, { size: 10 });
+      b.paragraph(`Email: ${CRA.email}`, { size: 10 });
+      b.paragraph(`Website: ${CRA.website}`, { size: 10 });
+      b.paragraph('The consumer reporting agency did not make this decision and cannot explain why it was made.', { size: 9, italic: true, color: PDF_COLORS.gray });
+
+      b.sectionTitle('Your Rights');
+      b.bullet('You may obtain a free copy of your consumer report within 60 days by contacting the agency above.', { size: 10 });
+      b.bullet('You have the right to dispute the accuracy or completeness of any information in your report.', { size: 10 });
+      if (isPreAdverse) b.bullet('If you believe any information is inaccurate, please contact the consumer reporting agency as soon as possible before a final decision is made.', { size: 10 });
+      b.bullet(`You may have additional rights under ${jurisdictionLabel || 'state'} law.`, { size: 10 });
+    } else {
+      b.paragraph('If you have questions about this decision, please contact the property manager.', { size: 10 });
+    }
+
+    const stateReq = stateId ? STATE_ADVERSE_ACTION_REGISTRY[stateId] : undefined;
+    if (stateReq) {
+      b.sectionTitle(`State-Specific Rights (${stateId})`);
+      if (stateReq.statutes.length > 0) {
+        b.paragraph('Applicable State Laws:', { bold: true, size: 10 });
+        for (const s of stateReq.statutes) b.bullet(s, { size: 9 });
+      }
+      if (stateReq.disclosures.length > 0) {
+        b.paragraph('Additional State Disclosures:', { bold: true, size: 10 });
+        for (const d of stateReq.disclosures) b.bullet(d, { size: 10 });
+      }
+      if (stateReq.sourceOfIncomeProtection) b.paragraph(`Source of Income Protection: ${stateReq.sourceOfIncomeProtection}`, { size: 9 });
+      if (stateReq.fairChanceRequirements) b.paragraph(`Fair Chance Notice: ${stateReq.fairChanceRequirements}`, { size: 9 });
+      if (stateReq.localOrdinanceNote) b.paragraph(`Note: ${stateReq.localOrdinanceNote}`, { size: 8, italic: true, color: PDF_COLORS.gray });
+    }
+
+    b.moveDown(16);
+    b.paragraph('Sincerely,');
+    b.moveDown(24);
+    b.paragraph('___________________________', { color: PDF_COLORS.gray });
+    b.paragraph('Property Manager / Owner', { size: 10 });
+
+    const footerLaw = isPreAdverse
+      ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. 1681m(a))'
+      : isFcra
+        ? 'This notice is provided in accordance with the Fair Credit Reporting Act (15 U.S.C. 1681m)'
+        : 'This notice is provided for your records';
+    b.footer([`${footerLaw}${jurisdictionLabel ? ` and applicable ${jurisdictionLabel} fair housing laws` : ''}.`]);
+
+    const pdfBuffer = await b.toBuffer();
+    const filename = isFcra
+      ? `adverse-action-letter-${new Date().toISOString().split('T')[0]}.pdf`
+      : `denial-notice-${new Date().toISOString().split('T')[0]}.pdf`;
+
+    res.setHeader('Content-Type', 'application/pdf');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+    res.send(pdfBuffer);
   }));
 
   // Admin: Get coverage report (all states x topics matrix)

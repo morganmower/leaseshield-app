@@ -22,6 +22,12 @@ used by `server/scripts/*` and `server/utils/documentGenerator.ts`), not Puppete
   user-supplied fields like typed signatures.
 - Wrap variable-width values (emails, names) to their column width so odd/long input
   can't overflow or trip layout math.
-- Known remaining offender: the rental `application-pdf` route still uses Puppeteer and
-  will exhibit the same prod timeout until migrated to pdf-lib.
+- Shared helper `server/utils/pdfDocBuilder.ts` (PdfDocBuilder + PDF_COLORS) wraps pdf-lib
+  with safe()/wrap/pagination/title/sectionTitle/bullet/fieldGrid/footer — reuse it for new
+  server PDFs instead of hand-rolling pdf-lib.
+- Migrated application-process downloads (all pdf-lib now): consent-pdf + application-pdf
+  (rentalScreening.ts) and adverse-action-letter (denialDecision.ts).
+- Still Puppeteer (outside the application-process scope, will hang in prod until migrated):
+  blankApplicationGenerator, moveOutChecklistGenerator, documentGenerator,
+  leaseAgreementGenerator (PDF path).
 - Any server PDF fix must be REPUBLISHED to take effect in production.

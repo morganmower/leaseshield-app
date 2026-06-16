@@ -1,7 +1,6 @@
 import type { Express } from "express";
 import crypto from "crypto";
 import { sql } from "drizzle-orm";
-import { execSync } from "child_process";
 import { storage } from "../storage";
 import { isAuthenticated, requireAccess } from "../jwtAuth";
 import { db } from "../db";
@@ -340,17 +339,12 @@ export async function registerRentalScreeningRoutes(app: Express) {
       const people = await storage.getRentalSubmissionPeople(submission.id);
       const decision = await storage.getRentalDecision(submission.id);
 
-      // Helper functions
-      const escapeHtml = (str: string | null | undefined): string => {
-        if (!str) return '';
-        return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
-      };
-
-      const formatDate = (dateStr: string | null | undefined): string => {
+      // Helpers
+      const formatDate = (dateStr: any): string => {
         if (!dateStr) return 'N/A';
-        return new Date(dateStr).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+        const d = new Date(dateStr);
+        return isNaN(d.getTime()) ? 'N/A' : d.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
       };
-
       const roleLabel = (role: string): string => {
         switch (role) {
           case 'applicant': return 'Primary Applicant';
@@ -360,851 +354,204 @@ export async function registerRentalScreeningRoutes(app: Express) {
         }
       };
 
-      // Generate terms & policies section from cover page
-      const generateTermsPoliciesSection = (link: any) => {
-        const merged = link.mergedSchemaJson as any;
-        const propertyTerms = merged?.propertyTerms || {};
-        const coverPage = merged?.coverPage || {};
-        const sections = coverPage?.sections || [];
-        
-        // Check if there's anything to show
-        const hasPropertyTerms = propertyTerms.monthlyRent || propertyTerms.applicationFee || 
-          propertyTerms.securityDeposit || propertyTerms.adminFee || propertyTerms.additionalNotes;
-        const hasSections = sections.length > 0;
-        
-        if (!hasPropertyTerms && !hasSections) {
-          return '';
+      // PDF built with pdf-lib (no Chromium dependency; Puppeteer hangs in prod).
+      const { PdfDocBuilder, PDF_COLORS } = await import('../utils/pdfDocBuilder');
+      const b = await PdfDocBuilder.create();
+
+      b.title('Rental Application');
+      b.subtitle(`Submitted ${formatDate(submission.createdAt)}`);
+      b.rule();
+
+      b.sectionTitle('Property Information');
+      b.fieldGrid([
+        { label: 'Property', value: property.name },
+        { label: 'Unit', value: unit.unitLabel },
+        { label: 'Status', value: submission.status },
+      ], 3);
+
+      // Terms & policies from the application link cover page
+      const merged = (appLink as any).mergedSchemaJson as any;
+      const propertyTerms = merged?.propertyTerms || {};
+      const coverPage = merged?.coverPage || {};
+      const coverSections: any[] = coverPage?.sections || [];
+      const hasPropertyTerms = propertyTerms.monthlyRent || propertyTerms.applicationFee ||
+        propertyTerms.securityDeposit || propertyTerms.adminFee || propertyTerms.additionalNotes;
+      if (hasPropertyTerms) {
+        b.h3('Property Terms & Fees');
+        b.fieldGrid([
+          { label: 'Monthly Rent', value: propertyTerms.monthlyRent },
+          { label: 'Application Fee', value: propertyTerms.applicationFee },
+          { label: 'Security Deposit', value: propertyTerms.securityDeposit },
+          { label: 'Admin/Move-in Fee', value: propertyTerms.adminFee },
+          { label: 'Lease Signing Deadline', value: propertyTerms.leaseSignDeadlineHours ? `${propertyTerms.leaseSignDeadlineHours} hours after approval` : '' },
+        ], 2);
+        if (propertyTerms.additionalNotes) {
+          b.fieldGrid([{ label: 'Additional Notes', value: propertyTerms.additionalNotes }], 1);
         }
-        
-        let html = `<div class="terms-section">`;
-        
-        // Property Terms (rent, fees, deposits)
-        if (hasPropertyTerms) {
-          html += `
-            <div class="property-terms">
-              <h3>Property Terms &amp; Fees</h3>
-              <div class="terms-grid">
-                ${propertyTerms.monthlyRent ? `<div class="term-item"><label>Monthly Rent</label><span>${escapeHtml(propertyTerms.monthlyRent)}</span></div>` : ''}
-                ${propertyTerms.applicationFee ? `<div class="term-item"><label>Application Fee</label><span>${escapeHtml(propertyTerms.applicationFee)}</span></div>` : ''}
-                ${propertyTerms.securityDeposit ? `<div class="term-item"><label>Security Deposit</label><span>${escapeHtml(propertyTerms.securityDeposit)}</span></div>` : ''}
-                ${propertyTerms.adminFee ? `<div class="term-item"><label>Admin/Move-in Fee</label><span>${escapeHtml(propertyTerms.adminFee)}</span></div>` : ''}
-                ${propertyTerms.leaseSignDeadlineHours ? `<div class="term-item"><label>Lease Signing Deadline</label><span>${propertyTerms.leaseSignDeadlineHours} hours after approval</span></div>` : ''}
-              </div>
-              ${propertyTerms.additionalNotes ? `<div class="additional-notes"><label>Additional Notes</label><p>${escapeHtml(propertyTerms.additionalNotes)}</p></div>` : ''}
-            </div>
-          `;
+      }
+      if (coverSections.length > 0) {
+        b.h3('Application Requirements & Policies');
+        for (const section of coverSections) {
+          if (section?.heading) b.paragraph(section.heading, { bold: true, size: 11 });
+          if (section?.body) b.paragraph(section.body, { size: 10, color: PDF_COLORS.gray });
         }
-        
-        // Cover Page Policies
-        if (hasSections) {
-          html += `
-            <div class="policies-section">
-              <h3>Application Requirements &amp; Policies</h3>
-              ${sections.map((section: any) => `
-                <div class="policy-item">
-                  <strong>${escapeHtml(section.heading || '')}</strong>
-                  <p>${escapeHtml(section.body || '')}</p>
-                </div>
-              `).join('')}
-            </div>
-          `;
-        }
-        
-        html += `</div>`;
-        return html;
-      };
-
-      // Generate acknowledgment record section
-      const generateAcknowledgmentSection = (personList: any[]) => {
-        const acknowledgedPeople = personList.filter(p => p.propertyTermsAcknowledgedAt);
-        
-        if (acknowledgedPeople.length === 0) {
-          return '';
-        }
-        
-        return `
-          <div class="acknowledgment-section">
-            <h3>Acknowledgment Record</h3>
-            <p class="ack-intro">The following individuals acknowledged the property terms, fees, and application requirements shown above:</p>
-            <div class="ack-list">
-              ${acknowledgedPeople.map(person => `
-                <div class="ack-item">
-                  <span class="checkmark">&#10003;</span>
-                  <span><strong>${escapeHtml(person.firstName)} ${escapeHtml(person.lastName)}</strong> (${roleLabel(person.role)}) acknowledged on ${formatDate(person.propertyTermsAcknowledgedAt)}</span>
-                </div>
-              `).join('')}
-            </div>
-          </div>
-        `;
-      };
-
-      // Generate person sections
-      const generatePersonSection = (person: any, index: number) => {
-        const formData = person.formJson || {};
-        
-        return `
-          <div class="person-section ${index > 0 ? 'page-break' : ''}">
-            <div class="person-header">
-              <h2>${escapeHtml(person.firstName)} ${escapeHtml(person.lastName)}</h2>
-              <span class="role-badge">${roleLabel(person.role)}</span>
-            </div>
-            
-            <div class="info-section">
-              <h3>Contact Information</h3>
-              <div class="info-grid">
-                <div class="info-item">
-                  <label>Email</label>
-                  <span>${escapeHtml(person.email)}</span>
-                </div>
-                ${formData.phone ? `
-                <div class="info-item">
-                  <label>Phone</label>
-                  <span>${escapeHtml(formData.phone)}</span>
-                </div>
-                ` : ''}
-                ${formData.dateOfBirth ? `
-                <div class="info-item">
-                  <label>Date of Birth</label>
-                  <span>${escapeHtml(formData.dateOfBirth)}</span>
-                </div>
-                ` : ''}
-                ${formData.driversLicense ? `
-                <div class="info-item">
-                  <label>Driver's License</label>
-                  <span>${escapeHtml(formData.driversLicense)}</span>
-                </div>
-                ` : ''}
-                ${formData.desiredMoveInDate ? `
-                <div class="info-item">
-                  <label>Desired Move-in</label>
-                  <span>${formatDate(formData.desiredMoveInDate)}</span>
-                </div>
-                ` : ''}
-                ${formData.hasHousingVoucher !== undefined ? `
-                <div class="info-item">
-                  <label>Housing Voucher</label>
-                  <span>${formData.hasHousingVoucher ? `Yes${formData.voucherType ? ` - ${escapeHtml(formData.voucherType)}` : ''}` : 'No'}</span>
-                </div>
-                ` : ''}
-                ${formData.referralSource ? `
-                <div class="info-item">
-                  <label>Referral Source</label>
-                  <span>${escapeHtml(formData.referralSource === 'other' ? formData.referralSourceOther || 'Other' : formData.referralSource.replace(/_/g, ' '))}</span>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-
-            ${formData.occupants && Array.isArray(formData.occupants) && formData.occupants.length > 0 ? `
-            <div class="info-section">
-              <h3>Additional Occupants</h3>
-              <div class="occupants-list">
-                ${formData.occupants.map((occ: any, idx: number) => `
-                  <div class="occupant-item">
-                    <strong>${escapeHtml(occ.name || 'Occupant ' + (idx + 1))}</strong>
-                    ${occ.relationship ? ` - ${escapeHtml(occ.relationship)}` : ''}
-                    ${occ.age ? ` (Age: ${escapeHtml(occ.age)})` : ''}
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-            ` : ''}
-
-            ${formData.currentAddress ? `
-            <div class="info-section">
-              <h3>Current Residence</h3>
-              <div class="info-grid">
-                <div class="info-item wide">
-                  <label>Address</label>
-                  <span>${escapeHtml(formData.currentAddress)}${formData.currentCity ? `, ${escapeHtml(formData.currentCity)}` : ''}${formData.currentState ? `, ${escapeHtml(formData.currentState)}` : ''} ${escapeHtml(formData.currentZip || '')}</span>
-                </div>
-                ${formData.currentLandlordName ? `
-                <div class="info-item">
-                  <label>Landlord Name</label>
-                  <span>${escapeHtml(formData.currentLandlordName)}</span>
-                </div>
-                ` : ''}
-                ${formData.currentLandlordPhone ? `
-                <div class="info-item">
-                  <label>Landlord Phone</label>
-                  <span>${escapeHtml(formData.currentLandlordPhone)}</span>
-                </div>
-                ` : ''}
-                ${formData.currentRent ? `
-                <div class="info-item">
-                  <label>Current Rent</label>
-                  <span>$${escapeHtml(formData.currentRent)}/mo</span>
-                </div>
-                ` : ''}
-                ${formData.moveInDate ? `
-                <div class="info-item">
-                  <label>Move-In Date</label>
-                  <span>${escapeHtml(formData.moveInDate)}</span>
-                </div>
-                ` : ''}
-                ${formData.reasonForMoving ? `
-                <div class="info-item wide">
-                  <label>Reason for Moving</label>
-                  <span>${escapeHtml(formData.reasonForMoving)}</span>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-            ` : ''}
-
-            ${formData.currentEmployer || formData.monthlyIncome ? `
-            <div class="info-section">
-              <h3>Employment &amp; Income</h3>
-              <div class="info-grid">
-                ${formData.currentEmployer ? `
-                <div class="info-item">
-                  <label>Employer</label>
-                  <span>${escapeHtml(formData.currentEmployer)}</span>
-                </div>
-                ` : ''}
-                ${formData.employerPhone ? `
-                <div class="info-item">
-                  <label>Employer Phone</label>
-                  <span>${escapeHtml(formData.employerPhone)}</span>
-                </div>
-                ` : ''}
-                ${formData.jobTitle ? `
-                <div class="info-item">
-                  <label>Job Title</label>
-                  <span>${escapeHtml(formData.jobTitle)}</span>
-                </div>
-                ` : ''}
-                ${formData.monthlyIncome ? `
-                <div class="info-item">
-                  <label>Monthly Income</label>
-                  <span>$${escapeHtml(formData.monthlyIncome)}</span>
-                </div>
-                ` : ''}
-                ${formData.employmentLength ? `
-                <div class="info-item">
-                  <label>Time at Job</label>
-                  <span>${escapeHtml(formData.employmentLength)}</span>
-                </div>
-                ` : ''}
-                ${formData.additionalIncome ? `
-                <div class="info-item">
-                  <label>Additional Income</label>
-                  <span>$${escapeHtml(formData.additionalIncome)} (${escapeHtml(formData.additionalIncomeSource || 'Other')})</span>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-            ` : ''}
-
-            ${formData.emergencyContactName || formData.emergencyContactPhone ? `
-            <div class="info-section">
-              <h3>Emergency Contact</h3>
-              <div class="info-grid">
-                ${formData.emergencyContactName ? `
-                <div class="info-item">
-                  <label>Name</label>
-                  <span>${escapeHtml(formData.emergencyContactName)}</span>
-                </div>
-                ` : ''}
-                ${formData.emergencyContactPhone ? `
-                <div class="info-item">
-                  <label>Phone</label>
-                  <span>${escapeHtml(formData.emergencyContactPhone)}</span>
-                </div>
-                ` : ''}
-                ${formData.emergencyContactRelationship ? `
-                <div class="info-item">
-                  <label>Relationship</label>
-                  <span>${escapeHtml(formData.emergencyContactRelationship)}</span>
-                </div>
-                ` : ''}
-              </div>
-            </div>
-            ` : ''}
-
-            ${formData.personalReferences && Array.isArray(formData.personalReferences) && formData.personalReferences.length > 0 ? `
-            <div class="info-section">
-              <h3>Personal References</h3>
-              <div class="references-list">
-                ${formData.personalReferences.map((ref: any, idx: number) => `
-                  <div class="reference-item">
-                    <strong>${escapeHtml(ref.name || 'Reference ' + (idx + 1))}</strong>
-                    ${ref.relationship ? ` (${escapeHtml(ref.relationship)})` : ''}
-                    <div class="reference-contact">
-                      ${ref.phone ? `<span>Phone: ${escapeHtml(ref.phone)}</span>` : ''}
-                      ${ref.email ? `<span>Email: ${escapeHtml(ref.email)}</span>` : ''}
-                    </div>
-                  </div>
-                `).join('')}
-              </div>
-            </div>
-            ` : ''}
-
-            ${formData.hasPets !== undefined || formData.smoker !== undefined || formData.hasBeenEvicted !== undefined || formData.hasFelony !== undefined ? `
-            <div class="info-section">
-              <h3>Additional Information</h3>
-              <div class="info-grid">
-                ${formData.hasPets !== undefined ? `
-                <div class="info-item">
-                  <label>Has Pets</label>
-                  <span>${formData.hasPets ? 'Yes' : 'No'}</span>
-                </div>
-                ` : ''}
-                ${formData.smoker !== undefined ? `
-                <div class="info-item">
-                  <label>Smoker</label>
-                  <span>${formData.smoker ? 'Yes' : 'No'}</span>
-                </div>
-                ` : ''}
-                ${formData.hasBeenEvicted !== undefined ? `
-                <div class="info-item">
-                  <label>Prior Eviction</label>
-                  <span>${formData.hasBeenEvicted ? 'Yes' : 'No'}</span>
-                </div>
-                ` : ''}
-                ${formData.hasFelony !== undefined ? `
-                <div class="info-item">
-                  <label>Felony Conviction</label>
-                  <span>${formData.hasFelony ? 'Yes' : 'No'}</span>
-                </div>
-                ` : ''}
-                ${(formData.smokesOrVapes !== undefined || formData.smoker !== undefined) ? `
-                <div class="info-item">
-                  <label>Smokes/Vapes</label>
-                  <span>${(formData.smokesOrVapes ?? formData.smoker) ? 'Yes' : 'No'}</span>
-                </div>
-                ` : ''}
-              </div>
-              ${formData.pets && Array.isArray(formData.pets) && formData.pets.length > 0 ? `
-              <div class="pets-list">
-                <label>Pets:</label>
-                <ul>
-                  ${formData.pets.map((p: any) => `<li>${escapeHtml(p.type || '')} ${p.breed ? `(${escapeHtml(p.breed)})` : ''} ${p.weight ? `- ${escapeHtml(p.weight)} lbs` : ''} ${p.isServiceAnimal ? '- Service Animal' : ''}</li>`).join('')}
-                </ul>
-              </div>
-              ` : ''}
-              ${formData.vehicles && Array.isArray(formData.vehicles) && formData.vehicles.length > 0 ? `
-              <div class="vehicles-list">
-                <label>Vehicles:</label>
-                <ul>
-                  ${formData.vehicles.map((v: any) => `<li>${escapeHtml(v.year || '')} ${escapeHtml(v.make || '')} ${escapeHtml(v.model || '')} ${v.color ? `(${escapeHtml(v.color)})` : ''} ${v.licensePlate ? `- ${escapeHtml(v.licensePlate)}` : ''}</li>`).join('')}
-                </ul>
-              </div>
-              ` : ''}
-            </div>
-            ` : ''}
-
-            ${person.fcraAuthorized ? `
-            <div class="fcra-authorization-box">
-              <div class="fcra-header">
-                <span class="checkmark">&#10003;</span>
-                <span class="fcra-title">Background Screening Disclosure &amp; Acknowledgment</span>
-                <span class="fcra-date">Acknowledged: ${formatDate(person.fcraAuthorizedTimestamp)}</span>
-              </div>
-              <div class="fcra-content">
-                <p>As part of the rental application process, the landlord or property manager may request a background screening report about you for housing purposes.</p>
-                <p class="fcra-subheading">If screening is requested:</p>
-                <ul>
-                  <li>You will receive a separate invitation directly from Western Verify, the consumer reporting agency, delivered through its screening platform DigitalDelve</li>
-                  <li>That invitation will include a standalone disclosure and authorization, which you must review and complete before any consumer report is obtained</li>
-                  <li>LeaseShield does not collect or store your Social Security number, date of birth, or screening authorization</li>
-                </ul>
-                <p>The background screening report, if obtained, may include information permitted by law, such as credit history, rental history, employment-related information, criminal records, and eviction records.</p>
-                <p class="fcra-subheading">Adverse Action Notice:</p>
-                <p>If adverse action is taken based in whole or in part on information contained in a consumer report, you will be provided an adverse action notice that includes:</p>
-                <ul>
-                  <li>The name, address, and phone number of the consumer reporting agency (Western Verify) that provided the report</li>
-                  <li>A statement that the consumer reporting agency did not make the decision and cannot explain why the decision was made</li>
-                  <li>Notice of your rights under the Fair Credit Reporting Act (FCRA), including your right to obtain a free copy of your consumer report and to dispute inaccurate or incomplete information</li>
-                </ul>
-                <p class="fcra-subheading">By acknowledging, applicant confirmed:</p>
-                <ul>
-                  <li>Understanding that a background screening may be requested in connection with the rental application</li>
-                  <li>Understanding that any screening authorization will be collected directly by Western Verify, through its screening platform DigitalDelve, and not by LeaseShield</li>
-                  <li>Understanding that LeaseShield does not make rental decisions</li>
-                </ul>
-              </div>
-            </div>
-            ` : `
-            <div class="consent-status pending">
-              <span>Background Check Authorization: Pending</span>
-            </div>
-            `}
-          </div>
-        `;
-      };
-
-      const primaryApplicant = people.find(p => p.role === 'applicant');
-
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            * { box-sizing: border-box; }
-            body {
-              font-family: 'Helvetica Neue', Arial, sans-serif;
-              max-width: 850px;
-              margin: 0 auto;
-              padding: 40px;
-              line-height: 1.5;
-              color: #1a1a1a;
-              font-size: 12px;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 3px solid #0d9488;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              color: #0d9488;
-              margin: 0 0 8px 0;
-              font-size: 26px;
-              font-weight: 600;
-            }
-            .header .subtitle {
-              color: #6b7280;
-              font-size: 14px;
-            }
-            .property-info {
-              background: #f0fdfa;
-              border: 1px solid #99f6e4;
-              border-radius: 8px;
-              padding: 16px;
-              margin-bottom: 24px;
-            }
-            .property-info h3 {
-              margin: 0 0 12px 0;
-              color: #0d9488;
-              font-size: 14px;
-            }
-            .property-info .details {
-              display: flex;
-              gap: 32px;
-              flex-wrap: wrap;
-            }
-            .property-info .detail-item label {
-              display: block;
-              font-size: 10px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .property-info .detail-item span {
-              font-size: 14px;
-              font-weight: 500;
-            }
-            .person-section {
-              margin-bottom: 32px;
-              padding-bottom: 24px;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            .person-section:last-child {
-              border-bottom: none;
-            }
-            .person-header {
-              display: flex;
-              align-items: center;
-              gap: 12px;
-              margin-bottom: 16px;
-            }
-            .person-header h2 {
-              margin: 0;
-              font-size: 18px;
-              color: #1a1a1a;
-            }
-            .role-badge {
-              background: #0d9488;
-              color: white;
-              padding: 4px 12px;
-              border-radius: 12px;
-              font-size: 11px;
-              font-weight: 500;
-            }
-            .info-section {
-              margin-bottom: 20px;
-            }
-            .info-section h3 {
-              color: #374151;
-              font-size: 13px;
-              font-weight: 600;
-              margin: 0 0 12px 0;
-              padding-bottom: 6px;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            .info-grid {
-              display: grid;
-              grid-template-columns: repeat(3, 1fr);
-              gap: 12px;
-            }
-            .info-item {
-              padding: 8px;
-              background: #f9fafb;
-              border-radius: 4px;
-            }
-            .info-item.wide {
-              grid-column: span 2;
-            }
-            .info-item label {
-              display: block;
-              font-size: 10px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 2px;
-            }
-            .info-item span {
-              font-size: 12px;
-              color: #1a1a1a;
-            }
-            .consent-status {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              padding: 12px 16px;
-              border-radius: 6px;
-              font-size: 12px;
-              margin-top: 16px;
-            }
-            .consent-status.authorized {
-              background: #dcfce7;
-              color: #166534;
-            }
-            .consent-status.pending {
-              background: #fef3c7;
-              color: #92400e;
-            }
-            .consent-status .checkmark {
-              font-size: 16px;
-              font-weight: bold;
-            }
-            .pets-list, .vehicles-list {
-              margin-top: 12px;
-            }
-            .pets-list label, .vehicles-list label {
-              display: block;
-              font-size: 11px;
-              color: #6b7280;
-              margin-bottom: 4px;
-            }
-            .pets-list ul, .vehicles-list ul {
-              margin: 0;
-              padding-left: 20px;
-            }
-            .pets-list li, .vehicles-list li {
-              font-size: 12px;
-              margin-bottom: 4px;
-            }
-            .occupants-list, .references-list {
-              display: flex;
-              flex-direction: column;
-              gap: 8px;
-            }
-            .occupant-item, .reference-item {
-              padding: 8px 12px;
-              background: #f9fafb;
-              border-radius: 4px;
-              font-size: 12px;
-            }
-            .reference-contact {
-              display: flex;
-              gap: 16px;
-              margin-top: 4px;
-              font-size: 11px;
-              color: #6b7280;
-            }
-            .decision-box {
-              margin-top: 32px;
-              padding: 20px;
-              border-radius: 8px;
-            }
-            .decision-box.approved {
-              background: #dcfce7;
-              border: 2px solid #22c55e;
-            }
-            .decision-box.denied {
-              background: #fef2f2;
-              border: 2px solid #ef4444;
-            }
-            .decision-box h3 {
-              margin: 0 0 12px 0;
-              font-size: 16px;
-            }
-            .decision-box.approved h3 { color: #166534; }
-            .decision-box.denied h3 { color: #991b1b; }
-            .decision-box p {
-              margin: 4px 0;
-              font-size: 12px;
-            }
-            .footer {
-              margin-top: 40px;
-              padding-top: 16px;
-              border-top: 1px solid #e5e7eb;
-              text-align: center;
-              font-size: 10px;
-              color: #9ca3af;
-            }
-            .terms-section {
-              margin-bottom: 28px;
-              padding: 16px;
-              background: #f8fafc;
-              border: 1px solid #e2e8f0;
-              border-radius: 8px;
-            }
-            .property-terms h3, .policies-section h3 {
-              color: #0d9488;
-              font-size: 14px;
-              margin: 0 0 12px 0;
-              padding-bottom: 6px;
-              border-bottom: 1px solid #e5e7eb;
-            }
-            .terms-grid {
-              display: grid;
-              grid-template-columns: repeat(2, 1fr);
-              gap: 10px;
-              margin-bottom: 12px;
-            }
-            .term-item {
-              padding: 8px;
-              background: white;
-              border-radius: 4px;
-              border: 1px solid #e5e7eb;
-            }
-            .term-item label {
-              display: block;
-              font-size: 10px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 2px;
-            }
-            .term-item span {
-              font-size: 13px;
-              font-weight: 500;
-              color: #1a1a1a;
-            }
-            .additional-notes {
-              margin-top: 8px;
-              padding: 10px;
-              background: white;
-              border-radius: 4px;
-              border: 1px solid #e5e7eb;
-            }
-            .additional-notes label {
-              display: block;
-              font-size: 10px;
-              color: #6b7280;
-              text-transform: uppercase;
-              margin-bottom: 4px;
-            }
-            .additional-notes p {
-              margin: 0;
-              font-size: 12px;
-              color: #1a1a1a;
-            }
-            .policies-section {
-              margin-top: 16px;
-            }
-            .policy-item {
-              margin-bottom: 10px;
-              padding: 8px 10px;
-              background: white;
-              border-radius: 4px;
-              border-left: 3px solid #0d9488;
-            }
-            .policy-item strong {
-              display: block;
-              font-size: 12px;
-              color: #374151;
-              margin-bottom: 3px;
-            }
-            .policy-item p {
-              margin: 0;
-              font-size: 11px;
-              color: #6b7280;
-              line-height: 1.4;
-            }
-            .acknowledgment-section {
-              margin-top: 32px;
-              padding: 16px;
-              background: #f0fdf4;
-              border: 1px solid #bbf7d0;
-              border-radius: 8px;
-            }
-            .acknowledgment-section h3 {
-              color: #166534;
-              font-size: 14px;
-              margin: 0 0 8px 0;
-            }
-            .ack-intro {
-              font-size: 11px;
-              color: #374151;
-              margin: 0 0 12px 0;
-            }
-            .ack-list {
-              display: flex;
-              flex-direction: column;
-              gap: 8px;
-            }
-            .ack-item {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              padding: 8px 12px;
-              background: white;
-              border-radius: 4px;
-              font-size: 12px;
-            }
-            .ack-item .checkmark {
-              color: #22c55e;
-              font-size: 16px;
-              font-weight: bold;
-            }
-            .fcra-authorization-box {
-              margin-top: 16px;
-              background: #fef3c7;
-              border: 1px solid #fcd34d;
-              border-radius: 8px;
-              padding: 12px 16px;
-            }
-            .fcra-header {
-              display: flex;
-              align-items: center;
-              gap: 8px;
-              margin-bottom: 12px;
-              padding-bottom: 8px;
-              border-bottom: 1px solid #fcd34d;
-              flex-wrap: wrap;
-            }
-            .fcra-header .checkmark {
-              color: #16a34a;
-              font-size: 18px;
-              font-weight: bold;
-            }
-            .fcra-title {
-              font-weight: 600;
-              font-size: 13px;
-              color: #92400e;
-            }
-            .fcra-date {
-              margin-left: auto;
-              font-size: 11px;
-              color: #b45309;
-              font-weight: 500;
-            }
-            .fcra-content {
-              font-size: 10px;
-              color: #78350f;
-              line-height: 1.5;
-            }
-            .fcra-content p {
-              margin: 6px 0;
-            }
-            .fcra-content ul {
-              margin: 6px 0 10px 0;
-              padding-left: 18px;
-            }
-            .fcra-content li {
-              margin-bottom: 3px;
-            }
-            .fcra-subheading {
-              font-weight: 600;
-              margin-top: 10px !important;
-            }
-            .page-break {
-              page-break-before: always;
-            }
-            @media print {
-              body { padding: 20px; }
-              .page-break { page-break-before: always; }
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Rental Application</h1>
-            <div class="subtitle">Submitted ${formatDate(submission.createdAt)}</div>
-          </div>
-
-          <div class="property-info">
-            <h3>Property Information</h3>
-            <div class="details">
-              <div class="detail-item">
-                <label>Property</label>
-                <span>${escapeHtml(property.name)}</span>
-              </div>
-              <div class="detail-item">
-                <label>Unit</label>
-                <span>${escapeHtml(unit.unitLabel)}</span>
-              </div>
-              <div class="detail-item">
-                <label>Status</label>
-                <span>${submission.status}</span>
-              </div>
-            </div>
-          </div>
-
-          ${generateTermsPoliciesSection(appLink)}
-
-          ${people.map((person, index) => generatePersonSection(person, index)).join('')}
-
-          ${decision ? `
-          <div class="decision-box ${decision.decision}">
-            <h3>Application ${decision.decision === 'approved' ? 'Approved' : 'Denied'}</h3>
-            <p><strong>Decision Date:</strong> ${formatDate(decision.decidedAt)}</p>
-            ${decision.notes ? `<p><strong>Notes:</strong> ${escapeHtml(decision.notes)}</p>` : ''}
-          </div>
-          ` : ''}
-
-          ${generateAcknowledgmentSection(people)}
-
-          <div class="footer">
-            <p>Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}</p>
-            <p>Application ID: ${submission.id}</p>
-          </div>
-        </body>
-        </html>
-      `;
-
-      // Generate PDF using Puppeteer
-      const puppeteer = await import('puppeteer');
-      const chromiumPath = execSync('which chromium').toString().trim();
-      const browser = await puppeteer.default.launch({ 
-        headless: true,
-        executablePath: chromiumPath,
-        timeout: 30000,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--single-process',
-          '--no-zygote',
-          '--disable-extensions',
-          '--disable-background-networking',
-        ]
-      });
-      
-      let pdfBuffer: Buffer;
-      try {
-        const page = await browser.newPage();
-        page.setDefaultTimeout(30000);
-
-        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
-        const pdfData = await page.pdf({
-          format: 'Letter',
-          printBackground: true,
-          margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
-        });
-        
-        pdfBuffer = Buffer.from(pdfData);
-      } finally {
-        await browser.close();
       }
 
-      const fileName = primaryApplicant 
+      // Per-person sections
+      people.forEach((person: any, index: number) => {
+        const formData = person.formJson || {};
+        if (index > 0) b.newPage();
+
+        b.ensureSpace(28);
+        b.moveDown(20);
+        const nameText = b.safe(`${person.firstName || ''} ${person.lastName || ''}`.trim());
+        b.page.drawText(nameText, { x: b.MARGIN, y: b.y, size: 15, font: b.fontBold, color: PDF_COLORS.dark });
+        const nameW = b.fontBold.widthOfTextAtSize(nameText, 15);
+        b.inlineBadge(roleLabel(person.role), b.MARGIN + nameW + 10, b.y);
+        b.moveDown(6);
+
+        b.h3('Contact Information');
+        b.fieldGrid([
+          { label: 'Email', value: person.email },
+          { label: 'Phone', value: formData.phone },
+          { label: 'Date of Birth', value: formData.dateOfBirth },
+          { label: "Driver's License", value: formData.driversLicense },
+          { label: 'Desired Move-in', value: formData.desiredMoveInDate ? formatDate(formData.desiredMoveInDate) : '' },
+          { label: 'Housing Voucher', value: formData.hasHousingVoucher !== undefined ? (formData.hasHousingVoucher ? `Yes${formData.voucherType ? ` - ${formData.voucherType}` : ''}` : 'No') : '' },
+          { label: 'Referral Source', value: formData.referralSource ? (formData.referralSource === 'other' ? (formData.referralSourceOther || 'Other') : String(formData.referralSource).replace(/_/g, ' ')) : '' },
+        ], 2);
+
+        if (Array.isArray(formData.occupants) && formData.occupants.length > 0) {
+          b.h3('Additional Occupants');
+          formData.occupants.forEach((occ: any, idx: number) => {
+            const parts = [occ.name || `Occupant ${idx + 1}`];
+            if (occ.relationship) parts.push(occ.relationship);
+            const line = parts.join(' - ') + (occ.age ? ` (Age: ${occ.age})` : '');
+            b.bullet(line);
+          });
+        }
+
+        if (formData.currentAddress) {
+          b.h3('Current Residence');
+          const addr = `${formData.currentAddress}${formData.currentCity ? `, ${formData.currentCity}` : ''}${formData.currentState ? `, ${formData.currentState}` : ''} ${formData.currentZip || ''}`.trim();
+          b.fieldGrid([
+            { label: 'Address', value: addr },
+            { label: 'Landlord Name', value: formData.currentLandlordName },
+            { label: 'Landlord Phone', value: formData.currentLandlordPhone },
+            { label: 'Current Rent', value: formData.currentRent ? `$${formData.currentRent}/mo` : '' },
+            { label: 'Move-In Date', value: formData.moveInDate },
+            { label: 'Reason for Moving', value: formData.reasonForMoving },
+          ], 2);
+        }
+
+        if (formData.currentEmployer || formData.monthlyIncome) {
+          b.h3('Employment & Income');
+          b.fieldGrid([
+            { label: 'Employer', value: formData.currentEmployer },
+            { label: 'Employer Phone', value: formData.employerPhone },
+            { label: 'Job Title', value: formData.jobTitle },
+            { label: 'Monthly Income', value: formData.monthlyIncome ? `$${formData.monthlyIncome}` : '' },
+            { label: 'Time at Job', value: formData.employmentLength },
+            { label: 'Additional Income', value: formData.additionalIncome ? `$${formData.additionalIncome} (${formData.additionalIncomeSource || 'Other'})` : '' },
+          ], 2);
+        }
+
+        if (formData.emergencyContactName || formData.emergencyContactPhone) {
+          b.h3('Emergency Contact');
+          b.fieldGrid([
+            { label: 'Name', value: formData.emergencyContactName },
+            { label: 'Phone', value: formData.emergencyContactPhone },
+            { label: 'Relationship', value: formData.emergencyContactRelationship },
+          ], 2);
+        }
+
+        if (Array.isArray(formData.personalReferences) && formData.personalReferences.length > 0) {
+          b.h3('Personal References');
+          formData.personalReferences.forEach((ref: any, idx: number) => {
+            let line = ref.name || `Reference ${idx + 1}`;
+            if (ref.relationship) line += ` (${ref.relationship})`;
+            const contact = [ref.phone ? `Phone: ${ref.phone}` : '', ref.email ? `Email: ${ref.email}` : ''].filter(Boolean).join('  ');
+            if (contact) line += ` - ${contact}`;
+            b.bullet(line);
+          });
+        }
+
+        const hasAddl = formData.hasPets !== undefined || formData.smoker !== undefined ||
+          formData.hasBeenEvicted !== undefined || formData.hasFelony !== undefined;
+        if (hasAddl) {
+          b.h3('Additional Information');
+          const addlFields: { label: string; value: string }[] = [];
+          if (formData.hasPets !== undefined) addlFields.push({ label: 'Has Pets', value: formData.hasPets ? 'Yes' : 'No' });
+          if (formData.smoker !== undefined) addlFields.push({ label: 'Smoker', value: formData.smoker ? 'Yes' : 'No' });
+          if (formData.hasBeenEvicted !== undefined) addlFields.push({ label: 'Prior Eviction', value: formData.hasBeenEvicted ? 'Yes' : 'No' });
+          if (formData.hasFelony !== undefined) addlFields.push({ label: 'Felony Conviction', value: formData.hasFelony ? 'Yes' : 'No' });
+          if (formData.smokesOrVapes !== undefined || formData.smoker !== undefined) addlFields.push({ label: 'Smokes/Vapes', value: (formData.smokesOrVapes ?? formData.smoker) ? 'Yes' : 'No' });
+          b.fieldGrid(addlFields, 2);
+          if (Array.isArray(formData.pets) && formData.pets.length > 0) {
+            b.paragraph('Pets:', { size: 9, color: PDF_COLORS.gray });
+            formData.pets.forEach((p: any) => {
+              const line = `${p.type || ''} ${p.breed ? `(${p.breed})` : ''} ${p.weight ? `- ${p.weight} lbs` : ''} ${p.isServiceAnimal ? '- Service Animal' : ''}`.replace(/\s+/g, ' ').trim();
+              if (line) b.bullet(line);
+            });
+          }
+          if (Array.isArray(formData.vehicles) && formData.vehicles.length > 0) {
+            b.paragraph('Vehicles:', { size: 9, color: PDF_COLORS.gray });
+            formData.vehicles.forEach((v: any) => {
+              const line = `${v.year || ''} ${v.make || ''} ${v.model || ''} ${v.color ? `(${v.color})` : ''} ${v.licensePlate ? `- ${v.licensePlate}` : ''}`.replace(/\s+/g, ' ').trim();
+              if (line) b.bullet(line);
+            });
+          }
+        }
+
+        if (person.fcraAuthorized) {
+          b.h3('Background Screening Disclosure & Acknowledgment');
+          b.paragraph(`Acknowledged: ${formatDate(person.fcraAuthorizedTimestamp)}`, { size: 9, color: PDF_COLORS.amber, bold: true });
+          b.paragraph('As part of the rental application process, the landlord or property manager may request a background screening report about you for housing purposes.', { size: 10 });
+          b.paragraph('If screening is requested:', { size: 10, bold: true });
+          b.bullet('You will receive a separate invitation directly from Western Verify, the consumer reporting agency, delivered through its screening platform DigitalDelve', { size: 10 });
+          b.bullet('That invitation will include a standalone disclosure and authorization, which you must review and complete before any consumer report is obtained', { size: 10 });
+          b.bullet('LeaseShield does not collect or store your Social Security number, date of birth, or screening authorization', { size: 10 });
+          b.paragraph('The background screening report, if obtained, may include information permitted by law, such as credit history, rental history, employment-related information, criminal records, and eviction records.', { size: 10 });
+          b.paragraph('Adverse Action Notice:', { size: 10, bold: true });
+          b.paragraph('If adverse action is taken based in whole or in part on information contained in a consumer report, you will be provided an adverse action notice that includes:', { size: 10 });
+          b.bullet('The name, address, and phone number of the consumer reporting agency (Western Verify) that provided the report', { size: 10 });
+          b.bullet('A statement that the consumer reporting agency did not make the decision and cannot explain why the decision was made', { size: 10 });
+          b.bullet('Notice of your rights under the Fair Credit Reporting Act (FCRA), including your right to obtain a free copy of your consumer report and to dispute inaccurate or incomplete information', { size: 10 });
+          b.paragraph('By acknowledging, applicant confirmed:', { size: 10, bold: true });
+          b.bullet('Understanding that a background screening may be requested in connection with the rental application', { size: 10 });
+          b.bullet('Understanding that any screening authorization will be collected directly by Western Verify, through its screening platform DigitalDelve, and not by LeaseShield', { size: 10 });
+          b.bullet('Understanding that LeaseShield does not make rental decisions', { size: 10 });
+        } else {
+          b.h3('Background Check Authorization');
+          b.paragraph('Pending', { size: 10, color: PDF_COLORS.amber, bold: true });
+        }
+      });
+
+      if (decision) {
+        b.rule(decision.decision === 'approved' ? PDF_COLORS.green : PDF_COLORS.red, 1);
+        b.sectionTitle(`Application ${decision.decision === 'approved' ? 'Approved' : 'Denied'}`);
+        b.fieldGrid([{ label: 'Decision Date', value: formatDate(decision.decidedAt) }], 1);
+        if (decision.notes) b.fieldGrid([{ label: 'Notes', value: decision.notes }], 1);
+      }
+
+      const acknowledgedPeople = people.filter((p: any) => p.propertyTermsAcknowledgedAt);
+      if (acknowledgedPeople.length > 0) {
+        b.sectionTitle('Acknowledgment Record');
+        b.paragraph('The following individuals acknowledged the property terms, fees, and application requirements shown above:', { size: 10, color: PDF_COLORS.gray });
+        acknowledgedPeople.forEach((person: any) => {
+          b.bullet(`${person.firstName} ${person.lastName} (${roleLabel(person.role)}) acknowledged on ${formatDate(person.propertyTermsAcknowledgedAt)}`, { size: 10 });
+        });
+      }
+
+      b.footer([
+        `Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' })}`,
+        `Application ID: ${submission.id}`,
+      ]);
+
+      const primaryApplicant = people.find((p: any) => p.role === 'applicant');
+      const pdfBuffer = await b.toBuffer();
+
+      const fileName = primaryApplicant
         ? `rental-application-${primaryApplicant.firstName}-${primaryApplicant.lastName}.pdf`
         : `rental-application-${submission.id.slice(0, 8)}.pdf`;
 
