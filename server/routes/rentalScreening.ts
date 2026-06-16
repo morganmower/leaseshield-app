@@ -78,257 +78,229 @@ export async function registerRentalScreeningRoutes(app: Express) {
         return res.status(400).json({ message: "This person has not authorized a background check" });
       }
 
-      // Generate PDF using Puppeteer with system Chromium
-      const puppeteer = await import('puppeteer');
-      const chromiumPath = execSync('which chromium').toString().trim();
-      const browser = await puppeteer.default.launch({ 
-        headless: true,
-        executablePath: chromiumPath,
-        timeout: 30000,
-        args: [
-          '--no-sandbox',
-          '--disable-setuid-sandbox',
-          '--disable-dev-shm-usage',
-          '--disable-gpu',
-          '--single-process',
-          '--no-zygote',
-          '--disable-extensions',
-          '--disable-background-networking',
-        ]
-      });
-      
-      let pdfBuffer: Buffer;
-      try {
-        const page = await browser.newPage();
-        page.setDefaultTimeout(30000);
+      // Generate the consent record as a PDF with pdf-lib. We intentionally do
+      // NOT use Puppeteer/Chromium here: in the deployed environment Chromium is
+      // not available, so the headless browser hung and the request timed out
+      // ("Download failed" for the landlord). pdf-lib is pure JS and reliable.
+      const { PDFDocument, StandardFonts, rgb } = await import('pdf-lib');
 
-        const consentDate = person.fcraAuthorizedTimestamp 
-          ? new Date(person.fcraAuthorizedTimestamp).toLocaleString('en-US', {
+      const consentDate = person.fcraAuthorizedTimestamp
+        ? new Date(person.fcraAuthorizedTimestamp).toLocaleString('en-US', {
             year: 'numeric',
             month: 'long',
             day: 'numeric',
             hour: 'numeric',
             minute: '2-digit',
             hour12: true,
-            timeZoneName: 'short'
+            timeZoneName: 'short',
           })
         : 'Unknown';
 
-      const htmlContent = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="UTF-8">
-          <style>
-            body {
-              font-family: 'Georgia', serif;
-              max-width: 800px;
-              margin: 0 auto;
-              padding: 40px;
-              line-height: 1.6;
-              color: #1a1a1a;
-            }
-            .header {
-              text-align: center;
-              border-bottom: 2px solid #0d9488;
-              padding-bottom: 20px;
-              margin-bottom: 30px;
-            }
-            .header h1 {
-              color: #0d9488;
-              margin: 0 0 10px 0;
-              font-size: 24px;
-            }
-            .header h2 {
-              color: #374151;
-              margin: 0;
-              font-size: 18px;
-              font-weight: normal;
-            }
-            .section {
-              margin-bottom: 24px;
-            }
-            .section-title {
-              font-weight: bold;
-              color: #0d9488;
-              margin-bottom: 8px;
-              font-size: 14px;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-            }
-            .info-grid {
-              display: grid;
-              grid-template-columns: 1fr 1fr;
-              gap: 16px;
-              margin-bottom: 24px;
-            }
-            .info-item label {
-              display: block;
-              font-size: 11px;
-              color: #6b7280;
-              text-transform: uppercase;
-              letter-spacing: 0.5px;
-              margin-bottom: 4px;
-            }
-            .info-item span {
-              font-size: 14px;
-            }
-            .consent-box {
-              background: #f0fdfa;
-              border: 1px solid #99f6e4;
-              border-radius: 8px;
-              padding: 20px;
-              margin: 24px 0;
-            }
-            .consent-box h3 {
-              color: #0d9488;
-              margin: 0 0 12px 0;
-              font-size: 16px;
-            }
-            .consent-text {
-              font-size: 13px;
-              color: #374151;
-            }
-            .consent-text ul {
-              margin: 12px 0;
-              padding-left: 24px;
-            }
-            .consent-text li {
-              margin-bottom: 8px;
-            }
-            .authorization-stamp {
-              background: #dcfce7;
-              border: 2px solid #22c55e;
-              border-radius: 8px;
-              padding: 20px;
-              text-align: center;
-              margin: 24px 0;
-            }
-            .authorization-stamp .checkmark {
-              color: #22c55e;
-              font-size: 36px;
-              margin-bottom: 8px;
-            }
-            .authorization-stamp .status {
-              color: #166534;
-              font-weight: bold;
-              font-size: 18px;
-            }
-            .authorization-stamp .timestamp {
-              color: #374151;
-              font-size: 14px;
-              margin-top: 8px;
-            }
-            .footer {
-              margin-top: 40px;
-              padding-top: 20px;
-              border-top: 1px solid #e5e7eb;
-              font-size: 11px;
-              color: #6b7280;
-              text-align: center;
-            }
-            .disclaimer {
-              background: #fffbeb;
-              border: 1px solid #fcd34d;
-              border-radius: 6px;
-              padding: 12px;
-              font-size: 11px;
-              color: #92400e;
-              margin-top: 24px;
-            }
-          </style>
-        </head>
-        <body>
-          <div class="header">
-            <h1>Background Check Authorization</h1>
-            <h2>Rental Application Consent Record</h2>
-          </div>
+      const pdfDoc = await PDFDocument.create();
+      const font = await pdfDoc.embedFont(StandardFonts.Helvetica);
+      const fontBold = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontItalic = await pdfDoc.embedFont(StandardFonts.HelveticaOblique);
 
-          <div class="section">
-            <div class="section-title">Applicant Information</div>
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Full Name</label>
-                <span>${person.firstName} ${person.lastName}</span>
-              </div>
-              <div class="info-item">
-                <label>Email Address</label>
-                <span>${person.email}</span>
-              </div>
-              <div class="info-item">
-                <label>Role</label>
-                <span>${person.role === 'applicant' ? 'Primary Applicant' : person.role === 'coapplicant' ? 'Co-Applicant' : 'Guarantor'}</span>
-              </div>
-              <div class="info-item">
-                <label>Application Date</label>
-                <span>${new Date(person.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
-              </div>
-            </div>
-          </div>
+      const teal = rgb(0.05, 0.58, 0.53);
+      const dark = rgb(0.1, 0.1, 0.1);
+      const gray = rgb(0.42, 0.45, 0.5);
+      const green = rgb(0.09, 0.4, 0.2);
 
-          <div class="section">
-            <div class="section-title">Property Information</div>
-            <div class="info-grid">
-              <div class="info-item">
-                <label>Property</label>
-                <span>${property.name}</span>
-              </div>
-              <div class="info-item">
-                <label>Unit</label>
-                <span>${unit.unitLabel}</span>
-              </div>
-            </div>
-          </div>
+      const PAGE_W = 612;
+      const PAGE_H = 792;
+      const MARGIN = 50;
+      const CONTENT_W = PAGE_W - MARGIN * 2;
 
-          <div class="consent-box">
-            <h3>Disclosure Acknowledgment</h3>
-            <div class="consent-text">
-              <p>By submitting this rental application, the applicant acknowledged the following:</p>
-              <ul>
-                <li>A background screening may be requested in connection with the rental application</li>
-                <li>The screening authorization will be collected directly by Western Verify through its screening platform DigitalDelve</li>
-                <li>LeaseShield does not make rental decisions</li>
-                <li>The background screening report may include credit history, rental history, employment-related information, criminal records, and eviction records as permitted by law</li>
-              </ul>
-              <p>The applicant authorized the verification of the information provided, including background and credit screening where permitted by law.</p>
-            </div>
-          </div>
+      let page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+      let y = PAGE_H - MARGIN;
 
-          <div class="authorization-stamp">
-            <div class="checkmark">✓</div>
-            <div class="status">AUTHORIZED</div>
-            <div class="timestamp">Consent recorded: ${consentDate}</div>
-            ${(person.formJson as any)?.typedSignature ? `
-              <div style="margin-top: 16px; padding-top: 16px; border-top: 1px dashed #86efac;">
-                <div style="font-size: 12px; color: #374151; margin-bottom: 8px;">Electronic Signature:</div>
-                <div style="font-family: 'Georgia', serif; font-style: italic; font-size: 20px; color: #166534;">${(person.formJson as any).typedSignature}</div>
-              </div>
-            ` : ''}
-          </div>
+      // Standard PDF fonts use WinAnsi encoding and throw on characters they
+      // cannot encode, so strip anything outside printable ASCII.
+      const safe = (str: any): string =>
+        String(str ?? '').replace(/[^\x09\x0A\x0D\x20-\x7E]/g, '');
 
-          <div class="disclaimer">
-            <strong>Important:</strong> This document serves as a record that the applicant acknowledged the background screening disclosure and authorized verification of their information during the rental application process. The actual background check authorization and consent are collected separately by Western Verify (DigitalDelve) in compliance with FCRA requirements.
-          </div>
+      const ensureSpace = (needed: number) => {
+        if (y - needed < MARGIN) {
+          page = pdfDoc.addPage([PAGE_W, PAGE_H]);
+          y = PAGE_H - MARGIN;
+        }
+      };
 
-          <div class="footer">
-            <p>Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-            <p>Submission ID: ${submission.id}</p>
-          </div>
-        </body>
-        </html>
-      `;
+      const wrapLines = (text: string, f: any, size: number, maxWidth: number): string[] => {
+        const words = safe(text).split(/\s+/).filter(Boolean);
+        const lines: string[] = [];
+        let line = '';
+        for (const word of words) {
+          const test = line ? `${line} ${word}` : word;
+          if (f.widthOfTextAtSize(test, size) > maxWidth && line) {
+            lines.push(line);
+            line = word;
+          } else {
+            line = test;
+          }
+        }
+        if (line) lines.push(line);
+        return lines.length ? lines : [''];
+      };
 
-        await page.setContent(htmlContent, { waitUntil: 'domcontentloaded' });
-        const pdfData = await page.pdf({
-          format: 'Letter',
-          printBackground: true,
-          margin: { top: '0.5in', right: '0.5in', bottom: '0.5in', left: '0.5in' }
+      const drawParagraph = (
+        text: string,
+        opts: { size?: number; f?: any; color?: any; x?: number; width?: number; gap?: number; center?: boolean } = {}
+      ) => {
+        const size = opts.size ?? 11;
+        const f = opts.f ?? font;
+        const color = opts.color ?? dark;
+        const x = opts.x ?? MARGIN;
+        const width = opts.width ?? CONTENT_W;
+        const gap = opts.gap ?? 4;
+        for (const ln of wrapLines(text, f, size, width)) {
+          ensureSpace(size + gap);
+          y -= size;
+          let drawX = x;
+          if (opts.center) {
+            const w = f.widthOfTextAtSize(ln, size);
+            drawX = MARGIN + (CONTENT_W - w) / 2;
+          }
+          page.drawText(ln, { x: drawX, y, size, font: f, color });
+          y -= gap;
+        }
+      };
+
+      const sectionTitle = (t: string) => {
+        ensureSpace(24);
+        y -= 18;
+        page.drawText(safe(t.toUpperCase()), { x: MARGIN, y, size: 11, font: fontBold, color: teal });
+        y -= 8;
+      };
+
+      const drawFieldRow = (l1: string, v1: string, l2?: string, v2?: string) => {
+        const col2X = MARGIN + CONTENT_W / 2 + 10;
+        const colW = CONTENT_W / 2 - 10;
+        // Wrap each value within its column so long inputs (e.g. a long email
+        // address or name) can never overflow into the adjacent column.
+        const v1Lines = wrapLines(v1, font, 11, colW);
+        const v2Lines = v2 !== undefined ? wrapLines(v2, font, 11, colW) : [];
+        const valueLineCount = Math.max(v1Lines.length, v2Lines.length, 1);
+        ensureSpace(12 + 14 + valueLineCount * 15 + 6);
+        y -= 12;
+        page.drawText(safe(l1.toUpperCase()), { x: MARGIN, y, size: 8, font: fontBold, color: gray });
+        if (l2) page.drawText(safe(l2.toUpperCase()), { x: col2X, y, size: 8, font: fontBold, color: gray });
+        const valueTopY = y - 14;
+        v1Lines.forEach((ln, i) => {
+          page.drawText(ln, { x: MARGIN, y: valueTopY - i * 15, size: 11, font, color: dark });
         });
-        
-        pdfBuffer = Buffer.from(pdfData);
-      } finally {
-        await browser.close();
+        v2Lines.forEach((ln, i) => {
+          page.drawText(ln, { x: col2X, y: valueTopY - i * 15, size: 11, font, color: dark });
+        });
+        y = valueTopY - (valueLineCount - 1) * 15 - 6;
+      };
+
+      const drawBullet = (t: string) => {
+        ensureSpace(16);
+        const startY = y;
+        page.drawText('-', { x: MARGIN + 6, y: startY - 11, size: 11, font, color: dark });
+        drawParagraph(t, { x: MARGIN + 18, width: CONTENT_W - 18, gap: 4 });
+      };
+
+      // Header
+      drawParagraph('Background Check Authorization', { size: 20, f: fontBold, color: teal, center: true });
+      drawParagraph('Rental Application Consent Record', { size: 13, color: gray, center: true });
+      y -= 6;
+      ensureSpace(14);
+      page.drawLine({
+        start: { x: MARGIN, y },
+        end: { x: PAGE_W - MARGIN, y },
+        thickness: 1.5,
+        color: teal,
+      });
+      y -= 6;
+
+      // Applicant information
+      sectionTitle('Applicant Information');
+      const roleText = person.role === 'applicant'
+        ? 'Primary Applicant'
+        : person.role === 'coapplicant'
+          ? 'Co-Applicant'
+          : 'Guarantor';
+      drawFieldRow('Full Name', `${person.firstName} ${person.lastName}`, 'Email Address', person.email || '');
+      drawFieldRow(
+        'Role',
+        roleText,
+        'Application Date',
+        new Date(person.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+      );
+
+      // Property information
+      sectionTitle('Property Information');
+      drawFieldRow('Property', property.name || '', 'Unit', unit.unitLabel || '');
+
+      // Disclosure acknowledgment
+      sectionTitle('Disclosure Acknowledgment');
+      drawParagraph('By submitting this rental application, the applicant acknowledged the following:', { gap: 6 });
+      drawBullet('A background screening may be requested in connection with the rental application');
+      drawBullet('The screening authorization will be collected directly by Western Verify through its screening platform DigitalDelve');
+      drawBullet('LeaseShield does not make rental decisions');
+      drawBullet('The background screening report may include credit history, rental history, employment-related information, criminal records, and eviction records as permitted by law');
+      y -= 4;
+      drawParagraph('The applicant authorized the verification of the information provided, including background and credit screening where permitted by law.', { gap: 4 });
+
+      // Authorization stamp box
+      const sig = (person.formJson as any)?.typedSignature;
+      const boxHeight = sig ? 104 : 64;
+      ensureSpace(boxHeight + 16);
+      y -= 10;
+      const boxTopY = y;
+      const boxBottomY = y - boxHeight;
+      page.drawRectangle({
+        x: MARGIN,
+        y: boxBottomY,
+        width: CONTENT_W,
+        height: boxHeight,
+        color: rgb(0.86, 0.99, 0.91),
+        borderColor: rgb(0.13, 0.77, 0.37),
+        borderWidth: 1.5,
+      });
+      const centerInBox = (txt: string, ty: number, size: number, f: any, color: any) => {
+        const s = safe(txt);
+        const w = f.widthOfTextAtSize(s, size);
+        page.drawText(s, { x: MARGIN + (CONTENT_W - w) / 2, y: ty, size, font: f, color });
+      };
+      let ty = boxTopY - 24;
+      centerInBox('AUTHORIZED', ty, 16, fontBold, green);
+      ty -= 22;
+      centerInBox(`Consent recorded: ${consentDate}`, ty, 11, font, dark);
+      if (sig) {
+        ty -= 24;
+        centerInBox('Electronic Signature', ty, 9, font, gray);
+        ty -= 22;
+        centerInBox(String(sig), ty, 16, fontItalic, green);
       }
+      y = boxBottomY - 14;
+
+      // Disclaimer
+      drawParagraph(
+        'Important: This document serves as a record that the applicant acknowledged the background screening disclosure and authorized verification of their information during the rental application process. The actual background check authorization and consent are collected separately by Western Verify (DigitalDelve) in compliance with FCRA requirements.',
+        { size: 10, color: rgb(0.57, 0.25, 0.05), gap: 4 }
+      );
+
+      // Footer
+      y -= 16;
+      ensureSpace(28);
+      page.drawLine({
+        start: { x: MARGIN, y },
+        end: { x: PAGE_W - MARGIN, y },
+        thickness: 0.5,
+        color: rgb(0.9, 0.9, 0.9),
+      });
+      y -= 4;
+      drawParagraph(
+        `Generated by LeaseShield on ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}`,
+        { size: 9, color: gray, center: true, gap: 2 }
+      );
+      drawParagraph(`Submission ID: ${submission.id}`, { size: 9, color: gray, center: true, gap: 2 });
+
+      const pdfBytes = await pdfDoc.save();
+      const pdfBuffer = Buffer.from(pdfBytes);
 
       res.setHeader('Content-Type', 'application/pdf');
       res.setHeader('Content-Disposition', `attachment; filename="consent-authorization-${person.firstName}-${person.lastName}.pdf"`);
