@@ -350,8 +350,8 @@ export default function RentalSubmissions() {
   // completion automatically, so we surface stale orders here and let the
   // landlord verify on the portal and use "Mark complete" manually. We never
   // auto-complete from this signal.
-  const STALE_IN_PROGRESS_DAYS = 3;
-  const STALE_SENT_DAYS = 5;
+  const STALE_IN_PROGRESS_DAYS = 7;
+  const STALE_SENT_DAYS = 7;
   const getScreeningStaleInfo = (
     order?: ScreeningOrder
   ): { kind: "in_progress" | "sent"; days: number } | null => {
