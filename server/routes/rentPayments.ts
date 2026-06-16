@@ -484,23 +484,47 @@ export async function registerRentPaymentsRoutes(app: Express) {
         platformFee: r.platformFeeAmount,
       });
 
+      // Determine whether the landlord's connected account can act as merchant
+      // of record. on_behalf_of requires the card_payments capability ACTIVE;
+      // ACH-only landlord accounts usually don't have it, and Stripe then
+      // rejects the charge ("...without the `card_payments` capability
+      // enabled."). When inactive we fall back to a plain destination charge so
+      // the tenant can always pay (funds still route to the landlord).
+      let landlordIsMerchantOfRecord = false;
+      try {
+        const acct = await stripe.accounts.retrieve(landlord.stripeConnectAccountId);
+        landlordIsMerchantOfRecord = acct.capabilities?.card_payments === 'active';
+      } catch (capErr: any) {
+        console.warn('Could not read connected account capabilities; using destination charge:', capErr?.message);
+      }
+      if (!landlordIsMerchantOfRecord) {
+        console.log(`Rent checkout (request ${r.id}, landlord ${r.userId}): card_payments not active — using destination charge (platform as merchant of record).`);
+      }
+
       // If we already have an open Checkout Session for this request, reuse it
       // instead of creating a duplicate (prevents accidental double-payments
-      // from page reloads/retries) - but ONLY if the session amount still
-      // matches the current tenant total (rent + tenant-paid service fee).
-      // If the rent OR fee config changed, expire the stale session so the
-      // tenant cannot pay the wrong total.
+      // from page reloads/retries) - but ONLY if the session still matches the
+      // current tenant total AND the current merchant-of-record config. A
+      // session created before the landlord's capability changed (e.g. an older
+      // session baked with on_behalf_of that now fails to charge) is expired and
+      // rebuilt so the same payment link works.
       if (r.stripeCheckoutSessionId) {
         try {
-          const existing = await stripe.checkout.sessions.retrieve(r.stripeCheckoutSessionId);
+          const existing = await stripe.checkout.sessions.retrieve(r.stripeCheckoutSessionId, {
+            expand: ['payment_intent'],
+          });
           if (existing.status === 'open' && existing.url) {
-            if (existing.amount_total === fees.tenantTotal) {
+            const existingPi = existing.payment_intent as Stripe.PaymentIntent | null;
+            const existingHasOnBehalfOf = !!(existingPi && existingPi.on_behalf_of);
+            const amountMatches = existing.amount_total === fees.tenantTotal;
+            const merchantConfigMatches = existingHasOnBehalfOf === landlordIsMerchantOfRecord;
+            if (amountMatches && merchantConfigMatches) {
               return res.json({ url: existing.url });
             }
-            // Amount drift detected - expire the stale session before creating a new one.
+            // Amount or merchant-of-record drift - expire the stale session before creating a new one.
             try {
               await stripe.checkout.sessions.expire(r.stripeCheckoutSessionId);
-              console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amount drift: ${existing.amount_total} → ${fees.tenantTotal})`);
+              console.log(`Expired stale rent checkout session ${r.stripeCheckoutSessionId} (amountMatches=${amountMatches}, merchantConfigMatches=${merchantConfigMatches}).`);
             } catch (expireErr: any) {
               console.warn(`Could not expire stale session ${r.stripeCheckoutSessionId}:`, expireErr?.message);
             }
@@ -554,25 +578,6 @@ export async function registerRentPaymentsRoutes(app: Express) {
           },
           quantity: 1,
         });
-      }
-
-      // on_behalf_of makes the LANDLORD the merchant of record on the ACH
-      // mandate ("direct debits from [Landlord]"), but Stripe requires the
-      // connected account to have the card_payments capability ACTIVE to use it.
-      // ACH-only landlord accounts often don't have card_payments, and Stripe
-      // then rejects the charge ("...without the `card_payments` capability
-      // enabled."). Detect the capability and fall back to a plain destination
-      // charge (funds still route to the landlord) when it's missing so the
-      // tenant can always complete payment.
-      let landlordIsMerchantOfRecord = false;
-      try {
-        const acct = await stripe.accounts.retrieve(landlord.stripeConnectAccountId);
-        landlordIsMerchantOfRecord = acct.capabilities?.card_payments === 'active';
-      } catch (capErr: any) {
-        console.warn('Could not read connected account capabilities; using destination charge:', capErr?.message);
-      }
-      if (!landlordIsMerchantOfRecord) {
-        console.log(`Rent checkout (request ${r.id}, landlord ${r.userId}): card_payments not active — using destination charge (platform as merchant of record).`);
       }
 
       const paymentIntentData: Stripe.Checkout.SessionCreateParams.PaymentIntentData = {
