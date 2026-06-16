@@ -73,6 +73,12 @@ export async function registerStripeConnectRoutes(app: Express) {
           capabilities: {
             transfers: { requested: true },
             us_bank_account_ach_payments: { requested: true },
+            // card_payments is required for on_behalf_of (landlord as merchant
+            // of record on the ACH mandate). Rent charges fall back gracefully
+            // to a destination charge when this isn't active, but requesting it
+            // lets accounts that complete the extra verification show the
+            // landlord's name on the mandate.
+            card_payments: { requested: true },
           },
           business_type: 'individual',
           metadata: { leaseshield_user_id: userId },

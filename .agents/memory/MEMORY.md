@@ -2,5 +2,6 @@
 - [State clause values](state-clause-values.md) — per-state numeric legal values auto-patch lease generator; cache must never persist empty-on-error, bounds enforced server-side via clauseRegistry.
 - [Apply flow schema drift](apply-flow-schema-drift.md) — apply/submission 500 "column does not exist" = DB missing a schema column; fix dev (db:push or dev ALTER), then REPUBLISH for prod.
 - [Screening completion authority](screening-completion-authority.md) — only the WV result webhook may set order status 'complete'; SSO redirect URLs are portal landings, never completion.
-- [Puppeteer prod hang](puppeteer-prod-hang.md) — headless-Chromium PDF routes time out in the deployed VM; generate PDFs with pdf-lib (WinAnsi-safe text, wrap values). application-pdf route still uses Puppeteer.
+- [Puppeteer prod hang](puppeteer-prod-hang.md) — headless-Chromium PDF routes time out in the deployed VM; generate PDFs with pdf-lib via shared pdfDocBuilder (WinAnsi-safe text, wrap values).
+- [Stripe Connect on_behalf_of](stripe-connect-on-behalf-of.md) — on_behalf_of needs card_payments capability active; ACH-only landlord accounts lack it, so gate it and fall back to destination charge.
 - [Application fee flow](application-fee-flow.md) — Charge-fee reuses rent infra via request_type; copies a link (no auto-email, rent template is mislabeled); onboard returnTo guarded.

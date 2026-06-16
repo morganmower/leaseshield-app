@@ -556,33 +556,53 @@ export async function registerRentPaymentsRoutes(app: Express) {
         });
       }
 
+      // on_behalf_of makes the LANDLORD the merchant of record on the ACH
+      // mandate ("direct debits from [Landlord]"), but Stripe requires the
+      // connected account to have the card_payments capability ACTIVE to use it.
+      // ACH-only landlord accounts often don't have card_payments, and Stripe
+      // then rejects the charge ("...without the `card_payments` capability
+      // enabled."). Detect the capability and fall back to a plain destination
+      // charge (funds still route to the landlord) when it's missing so the
+      // tenant can always complete payment.
+      let landlordIsMerchantOfRecord = false;
+      try {
+        const acct = await stripe.accounts.retrieve(landlord.stripeConnectAccountId);
+        landlordIsMerchantOfRecord = acct.capabilities?.card_payments === 'active';
+      } catch (capErr: any) {
+        console.warn('Could not read connected account capabilities; using destination charge:', capErr?.message);
+      }
+      if (!landlordIsMerchantOfRecord) {
+        console.log(`Rent checkout (request ${r.id}, landlord ${r.userId}): card_payments not active — using destination charge (platform as merchant of record).`);
+      }
+
+      const paymentIntentData: Stripe.Checkout.SessionCreateParams.PaymentIntentData = {
+        transfer_data: { destination: landlord.stripeConnectAccountId },
+        // application_fee_amount is what gets routed to LeaseShield's Stripe
+        // account at settlement. It includes the convenience fee (covers our
+        // Stripe ACH cost) and the platform fee (LeaseShield's revenue).
+        // The remainder goes to the landlord's connected account.
+        ...(fees.applicationFee > 0 ? { application_fee_amount: fees.applicationFee } : {}),
+        metadata: {
+          leaseshield_kind: 'rent_payment',
+          rent_payment_request_id: r.id,
+          landlord_user_id: r.userId,
+          rent_amount_cents: String(r.amount),
+          service_fee_cents: String(fees.serviceFee),
+          service_fee_payer: fees.serviceFeePayer,
+          platform_fee_cents: String(fees.platformFee),
+        },
+      };
+      if (landlordIsMerchantOfRecord) {
+        paymentIntentData.on_behalf_of = landlord.stripeConnectAccountId;
+        paymentIntentData.statement_descriptor_suffix = safeDescriptorSuffix;
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['us_bank_account'],
         customer_email: r.tenantEmail || undefined,
         line_items: lineItems,
-        // Show the LANDLORD as merchant of record on the ACH mandate so the
-        // tenant sees "direct debits from [Landlord]" instead of "from LeaseShield".
-        // Required: this must be a connected account on our platform.
-        payment_intent_data: {
-          transfer_data: { destination: landlord.stripeConnectAccountId },
-          on_behalf_of: landlord.stripeConnectAccountId,
-          // application_fee_amount is what gets routed to LeaseShield's Stripe
-          // account at settlement. It includes the convenience fee (covers our
-          // Stripe ACH cost) and the platform fee (LeaseShield's revenue).
-          // The remainder goes to the landlord's connected account.
-          ...(fees.applicationFee > 0 ? { application_fee_amount: fees.applicationFee } : {}),
-          statement_descriptor_suffix: safeDescriptorSuffix,
-          metadata: {
-            leaseshield_kind: 'rent_payment',
-            rent_payment_request_id: r.id,
-            landlord_user_id: r.userId,
-            rent_amount_cents: String(r.amount),
-            service_fee_cents: String(fees.serviceFee),
-            service_fee_payer: fees.serviceFeePayer,
-            platform_fee_cents: String(fees.platformFee),
-          },
-        },
+        payment_intent_data: paymentIntentData,
         // Rent-specific framing shown above Stripe's NACHA mandate text.
         custom_text: {
           submit: {
