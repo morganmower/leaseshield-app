@@ -29,3 +29,11 @@ landlord-as-merchant display where Stripe allows it.
 complete the extra verification become eligible over time; the per-charge gate
 makes the upgrade automatic with no code change. Requesting card_payments adds
 onboarding requirements but never blocks ACH because of the fallback.
+
+**Idempotency gotcha:** when you rebuild a Checkout Session to drop a now-broken
+param, the `idempotencyKey` MUST change or Stripe (24h cache) returns the
+ORIGINAL response — i.e. the old broken session — so the fix appears not to work.
+Encode the merchant-of-record / config state into the key (e.g. `...-mor0/-mor1`).
+Also: a tenant sitting on the old hosted checkout.stripe.com page won't pick up
+the fix; they must restart from the app's `/pay-rent/:token` link to get a fresh
+session.

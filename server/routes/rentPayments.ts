@@ -628,7 +628,12 @@ export async function registerRentPaymentsRoutes(app: Express) {
       }, {
         // Idempotency key prevents duplicate session creation if this endpoint
         // is hit twice in quick succession (network retry, double-click).
-        idempotencyKey: `rent-checkout-${r.id}-${fees.tenantTotal}-${r.updatedAt instanceof Date ? r.updatedAt.getTime() : new Date(r.updatedAt as unknown as string).getTime()}`,
+        // It MUST include the merchant-of-record flag: Stripe caches idempotent
+        // requests for 24h and returns the ORIGINAL response, so a session
+        // created before the on_behalf_of fix would otherwise be handed back
+        // (still broken) even after we expire it. Changing the key forces a
+        // genuinely new session when the merchant-of-record config changes.
+        idempotencyKey: `rent-checkout-${r.id}-${fees.tenantTotal}-mor${landlordIsMerchantOfRecord ? 1 : 0}-${r.updatedAt instanceof Date ? r.updatedAt.getTime() : new Date(r.updatedAt as unknown as string).getTime()}`,
       });
 
       await storage.updateRentPaymentRequest(r.id, {
