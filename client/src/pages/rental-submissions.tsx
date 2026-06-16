@@ -345,6 +345,30 @@ export default function RentalSubmissions() {
     return screeningOrders?.find(order => order.personId === personId);
   };
 
+  // A screening that has been waiting too long likely had its completion
+  // message missed (rare). Western Verify offers no reliable way to confirm
+  // completion automatically, so we surface stale orders here and let the
+  // landlord verify on the portal and use "Mark complete" manually. We never
+  // auto-complete from this signal.
+  const STALE_IN_PROGRESS_DAYS = 3;
+  const STALE_SENT_DAYS = 5;
+  const getScreeningStaleInfo = (
+    order?: ScreeningOrder
+  ): { kind: "in_progress" | "sent"; days: number } | null => {
+    if (!order) return null;
+    if (order.status !== "in_progress" && order.status !== "sent") return null;
+    const created = new Date(order.createdAt).getTime();
+    if (Number.isNaN(created)) return null;
+    const days = Math.floor((Date.now() - created) / (1000 * 60 * 60 * 24));
+    if (order.status === "in_progress" && days >= STALE_IN_PROGRESS_DAYS) {
+      return { kind: "in_progress", days };
+    }
+    if (order.status === "sent" && days >= STALE_SENT_DAYS) {
+      return { kind: "sent", days };
+    }
+    return null;
+  };
+
   const screeningMutation = useMutation({
     mutationFn: async ({ submissionId, personId }: { submissionId: string; personId?: string }) => {
       return apiRequest("POST", `/api/rental/submissions/${submissionId}/screening`, { personId });
@@ -1392,6 +1416,24 @@ Best regards`;
                               return <p className="text-sm text-red-500 w-full mt-2">{personOrder.errorMessage}</p>;
                             }
                             return null;
+                          })()}
+                          {(() => {
+                            const personOrder = getScreeningOrderForPerson(person.id);
+                            const stale = getScreeningStaleInfo(personOrder);
+                            if (!stale) return null;
+                            return (
+                              <div
+                                className="flex items-start gap-2 w-full mt-2 rounded-md border border-amber-300 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/40 p-2"
+                                data-testid={`note-screening-stale-${person.id}`}
+                              >
+                                <Clock className="h-4 w-4 mt-0.5 shrink-0 text-amber-600 dark:text-amber-400" />
+                                <p className="text-sm text-amber-800 dark:text-amber-200">
+                                  {stale.kind === 'in_progress'
+                                    ? `This screening was requested ${stale.days} days ago and is still in progress. If Western Verify shows the report is ready, open it to confirm, then use "Mark complete" above.`
+                                    : `The invitation was sent ${stale.days} days ago and the applicant hasn't started. Consider resending the invitation.`}
+                                </p>
+                              </div>
+                            );
                           })()}
                         </div>
                       )}
