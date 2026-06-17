@@ -1547,6 +1547,16 @@ Best regards`;
                                 {personOrder.status === 'complete' && (
                                   <Button
                                     size="sm"
+                                    onClick={() => { window.location.href = '/screening#credit-helper'; }}
+                                    data-testid={`button-analyze-report-${person.id}`}
+                                  >
+                                    <Search className="h-4 w-4 mr-1" />
+                                    Analyze report
+                                  </Button>
+                                )}
+                                {personOrder.status === 'complete' && (
+                                  <Button
+                                    size="sm"
                                     variant="outline"
                                     onClick={() => {
                                       apiRequest('POST', '/api/analytics/track', {

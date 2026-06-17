@@ -354,11 +354,17 @@ export default function RentLedger() {
               <Button
                 onClick={downloadExcelTemplate}
                 className="gap-2"
+                disabled={!entries || entries.length === 0}
                 data-testid="button-download-excel"
               >
                 <Download className="h-4 w-4" />
                 Export Rent Ledger (CSV/Excel)
               </Button>
+              {(!entries || entries.length === 0) && (
+                <p className="text-sm text-muted-foreground mt-2" data-testid="text-export-empty">
+                  Add at least one charge or payment in the Manual Ledger before exporting.
+                </p>
+              )}
             </div>
             <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
               <p className="font-semibold">Report includes:</p>
@@ -952,6 +958,37 @@ interface ConnectStatus {
   chargesEnabled: boolean;
   payoutsEnabled: boolean;
   detailsSubmitted: boolean;
+  currentlyDue?: string[];
+  pastDue?: string[];
+  disabledReason?: string | null;
+}
+
+// Map Stripe's machine requirement codes to plain-English asks so landlords
+// know exactly what to provide instead of seeing a generic "resume setup".
+const REQUIREMENT_LABELS: Record<string, string> = {
+  'individual.verification.document': 'A photo of your government-issued ID',
+  'individual.verification.additional_document': 'An additional ID document',
+  'company.verification.document': 'A business verification document',
+  'external_account': 'Your bank account details (for payouts)',
+  'individual.id_number': 'Your SSN or tax ID number',
+  'individual.ssn_last_4': 'The last 4 digits of your SSN',
+  'individual.dob.day': 'Your date of birth',
+  'individual.dob.month': 'Your date of birth',
+  'individual.dob.year': 'Your date of birth',
+  'individual.address.line1': 'Your home address',
+  'individual.phone': 'Your phone number',
+  'individual.email': 'Your email address',
+  'business_profile.url': 'Your business website or product description',
+  'business_profile.mcc': 'Your business category',
+  'tos_acceptance.date': 'Accept the Stripe terms of service',
+};
+
+function formatRequirement(code: string): string {
+  if (REQUIREMENT_LABELS[code]) return REQUIREMENT_LABELS[code];
+  return code
+    .replace(/_/g, ' ')
+    .replace(/\./g, ' → ')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
 function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
@@ -1260,10 +1297,21 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
             <p>Your onboarding is incomplete. Continue where you left off.</p>
           </div>
         )}
-        {hasAccount && status?.detailsSubmitted && !status?.chargesEnabled && (
+        {hasAccount && status?.detailsSubmitted && !status?.chargesEnabled && (status?.currentlyDue?.length ?? 0) === 0 && (
           <div className="flex items-start gap-2 text-sm text-amber-700 dark:text-amber-400">
             <AlertTriangle className="h-4 w-4 mt-0.5" />
             <p>Your account is under review by Stripe. Charges aren't enabled yet.</p>
+          </div>
+        )}
+        {hasAccount && (status?.currentlyDue?.length ?? 0) > 0 && (
+          <div className="bg-amber-50 dark:bg-amber-950/30 rounded-md p-4 text-sm space-y-2" data-testid="connect-requirements">
+            <p className="font-semibold text-amber-800 dark:text-amber-300">Stripe still needs the following before it can enable payouts:</p>
+            <ul className="list-disc list-inside text-amber-700 dark:text-amber-400 space-y-1">
+              {Array.from(new Set((status?.currentlyDue ?? []).map(formatRequirement))).map((label, i) => (
+                <li key={i} data-testid={`requirement-${i}`}>{label}</li>
+              ))}
+            </ul>
+            <p className="text-xs text-amber-700/80 dark:text-amber-400/80">Click below to finish in Stripe — it will ask for exactly these items.</p>
           </div>
         )}
         <Button

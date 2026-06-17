@@ -32,6 +32,13 @@ import type { Template } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { Link, useLocation } from "wouter";
 
+type WorkflowTemplateRef = {
+  label: string;
+  templateType: Template["templateType"];
+  titleIncludes?: string;
+  titleExcludes?: string;
+};
+
 const workflows = [
   {
     id: "late-rent",
@@ -39,7 +46,10 @@ const workflows = [
     description: "Step-by-step process for handling late rent, from first notice to legal action",
     icon: DollarSign,
     category: "Payment Issues",
-    templates: ["Late Rent Notice", "3-Day Pay or Quit Notice"],
+    templates: [
+      { label: "Late Rent Notice", templateType: "late_rent_notice", titleIncludes: "late rent" },
+      { label: "Pay or Quit Notice", templateType: "late_rent_notice", titleIncludes: "pay or quit" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Review your lease agreement for late fee policies and grace periods",
       "Send a friendly reminder if within grace period",
@@ -56,7 +66,9 @@ const workflows = [
     description: "Document and address lease violations while maintaining Fair Housing compliance",
     icon: AlertCircle,
     category: "Violations",
-    templates: ["5-Day Lease Violation Notice"],
+    templates: [
+      { label: "Lease Violation Notice", templateType: "lease_violation_notice" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Document the specific violation with photos, dates, and details",
       "Review lease terms to confirm violation",
@@ -73,7 +85,9 @@ const workflows = [
     description: "Document damage, communicate with tenants, and handle security deposit deductions",
     icon: Home,
     category: "Property Issues",
-    templates: ["Move-Out Inspection Checklist"],
+    templates: [
+      { label: "Move-Out Inspection Checklist", templateType: "move_out_checklist" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Document damage with photos and detailed description",
       "Determine if damage exceeds normal wear and tear",
@@ -90,7 +104,9 @@ const workflows = [
     description: "Verify emotional support animal requests and handle documentation requirements",
     icon: Home,
     category: "Animals",
-    templates: ["Residential Lease Agreement"],
+    templates: [
+      { label: "Residential Lease Agreement", templateType: "lease", titleExcludes: "month-to-month" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Receive request for emotional support animal accommodation",
       "Request verification from healthcare provider",
@@ -107,7 +123,9 @@ const workflows = [
     description: "Legally notify tenants of rent increases with proper timing and documentation",
     icon: TrendingUp,
     category: "Lease Changes",
-    templates: ["Month-to-Month Rental Agreement"],
+    templates: [
+      { label: "Month-to-Month Rental Agreement", templateType: "lease", titleIncludes: "month-to-month" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Research local rent control laws and limitations",
       "Verify required notice period (typically 30-60 days)",
@@ -124,7 +142,10 @@ const workflows = [
     description: "End tenancies properly with correct notices and move-out procedures",
     icon: UserX,
     category: "Lease Termination",
-    templates: ["Move-Out Inspection Checklist", "Move-In Checklist"],
+    templates: [
+      { label: "Move-Out Inspection Checklist", templateType: "move_out_checklist" },
+      { label: "Move-In Checklist", templateType: "move_in_checklist" },
+    ] as WorkflowTemplateRef[],
     steps: [
       "Review lease end date and notice requirements",
       "Send non-renewal notice within required timeframe",
@@ -186,24 +207,43 @@ export default function TenantIssues() {
     setShowWorkflowDialog(true);
   };
 
-  const handleTemplateDownload = async (templateName: string) => {
+  // Resolve a workflow's template reference to a concrete DB template using the
+  // stable `templateType` enum (rename-safe) instead of fuzzy title matching.
+  // Narrow lease subtypes by a title keyword, then prefer the landlord's
+  // preferred state so the downloaded form is state-appropriate.
+  const findTemplateForRef = (ref: WorkflowTemplateRef): Template | undefined => {
+    if (!allTemplates) return undefined;
+    let candidates = allTemplates.filter((t) => t.templateType === ref.templateType);
+    if (ref.titleIncludes) {
+      const kw = ref.titleIncludes.toLowerCase();
+      const narrowed = candidates.filter((t) => t.title.toLowerCase().includes(kw));
+      if (narrowed.length > 0) candidates = narrowed;
+    }
+    if (ref.titleExcludes) {
+      const kw = ref.titleExcludes.toLowerCase();
+      candidates = candidates.filter((t) => !t.title.toLowerCase().includes(kw));
+    }
+    if (candidates.length === 0) return undefined;
+    const stateId = user?.preferredState?.toLowerCase();
+    if (stateId) {
+      const stateMatch = candidates.find(
+        (t) =>
+          t.title.toLowerCase().includes(`(${stateId})`) ||
+          (t.key || "").toLowerCase().includes(`_${stateId}_`) ||
+          (t.key || "").toLowerCase().endsWith(`_${stateId}`),
+      );
+      if (stateMatch) return stateMatch;
+    }
+    return candidates[0];
+  };
+
+  const handleTemplateDownload = async (ref: WorkflowTemplateRef) => {
     if (!hasAccess) {
       setShowUpgradeDialog(true);
       return;
     }
 
-    // Find matching template by name. Prefer an exact (case-insensitive) title
-    // match so similarly-named templates (e.g. "Move-Out Inspection Checklist"
-    // vs "Move-In Checklist") never resolve to the wrong document. Only fall
-    // back to substring matching when there's no exact hit.
-    const target = templateName.trim().toLowerCase();
-    const template =
-      allTemplates?.find((t) => t.title.trim().toLowerCase() === target) ||
-      allTemplates?.find(
-        (t) =>
-          t.title.toLowerCase().includes(target) ||
-          target.includes(t.title.toLowerCase()),
-      );
+    const template = findTemplateForRef(ref);
 
     if (!template) {
       toast({
@@ -295,7 +335,7 @@ export default function TenantIssues() {
   const visibleWorkflows = activeCategory === "All"
     ? workflows
     : workflows.filter(w => w.category === activeCategory);
-  const totalTemplates = Array.from(new Set(workflows.flatMap(w => w.templates))).length;
+  const totalTemplates = Array.from(new Set(workflows.flatMap(w => w.templates.map(t => t.label)))).length;
 
   return (
     <div className="flex-1 overflow-auto">
@@ -428,7 +468,7 @@ export default function TenantIssues() {
                     {workflow.templates.slice(0, 2).map((template, idx) => (
                       <div key={idx} className="flex items-center gap-1 text-xs">
                         <FileText className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-muted-foreground">{template}</span>
+                        <span className="text-muted-foreground">{template.label}</span>
                       </div>
                     ))}
                     {workflow.templates.length > 2 && (
@@ -539,7 +579,7 @@ export default function TenantIssues() {
                         >
                           <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-foreground">{template}</span>
+                            <span className="text-foreground">{template.label}</span>
                           </div>
                           {hasAccess ? (
                             <Download className="h-4 w-4 text-muted-foreground" />

@@ -24,10 +24,6 @@ export default function Activate() {
     window.location.href = "/subscribe";
   };
 
-  const handleSkip = () => {
-    window.location.href = "/dashboard";
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4 py-8">
       <Card className="w-full max-w-md">
@@ -92,21 +88,6 @@ export default function Activate() {
             <p className="text-xs text-muted-foreground text-center">
               You can cancel anytime from your account settings.
             </p>
-            
-            <div className="border-t border-border pt-3 space-y-2">
-              <Button
-                onClick={handleSkip}
-                variant="outline"
-                className="w-full"
-                size="lg"
-                data-testid="button-skip-activation"
-              >
-                Skip for now - keep looking around
-              </Button>
-              <p className="text-xs text-muted-foreground text-center">
-                You'll go to your dashboard. Subscribe whenever you're ready to unlock templates, compliance, and screening tools.
-              </p>
-            </div>
           </div>
         </CardContent>
       </Card>

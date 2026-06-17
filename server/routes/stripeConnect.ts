@@ -18,11 +18,17 @@ export async function registerStripeConnectRoutes(app: Express) {
         chargesEnabled: boolean;
         payoutsEnabled: boolean;
         detailsSubmitted: boolean;
+        currentlyDue: string[];
+        pastDue: string[];
+        disabledReason: string | null;
       } = {
         accountId: user.stripeConnectAccountId || null,
         chargesEnabled: !!user.stripeConnectChargesEnabled,
         payoutsEnabled: !!user.stripeConnectPayoutsEnabled,
         detailsSubmitted: !!user.stripeConnectDetailsSubmitted,
+        currentlyDue: [],
+        pastDue: [],
+        disabledReason: null,
       };
 
       // If we have an account, refresh state from Stripe
@@ -34,6 +40,9 @@ export async function registerStripeConnectRoutes(app: Express) {
             chargesEnabled: !!acct.charges_enabled,
             payoutsEnabled: !!acct.payouts_enabled,
             detailsSubmitted: !!acct.details_submitted,
+            currentlyDue: acct.requirements?.currently_due ?? [],
+            pastDue: acct.requirements?.past_due ?? [],
+            disabledReason: acct.requirements?.disabled_reason ?? null,
           };
           // Persist any drift (map response keys → DB column keys)
           if (
