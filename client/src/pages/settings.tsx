@@ -680,14 +680,14 @@ export default function Settings() {
                           <div>
                             <p className="font-medium">
                               {credentialsStatus.integrationReady ? 'Screening Integration Ready' :
-                               credentialsStatus.pendingAdminSetup ? 'Pending Setup Completion' :
+                               credentialsStatus.pendingAdminSetup ? 'Activating Your Account' :
                                'Western Verify Connected'}
                             </p>
                             <p className="text-sm text-muted-foreground">
                               {credentialsStatus.integrationReady ? (
                                 <>Ready to use for tenant screening</>
                               ) : credentialsStatus.pendingAdminSetup ? (
-                                <>Your credentials are saved. An administrator will complete setup shortly.</>
+                                <>Saved and verified. We're matching your account to the right screening package — a one-time setup step.</>
                               ) : credentialsStatus.status === 'failed' ? (
                                 <>Error: {credentialsStatus.lastErrorMessage || 'Verification failed'}</>
                               ) : (
@@ -717,7 +717,7 @@ export default function Settings() {
                       {credentialsStatus.pendingAdminSetup && (
                         <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
                           <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                            We've received your credentials and notified our team. You'll receive an email when your screening integration is ready to use.
+                            Your login is confirmed. As a one-time step, we match your account to the correct screening package so every report comes back accurate and compliant. This usually takes under one business day, and we'll email you the moment it's ready — no further action needed.
                           </p>
                         </div>
                       )}

@@ -65,11 +65,13 @@ export function ScreeningConnectionBanner({
           <Clock className="h-6 w-6 text-yellow-600 dark:text-yellow-400 flex-shrink-0 mt-0.5" />
           <div>
             <p className="font-medium text-yellow-800 dark:text-yellow-200">
-              Almost there — we're finishing your screening setup
+              Activating your screening account
             </p>
             <p className="text-sm text-yellow-700 dark:text-yellow-300">
-              Your Western Verify login is saved. Our team activates your account within
-              one business day and emails you the moment it's ready. No further action needed.
+              Your Western Verify login is saved and verified. As a one-time step, we match
+              your account to the right screening package so every report comes back accurate
+              and compliant. This usually takes under one business day — we'll email you the
+              moment it's ready. Nothing else needed from you.
             </p>
           </div>
         </CardContent>
