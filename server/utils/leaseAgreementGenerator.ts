@@ -108,6 +108,40 @@ function getFieldValue(fieldValues: Record<string, string | number>, key: string
   return String(value);
 }
 
+// Reads the first populated value among several accepted field IDs. Different
+// lease templates use different field IDs for the same concept (e.g. the
+// Michigan template uses `maxDeposit`/`lateFeeDays` while others use
+// `securityDeposit`/`lateFeeGracePeriod`), so the generator must accept all of
+// them or the entered value silently falls back to a default.
+function getFieldValueAny(fieldValues: Record<string, string | number>, keys: string[], defaultValue: string = '[_____________]'): string {
+  for (const key of keys) {
+    const value = fieldValues[key];
+    if (value !== undefined && value !== null && value !== '') {
+      return String(value);
+    }
+  }
+  return defaultValue;
+}
+
+// Formats a day-of-month as an English ordinal (1 -> "1st", 2 -> "2nd",
+// 3 -> "3rd", 11 -> "11th", 21 -> "21st"). Non-numeric input (e.g. a blank
+// placeholder) is returned unchanged.
+function ordinalDay(value: string): string {
+  const n = parseInt(value, 10);
+  if (isNaN(n) || String(n) !== value.trim()) {
+    return value;
+  }
+  const mod100 = n % 100;
+  const mod10 = n % 10;
+  let suffix = 'th';
+  if (mod100 < 11 || mod100 > 13) {
+    if (mod10 === 1) suffix = 'st';
+    else if (mod10 === 2) suffix = 'nd';
+    else if (mod10 === 3) suffix = 'rd';
+  }
+  return `${n}${suffix}`;
+}
+
 const H1 = (text: string): Paragraph =>
   new Paragraph({
     children: [new TextRun({ text, bold: true, size: 32 })],
@@ -332,9 +366,9 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
   const leaseEndDate = getFieldValue(fieldValues, 'leaseEndDate');
   const monthlyRent = getFieldValue(fieldValues, 'monthlyRent');
   const rentDueDay = getFieldValue(fieldValues, 'rentDueDay', '1');
-  const lateFeeGracePeriod = getFieldValue(fieldValues, 'lateFeeGracePeriod', '5');
+  const lateFeeGracePeriod = getFieldValueAny(fieldValues, ['lateFeeDays', 'lateFeeGracePeriod'], '5');
   const lateFeeAmount = getFieldValue(fieldValues, 'lateFeeAmount');
-  const securityDeposit = getFieldValue(fieldValues, 'securityDeposit');
+  const securityDeposit = getFieldValueAny(fieldValues, ['securityDeposit', 'maxDeposit']);
 
   const children: Paragraph[] = [];
 
@@ -363,7 +397,7 @@ export async function generateLeaseAgreementDocx(options: LeaseAgreementOptions)
   children.push(LabelValue("Property Type: ", propertyType));
 
   children.push(H2("4. RENT AND PAYMENT"));
-  children.push(LabelValue("Monthly Rent: ", `$${monthlyRent} payable on the ${rentDueDay} day of each month.`));
+  children.push(LabelValue("Monthly Rent: ", `$${monthlyRent} payable on the ${ordinalDay(rentDueDay)} day of each month.`));
   children.push(LabelValue("Late Fee: ", `If rent is not received within ${lateFeeGracePeriod} days of the due date, a late fee of $${lateFeeAmount} shall be assessed.`));
   const lateFeeNotes = formatLateFeeStateNote(stateName, lateFeeCapPctClause, lateFeeCapFlatClause, lateFeeGraceMinClause);
   if (lateFeeNotes) {
@@ -562,14 +596,14 @@ function generateLeaseHTMLForPdf(
   const propertyAddress = getFieldValue(fieldValues, 'propertyAddress');
   const propertyCity = getFieldValue(fieldValues, 'propertyCity');
   const propertyZip = getFieldValue(fieldValues, 'propertyZip');
-  const propertyType = getFieldValue(fieldValues, 'propertyType');
+  const propertyType = getFieldValue(fieldValues, 'propertyType', 'Residential');
   const leaseStartDate = getFieldValue(fieldValues, 'leaseStartDate');
   const leaseEndDate = getFieldValue(fieldValues, 'leaseEndDate');
   const monthlyRent = getFieldValue(fieldValues, 'monthlyRent');
   const rentDueDay = getFieldValue(fieldValues, 'rentDueDay', '1');
-  const lateFeeGracePeriod = getFieldValue(fieldValues, 'lateFeeGracePeriod', '5');
+  const lateFeeGracePeriod = getFieldValueAny(fieldValues, ['lateFeeDays', 'lateFeeGracePeriod'], '5');
   const lateFeeAmount = getFieldValue(fieldValues, 'lateFeeAmount');
-  const securityDeposit = getFieldValue(fieldValues, 'securityDeposit');
+  const securityDeposit = getFieldValueAny(fieldValues, ['securityDeposit', 'maxDeposit']);
 
   return `<!DOCTYPE html>
 <html>
@@ -613,7 +647,7 @@ function generateLeaseHTMLForPdf(
 <p>Property Type: ${escapeHtml(propertyType)}</p>
 
 <h2>4. RENT AND PAYMENT</h2>
-<p><strong>Monthly Rent:</strong> $${escapeHtml(monthlyRent)} payable on the ${escapeHtml(rentDueDay)} day of each month.</p>
+<p><strong>Monthly Rent:</strong> $${escapeHtml(monthlyRent)} payable on the ${escapeHtml(ordinalDay(rentDueDay))} day of each month.</p>
 <p><strong>Late Fee:</strong> If rent is not received within ${escapeHtml(lateFeeGracePeriod)} days of the due date, a late fee of $${escapeHtml(lateFeeAmount)} shall be assessed.</p>
 ${(() => {
   const note = formatLateFeeStateNote(stateName, lateFeeCapPctClause, lateFeeCapFlatClause, lateFeeGraceMinClause);
