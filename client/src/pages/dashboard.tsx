@@ -54,6 +54,7 @@ type DashboardData = {
     activeApplicationsCount: number;
     reportsToReviewCount: number;
     updatesThisMonthCount: number;
+    applicationLinksCount: number;
   };
   attention: AttentionItem[];
   activity: ActivityItem[];
@@ -239,7 +240,9 @@ export default function Dashboard() {
         {(() => {
           const stateDone = !!user.preferredState;
           const propertyDone = (stats?.propertiesCount ?? 0) > 0;
-          const linkDone = (stats?.activeApplicationsCount ?? 0) > 0;
+          const linkDone =
+            (stats?.applicationLinksCount ?? 0) > 0 ||
+            (stats?.activeApplicationsCount ?? 0) > 0;
           if ((stateDone && propertyDone && linkDone) || onboardingDismissed) return null;
           const steps = [
             {

@@ -225,12 +225,34 @@ export async function registerDashboardRoutes(app: Express) {
       const updatesThisMonthCount = stateUpdates.length;
       const propertiesCount = rentalProperties.length || properties.length || 0;
 
+      // Application links: a property auto-generates a shareable link, so the
+      // onboarding "share your link" step should reflect link existence, not
+      // whether applications have arrived yet.
+      let applicationLinksCount = 0;
+      try {
+        const unitLists = await Promise.all(
+          (rentalProperties || []).map((p: any) =>
+            storage.getRentalUnitsByPropertyId(p.id).catch(() => [])
+          )
+        );
+        const allUnits = unitLists.flat();
+        const linkLists = await Promise.all(
+          allUnits.map((u: any) =>
+            storage.getRentalApplicationLinksByUnitId(u.id).catch(() => [])
+          )
+        );
+        applicationLinksCount = linkLists.flat().filter((l: any) => l?.isActive).length;
+      } catch {
+        applicationLinksCount = 0;
+      }
+
       res.json({
         stats: {
           propertiesCount,
           activeApplicationsCount,
           reportsToReviewCount,
           updatesThisMonthCount,
+          applicationLinksCount,
         },
         attention: attention.slice(0, 8),
         activity: activity.slice(0, 8),
