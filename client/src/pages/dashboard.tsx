@@ -635,7 +635,7 @@ function StatCard({
       >
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0 flex-1">
-            <p className="text-sm text-muted-foreground">{label}</p>
+            <p className="text-sm text-muted-foreground leading-tight min-h-[2.5rem]">{label}</p>
             {loading ? (
               <Skeleton className="h-10 w-16 mt-2" />
             ) : (
