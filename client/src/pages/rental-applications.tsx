@@ -631,6 +631,7 @@ export default function RentalApplications() {
                       onChange={(e) => setPropertyTerms({ ...propertyTerms, applicationFee: e.target.value })}
                       data-testid="input-add-application-fee"
                     />
+                    <p className="text-xs text-muted-foreground">Optional. Only collected if you connect Stripe — separate from the Western Verify screening, which is billed in Western Verify, not here.</p>
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="add-securityDeposit" className="text-xs">Security Deposit</Label>
@@ -882,6 +883,7 @@ export default function RentalApplications() {
                       onChange={(e) => setPropertyTerms({ ...propertyTerms, applicationFee: e.target.value })}
                       data-testid="input-edit-application-fee"
                     />
+                    <p className="text-xs text-muted-foreground">Optional. Only collected if you connect Stripe — separate from the Western Verify screening, which is billed in Western Verify, not here.</p>
                   </div>
                   <div className="space-y-1">
                     <Label htmlFor="edit-securityDeposit" className="text-xs">Security Deposit</Label>
@@ -1038,6 +1040,7 @@ export default function RentalApplications() {
                   onChange={(e) => setPropertyTerms(prev => ({ ...prev, applicationFee: e.target.value }))}
                   data-testid="input-property-terms-app-fee"
                 />
+                <p className="text-xs text-muted-foreground">Optional. Only collected if you connect Stripe — separate from the Western Verify screening, which is billed in Western Verify, not here.</p>
               </div>
               <div className="space-y-2">
                 <Label htmlFor="securityDeposit">Security Deposit</Label>

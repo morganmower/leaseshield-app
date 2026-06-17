@@ -802,6 +802,7 @@ export default function Properties() {
                       onChange={(e) => setPropertyTerms(prev => ({ ...prev, applicationFee: e.target.value }))}
                       data-testid="input-add-application-fee"
                     />
+                    <p className="text-sm text-muted-foreground">Optional. Only collected if you connect Stripe — separate from the Western Verify screening, which is billed in Western Verify, not here.</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -1218,6 +1219,7 @@ export default function Properties() {
                       onChange={(e) => setPropertyTerms(prev => ({ ...prev, applicationFee: e.target.value }))}
                       data-testid="input-edit-application-fee"
                     />
+                    <p className="text-sm text-muted-foreground">Optional. Only collected if you connect Stripe — separate from the Western Verify screening, which is billed in Western Verify, not here.</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">

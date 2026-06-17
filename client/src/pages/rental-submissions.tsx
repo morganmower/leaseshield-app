@@ -1262,7 +1262,7 @@ Best regards`;
                   })()}
                 </div>
                 <p className="text-xs text-muted-foreground mb-3">
-                  Each person requires individual screening. Click "Request Screening" on each person's card below.
+                  Each person requires individual screening. Click "Request Screening" on each person's card below. Screening is handled in Western Verify — costs are billed there, not through LeaseShield or Stripe.
                 </p>
               </div>
 
