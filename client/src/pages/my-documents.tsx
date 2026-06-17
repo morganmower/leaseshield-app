@@ -1,5 +1,5 @@
 import { useQuery, useMutation } from "@tanstack/react-query";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -48,6 +48,22 @@ export default function MyDocuments() {
   const [editFileName, setEditFileName] = useState("");
   const [editPropertyId, setEditPropertyId] = useState<string>("none");
   const [editDescription, setEditDescription] = useState("");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const propertyId = params.get("propertyId");
+    const shouldUpload = params.get("upload");
+    if (propertyId) {
+      setSelectedPropertyId(propertyId);
+      setUploadPropertyId(propertyId);
+    }
+    if (shouldUpload === "1") {
+      setIsUploadDialogOpen(true);
+    }
+    if (propertyId || shouldUpload) {
+      window.history.replaceState({}, "", "/my-documents");
+    }
+  }, []);
 
   const { data: documents = [], isLoading } = useQuery<SavedDocument[]>({
     queryKey: ['/api/saved-documents'],

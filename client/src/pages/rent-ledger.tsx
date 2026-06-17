@@ -330,7 +330,7 @@ export default function RentLedger() {
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full max-w-3xl grid-cols-4">
           <TabsTrigger value="online" data-testid="tab-online-payments">Requests</TabsTrigger>
-          <TabsTrigger value="track" data-testid="tab-track-entries">History</TabsTrigger>
+          <TabsTrigger value="track" data-testid="tab-track-entries">Manual Ledger</TabsTrigger>
           <TabsTrigger value="recurring" data-testid="tab-recurring">Recurring</TabsTrigger>
           <TabsTrigger value="export" data-testid="tab-export-report">Export</TabsTrigger>
         </TabsList>
@@ -586,7 +586,7 @@ export default function RentLedger() {
             <Card className="p-6">
               <div className="flex flex-col gap-3 mb-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <h2 className="text-xl font-bold">Ledger History</h2>
+                  <h2 className="text-xl font-bold">Manual Ledger</h2>
                   {properties.length > 0 && (
                     <div className="flex items-center gap-2">
                       <Building2 className="h-4 w-4 text-muted-foreground" />
@@ -1272,7 +1272,11 @@ function OnlinePaymentsPanel({ properties }: { properties: RentalProperty[] }) {
           data-testid="button-stripe-connect-onboard"
         >
           <CreditCard className="h-4 w-4 mr-2" />
-          {hasAccount ? "Continue Stripe Onboarding" : "Connect Stripe Account"}
+          {!hasAccount
+            ? "Connect Stripe Account"
+            : !status?.detailsSubmitted
+              ? "Resume Stripe setup"
+              : "Check Stripe status"}
         </Button>
       </Card>
     );

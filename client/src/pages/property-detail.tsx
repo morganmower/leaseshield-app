@@ -157,7 +157,7 @@ export default function PropertyDetail() {
                   Add Ledger Entry
                 </Button>
               </Link>
-              <Link href="/my-documents">
+              <Link href={`/my-documents?propertyId=${id}&upload=1`}>
                 <Button variant="outline" size="sm" data-testid="button-upload-document">
                   <Upload className="h-4 w-4 mr-2" />
                   Upload Document
@@ -498,7 +498,7 @@ export default function PropertyDetail() {
                   </CardTitle>
                   <CardDescription>Your uploaded files</CardDescription>
                 </div>
-                <Link href="/my-documents">
+                <Link href={`/my-documents?propertyId=${id}&upload=1`}>
                   <Button size="sm" variant="outline">
                     <Upload className="h-4 w-4 mr-1" />
                     Upload

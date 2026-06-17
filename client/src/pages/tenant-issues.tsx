@@ -192,11 +192,18 @@ export default function TenantIssues() {
       return;
     }
 
-    // Find matching template by name
-    const template = allTemplates?.find(t => 
-      t.title.toLowerCase().includes(templateName.toLowerCase()) ||
-      templateName.toLowerCase().includes(t.title.toLowerCase())
-    );
+    // Find matching template by name. Prefer an exact (case-insensitive) title
+    // match so similarly-named templates (e.g. "Move-Out Inspection Checklist"
+    // vs "Move-In Checklist") never resolve to the wrong document. Only fall
+    // back to substring matching when there's no exact hit.
+    const target = templateName.trim().toLowerCase();
+    const template =
+      allTemplates?.find((t) => t.title.trim().toLowerCase() === target) ||
+      allTemplates?.find(
+        (t) =>
+          t.title.toLowerCase().includes(target) ||
+          target.includes(t.title.toLowerCase()),
+      );
 
     if (!template) {
       toast({

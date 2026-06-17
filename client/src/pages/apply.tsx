@@ -52,6 +52,7 @@ import {
   Car,
   X,
   DollarSign,
+  Copy,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Logo } from "@/components/logo";
@@ -1014,9 +1015,28 @@ export default function Apply() {
                   </div>
                 )}
               </CardContent>
-              <CardFooter className="flex justify-end border-t pt-6">
+              <CardFooter className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t pt-6">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="order-2 sm:order-1"
+                  onClick={() => {
+                    navigator.clipboard.writeText(window.location.href);
+                    toast({
+                      title: "Link copied",
+                      description: personToken
+                        ? "Save this link to come back and finish later - your progress is saved automatically."
+                        : "Save this link to return to this application later. Start the application to have your answers saved automatically.",
+                    });
+                  }}
+                  data-testid="button-copy-apply-link"
+                >
+                  <Copy className="h-4 w-4 mr-2" />
+                  Copy link to finish later
+                </Button>
                 {!personToken ? (
                   <Button
+                    className="order-1 sm:order-2"
                     onClick={() => startMutation.mutate({
                       email: formData.email,
                       firstName: formData.firstName,
@@ -1037,7 +1057,7 @@ export default function Apply() {
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
                 ) : (
-                  <Button onClick={() => setCurrentStep(1)} data-testid="button-continue-application">
+                  <Button className="order-1 sm:order-2" onClick={() => setCurrentStep(1)} data-testid="button-continue-application">
                     Continue
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>

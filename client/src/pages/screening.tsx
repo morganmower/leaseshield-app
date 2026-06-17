@@ -377,7 +377,7 @@ function cautionBadge(level: BatchFindingResult['cautionLevel']) {
     return <Badge className="bg-amber-500/15 text-amber-700 dark:text-amber-400 border-amber-500/20" data-testid="badge-caution-medium">Review carefully</Badge>;
   }
   if (level === 'low') {
-    return <Badge className="bg-success/15 text-success border-success/20" data-testid="badge-caution-low">Routine</Badge>;
+    return <Badge className="bg-success/15 text-success border-success/20" data-testid="badge-caution-low">Standard review</Badge>;
   }
   return <Badge variant="outline" data-testid="badge-caution-unknown">Pending</Badge>;
 }

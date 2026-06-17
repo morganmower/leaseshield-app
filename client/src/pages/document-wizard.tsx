@@ -373,6 +373,26 @@ export default function DocumentWizard() {
   });
 
   const handleGenerate = (data: Record<string, string>, format: 'pdf' | 'docx') => {
+    // Validate that a manually-entered lease end date falls after the start
+    // date. The auto-calculated terms ('1 Year'/'2 Years') are always valid, so
+    // we only guard the 'Custom' path where the user types both dates.
+    if (data.leaseStartDate && data.leaseEndDate) {
+      const start = new Date(data.leaseStartDate);
+      const end = new Date(data.leaseEndDate);
+      if (!isNaN(start.getTime()) && !isNaN(end.getTime()) && end <= start) {
+        form.setError('leaseEndDate', {
+          type: 'manual',
+          message: 'End date must be after the start date.',
+        });
+        toast({
+          title: 'Invalid lease dates',
+          description: 'The lease end date must be after the start date.',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     // Format fields for document generation
     // Note: Currency values are sent without $ prefix - the server template adds it
     const formattedData = Object.entries(data).reduce((acc, [key, value]) => {

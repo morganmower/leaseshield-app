@@ -385,7 +385,11 @@ export default function AuditHistory() {
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Decision Outcome</label>
-              <Select value={editOutcome} onValueChange={(v) => setEditOutcome(v as any)}>
+              <Select
+                value={editOutcome}
+                onValueChange={(v) => setEditOutcome(v as any)}
+                disabled={!!editingLog?.adverseActionLetterGenerated}
+              >
                 <SelectTrigger data-testid="select-edit-outcome">
                   <SelectValue />
                 </SelectTrigger>
@@ -395,6 +399,13 @@ export default function AuditHistory() {
                   <SelectItem value="deny">Denied</SelectItem>
                 </SelectContent>
               </Select>
+              {editingLog?.adverseActionLetterGenerated && (
+                <p className="text-xs text-muted-foreground" data-testid="text-outcome-locked">
+                  The outcome is locked because an adverse action notice has already been
+                  generated for this decision — changing it would conflict with the letter on
+                  record. To record a different decision, create a new screening decision.
+                </p>
+              )}
             </div>
           </div>
           <DialogFooter>

@@ -137,6 +137,13 @@ export default function Communications() {
     toast({ description: "Copied to clipboard!" });
   };
 
+  const handleOpenInEmail = () => {
+    if (!selectedTemplate) return;
+    const body = renderTemplate(selectedTemplate.bodyText, mergeFields);
+    const subject = TEMPLATE_LABELS[selectedTemplate.templateType] || selectedTemplate.title;
+    window.location.href = `mailto:?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
+
   const handleDownload = () => {
     if (!selectedTemplate) return;
     const rendered = renderTemplate(selectedTemplate.bodyText, mergeFields);
@@ -332,19 +339,28 @@ export default function Communications() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <Button
                     onClick={handleCopyToClipboard}
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 min-w-[140px]"
                     data-testid="button-copy-template"
                   >
                     <Copy className="h-4 w-4 mr-2" />
                     Copy to clipboard
                   </Button>
                   <Button
+                    onClick={handleOpenInEmail}
+                    variant="outline"
+                    className="flex-1 min-w-[140px]"
+                    data-testid="button-open-in-email"
+                  >
+                    <Mail className="h-4 w-4 mr-2" />
+                    Open in email
+                  </Button>
+                  <Button
                     onClick={handleDownload}
-                    className="flex-1"
+                    className="flex-1 min-w-[140px]"
                     data-testid="button-download-template"
                   >
                     <Download className="h-4 w-4 mr-2" />

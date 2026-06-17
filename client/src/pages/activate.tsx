@@ -93,14 +93,19 @@ export default function Activate() {
               You can cancel anytime from your account settings.
             </p>
             
-            <div className="border-t border-border pt-3">
-              <button
+            <div className="border-t border-border pt-3 space-y-2">
+              <Button
                 onClick={handleSkip}
-                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors py-1"
+                variant="outline"
+                className="w-full"
+                size="lg"
                 data-testid="button-skip-activation"
               >
-                Skip for now - go to dashboard
-              </button>
+                Skip for now - keep looking around
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                You'll go to your dashboard. Subscribe whenever you're ready to unlock templates, compliance, and screening tools.
+              </p>
             </div>
           </div>
         </CardContent>

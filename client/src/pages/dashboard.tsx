@@ -1,5 +1,5 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useQuery } from "@tanstack/react-query";
 import { Card } from "@/components/ui/card";
@@ -21,6 +21,10 @@ import {
   Receipt,
   Scale,
   Send,
+  Circle,
+  X,
+  MapPin,
+  Share2,
 } from "lucide-react";
 import { Link } from "wouter";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -114,6 +118,10 @@ export default function Dashboard() {
     queryKey: ["/api/dashboard/attention"],
     enabled: isAuthenticated,
   });
+
+  const [onboardingDismissed, setOnboardingDismissed] = useState(
+    () => localStorage.getItem("leaseshield_onboarding_dismissed") === "true",
+  );
 
   if (isLoading) {
     return (
@@ -227,6 +235,103 @@ export default function Dashboard() {
           </Card>
         )}
 
+        {/* Get started checklist - shows until setup is complete or dismissed */}
+        {(() => {
+          const stateDone = !!user.preferredState;
+          const propertyDone = (stats?.propertiesCount ?? 0) > 0;
+          const linkDone = (stats?.activeApplicationsCount ?? 0) > 0;
+          if ((stateDone && propertyDone && linkDone) || onboardingDismissed) return null;
+          const steps = [
+            {
+              done: stateDone,
+              icon: MapPin,
+              label: "Set your state",
+              desc: "Powers compliance monitoring and the right legal templates for your area.",
+              href: "/settings",
+              cta: "Open settings",
+            },
+            {
+              done: propertyDone,
+              icon: Building2,
+              label: "Add your first property",
+              desc: "Everything else — applications, leases, and rent — lives under a property.",
+              href: "/properties",
+              cta: "Add property",
+            },
+            {
+              done: linkDone,
+              icon: Share2,
+              label: "Share your application link",
+              desc: "Each property gets a link applicants fill out online. Share it to start receiving applications.",
+              href: "/properties",
+              cta: "Get link",
+            },
+          ];
+          const completedCount = steps.filter((s) => s.done).length;
+          return (
+            <Card className="mb-6 p-5" data-testid="card-onboarding-checklist">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div className="min-w-0">
+                  <h2 className="text-lg font-display font-semibold text-foreground">
+                    Get started
+                  </h2>
+                  <p className="text-sm text-muted-foreground mt-0.5">
+                    {completedCount} of {steps.length} done — finish setup to start screening tenants.
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    localStorage.setItem("leaseshield_onboarding_dismissed", "true");
+                    setOnboardingDismissed(true);
+                  }}
+                  data-testid="button-dismiss-onboarding"
+                  aria-label="Dismiss get started"
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {steps.map((step, i) => (
+                  <div
+                    key={i}
+                    className="flex items-start gap-3 p-3 rounded-md border bg-background"
+                    data-testid={`onboarding-step-${i}`}
+                  >
+                    <div className="mt-0.5 flex-shrink-0">
+                      {step.done ? (
+                        <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                      ) : (
+                        <Circle className="h-5 w-5 text-muted-foreground/40" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className={`font-medium text-sm ${
+                          step.done ? "text-muted-foreground line-through" : "text-foreground"
+                        }`}
+                      >
+                        {step.label}
+                      </p>
+                      {!step.done && (
+                        <p className="text-sm text-muted-foreground mt-0.5">{step.desc}</p>
+                      )}
+                    </div>
+                    {!step.done && (
+                      <Link to={step.href} className="flex-shrink-0">
+                        <Button size="sm" variant="outline" data-testid={`button-onboarding-step-${i}`}>
+                          {step.cta}
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </Card>
+          );
+        })()}
+
         {/* Stats strip */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           <StatCard
@@ -254,7 +359,7 @@ export default function Dashboard() {
             highlight={(stats?.reportsToReviewCount ?? 0) > 0}
             icon={<Search className="h-10 w-10 text-primary/30" />}
             href="/rental-applications"
-            zeroHint="Run your first decode"
+            zeroHint="Run your first analysis"
             testId="stat-reports"
           />
           <StatCard
@@ -366,7 +471,7 @@ export default function Dashboard() {
             <QuickAction
               href="/screening"
               icon={<Search className="h-7 w-7" />}
-              label="Decode a report"
+              label="Analyze a report"
               primary
               testId="quick-decode"
             />
@@ -454,13 +559,13 @@ export default function Dashboard() {
             <div className="text-center py-8" data-testid="empty-activity">
               <Activity className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground mb-4">
-                No activity yet. Try decoding your first tenant report or logging rent to see updates here.
+                No activity yet. Try analyzing your first screening report or logging rent to see updates here.
               </p>
               <div className="flex gap-2 justify-center flex-wrap">
                 <Link to="/screening">
                   <Button variant="outline" size="sm" data-testid="button-empty-activity-decode">
                     <Search className="mr-2 h-4 w-4" />
-                    Decode a report
+                    Analyze a report
                   </Button>
                 </Link>
                 <Link to="/rent-ledger">

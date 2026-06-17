@@ -7,7 +7,7 @@ import { apiRequest } from "@/lib/queryClient";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CheckCircle2, Shield, Lock, CreditCard, User } from "lucide-react";
+import { CheckCircle2, Shield, Lock, CreditCard, User, AlertCircle } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { SEO } from "@/components/seo";
 
@@ -403,7 +403,23 @@ export default function Subscribe() {
               <h2 className="text-xl font-semibold">Secure Payment</h2>
             </div>
             
-            {clientSecret ? (
+            {!stripePromise ? (
+              <div
+                className="flex flex-col items-center justify-center min-h-[200px] gap-3 text-center"
+                data-testid="error-stripe-unconfigured"
+              >
+                <AlertCircle className="h-8 w-8 text-destructive" />
+                <p className="font-medium text-foreground">Payments are temporarily unavailable</p>
+                <p className="text-sm text-muted-foreground max-w-sm">
+                  We couldn't load the secure payment form right now. Please refresh the page or
+                  try again in a few minutes. If this keeps happening, email support and we'll get
+                  you set up.
+                </p>
+                <Button variant="outline" onClick={() => window.location.reload()} data-testid="button-reload-payment">
+                  Refresh page
+                </Button>
+              </div>
+            ) : clientSecret ? (
               <Elements 
                 stripe={stripePromise} 
                 options={{ 

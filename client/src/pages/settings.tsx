@@ -467,7 +467,12 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="preferred-state">Preferred State</Label>
+                <Label htmlFor="preferred-state">
+                  Preferred State
+                  <span className="ml-2 text-xs font-normal text-muted-foreground">
+                    Required for compliance monitoring
+                  </span>
+                </Label>
                 <Select value={preferredState} onValueChange={setPreferredState}>
                   <SelectTrigger id="preferred-state" className="w-full sm:w-64" data-testid="select-preferred-state">
                     <SelectValue placeholder="Select your state" />

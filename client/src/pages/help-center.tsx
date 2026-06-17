@@ -5,6 +5,12 @@ import { motion } from "framer-motion";
 import { useAuth } from "@/hooks/useAuth";
 import { Logo } from "@/components/logo";
 import { useLocation } from "wouter";
+import { useQuery } from "@tanstack/react-query";
+
+interface StateSummary {
+  id: string;
+  name: string;
+}
 
 const fadeIn = {
   initial: { opacity: 0, y: 20 },
@@ -16,10 +22,18 @@ export default function HelpCenter() {
   const { isAuthenticated, isLoading } = useAuth();
   const [, setLocation] = useLocation();
 
+  const { data: states } = useQuery<StateSummary[]>({
+    queryKey: ["/api/states"],
+  });
+  const statesCount = states && states.length > 0 ? states.length : 16;
+  const statesLabel = `${statesCount} supported states`;
+
   const handleQuickLinkClick = (href: string) => {
-    // If not authenticated and trying to access protected routes, redirect to login
+    // If not authenticated and trying to access protected routes, send the user
+    // to login but remember where they wanted to go so they land there after
+    // signing in instead of being dropped on a generic page.
     if (!isAuthenticated && (href === '/templates' || href === '/compliance' || href === '/screening')) {
-      window.location.href = '/login';
+      window.location.href = `/login?redirect=${encodeURIComponent(href)}`;
     } else {
       setLocation(href);
     }
@@ -54,7 +68,7 @@ export default function HelpCenter() {
       questions: [
         {
           q: "How do I access legal templates?",
-          a: "After subscribing, navigate to the Templates section from your dashboard. Select your state from our 16 supported states, choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization."
+          a: `After subscribing, navigate to the Templates section from your dashboard. Select your state from our ${statesLabel}, choose the template you need, and download it in Word or PDF format. Each template includes step-by-step instructions for customization.`
         },
         {
           q: "What's included in my subscription?",

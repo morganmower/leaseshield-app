@@ -50,7 +50,8 @@ export default function Login() {
         title: "Welcome back!",
         description: "You have successfully logged in.",
       });
-      setLocation("/dashboard");
+      const redirect = new URLSearchParams(window.location.search).get("redirect");
+      setLocation(redirect && redirect.startsWith("/") ? redirect : "/dashboard");
     },
     onError: (error: Error) => {
       toast({

@@ -76,6 +76,7 @@ import {
   ArchiveRestore,
   ArrowUp,
   ArrowDown,
+  ArrowRight,
   DollarSign,
   Copy,
   Check,
@@ -1356,7 +1357,35 @@ Best regards`;
                           </Button>
                         </div>
                       </div>
-                      
+
+                      {(() => {
+                        const order = getScreeningOrderForPerson(person.id);
+                        let next = "";
+                        if (!person.isCompleted) {
+                          next = person.role === 'applicant'
+                            ? "Next: the applicant still needs to finish and sign their application."
+                            : `Next: waiting on ${person.firstName} to complete their part — resend the invite if it's been a while.`;
+                        } else if (!order || order.status === 'error' || order.status === 'not_sent') {
+                          next = "Next: request screening to run their credit & background check in Western Verify.";
+                        } else if (order.status === 'sent') {
+                          next = `Next: ${person.firstName} needs to complete screening in Western Verify. Resend the invitation if needed.`;
+                        } else if (order.status === 'in_progress') {
+                          next = "Next: screening is running. Sync status, or check Western Verify for the finished report.";
+                        } else if (order.status === 'complete') {
+                          next = "Next: review the report, then record your decision so it's saved for your records.";
+                        }
+                        if (!next) return null;
+                        return (
+                          <div
+                            className="mt-3 flex items-start gap-2 rounded-md bg-primary/5 p-2"
+                            data-testid={`next-step-${person.id}`}
+                          >
+                            <ArrowRight className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+                            <p className="text-sm text-foreground">{next}</p>
+                          </div>
+                        );
+                      })()}
+
                       {!person.isCompleted && person.role === 'applicant' && (
                         <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
@@ -1395,7 +1424,10 @@ Best regards`;
                       <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                         <div className="flex items-center gap-2">
                           <DollarSign className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-sm">Application fee</span>
+                          <div>
+                            <span className="text-sm">Application fee</span>
+                            <p className="text-xs text-muted-foreground">One-time payment from the applicant, collected through Stripe.</p>
+                          </div>
                         </div>
                         <Button
                           size="sm"
@@ -1412,7 +1444,10 @@ Best regards`;
                         <div className="mt-3 pt-3 border-t flex flex-wrap items-center justify-between gap-2">
                           <div className="flex items-center gap-2">
                             <ShieldCheck className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm">Screening</span>
+                            <div>
+                              <span className="text-sm">Screening</span>
+                              <p className="text-xs text-muted-foreground">Credit &amp; background check run in Western Verify, billed there — separate from the application fee.</p>
+                            </div>
                           </div>
                           {(() => {
                             const personOrder = getScreeningOrderForPerson(person.id);

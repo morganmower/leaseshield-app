@@ -94,9 +94,21 @@ export default function Reupload() {
           <CardContent className="pt-6 text-center">
             <AlertCircle className="h-12 w-12 text-destructive mx-auto mb-4" />
             <h2 className="text-lg font-semibold mb-2" data-testid="text-error-title">Link Unavailable</h2>
-            <p className="text-muted-foreground" data-testid="text-error-message">
+            <p className="text-muted-foreground mb-4" data-testid="text-error-message">
               {(error as Error).message}
             </p>
+            <div className="rounded-md bg-muted/40 p-4 text-left text-sm text-muted-foreground space-y-2" data-testid="text-error-guidance">
+              <p className="font-medium text-foreground">What to do next</p>
+              <p>
+                This upload link may have expired, already been used, or been
+                typed incorrectly. Re-open the most recent email or text from
+                your landlord and tap the link again.
+              </p>
+              <p>
+                If it still doesn't work, reply to your landlord and ask them to
+                send a fresh document-upload link.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
