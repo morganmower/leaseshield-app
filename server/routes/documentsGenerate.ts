@@ -85,8 +85,14 @@ export async function registerDocumentsGenerateRoutes(app: Express) {
         landlordInfo,
       };
 
-      // Check if this is a lease agreement template
-      const isLeaseAgreement = template.title.toLowerCase().includes('lease') || 
+      // Check if this is a lease agreement template. Route by template type
+      // first (authoritative); fall back to title keywords for safety. This
+      // catches lease-type templates whose titles lack "lease"/"rental
+      // agreement" (e.g. "Month-to-Month Agreement (XX)"), which would
+      // otherwise fall through to the generic generator and silently drop the
+      // landlord/tenant contact block.
+      const isLeaseAgreement = (template as any).templateType === 'lease' ||
+                               template.title.toLowerCase().includes('lease') || 
                                template.title.toLowerCase().includes('rental agreement');
 
       const safeFilename = template.title.replace(/[^a-z0-9]/gi, '_');

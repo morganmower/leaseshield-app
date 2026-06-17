@@ -2,6 +2,7 @@
 - [State clause values](state-clause-values.md) — per-state numeric legal values auto-patch lease generator; cache must never persist empty-on-error, bounds enforced server-side via clauseRegistry.
 - [Apply flow schema drift](apply-flow-schema-drift.md) — apply/submission 500 "column does not exist" = DB missing a schema column; fix dev (db:push or dev ALTER), then REPUBLISH for prod.
 - [Screening completion authority](screening-completion-authority.md) — only the WV result webhook may set order status 'complete'; SSO redirect URLs are portal landings, never completion.
+- [Document generation routing](document-generation-routing.md) — route landlord templates to lease generator by templateType==='lease' (not title); generic generator hardcodes a lease so 33 non-lease wizard templates render as leases. Stress-test harness in scripts/.
 - [Lease generator field-IDs](lease-generator-field-ids.md) — lease templates use non-standard field IDs (e.g. MI: maxDeposit/lateFeeDays); generator must read all aliases via getFieldValueAny in BOTH DOCX+PDF paths or values silently default.
 - [Puppeteer prod hang](puppeteer-prod-hang.md) — headless-Chromium PDF routes time out in the deployed VM; generate PDFs with pdf-lib via shared pdfDocBuilder (WinAnsi-safe text, wrap values).
 - [Stripe Connect on_behalf_of](stripe-connect-on-behalf-of.md) — on_behalf_of needs card_payments capability active; ACH-only landlord accounts lack it, so gate it and fall back to destination charge.
