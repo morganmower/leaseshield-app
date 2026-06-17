@@ -7,3 +7,4 @@
 - [Puppeteer prod hang](puppeteer-prod-hang.md) — headless-Chromium PDF routes time out in the deployed VM; generate PDFs with pdf-lib via shared pdfDocBuilder (WinAnsi-safe text, wrap values).
 - [Stripe Connect on_behalf_of](stripe-connect-on-behalf-of.md) — on_behalf_of needs card_payments capability active; ACH-only landlord accounts lack it, so gate it and fall back to destination charge.
 - [Application fee flow](application-fee-flow.md) — Charge-fee reuses rent infra via request_type; copies a link (no auto-email, rent template is mislabeled); onboard returnTo guarded.
+- [gpt-5 model params](gpt5-model-params.md) — gpt-5* swap must drop custom temperature, use max_completion_tokens, and raise budgets (reasoning tokens eat the limit).

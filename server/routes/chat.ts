@@ -25,7 +25,7 @@ export async function registerChatRoutes(app: Express) {
     }
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
@@ -61,8 +61,7 @@ Keep responses concise (2-4 sentences unless more detail is specifically request
           content: message
         }
       ],
-      temperature: 0.7,
-      max_tokens: 300,
+      max_completion_tokens: 800,
     });
 
     const reply = completion.choices[0]?.message?.content || "I'm sorry, I couldn't process that. Please try again.";

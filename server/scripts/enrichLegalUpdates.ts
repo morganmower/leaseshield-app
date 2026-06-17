@@ -85,10 +85,9 @@ IMPORTANT: Do NOT use generic placeholder text. If you don't have specific infor
 
   try {
     const response = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: [{ role: 'user', content: prompt }],
-      temperature: 0.3,
-      max_tokens: 800,
+      max_completion_tokens: 1500,
     });
 
     const content = response.choices[0]?.message?.content || '';

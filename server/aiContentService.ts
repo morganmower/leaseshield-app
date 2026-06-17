@@ -148,14 +148,13 @@ ${context.recentDownloads.length > 0 ? `- Recent Downloads: ${context.recentDown
 Generate the email body only (no subject, no signature). Keep it under 200 words.`;
 
       const response = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userPrompt },
         ],
         response_format: { type: "json_object" },
-        temperature: 0.7,
-        max_tokens: 500,
+        max_completion_tokens: 1000,
       });
 
       const content = response.choices[0]?.message?.content;

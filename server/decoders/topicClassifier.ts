@@ -182,7 +182,7 @@ export async function classifyTopicWithAI(
   
   try {
     const completion = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+      model: "gpt-5-mini",
       messages: [
         {
           role: "system",
@@ -199,8 +199,7 @@ Respond with ONLY the topic name or "none". No explanation.`
           content: question
         }
       ],
-      temperature: 0,
-      max_tokens: 50,
+      max_completion_tokens: 600,
     });
 
     const response = completion.choices[0]?.message?.content?.trim().toLowerCase() || 'none';

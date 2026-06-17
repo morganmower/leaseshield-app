@@ -113,7 +113,7 @@ export async function registerExplainTermsRoutes(app: Express) {
         : 'This appears to be a routine inquiry. Provide helpful context while maintaining professional balance.';
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [
           {
             role: "system",
@@ -205,8 +205,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
             content: `Explain this credit report information for a landlord: "${trimmedTerm}"`
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1000,
+        max_completion_tokens: 1500,
       });
 
       const explanation = completion.choices[0]?.message?.content || 
@@ -367,7 +366,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
         : 'This appears to be a routine inquiry. Provide helpful context while maintaining professional balance.';
 
       const completion = await openai.chat.completions.create({
-        model: "gpt-4o-mini",
+        model: "gpt-5-mini",
         messages: [
           {
             role: "system",
@@ -459,8 +458,7 @@ TONE: Calm, structured, and confidence-building. Help landlords feel informed an
             content: `Explain this criminal/eviction screening information for a landlord: "${trimmedTerm}"`
           }
         ],
-        temperature: 0.7,
-        max_tokens: 1200,
+        max_completion_tokens: 1800,
       });
 
       const explanation = completion.choices[0]?.message?.content || 

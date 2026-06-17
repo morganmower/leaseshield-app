@@ -20,7 +20,7 @@ async function main() {
   console.log('Enriching:', update.title, 'in', update.stateId);
   
   const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
+    model: 'gpt-5-mini',
     messages: [{
       role: 'system',
       content: 'You are a legal analyst helping landlords understand legislation. Generate helpful, specific content.'
