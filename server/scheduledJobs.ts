@@ -10,6 +10,7 @@ import { and, eq, lt, gte, sql, not } from "drizzle-orm";
 import { setupEmailSequences } from "./emailSequenceSetup";
 import { runUploadCleanup } from "./cleanup";
 import { getAppBaseUrl } from "./utils/appUrl";
+import { isProduction } from "./utils/env";
 import Stripe from "stripe";
 
 const stripeForJobs = process.env.STRIPE_SECRET_KEY
@@ -1448,17 +1449,31 @@ Manage preferences: ${baseUrl}/settings
     // Set up email sequences on startup
     await setupEmailSequences();
 
+    // Customer-facing jobs (real emails to landlords/tenants and real Stripe
+    // money movement) must run in the deployed production app ONLY. The dev
+    // workspace shares the same Resend + Stripe credentials but uses a separate
+    // database with its own dedup table, so when dev also ran these jobs a
+    // single customer received duplicate emails (e.g. two biweekly landlord
+    // tips ~1.5h apart) and risked duplicate charges. Gating on production
+    // makes the deployed app the single source of customer-facing sends.
+    const customerJobsEnabled = isProduction();
+    if (!customerJobsEnabled) {
+      console.log('⏸️  Customer-facing email/payment jobs are DISABLED in this environment (not production). Internal maintenance jobs still run.');
+    }
+
     // DISABLED: Trial reminder/expiration emails removed per new email strategy
     // The new lifecycle uses 3 simple emails based on signup date, not trial countdown
     // See: Email #1 (signup), Email #2 (3-day), Email #3 (10-14 day close the loop)
     // Old trial-based emails are no longer sent
 
     // NEW: Process lifecycle emails every 6 hours (3-day nudge, 12-day close the loop)
-    this.lifecycleEmailsInterval = setInterval(
-      () => this.processLifecycleEmails(),
-      6 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.processLifecycleEmails(), 2 * 60 * 1000);
+    if (customerJobsEnabled) {
+      this.lifecycleEmailsInterval = setInterval(
+        () => this.processLifecycleEmails(),
+        6 * 60 * 60 * 1000
+      );
+      setTimeout(() => this.processLifecycleEmails(), 2 * 60 * 1000);
+    }
 
     // Check for legislative monitoring daily
     this.legislativeMonitoringInterval = setInterval(
@@ -1468,18 +1483,22 @@ Manage preferences: ${baseUrl}/settings
     setTimeout(() => this.checkLegislativeMonitoring(), 2 * 60 * 1000);
 
     // Process email sequences every hour
-    this.emailSequenceInterval = setInterval(
-      () => this.processEmailSequences(),
-      60 * 60 * 1000
-    );
-    setTimeout(() => this.processEmailSequences(), 3 * 60 * 1000);
+    if (customerJobsEnabled) {
+      this.emailSequenceInterval = setInterval(
+        () => this.processEmailSequences(),
+        60 * 60 * 1000
+      );
+      setTimeout(() => this.processEmailSequences(), 3 * 60 * 1000);
+    }
 
     // Check for renewal reminders every 12 hours
-    this.renewalReminderInterval = setInterval(
-      () => this.checkRenewalReminders(),
-      12 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.checkRenewalReminders(), 4 * 60 * 1000);
+    if (customerJobsEnabled) {
+      this.renewalReminderInterval = setInterval(
+        () => this.checkRenewalReminders(),
+        12 * 60 * 60 * 1000
+      );
+      setTimeout(() => this.checkRenewalReminders(), 4 * 60 * 1000);
+    }
 
     // Run upload cleanup daily
     this.uploadCleanupInterval = setInterval(
@@ -1489,11 +1508,13 @@ Manage preferences: ${baseUrl}/settings
     setTimeout(() => runUploadCleanup().catch(e => console.error('[CLEANUP] startup error:', e)), 5 * 60 * 1000);
 
     // Send biweekly tips every 14 days (check daily, but only send once per 2 weeks)
-    this.weeklyTipsInterval = setInterval(
-      () => this.sendBiweeklyTips(),
-      24 * 60 * 60 * 1000 // Check daily
-    );
-    setTimeout(() => this.sendBiweeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
+    if (customerJobsEnabled) {
+      this.weeklyTipsInterval = setInterval(
+        () => this.sendBiweeklyTips(),
+        24 * 60 * 60 * 1000 // Check daily
+      );
+      setTimeout(() => this.sendBiweeklyTips(), 6 * 60 * 1000); // First check after 6 minutes
+    }
 
     // Run monthly database backup (check daily, but only runs on 1st)
     this.databaseBackupInterval = setInterval(
@@ -1518,11 +1539,13 @@ Manage preferences: ${baseUrl}/settings
     setTimeout(() => this.runMonthlyPublishJob(), 9 * 60 * 1000); // First check after 9 minutes
 
     // Bi-weekly legislative digest (check daily, but only send once per 2 weeks)
-    this.biweeklyDigestInterval = setInterval(
-      () => this.sendBiweeklyLegislativeDigest(),
-      24 * 60 * 60 * 1000 // Check daily
-    );
-    setTimeout(() => this.sendBiweeklyLegislativeDigest(), 10 * 60 * 1000); // First check after 10 minutes
+    if (customerJobsEnabled) {
+      this.biweeklyDigestInterval = setInterval(
+        () => this.sendBiweeklyLegislativeDigest(),
+        24 * 60 * 60 * 1000 // Check daily
+      );
+      setTimeout(() => this.sendBiweeklyLegislativeDigest(), 10 * 60 * 1000); // First check after 10 minutes
+    }
 
     this.autoArchiveInterval = setInterval(
       () => this.autoArchiveOldSubmissions(),
@@ -1537,25 +1560,27 @@ Manage preferences: ${baseUrl}/settings
     setTimeout(() => this.runWeeklyCaseLawRefresh(), 12 * 60 * 1000);
 
     // Online rent collection - run reminders + late fees daily
-    this.rentRemindersInterval = setInterval(
-      () => this.processRentReminders(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.processRentReminders(), 13 * 60 * 1000);
+    if (customerJobsEnabled) {
+      this.rentRemindersInterval = setInterval(
+        () => this.processRentReminders(),
+        24 * 60 * 60 * 1000
+      );
+      setTimeout(() => this.processRentReminders(), 13 * 60 * 1000);
 
-    this.rentLateFeesInterval = setInterval(
-      () => this.processRentLateFees(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.processRentLateFees(), 14 * 60 * 1000);
+      this.rentLateFeesInterval = setInterval(
+        () => this.processRentLateFees(),
+        24 * 60 * 60 * 1000
+      );
+      setTimeout(() => this.processRentLateFees(), 14 * 60 * 1000);
 
-    // Recurring auto-pay debits (Plan B). Runs nightly; processes any active
-    // subscription whose next_scheduled_date <= today.
-    this.rentRecurringDebitsInterval = setInterval(
-      () => this.processRecurringRentDebits(),
-      24 * 60 * 60 * 1000
-    );
-    setTimeout(() => this.processRecurringRentDebits(), 15 * 60 * 1000);
+      // Recurring auto-pay debits (Plan B). Runs nightly; processes any active
+      // subscription whose next_scheduled_date <= today.
+      this.rentRecurringDebitsInterval = setInterval(
+        () => this.processRecurringRentDebits(),
+        24 * 60 * 60 * 1000
+      );
+      setTimeout(() => this.processRecurringRentDebits(), 15 * 60 * 1000);
+    }
 
     console.log('✅ Scheduled jobs started');
   }

@@ -2,6 +2,7 @@ import { storage } from "./storage";
 import { emailService } from "./emailService";
 import { syncScreeningStatus, type ScreeningCredentials } from "./digitalDelveService";
 import { decryptCredentials } from "./crypto";
+import { isProduction } from "./utils/env";
 
 let pollerInterval: NodeJS.Timeout | null = null;
 const POLLING_INTERVAL_MS = 30 * 60 * 1000; // 30 minutes
@@ -81,7 +82,14 @@ export async function pollScreeningStatus(): Promise<void> {
       }
     }
 
-    const completedOrders = await storage.getInProgressScreeningOrdersWithOwnerInfo();
+    // Completion-notification retries send REAL customer emails. Only the
+    // deployed production app may do this; otherwise the dev workspace (which
+    // shares Resend credentials but uses a separate database) would send
+    // duplicate landlord notifications. SSO URL refresh above is internal-only
+    // and safe to run in every environment.
+    const completedOrders = isProduction()
+      ? await storage.getInProgressScreeningOrdersWithOwnerInfo()
+      : [];
     const unnotified = completedOrders.filter(
       o => o.order.status === 'complete' && !o.order.completionNotifiedAt
     );
